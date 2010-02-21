@@ -1,0 +1,20 @@
+There are two setup files, each corresponding to a different level of setup.
+
+setup.py :
+
+	In this package the .dll/.so comes precompiled so there is no need to
+	have Sundials 2.4 or Cython installed. (Although the source .pyx files
+	are included). Just do a normal setup with the command:
+	"python setup.py install" and the package will be installed in your
+	python dist-packages folder.
+
+setup_source.py :
+	
+	You have to have Sundials 2.4 and Cython installed to be able to compile
+	the source files. If you are on windows/mac or installed Sundials in a
+	folder which is not the default, you have to edit the setup_source.py
+	manually to where Sundials is installed. The variables to edit are
+	"incdirs" and "libdirs". Then just do a normal setup with the command:
+	"python setup_source.py install" and the package will be installed in
+	your python dist-packages folder.
+	
