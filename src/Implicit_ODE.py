@@ -226,11 +226,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         Defines the problem and sets the initial values.
         
-            res_fcn - The residual function
+            problem - Defines the problem
             y0 - Starting values for the none differentiated variables 
             yd0 - Starting values for the differentiated variables
             t0 - Starting time
-            event_fcn - The event function (To keep track of changes)
             switches0 - Sets the starting mode
         """
         if y0 == None:
@@ -261,16 +260,34 @@ class IDA(Implicit_ODE, Sundials):
         
         self.switches = switches0
         self._problem.switches0 = switches0
-
+        
+        #Determine if we have a user supplied jacobian
+        if hasattr(self._problem, 'jac'):
+            #try:
+            if self.switches == None:
+                trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1])
+            else:
+                trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1], self.switches)
+            if trial.shape != (len(self.y[-1]),len(self.y[-1])):
+                raise Implicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
+            #except:
+            #    raise Implicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
+            self.Integrator.jacobian = True
+            self.jac = self._problem.jac
+            self._RES = [self.res_fcn, self._problem.jac]
+        else:
+            self.Integrator.jacobian = False
+            self._RES = [self.res_fcn]
+        
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'event_fcn'):
-            self.event_fcn = self._problem.event_fcn#problem.event_fcn
+            self.event_fcn = self._problem.event_fcn
             self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
-            #self.problem_spec=[self.res_fcn,self.event_fcn,self._problem.switches0]
-            self.problem_spec=[self.res_fcn,self.event_fcn,self.switches]
+            self._ROOT = [self.event_fcn, self.switches]
+            self.problem_spec=[self._RES,self._ROOT]
         else:
             self.Integrator.num_event_fcn=0
-            self.problem_spec=[self.res_fcn]
+            self.problem_spec=[self._RES]
             
         #Default values
         self.tout1 = 0.001
