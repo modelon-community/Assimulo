@@ -5,7 +5,7 @@ import sys as S
 lib_file = ''
 
 if S.platform == 'win32':
-    lib_file = 'sundials_core.dll'
+    lib_file = 'sundials_core.pyd'
 else:
     lib_file = 'sundials_core.so'
 
