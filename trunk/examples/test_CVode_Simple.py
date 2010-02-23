@@ -8,7 +8,8 @@ def run_example():
     def f(t,y):
         ydot = -y[0]
         return N.array([ydot])
-    
+    global exp_mod
+    global exp_sim
     exp_mod = Explicit_Problem()
     exp_mod.f = f
     exp_mod.Problem_Name = 'Simple CVode Example'

@@ -59,6 +59,20 @@ cdef extern from "nvector/nvector_serial.h":
     ctypedef _N_VectorContent_Serial* N_VectorContent_Serial
     cdef N_Vector N_VMake_Serial(long int vec_length, realtype *v_data)
 
+cdef extern from "sundials/sundials_direct.h":
+    cdef struct _DlsMat:
+        int type
+        int M
+        int N
+        int ldim
+        int mu
+        int ml
+        int s_mu
+        realtype *data
+        int ldata
+        realtype **cols
+    ctypedef _DlsMat* DlsMat
+    cdef realtype* DENSE_COL(DlsMat A, int j)
 
 cdef extern from "cvode/cvode.h":
     void* CVodeCreate(int lmm, int iter)
@@ -141,6 +155,9 @@ cdef extern from "ida/ida.h":
 
 cdef extern from "ida/ida_dense.h":
     int IDADense(void *ida_mem, long int N)
+    ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+    int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
+
 #===============================================================
 # Constants
 #===============================================================
@@ -171,9 +188,12 @@ DEF CV_RTFUNC_FAIL    = -10 # The rootfinding function failed in an unrecoverabl
 #c) IDA in
 DEF IDA_NORMAL         = 1   # Solver returns at specified output time.
 DEF IDA_ONE_STEP       = 2   # Solver returns after each successful step.
-DEF IDA_RES_IND        = 0   # Index to user data
-DEF IDA_ROOT_IND       = 1   # Index to user data
-DEF IDA_Switches       = 2   # Index to user data
+DEF IDA_RES_IND        = 0   # Index to user data residual handling
+DEF IDA_RESF_IND       = 0   # Index to user data residual
+DEF IDA_JAC_IND        = 1   # Index to user data jacobian
+DEF IDA_ROOT_IND       = 1   # Index to user data root handling
+DEF IDA_ROOTF_IND      = 0   # Index to user data root function
+DEF IDA_SW_IND         = 1   # Index to user data root switches
 DEF IDA_YA_YDP_INIT    = 1   # See IDA Documentation 4.5.4
 DEF IDA_Y_INIT         = 2   # See IDA Documentation 4.5.4
 #d) IDA out
@@ -264,22 +284,48 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> user_data)[IDA_Switches]
+        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
-        pass
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
     try:
         if switch:
-            res=(<object> user_data)[IDA_RES_IND](t,y,yd,switch)  # call to the python residual function
+            res=(<object> user_data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
         else:
-            res=(<object> user_data)[IDA_RES_IND](t,y,yd)
+            res=(<object> user_data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
         for i in range(n):
             resptr[i]=res[i]
         return 0
     except:
         return 1 # recoverable error (see Sundials description)
+        
+cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jac,
+                 void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+    """
+    Wraps Python jacobian-callback function to obtain IDA required interface.
+    """
+    y = nv2arr(yv)
+    yd = nv2arr(yvdot)
+    try:
+        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
+    except:
+        switch=False
+    cdef realtype* col_i=DENSE_COL(Jac,0)
+    try:
+        if switch:
+            jacobian=(<object> user_data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
+        else:
+            jacobian=(<object> user_data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
+        
+        for i in range(Neq):
+            col_i = DENSE_COL(Jac, i)
+            for j in range(Neq):
+                col_i[j] = jacobian[j,i]
+        return 0
+    except: #None recoverable
+        return -1
+
 cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* user_data):
     """
     Wraps  Python root-callback function to obtain IDA required interface
@@ -288,11 +334,11 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> user_data)[IDA_Switches]
+        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     try:
-        rootf=(<object> user_data)[IDA_ROOT_IND](t,y,yd,switch)  # call to the python root function 
+        rootf=(<object> user_data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
@@ -491,7 +537,7 @@ cdef class IDA_wrap:
         public realtype t0
         public ndarray abstol_ar,algvar,event_info
         public dict stats
-        public booleantype suppress_alg
+        public booleantype suppress_alg,jacobian
         public int icopt
         N_Vector curr_state
         N_Vector curr_deriv
@@ -528,6 +574,8 @@ cdef class IDA_wrap:
             flag=IDASetMaxOrd(self.mem, maxord)
         flag = IDASetMaxNumSteps(self.mem, self.max_steps)
         flag = IDADense(self.mem, self.dim)
+        if self.jacobian:
+            flag = IDADlsSetDenseJacFn(self.mem, ida_jac)
         flag = IDASetUserData(self.mem, <void*> user_data)
         flag = IDASetId(self.mem, arr2nv(self.algvar))
         flag = IDASetSuppressAlg(self.mem, self.suppress_alg)

@@ -1,4 +1,5 @@
 import nose
+import numpy as N
 from Assimulo.Implicit_ODE import *
 from Assimulo.Problem import Implicit_Problem
 
@@ -9,10 +10,10 @@ class Test_Implicit_ODE:
         """
         This tests the functionality of the method __init__.
         """
-        class prob(Implicit_Problem):
-            def f(self, t, y, yd):
-                pass
-        res = prob()
+        def f(self, t, y, yd):
+            pass
+        res = Implicit_Problem()
+        res.f = f
         
         nose.tools.assert_raises(Implicit_ODE_Exception, Implicit_ODE, res, 1, 'test')
         nose.tools.assert_raises(Implicit_ODE_Exception, Implicit_ODE, res, 1, 1, 'test')
@@ -33,14 +34,13 @@ class Test_Implicit_ODE:
         """
         y0 = [0.0]
         yd0 = [1.0]
-        class prob(Implicit_Problem):
-            f = lambda self,t,x,xd: x
-        ida = prob()
+        my_Prob = Implicit_Problem()
+        my_Prob.f = lambda t,x,xd: x
 
-        simulator = IDA(ida,y0,yd0)
+        simulator = IDA(my_Prob,y0,yd0)
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, -1.0)
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, 'test')
-        
+        print simulator.problem_spec[0][0]
         [t,y,yd] = simulator(1.0,10)
         
         assert len(t) == 11 #11 Due to t0 is counted as well
@@ -52,13 +52,12 @@ class Test_IDA:
         """
         This function sets up the test case.
         """
-        class Prob(Implicit_Problem):
-            f = 'Test function'
-        res = Prob()
+        my_test_prob = Implicit_Problem()
+        my_test_prob.f = 'Test function'
         y0 = [1.0]
         yd0 = [1.0]
 
-        self.simulator = IDA(res, y0, yd0)
+        self.simulator = IDA(my_test_prob, y0, yd0)
         
         
     def test_init(self):
@@ -77,23 +76,29 @@ class Test_IDA:
         nose.tools.assert_raises(Implicit_ODE_Exception, IDA, 'Test function', 'test', [1.0])
         nose.tools.assert_raises(Implicit_ODE_Exception, IDA, 'Test function', [1.0], [1.0], switches0='Error')
         
-        class Prob(Implicit_Problem):
-            f = 'Test function'
-            event_fcn = lambda self,t,x,xd,sw: x
-        res = Prob()
+        my_Prob = Implicit_Problem()
+        my_Prob.f = 'Test function'
+        my_Prob.event_fcn = lambda t,x,xd,sw: x
+        
+        def jac(c,t,y,yd,sw):
+            re = N.zeros([len(y),len(y)])
+            return re
+        
+        my_Prob.jac = jac
         y0 = [1.0, 1.0, 1]
         yd0 = [1, 1, 1]
         
         switches = [True, False]
 
-        simulator = IDA(res,y0,yd0, switches0=switches)
+        simulator = IDA(my_Prob,y0,yd0, switches0=switches)
         
-        assert simulator.res_fcn == res.f
+        assert simulator.res_fcn == 'Test function'
         assert simulator.switches == switches
         assert simulator.yd[0][0] == 1.0
-        assert simulator.problem_spec[0] == res.f
-        assert simulator.problem_spec[1] == simulator.event_fcn
-        assert simulator.problem_spec[2] == switches
+        assert simulator.problem_spec[0][0] == simulator.res_fcn
+        assert simulator.problem_spec[0][1] == simulator.jac
+        assert simulator.problem_spec[1][0] == simulator.event_fcn
+        assert simulator.problem_spec[1][1] == switches
     
     def test_max_order(self):
         """
@@ -142,6 +147,12 @@ class Test_IDA:
         self.simulator.lsoff = False
         assert self.simulator.lsoff == False
         
+    def test_run(self):
+        """
+        This tests the functionality of the property run. (With jacobian)
+        """
+        pass
+        
         
     def test_algvar(self):
         """
@@ -187,17 +198,18 @@ class Test_IDA:
         """
         This tests the functionality of the method make_consistency.
         """
-        class Prob(Implicit_Problem):
-            def f(self,t,y,yd):
-                res_1 = y[0] + y[1]+1.0
-                res_2 = y[1]
-                return [res_1, res_2]
-        res = Prob()
+        def f(t,y,yd):
+            res_1 = y[0] + y[1]+1.0
+            res_2 = y[1]
+            print res_1
+            return [res_1, res_2]
+        my_Prob = Implicit_Problem()
+        my_Prob.f = f
         
         y0 = [2.0, 2.0]
         yd0 = [1.0 , 0.0]
-        simulator = IDA(res, y0, yd0)
-        
+        simulator = IDA(my_Prob, y0, yd0)
+        print simulator.Integrator.jacobian
         [y, yd] = simulator.make_consistency('IDA_Y_INIT')
         
         nose.tools.assert_almost_equal(y[1], 0.00000)
