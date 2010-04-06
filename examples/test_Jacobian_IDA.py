@@ -64,12 +64,12 @@ def run_example():
     
     #assert exp_sim.problemname == exp_mod.Problem_Name
     #assert exp_sim.y[0] == y0
-    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 0.94019949, places=8)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][1], -0.34095123, places=8)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][2], -0.88198309, places=8)
-    nose.tools.assert_almost_equal(imp_sim.yd[-1][0], -0.88198927, places=8)
-    nose.tools.assert_almost_equal(imp_sim.yd[-1][1], -2.43227069, places=8)
-    nose.tools.assert_almost_equal(imp_sim.yd[-1][2], -9.43939383, places=8)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 0.94019949, places=7)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][1], -0.34095123, places=7)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][2], -0.88198309, places=7)
+    nose.tools.assert_almost_equal(imp_sim.yd[-1][0], -0.88198927, places=7)
+    nose.tools.assert_almost_equal(imp_sim.yd[-1][1], -2.43227069, places=7)
+    nose.tools.assert_almost_equal(imp_sim.yd[-1][2], -9.43939383, places=7)
 
 
 if __name__=='__main__':
