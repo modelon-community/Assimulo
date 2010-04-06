@@ -11,8 +11,17 @@ if S.platform == 'win32':
     incdirs = ''
     libdirs = ''
 else:
-    incdirs = '/usr/local/include/sundials'
+    incdirs = '/usr/local/include'
     libdirs = '/usr/local/lib'
+
+copy_args=S.argv[1:]
+
+for x in copy_args:
+    if not x.find('--sundials-home'):
+        incdirs = O.path.join(x[16:],'include')
+        libdirs = O.path.join(x[16:],'lib')
+        copy_args.remove(x)
+
 
 cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
@@ -32,5 +41,6 @@ setup(name='Assimulo_Source',
             include_dirs=[incdirs, N.get_include ()],
             library_dirs=[libdirs],
             libraries=['sundials_cvode','sundials_ida','sundials_nvecserial']),
-    ]
+    ],
+    script_args=copy_args
      )
