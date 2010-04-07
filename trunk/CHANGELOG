@@ -1,6 +1,7 @@
 --- CHANGELOG ---
 
 --- Assimulo-b1.02 ---
+    * Added support for user-defined Jacobians when using CVode
     * Added support for user-defined Jacobians when using IDA
 
 --- Assimulo-b1.01 ---
