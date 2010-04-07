@@ -8,18 +8,19 @@ class Test_Explicit_ODE:
         """
         This tests the functionality of the method __init__.
         """
-        class expl(Explicit_Problem):
-            f = 'test'
-        problem = expl()
+        def f(t, y):
+            pass
+        Test = Explicit_Problem()
+        Test.f = f
         
-        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, problem, 'test')
-        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, problem, 1, 'test')
-        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, problem, 'test', 'test')
-        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, problem, [1.0 , 1.0, 'test'])
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test, 'test')
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test, 1, 'test')
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test, 'test', 'test')
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test, [1.0 , 1.0, 'test'])
         nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, None, [1.0 , 1.0, 1.0])
         
         
-        simulator = Explicit_ODE(problem, [1.0 , 1.0], 1)
+        simulator = Explicit_ODE(Test, [1.0 , 1.0], 1)
         assert simulator.t[0] == 1.0
         assert simulator.y[0][0] == 1.0
         
@@ -59,10 +60,10 @@ class Test_Explicit_Euler:
         """
         This function sets up the test case.
         """
-        class simple(Explicit_Problem):
-            def f(self, t, y):
-                return 1.0
-        problem = simple()
+        def f(t, y):
+            return 1.0
+        problem = Explicit_Problem()
+        problem.f = f
         y0 = 1.0
         self.simulator = Explicit_Euler(problem,y0)
         
@@ -100,10 +101,10 @@ class Test_RungeKutta34:
         """
         This function sets up the test case.
         """ 
-        class simple(Explicit_Problem):
-            def f(self, t, y):
-                return 1.0
-        problem = simple()
+        def f(t, y):
+            return 1.0
+        problem = Explicit_Problem()
+        problem.f = f
         y0 = 1
         self.simulator = RungeKutta34(problem,y0)
     
@@ -158,10 +159,10 @@ class Test_RungeKutta4:
         """
         This function sets up the test case.
         """ 
-        class simple(Explicit_Problem):
-            def f(self, t, y):
-                return 1.0
-        problem = simple()
+        def f(t, y):
+            return 1.0
+        problem = Explicit_Problem()
+        problem.f = f
         y0 = 1
         self.simulator = RungeKutta4(problem,y0)
         
@@ -199,9 +200,9 @@ class Test_CVode:
         """
         This function sets up the test case.
         """
-        class simple(Explicit_Problem):
-            f = 'Test function'
-        problem = simple()
+        f = 'Test function'
+        problem = Explicit_Problem()
+        problem.f = f
         y0 = [1.0]
         
         self.simulator = CVode(problem,y0)
@@ -225,10 +226,13 @@ class Test_CVode:
         nose.tools.assert_raises(Explicit_ODE_Exception, CVode, 'Test function', [1.0], switches0='Error')
         
         
-        class simple(Explicit_Problem):
-            f = 'Test function'
-            event_fcn = lambda self,t,x,sw: x
-        problem = simple()
+        f = 'Test function'
+        event_fcn = lambda t,x,sw: x
+        jac = lambda t,x,sw: N.zeros([len(x),len(x)])
+        problem = Explicit_Problem()
+        problem.f = f
+        problem.event_fcn = event_fcn
+        problem.jac = jac
         y0 = [1.0]
 
         switches = [True]
@@ -238,9 +242,10 @@ class Test_CVode:
         assert simulator.f == problem.f
         assert simulator.switches == switches
         assert simulator.y[0][0] == 1.0
-        assert simulator.problem_spec[0] == problem.f
-        assert simulator.problem_spec[1] == simulator.event_fcn
-        assert simulator.problem_spec[2] == switches
+        assert simulator.problem_spec[0][0] == simulator.f
+        assert simulator.problem_spec[0][1] == simulator.jac
+        assert simulator.problem_spec[1][0] == simulator.event_fcn
+        assert simulator.problem_spec[1][1] == switches
          
         
     def test_discr_method(self):

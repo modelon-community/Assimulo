@@ -127,6 +127,8 @@ cdef extern from "cvode/cvode.h":
     int CVodeGetNumNonlinSolvConvFails(void *cvode_mem, long int *nncfails) #Number of nonlinear conv failures
 cdef extern from "cvode/cvode_dense.h":
     int CVDense(void *cvode_mem, long int N)
+    ctypedef int (*CVDlsDenseJacFn)(int N, realtype t, N_Vector y, N_Vector fy, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+    int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
     
 cdef extern from "ida/ida.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
@@ -179,8 +181,12 @@ cdef extern from "ida/ida_dense.h":
 # Constants
 #===============================================================
 #a) CVODE in
-DEF CV_RHS_IND         = 0   
-DEF CV_ROOT_IND        = 1
+DEF CV_RHS_IND        = 0   # Index to user data rhs handling
+DEF CV_RHSF_IND       = 0   # Index to user data rhs
+DEF CV_JAC_IND        = 1   # Index to user data jacobian
+DEF CV_ROOT_IND       = 1   # Index to user data root handling
+DEF CV_ROOTF_IND      = 0   # Index to user data root function
+DEF CV_SW_IND         = 1   # Index to user data root switches
 DEF CV_ADAMS = 1
 DEF CV_BDF   = 2
 DEF CV_FUNCTIONAL = 1
@@ -192,9 +198,6 @@ DEF CV_NORMAL         = 1
 DEF CV_ONE_STEP       = 2
 DEF CV_NORMAL_TSTOP   = 3
 DEF CV_ONE_STEP_TSTOP = 4
-DEF CV_RES_IND        = 0   # Index to user data
-DEF CV_ROOT_IND       = 1   # Index to user data
-DEF CV_Switches       = 2   # Index to user data
 #b) CVODE out
 DEF CV_SUCCESS = 0
 DEF CV_TSTOP_RETURN = 1
@@ -260,21 +263,45 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* user_data):
     cdef realtype* ydotptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
     try:
-        switch=(<object> user_data)[CV_Switches]
+        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
     except:
         switch=False
         pass
     try:
         if switch:
-            ydot=(<object> user_data)[CV_RHS_IND](t,y,switch)  # call to the python rhs function
+            ydot=(<object> user_data)[CV_RHS_IND][CV_RHSF_IND](t,y,switch)  # call to the python rhs function
         else:
-            ydot=(<object> user_data)[CV_RHS_IND](t,y)
+            ydot=(<object> user_data)[CV_RHS_IND][CV_RHSF_IND](t,y)
         for i in range(n):
             ydotptr[i]=ydot[i]
         return 0
     except:
         return 1 # recoverable error (see Sundials description)
-    
+
+cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+    """
+    Wraps Python jacobian-callback function to obtain CV required interface.
+    """
+    y = nv2arr(yv)
+    try:
+        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
+    except:
+        switch=False
+    cdef realtype* col_i=DENSE_COL(Jac,0)
+    try:
+        if switch:
+            jacobian=(<object> user_data)[CV_RHS_IND][CV_JAC_IND](t,y,switch)  # call to the python residual function
+        else:
+            jacobian=(<object> user_data)[CV_RHS_IND][CV_JAC_IND](t,y)
+        
+        for i in range(Neq):
+            col_i = DENSE_COL(Jac, i)
+            for j in range(Neq):
+                col_i[j] = jacobian[j,i]
+        return 0
+    except: #None recoverable
+        return -1
+
 cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* user_data):
     """
     Wraps  Python root-callback function to obtain CV required interface
@@ -282,11 +309,11 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* user_data):
     """
     y=nv2arr(yv)
     try:
-        switch=(<object> user_data)[CV_Switches]
+        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
     except:
         switch=False
     try:
-        rootf=(<object> user_data)[CV_ROOT_IND](t,y,switch)  # call to the python root function 
+        rootf=(<object> user_data)[CV_ROOT_IND][CV_ROOTF_IND](t,y,switch)  # call to the python root function 
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
@@ -401,6 +428,7 @@ cdef class CVode_wrap:
         public realtype t0
         public ndarray abstol_ar,event_info
         public dict stats
+        public booleantype jacobian
         N_Vector curr_state
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
@@ -437,6 +465,8 @@ cdef class CVode_wrap:
             flag=CVodeSetMaxOrd(self.mem, maxord)
         flag = CVodeSetMaxNumSteps(self.mem, self.max_steps)
         flag=CVDense(self.mem, self.dim)
+        if self.jacobian:
+            flag = CVDlsSetDenseJacFn(self.mem, cv_jac)
         flag = CVodeSetUserData(self.mem, <void*>user_data)
         try:
             flag= CVodeSetMaxStep(self.mem, self.max_h)

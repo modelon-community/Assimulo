@@ -351,14 +351,31 @@ class CVode(Explicit_ODE, Sundials):
         self._problem.switches0 = switches0
         self.switches = switches0
         
+        #Determine if we have a user supplied jacobian
+        if hasattr(self._problem, 'jac'):
+            if self.switches == None:
+                trial = self._problem.jac(self.t[-1],self.y[-1])
+            else:
+                trial = self._problem.jac(self.t[-1],self.y[-1], self.switches)
+            if trial.shape != (len(self.y[-1]),len(self.y[-1])):
+                raise Explicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
+                
+            self.Integrator.jacobian = True
+            self.jac = self._problem.jac
+            self._RHS = [self.f, self._problem.jac]
+        else:
+            self.Integrator.jacobian = False
+            self._RHS = [self.f]
+        
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'event_fcn'):
             self.event_fcn = self._problem.event_fcn #problem.event_fcn
             self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.switches0))
-            self.problem_spec=[self.f,self.event_fcn,self._problem.switches0]
+            self._ROOT = [self.event_fcn, self._problem.switches0]
+            self.problem_spec=[self._RHS, self._ROOT]
         else:
             self.Integrator.num_event_fcn=0
-            self.problem_spec=[self.f]
+            self.problem_spec=[self._RHS]
         
         
     
