@@ -17,6 +17,7 @@
 
 from lib import sundials_core
 import numpy as N
+import pylab as P
 
 class Sundials_Exception(Exception):
     pass
@@ -100,6 +101,30 @@ class Sundials:
         
         for x in keys:
             print '%s = %s'%(x, statistics[x])
+    
+    def plot_stepsize_order(self):
+        """
+        Plots the step-size used throughout the integration together with
+        the order used. Only able when using one-step mode.
+        """
+        if not self.Integrator.detailed_info:
+            raise Sundials_Exception('There is no information. Either the problem' \
+            ' was not simulated using the one-step mode or the problem have not ' \
+            'been simulated.')
+        
+        P.subplot(211)
+        P.semilogy(N.diff(self.t),drawstyle='steps')
+        P.title(self.problemname)
+        P.ylabel('Step length')
+        P.xlabel('Number of steps')
+        P.subplot(212)
+        P.plot(self.Integrator.detailed_info['qlast'])
+        P.plot(self.Integrator.detailed_info['qcurrent'])
+        P.ylabel('Order')
+        P.xlabel('Steps')
+        P.legend(['Last order','Current order'], loc=4)
+        P.show()
+        
     
     @property
     def stats(self):
