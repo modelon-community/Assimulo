@@ -105,6 +105,12 @@ class Test_Sundials:
         """
         pass
         
+    def test_plot_stepsize_order(self):
+        """
+        This tests the functionality of the method plot_stepsize_order.
+        """
+        pass
+        
     def test_disc_info(self):
         """
         This tests the functionality of the property disc_info.
