@@ -102,7 +102,6 @@ cdef extern from "cvode/cvode.h":
     int CVodeGetIntegratorStats(void* cvode_mem, long int *nsteps, long int *nfevals,
                                 long int *nlinsetups, long int *netfails, int *qlast, int *qcur,
                                 realtype *hinused, realtype *hlast, realtype *hcur, realtype *tcur)
-    int CVodeGetLastOrder(void * cvode_mem,int *qlast)
     int CVodeSetMaxOrd(void * cvode_mem, int maxord)
     int CVodeSetMaxNumSteps(void * cvode_mem, long int mxsteps)
     int CVodeSetMaxStep(void* cvode_mem, realtype hmax)
@@ -117,6 +116,8 @@ cdef extern from "cvode/cvode.h":
     int CVodeRootInit(void *cvode_mem, int nrtfn, CVRootFn g)
     int CVodeGetRootInfo(void *cvode_mem, int *rootsfound)
     #Functions for retrieving statistics
+    int CVodeGetLastOrder(void * cvode_mem,int *qlast)
+    int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent)
     int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) #Number of steps
     int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) #Number of function evals
     int CVDlsGetNumJacEvals(void *cvode_mem, long int *njevals) #Number of jac evals
@@ -144,7 +145,6 @@ cdef extern from "ida/ida.h":
                             long int *nlinsetups, long int *netfails, int *klast, 
                             int *kcur, realtype *hinused, realtype *hlast, 
                             realtype *hcur, realtype *tcur)
-    int IDAGetLastOrder(void* ida_mem,int *klast)
     int IDASolve(void* ida_mem, realtype tout,realtype  *tret, N_Vector yret, 
                             N_Vector ypret, int itask)
     int IDASetUserData(void *ida_mem,void *user_data)
@@ -163,6 +163,8 @@ cdef extern from "ida/ida.h":
     int IDAGetConsistentIC(void *ida_mem, N_Vector y0, N_Vector yp0)
     int IDASetLineSearchOffIC(void *ida_mem, booleantype lsoff)
     #Functions for retrieving statistics
+    int IDAGetLastOrder(void *ida_mem,int *qlast) #Last order used
+    int IDAGetCurrentOrder(void *ida_mem,int *qcurrent) #Order that is about to be tried
     int IDAGetNumSteps(void *ida_mem, long int *nsteps) #Number of steps
     int IDAGetNumResEvals(void *ida_mem, long int *nrevals) #Number of res evals
     int IDADlsGetNumJacEvals(void *ida_mem, long int *njevals) #Number of jac evals
@@ -428,6 +430,7 @@ cdef class CVode_wrap:
         public realtype t0
         public ndarray abstol_ar,event_info
         public dict stats
+        public dict detailed_info
         public booleantype jacobian
         N_Vector curr_state
     method=['Adams','BDF']
@@ -503,9 +506,10 @@ cdef class CVode_wrap:
         cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
-        cdef int  qlast, qcur
+        cdef int  qlast, qcurrent
         flag = CVodeSetStopTime(self.mem, tf)
         sol=[]
+        
         tret=t0
         if nt > 0:
             dt=(tf-t0)/nt
@@ -523,6 +527,12 @@ cdef class CVode_wrap:
                 if self.treat_disc(flags,tret):
                     break
         else: # one step mode
+            
+            if self.detailed_info == None:
+                self.detailed_info = {}
+                self.detailed_info['qlast'] = []
+                self.detailed_info['qcurrent'] = []
+        
             while tret < tf:
                 flag=0
                 flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
@@ -530,6 +540,9 @@ cdef class CVode_wrap:
                     raise Exception,"CVode (one step mode) run error at t=%s with flags %s" %(tret, flags)
                 sol.append((tret,nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
+                flag = CVodeGetCurrentOrder(self.mem, &qcurrent)
+                self.detailed_info['qlast'].append(qlast)
+                self.detailed_info['qcurrent'].append(qcurrent)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
@@ -584,6 +597,7 @@ cdef class IDA_wrap:
         public realtype t0
         public ndarray abstol_ar,algvar,event_info
         public dict stats
+        public dict detailed_info
         public booleantype suppress_alg,jacobian
         public int icopt
         N_Vector curr_state
@@ -688,7 +702,7 @@ cdef class IDA_wrap:
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef long int nsteps, nrevals,njevals,nrevalsLS,ngevals,netfails,nniters,nncfails
-        cdef int  qlast, qcur
+        cdef int  qlast, qcurrent
         flag = IDASetStopTime(self.mem, tf)
         sol=[]
         tret=t0
@@ -709,6 +723,12 @@ cdef class IDA_wrap:
                 if self.treat_disc(flags,tret):
                     break
         else: # one step mode
+        
+            if self.detailed_info == None:
+                self.detailed_info = {}
+                self.detailed_info['qlast'] = []
+                self.detailed_info['qcurrent'] = []
+                
             while tret < tf:
                 flag=0
                 flags=0
@@ -717,6 +737,9 @@ cdef class IDA_wrap:
                     raise Exception,"IDA (one step mode) run error at t=%s with flag %s" %(tret, flags)
                 sol.append((tret,nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
+                flag = IDAGetCurrentOrder(self.mem, &qcurrent)
+                self.detailed_info['qlast'].append(qlast)
+                self.detailed_info['qcurrent'].append(qcurrent)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
