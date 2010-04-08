@@ -105,6 +105,7 @@ cdef extern from "cvode/cvode.h":
     int CVodeSetMaxOrd(void * cvode_mem, int maxord)
     int CVodeSetMaxNumSteps(void * cvode_mem, long int mxsteps)
     int CVodeSetMaxStep(void* cvode_mem, realtype hmax)
+    int CVodeSetInitStep(void * cvode_mem, realtype hin)
     void CVodeFree(void **cvode_mem)
     int CVode(void *cvode_mem, realtype tout, N_Vector yout, realtype *tret, 
         int itask)
@@ -439,7 +440,7 @@ cdef class CVode_wrap:
         self.dim=dim
         self.discr=1
         self.iter=1
-    def cvinit(self,t0,user_data,u,maxord, max_steps):
+    def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
         cdef flag
         self.curr_state=arr2nv(u)
         self.max_steps = max_steps
@@ -467,6 +468,7 @@ cdef class CVode_wrap:
         if maxord:
             flag=CVodeSetMaxOrd(self.mem, maxord)
         flag = CVodeSetMaxNumSteps(self.mem, self.max_steps)
+        flag = CVodeSetInitStep(self.mem, init_step)
         flag=CVDense(self.mem, self.dim)
         if self.jacobian:
             flag = CVDlsSetDenseJacFn(self.mem, cv_jac)
