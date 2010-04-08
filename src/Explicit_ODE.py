@@ -201,15 +201,33 @@ class Explicit_ODE(ODE):
             raise Explicit_ODE_Exception('y0 must be of the same length as the original problem.')
         Explicit_ODE.__init__(self, self._problem,y0,t0)
     
-    def plot(self):
+    def plot(self, mask=None):
         """
         Plot the computed solution.
+        
+            Parameters:
+                mask - Default 'None'. Used to determine which variables that is to be plotted.
+                       Used as a list of integers, ones represents the variable that is to be
+                       plotted and zeros that is not. Example mask=[1,0] , plots the first
+                       variable.
         """
-        P.plot(self.t, self.y)
+        if not mask:
+            P.plot(self.t, self.y)
+        else:
+            if not isinstance(mask, list):
+                raise Explicit_ODE_Exception('Mask must be a list of integers')
+            if not len(mask)==len(self.y[-1]):
+                raise Explicit_ODE_Exception('Mask must be a list of integers of equal length as '\
+                                             'the number of variables.')
+            for i in range(len(mask)):
+                if mask[i]:
+                    P.plot(self.t, N.array(self.y)[:,i])
+        
         P.xlabel('time')
         P.ylabel('state')
         P.title(self.problemname)
         P.show()
+            
             
     
 class Explicit_Euler(Explicit_ODE):
