@@ -113,7 +113,7 @@ class Sundials:
             'been simulated.')
         
         P.subplot(211)
-        P.semilogy(N.diff(self.t),drawstyle='steps')
+        P.semilogy(N.diff(self.t),drawstyle='steps-post')
         P.title(self.problemname)
         P.ylabel('Step length')
         P.xlabel('Number of steps')
