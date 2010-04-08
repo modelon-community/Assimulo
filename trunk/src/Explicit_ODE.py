@@ -352,9 +352,11 @@ class CVode(Explicit_ODE, Sundials):
         Sundials.__init__(self, y0, 'CVode') #Creates an integrator
         Explicit_ODE.__init__(self, problem, y0, t0) #Calls the base class
         
+        #Default values
         self.discr = 'Adams' #Setting default discretization to Adams
         self.iter = 'FixedPoint' #Setting default iteration to FixedPoint
         self.maxord = 12 #Setting default maxord to maximum
+        self.initstep = 0.0 #Setting the initial step to be estimated
         
         if hasattr(self._problem, 'switches0') and switches0 == None:
             switches0 = self._problem.switches0
@@ -401,7 +403,7 @@ class CVode(Explicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps)
+        self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
         return self.Integrator.run(t,tfinal,nt)
     
     def _set_discr_method(self,discr='Adams'):
@@ -425,6 +427,26 @@ class CVode(Explicit_ODE, Sundials):
         return discr
     discrdocstring = 'Can be set to "BDF" or "Adams" (default)'
     discr= property(_get_discr_method,_set_discr_method,doc=discrdocstring)
+    
+    def _set_initial_step(self, initstep):
+        """
+        This sets the initial step-size to be used in the integration.
+        """
+        try:
+            initstep = float(initstep)
+        except (ValueError, TypeError):
+            raise Explicit_ODE_Exception('The initial step must be an integer or float.')
+        
+        self.__initstep = initstep
+        
+    def _get_initial_step(self):
+        """
+        Returns the initial step-size.
+        """
+        return self.__initstep
+        
+    initstepdocstring = 'Sets the initial step-size.'
+    initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
     
     def _set_iter_method(self,iter='FixedPoint'):
         """

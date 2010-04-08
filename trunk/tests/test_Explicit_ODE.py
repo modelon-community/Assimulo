@@ -281,7 +281,21 @@ class Test_CVode:
         assert self.simulator.iter == 'Newton'
         self.simulator.iter = 'FixedPoint'
         assert self.simulator.iter == 'FixedPoint'
-
+    
+    def test_initial_step(self):
+        """
+        This tests the functionality of the property initstep.
+        """
+        
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_initial_step, 'Test')
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_initial_step, ['Test'])
+        
+        assert self.simulator.initstep == 0.0
+        self.simulator.initstep = 10.0
+        assert self.simulator.initstep == 10.0
+        self.simulator.initstep = 1
+        assert self.simulator.initstep == 1.0
+    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
