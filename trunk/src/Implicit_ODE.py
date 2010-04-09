@@ -278,34 +278,39 @@ class IDA(Implicit_ODE, Sundials):
         self.switches = switches0
         self._problem.switches0 = switches0
         
+        #Determine if we have an event function and sets the integration data
+        if hasattr(problem, 'event_fcn'):
+            self.event_fcn = self._problem.event_fcn
+            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
+            self._ROOT = [self.event_fcn, self.switches]
+        else:
+            self.Integrator.num_event_fcn=0
+        
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
-            #try:
             if self.switches == None:
                 trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1])
             else:
                 trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1], self.switches)
             if trial.shape != (len(self.y[-1]),len(self.y[-1])):
                 raise Implicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
-            #except:
-            #    raise Implicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
-            self.Integrator.jacobian = True
+            
             self.jac = self._problem.jac
+            self.Integrator.jacobian = True
+            self.usejac = True
             self._RES = [self.res_fcn, self._problem.jac]
         else:
             self.Integrator.jacobian = False
+            self.usejac = False
             self._RES = [self.res_fcn]
         
-        #Determine if we have an event function and sets the integration data
-        if hasattr(problem, 'event_fcn'):
-            self.event_fcn = self._problem.event_fcn
-            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
-            self._ROOT = [self.event_fcn, self.switches]
-            self.problem_spec=[self._RES,self._ROOT]
+        
+        if hasattr(self, '_ROOT'):
+            self.problem_spec = [self._RES, self._ROOT]
         else:
-            self.Integrator.num_event_fcn=0
-            self.problem_spec=[self._RES]
-            
+            self.problem_spec = [self._RES]
+        
+        
         #Default values
         self.tout1 = 0.001
         self.lsoff = False #Use LineSearch
@@ -333,6 +338,39 @@ class IDA(Implicit_ODE, Sundials):
     tout1docstring='Value used for determine the direction of the ' \
                     'integration in make_consistency'
     tout1=property(_get_calcIC_tout1,_set_calcIC_tout1,doc=tout1docstring)
+    
+    def _set_usejac(self, jac):
+        """
+        This sets the option to use the user defined jacobian.
+        
+            Parameters:
+                jac - boolean. True - use user defined jacobian
+                               False - use an approximation
+        """
+        self.__usejac = bool(jac)
+        
+        if not bool(jac):
+            self.Integrator.jacobian = False
+            self._RES = [self.res_fcn]
+        else:
+            self.Integrator.jacobian = True
+            if not hasattr(self, 'jac'):
+                raise Implicit_ODE_Exception('No jacobian defined.')
+            self._RES = [self.res_fcn, self.jac]
+            
+        if hasattr(self, '_ROOT'):
+            self.problem_spec = [self._RES, self._ROOT]
+        else:
+            self.problem_spec = [self._RES]
+    
+    def _get_usejac(self):
+        """
+        Returns the jacobian option.
+        """
+        return self.__usejac
+    
+    jacdocstring = 'Option to set if the user defined jacobian is to be used'
+    usejac = property(_get_usejac,_set_usejac, doc=jacdocstring)
     
     
     def _set_lsoff(self, lsoff):

@@ -146,7 +146,30 @@ class Test_IDA:
         assert self.simulator.lsoff == True
         self.simulator.lsoff = False
         assert self.simulator.lsoff == False
+    
+    def test_usejac(self):
+        """
+        This tests the functionality of the property usejac.
+        """
+        f = lambda t,x,xd: x
+        jac = lambda c,t,x,xd: N.array([x*x])
         
+        prob = Implicit_Problem()
+        prob.f = f
+        prob.jac = jac
+        
+        sim = IDA(prob, [0],[0])
+        
+        assert sim._RES[0] == f
+        assert sim._RES[1] == jac
+        assert sim.problem_spec[0][0] == f
+        assert sim.problem_spec[0][1] == jac
+        sim.usejac = False
+        assert sim._RES[0] == f
+        assert len(sim._RES) == 1
+        assert sim.problem_spec[0][0] == f
+        assert len(sim.problem_spec[0]) == 1
+    
     def test_run(self):
         """
         This tests the functionality of the property run. (With jacobian)
