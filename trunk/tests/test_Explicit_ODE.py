@@ -264,7 +264,31 @@ class Test_CVode:
         assert self.simulator.discr == 'BDF'
         self.simulator.discr = 'Adams'
         assert self.simulator.discr == 'Adams'
+    
+    def test_usejac(self):
+        """
+        This tests the functionality of the property usejac.
+        """
+        f = lambda t,x: x
+        jac = lambda t,x: N.array([x*x])
         
+        prob = Explicit_Problem()
+        prob.f = f
+        prob.jac = jac
+        
+        sim = CVode(prob, [0])
+        
+        assert sim._RHS[0] == f
+        assert sim._RHS[1] == jac
+        assert sim.problem_spec[0][0] == f
+        assert sim.problem_spec[0][1] == jac
+        sim.usejac = False
+        assert sim._RHS[0] == f
+        assert len(sim._RHS) == 1
+        assert sim.problem_spec[0][0] == f
+        assert len(sim.problem_spec[0]) == 1
+        
+    
     def test_iter_method(self):
         """
         This tests the functionality of the property iter.
