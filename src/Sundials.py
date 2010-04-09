@@ -90,17 +90,6 @@ class Sundials:
         """Returns the maximal stepsize."""
         return self.__max_h
     maxh=property(_get_max_h,_set_max_h,doc='Maximal stepsize')    
-
-    def print_statistics(self):
-        """Prints the run-time statistics for the problem."""
-        print 'Final Run Statistics: %s \n' % self.problemname
-        
-        statistics = self.stats
-        keys = statistics.keys()
-        keys.sort()
-        
-        for x in keys:
-            print '%s = %s'%(x, statistics[x])
     
     def plot_stepsize_order(self):
         """

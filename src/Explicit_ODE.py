@@ -164,6 +164,9 @@ class Explicit_ODE(ODE):
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Event Iteration
+            
+            if self.verbosity >= self.NORMAL:
+                self.print_statistics()
         
         return [self.t, self.y]
         
@@ -552,6 +555,17 @@ class CVode(Explicit_ODE, Sundials):
     maxorddocstring='Maxord: Maximal Order\n Adams  0 < maxord < 13\n BDF 0 < maxord < 6' \
                     '\n Defaults to None, which corresponds to the maximal values above.'
     maxord=property(_get_max_ord,_set_max_ord,doc=maxorddocstring)
+    
+    def print_statistics(self):
+        """Prints the run-time statistics for the problem."""
+        print 'Final Run Statistics: %s \n' % self.problemname
+        
+        statistics = self.stats
+        keys = statistics.keys()
+        keys.sort()
+        
+        for x in keys:
+            print '%s = %s'%(x, statistics[x])
     
     @property
     def is_disc(self):

@@ -185,7 +185,10 @@ class Implicit_ODE(ODE):
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
-                
+        
+        if self.verbosity >= self.NORMAL:
+            self.print_statistics()
+        
         
         return [self.t, self.y, self.yd]
         
@@ -508,6 +511,17 @@ class IDA(Implicit_ODE, Sundials):
         return self.Integrator.algvar    
     algvardocstring='An ndarray which has an entry 1.0 for a differential variable, otherwise 0.0'
     algvar=property(_get_algvar,_set_algvar,doc=algvardocstring)
+    
+    def print_statistics(self):
+        """Prints the run-time statistics for the problem."""
+        print 'Final Run Statistics: %s \n' % self.problemname
+        
+        statistics = self.stats
+        keys = statistics.keys()
+        keys.sort()
+        
+        for x in keys:
+            print '%s = %s'%(x, statistics[x])
     
     @property
     def is_disc(self):
