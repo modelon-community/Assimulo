@@ -371,6 +371,14 @@ class CVode(Explicit_ODE, Sundials):
         self._problem.switches0 = switches0
         self.switches = switches0
         
+        #Determine if we have an event function and sets the integration data
+        if hasattr(problem, 'event_fcn'):
+            self.event_fcn = self._problem.event_fcn #problem.event_fcn
+            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.switches0))
+            self._ROOT = [self.event_fcn, self._problem.switches0]
+        else:
+            self.Integrator.num_event_fcn=0
+        
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
             if self.switches == None:
@@ -379,24 +387,21 @@ class CVode(Explicit_ODE, Sundials):
                 trial = self._problem.jac(self.t[-1],self.y[-1], self.switches)
             if trial.shape != (len(self.y[-1]),len(self.y[-1])):
                 raise Explicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
-                
+            
+            self.jac = self._problem.jac    
             self.Integrator.jacobian = True
-            self.jac = self._problem.jac
+            self.usejac = True
             self._RHS = [self.f, self._problem.jac]
         else:
             self.Integrator.jacobian = False
+            self.usejac = False
             self._RHS = [self.f]
         
-        #Determine if we have an event function and sets the integration data
-        if hasattr(problem, 'event_fcn'):
-            self.event_fcn = self._problem.event_fcn #problem.event_fcn
-            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.switches0))
-            self._ROOT = [self.event_fcn, self._problem.switches0]
-            self.problem_spec=[self._RHS, self._ROOT]
-        else:
-            self.Integrator.num_event_fcn=0
-            self.problem_spec=[self._RHS]
         
+        if hasattr(self, '_ROOT'):
+            self.problem_spec = [self._RHS, self._ROOT]
+        else:
+            self.problem_spec = [self._RHS]
         
     
     def integrate(self,t,y,tfinal,nt):
@@ -447,6 +452,39 @@ class CVode(Explicit_ODE, Sundials):
         
     initstepdocstring = 'Sets the initial step-size.'
     initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
+    
+    def _set_usejac(self, jac):
+        """
+        This sets the option to use the user defined jacobian.
+        
+            Parameters:
+                jac - boolean. True - use user defined jacobian
+                               False - use an approximation
+        """
+        self.__usejac = bool(jac)
+        
+        if not bool(jac):
+            self.Integrator.jacobian = False
+            self._RHS = [self.f]
+        else:
+            self.Integrator.jacobian = True
+            if not hasattr(self, 'jac'):
+                raise Explicit_ODE_Exception('No jacobian defined.')
+            self._RHS = [self.f, self.jac]
+            
+        if hasattr(self, '_ROOT'):
+            self.problem_spec = [self._RHS, self._ROOT]
+        else:
+            self.problem_spec = [self._RHS]
+    
+    def _get_usejac(self):
+        """
+        Returns the jacobian option.
+        """
+        return self.__usejac
+    
+    jacdocstring = 'Option to set if the user defined jacobian is to be used'
+    usejac = property(_get_usejac,_set_usejac, doc=jacdocstring)
     
     def _set_iter_method(self,iter='FixedPoint'):
         """
