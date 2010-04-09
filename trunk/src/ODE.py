@@ -167,3 +167,9 @@ class ODE(object):
             print 'Time, t = %e'%self._log_event_info[i][0]
             print '  Event info, ', self._log_event_info[i][1]
         print 'Number of events: ', len(self._log_event_info)
+    
+    def print_statistics(self):
+        """
+        Should print the statistics.
+        """
+        pass
