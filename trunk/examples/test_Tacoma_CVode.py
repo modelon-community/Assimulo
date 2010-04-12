@@ -92,7 +92,7 @@ def test_rk_tacoma():
 	See Exercise 1 at Sauer page 330
 	"""
 	rk4=RungeKutta4(problem,[0,0,0.001,0])
-	rk4.simulate(10)
+	rk4.simulate(10,1000)
 	print rk4.y[-1][0],rk4.t
 	assert abs(rk4.y[-1][0]- (-0.3615)) < 1.e-3
 	assert rk4.t[-1]==10
