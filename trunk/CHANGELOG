@@ -1,6 +1,8 @@
 --- CHANGELOG ---
 
 --- Assimulo-b1.02 ---
+    * Added a .simulate function for use when simulating instead of
+      __call__. Although __call__ can still be used.
     * Added a plotting functionality for plotting the step-size used
       together with the order used when the simulation have been
       run with one-step mode in either CVode or IDA.

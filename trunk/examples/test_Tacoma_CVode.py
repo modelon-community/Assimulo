@@ -40,7 +40,7 @@ def test_cvode_BN_tacoma():
 	cv.atol=1.e-6
 	cv.rtol=1.e-9
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
-	cv(10,200)
+	cv.simulate(10,200)
 	print cv.y[-1][0]
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
@@ -54,7 +54,7 @@ def test_cvode_BF_tacoma():
 	cv.atol=1.e-4
 	cv.rtol=1.e-4
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
-	cv(10,200)
+	cv.simulate(10,200)
 	cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
@@ -67,7 +67,7 @@ def test_cvode_AF_tacoma():
 	#cv.atol=1.e-4
 	cv.rtol=1.e-4
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
-	cv(10,200)
+	cv.simulate(10,200)
 	cv.print_statistics()
 	cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
@@ -82,7 +82,7 @@ def test_cvode_AN_tacoma():
 	cv.iter='FixedPoint'
 	# we use default atols, rtols
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
-	cv(10,200)
+	cv.simulate(10,200)
 	cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
@@ -92,7 +92,7 @@ def test_rk_tacoma():
 	See Exercise 1 at Sauer page 330
 	"""
 	rk4=RungeKutta4(problem,[0,0,0.001,0])
-	rk4(10)
+	rk4.simulate(10)
 	print rk4.y[-1][0],rk4.t
 	assert abs(rk4.y[-1][0]- (-0.3615)) < 1.e-3
 	assert rk4.t[-1]==10
@@ -102,6 +102,6 @@ def test_rk34_tacoma():
 	See Exercise 1 at Sauer page 330
 	"""
 	rk34=RungeKutta34(problem,[0,0,0.001,0])
-	rk34(10)
+	rk34.simulate(10)
 	assert abs(rk34.y[-1][0]- (-0.3615)) < 1.e-3
 	assert rk34.t[-1]==10

@@ -153,6 +153,18 @@ class ODE(object):
     verbositydocstring = 'Determine the output level from the integrator.'
     verbosity = property(_get_verbosity, _set_verbosity,doc=verbositydocstring)
     
+    def simulate(self,tfinal, ncp=0):
+        """
+        Calls the integrator to perform the simulation over the given time-interval.
+        
+            tfinal - Final time for the simulation
+            nt - Number of communication points where the solution is returned.
+                 If nt=0, the integrator will return at it's internal steps.
+                 
+        Returns the computed solution.
+        """
+        return self.__call__(tfinal,ncp)
+    
     def initiate(self):
         """
         Initiates the problem (if defined in the problem class).
