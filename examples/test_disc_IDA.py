@@ -115,9 +115,11 @@ class Extended_Problem(Implicit_Problem):
         solver.make_consistency('IDA_YA_YDP_INIT') #Calculate new initial conditions.
                                                    #see SUNDIALS IDA documentation
                                                    #on the option 'IDA_YA_YDP_INIT'
- 
-if __name__=="__main__":
-    
+
+def test_disc():
+    """
+    Runs the tests
+    """
     iter_mod = Extended_Problem() #Create the problem
     iter_sim = IDA(iter_mod) #Create the solver
     iter_sim.verbosity = iter_sim.SCREAM #Set the verbosity
@@ -130,5 +132,10 @@ if __name__=="__main__":
     assert iter_sim.y[-1][0] == 8.0
     assert iter_sim.y[-1][1] == 3.0
     assert iter_sim.y[-1][2] == 2.0
+    
+
+if __name__=="__main__":
+    test_disc()
+    
 
     

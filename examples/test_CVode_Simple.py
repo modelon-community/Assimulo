@@ -27,6 +27,11 @@ def run_example():
     assert exp_sim.y[0] == y0
     nose.tools.assert_almost_equal(exp_sim.y[-1], 0.02697622, places=8)
 
+def test_CVode():
+    """
+    Runs the tests
+    """
+    run_example()
 
 if __name__=='__main__':
     run_example()

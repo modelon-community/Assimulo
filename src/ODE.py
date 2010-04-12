@@ -37,7 +37,7 @@ class ODE(object):
         self.maxsteps = 10000 #Max number of steps
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
-        self.h = 0.01 #Stepsize used for methods with fixed stepsize
+        #self.h = 0.01 #Stepsize used for methods with fixed stepsize
         #self.max_eIter = 50 #Default number of allowed event iterations
         
         #Internal values

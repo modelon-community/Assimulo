@@ -50,7 +50,7 @@ class Explicit_ODE(ODE):
         
         if y0 == None:
             if hasattr(problem, 'y0'):
-                y0 = problem.y0[:]
+                y0 = problem.y0
             else:
                 raise Explicit_ODE_Exception('y0 must be specified. Either in the problem or in the initialization')
 
@@ -241,6 +241,12 @@ class Explicit_Euler(Explicit_ODE):
         """
         Integrates (t,y) values until t > tf
         """
+        if nt <= 0.0:
+            raise Explicit_ODE_Exception('Explicit Euler is a fixed step-size method. Provide' \
+                                         ' the number of communication points.')
+        
+        self.h = N.array((tf-self.t[-1])/nt)
+
         for i in range(self.maxsteps):
             if t >= tf:
                 break
@@ -264,10 +270,46 @@ class RungeKutta34(Explicit_ODE):
     Adaptive Runge-Kutta of order four.
     Obs. Step rejection not implemented.
     """
+    def __init__(self, problem, y0=None, t0=None):
+        """
+        Defines the problem and sets the initial values.
+        
+            problem - An instance of an explicit problem
+            y0      - The initial starting values
+            t0      - The initial starting time
+        """
+        Explicit_ODE.__init__(self, problem, y0, t0) #Calls the base class
+        
+        #Default values
+        self.initstep = 0.01
+        
+    def _set_initial_step(self, initstep):
+        """
+        This sets the initial step-size to be used in the integration.
+        """
+        try:
+            initstep = float(initstep)
+        except (ValueError, TypeError):
+            raise Explicit_ODE_Exception('The initial step must be an integer or float.')
+        
+        self.__initstep = initstep
+        
+    def _get_initial_step(self):
+        """
+        Returns the initial step-size.
+        """
+        return self.__initstep
+        
+    initstepdocstring = 'Sets the initial step-size.'
+    initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
+        
+    
     def integrate(self, t, y, tf, nt):
         """
         Integrates (t,y) values until t > tf
         """
+        self.h = self.initstep
+        
         for i in range(self.maxsteps):
             if t >= tf:
                 break
@@ -310,6 +352,12 @@ class RungeKutta4(Explicit_ODE):
         """
         Integrates (t,y) values until t > tf
         """
+        if nt <= 0.0:
+            raise Explicit_ODE_Exception('RungeKutta4 is a fixed step-size method. Provide' \
+                                         ' the number of communication points.')
+        
+        self.h = N.array((tf-self.t[-1])/nt)
+
         for i in range(self.maxsteps):
             if t >= tf:
                 break

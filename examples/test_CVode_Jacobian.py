@@ -39,5 +39,11 @@ def run_example():
     nose.tools.assert_almost_equal(exp_sim.y[-1][1], -49.1000000, places=4)
 
 
+def test_jacobian():
+    """
+    Runs the tests.
+    """
+    run_example()
+
 if __name__=='__main__':
     run_example()
