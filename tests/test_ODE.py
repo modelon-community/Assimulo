@@ -50,6 +50,21 @@ class Test_ODE:
         self.simulator.maxsteps=1
         assert self.simulator.maxsteps==1
         
+    def test_simulate(self):
+        """
+        This tests the functionality of the method simulate.
+        """
+        
+        call = lambda tf,ncp: [tf,ncp]
+        
+        self.simulator.__call__ = call
+        
+        [tf, ncp] = self.simulator.simulate(10, 100)
+        
+        assert tf == 10
+        assert ncp == 100
+        
+        
     #def test_max_eIter(self):
     #    """
     #    This tests the functionality of the property max_eIter.

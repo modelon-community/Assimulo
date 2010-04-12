@@ -49,5 +49,5 @@ if __name__=='__main__':
     gyro_sim.maxord=2 #Sets the maxorder
     gyro_sim.atol=1.e-10
     gyro_sim.rtol=1.e-10
-    gyro_sim(0.1)
+    gyro_sim.simulate(0.1)
     en=energi(gyro_sim.y)

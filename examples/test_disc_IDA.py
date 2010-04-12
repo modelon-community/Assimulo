@@ -121,7 +121,7 @@ if __name__=="__main__":
     iter_mod = Extended_Problem() #Create the problem
     iter_sim = IDA(iter_mod) #Create the solver
     iter_sim.verbosity = iter_sim.SCREAM #Set the verbosity
-    iter_sim(10.0,100) #Simulate 10 seconds with 100 communications points
+    iter_sim.simulate(10.0,100) #Simulate 10 seconds with 100 communications points
     
     assert iter_sim.yd[-1][0] == 1.0
     assert iter_sim.yd[-1][1] == 0.0

@@ -30,7 +30,7 @@ def run_example():
     exp_sim.discr = 'BDF' #Default 'Adams'
     exp_sim.atol = 1e-4 #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    exp_sim(5,1000) #Simulate 5 seconds
+    exp_sim.simulate(5,1000) #Simulate 5 seconds
     exp_sim.plot() #Plot the solution
     
     assert exp_sim.problemname == exp_mod.Problem_Name
