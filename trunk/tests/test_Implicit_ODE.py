@@ -147,6 +147,32 @@ class Test_IDA:
         self.simulator.lsoff = False
         assert self.simulator.lsoff == False
     
+    def test_initstep(self):
+        """
+        This tests the funtionality of the property initstep.
+        """
+        
+        def f(t,y,yd):
+            res_0 = yd[0] - y[1]
+            res_1 = yd[1] +9.82-0.01*y[1]**2
+            return N.array([res_0,res_1])
+            
+        mod = Implicit_Problem()
+        mod.f=f
+        sim = IDA(mod, y0=[5.0,0.0], yd0=[0.0,9.82])
+        
+        sim.simulate(2.0)
+
+        nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746473811, places=7)
+        
+        sim = IDA(mod, y0=[5.0,0.0], yd0=[0.0,9.82])
+        sim.initstep = 1e-10
+        
+        sim.simulate(2.0)
+
+        nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746596311, places=7)
+        
+    
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
