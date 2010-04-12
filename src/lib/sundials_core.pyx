@@ -149,6 +149,7 @@ cdef extern from "ida/ida.h":
     int IDASolve(void* ida_mem, realtype tout,realtype  *tret, N_Vector yret, 
                             N_Vector ypret, int itask)
     int IDASetUserData(void *ida_mem,void *user_data)
+    int IDASetInitStep(void *ida_mem, realtype hin)
     # functions to control the error test
     int IDASStolerances(void *ida_mem, realtype reltol, realtype abstol)
     int IDASVtolerances(void *ida_mem, realtype reltol, N_Vector abstol)
@@ -606,7 +607,7 @@ cdef class IDA_wrap:
         N_Vector curr_deriv
     def __init__(self,dim):
         self.dim=dim
-    def idinit(self,t0,user_data,u,ud,maxord, max_steps):
+    def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step):
         cdef flag
         self.t0 = t0
         self.curr_state=arr2nv(u)
@@ -636,6 +637,7 @@ cdef class IDA_wrap:
         if maxord:
             flag=IDASetMaxOrd(self.mem, maxord)
         flag = IDASetMaxNumSteps(self.mem, self.max_steps)
+        flag = IDASetInitStep(self.mem, init_step)
         flag = IDADense(self.mem, self.dim)
         if self.jacobian:
             flag = IDADlsSetDenseJacFn(self.mem, ida_jac)
