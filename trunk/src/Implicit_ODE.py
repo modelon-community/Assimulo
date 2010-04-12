@@ -218,21 +218,57 @@ class Implicit_ODE(ODE):
     #            
     #        nbr_iteration += 1
         
-    def plot(self):
+    def plot(self, mask=None, der=False):
         """
         Plot the computed solution.
+        
+            Parameters:
+                mask     - Default 'None'. Used to determine which variables that is to be plotted.
+                           Used as a list of integers, ones represents the variable that is to be
+                           plotted and zeros that is not. Example mask=[1,0] , plots the first
+                           variable.
+                der      - Default 'False'. When True plots the derivative variables.
         """
         P.figure(1)
-        P.plot(self.t, self.y)
+        if not mask:
+            P.plot(self.t, self.y)
+        else:
+            if not isinstance(mask, list):
+                raise Implicit_ODE_Exception('Mask must be a list of integers')
+            if not len(mask)==len(self.y[-1]):
+                raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
+                                             'the number of variables.')
+            for i in range(len(mask)):
+                if mask[i]:
+                    P.plot(self.t, N.array(self.y)[:,i])
+
         P.xlabel('time')
         P.ylabel('state')
         P.title(self.problemname)
-        #P.show()
-        P.figure(2)
-        P.plot(self.t, self.yd)
-        P.xlabel('time')
-        P.ylabel('state derivatives')
-        P.title(self.problemname)
+
+        
+        if der and not mask:
+            P.figure(2)
+            P.plot(self.t, self.yd)
+            P.xlabel('time')
+            P.ylabel('state derivatives')
+            P.title(self.problemname)
+        elif mask and der:
+            P.figure(2)
+            if not isinstance(mask, list):
+                raise Implicit_ODE_Exception('Mask must be a list of integers')
+            if not len(mask)==len(self.yd[-1]):
+                raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
+                                             'the number of variables.')
+            for i in range(len(mask)):
+                if mask[i]:
+                    P.plot(self.t, N.array(self.yd)[:,i])
+                    
+            P.xlabel('time')
+            P.ylabel('state derivatives')
+            P.title(self.problemname)
+        
+        
         P.show()
 
         

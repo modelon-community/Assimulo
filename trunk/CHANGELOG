@@ -1,6 +1,7 @@
 --- CHANGELOG ---
 
 --- Assimulo-b1.02 ---
+    * Added an option to mask which variables that is to be plotted.
     * Added a .simulate function for use when simulating instead of
       __call__. Although __call__ can still be used.
     * Added a plotting functionality for plotting the step-size used
