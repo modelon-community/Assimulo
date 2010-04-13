@@ -82,7 +82,7 @@ class Sundials:
         """Sets the maximal stepsize with the default value of infinity."""
         if not isinstance(max_h,float):
             raise Sundials_Exception('Maximal stepsize must be a (scalar) float.')
-        if max_h <= 0.0:
+        if max_h < 0.0:
             raise Sundials_Exception('Maximal stepsize must be a positive (scalar) float.')
         self.Integrator.max_h=max_h
         self.__max_h=max_h
