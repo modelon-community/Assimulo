@@ -356,6 +356,7 @@ class IDA(Implicit_ODE, Sundials):
         self.suppress_alg = False #Don't suppres algebraic variables
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxord = 5 #Maximal order is set to max
+        self.maxh = 0.0 #Setting the maximum absolute step length to infinity
         
     
     def _set_calcIC_tout1(self, tout1):
@@ -449,7 +450,7 @@ class IDA(Implicit_ODE, Sundials):
             
         See SUNDIALS IDA documentation 4.5.4 for more details.
         """
-        self.Integrator.idinit(self.t[-1], self.problem_spec, self.y[-1], self.yd[-1], self.maxord, self.maxsteps,self.initstep)
+        self.Integrator.idinit(self.t[-1], self.problem_spec, self.y[-1], self.yd[-1], self.maxord, self.maxsteps,self.initstep,self.maxh)
         
         if method == 'IDA_YA_YDP_INIT':
             [flag, y, yd] = self.Integrator.calc_IC(method,self.tout1,self.lsoff)
@@ -471,7 +472,7 @@ class IDA(Implicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep)
+        self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh)
         return self.Integrator.run(t,tfinal,nt)
     
     def _set_initial_step(self, initstep):
