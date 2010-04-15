@@ -30,11 +30,32 @@ class Explicit_ODE(ODE):
     
     def __init__(self, problem, y0=None, t0=None):
         """
-        Defines the problem and sets the initial values.
+        Initiates the solver.
         
-            f - The 'right-hand-side' function
-            y0 - The initial starting values
-            t0 - The initial starting time
+            Parameters:
+            
+                problem     - The problem to be solved. Should be an instance
+                              of the 'Implicit_Problem' class.
+                              
+                y0          - Default 'None'. The initial values for the states.
+                              If 'None', the initial values are retrieved from
+                              the problem.y0. If set they override problem.y0
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    y0 = [1.0, 0.0]
+                                
+                t0          - Default 'None'. The initial time. If 'None'. the
+                              initial time are retrieved from the problem.t0.
+                              If set it override problem.t0. If NOT set and NOT
+                              defined in problem.t0, t0 is set to 0.0.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    t0 = 1.0
+                                    
         """
         ODE.__init__(self) #Sets general attributes
         
@@ -79,29 +100,14 @@ class Explicit_ODE(ODE):
             
     def reset(self):
         """
-        Resets the problem if defined in the problem.
+        
+        Resets the problem. If the problem is defined with a reset method, its called
+        and then the method re_init. The re_init method is called with the initial
+        values set in the problem, problem.t0 and problem.y0.
+        
         """
         self._problem.reset()
         self.re_init(self._problem.t0, self._problem.y0)
-        
-    #def event_fcn_adjust(self, t, y, sw):
-    #    """
-    #    This function adjusts the event functions according to Martin Otter et al defined
-    #    in (...)
-    #    """
-    #    r = N.array(self._problem.event_fcn(t,y,sw))
-    #    rp = N.zeros(len(r))
-    #    self.eps_adjust = N.zeros(len(r))
-    #    
-    #    for i in range(len(sw)):
-    #        if sw[i]:
-    #            self.eps_adjust[i]=self.eps
-    #        else:
-    #            self.eps_adjust[i]=-self.eps
-    #    
-    #    rp = r + self.eps_adjust
-    #    
-    #    return rp
     
     def integrate(self, t, y, tf, nt):
         pass 
@@ -110,12 +116,27 @@ class Explicit_ODE(ODE):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            tfinal - Final time for the simulation
-            ncp - Number of communication points where the solution is returned.
-                 If nt=0, the integrator will return it's internal steps.
+            Parameters:
+                tfinal  - Final time for the simulation
+                
+                        - Should be a float or integer greater than the initial time.
+                        
+                ncp     - Default '0'. Number of communication points where the 
+                          solution is returned. If '0', the integrator will return 
+                          at its internal steps.
+                          
+                        - Should be an integer.
+                          
+                    Example:
+                    
+                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                                             communication points.
                  
-        Returns the computed solution.
+        Returns the computed solution which is also saved in 'solver'.t
+                                                             'solver'.y
+                    
         """
+
         try:
             tfinal = float(tfinal)
         except ValueError:
@@ -169,36 +190,17 @@ class Explicit_ODE(ODE):
                 self.print_statistics()
         
         return [self.t, self.y]
-        
-    #def event_iteration(self, event_info):
-    #    """
-    #    Handles the event iteration.
-    #    """
-    #    nbr_iteration = 0
-    #        
-    #    while self.max_eIter > nbr_iteration: #Event Iteration
-    #        self._problem.event_switch(self, event_info) #Turns the switches
-    #        
-    #        b_mode = self.event_fcn_adjust(self.t[-1], self.y[-1], self.switches)
-    #        b_mode -= self.eps_adjust #Adjust for the appended epsilon
-    #        self._problem.init_mode(self) #Pass in the solver to the problem specified init_mode
-    #        
-    #        a_mode = self.event_fcn_adjust(self.t[-1], self.y[-1], self.switches)
-    #        a_mode -= self.eps_adjust #Adjust for the appended epsilon
-    #        
-    #        event_info = self.check_eIter(b_mode, a_mode)
-    #        
-    #        if self.verbosity >= self.SCREAM:
-    #            print 'Event iteration?: ', event_info
-    #            
-    #        if not True in event_info: #Breaks the iteration loop
-    #            break
-    #        
-    #        nbr_iteration += 1
     
     def re_init(self,t0, y0):
         """
-        Re initiates the solver
+        Reinitiates the solver.
+        
+            Parameters:
+                
+                t0  - The initial time.
+                y0  - The initial values for the states
+                
+        See information in the __init__ method.
         """
         if len(self.y[-1]) != len(y0):
             raise Explicit_ODE_Exception('y0 must be of the same length as the original problem.')
@@ -209,10 +211,15 @@ class Explicit_ODE(ODE):
         Plot the computed solution.
         
             Parameters:
-                mask - Default 'None'. Used to determine which variables that is to be plotted.
-                       Used as a list of integers, ones represents the variable that is to be
-                       plotted and zeros that is not. Example mask=[1,0] , plots the first
-                       variable.
+                mask    - Default 'None'. Used to determine which variables that is to be plotted.
+                          Used as a list of integers, ones represents the variable that is to be
+                          plotted and zeros that is not. 
+                        
+                        - Should be a list of integers.
+                        
+                            Example:
+                                mask = [1,0] , plots the first variable.
+                        
         """
         if not mask:
             P.plot(self.t, self.y)
@@ -272,11 +279,32 @@ class RungeKutta34(Explicit_ODE):
     """
     def __init__(self, problem, y0=None, t0=None):
         """
-        Defines the problem and sets the initial values.
+        Initiates the solver.
         
-            problem - An instance of an explicit problem
-            y0      - The initial starting values
-            t0      - The initial starting time
+            Parameters:
+            
+                problem     - The problem to be solved. Should be an instance
+                              of the 'Implicit_Problem' class.
+                              
+                y0          - Default 'None'. The initial values for the states.
+                              If 'None', the initial values are retrieved from
+                              the problem.y0. If set they override problem.y0
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    y0 = [1.0, 0.0]
+                                
+                t0          - Default 'None'. The initial time. If 'None'. the
+                              initial time are retrieved from the problem.t0.
+                              If set it override problem.t0. If NOT set and NOT
+                              defined in problem.t0, t0 is set to 0.0.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    t0 = 1.0
+                                    
         """
         Explicit_ODE.__init__(self, problem, y0, t0) #Calls the base class
         
@@ -285,7 +313,15 @@ class RungeKutta34(Explicit_ODE):
         
     def _set_initial_step(self, initstep):
         """
-        This sets the initial step-size to be used in the integration.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.01'.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         try:
             initstep = float(initstep)
@@ -296,12 +332,19 @@ class RungeKutta34(Explicit_ODE):
         
     def _get_initial_step(self):
         """
-        Returns the initial step-size.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.01'.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         return self.__initstep
         
-    initstepdocstring = 'Sets the initial step-size.'
-    initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
+    initstep = property(_get_initial_step,_set_initial_step)
         
     
     def integrate(self, t, y, tf, nt):
@@ -386,13 +429,42 @@ class CVode(Explicit_ODE, Sundials):
     """
     def __init__(self, problem, y0=None, t0=None, switches0=None):
         """
-        Defines the problem and sets the initial values.
+        Initiates the solver.
         
-            f - The 'right-hand-side' function
-            y0 - Starting values for the none differentiated variables 
-            t0 - Starting time
-            event_fcn - The event function (To keep track of changes)
-            switches0 - Sets the starting mode
+            Parameters:
+            
+                problem     - The problem to be solved. Should be an instance
+                              of the 'Implicit_Problem' class.
+                              
+                y0          - Default 'None'. The initial values for the states.
+                              If 'None', the initial values are retrieved from
+                              the problem.y0. If set they override problem.y0
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    y0 = [1.0, 0.0]
+                                    
+                t0          - Default 'None'. The initial time. If 'None'. the
+                              initial time are retrieved from the problem.t0.
+                              If set it override problem.t0. If NOT set and NOT
+                              defined in problem.t0, t0 is set to 0.0.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    t0 = 1.0
+                                    
+                switches0   - Default 'None'. Only used for hybrid (discontinuous)
+                              systems. If 'None', the switches are retrieved from
+                              the problem.switches0. If set, they override the
+                              problem.switches0.
+                            
+                            - Should be a list of booleans.
+                            
+                                Example:
+                                    switches0 = [True, False]
+            
         """
         if y0 == None:
             if hasattr(problem, 'y0'):
@@ -464,8 +536,18 @@ class CVode(Explicit_ODE, Sundials):
     
     def _set_discr_method(self,discr='Adams'):
         """
-        This sets the discretization method which can either be set
-        to Adams (default) or BDF.
+        This determines the discretization method.
+        
+            Parameters:
+                discr   - Default 'Adams', which indicates the use
+                          of the Adams method. Can also be set to
+                          'BDF' which indicates the use of the BDF
+                          method.
+                
+                    Example:
+                        discr = 'BDF'
+        
+        See SUNDIALS CVODE documentation 2.1 for more details.
         """
         if discr=='BDF':
             self.Integrator.discr=2
@@ -475,18 +557,41 @@ class CVode(Explicit_ODE, Sundials):
             self.maxord = 12
         else:
             raise Sundials_Exception('Discretization method must be either Adams or BDF')
+            
     def _get_discr_method(self):
-        """Returns the discretization method."""
+        """
+        This determines the discretization method.
+        
+            Parameters:
+                discr   - Default 'Adams', which indicates the use
+                          of the Adams method. Can also be set to
+                          'BDF' which indicates the use of the BDF
+                          method.
+                
+                    Example:
+                        discr = 'BDF'
+        
+        See SUNDIALS CVODE documentation 2.1 for more details.
+        """
         discr='Adams'
         if self.Integrator.discr==2:
             discr='BDF'
         return discr
-    discrdocstring = 'Can be set to "BDF" or "Adams" (default)'
-    discr= property(_get_discr_method,_set_discr_method,doc=discrdocstring)
+
+    discr= property(_get_discr_method,_set_discr_method)
     
     def _set_initial_step(self, initstep):
         """
-        This sets the initial step-size to be used in the integration.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.0', which result in that the
+                              the initial step is approximated.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         try:
             initstep = float(initstep)
@@ -497,20 +602,36 @@ class CVode(Explicit_ODE, Sundials):
         
     def _get_initial_step(self):
         """
-        Returns the initial step-size.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.0', which result in that the
+                              the initial step is approximated.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         return self.__initstep
         
-    initstepdocstring = 'Sets the initial step-size.'
-    initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
+    initstep = property(_get_initial_step,_set_initial_step)
     
     def _set_usejac(self, jac):
         """
-        This sets the option to use the user defined jacobian.
+        This sets the option to use the user defined jacobian. If a
+        user provided jacobian is implemented into the problem the
+        default setting is to use that jacobian. If not, an
+        approximation is used.
         
             Parameters:
-                jac - boolean. True - use user defined jacobian
-                               False - use an approximation
+                usejac  - True - use user defined jacobian
+                          False - use an approximation
+                    
+                        - Should be a boolean.
+                        
+                            Example:
+                                usejac = False
         """
         self.__usejac = bool(jac)
         
@@ -530,17 +651,39 @@ class CVode(Explicit_ODE, Sundials):
     
     def _get_usejac(self):
         """
-        Returns the jacobian option.
+        This sets the option to use the user defined jacobian. If a
+        user provided jacobian is implemented into the problem the
+        default setting is to use that jacobian. If not, an
+        approximation is used.
+        
+            Parameters:
+                usejac  - True - use user defined jacobian
+                          False - use an approximation
+                    
+                        - Should be a boolean.
+                        
+                            Example:
+                                usejac = False
         """
         return self.__usejac
     
-    jacdocstring = 'Option to set if the user defined jacobian is to be used'
-    usejac = property(_get_usejac,_set_usejac, doc=jacdocstring)
+    usejac = property(_get_usejac,_set_usejac)
     
     def _set_iter_method(self,iter='FixedPoint'):
         """
-        This sets the iteration method which can either be set to
-        FixedPoint (default) or Newton.
+        This determines the iteration method that is be used by the
+        solver.
+        
+            Parameters:
+                iter    - Default 'FixedPoint', which indicates the
+                          use of a fixedpoint iteration method. Can
+                          also be set to 'Newton' which indicates
+                          the use of a Newton method.
+                          
+                            Example:
+                                iter = 'Newton'
+        
+        See SUNDIALS CVODE documentation 2.1 for more details.
         """
         if iter=='Newton':
             self.Integrator.iter=2
@@ -550,22 +693,47 @@ class CVode(Explicit_ODE, Sundials):
             raise Sundials_Exception('Iteration method must be either FixedPoint or Newton')
     
     def _get_iter_method(self):
-        """Returns the iteration method."""
+        """
+        This determines the iteration method that is be used by the
+        solver.
+        
+            Parameters:
+                iter    - Default 'FixedPoint', which indicates the
+                          use of a fixedpoint iteration method. Can
+                          also be set to 'Newton' which indicates
+                          the use of a Newton method.
+                          
+                            Example:
+                                iter = 'Newton'
+        
+        See SUNDIALS CVODE documentation 2.1 for more details.
+        """
         iter='FixedPoint'
         if self.Integrator.iter==2:
             iter='Newton'
         return iter
-    iterdocstring = 'Can be set to "Newton" or "FixedPoint" (default)'
-    iter = property(_get_iter_method,_set_iter_method,doc=iterdocstring)        
+        
+    iter = property(_get_iter_method,_set_iter_method)        
     
     def _set_max_ord(self,maxord):
         """
-        Sets the maximal order of the method:
-        defaults = maximal values:
-        Adams:  maxord=12
-        BDF  :  maxord= 5
+        This determines the maximal order that is be used by the solver.
         
-        An input value greater than the default will result in the default value.
+            Parameters:
+                maxord  - Default '12', which is the maximum for the
+                          Adams method, which is also default. For the
+                          BDF method the maximum order is 5. 'maxord'
+                          can be set in an interval from 1 to the
+                          maximum order allowed.
+                
+                        - Should be an integer.
+                        
+                            Example:
+                                maxord = 3
+    
+        
+        An input value greater than the maximal order will result in the 
+        maximum value.
         """
         if not isinstance(maxord,int):
             raise Sundials_Exception('The maximal order must be an integer.')
@@ -595,17 +763,35 @@ class CVode(Explicit_ODE, Sundials):
                 self.__maxord=1
             else:
                 self.__maxord=maxord
+    
     def _get_max_ord(self):
         """
-        Returns the used maximal order.
+        This determines the maximal order that is be used by the solver.
+        
+            Parameters:
+                maxord  - Default '12', which is the maximum for the
+                          Adams method, which is also default. For the
+                          BDF method the maximum order is 5. 'maxord'
+                          can be set in an interval from 1 to the
+                          maximum order allowed.
+                
+                        - Should be an integer.
+                        
+                            Example:
+                                maxord = 3
+    
+        
+        An input value greater than the maximal order will result in the 
+        maximum value.
         """
         return self.__maxord
-    maxorddocstring='Maxord: Maximal Order\n Adams  0 < maxord < 13\n BDF 0 < maxord < 6' \
-                    '\n Defaults to None, which corresponds to the maximal values above.'
-    maxord=property(_get_max_ord,_set_max_ord,doc=maxorddocstring)
+
+    maxord=property(_get_max_ord,_set_max_ord)
     
     def print_statistics(self):
-        """Prints the run-time statistics for the problem."""
+        """
+        Prints the run-time statistics for the problem.
+        """
         print 'Final Run Statistics: %s \n' % self.problemname
         
         statistics = self.stats

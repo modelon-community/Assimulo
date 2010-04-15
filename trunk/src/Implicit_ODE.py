@@ -36,6 +36,7 @@ class Implicit_ODE(ODE):
             
                 problem     - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
+                              
                 y0          - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
@@ -158,7 +159,7 @@ class Implicit_ODE(ODE):
                 
                         - Should be a float or integer greater than the initial time.
                         
-                nt      - Default '0' .Number of communication points where the 
+                ncp     - Default '0'. Number of communication points where the 
                           solution is returned. If '0', the integrator will return 
                           at its internal steps.
                           
@@ -166,8 +167,8 @@ class Implicit_ODE(ODE):
                           
                     Example:
                     
-                    __call__(10.0, 100), 10.0 is the final time and 100 is the number
-                                        communication points.
+                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                                             communication points.
                  
         Returns the computed solution which is also saved in 'solver'.t
                                                              'solver'.y
@@ -307,6 +308,7 @@ class IDA(Implicit_ODE, Sundials):
             
                 problem     - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
+                              
                 y0          - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0

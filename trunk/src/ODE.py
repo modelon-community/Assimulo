@@ -45,8 +45,17 @@ class ODE(object):
     
     def _set_max_steps(self, maxsteps):
         """
-        Sets the maximum number of steps the integrator is allowed
+        Determines the maximum number of steps the solver is allowed
         to take to finnish the simulation.
+        
+            Parameters:
+                maxsteps    - Default '10000'.
+                            
+                            - Should be an integer.
+                            
+                                Example:
+                                    maxsteps = 1000.
+                                    
         """
         if not isinstance(maxsteps,int):
             raise ODE_Exception('The maximum number of steps must be an integer.')
@@ -56,72 +65,62 @@ class ODE(object):
     
     def _get_max_steps(self):
         """
-        Returns the maximum number of steps used.
+        Determines the maximum number of steps the solver is allowed
+        to take to finnish the simulation.
+        
+            Parameters:
+                maxsteps    - Default '10000'.
+                            
+                            - Should be an integer.
+                            
+                                Example:
+                                    maxsteps = 1000.
+                                    
         """
         return self.__max_steps
-    maxstepsdocstring='Value to restrict the number of steps the integrator is allowed to take'
-    maxsteps = property(_get_max_steps, _set_max_steps, doc=maxstepsdocstring)
+
+    maxsteps = property(_get_max_steps, _set_max_steps)
     
-    #def _get_eps(self):
-    #    """
-    #    Returns the epsilon used in the event indicators.
-    #    """
-    #    return self.atol*0.001
-    #epsdocstring='Value used for adjusting the event indicators'
-    #eps = property(_get_eps, doc=epsdocstring)
-    
+
     def _set_problem_name(self, name):
         """
-        Sets the name describing the problem
+        Defines the name of the problem. Which is then used
+        in the plots and when printing the result.
+        
+            Parameters:
+                name    - Name of the problem.
+                        
+                        - Should be a string.
+                        
+                            Example:
+                                name = 'My Problem'
+
         """
         self.__name = name
         
     def _get_problem_name(self):
         """
-        Returns the problem name.
+        Defines the name of the problem. Which is then used
+        in the plots and when printing the result.
+        
+            Parameters:
+                name    - Name of the problem.
+                        
+                        - Should be a string.
+                        
+                            Example:
+                                name = 'My Problem'
+
         """
         return self.__name
-    problemnamedocstring = 'String to describe the problem'
-    problemname = property(_get_problem_name, _set_problem_name, doc=problemnamedocstring)
+        
+    problemname = property(_get_problem_name, _set_problem_name)
     
-    #def _set_max_eIteration(self, max_eIter):
-    #    """
-    #    Sets the maximum number of iterations allowed in the event iteration.
-    #    """
-    #    if not isinstance(max_eIter, int) or max_eIter < 0:
-    #        raise ODE_Exception('max_eIter must be a positive integer.')
-    #    self.__max_eIter = max_eIter
-    #    
-    #def _get_max_eIteration(self):
-    #    """
-    #    Returns max_eIter.
-    #    """
-    #    return self.__max_eIter
-    #    
-    #max_eIterdocstring='Maximum number of event iterations allowed.'
-    #max_eIter = property(_get_max_eIteration, _set_max_eIteration, doc=max_eIterdocstring)
-
     @property
     def is_disc(self):
         """Method to test if we are at an event."""
         return False
         
-    #def check_eIter(self,before,after):
-    #    """
-    #    Helper function for event_switch to determine if we have event
-    #    iteration.
-    #    
-    #        Input: Values of the event indicator functions (event_fcn)
-    #        before and after we have changed mode of operations.
-    #    """
-    #    
-    #    eIter = [False]*len(before)
-    #    
-    #    for i in range(len(before)):
-    #        if (before[i] < 0.0 and after[i] > 0.0) or (before[i] > 0.0 and after[i] < 0.0):
-    #            eIter[i] = True
-    #            
-    #    return eIter
     
     #Verbosity levels
     QUIET = 0
@@ -131,35 +130,74 @@ class ODE(object):
     SCREAM = 4
     VERBOSE_VALUES = [QUIET, WHISPER, NORMAL, LOUD, SCREAM]
     def _get_verbosity(self):
-        """Return the verbosity of the integrator."""
+        """
+        Defines the verbosity of the integrator. The verbosity levels are used to
+        determine the amount of output from the integrater the user wishes to receive.
+        
+            Parameters:
+                verbosity   - Default 'NORMAL'. Can be set to either,
+                                
+                                QUIET = 0
+                                WHISPER = 1
+                                NORMAL = 2
+                                LOUD = 3
+                                SCREAM = 4
+                            
+                            - Should be an integer.
+                            
+                                Example:
+                                    verbosity = 3
+
+            
+        """
         return self.__verbosity
         
     def _set_verbosity(self, verbosity):
         """
-        Sets the verbosity of the integrator. The verbosity levels are used to
+        Defines the verbosity of the integrator. The verbosity levels are used to
         determine the amount of output from the integrater the user wishes to receive.
         
-        These are the options:
-            QUIET = 0
-            WHISPER = 1
-            NORMAL = 2
-            LOUD = 3
-            SCREAM = 4
+            Parameters:
+                verbosity   - Default 'NORMAL'. Can be set to either,
+                                
+                                QUIET = 0
+                                WHISPER = 1
+                                NORMAL = 2
+                                LOUD = 3
+                                SCREAM = 4
+                            
+                            - Should be an integer.
+                            
+                                Example:
+                                    verbosity = 3
+
+            
         """
         if verbosity not in self.VERBOSE_VALUES:
             raise ODE_Exception('Verbosity values must be within %s - %s'%(self.QUIET, self.SCREAM))
         self.__verbosity = verbosity
         
-    verbositydocstring = 'Determine the output level from the integrator.'
-    verbosity = property(_get_verbosity, _set_verbosity,doc=verbositydocstring)
+    verbosity = property(_get_verbosity, _set_verbosity)
     
     def simulate(self,tfinal, ncp=0):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            tfinal - Final time for the simulation
-            nt - Number of communication points where the solution is returned.
-                 If nt=0, the integrator will return at it's internal steps.
+            Parameters:
+                tfinal  - Final time for the simulation
+                
+                        - Should be a float or integer greater than the initial time.
+                        
+                ncp     - Default '0'. Number of communication points where the 
+                          solution is returned. If '0', the integrator will return 
+                          at its internal steps.
+                          
+                        - Should be an integer.
+                          
+                    Example:
+                    
+                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                                             communication points.
                  
         Returns the computed solution.
         """
