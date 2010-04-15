@@ -21,6 +21,8 @@ for x in copy_args:
         incdirs = O.path.join(x[16:],'include')
         libdirs = O.path.join(x[16:],'lib')
         copy_args.remove(x)
+    if not x.find('--prefix'):
+        copy_args[copy_args.index(x)] = O.path.join(x[9:],'')
 
 
 cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
