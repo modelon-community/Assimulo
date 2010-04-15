@@ -30,12 +30,41 @@ class Implicit_ODE(ODE):
     
     def __init__(self, problem, y0=None, yd0=None, t0=None):
         """
-        Defines the problem and sets the initial values.
+        Initiates the solver.
         
-            res - The residual function
-            y0 - Starting values for the none differentiated variables 
-            yd0 - Starting values for the differentiated variables
-            t0 - Starting time
+            Parameters:
+            
+                problem     - The problem to be solved. Should be an instance
+                              of the 'Implicit_Problem' class.
+                y0          - Default 'None'. The initial values for the states.
+                              If 'None', the initial values are retrieved from
+                              the problem.y0. If set they override problem.y0
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    y0 = [1.0, 0.0]
+                                    
+                yd0         - Default 'None'. The initial values for the state
+                              derivatives. If 'None', the initial values are
+                              retrieved from the problem.yd0. If set they
+                              override problem.yd0.
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    yd0 = [0.0, 0.0]
+                                
+                t0          - Default 'None'. The initial time. If 'None'. the
+                              initial time are retrieved from the problem.t0.
+                              If set it override problem.t0. If NOT set and NOT
+                              defined in problem.t0, t0 is set to 0.0.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    t0 = 1.0
+                                    
         """
         ODE.__init__(self) #Sets general attributes
         
@@ -94,48 +123,55 @@ class Implicit_ODE(ODE):
         
     def reset(self):
         """
-        Resets the problem if defined in the problem.
+        
+        Resets the problem. If the problem is defined with a reset method, its called
+        and then the method re_init. The re_init method is called with the initial
+        values set in the problem, problem.t0, problem.y0 and problem.yd0
+        
         """
         self._problem.reset()
         self.re_init(self._problem.t0, self._problem.y0, self._problem.yd0)
         
     def re_init(self,t0, y0, yd0):
         """
-        Re initiates the solver
+        Reinitiates the solver.
+        
+            Parameters:
+                
+                t0  - The initial time.
+                y0  - The initial values for the states
+                yd0 - The initial values for the state derivatives.
+                
+        See information in the __init__ method.
         """
         if len(self.y[-1]) != len(y0) or len(self.yd[-1]) != len(yd0):
             raise Explicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         Implicit_ODE.__init__(self, self._problem,y0,yd0,t0)
-            
-    #def event_fcn_adjust(self, t, y, yd, sw):
-    #    """
-    #    This function adjusts the event functions according to Martin Otter et al defined
-    #    in (...)
-    #    """
-    #    r = N.array(self._problem.event_fcn(t,y,yd,sw))
-    #    rp = N.zeros(len(r))
-    #    self.eps_adjust = N.zeros(len(r))
-    #    
-    #    for i in range(len(sw)):
-    #        if sw[i]:
-    #            self.eps_adjust[i]=self.eps
-    #        else:
-    #            self.eps_adjust[i]=-self.eps
-    #    
-    #    rp = r + self.eps_adjust
-    #
-    #    return rp
 
     def __call__(self, tfinal, ncp=0):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            tfinal - Final time for the simulation
-            nt - Number of communication points where the solution is returned.
-                 If nt=0, the integrator will return at it's internal steps.
+            Parameters:
+                tfinal  - Final time for the simulation
+                
+                        - Should be a float or integer greater than the initial time.
+                        
+                nt      - Default '0' .Number of communication points where the 
+                          solution is returned. If '0', the integrator will return 
+                          at its internal steps.
+                          
+                        - Should be an integer.
+                          
+                    Example:
+                    
+                    __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                                        communication points.
                  
-        Returns the computed solution.
+        Returns the computed solution which is also saved in 'solver'.t
+                                                             'solver'.y
+                                                             'solver'.yd
         """
         try:
             tfinal = float(tfinal)
@@ -192,42 +228,27 @@ class Implicit_ODE(ODE):
         
         return [self.t, self.y, self.yd]
         
-    #def event_iteration(self, event_info):
-    #    """
-    #    Handles the event iteration.
-    #    """
-    #    nbr_iteration = 0
-    #        
-    #    while self.max_eIter > nbr_iteration: #Event Iteration
-    #        self._problem.event_switch(self, event_info) #Turns the switches
-    #        
-    #        b_mode = self.event_fcn_adjust(self.t[-1], self.y[-1], self.yd[-1], self.switches)
-    #        b_mode -= self.eps_adjust #Adjust for the appended epsilon
-    #        self._problem.init_mode(self) #Pass in the solver to the problem specified init_mode
-    #        
-    #        a_mode = self.event_fcn_adjust(self.t[-1], self.y[-1], self.yd[-1], self.switches)
-    #        a_mode -= self.eps_adjust #Adjust for the appended epsilon
-    #        
-    #        event_info = self.check_eIter(b_mode, a_mode)
-    #        
-    #        if self.verbosity >= self.SCREAM:
-    #            print 'Event iteration?: ', event_info
-    #            
-    #        if not True in event_info: #Breaks the iteration loop
-    #            break
-    #            
-    #        nbr_iteration += 1
         
     def plot(self, mask=None, der=False):
         """
         Plot the computed solution.
         
             Parameters:
-                mask     - Default 'None'. Used to determine which variables that is to be plotted.
-                           Used as a list of integers, ones represents the variable that is to be
-                           plotted and zeros that is not. Example mask=[1,0] , plots the first
-                           variable.
-                der      - Default 'False'. When True plots the derivative variables.
+                mask    - Default 'None'. Used to determine which variables that is to be plotted.
+                          Used as a list of integers, ones represents the variable that is to be
+                          plotted and zeros that is not. 
+                        
+                        - Should be a list of integers.
+                        
+                            Example:
+                                mask = [1,0] , plots the first variable.
+                        
+                der     - Default 'False'. When 'True' plots the derivative variables also.
+                        
+                        - Should be a boolean.
+                        
+                            Example:
+                                der = True
         """
         P.figure(1)
         if not mask:
@@ -280,13 +301,51 @@ class IDA(Implicit_ODE, Sundials):
     
     def __init__(self, problem, y0=None, yd0=None, t0=None, switches0=None):
         """
-        Defines the problem and sets the initial values.
+        Initiates the solver.
         
-            problem - Defines the problem
-            y0 - Starting values for the none differentiated variables 
-            yd0 - Starting values for the differentiated variables
-            t0 - Starting time
-            switches0 - Sets the starting mode
+            Parameters:
+            
+                problem     - The problem to be solved. Should be an instance
+                              of the 'Implicit_Problem' class.
+                y0          - Default 'None'. The initial values for the states.
+                              If 'None', the initial values are retrieved from
+                              the problem.y0. If set they override problem.y0
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    y0 = [1.0, 0.0]
+                                    
+                yd0         - Default 'None'. The initial values for the state
+                              derivatives. If 'None', the initial values are
+                              retrieved from the problem.yd0. If set they
+                              override problem.yd0.
+                            
+                            - Should be a list of floats or a float.
+                            
+                                Example:
+                                    yd0 = [0.0, 0.0]
+                                
+                t0          - Default 'None'. The initial time. If 'None'. the
+                              initial time are retrieved from the problem.t0.
+                              If set it override problem.t0. If NOT set and NOT
+                              defined in problem.t0, t0 is set to 0.0.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    t0 = 1.0
+                                    
+                switches0   - Default 'None'. Only used for hybrid (discontinuous)
+                              systems. If 'None', the switches are retrieved from
+                              the problem.switches0. If set, they override the
+                              problem.switches0.
+                            
+                            - Should be a list of booleans.
+                            
+                                Example:
+                                    switches0 = [True, False]
+            
         """
         if y0 == None:
             if hasattr(problem, 'y0'):
@@ -365,6 +424,15 @@ class IDA(Implicit_ODE, Sundials):
         for determine initial conditions. This value is needed
         in order to manipulate the existing machinery to be used
         in determining the initial conditions.
+        
+            Parameters:
+            
+                tout1       - Default '0.001'.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    tout1 = 0.01
         """
         try:
             tout1 = float(tout1)
@@ -374,20 +442,39 @@ class IDA(Implicit_ODE, Sundials):
         
     def _get_calcIC_tout1(self):
         """
-        Gets the internal directional value used in make_consistency.
+        Sets the value used in the internal Sundials function
+        for determine initial conditions. This value is needed
+        in order to manipulate the existing machinery to be used
+        in determining the initial conditions.
+        
+            Parameters:
+            
+                tout1       - Default '0.001'.
+                            
+                            - Should be a float.
+                            
+                                Example:
+                                    tout1 = 0.01
         """
         return self.__tout1
-    tout1docstring='Value used for determine the direction of the ' \
-                    'integration in make_consistency'
-    tout1=property(_get_calcIC_tout1,_set_calcIC_tout1,doc=tout1docstring)
+
+    tout1=property(_get_calcIC_tout1,_set_calcIC_tout1)
     
     def _set_usejac(self, jac):
         """
-        This sets the option to use the user defined jacobian.
+        This sets the option to use the user defined jacobian. If a
+        user provided jacobian is implemented into the problem the
+        default setting is to use that jacobian. If not, an
+        approximation is used.
         
             Parameters:
-                jac - boolean. True - use user defined jacobian
-                               False - use an approximation
+                usejac  - True - use user defined jacobian
+                          False - use an approximation
+                    
+                        - Should be a boolean.
+                        
+                            Example:
+                                usejac = False
         """
         self.__usejac = bool(jac)
         
@@ -407,20 +494,38 @@ class IDA(Implicit_ODE, Sundials):
     
     def _get_usejac(self):
         """
-        Returns the jacobian option.
+        This sets the option to use the user defined jacobian. If a
+        user provided jacobian is implemented into the problem the
+        default setting is to use that jacobian. If not, an
+        approximation is used.
+        
+            Parameters:
+                usejac  - True - use user defined jacobian
+                          False - use an approximation
+                    
+                        - Should be a boolean.
+                        
+                            Example:
+                                usejac = False
         """
         return self.__usejac
     
-    jacdocstring = 'Option to set if the user defined jacobian is to be used'
-    usejac = property(_get_usejac,_set_usejac, doc=jacdocstring)
+    usejac = property(_get_usejac,_set_usejac)
     
     
     def _set_lsoff(self, lsoff):
         """
-        Boolean value to turn of Sundials LineSearch when calculating
+        Boolean value to turn OFF Sundials LineSearch when calculating
         initial conditions.
-        
-            lsoff - False/True (False = LineSearch on)
+            
+            Parameters:
+                lsoff   - Default 'False'. False indicates the use of
+                          linesearch.
+
+                        - Should be a boolean.
+                        
+                            Example:
+                                lsoff = True
         """
         if not isinstance(lsoff, bool):
             raise Implicit_ODE_Exception('lsoff must be a boolean.')
@@ -428,25 +533,38 @@ class IDA(Implicit_ODE, Sundials):
         
     def _get_lsoff(self):
         """
-        Gets the boolean value that determines if LineSearch is active.
+        Boolean value to turn OFF Sundials LineSearch when calculating
+        initial conditions.
+            
+            Parameters:
+                lsoff   - Default 'False'. False indicates the use of
+                          linesearch.
+
+                        - Should be a boolean.
+                        
+                            Example:
+                                lsoff = True
         """
         return self.__lsoff
     
-    lsoffdocstring='Value to turn of LineSearch'
-    lsoff = property(_get_lsoff, _set_lsoff, doc=lsoffdocstring)
+    lsoff = property(_get_lsoff, _set_lsoff)
     
     def make_consistency(self, method):
         """
         Directs IDA to try to calculate consistant initial conditions.
-        
-        The options are:
-            method = IDA_YA_YDP_INIT - This tries to calculate the algebraic
-            componets y and the differential componets of yd given the
-            differential componets of y. The algebraic componets of y must 
-            have been specified with algvar.
             
-            method = IDA_Y_INIT - This tries to calculate all componets of y
-            given yd.
+            Parameters:
+                method  -  
+                    'IDA_YA_YDP_INIT' - This tries to calculate the
+                    algebraic components of y and the differential
+                    components of yd given the differential components
+                    of y. The algebraic components of y must have been
+                    specified with the property 'algvar'. The property
+                    'tout1' is also used in the calculations which should
+                    represent the the next output point.
+                    
+                    'IDA_Y_INIT' - This tries to calculate all components
+                    of y given yd.
             
         See SUNDIALS IDA documentation 4.5.4 for more details.
         """
@@ -477,7 +595,16 @@ class IDA(Implicit_ODE, Sundials):
     
     def _set_initial_step(self, initstep):
         """
-        This sets the initial step-size to be used in the integration.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.0', which result in that the
+                              the initial step is approximated.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         try:
             initstep = float(initstep)
@@ -488,21 +615,36 @@ class IDA(Implicit_ODE, Sundials):
         
     def _get_initial_step(self):
         """
-        Returns the initial step-size.
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters:
+                initstep    - Default '0.0', which result in that the
+                              the initial step is approximated.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
         """
         return self.__initstep
         
-    initstepdocstring = 'Sets the initial step-size.'
-    initstep = property(_get_initial_step,_set_initial_step,doc=initstepdocstring)
+    initstep = property(_get_initial_step,_set_initial_step)
     
     def _set_max_ord(self,maxord):
         """
-        Sets the maximal order of the method:
+        This determines the maximal order that is be used by the solver.
         
-            defaults : maximal values:
-            BDF  :  maxord= 5
+            Parameters:
+                maxord  - Default '5', which is the maximum.
+                
+                        - Should be an integer.
+                        
+                            Example:
+                                maxord = 3
+    
         
-        An input value greater than the maximal order will result in the maximum value.
+        An input value greater than the maximal order will result in the 
+        maximum value.
         """
         if not isinstance(maxord,int):
             raise Sundials_Exception('The maximal order must be an integer.')
@@ -520,16 +662,41 @@ class IDA(Implicit_ODE, Sundials):
             self.__maxord=maxord
             
     def _get_max_ord(self):
-        """Returns the maximal order."""
+        """
+        This determines the maximal order that is be used by the solver.
+        
+            Parameters:
+                maxord  - Default '5', which is the maximum.
+                
+                        - Should be an integer.
+                        
+                            Example:
+                                maxord = 3
+    
+        
+        An input value greater than the maximal order will result in the 
+        maximum value.
+        """
         return self.__maxord
-    maxorddocstring='Maxord: Maximal Order BDF 0 < maxord < 6\n Defaults to None, ' \
-                     'which corresponds to the maximal values above.'
-    maxord=property(_get_max_ord,_set_max_ord,doc=maxorddocstring)
+
+    maxord=property(_get_max_ord,_set_max_ord)
     
     def _set_suppress_alg(self,suppress_alg):
         """
-        Sets the boolean flag which indicates that error-tests are 
-        suppressed on algebraic variables.
+        A boolean flag which indicates that the error-tests are 
+        suppressed on algebraic variables. The algebraic variables
+        are defined by setting the property 'algvar'.
+        
+            Parameters:
+                suppress_alg    - Default 'False'.
+                
+                                - Should be a boolean.
+                                
+                                    Example:
+                                        suppress_alg = True
+                                        
+        See SUNDIALS IDA documentation 4.5.7 'IDASetSuppressAlg' 
+        for more details.
         """
         if not isinstance(suppress_alg, bool):
             raise Sundials_Exception('Option suppress algebraic variables' \
@@ -537,18 +704,40 @@ class IDA(Implicit_ODE, Sundials):
         self.Integrator.suppress_alg=suppress_alg
     def _get_suppress_alg(self):
         """
-        Returns the boolean flag which indicates that error-tests are 
-        suppressed on algebraic variables.
+        A boolean flag which indicates that the error-tests are 
+        suppressed on algebraic variables. The algebraic variables
+        are defined by setting the property 'algvar'.
+        
+            Parameters:
+                suppress_alg    - Default 'False'.
+                
+                                - Should be a boolean.
+                                
+                                    Example:
+                                        suppress_alg = True
+                                        
+        See SUNDIALS IDA documentation 4.5.7 'IDASetSuppressAlg' 
+        for more details.
         """
         return self.Integrator.suppress_alg    
-    supprdocstring='True indicates that the error test on algebraic variables is suppressed.' \
-              '\n Define the algebraic variables by the attribute algvar.'
-    suppress_alg=property(_get_suppress_alg,_set_suppress_alg,doc=supprdocstring)
+
+    suppress_alg=property(_get_suppress_alg,_set_suppress_alg)
     
     def _set_algvar(self,algvar):
         """
-        Sets the ndarray which indicates which variables are differential (1.0)
-        and which are algebraic (0.0).
+        A vector for defining which variables are differential and
+        which are algebraic.
+        
+            Parameters:
+                algvar  - The value 1.0 indicates an differential
+                          variable and the value 0.0 indicates an
+                          algebraic variable.
+                          
+                        - Should be a list or a numpy vector (ndarray)
+                        
+                            Example:
+                                algvar = [1.0, 0.0, 1.0]
+                                
         """
         algvar = N.array(algvar)
 
@@ -564,15 +753,28 @@ class IDA(Implicit_ODE, Sundials):
             raise Sundials_Exception('Argval vector must be of type float.')
     def _get_algvar(self):
         """
-        Returns an ndarray which indicates which variables are differential (1.0)
-        and which are algebraic (0.0).
+        A vector for defining which variables are differential and
+        which are algebraic.
+        
+            Parameters:
+                algvar  - The value 1.0 indicates an differential
+                          variable and the value 0.0 indicates an
+                          algebraic variable.
+                          
+                        - Should be a list or a numpy vector (ndarray)
+                        
+                            Example:
+                                algvar = [1.0, 0.0, 1.0]
+                                
         """
         return self.Integrator.algvar    
-    algvardocstring='An ndarray which has an entry 1.0 for a differential variable, otherwise 0.0'
-    algvar=property(_get_algvar,_set_algvar,doc=algvardocstring)
+
+    algvar=property(_get_algvar,_set_algvar)
     
     def print_statistics(self):
-        """Prints the run-time statistics for the problem."""
+        """
+        Prints the run-time statistics for the problem.
+        """
         print 'Final Run Statistics: %s \n' % self.problemname
         
         statistics = self.stats
