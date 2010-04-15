@@ -108,10 +108,10 @@ class Sundials:
         P.xlabel('Number of steps')
         P.subplot(212)
         P.plot(self.Integrator.detailed_info['qlast'])
-        P.plot(self.Integrator.detailed_info['qcurrent'])
+        #P.plot(self.Integrator.detailed_info['qcurrent'])
         P.ylabel('Order')
         P.xlabel('Steps')
-        P.legend(['Last order','Current order'], loc=4)
+        #P.legend(['Last order','Current order'], loc=4)
         P.show()
         
     
