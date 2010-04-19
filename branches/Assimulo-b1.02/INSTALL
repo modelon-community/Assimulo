@@ -1,0 +1,29 @@
+There are two setup files, each corresponding to a different level of setup.
+If the package was downloaded as a release the cython part connecting Sundials
+comes precompiled. So the only dependecies are shown below,
+
+*REQUIREMENTS
+-Python
+-Numpy, Pylab
+
+. To install just do a normal python installation, 'python setup.py install'.
+To test the installation, browse to the tests folder and do a 'nosetests'.
+Will require python-nosetests additionally.
+
+If the package was download from the trac-site, the cython part is not precompiled.
+This results in a few more dependencies,
+
+*REQUIREMENTS
+-Python
+-Numpy, Pylab
+-Cython
+-Sundials-2.4
+
+. To install you also have to edit the file setup_source.py, the variables 'incdirs',
+and 'libdirs'. 'incdirs' should correspond to the include folder in the Sundials
+installation and 'libdirs' should correspond to the lib folder in the Sundials
+installation. Then just do a normal setup with the command:
+"python setup_source.py install" and the package will be installed in your python 
+dist-packages folder.
+
+	
