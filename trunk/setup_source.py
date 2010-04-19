@@ -24,10 +24,11 @@ for x in copy_args:
     if not x.find('--prefix'):
         copy_args[copy_args.index(x)] = O.path.join(x[9:],'')
 
+if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
+    
+    cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
-cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
-
-setup(name='Assimulo_Source',
+    setup(name='Assimulo_Source',
       version='1.1',
       description='A package for solving ordinary differential equations',
       author='Claus Fuhrer and Christian Andersson',
@@ -46,3 +47,5 @@ setup(name='Assimulo_Source',
     ],
     script_args=copy_args
      )
+else:
+    raise Exception('Could not find Sundials. Recheck Sundials path.')
