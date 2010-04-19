@@ -171,7 +171,7 @@ class Explicit_ODE(ODE):
                 #Log the information
                 self._log_event_info.append([self.t[-1], event_info])
                 
-                if self.verbosity >= self.NORMAL:
+                if self.verbosity > self.NORMAL:
                     print 'A discontinuity occured at t = %e.'%tevent
                 if self.verbosity >= self.LOUD:
                     print 'Current switches: ', self.switches
@@ -180,7 +180,7 @@ class Explicit_ODE(ODE):
                 if self.verbosity >= self.SCREAM:
                     self.print_statistics() #Prints statistics
                     
-                if self.verbosity >= self.NORMAL:
+                if self.verbosity > self.NORMAL:
                     print 'Calling problem specified event handling...'
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
