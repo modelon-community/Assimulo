@@ -28,18 +28,21 @@ class Problem(object):
     Avaliable (optional) options:
         def reset(self)
             Overrides the reset function to a user defined. The restriction is that
-            t0, and y0 (and yd0) will be the new starting values. If they are not change
+            t0, and y0 (and yd0) will be the new starting values. If they are not changed
             in the reset() they are left to be the the starting values defined in
             the beginning.
+            
         def handle_event(self, solver, event_info)
             Defines how to handle a discontinuity. This functions gets called when
             a discontinuity has been found in the supplied event functions.
-        def init_mode(self, solver)
-            Override this function to create your own initialization of the new mode
-            of operation. Default assumes that switching does not break consistency.
+            
         def initiate(self)
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
+            
+    Parameters (optional):
+        Problem_Name
+            The name of the problem.
     """
     Problem_Name = '---'
     
@@ -71,24 +74,41 @@ class Implicit_Problem(Problem):
     
         Must define the problem function f(self, t, y, yd, sw=None)
         
+        Mandatory option:
+            def f(self, t, y, yd) or f(self, t, y, yd, sw)
+                Defines the residual of the problem.
+                
+                Returns:
+                    A numpy array of size len(y).
+        
         Avaliable (optional) options:
             def event_fcn(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
+                
+                Returns:
+                    A numpy array.
+                
             def jac(self, c, t, y, yd, sw)
                 Defines the jacobian, which should be of the form
-                J = dF/dx + c*dF/dx'
+                J = dF/dx + c*dF/dx'.
+                
+                Returns:
+                    A numpy array of size len(y)*len(y).
           
           Parameters (optional):
             t0
-                Defines the starting time
+                Defines the starting time.
             y0
-                Defines the starting values of y0
+                Defines the starting values of y0.
             yd0
-                Defines the starting values of yd0
+                Defines the starting values of yd0.
             switches0
-                Defines the starting values of the switches
+                Defines the starting values of the switches.
+                Should be a list of booleans.
             algvar
-                Defines the differential and algebraic components of the problem (Ones and Zeros)
+                Defines the differential and algebraic components of the problem.
+                Should be a list of integers. For more information, see the
+                property algvar in Implicit_ODE.IDA
     """
     
     def f(self, t, y, yd, sw=None):
@@ -103,9 +123,25 @@ class Explicit_Problem(Problem):
  
         Must define the problem function f(self, t, y, sw=None)
         
+        Mandatory option:
+            def f(self, t, y) or f(self, t, y, sw)
+                Defines the right-hand-side of the problem.
+                
+                Returns:
+                    A numpy array of size len(y).
+        
         Avaliable (optional) options:
             def event_fcn(self ,t ,y, sw)
                 Defines the event (root) functions.
+                
+                Returns:
+                    A numpy array.
+                
+            def jac(self, t, y, sw=None)
+                Defines the jacobian. J=df/dx.
+                
+                Returns:
+                    A numpy matrix of size len(y)*len(y).
         
         Parameters (optional):
             t0
@@ -113,7 +149,8 @@ class Explicit_Problem(Problem):
             y0
                 Defines the starting values of y0
             switches0
-                Defines the starting values of the switches
+                Defines the starting values of the switches. 
+                Should be a list of booleans.
     """
     
     def f(self, t, y, sw=None):
