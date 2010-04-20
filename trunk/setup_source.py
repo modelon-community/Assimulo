@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
 from distutils.core import setup, Extension
 from Cython.Distutils import build_ext
 import numpy as N
