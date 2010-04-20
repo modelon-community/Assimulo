@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
 from distutils.core import setup, Extension
 from Cython.Distutils import build_ext
 import numpy as N
@@ -29,11 +31,11 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
     setup(name='Assimulo_Source',
-      version='1.1',
+      version='b1.02',
       description='A package for solving ordinary differential equations',
-      author='Claus Fuhrer and Christian Andersson',
+      author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
-      url='http://wwww',
+      url='http://wwww.jmodelica.org/assimulo',
       package_dir = {'Assimulo':'src'},
       packages=['Assimulo', 'Assimulo.lib'],
       cmdclass = {'build_ext': build_ext},
