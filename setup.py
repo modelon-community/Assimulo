@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
 from distutils.core import setup, Extension
 import numpy as N
 import sys as S
