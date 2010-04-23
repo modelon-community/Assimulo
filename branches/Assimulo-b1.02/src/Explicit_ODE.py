@@ -32,12 +32,14 @@ class Explicit_ODE(ODE):
         """
         Initiates the solver.
         
-            Parameters:
+            Parameters::
             
-                problem     - The problem to be solved. Should be an instance
+                problem     
+                            - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
                               
-                y0          - Default 'None'. The initial values for the states.
+                y0          
+                            - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
                             
@@ -46,7 +48,8 @@ class Explicit_ODE(ODE):
                                 Example:
                                     y0 = [1.0, 0.0]
                                 
-                t0          - Default 'None'. The initial time. If 'None'. the
+                t0          
+                            - Default 'None'. The initial time. If 'None'. the
                               initial time are retrieved from the problem.t0.
                               If set it override problem.t0. If NOT set and NOT
                               defined in problem.t0, t0 is set to 0.0.
@@ -116,12 +119,15 @@ class Explicit_ODE(ODE):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            Parameters:
-                tfinal  - Final time for the simulation
+            Parameters::
+            
+                tfinal  
+                        - Final time for the simulation
                 
                         - Should be a float or integer greater than the initial time.
                         
-                ncp     - Default '0'. Number of communication points where the 
+                ncp     
+                        - Default '0'. Number of communication points where the 
                           solution is returned. If '0', the integrator will return 
                           at its internal steps.
                           
@@ -195,10 +201,12 @@ class Explicit_ODE(ODE):
         """
         Reinitiates the solver.
         
-            Parameters:
+            Parameters::
                 
-                t0  - The initial time.
-                y0  - The initial values for the states
+                t0  
+                    - The initial time.
+                y0  
+                    - The initial values for the states
                 
         See information in the __init__ method.
         """
@@ -210,8 +218,10 @@ class Explicit_ODE(ODE):
         """
         Plot the computed solution.
         
-            Parameters:
-                mask    - Default 'None'. Used to determine which variables that is to be plotted.
+            Parameters::
+            
+                mask    
+                        - Default 'None'. Used to determine which variables that is to be plotted.
                           Used as a list of integers, ones represents the variable that is to be
                           plotted and zeros that is not. 
                         
@@ -281,12 +291,14 @@ class RungeKutta34(Explicit_ODE):
         """
         Initiates the solver.
         
-            Parameters:
+            Parameters::
             
-                problem     - The problem to be solved. Should be an instance
+                problem     
+                            - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
                               
-                y0          - Default 'None'. The initial values for the states.
+                y0          
+                            - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
                             
@@ -295,7 +307,8 @@ class RungeKutta34(Explicit_ODE):
                                 Example:
                                     y0 = [1.0, 0.0]
                                 
-                t0          - Default 'None'. The initial time. If 'None'. the
+                t0          
+                            - Default 'None'. The initial time. If 'None'. the
                               initial time are retrieved from the problem.t0.
                               If set it override problem.t0. If NOT set and NOT
                               defined in problem.t0, t0 is set to 0.0.
@@ -315,8 +328,9 @@ class RungeKutta34(Explicit_ODE):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.01'.
+            Parameters::
+                initstep    
+                            - Default '0.01'.
                             
                             - Should be float.
                             
@@ -334,8 +348,10 @@ class RungeKutta34(Explicit_ODE):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.01'.
+            Parameters::
+            
+                initstep    
+                            - Default '0.01'.
                             
                             - Should be float.
                             
@@ -431,12 +447,14 @@ class CVode(Explicit_ODE, Sundials):
         """
         Initiates the solver.
         
-            Parameters:
+            Parameters::
             
-                problem     - The problem to be solved. Should be an instance
+                problem     
+                            - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
                               
-                y0          - Default 'None'. The initial values for the states.
+                y0          
+                            - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
                             
@@ -445,7 +463,8 @@ class CVode(Explicit_ODE, Sundials):
                                 Example:
                                     y0 = [1.0, 0.0]
                                     
-                t0          - Default 'None'. The initial time. If 'None'. the
+                t0          
+                            - Default 'None'. The initial time. If 'None'. the
                               initial time are retrieved from the problem.t0.
                               If set it override problem.t0. If NOT set and NOT
                               defined in problem.t0, t0 is set to 0.0.
@@ -455,7 +474,8 @@ class CVode(Explicit_ODE, Sundials):
                                 Example:
                                     t0 = 1.0
                                     
-                switches0   - Default 'None'. Only used for hybrid (discontinuous)
+                switches0   
+                            - Default 'None'. Only used for hybrid (discontinuous)
                               systems. If 'None', the switches are retrieved from
                               the problem.switches0. If set, they override the
                               problem.switches0.
@@ -538,8 +558,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the discretization method.
         
-            Parameters:
-                discr   - Default 'Adams', which indicates the use
+            Parameters::
+            
+                discr   
+                        - Default 'Adams', which indicates the use
                           of the Adams method. Can also be set to
                           'BDF' which indicates the use of the BDF
                           method.
@@ -562,8 +584,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the discretization method.
         
-            Parameters:
-                discr   - Default 'Adams', which indicates the use
+            Parameters::
+            
+                discr   
+                        - Default 'Adams', which indicates the use
                           of the Adams method. Can also be set to
                           'BDF' which indicates the use of the BDF
                           method.
@@ -584,8 +608,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.0', which result in that the
+            Parameters::
+            
+                initstep    
+                            - Default '0.0', which result in that the
                               the initial step is approximated.
                             
                             - Should be float.
@@ -604,8 +630,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.0', which result in that the
+            Parameters::
+            
+                initstep    
+                            - Default '0.0', which result in that the
                               the initial step is approximated.
                             
                             - Should be float.
@@ -624,8 +652,10 @@ class CVode(Explicit_ODE, Sundials):
         default setting is to use that jacobian. If not, an
         approximation is used.
         
-            Parameters:
-                usejac  - True - use user defined jacobian
+            Parameters::
+            
+                usejac  
+                        - True - use user defined jacobian
                           False - use an approximation
                     
                         - Should be a boolean.
@@ -656,8 +686,10 @@ class CVode(Explicit_ODE, Sundials):
         default setting is to use that jacobian. If not, an
         approximation is used.
         
-            Parameters:
-                usejac  - True - use user defined jacobian
+            Parameters::
+            
+                usejac  
+                        - True - use user defined jacobian
                           False - use an approximation
                     
                         - Should be a boolean.
@@ -674,8 +706,10 @@ class CVode(Explicit_ODE, Sundials):
         This determines the iteration method that is be used by the
         solver.
         
-            Parameters:
-                iter    - Default 'FixedPoint', which indicates the
+            Parameters::
+            
+                iter    
+                        - Default 'FixedPoint', which indicates the
                           use of a fixedpoint iteration method. Can
                           also be set to 'Newton' which indicates
                           the use of a Newton method.
@@ -697,8 +731,10 @@ class CVode(Explicit_ODE, Sundials):
         This determines the iteration method that is be used by the
         solver.
         
-            Parameters:
-                iter    - Default 'FixedPoint', which indicates the
+            Parameters::
+            
+                iter    
+                        - Default 'FixedPoint', which indicates the
                           use of a fixedpoint iteration method. Can
                           also be set to 'Newton' which indicates
                           the use of a Newton method.
@@ -719,8 +755,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the maximal order that is be used by the solver.
         
-            Parameters:
-                maxord  - Default '12', which is the maximum for the
+            Parameters::
+            
+                maxord  
+                        - Default '12', which is the maximum for the
                           Adams method, which is also default. For the
                           BDF method the maximum order is 5. 'maxord'
                           can be set in an interval from 1 to the
@@ -768,8 +806,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         This determines the maximal order that is be used by the solver.
         
-            Parameters:
-                maxord  - Default '12', which is the maximum for the
+            Parameters::
+            
+                maxord  
+                        - Default '12', which is the maximum for the
                           Adams method, which is also default. For the
                           BDF method the maximum order is 5. 'maxord'
                           can be set in an interval from 1 to the

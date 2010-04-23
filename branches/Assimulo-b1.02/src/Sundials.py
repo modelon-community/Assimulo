@@ -46,8 +46,10 @@ class Sundials:
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
         
-            Parameters:
-                atol    - Default '1.0e-6'.
+            Parameters::
+            
+                atol    
+                        - Default '1.0e-6'.
                 
                         - Should be a positive float or a numpy vector
                           of floats.
@@ -80,8 +82,10 @@ class Sundials:
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
         
-            Parameters:
-                atol    - Default '1.0e-6'.
+            Parameters::
+            
+                atol    
+                        - Default '1.0e-6'.
                 
                         - Should be a positive float or a numpy vector
                           of floats.
@@ -99,8 +103,10 @@ class Sundials:
         """
         Defines the relative tolerance that is to be used by the solver.
         
-            Parameters:
-                rtol    - Default '1.0e-6'.
+            Parameters::
+            
+                rtol    
+                        - Default '1.0e-6'.
                 
                         - Should be a positive float.
                         
@@ -119,8 +125,10 @@ class Sundials:
         """
         Defines the relative tolerance that is to be used by the solver.
         
-            Parameters:
-                rtol    - Default '1.0e-6'.
+            Parameters::
+            
+                rtol    
+                        - Default '1.0e-6'.
                 
                         - Should be a positive float.
                         
@@ -136,8 +144,10 @@ class Sundials:
         """
         Defines the maximal step-size that is to be used by the solver.
         
-            Parameters:
-                maxh    - Default '0', which indicates that the maximal
+            Parameters::
+            
+                maxh    
+                        - Default '0', which indicates that the maximal
                           step-size is infinity.
                           
                         - Should be a float.
@@ -157,8 +167,10 @@ class Sundials:
         """
         Defines the maximal step-size that is to be used by the solver.
         
-            Parameters:
-                maxh    - Default '0', which indicates that the maximal
+            Parameters::
+            
+                maxh    
+                        - Default '0', which indicates that the maximal
                           step-size is infinity.
                           
                         - Should be a float.
