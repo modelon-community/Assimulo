@@ -32,12 +32,14 @@ class Implicit_ODE(ODE):
         """
         Initiates the solver.
         
-            Parameters:
+            Parameters::
             
-                problem     - The problem to be solved. Should be an instance
+                problem     
+                            - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
                               
-                y0          - Default 'None'. The initial values for the states.
+                y0          
+                            - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
                             
@@ -46,7 +48,8 @@ class Implicit_ODE(ODE):
                                 Example:
                                     y0 = [1.0, 0.0]
                                     
-                yd0         - Default 'None'. The initial values for the state
+                yd0         
+                            - Default 'None'. The initial values for the state
                               derivatives. If 'None', the initial values are
                               retrieved from the problem.yd0. If set they
                               override problem.yd0.
@@ -56,7 +59,8 @@ class Implicit_ODE(ODE):
                                 Example:
                                     yd0 = [0.0, 0.0]
                                 
-                t0          - Default 'None'. The initial time. If 'None'. the
+                t0          
+                            - Default 'None'. The initial time. If 'None'. the
                               initial time are retrieved from the problem.t0.
                               If set it override problem.t0. If NOT set and NOT
                               defined in problem.t0, t0 is set to 0.0.
@@ -137,7 +141,7 @@ class Implicit_ODE(ODE):
         """
         Reinitiates the solver.
         
-            Parameters:
+            Parameters::
                 
                 t0  - The initial time.
                 y0  - The initial values for the states
@@ -154,12 +158,15 @@ class Implicit_ODE(ODE):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            Parameters:
-                tfinal  - Final time for the simulation
+            Parameters::
+            
+                tfinal  
+                        - Final time for the simulation
                 
                         - Should be a float or integer greater than the initial time.
                         
-                ncp     - Default '0'. Number of communication points where the 
+                ncp     
+                        - Default '0'. Number of communication points where the 
                           solution is returned. If '0', the integrator will return 
                           at its internal steps.
                           
@@ -234,8 +241,10 @@ class Implicit_ODE(ODE):
         """
         Plot the computed solution.
         
-            Parameters:
-                mask    - Default 'None'. Used to determine which variables that is to be plotted.
+            Parameters::
+            
+                mask    
+                        - Default 'None'. Used to determine which variables that is to be plotted.
                           Used as a list of integers, ones represents the variable that is to be
                           plotted and zeros that is not. 
                         
@@ -244,7 +253,8 @@ class Implicit_ODE(ODE):
                             Example:
                                 mask = [1,0] , plots the first variable.
                         
-                der     - Default 'False'. When 'True' plots the derivative variables also.
+                der     
+                        - Default 'False'. When 'True' plots the derivative variables also.
                         
                         - Should be a boolean.
                         
@@ -304,12 +314,14 @@ class IDA(Implicit_ODE, Sundials):
         """
         Initiates the solver.
         
-            Parameters:
+            Parameters::
             
-                problem     - The problem to be solved. Should be an instance
+                problem     
+                            - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
                               
-                y0          - Default 'None'. The initial values for the states.
+                y0          
+                            - Default 'None'. The initial values for the states.
                               If 'None', the initial values are retrieved from
                               the problem.y0. If set they override problem.y0
                             
@@ -318,7 +330,8 @@ class IDA(Implicit_ODE, Sundials):
                                 Example:
                                     y0 = [1.0, 0.0]
                                     
-                yd0         - Default 'None'. The initial values for the state
+                yd0         
+                            - Default 'None'. The initial values for the state
                               derivatives. If 'None', the initial values are
                               retrieved from the problem.yd0. If set they
                               override problem.yd0.
@@ -328,7 +341,8 @@ class IDA(Implicit_ODE, Sundials):
                                 Example:
                                     yd0 = [0.0, 0.0]
                                 
-                t0          - Default 'None'. The initial time. If 'None'. the
+                t0          
+                            - Default 'None'. The initial time. If 'None'. the
                               initial time are retrieved from the problem.t0.
                               If set it override problem.t0. If NOT set and NOT
                               defined in problem.t0, t0 is set to 0.0.
@@ -338,7 +352,8 @@ class IDA(Implicit_ODE, Sundials):
                                 Example:
                                     t0 = 1.0
                                     
-                switches0   - Default 'None'. Only used for hybrid (discontinuous)
+                switches0   
+                            - Default 'None'. Only used for hybrid (discontinuous)
                               systems. If 'None', the switches are retrieved from
                               the problem.switches0. If set, they override the
                               problem.switches0.
@@ -427,9 +442,10 @@ class IDA(Implicit_ODE, Sundials):
         in order to manipulate the existing machinery to be used
         in determining the initial conditions.
         
-            Parameters:
+            Parameters::
             
-                tout1       - Default '0.001'.
+                tout1       
+                            - Default '0.001'.
                             
                             - Should be a float.
                             
@@ -449,9 +465,10 @@ class IDA(Implicit_ODE, Sundials):
         in order to manipulate the existing machinery to be used
         in determining the initial conditions.
         
-            Parameters:
+            Parameters::
             
-                tout1       - Default '0.001'.
+                tout1       
+                            - Default '0.001'.
                             
                             - Should be a float.
                             
@@ -469,8 +486,10 @@ class IDA(Implicit_ODE, Sundials):
         default setting is to use that jacobian. If not, an
         approximation is used.
         
-            Parameters:
-                usejac  - True - use user defined jacobian
+            Parameters::
+            
+                usejac  
+                        - True - use user defined jacobian
                           False - use an approximation
                     
                         - Should be a boolean.
@@ -501,8 +520,10 @@ class IDA(Implicit_ODE, Sundials):
         default setting is to use that jacobian. If not, an
         approximation is used.
         
-            Parameters:
-                usejac  - True - use user defined jacobian
+            Parameters::
+            
+                usejac  
+                        - True - use user defined jacobian
                           False - use an approximation
                     
                         - Should be a boolean.
@@ -520,8 +541,10 @@ class IDA(Implicit_ODE, Sundials):
         Boolean value to turn OFF Sundials LineSearch when calculating
         initial conditions.
             
-            Parameters:
-                lsoff   - Default 'False'. False indicates the use of
+            Parameters::
+            
+                lsoff   
+                        - Default 'False'. False indicates the use of
                           linesearch.
 
                         - Should be a boolean.
@@ -538,8 +561,10 @@ class IDA(Implicit_ODE, Sundials):
         Boolean value to turn OFF Sundials LineSearch when calculating
         initial conditions.
             
-            Parameters:
-                lsoff   - Default 'False'. False indicates the use of
+            Parameters::
+            
+                lsoff   
+                        - Default 'False'. False indicates the use of
                           linesearch.
 
                         - Should be a boolean.
@@ -555,18 +580,21 @@ class IDA(Implicit_ODE, Sundials):
         """
         Directs IDA to try to calculate consistant initial conditions.
             
-            Parameters:
-                method  -  
-                    'IDA_YA_YDP_INIT' - This tries to calculate the
-                    algebraic components of y and the differential
-                    components of yd given the differential components
-                    of y. The algebraic components of y must have been
-                    specified with the property 'algvar'. The property
-                    'tout1' is also used in the calculations which should
-                    represent the the next output point.
-                    
-                    'IDA_Y_INIT' - This tries to calculate all components
-                    of y given yd.
+            Parameters::
+            
+                method  
+                        - 'IDA_YA_YDP_INIT'
+                                - This tries to calculate the
+                                  algebraic components of y and the differential
+                                  components of yd given the differential components
+                                  of y. The algebraic components of y must have been
+                                  specified with the property 'algvar'. The property
+                                  'tout1' is also used in the calculations which should
+                                  represent the the next output point.
+                                
+                        - 'IDA_Y_INIT' 
+                                - This tries to calculate all components
+                                  of y given yd.
             
         See SUNDIALS IDA documentation 4.5.4 for more details.
         """
@@ -599,8 +627,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.0', which result in that the
+            Parameters::
+            
+                initstep    
+                            - Default '0.0', which result in that the
                               the initial step is approximated.
                             
                             - Should be float.
@@ -619,8 +649,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         This determines the initial step-size to be used in the integration.
         
-            Parameters:
-                initstep    - Default '0.0', which result in that the
+            Parameters::
+            
+                initstep    
+                            - Default '0.0', which result in that the
                               the initial step is approximated.
                             
                             - Should be float.
@@ -636,8 +668,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         This determines the maximal order that is be used by the solver.
         
-            Parameters:
-                maxord  - Default '5', which is the maximum.
+            Parameters::
+            
+                maxord  
+                        - Default '5', which is the maximum.
                 
                         - Should be an integer.
                         
@@ -667,8 +701,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         This determines the maximal order that is be used by the solver.
         
-            Parameters:
-                maxord  - Default '5', which is the maximum.
+            Parameters::
+            
+                maxord  
+                        - Default '5', which is the maximum.
                 
                         - Should be an integer.
                         
@@ -689,8 +725,10 @@ class IDA(Implicit_ODE, Sundials):
         suppressed on algebraic variables. The algebraic variables
         are defined by setting the property 'algvar'.
         
-            Parameters:
-                suppress_alg    - Default 'False'.
+            Parameters::
+            
+                suppress_alg    
+                                - Default 'False'.
                 
                                 - Should be a boolean.
                                 
@@ -710,8 +748,10 @@ class IDA(Implicit_ODE, Sundials):
         suppressed on algebraic variables. The algebraic variables
         are defined by setting the property 'algvar'.
         
-            Parameters:
-                suppress_alg    - Default 'False'.
+            Parameters::
+            
+                suppress_alg    
+                                - Default 'False'.
                 
                                 - Should be a boolean.
                                 
@@ -730,8 +770,10 @@ class IDA(Implicit_ODE, Sundials):
         A vector for defining which variables are differential and
         which are algebraic.
         
-            Parameters:
-                algvar  - The value 1.0 indicates an differential
+            Parameters::
+            
+                algvar  
+                        - The value 1.0 indicates an differential
                           variable and the value 0.0 indicates an
                           algebraic variable.
                           
@@ -758,8 +800,10 @@ class IDA(Implicit_ODE, Sundials):
         A vector for defining which variables are differential and
         which are algebraic.
         
-            Parameters:
-                algvar  - The value 1.0 indicates an differential
+            Parameters::
+            
+                algvar  
+                        - The value 1.0 indicates an differential
                           variable and the value 0.0 indicates an
                           algebraic variable.
                           

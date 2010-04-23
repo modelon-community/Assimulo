@@ -25,7 +25,8 @@ class Problem(object):
     """
     Base problem for Assimulo.
     
-    Avaliable (optional) options:
+    Avaliable (optional) options::
+    
         def reset(self)
             Overrides the reset function to a user defined. The restriction is that
             t0, and y0 (and yd0) will be the new starting values. If they are not changed
@@ -40,7 +41,8 @@ class Problem(object):
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
             
-    Parameters (optional):
+    Parameters (optional)::
+    
         Problem_Name
             The name of the problem.
     """
@@ -74,14 +76,16 @@ class Implicit_Problem(Problem):
     
         Must define the problem function f(self, t, y, yd, sw=None)
         
-        Mandatory option:
+        Mandatory option::
+        
             def f(self, t, y, yd) or f(self, t, y, yd, sw)
                 Defines the residual of the problem.
                 
                 Returns:
                     A numpy array of size len(y).
         
-        Avaliable (optional) options:
+        Avaliable (optional) options::
+        
             def event_fcn(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
                 
@@ -95,7 +99,8 @@ class Implicit_Problem(Problem):
                 Returns:
                     A numpy array of size len(y)*len(y).
           
-          Parameters (optional):
+        Parameters (optional)::
+          
             t0
                 Defines the starting time.
             y0
@@ -123,14 +128,16 @@ class Explicit_Problem(Problem):
  
         Must define the problem function f(self, t, y, sw=None)
         
-        Mandatory option:
+        Mandatory option::
+        
             def f(self, t, y) or f(self, t, y, sw)
                 Defines the right-hand-side of the problem.
                 
                 Returns:
                     A numpy array of size len(y).
         
-        Avaliable (optional) options:
+        Avaliable (optional) options::
+        
             def event_fcn(self ,t ,y, sw)
                 Defines the event (root) functions.
                 
@@ -143,7 +150,8 @@ class Explicit_Problem(Problem):
                 Returns:
                     A numpy matrix of size len(y)*len(y).
         
-        Parameters (optional):
+        Parameters (optional)::
+        
             t0
                 Defines the starting time
             y0
