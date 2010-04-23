@@ -48,8 +48,10 @@ class ODE(object):
         Determines the maximum number of steps the solver is allowed
         to take to finnish the simulation.
         
-            Parameters:
-                maxsteps    - Default '10000'.
+            Parameters::
+            
+                maxsteps    
+                            - Default '10000'.
                             
                             - Should be an integer.
                             
@@ -68,8 +70,10 @@ class ODE(object):
         Determines the maximum number of steps the solver is allowed
         to take to finnish the simulation.
         
-            Parameters:
-                maxsteps    - Default '10000'.
+            Parameters::
+            
+                maxsteps    
+                            - Default '10000'.
                             
                             - Should be an integer.
                             
@@ -87,8 +91,10 @@ class ODE(object):
         Defines the name of the problem. Which is then used
         in the plots and when printing the result.
         
-            Parameters:
-                name    - Name of the problem.
+            Parameters::
+            
+                name    
+                        - Name of the problem.
                         
                         - Should be a string.
                         
@@ -103,8 +109,10 @@ class ODE(object):
         Defines the name of the problem. Which is then used
         in the plots and when printing the result.
         
-            Parameters:
-                name    - Name of the problem.
+            Parameters::
+            
+                name    
+                        - Name of the problem.
                         
                         - Should be a string.
                         
@@ -134,14 +142,16 @@ class ODE(object):
         Defines the verbosity of the integrator. The verbosity levels are used to
         determine the amount of output from the integrater the user wishes to receive.
         
-            Parameters:
-                verbosity   - Default 'NORMAL'. Can be set to either,
+            Parameters::
+            
+                verbosity   
+                            - Default 'NORMAL'. Can be set to either,
                                 
-                                QUIET = 0
-                                WHISPER = 1
-                                NORMAL = 2
-                                LOUD = 3
-                                SCREAM = 4
+                                - QUIET = 0
+                                - WHISPER = 1
+                                - NORMAL = 2
+                                - LOUD = 3
+                                - SCREAM = 4
                             
                             - Should be an integer.
                             
@@ -157,14 +167,16 @@ class ODE(object):
         Defines the verbosity of the integrator. The verbosity levels are used to
         determine the amount of output from the integrater the user wishes to receive.
         
-            Parameters:
-                verbosity   - Default 'NORMAL'. Can be set to either,
+            Parameters::
+            
+                verbosity   
+                            - Default 'NORMAL'. Can be set to either,
                                 
-                                QUIET = 0
-                                WHISPER = 1
-                                NORMAL = 2
-                                LOUD = 3
-                                SCREAM = 4
+                                - QUIET = 0
+                                - WHISPER = 1
+                                - NORMAL = 2
+                                - LOUD = 3
+                                - SCREAM = 4
                             
                             - Should be an integer.
                             
@@ -183,12 +195,15 @@ class ODE(object):
         """
         Calls the integrator to perform the simulation over the given time-interval.
         
-            Parameters:
-                tfinal  - Final time for the simulation
+            Parameters::
+            
+                tfinal  
+                        - Final time for the simulation
                 
                         - Should be a float or integer greater than the initial time.
                         
-                ncp     - Default '0'. Number of communication points where the 
+                ncp     
+                        - Default '0'. Number of communication points where the 
                           solution is returned. If '0', the integrator will return 
                           at its internal steps.
                           
