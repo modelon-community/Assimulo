@@ -36,7 +36,7 @@ class Explicit_ODE(ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Implicit_Problem' class.
+                              of the 'Explicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
@@ -295,7 +295,7 @@ class RungeKutta34(Explicit_ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Implicit_Problem' class.
+                              of the 'Explicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
@@ -451,7 +451,7 @@ class CVode(Explicit_ODE, Sundials):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Implicit_Problem' class.
+                              of the 'Explicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
