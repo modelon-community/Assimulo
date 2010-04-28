@@ -36,7 +36,7 @@ class Explicit_ODE(ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Explicit_Problem' class.
+                              of the 'Implicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
@@ -160,7 +160,7 @@ class Explicit_ODE(ODE):
                       ' nt = 0.'
         ncp_ori = ncp
         
-        while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
+        while self.t[-1] < tfinal:
             
             solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,ncp))
         
@@ -295,7 +295,7 @@ class RungeKutta34(Explicit_ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Explicit_Problem' class.
+                              of the 'Implicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
@@ -451,7 +451,7 @@ class CVode(Explicit_ODE, Sundials):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Explicit_Problem' class.
+                              of the 'Implicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.

@@ -1,6 +1,6 @@
 --- CHANGELOG ---
 
---- Assimulo-1.0b2 ---
+--- Assimulo-b1.02 ---
     * Added an option to mask which variables that is to be plotted.
     * Added a .simulate function for use when simulating instead of
       __call__. Although __call__ can still be used.
@@ -17,5 +17,5 @@
     * Added support for user-defined Jacobians when using CVode.
     * Added support for user-defined Jacobians when using IDA.
 
---- Assimulo-1.0b1 ---
+--- Assimulo-b1.01 ---
     * The rough first version.
