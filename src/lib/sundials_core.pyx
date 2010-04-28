@@ -589,7 +589,7 @@ cdef class CVode_wrap:
         #CVodeFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)
         
-        return sol
+        return sol       
 cdef class IDA_wrap:
     """Class to wrap Sundials IDA"""
     cdef:
