@@ -197,7 +197,8 @@ class Implicit_ODE(ODE):
                       ' nt = 0.'
         ncp_ori = ncp
         
-        while self.t[-1] < tfinal:
+        while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
+            
             solution = list(self.integrate(self.t[-1], self.y[-1], self.yd[-1], tfinal,ncp))
         
             self.t.extend(q[0] for q in solution)

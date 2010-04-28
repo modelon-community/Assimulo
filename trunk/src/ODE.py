@@ -39,8 +39,9 @@ class ODE(object):
         self.rtol = 1.0e-6 #Relative tolerance
         #self.h = 0.01 #Stepsize used for methods with fixed stepsize
         #self.max_eIter = 50 #Default number of allowed event iterations
-        
+    
         #Internal values
+        self._SAFETY = 100*N.finfo('double').eps
         self._log_event_info = []
     
     def _set_max_steps(self, maxsteps):
