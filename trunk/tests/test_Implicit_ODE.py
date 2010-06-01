@@ -207,19 +207,24 @@ class Test_IDA:
         """
         This tests the functionality of the property algvar.
         """
-        
-        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, 1)
-        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, [1,1,1])
-        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, {'Test':'case'})
-        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, -1)
-        
         self.simulator.Integrator.dim = 3
         
+        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, 1)
+        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, 1.0)
+        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, [1,'hej',1])
+        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, {'Test':'case'})
+        nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, [-1,0,1])
+        
+
         nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, [1.0,1.0])
         nose.tools.assert_raises(Sundials_Exception, self.simulator._set_algvar, [3.0, 1.0, 1.0])
         
         vector = [1.0,0.0,1.0]
+        vectorb = [True,False,True]
+        vectori = [1,0,1]
         
+        self.simulator.algvar = vectorb
+        self.simulator.algvar = vectori
         self.simulator.algvar = vector
         nose.tools.assert_equal(self.simulator.algvar[0], vector[0])
         nose.tools.assert_equal(self.simulator.algvar[1], vector[1])

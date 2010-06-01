@@ -230,15 +230,13 @@ DEF IDA_RTFUNC_FAIL    = -10 # The rootfinding function failed in an unrecoverab
 #  Module level functions
 # ===============================================================
 cdef N_Vector arr2nv(x):
-    x=np.array(x)
-    #assert x.dtype == np.float64
     """Create new N_Vector from numpy array"""
+    x=np.array(x)
     cdef long int n = len(x)
 
     cdef ndarray[double, ndim=1,mode='c'] ndx=x
     import_array()
     cdef void* data_ptr=PyArray_DATA(ndx)
-    #cdef void* data_ptr1
     cdef N_Vector v=N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(double))
     return v
@@ -426,7 +424,7 @@ cdef class CVode_wrap:
     """Class to wrap CVode"""
     cdef:
         void* mem
-        public int discr, iter, dim, maxord, _ordersum,_count_output,num_event_fcn, max_h
+        public int discr, iter, dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
         public realtype t0
@@ -434,6 +432,7 @@ cdef class CVode_wrap:
         public dict stats
         public dict detailed_info
         public booleantype jacobian
+        public npy_intp num_event_fcn
         N_Vector curr_state
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
@@ -594,7 +593,7 @@ cdef class IDA_wrap:
     """Class to wrap Sundials IDA"""
     cdef:
         void* mem
-        public int dim, maxord, _ordersum,_count_output, num_event_fcn, max_h
+        public int dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
         public realtype t0
@@ -603,6 +602,7 @@ cdef class IDA_wrap:
         public dict detailed_info
         public booleantype suppress_alg,jacobian
         public int icopt
+        public npy_intp num_event_fcn
         N_Vector curr_state
         N_Vector curr_deriv
     def __init__(self,dim):
