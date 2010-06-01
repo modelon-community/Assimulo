@@ -774,28 +774,37 @@ class IDA(Implicit_ODE, Sundials):
             Parameters::
             
                 algvar  
-                        - The value 1.0 indicates an differential
-                          variable and the value 0.0 indicates an
+                        - The value True(1.0) indicates an differential
+                          variable and the value False(0.0) indicates an
                           algebraic variable.
                           
                         - Should be a list or a numpy vector (ndarray)
                         
                             Example:
                                 algvar = [1.0, 0.0, 1.0]
+                                algvar = [True, False, True]
+                                algvar = [1,0,1]
                                 
         """
-        algvar = N.array(algvar)
+        try:
+            algvar = N.array(algvar,dtype='float')
+        except (ValueError, TypeError):
+            raise Sundials_Exception('algvar needs to be a list or a numpy vector.')
+            
+        try:
+            size = len(algvar)
+        except TypeError:
+            raise Sundials_Exception('algvar needs to be a list or a numpy vector.')
+        
+        if len(algvar) != self.Integrator.dim:
+            raise Sundials_Exception('When setting the algebraic variables, the' \
+                                ' vector must be of the same size as the problem dimension.')
+        
+        for alg in algvar:
+            if alg != 1.0 and alg != 0.0:
+                raise Sundials_Exception('The vector must consist of 1.0 or 0.0 .')
+        self.Integrator.algvar=algvar
 
-        if isinstance(algvar,N.ndarray) and algvar.dtype=='float':
-            if len(algvar) != self.Integrator.dim:
-                raise Sundials_Exception('When setting the algebraic variables, the' \
-                                    ' vector must be of the same size as the problem dimension.')
-            for alg in algvar:
-                if alg != 1.0 and alg != 0.0:
-                    raise Sundials_Exception('The vector must consist of 1.0 or 0.0 .')
-            self.Integrator.algvar=algvar
-        else:
-            raise Sundials_Exception('Argval vector must be of type float.')
     def _get_algvar(self):
         """
         A vector for defining which variables are differential and
