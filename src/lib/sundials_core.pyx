@@ -614,8 +614,12 @@ cdef class CVode_wrap:
         #        'Iteration':self.iteration[self.iter-1]}
         flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
         flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
-        flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-        flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
+        if self.iter == 1:
+            njevals = 0
+            nrevalsLS = 0
+        else:
+            flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
+            flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
         flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
         flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
         flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
