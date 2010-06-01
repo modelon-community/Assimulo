@@ -256,6 +256,59 @@ cdef nv2arr(N_Vector v):
 #        x[i] = v_data[i]
     return x
 
+cdef int sundials_error(int flag, int solver, float time) except -1:
+    """
+    Raises an Sundials error and prints suitable error message.
+    """
+    if solver == 1: #IDA
+        err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
+                    -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
+                    -3: 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
+                    -4: 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
+                    -5: 'The linear solvers initialization function failed.',
+                    -6: 'The linear solvers setup function failed in an unrecoverable manner.',
+                    -7: 'The linear solvers solve function failed in an unrecoverable manner.',
+                    -8: 'The user-provided residual function failed in an unrecoverable manner.',
+                    -9: 'The user-provided residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
+                    -10: 'The rootfinding function failed in an unrecoverable manner.',
+                    -11: 'The inequality constraints were violated and the solver was unable to recover.',
+                    -12: 'The user-provided residual function failed recoverable on the first call.',
+                    -13: 'The line search failed.',
+                    -14: 'The residual function, linear solver setup function or linear solver solve function had a recoverable failure. But IDACalcIC could not recover.',
+                    -20: 'The ida_mem argument was NULL.',
+                    -21: 'A memory allocation failed.',
+                    -22: 'One of the function inputs is illegal.',
+                    -23: 'The IDA memory was not allocated by a call to IDAInit.',
+                    -24: 'Zero value of some error weight component.',
+                    -25: 'The k-th derivative is not available.',
+                    -26: 'The time t is outside the last step taken.',
+                    -27: 'The vector argument where derivative should be stored is NULL.'}
+    else:           #CVode
+        err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
+                    -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
+                    -3: 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
+                    -4: 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
+                    -5: 'The linear solvers initialization function failed.',
+                    -6: 'The linear solvers setup function failed in an unrecoverable manner.',
+                    -7: 'The linear solvers solve function failed in an unrecoverable manner.',
+                    -8: 'The user-provided rhs function failed in an unrecoverable manner.',
+                    -9: 'The right-hand side function failed at the first call.',
+                    -10: 'The right-hand side function had repetead recoverable errors.',
+                    -11: 'The right-hand side function had a recoverable error, but no recovery is possible.',
+                    -12: 'The rootfinding function failed in an unrecoverable manner.',
+                    -20: 'A memory allocation failed.',
+                    -21: 'The cvode_mem argument was NULL.',
+                    -22: 'One of the function inputs is illegal.',
+                    -23: 'The CVode memory block was not allocated by a call to CVodeMalloc.',
+                    -24: 'The derivative order k is larger than the order used.',
+                    -25: 'The time t is outside the last step taken.',
+                    -26: 'The output derivative vector is NULL.',
+                    -27: 'The output and initial times are too close to each other.'}
+    try:    
+        raise SundialsError, err_mess[flag]+' At time %f'%time
+    except KeyError:
+        raise SundialsError, 'Sundials failed with flag %s. At time %f'%(flag,time)
+
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* user_data):
     """
     Wraps  Python rhs-callback function to obtain CVode required interface
@@ -520,7 +573,8 @@ cdef class CVode_wrap:
                 flag=0
                 flags=CVode(self.mem,tout,self.curr_state,&tret,CV_NORMAL)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
-                    raise SundialsError,"CVode run error at t=%s with flag %s" %(tret, flags)
+                    sundials_error(flags,2,tret)
+                    #raise SundialsError,"CVode run error at t=%s with flag %s" %(tret, flags)
                 sol.append((tret,nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
@@ -717,7 +771,8 @@ cdef class IDA_wrap:
                 flags=0
                 flags=IDASolve(self.mem,tout,&tret, self.curr_state, self.curr_deriv,IDA_NORMAL)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    raise Exception,"IDA run error at t=%s with flag %s" %(tret, flags)
+                    sundials_error(flags,1,tret)
+                    #raise Exception,"IDA run error at t=%s with flag %s" %(tret, flags)
                 sol.append((tret,nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
