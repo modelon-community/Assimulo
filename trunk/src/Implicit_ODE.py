@@ -238,7 +238,7 @@ class Implicit_ODE(ODE):
         return [self.t, self.y, self.yd]
         
         
-    def plot(self, mask=None, der=False):
+    def plot(self, mask=None, der=False, **kwargs):
         """
         Plot the computed solution.
         
@@ -261,10 +261,13 @@ class Implicit_ODE(ODE):
                         
                             Example:
                                 der = True
+                **kwargs
+                        - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
+                          for information about the available options for **kwargs.
         """
         P.figure(1)
         if not mask:
-            P.plot(self.t, self.y)
+            P.plot(self.t, self.y, **kwargs)
         else:
             if not isinstance(mask, list):
                 raise Implicit_ODE_Exception('Mask must be a list of integers')
@@ -273,7 +276,7 @@ class Implicit_ODE(ODE):
                                              'the number of variables.')
             for i in range(len(mask)):
                 if mask[i]:
-                    P.plot(self.t, N.array(self.y)[:,i])
+                    P.plot(self.t, N.array(self.y)[:,i], **kwargs)
 
         P.xlabel('time')
         P.ylabel('state')
@@ -282,7 +285,7 @@ class Implicit_ODE(ODE):
         
         if der and not mask:
             P.figure(2)
-            P.plot(self.t, self.yd)
+            P.plot(self.t, self.yd, **kwargs)
             P.xlabel('time')
             P.ylabel('state derivatives')
             P.title(self.problemname)
@@ -295,7 +298,7 @@ class Implicit_ODE(ODE):
                                              'the number of variables.')
             for i in range(len(mask)):
                 if mask[i]:
-                    P.plot(self.t, N.array(self.yd)[:,i])
+                    P.plot(self.t, N.array(self.yd)[:,i], **kwargs)
                     
             P.xlabel('time')
             P.ylabel('state derivatives')
