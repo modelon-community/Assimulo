@@ -214,7 +214,7 @@ class Explicit_ODE(ODE):
             raise Explicit_ODE_Exception('y0 must be of the same length as the original problem.')
         Explicit_ODE.__init__(self, self._problem,y0,t0)
     
-    def plot(self, mask=None):
+    def plot(self, mask=None, **kwargs):
         """
         Plot the computed solution.
         
@@ -229,10 +229,17 @@ class Explicit_ODE(ODE):
                         
                             Example:
                                 mask = [1,0] , plots the first variable.
-                        
+                
+                **kwargs
+                        - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
+                          for information about the available options for **kwargs.
         """
+        P.xlabel('time')
+        P.ylabel('state')
+        P.title(self.problemname)
+        
         if not mask:
-            P.plot(self.t, self.y)
+            P.plot(self.t, self.y, **kwargs)
         else:
             if not isinstance(mask, list):
                 raise Explicit_ODE_Exception('Mask must be a list of integers')
@@ -241,11 +248,9 @@ class Explicit_ODE(ODE):
                                              'the number of variables.')
             for i in range(len(mask)):
                 if mask[i]:
-                    P.plot(self.t, N.array(self.y)[:,i])
+                    P.plot(self.t, N.array(self.y)[:,i],**kwargs)
         
-        P.xlabel('time')
-        P.ylabel('state')
-        P.title(self.problemname)
+        
         P.show()
             
             

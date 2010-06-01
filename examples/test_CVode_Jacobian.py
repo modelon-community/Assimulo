@@ -31,7 +31,7 @@ def run_example():
     exp_sim.atol = 1e-4 #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
     exp_sim.simulate(5,1000) #Simulate 5 seconds
-    exp_sim.plot() #Plot the solution
+    #exp_sim.plot() #Plot the solution
     
     assert exp_sim.problemname == exp_mod.Problem_Name
     assert exp_sim.y[0][0] == y0[0]
