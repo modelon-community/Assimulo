@@ -12,7 +12,7 @@ def run_example():
     global exp_sim
     exp_mod = Explicit_Problem()
     exp_mod.f = f
-    exp_mod.Problem_Name = 'Simple CVode Example'
+    exp_mod.problem_name = 'Simple CVode Example'
 
     y0 = 4.0 #Initial conditions
     exp_sim = CVode(exp_mod,y0) #Create a CVode solver
@@ -23,7 +23,7 @@ def run_example():
     exp_sim.simulate(5) #Simulate 3 seconds
     #exp_sim.plot() #Plot the solution
     
-    assert exp_sim.problemname == exp_mod.Problem_Name
+    assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0] == y0
     nose.tools.assert_almost_equal(exp_sim.y[-1], 0.02697622, places=8)
 

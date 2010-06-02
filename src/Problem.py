@@ -46,7 +46,7 @@ class Problem(object):
         Problem_Name
             The name of the problem.
     """
-    Problem_Name = '---'
+    problem_name = '---'
     
     def initiate(self, solver):
         """

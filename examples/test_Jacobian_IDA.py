@@ -50,7 +50,7 @@ def run_example():
     imp_mod.f = f #Sets the residual function
     imp_mod.jac = jac #Sets the jacobian
     imp_mod.algvar = [1.0,1.0,1.0,1.0,0.0] #Set the algebraic components
-    imp_mod.Problem_Name = 'Test Jacobian'
+    imp_mod.problem_name = 'Test Jacobian'
 
     y0 = [1.0,0.0,0.0,0.0,5] #Initial conditions
     yd0 = [0.0,0.0,0.0,-9.82,0.0] #Initial conditions

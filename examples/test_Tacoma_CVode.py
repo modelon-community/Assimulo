@@ -27,7 +27,7 @@ bridge.name='Tacoma Narrows Bridge'
 
 problem = Explicit_Problem()
 problem.f = bridge
-problem.Problem_Name = bridge.name
+problem.problem_name = bridge.name
 
 def test_cvode_BN_tacoma():
 	"""
@@ -55,7 +55,7 @@ def test_cvode_BF_tacoma():
 	cv.rtol=1.e-4
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
 	cv.simulate(10,200)
-	cv.plot()
+	#cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
 def test_cvode_AF_tacoma():
@@ -69,7 +69,7 @@ def test_cvode_AF_tacoma():
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
 	cv.simulate(10,200)
 	cv.print_statistics()
-	cv.plot()
+	#cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
 def test_cvode_AN_tacoma():
@@ -83,7 +83,7 @@ def test_cvode_AN_tacoma():
 	# we use default atols, rtols
 	print cv.discr,cv.iter,cv.atol,cv.rtol,'\n'
 	cv.simulate(10,200)
-	cv.plot()
+	#cv.plot()
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
 def test_rk_tacoma():

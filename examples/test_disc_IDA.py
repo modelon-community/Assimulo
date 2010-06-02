@@ -51,7 +51,7 @@ class Extended_Problem(Implicit_Problem):
         return N.array([res_0,res_1,res_2])
 
     #Sets a name to our function
-    Problem_Name = 'Function with consistency problem'
+    problem_name = 'Function with consistency problem'
 
     def event_fcn(self,t,y,yd,sw):
         """

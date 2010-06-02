@@ -94,13 +94,13 @@ class ODE(object):
         
             Parameters::
             
-                name    
-                        - Name of the problem.
+                problem_name    
+                            - Name of the problem.
                         
-                        - Should be a string.
+                            - Should be a string.
                         
-                            Example:
-                                name = 'My Problem'
+                                Example:
+                                    problem_name = 'My Problem'
 
         """
         self.__name = name
@@ -112,18 +112,18 @@ class ODE(object):
         
             Parameters::
             
-                name    
-                        - Name of the problem.
+                problem_name   
+                            - Name of the problem.
                         
-                        - Should be a string.
+                            - Should be a string.
                         
-                            Example:
-                                name = 'My Problem'
+                                Example:
+                                    problem_name = 'My Problem'
 
         """
         return self.__name
         
-    problemname = property(_get_problem_name, _set_problem_name)
+    problem_name = property(_get_problem_name, _set_problem_name)
     
     @property
     def is_disc(self):
