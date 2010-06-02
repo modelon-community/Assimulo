@@ -25,7 +25,7 @@ class Problem(object):
     """
     Base problem for Assimulo.
     
-    Avaliable (optional) options::
+    Available (optional) options::
     
         def reset(self)
             Overrides the reset function to a user defined. The restriction is that
@@ -40,10 +40,11 @@ class Problem(object):
         def initiate(self)
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
+        
             
     Parameters (optional)::
     
-        Problem_Name
+        problem_name
             The name of the problem.
     """
     problem_name = '---'
@@ -84,7 +85,7 @@ class Implicit_Problem(Problem):
                 Returns:
                     A numpy array of size len(y).
         
-        Avaliable (optional) options::
+        Available (optional) options::
         
             def event_fcn(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
@@ -93,7 +94,7 @@ class Implicit_Problem(Problem):
                     A numpy array.
                 
             def jac(self, c, t, y, yd, sw)
-                Defines the jacobian, which should be of the form
+                Defines the Jacobian, which should be of the form
                 J = dF/dx + c*dF/dx'.
                 
                 Returns:
@@ -136,7 +137,7 @@ class Explicit_Problem(Problem):
                 Returns:
                     A numpy array of size len(y).
         
-        Avaliable (optional) options::
+        Available (optional) options::
         
             def event_fcn(self ,t ,y, sw)
                 Defines the event (root) functions.

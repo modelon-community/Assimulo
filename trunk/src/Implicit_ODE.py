@@ -816,14 +816,16 @@ class IDA(Implicit_ODE, Sundials):
             Parameters::
             
                 algvar  
-                        - The value 1.0 indicates an differential
-                          variable and the value 0.0 indicates an
+                        - The value True(1.0) indicates an differential
+                          variable and the value False(0.0) indicates an
                           algebraic variable.
                           
                         - Should be a list or a numpy vector (ndarray)
                         
                             Example:
                                 algvar = [1.0, 0.0, 1.0]
+                                algvar = [True, False, True]
+                                algvar = [1,0,1]
                                 
         """
         return self.Integrator.algvar    
