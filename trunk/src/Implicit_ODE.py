@@ -79,7 +79,7 @@ class Implicit_ODE(ODE):
         if isinstance(problem, Implicit_Problem):
             self._problem = problem
             self.res_fcn = problem.f
-            self.problemname = problem.Problem_Name
+            self.problem_name = problem.problem_name
         else:
             raise Implicit_ODE_Exception('The problem needs to be a subclass of a Implicit_Problem.')
         
@@ -280,7 +280,7 @@ class Implicit_ODE(ODE):
 
         P.xlabel('time')
         P.ylabel('state')
-        P.title(self.problemname)
+        P.title(self.problem_name)
 
         
         if der and not mask:
@@ -288,7 +288,7 @@ class Implicit_ODE(ODE):
             P.plot(self.t, self.yd, **kwargs)
             P.xlabel('time')
             P.ylabel('state derivatives')
-            P.title(self.problemname)
+            P.title(self.problem_name)
         elif mask and der:
             P.figure(2)
             if not isinstance(mask, list):
@@ -302,7 +302,7 @@ class Implicit_ODE(ODE):
                     
             P.xlabel('time')
             P.ylabel('state derivatives')
-            P.title(self.problemname)
+            P.title(self.problem_name)
         
         
         P.show()
@@ -834,7 +834,7 @@ class IDA(Implicit_ODE, Sundials):
         """
         Prints the run-time statistics for the problem.
         """
-        print 'Final Run Statistics: %s \n' % self.problemname
+        print 'Final Run Statistics: %s \n' % self.problem_name
         
         statistics = self.stats
         keys = statistics.keys()

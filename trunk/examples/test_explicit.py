@@ -13,7 +13,7 @@ def run_example():
     exp_mod = Explicit_Problem()
     exp_mod.f = f
     exp_mod.y0 = 4.0
-    exp_mod.Problem_Name = 'Simple Explicit Example'
+    exp_mod.problem_name = 'Simple Explicit Example'
 
     #Explicit Euler
     exp_sim = Explicit_Euler(exp_mod) #Create a explicit Euler solver
@@ -21,7 +21,7 @@ def run_example():
     exp_sim.simulate(5,100) #Simulate 2 second more
     #exp_sim.plot() #Plot the solution
     
-    assert exp_sim.problemname == exp_mod.Problem_Name
+    assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0] == 4.0
     nose.tools.assert_almost_equal(exp_sim.y[-1], 0.0252255, places=4)
     

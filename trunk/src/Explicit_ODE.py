@@ -68,7 +68,7 @@ class Explicit_ODE(ODE):
         if isinstance(problem, Explicit_Problem):
             self._problem = problem
             self.f = problem.f
-            self.problemname = problem.Problem_Name
+            self.problem_name = problem.problem_name
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')
         
@@ -236,7 +236,7 @@ class Explicit_ODE(ODE):
         """
         P.xlabel('time')
         P.ylabel('state')
-        P.title(self.problemname)
+        P.title(self.problem_name)
         
         if not mask:
             P.plot(self.t, self.y, **kwargs)
@@ -837,7 +837,7 @@ class CVode(Explicit_ODE, Sundials):
         """
         Prints the run-time statistics for the problem.
         """
-        print 'Final Run Statistics: %s \n' % self.problemname
+        print 'Final Run Statistics: %s \n' % self.problem_name
         
         statistics = self.stats
         keys = statistics.keys()

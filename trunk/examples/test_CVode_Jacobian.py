@@ -22,7 +22,7 @@ def run_example():
     exp_mod = Explicit_Problem()
     exp_mod.f = f #Sets the rhs
     exp_mod.jac = jac #Sets the jacobian
-    exp_mod.Problem_Name = 'Example using Jacobian'
+    exp_mod.problem_name = 'Example using Jacobian'
 
     y0 = [1.0,0.0] #Initial conditions
     exp_sim = CVode(exp_mod,y0) #Create a CVode solver
@@ -33,7 +33,7 @@ def run_example():
     exp_sim.simulate(5,1000) #Simulate 5 seconds
     #exp_sim.plot() #Plot the solution
     
-    assert exp_sim.problemname == exp_mod.Problem_Name
+    assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0][0] == y0[0]
     nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75011017723, places=8)
     nose.tools.assert_almost_equal(exp_sim.y[-1][1], -49.1000000, places=4)

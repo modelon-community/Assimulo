@@ -1,5 +1,12 @@
 --- CHANGELOG ---
 
+--- Assimulo-1.1.x (Not released yet)---
+    * Changed Assimulo.Problem.Problem_Name to problem_name.
+    * Changed Assimulo.ODE.problemname to problem_name.
+    * Fixed a bugg when printing information when used FixedPoint.
+    * Changed algvar to be more type independent.
+    * Added **kwargs to the plotting functionality.
+
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.
     * Added a .simulate function for use when simulating instead of
