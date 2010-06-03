@@ -189,9 +189,9 @@ class Explicit_ODE(ODE):
                 #self.event_iteration(event_info) #Event Iteration
             
             if ncp > 0:
-                    ncp = ncp_ori-len(self.y)+1
-                    if ncp < 0:
-                        ncp = 0
+                ncp = ncp_ori-len(self.y)+1
+                if ncp < 0:
+                    ncp = 0
             
         if self.verbosity >= self.NORMAL:
             self.print_statistics()
