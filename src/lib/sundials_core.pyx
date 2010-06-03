@@ -444,6 +444,9 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
         return 0
     except:
         return 1 # generates an error of type IDA_RTFUNC_FAIL
+        
+cdef int completed_step(void* user_data):
+    return (<object> user_data)[0]()
 
 class SundialsError(Exception):
     def __init__(self, value):
@@ -484,12 +487,14 @@ cdef class CVode_wrap:
         public ndarray abstol_ar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype jacobian
+        public booleantype jacobian, comp_step
         public npy_intp num_event_fcn
+        void* comp_step_method
         N_Vector curr_state
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
     def __init__(self,dim):
+        self.comp_step = False
         self.dim=dim
         self.discr=1
         self.iter=1
@@ -530,6 +535,10 @@ cdef class CVode_wrap:
             flag= CVodeSetMaxStep(self.mem, self.max_h)
         except AttributeError:
             pass
+    
+    def set_completed_method(self,data):
+        self.comp_step_method = <void*>data
+            
     def treat_disc(self,flag,tret):
         cdef int* event_info_
         """
@@ -582,6 +591,9 @@ cdef class CVode_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.comp_step:
+                    if completed_step(self.comp_step_method) != 0:
+                        break
         else: # one step mode
             
             if self.detailed_info == None:
@@ -604,6 +616,9 @@ cdef class CVode_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.comp_step:
+                    if completed_step(self.comp_step_method) != 0:
+                        break
         # Store statistics
         #flag = CVodeGetIntegratorStats(self.mem, &nsteps, &fevals,
         #                        &nlinsetups, &netfails, &qlast, &qcur,
@@ -651,6 +666,7 @@ cdef class IDA_wrap:
     """Class to wrap Sundials IDA"""
     cdef:
         void* mem
+        void* comp_step_method
         public int dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
@@ -658,13 +674,14 @@ cdef class IDA_wrap:
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype suppress_alg,jacobian
+        public booleantype suppress_alg,jacobian, comp_step
         public int icopt
         public npy_intp num_event_fcn
         N_Vector curr_state
         N_Vector curr_deriv
     def __init__(self,dim):
         self.dim=dim
+        self.comp_step = False
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
         self.t0 = t0
@@ -704,7 +721,8 @@ cdef class IDA_wrap:
         flag = IDASetId(self.mem, arr2nv(self.algvar))
         flag = IDASetSuppressAlg(self.mem, self.suppress_alg)
         
-
+    def set_completed_method(self,data):
+        self.comp_step_method = <void*>data
             
     def calc_IC(self,method, direction, lsoff):
         """
@@ -784,6 +802,9 @@ cdef class IDA_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.comp_step:
+                    if completed_step(self.comp_step_method) != 0:
+                        break
         else: # one step mode
         
             if self.detailed_info == None:
@@ -807,6 +828,9 @@ cdef class IDA_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.comp_step:
+                    if completed_step(self.comp_step_method) != 0:
+                        break
         # Store statistics
         #flag = IDAGetIntegratorStats(self.mem, &nsteps, &fevals,
         #                        &nlinsetups, &netfails, &qlast, &qcur,
