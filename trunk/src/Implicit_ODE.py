@@ -123,6 +123,8 @@ class Implicit_ODE(ODE):
             raise Implicit_ODE_Exception('Initial time must be an integer or float.')
 
     
+    
+    
     def integrate(self, t, y, yd, tf,nt):
         pass
         
@@ -208,10 +210,7 @@ class Implicit_ODE(ODE):
             if self.is_disc: #Is discontinious?
                 [tevent,event_info]=self.disc_info
                 
-                if ncp > 0:
-                    ncp = ncp_ori-len(self.y)+1
-                    if ncp < 0:
-                        ncp = 0
+                
                 
                 #Log the information
                 self._log_event_info.append([self.t[-1], event_info])
@@ -230,6 +229,11 @@ class Implicit_ODE(ODE):
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
+            
+            if ncp > 0:
+                ncp = ncp_ori-len(self.y)+1
+                if ncp < 0:
+                    ncp = 0
         
         if self.verbosity >= self.NORMAL:
             self.print_statistics()
@@ -429,6 +433,10 @@ class IDA(Implicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RES]
         
+        if hasattr(problem, 'completed_step'):
+            self.Integrator.comp_step = True
+            self._comp = [self.completed_step]
+            self.Integrator.set_completed_method(self._comp)
         
         #Default values
         self.tout1 = 0.001
@@ -437,7 +445,12 @@ class IDA(Implicit_ODE, Sundials):
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
-        
+    
+    def completed_step(self):
+        """
+        Callback function for the problem class completed_step method.
+        """
+        return self._problem.completed_step(self)
     
     def _set_calcIC_tout1(self, tout1):
         """
