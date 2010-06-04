@@ -605,7 +605,7 @@ cdef class CVode_wrap:
                 flag=0
                 flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
-                    raise Exception,"CVode (one step mode) run error at t=%s with flags %s" %(tret, flags)
+                    sundials_error(flags,2,tret)
                 sol.append((tret,nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 flag = CVodeGetCurrentOrder(self.mem, &qcurrent)
@@ -817,7 +817,7 @@ cdef class IDA_wrap:
                 flags=0
                 flags=IDASolve(self.mem,tf,&tret, self.curr_state,self.curr_deriv,IDA_ONE_STEP)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    raise Exception,"IDA (one step mode) run error at t=%s with flag %s" %(tret, flags)
+                    sundials_error(flags,1,tret)
                 sol.append((tret,nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 flag = IDAGetCurrentOrder(self.mem, &qcurrent)
