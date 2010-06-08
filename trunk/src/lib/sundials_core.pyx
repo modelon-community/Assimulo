@@ -133,7 +133,7 @@ cdef extern from "cvode/cvode_dense.h":
     ctypedef int (*CVDlsDenseJacFn)(int N, realtype t, N_Vector y, N_Vector fy, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
     
-cdef extern from "ida/ida.h":
+cdef extern from "idas/idas.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
     void* IDACreate()
     int IDAInit(void* ida_mem, IDAResFn res, realtype t0, N_Vector y0, N_Vector yp0)
@@ -178,7 +178,7 @@ cdef extern from "ida/ida.h":
     int IDAGetNumNonlinSolvIters(void *ida_mem, long int *nniters) #Number of nonlinear iteration
     int IDAGetNumNonlinSolvConvFails(void *ida_mem, long int *nncfails) #Number of nonlinear conv failures
 
-cdef extern from "ida/ida_dense.h":
+cdef extern from "idas/idas_dense.h":
     int IDADense(void *ida_mem, long int N)
     ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
