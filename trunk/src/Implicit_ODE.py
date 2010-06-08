@@ -680,9 +680,9 @@ class IDA(Implicit_ODE, Sundials):
         return self.__initstep
         
     initstep = property(_get_initial_step,_set_initial_step)
-    """
+    
     def interpolate(self, t, k):
-                
+        """        
         Calls Sundials internal function IDAGetDky that computes the interpolated 
         values of the k-th derivative of y for any value of t in the last internal 
         step taken by IDA.
@@ -698,7 +698,7 @@ class IDA(Implicit_ODE, Sundials):
                     - Must be non-negative and samller than the last internal order used.
                     
                     - Must be an integer.
-        
+        """
         try:
             t = float(t)
         except (TypeError, ValueError):
@@ -709,7 +709,7 @@ class IDA(Implicit_ODE, Sundials):
             raise Explicit_ODE_Exception('k must be convertable to an integer.')
             
         return self.Integrator.interpolate(t,k)
-    """
+
     def _set_max_ord(self,maxord):
         """
         This determines the maximal order that is be used by the solver.
