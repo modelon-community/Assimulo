@@ -45,7 +45,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
             [cordir],
             include_dirs=[incdirs, N.get_include ()],
             library_dirs=[libdirs],
-            libraries=['sundials_cvode','sundials_ida','sundials_nvecserial']),
+            libraries=['sundials_cvode','sundials_idas','sundials_nvecserial']),
     ],
     script_args=copy_args
      )
