@@ -110,6 +110,7 @@ cdef extern from "cvode/cvode.h":
     int CVode(void *cvode_mem, realtype tout, N_Vector yout, realtype *tret, 
         int itask)
     int CVodeSetUserData(void *cvode_mem,void *user_data)
+    int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky)
     # functions for discontinuity handling
     ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data)
     int CVodeRootDirection(void *cvode_mem, int *rootdir)
@@ -150,6 +151,7 @@ cdef extern from "ida/ida.h":
                             N_Vector ypret, int itask)
     int IDASetUserData(void *ida_mem,void *user_data)
     int IDASetInitStep(void *ida_mem, realtype hin)
+    #int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
     # functions to control the error test
     int IDASStolerances(void *ida_mem, realtype reltol, realtype abstol)
     int IDASVtolerances(void *ida_mem, realtype reltol, N_Vector abstol)
@@ -491,6 +493,7 @@ cdef class CVode_wrap:
         public npy_intp num_event_fcn
         void* comp_step_method
         N_Vector curr_state
+        N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
     def __init__(self,dim):
@@ -538,7 +541,22 @@ cdef class CVode_wrap:
     
     def set_completed_method(self,data):
         self.comp_step_method = <void*>data
-            
+    
+    def interpolate(self, t, k):
+        """
+        Calls the internal CVodeGetDky for the interpolated values at time t.
+        t must be within the last internal step. k is the derivative of y which
+        can be from zero to the current order.
+        """
+        cdef N_Vector temp=N_VNew_Serial(self.dim)
+        
+        flag = CVodeGetDky(self.mem, t, k, temp)
+        
+        if flag < 0:
+            sundials_error(flag,2,t)
+        
+        return nv2arr(temp)
+    
     def treat_disc(self,flag,tret):
         cdef int* event_info_
         """
@@ -679,6 +697,7 @@ cdef class IDA_wrap:
         public npy_intp num_event_fcn
         N_Vector curr_state
         N_Vector curr_deriv
+        N_Vector temp_nvector
     def __init__(self,dim):
         self.dim=dim
         self.comp_step = False
@@ -723,7 +742,20 @@ cdef class IDA_wrap:
         
     def set_completed_method(self,data):
         self.comp_step_method = <void*>data
-            
+    """
+    def interpolate(self, t, k):
+        
+        Calls the internal IDAGetDky for the interpolated values at time t.
+        t must be within the last internal step. k is the derivative of y which
+        can be from zero to the current order.
+        
+        flag = IDAGetDky(self.mem, t, k, self.temp_nvector)
+        
+        if flag < 0:
+            sundials_error(flag,1,t)
+        
+        return nv2arr(self.temp_nvector)
+    """
     def calc_IC(self,method, direction, lsoff):
         """
         This calculates the initial conditions with the built in SUNDIALS

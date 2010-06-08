@@ -318,6 +318,25 @@ class Test_CVode:
         self.simulator.initstep = 1
         assert self.simulator.initstep == 1.0
     
+    def test_interpolate(self):
+        """
+        This tests the functionality of the method interpolate.
+        """
+        f = lambda t,x: x**0.25
+        
+        prob = Explicit_Problem()
+        prob.f = f
+        
+        sim = CVode(prob, [1.0])
+        sim.simulate(10., 100)
+        y100 = sim.y
+        t100 = sim.t
+        sim.reset()
+        sim.simulate(10.)
+        
+        nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
+        
+        
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
