@@ -547,21 +547,21 @@ class CVode(Explicit_ODE, Sundials):
             self.usejac = False
             self._RHS = [self.f]
         
-        if hasattr(problem, 'completed_step'):
-            self.Integrator.comp_step = True
-            self._comp = [self.completed_step]
-            self.Integrator.set_completed_method(self._comp)
+        #if hasattr(problem, 'completed_step'):
+        #    self.Integrator.comp_step = True
+        #    self._comp = [self.completed_step]
+        #    self.Integrator.set_completed_method(self._comp)
         
         if hasattr(self, '_ROOT'):
             self.problem_spec = [self._RHS, self._ROOT]
         else:
             self.problem_spec = [self._RHS]
         
-    def completed_step(self):
-        """
-        Callback function for the problem class completed_step method.
-        """
-        return self._problem.completed_step(self)
+    #def completed_step(self):
+    #    """
+    #    Callback function for the problem class completed_step method.
+    #    """
+    #    return self._problem.completed_step(self)
     
     def integrate(self,t,y,tfinal,nt):
         """
