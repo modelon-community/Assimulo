@@ -18,13 +18,13 @@ else:
 
 copy_args=S.argv[1:]
 
-for x in copy_args:
+for x in S.argv[1:]:
     if not x.find('--sundials-home'):
         incdirs = O.path.join(x[16:],'include')
         libdirs = O.path.join(x[16:],'lib')
         copy_args.remove(x)
     if not x.find('--prefix'):
-        copy_args[copy_args.index(x)] = O.path.join(x[9:],'')
+        copy_args[copy_args.index(x)] = x.replace('/',O.sep)
 
 if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
     
