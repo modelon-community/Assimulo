@@ -28,7 +28,7 @@ class Explicit_ODE(ODE):
     Baseclass for our explicit ODE integrators.
     """
     
-    def __init__(self, problem, y0=None, t0=None):
+    def __init__(self, problem, y0=None, t0=None, switches0=None):
         """
         Initiates the solver.
         
@@ -85,7 +85,20 @@ class Explicit_ODE(ODE):
             self.y = [N.array(y0, dtype=float)]
         except ValueError:
             raise Explicit_ODE_Exception('Initial values must be a scalar/list/array of type int or float.')
-
+        
+        if hasattr(self._problem, 'switches0') and switches0 == None:
+            switches0 = self._problem.switches0
+        
+        if isinstance(switches0, list):
+            for x in switches0:
+                if not isinstance(x, bool):
+                    raise Explicit_ODE_Exception('Switches must be a list of booleans.')
+        elif switches0 is not None:
+            raise Explicit_ODE_Exception('Switches must be a list of booleans.')
+        
+        self._problem.switches0 = switches0
+        self.switches = switches0
+        
         if t0 == None:
             if hasattr(problem, 't0'):
                 t0 = problem.t0
@@ -159,16 +172,37 @@ class Explicit_ODE(ODE):
                 print 'Number of communication points must be a positive integer, setting' \
                       ' nt = 0.'
         ncp_ori = ncp
+        tfinal_ori = tfinal
         
-        while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
+        while N.abs(self.t[-1]-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t[-1]-tfinal_ori)/(ncp+1.0)):
             
+            tevent = self._problem.time_event_fcn(self.t[-1], self.y[-1], self.switches)
+            if tevent == None:
+                tfinal = tfinal_ori
+            else:
+                tfinal = tevent if tevent < tfinal_ori else tfinal_ori
+                if ncp > 0:
+                    ncp = (tevent-self.t[-1])/(tfinal_ori-self.t[0])*ncp_ori
+
             solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,ncp))
         
             self.t.extend(q[0] for q in solution)
             self.y.extend(q[1] for q in solution)
             
-            if self.is_disc: #Is discontinious?
-                [tevent,event_info]=self.disc_info
+            if tevent == None:
+                teventflag = False
+            elif N.abs(self.t[-1]-tevent)< self._SAFETY**0.5:
+                teventflag = True
+            else:
+                teventflag = False
+                
+            
+            if self.is_disc or teventflag: #Is discontinious?
+            
+                if teventflag:
+                    [tevent, event_info] = [tevent, []]
+                else:
+                    [tevent,event_info]=self.disc_info
                 
                 #Log the information
                 self._log_event_info.append([self.t[-1], event_info])
@@ -294,7 +328,7 @@ class RungeKutta34(Explicit_ODE):
     Adaptive Runge-Kutta of order four.
     Obs. Step rejection not implemented.
     """
-    def __init__(self, problem, y0=None, t0=None):
+    def __init__(self, problem, y0=None, t0=None, switches0=None):
         """
         Initiates the solver.
         
@@ -326,7 +360,7 @@ class RungeKutta34(Explicit_ODE):
                                     t0 = 1.0
                                     
         """
-        Explicit_ODE.__init__(self, problem, y0, t0) #Calls the base class
+        Explicit_ODE.__init__(self, problem, y0, t0, switches0) #Calls the base class
         
         #Default values
         self.initstep = 0.01
@@ -500,7 +534,7 @@ class CVode(Explicit_ODE, Sundials):
                 raise Explicit_ODE_Exception('y0 must not be None.')
             
         Sundials.__init__(self, y0, 'CVode') #Creates an integrator
-        Explicit_ODE.__init__(self, problem, y0, t0) #Calls the base class
+        Explicit_ODE.__init__(self, problem, y0, t0, switches0) #Calls the base class
         
         #Default values
         self.discr = 'Adams' #Setting default discretization to Adams
@@ -508,18 +542,6 @@ class CVode(Explicit_ODE, Sundials):
         self.maxord = 12 #Setting default maxord to maximum
         self.initstep = 0.0 #Setting the initial step to be estimated
         
-        if hasattr(self._problem, 'switches0') and switches0 == None:
-            switches0 = self._problem.switches0
-        
-        if isinstance(switches0, list):
-            for x in switches0:
-                if not isinstance(x, bool):
-                    raise Explicit_ODE_Exception('Switches must be a list of booleans.')
-        elif switches0 is not None:
-            raise Explicit_ODE_Exception('Switches must be a list of booleans.')
-        
-        self._problem.switches0 = switches0
-        self.switches = switches0
         
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'event_fcn'):

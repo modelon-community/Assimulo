@@ -143,6 +143,16 @@ class Explicit_Problem(Problem):
                 
                 Returns:
                     A numpy array.
+                    
+            def time_event_fcn(self, t, y, sw) or time_event_fcn(self, t, y)
+                Defines the time events. This function should return
+                the next time-point for a time event. At a time-event
+                the usual method handle_event is called for the specific
+                handling. If there are no more time events. This function
+                should return None.
+                
+                Returns:
+                    A float.
                 
             def jac(self, t, y, sw=None)
                 Defines the jacobian. J=df/dx.
@@ -160,6 +170,11 @@ class Explicit_Problem(Problem):
                 Defines the starting values of the switches. 
                 Should be a list of booleans.
     """
+    def time_event_fcn(self, t, y, sw=None):
+        """
+        The time event function.
+        """
+        return None
     
     def f(self, t, y, sw=None):
         """
