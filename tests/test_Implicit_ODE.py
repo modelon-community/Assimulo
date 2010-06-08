@@ -100,6 +100,24 @@ class Test_IDA:
         assert simulator.problem_spec[1][0] == simulator.event_fcn
         assert simulator.problem_spec[1][1] == switches
     
+    def test_interpolate(self):
+        """
+        This tests the functionality of the method interpolate.
+        """
+        f = lambda t,y,yd: y**0.25-yd
+        
+        prob = Implicit_Problem()
+        prob.f = f
+        
+        sim = IDA(prob, [1.0],[1.0])
+        sim.simulate(10., 100)
+        y100 = sim.y
+        t100 = sim.t
+        sim.reset()
+        sim.simulate(10.)
+        
+        nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
+    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.

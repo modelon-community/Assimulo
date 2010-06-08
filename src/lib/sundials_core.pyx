@@ -151,7 +151,7 @@ cdef extern from "idas/idas.h":
                             N_Vector ypret, int itask)
     int IDASetUserData(void *ida_mem,void *user_data)
     int IDASetInitStep(void *ida_mem, realtype hin)
-    #int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
+    int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
     # functions to control the error test
     int IDASStolerances(void *ida_mem, realtype reltol, realtype abstol)
     int IDASVtolerances(void *ida_mem, realtype reltol, N_Vector abstol)
@@ -741,20 +741,22 @@ cdef class IDA_wrap:
         
     #def set_completed_method(self,data):
     #    self.comp_step_method = <void*>data
-    """
+    
     def interpolate(self, t, k):
-        
+        """
         Calls the internal IDAGetDky for the interpolated values at time t.
         t must be within the last internal step. k is the derivative of y which
         can be from zero to the current order.
+        """
+        cdef N_Vector temp=N_VNew_Serial(self.dim)
         
-        flag = IDAGetDky(self.mem, t, k, self.temp_nvector)
+        flag = IDAGetDky(self.mem, t, k, temp)
         
         if flag < 0:
             sundials_error(flag,1,t)
         
-        return nv2arr(self.temp_nvector)
-    """
+        return nv2arr(temp)
+
     def calc_IC(self,method, direction, lsoff):
         """
         This calculates the initial conditions with the built in SUNDIALS
