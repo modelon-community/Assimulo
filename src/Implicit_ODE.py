@@ -433,10 +433,10 @@ class IDA(Implicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RES]
         
-        if hasattr(problem, 'completed_step'):
-            self.Integrator.comp_step = True
-            self._comp = [self.completed_step]
-            self.Integrator.set_completed_method(self._comp)
+        #if hasattr(problem, 'completed_step'):
+        #    self.Integrator.comp_step = True
+        #    self._comp = [self.completed_step]
+        #    self.Integrator.set_completed_method(self._comp)
         
         #Default values
         self.tout1 = 0.001
@@ -446,11 +446,11 @@ class IDA(Implicit_ODE, Sundials):
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
     
-    def completed_step(self):
-        """
-        Callback function for the problem class completed_step method.
-        """
-        return self._problem.completed_step(self)
+    #def completed_step(self):
+    #    """
+    #    Callback function for the problem class completed_step method.
+    #    """
+    #    return self._problem.completed_step(self)
     
     def _set_calcIC_tout1(self, tout1):
         """

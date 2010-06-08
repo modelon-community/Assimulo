@@ -40,10 +40,6 @@ class Problem(object):
         def initiate(self)
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
-        
-        def completed_step(self, solver)
-            Method for specifying certain options or handling after a step have been
-            successful. Return -1 to break and reinitiate the solver. Return 0 if not.
             
     Parameters (optional)::
     
