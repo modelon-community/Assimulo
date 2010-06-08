@@ -188,6 +188,7 @@ class Explicit_ODE(ODE):
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Event Iteration
             
+            
             if ncp > 0:
                 ncp = ncp_ori-len(self.y)+1
                 if ncp < 0:
@@ -842,6 +843,36 @@ class CVode(Explicit_ODE, Sundials):
         return self.__maxord
 
     maxord=property(_get_max_ord,_set_max_ord)
+    
+    def interpolate(self, t, k):
+        """            
+        Calls Sundials internal function CVodeGetDky that computes the interpolated 
+        values of the k-th derivative of y for any value of t in the last internal 
+        step taken by CVode.
+        
+            Parameters::
+                t
+                    - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
+                      internal time reached, and hu is the last internal step size used successfully.
+                      
+                    - Must be a float.
+                      
+                k
+                    - Must be non-negative and samller than the last internal order used.
+                    
+                    - Must be an integer.
+        """
+        try:
+            t = float(t)
+        except (TypeError, ValueError):
+            raise Explicit_ODE_Exception('t must be convertable to a float.')
+        try:
+            k = int(k)
+        except (TypeError, ValueError):
+            raise Explicit_ODE_Exception('k must be convertable to an integer.')
+            
+        return self.Integrator.interpolate(t,k)
+            
     
     def print_statistics(self):
         """
