@@ -1,29 +1,67 @@
+========
+ASSIMULO
+========
+
+INSTALL
+=======
+
 There are two setup files, each corresponding to a different level of setup.
-If the package was downloaded as a release the cython part connecting Sundials
-comes precompiled. So the only dependecies are shown below,
+
+	setup.py
+	setup_source.py
+	
+The idea with setup.py is to allow for pre-compiled binaries for Sundials and
+the interface with Cython for Sundials. setup_source.py is intended for use 
+when compiling everything from source.
+
+If your package was downloaded as a platform specific release, use the setup.py
+otherwise use setup_source.py. It's only for a platform specific release the
+binary comes pre-compiled.
+
+
+---------------
+setup_source.py
+---------------
 
 *REQUIREMENTS
--Python
--Numpy, Pylab
+	-Python-2.6 (with headers)
+	-Numpy, Pylab
+	-Sundials-2.4.0
+	-Cython
 
-. To install just do a normal python installation, 'python setup.py install'.
+Installation is preformed using the command:
+
+	'python setup_source.py install --sundials-home=/path/to/sundials'
+	
+The argument --sundials-home should point to where Sundials have been
+installed. Assimulo is then installed under Python dist-packages. 
 To test the installation, browse to the tests folder and do a 'nosetests'.
-Will require python-nosetests additionally.
+(The testing needs additionally python-nose)
 
-If the package was download from the trac-site, the cython part is not precompiled.
-This results in a few more dependencies,
+
+
+
+--------
+setup.py
+--------
 
 *REQUIREMENTS
--Python
--Numpy, Pylab
--Cython
--Sundials-2.4
+	-Python-2.6
+	-Numpy, Pylab
 
-. To install you also have to edit the file setup_source.py, the variables 'incdirs',
-and 'libdirs'. 'incdirs' should correspond to the include folder in the Sundials
-installation and 'libdirs' should correspond to the lib folder in the Sundials
-installation. Then just do a normal setup with the command:
-"python setup_source.py install" and the package will be installed in your python 
-dist-packages folder.
+Installation is preformed using the normal command:
+ 
+	'python setup.py install'
+
+Assimulo is then installed under Python dist-packages. To test the installation, 
+browse to the tests folder and do a 'nosetests'.
+(The testing needs additionally python-nose)
+
+
+
+
+
+
+
 
 	
