@@ -41,6 +41,15 @@ class Problem(object):
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
             
+        def post_process(self, solver)
+            Allows for users to specify how the data handling is done for example.
+            It is not allowed to change the values of the states in this method.
+            This method gets called if the property post_process = True in the solver
+            and it is called at each communication point (if specified) or at each
+            internal point if no communication points are specified. Also after each
+            time and state event. Currently it is only supported when using Sundials
+            solvers.
+            
     Parameters (optional)::
     
         problem_name
