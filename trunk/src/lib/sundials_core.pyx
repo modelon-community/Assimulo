@@ -489,7 +489,7 @@ cdef class CVode_wrap:
         public ndarray abstol_ar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype jacobian
+        public booleantype jacobian, post_process
         public npy_intp num_event_fcn
         N_Vector curr_state
         N_Vector temp_nvector
@@ -500,6 +500,7 @@ cdef class CVode_wrap:
         self.dim=dim
         self.discr=1
         self.iter=1
+        self.post_process = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
         cdef flag
         self.curr_state=arr2nv(u)
@@ -608,6 +609,8 @@ cdef class CVode_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.post_process:
+                    break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
@@ -632,6 +635,8 @@ cdef class CVode_wrap:
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
+                    break
+                if self.post_process:
                     break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
@@ -691,7 +696,7 @@ cdef class IDA_wrap:
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype suppress_alg,jacobian
+        public booleantype suppress_alg,jacobian, post_process
         public int icopt
         public npy_intp num_event_fcn
         N_Vector curr_state
@@ -699,6 +704,7 @@ cdef class IDA_wrap:
         N_Vector temp_nvector
     def __init__(self,dim):
         self.dim=dim
+        self.post_process = False
         #self.comp_step = False
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
@@ -835,6 +841,8 @@ cdef class IDA_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.post_process:
+                    break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
@@ -860,6 +868,8 @@ cdef class IDA_wrap:
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
+                    break
+                if self.post_process:
                     break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:

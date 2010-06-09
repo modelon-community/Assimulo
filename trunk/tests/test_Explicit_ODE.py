@@ -205,6 +205,7 @@ class Test_CVode:
         
         self.simulator = CVode(problem,y0)
         
+    
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -336,6 +337,26 @@ class Test_CVode:
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
         
+    def test_post_process(self):
+        """
+        This function tests the post processing.
+        """
+        f = lambda t,x: x**0.25
+        def post_process(solver):
+            solver.temp+=1
+        
+        
+        prob = Explicit_Problem()
+        prob.f = f
+        prob.post_process = post_process
+        
+        sim = CVode(prob, [1.0])
+        sim.temp = 0
+        sim.post_process = True
+        sim.simulate(10., 100)
+        assert sim.temp == 100
+        sim.simulate(20.)
+        assert sim.temp == 110
         
     def test_max_order(self):
         """
