@@ -888,13 +888,16 @@ class IDA(Implicit_ODE, Sundials):
         Prints the run-time statistics for the problem.
         """
         print 'Final Run Statistics: %s \n' % self.problem_name
-        
         statistics = self.stats
-        keys = statistics.keys()
-        keys.sort()
         
-        for x in keys:
-            print '%s = %s'%(x, statistics[x])
+        if statistics!= None:
+            keys = statistics.keys()
+            keys.sort()
+            
+            for x in keys:
+                print '%s = %s'%(x, statistics[x])
+        else:
+            print 'No statistics available.'
     
     @property
     def is_disc(self):

@@ -52,7 +52,7 @@ class Problem(object):
         """
         Method for specializing initiation.
         """
-        if solver.verbosity == solver.NORMAL:
+        if solver.verbosity >= solver.NORMAL:
             print 'No initiation defined for the problem.'
     
     def reset(self):
@@ -66,7 +66,7 @@ class Problem(object):
         """
         Method that is called when an event has triggered.
         """
-        if solver.verbosity == solver.NORMAL:
+        if solver.verbosity >= solver.NORMAL:
             print 'No event handling defined.'
     
     def post_process(self, solver):
@@ -74,7 +74,7 @@ class Problem(object):
         Method for specifying post process handling. Only
         available when using Sundials.
         """
-        if solver.verbosity == solver.NORMAL:
+        if solver.verbosity >= solver.NORMAL:
             print 'No post processing defined for the problem.'
     
     
