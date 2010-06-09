@@ -1,4 +1,9 @@
+========
 ASSIMULO
+========
+
+README
+=======
 
 Assimulo is a python based simulation package that allows for simulation both 
 ordinary differential equations of the form f(t,y), (explicit problems) and 
@@ -21,15 +26,16 @@ just as easily pass them to the constructor of the solver as well. Then create y
 solver, set the attributes (method, absolute/relative tolerance etc.) and use 
 the call to simulate.
 
+For more information about Assimulo, visit http://www.jmodelica.org/assimulo
 For more information on how to solve a problem see examples.
 
 INSTALL
-See the INSTALL file. 
+See the INSTALL file or 'installation' on the homepage.
 
 CONTACT
 Trac-site: https://trac.jmodelica.org/assimulo/wiki
 Homepage: http://www.jmodelica.org/assimulo
-Email: chria@kth.se
+Email: chria@maths.lth.se
 
 The package is currently under development and any input is appreciated.
 

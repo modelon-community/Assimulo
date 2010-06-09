@@ -1,6 +1,8 @@
 --- CHANGELOG ---
 
 --- Assimulo-1.1.x (Not released yet)---
+    * Wrapped an interpolate method from Sundials (IDAGetDky, CVodeGetDky)
+    * Changed from using IDA to IDAS
     * Changed Assimulo.Problem.Problem_Name to problem_name.
     * Changed Assimulo.ODE.problemname to problem_name.
     * Fixed a bugg when printing information when used FixedPoint.
