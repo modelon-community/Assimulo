@@ -369,6 +369,11 @@ class RungeKutta34(Explicit_ODE):
         #Default values
         self.initstep = 0.01
         
+        #Internal values
+        # - Statistic values
+        self._nsteps = 0 #Number of steps
+        self._nfcn = 0 #Number of function evaluations
+        
     def _set_initial_step(self, initstep):
         """
         This determines the initial step-size to be used in the integration.
@@ -418,6 +423,7 @@ class RungeKutta34(Explicit_ODE):
             if t >= tf:
                 break
             t, y = self.step(t, y)
+            self._nsteps += 1
             yield t,y
             self.adjust_stepsize()
             self.h=min(self.h,N.abs(tf-t))
@@ -436,6 +442,7 @@ class RungeKutta34(Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
+        self._nfcn += 5
         f = self.f
         h = self.h
         Y1 = f(t, y)
@@ -445,7 +452,14 @@ class RungeKutta34(Explicit_ODE):
         Y4 = f(t + h, y + h*Y3)
         self.error = N.linalg.norm(h/6*(2*Y2 + Z3 - 2*Y3 - Y4))
         return t+h, y + h/6*(Y1 + 2*Y2 + 2*Y3 + Y4)
-     
+    
+    def print_statistics(self):
+        """
+        Should print the statistics.
+        """
+        print 'Final Run Statistics: %s \n' % self.problem_name
+        print 'Number of Steps                           =', self._nsteps
+        print 'Number of Function Evaluations            =', self._nfcn
     
     
 class RungeKutta4(Explicit_ODE):
