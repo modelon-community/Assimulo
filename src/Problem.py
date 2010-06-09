@@ -69,6 +69,14 @@ class Problem(object):
         if solver.verbosity == solver.NORMAL:
             print 'No event handling defined.'
     
+    def post_process(self, solver):
+        """
+        Method for specifying post process handling. Only
+        available when using Sundials.
+        """
+        if solver.verbosity == solver.NORMAL:
+            print 'No post processing defined for the problem.'
+    
     
 class Implicit_Problem(Problem):
     """

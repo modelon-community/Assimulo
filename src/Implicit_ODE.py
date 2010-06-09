@@ -229,6 +229,12 @@ class Implicit_ODE(ODE):
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
+                self._flag_init = True
+            else:
+                self._flag_init = False
+            
+            if self.post_process:
+                self._problem.post_process(self)
             
             if ncp > 0:
                 ncp = ncp_ori-len(self.y)+1
@@ -637,7 +643,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh)
+        self.Integrator.post_process = self.post_process
+        if self._flag_init:
+            self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh)
+        
         return self.Integrator.run(t,tfinal,nt)
     
     def _set_initial_step(self, initstep):

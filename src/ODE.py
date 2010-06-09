@@ -37,12 +37,14 @@ class ODE(object):
         self.maxsteps = 10000 #Max number of steps
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
+        self.post_process = False #Post processing option
         #self.h = 0.01 #Stepsize used for methods with fixed stepsize
         #self.max_eIter = 50 #Default number of allowed event iterations
     
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps
         self._log_event_info = []
+        self._flag_init = True
     
     def _set_max_steps(self, maxsteps):
         """
@@ -224,7 +226,7 @@ class ODE(object):
         Initiates the problem (if defined in the problem class).
         """
         self._problem.initiate(self)
-
+    
     def print_event_info(self):
         """
         Prints the event information.
@@ -239,3 +241,45 @@ class ODE(object):
         Should print the statistics.
         """
         pass
+        
+    def _get_post_process(self):
+        """
+        Defines the post process actions. When set to True handling
+        is given to the post process method defined in the Problem at
+        each time-step taken. For Sundials methods this can either
+        be at an internal time-step (in simulate, ncp=0) or at 
+        communication points, (in simulate, ncp>0).
+        
+            Parameters::
+            
+                post_process
+                        - Default 'False'.
+                        
+                        - Should be convertable to boolean.
+                        
+                            Example:
+                                post_process = True
+        """
+        return self.__postprocess
+        
+    def _set_post_process(self, post):
+        """
+        Defines the post process actions. When set to True handling
+        is given to the post process method defined in the Problem at
+        each time-step taken. For Sundials methods this can either
+        be at an internal time-step (in simulate, ncp=0) or at 
+        communication points, (in simulate, ncp>0).
+        
+            Parameters::
+            
+                post_process
+                        - Default 'False'.
+                        
+                        - Should be convertable to boolean.
+                        
+                            Example:
+                                post_process = True
+        """
+        self.__postprocess = bool(post)
+
+    post_process = property(_get_post_process, _set_post_process)

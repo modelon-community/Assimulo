@@ -64,6 +64,17 @@ class Test_ODE:
         assert tf == 10
         assert ncp == 100
         
+    def test_post_process(self):
+        """
+        This tests the functionality of the property post_process.
+        """
+        
+        assert self.simulator.post_process == False #Test the default value
+        
+        self.simulator.post_process = True
+        assert self.simulator.post_process == True
+        
+        
         
     #def test_max_eIter(self):
     #    """

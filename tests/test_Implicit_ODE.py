@@ -118,6 +118,27 @@ class Test_IDA:
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
+    def test_post_process(self):
+        """
+        This function tests the post processing.
+        """
+        f = lambda t,x,xd: x**0.25-xd
+        def post_process(solver):
+            solver.temp+=1
+        
+        
+        prob = Implicit_Problem()
+        prob.f = f
+        prob.post_process = post_process
+        
+        sim = IDA(prob, [1.0],[1.0])
+        sim.temp = 0
+        sim.post_process = True
+        sim.simulate(10., 100)
+        assert sim.temp == 100
+        sim.simulate(20)
+        assert sim.temp == 114
+        
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.

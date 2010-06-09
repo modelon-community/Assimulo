@@ -185,7 +185,7 @@ class Explicit_ODE(ODE):
                     ncp = (tevent-self.t[-1])/(tfinal_ori-self.t[0])*ncp_ori
 
             solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,ncp))
-        
+
             self.t.extend(q[0] for q in solution)
             self.y.extend(q[1] for q in solution)
             
@@ -220,8 +220,12 @@ class Explicit_ODE(ODE):
                     print 'Calling problem specified event handling...'
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
-                #self.event_iteration(event_info) #Event Iteration
+                self._flag_init = True
+            else:
+                self._flag_init = False
             
+            if self.post_process:
+                self._problem.post_process(self)
             
             if ncp > 0:
                 ncp = ncp_ori-len(self.y)+1
@@ -541,7 +545,7 @@ class CVode(Explicit_ODE, Sundials):
         self.iter = 'FixedPoint' #Setting default iteration to FixedPoint
         self.maxord = 12 #Setting default maxord to maximum
         self.initstep = 0.0 #Setting the initial step to be estimated
-        
+
         
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'event_fcn'):
@@ -589,7 +593,10 @@ class CVode(Explicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
+        self.Integrator.post_process = self.post_process
+        if self._flag_init:
+            self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
+            
         return self.Integrator.run(t,tfinal,nt)
     
     def _set_discr_method(self,discr='Adams'):
@@ -913,3 +920,4 @@ class CVode(Explicit_ODE, Sundials):
     def is_disc(self):
         """Method to test if we are at an event."""
         return self.t[-1]==self.Integrator.event_time
+        
