@@ -557,6 +557,43 @@ cdef class CVode_wrap:
         
         return nv2arr(temp)
     
+    def store_statistics(self):
+        """
+        Retrieves and stores the statistics.
+        """
+        cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
+        
+        flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
+        flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
+        if self.iter == 1:
+            njevals = 0
+            nrevalsLS = 0
+        else:
+            flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
+            flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
+        flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
+        flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
+        flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
+        flag = CVodeGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+        
+        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
+        stats_text = ['Number of Steps                          ',
+                      'Number of Function Evaluations           ',
+                      'Number of Jacobian Evaluations           ',
+                      'Number of F-Eval During Jac-Eval         ',
+                      'Number of Root Evaluations               ',
+                      'Number of Error Test Failures            ',
+                      'Number of Nonlinear Iterations           ',
+                      'Number of Nonlinear Convergence Failures ']
+        
+        if self.stats != None:
+            for x in range(len(stats_text)):
+                self.stats[stats_text[x]] += stats_values[x]
+        else:
+            self.stats = {}
+            for x in range(len(stats_text)):
+                self.stats[stats_text[x]] = stats_values[x]
+    
     def treat_disc(self,flag,tret):
         cdef int* event_info_
         """
@@ -587,11 +624,9 @@ cdef class CVode_wrap:
         cdef int i,itask
         cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
-        cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
         cdef int  qlast, qcurrent
         flag = CVodeSetStopTime(self.mem, tf)
         sol=[]
-        
         tret=t0
         if nt > 0:
             dt=(tf-t0)/nt
@@ -610,10 +645,14 @@ cdef class CVode_wrap:
                 if self.treat_disc(flags,tret):
                     break
                 if self.post_process:
+                    if i == nt:
+                        flags=1
                     break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
+            else:
+                flags=1
         else: # one step mode
             
             if self.detailed_info == None:
@@ -649,41 +688,14 @@ cdef class CVode_wrap:
         #        'Last Order':qlast,'Current Order':qcur,'Avarage Order':avar,'Computed Initial StepSize':hinused,'Last StepSize':hlast,
         #        'Current Stepsize':hcur,'Time interval':[t0,tcur],'Method':self.method[self.discr-1],
         #        'Iteration':self.iteration[self.iter-1]}
-        flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
-        flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
-        if self.iter == 1:
-            njevals = 0
-            nrevalsLS = 0
-        else:
-            flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-            flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
-        flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
-        flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-        flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-        flag = CVodeGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
-        
-        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-        stats_text = ['Number of Steps                          ',
-                      'Number of Function Evaluations           ',
-                      'Number of Jacobian Evaluations           ',
-                      'Number of F-Eval During Jac-Eval         ',
-                      'Number of Root Evaluations               ',
-                      'Number of Error Test Failures            ',
-                      'Number of Nonlinear Iterations           ',
-                      'Number of Nonlinear Convergence Failures ']
-        
-        if self.stats != None:
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] += stats_values[x]
-        else:
-            self.stats = {}
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] = stats_values[x]
+        if flags >= 1:
+            self.store_statistics()
         # Free memory
         #CVodeFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)
-        
         return sol
+        
+        
 cdef class IDA_wrap:
     """Class to wrap Sundials IDA"""
     cdef:
@@ -762,6 +774,38 @@ cdef class IDA_wrap:
             sundials_error(flag,1,t)
         
         return nv2arr(temp)
+        
+    def store_statistics(self):
+        """
+        Retrieves and stores the statistics.
+        """
+        cdef long int nsteps, nrevals,njevals,nrevalsLS,ngevals,netfails,nniters,nncfails
+        
+        flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
+        flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
+        flag = IDADlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
+        flag = IDADlsGetNumResEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
+        flag = IDAGetNumGEvals(self.mem, &ngevals) #Number of root evals
+        flag = IDAGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
+        flag = IDAGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
+        flag = IDAGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+        
+        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
+        stats_text = ['Number of Steps                          ',
+                      'Number of Function Evaluations           ',
+                      'Number of Jacobian Evaluations           ',
+                      'Number of F-Eval During Jac-Eval         ',
+                      'Number of Root Evaluations               ',
+                      'Number of Error Test Failures            ',
+                      'Number of Nonlinear Iterations           ',
+                      'Number of Nonlinear Convergence Failures ']
+        if self.stats != None:
+            for x in range(len(stats_text)):
+                self.stats[stats_text[x]] += stats_values[x]
+        else:
+            self.stats = {}
+            for x in range(len(stats_text)):
+                self.stats[stats_text[x]] = stats_values[x]
 
     def calc_IC(self,method, direction, lsoff):
         """
@@ -819,7 +863,6 @@ cdef class IDA_wrap:
         cdef int i,itask
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
-        cdef long int nsteps, nrevals,njevals,nrevalsLS,ngevals,netfails,nniters,nncfails
         cdef int  qlast, qcurrent
         flag = IDASetStopTime(self.mem, tf)
         sol=[]
@@ -842,10 +885,14 @@ cdef class IDA_wrap:
                 if self.treat_disc(flags,tret):
                     break
                 if self.post_process:
+                    if i == nt:
+                        flags=1
                     break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
+            else:
+                flags=1
         else: # one step mode
         
             if self.detailed_info == None:
@@ -874,6 +921,9 @@ cdef class IDA_wrap:
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
+                
+        if flags >= 1:
+            self.store_statistics()
         # Store statistics
         #flag = IDAGetIntegratorStats(self.mem, &nsteps, &fevals,
         #                        &nlinsetups, &netfails, &qlast, &qcur,
@@ -881,31 +931,7 @@ cdef class IDA_wrap:
         #self.stats={'Steps':nsteps,'F-Evals':fevals, 'LinSystem Setups':nlinsetups, 'ErrorTest Failures':netfails,
         #        'Last Order':qlast,'Current Order':qcur,'Avarage Order':avar,'Computed Initial StepSize':hinused,'Last StepSize':hlast,
         #        'Current Stepsize':hcur,'Time interval':[t0,tcur]}
-        flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
-        flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
-        flag = IDADlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-        flag = IDADlsGetNumResEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
-        flag = IDAGetNumGEvals(self.mem, &ngevals) #Number of root evals
-        flag = IDAGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-        flag = IDAGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-        flag = IDAGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
         
-        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-        stats_text = ['Number of Steps                          ',
-                      'Number of Function Evaluations           ',
-                      'Number of Jacobian Evaluations           ',
-                      'Number of F-Eval During Jac-Eval         ',
-                      'Number of Root Evaluations               ',
-                      'Number of Error Test Failures            ',
-                      'Number of Nonlinear Iterations           ',
-                      'Number of Nonlinear Convergence Failures ']
-        if self.stats != None:
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] += stats_values[x]
-        else:
-            self.stats = {}
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] = stats_values[x]
         # Free memory
         #IDAFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)
