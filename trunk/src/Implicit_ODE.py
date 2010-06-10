@@ -198,6 +198,7 @@ class Implicit_ODE(ODE):
                 print 'Number of communication points must be a positive integer, setting' \
                       ' nt = 0.'
         ncp_ori = ncp
+        time_start = time.clock()
         
         while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
             
@@ -240,9 +241,11 @@ class Implicit_ODE(ODE):
                 ncp = ncp_ori-len(self.y)+1
                 if ncp < 0:
                     ncp = 0
+        time_stop = time.clock()
         
         if self.verbosity >= self.NORMAL:
             self.print_statistics()
+            print 'Elapsed simulation time:', time_stop-time_start, 'seconds.'
         
         
         return [self.t, self.y, self.yd]

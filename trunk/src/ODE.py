@@ -17,6 +17,7 @@
 
 import numpy as N
 import pylab as P
+import time
 
 class ODE_Exception(Exception):
     """ An integrator exception. """
