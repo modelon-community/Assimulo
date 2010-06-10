@@ -173,6 +173,7 @@ class Explicit_ODE(ODE):
                       ' nt = 0.'
         ncp_ori = ncp
         tfinal_ori = tfinal
+        time_start = time.clock()
         
         while N.abs(self.t[-1]-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t[-1]-tfinal_ori)/(ncp+1.0)):
             
@@ -231,9 +232,11 @@ class Explicit_ODE(ODE):
                 ncp = ncp_ori-len(self.y)+1
                 if ncp < 0:
                     ncp = 0
-            
+        time_stop = time.clock()
+        
         if self.verbosity >= self.NORMAL:
             self.print_statistics()
+            print 'Elapsed simulation time:', time_stop-time_start, 'seconds.'
         
         return [self.t, self.y]
     
