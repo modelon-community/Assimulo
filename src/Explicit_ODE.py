@@ -185,7 +185,7 @@ class Explicit_ODE(ODE):
                 if ncp > 0:
                     ncp = (tevent-self.t[-1])/(tfinal_ori-self.t[0])*ncp_ori
 
-            solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,ncp))
+            solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,int(ncp)))
 
             self.t.extend(q[0] for q in solution)
             self.y.extend(q[1] for q in solution)
@@ -196,7 +196,6 @@ class Explicit_ODE(ODE):
                 teventflag = True
             else:
                 teventflag = False
-                
             
             if self.is_disc or teventflag: #Is discontinious?
             
