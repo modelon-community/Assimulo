@@ -1,7 +1,9 @@
 import nose
 import numpy as N
 from Assimulo.Explicit_ODE import *
+from Assimulo.Implicit_ODE import *
 from Assimulo.Problem import Explicit_Problem
+from Assimulo.Problem import Implicit_Problem
 
 def run_example():
     
@@ -42,11 +44,53 @@ def run_example():
     assert exp_sim.stats != None
     
 
+def run_example2():
+    def f(t,y):
+        ydot = 1.0
+        return N.array([ydot])
+    
+    def time_event_fcn(t,y,sw):
+        events = [1.0, 2.0, 2.5, 3.0]
+        for ev in events:
+            if t < ev:
+                tnext = ev
+                break
+            else:
+                tnext = None
+        #print tnext
+        return tnext
+        
+    def handle_event(solver, event_info):
+        solver.y[-1]+= 1.0
+    
+    global exp_mod
+    global exp_sim
+    
+    exp_mod = Explicit_Problem()
+    exp_mod.f = f
+    exp_mod.time_event_fcn = time_event_fcn
+    exp_mod.handle_event = handle_event
+    exp_mod.y0 = 0.0
+    exp_mod.problem_name = 'Test explicit time event with post process.'
+    
+    #CVode
+    exp_sim = CVode(exp_mod)
+    exp_sim.post_process = True
+    exp_sim(5.,10)
+    #exp_sim.plot()
+    
+
 def test_CVode():
     """
     Runs the tests
     """
     run_example()
+    
+def test_post_and_time_event():
+    """
+    Tests an explicit solver with time event and with post process.
+    """
+    run_example2()
 
 if __name__=='__main__':
-    run_example()
+    run_example2()

@@ -202,7 +202,7 @@ class Implicit_ODE(ODE):
         
         while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
             
-            solution = list(self.integrate(self.t[-1], self.y[-1], self.yd[-1], tfinal,ncp))
+            solution = list(self.integrate(self.t[-1], self.y[-1], self.yd[-1], tfinal,int(ncp)))
         
             self.t.extend(q[0] for q in solution)
             self.y.extend(q[1] for q in solution)
