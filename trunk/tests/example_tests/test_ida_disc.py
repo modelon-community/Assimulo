@@ -13,14 +13,18 @@ t=1 (3) , [True, False, False]  (Third iteration at t=1)
 t=10    , [True, False, False]  (End of simulation)
 
 """
+
+#Extend Assimulos problem definition
 class Extended_Problem(Implicit_Problem):
     
+    #Sets the initial conditons directly into the problem
     y0 = [0.0, -1.0, 0.0]
     yd0 = [-1.0, 0.0, 0.0]
     switches0 = [False,True,True]
     algvar = [1.0, 0.0, 0.0] #Determine which variables are differential and algebraic
     
     
+    #The residual
     def f(self,t,y,yd,sw):
         """
         This is our function we are trying to simulate. During simulation
@@ -28,31 +32,16 @@ class Extended_Problem(Implicit_Problem):
         over the interval. The parameters sw should only be changed when the
         integrator has stopped.
         """
-        res_0 = -yd[0]
-        res_1 = -y[1]
-        res_2 = -y[2]
-
-        if sw[0]:
-            res_0 += 1.0
-        else:
-            res_0 += -1.0
+        res_0 = -yd[0] + (1.0 if sw[0] else -1.0)
+        res_1 = -y[1] + (-1.0 if sw[1] else 3.0)
+        res_2 = -y[2] + (0.0 if sw[2] else 2.0)
         
-        if sw[1]:
-            res_1 += -1.0 
-        else:
-            res_1 += 3.0
-            
-        if sw[2]:
-            res_2 += 0.0
-        else:
-            res_2 += 2.0
-
-
         return N.array([res_0,res_1,res_2])
 
     #Sets a name to our function
     problem_name = 'Function with consistency problem'
-
+    
+    #The event function
     def event_fcn(self,t,y,yd,sw):
         """
         This is our function that keep track of our events, when the sign
@@ -64,9 +53,12 @@ class Extended_Problem(Implicit_Problem):
         
         return N.array([event_0,event_1,event_2])
     
+    
+    #Responsible for handling the events.
     def handle_event(self, solver, event_info):
         """
-        Event handling.
+        Event handling. This functions is called when Assimulo finds an event as
+        specified by the event functions.
         """
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
@@ -83,6 +75,7 @@ class Extended_Problem(Implicit_Problem):
             if not True in event_info: #Breaks the iteration loop
                 break
     
+    #Helper function for handle_event
     def event_switch(self, solver, event_info):
         """
         Turns the switches.
@@ -94,6 +87,7 @@ class Extended_Problem(Implicit_Problem):
         if solver.verbosity >= solver.LOUD:
             print 'New switches: ', solver.switches
     
+    #Helper function for handle_event
     def check_eIter(self, before, after):
         """
         Helper function for handle_event to determine if we have event
@@ -112,9 +106,14 @@ class Extended_Problem(Implicit_Problem):
         return eIter
     
     def init_mode(self, solver):
+        """
+        Initialize the DAE with the new conditions.
+        """
         solver.make_consistency('IDA_YA_YDP_INIT') #Calculate new initial conditions.
                                                    #see SUNDIALS IDA documentation
                                                    #on the option 'IDA_YA_YDP_INIT'
+
+
 
 def test_disc():
     """
