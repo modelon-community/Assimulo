@@ -54,6 +54,33 @@ class Test_Explicit_ODE:
         #[t,y] = simulator(1.0,10)
         #assert len(t) == 11 #11 Due to t0 is counted as well
     
+    def test_reset(self):
+        """
+        This tests the functionality of the method reset.
+        """
+        y0 = [0.0]
+        
+        f = lambda t, x: x
+
+        problem = Explicit_Problem()
+        problem.f = f
+        
+        simulator = Explicit_ODE(problem, y0)
+        
+        simulator.atol = 0.1
+        simulator.rtol = 0.01
+        simulator.maxsteps = 1000
+        simulator.post_process = True
+        simulator.verbosity = 2
+        
+        simulator.reset()
+        
+        assert simulator.atol == 0.1
+        assert simulator.rtol == 0.01
+        assert simulator.maxsteps == 1000
+        assert simulator.post_process == True
+        assert simulator.verbosity == 2
+    
 class Test_Explicit_Euler:
     
     def setUp(self):
