@@ -45,6 +45,32 @@ class Test_Implicit_ODE:
         
         assert len(t) == 11 #11 Due to t0 is counted as well
         
+    def test_reset(self):
+        """
+        This tests the functionality of the method reset.
+        """
+        y0 = [0.0]
+        yd0 = [1.0]
+        my_Prob = Implicit_Problem()
+        my_Prob.f = lambda t,x,xd: x
+
+        simulator = Implicit_ODE(my_Prob,y0,yd0)
+        
+        simulator.atol = 0.1
+        simulator.rtol = 0.01
+        simulator.maxsteps = 1000
+        simulator.post_process = True
+        simulator.verbosity = 2
+        
+        simulator.reset()
+        
+        assert simulator.atol == 0.1
+        assert simulator.rtol == 0.01
+        assert simulator.maxsteps == 1000
+        assert simulator.post_process == True
+        assert simulator.verbosity == 2
+        
+    
     
 class Test_IDA:
     

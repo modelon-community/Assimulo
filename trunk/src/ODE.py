@@ -34,13 +34,16 @@ class ODE(object):
         problem.
         """
         
-        self.verbosity = self.NORMAL #Output level
-        self.maxsteps = 10000 #Max number of steps
-        self.atol = 1.0e-6 #Absolute tolerance
-        self.rtol = 1.0e-6 #Relative tolerance
-        self.post_process = False #Post processing option
-        #self.h = 0.01 #Stepsize used for methods with fixed stepsize
-        #self.max_eIter = 50 #Default number of allowed event iterations
+        #Default values
+        try:
+            #Test if the solver is being reinitiated and if so, keep the settings.
+            self.verbosity
+        except AttributeError:
+            self.verbosity = self.NORMAL #Output level
+            self.maxsteps = 10000 #Max number of steps
+            self.atol = 1.0e-6 #Absolute tolerance
+            self.rtol = 1.0e-6 #Relative tolerance
+            self.post_process = False #Post processing option
     
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps
