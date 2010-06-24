@@ -489,14 +489,15 @@ cdef class CVode_wrap:
         public ndarray abstol_ar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype jacobian, post_process
+        public booleantype jacobian, post_process, comp_step
         public npy_intp num_event_fcn
+        #void* comp_step_method
         N_Vector curr_state
         N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
     def __init__(self,dim):
-        #self.comp_step = False
+        self.comp_step = False
         self.dim=dim
         self.discr=1
         self.iter=1
@@ -675,11 +676,11 @@ cdef class CVode_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
+                if self.comp_step:
+                    break
                 if self.post_process:
                     break
-                #if self.comp_step:
-                #    if completed_step(self.comp_step_method) != 0:
-                #        break
+                
         # Store statistics
         #flag = CVodeGetIntegratorStats(self.mem, &nsteps, &fevals,
         #                        &nlinsetups, &netfails, &qlast, &qcur,
@@ -854,8 +855,7 @@ cdef class IDA_wrap:
             return True
         else:
             return False
-
-        
+   
     def run(self,t0,tf,nt):
         cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)

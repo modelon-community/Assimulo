@@ -44,6 +44,7 @@ class ODE(object):
             self.atol = 1.0e-6 #Absolute tolerance
             self.rtol = 1.0e-6 #Relative tolerance
             self.post_process = False #Post processing option
+            self.completed_step = False #Completed step option
     
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps

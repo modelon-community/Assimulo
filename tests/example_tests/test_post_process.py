@@ -10,7 +10,7 @@ def run_example():
     def f(t,y):
         ydot = -y[0]
         return N.array([ydot])
-    def post_process(solver):
+    def post_process(solver, t, y):
         solver.temp += 1
     global exp_mod
     global exp_sim

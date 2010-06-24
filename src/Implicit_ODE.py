@@ -235,7 +235,7 @@ class Implicit_ODE(ODE):
                 self._flag_init = False
             
             if self.post_process:
-                self._problem.post_process(self)
+                self._problem.post_process(self, self.t[-1],self.y[-1])
             
             if ncp > 0:
                 ncp = ncp_ori-len(self.y)+1
