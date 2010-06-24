@@ -171,6 +171,14 @@ class Explicit_ODE(ODE):
             if self.verbosity > self.QUIET:
                 print 'Number of communication points must be a positive integer, setting' \
                       ' nt = 0.'
+                      
+        if self.completed_step and ncp != 0:
+            mode_special = True
+            dist_space = [(x+1)*(tfinal-self.t[-1])/ncp for x in range(ncp+1)]
+            ncp = 0
+        else:
+            mode_special = False
+        
         ncp_ori = ncp
         tfinal_ori = tfinal
         time_start = time.clock()
@@ -224,13 +232,23 @@ class Explicit_ODE(ODE):
             else:
                 self._flag_init = False
             
-            if self.post_process:
-                self._problem.post_process(self)
+            if self.completed_step: #If the option completed is set.
+                self._flag_init = self._problem.completed_step(self)
+            
+            if self.post_process: #If the option post process is set.
+                if mode_special:
+                    while dist_space[0] <= self.t[-1]:
+                        self._problem.post_process(self, dist_space[0], self.interpolate(dist_space[0],0))
+                        dist_space.pop(0)
+                else:
+                    self._problem.post_process(self, self.t[-1], self.y[-1])
             
             if ncp > 0:
                 ncp = ncp_ori-len(self.y)+1
                 if ncp < 0:
                     ncp = 0
+        
+        
         time_stop = time.clock()
         
         if self.verbosity >= self.NORMAL:
@@ -589,9 +607,10 @@ class CVode(Explicit_ODE, Sundials):
             self.usejac = False
             self._RHS = [self.f]
         
-        #if hasattr(problem, 'completed_step'):
-        #    self.Integrator.comp_step = True
-        #    self._comp = [self.completed_step]
+        if hasattr(problem, 'completed_step'):
+            self.completed_step = True
+            self.Integrator.comp_step = True
+        #    self._comp = [self.__completed_step]
         #    self.Integrator.set_completed_method(self._comp)
         
         if hasattr(self, '_ROOT'):
@@ -599,9 +618,10 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RHS]
         
-    #def completed_step(self):
+    #def __completed_step(self):
     #    """
     #    Callback function for the problem class completed_step method.
+    #    NOTE: This is not the recommended use.
     #    """
     #    return self._problem.completed_step(self)
     

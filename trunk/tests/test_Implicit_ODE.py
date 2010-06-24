@@ -149,7 +149,7 @@ class Test_IDA:
         This function tests the post processing.
         """
         f = lambda t,x,xd: x**0.25-xd
-        def post_process(solver):
+        def post_process(solver, t ,y):
             solver.temp+=1
         
         

@@ -41,7 +41,7 @@ class Problem(object):
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
             
-        def post_process(self, solver)
+        def post_process(self, solver, t, y)
             Allows for users to specify how the data handling is done for example.
             It is not allowed to change the values of the states in this method.
             This method gets called if the property post_process = True in the solver
@@ -78,7 +78,7 @@ class Problem(object):
         if solver.verbosity >= solver.NORMAL:
             print 'No event handling defined.'
     
-    def post_process(self, solver):
+    def post_process(self, solver, t, y):
         """
         Method for specifying post process handling. Only
         available when using Sundials.
