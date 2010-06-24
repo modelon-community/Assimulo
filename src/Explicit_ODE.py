@@ -114,6 +114,7 @@ class Explicit_ODE(ODE):
         except ValueError:
             raise Explicit_ODE_Exception('Initial time must be an integer or float.')
             
+            
     def reset(self):
         """
         
@@ -233,7 +234,7 @@ class Explicit_ODE(ODE):
                 self._flag_init = False
             
             if self.completed_step: #If the option completed is set.
-                self._flag_init = self._problem.completed_step(self)
+                self._flag_init = self._flag_init or self._problem.completed_step(self)
             
             if self.post_process: #If the option post process is set.
                 if mode_special:
