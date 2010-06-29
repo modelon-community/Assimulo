@@ -489,7 +489,7 @@ cdef class CVode_wrap:
         public ndarray abstol_ar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype jacobian, post_process, comp_step
+        public booleantype jacobian, post_process, comp_step, store_state
         public npy_intp num_event_fcn
         #void* comp_step_method
         N_Vector curr_state
@@ -502,9 +502,11 @@ cdef class CVode_wrap:
         self.discr=1
         self.iter=1
         self.post_process = False
+        self.store_state = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
         cdef flag
         self.curr_state=arr2nv(u)
+        self.store_state = True
         self.max_steps = max_steps
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
         if self.mem == NULL:
@@ -564,36 +566,39 @@ cdef class CVode_wrap:
         """
         cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
         
-        flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
-        flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
-        if self.iter == 1:
-            njevals = 0
-            nrevalsLS = 0
-        else:
-            flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-            flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
-        flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
-        flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-        flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-        flag = CVodeGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
-        
-        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-        stats_text = ['Number of Steps                          ',
-                      'Number of Function Evaluations           ',
-                      'Number of Jacobian Evaluations           ',
-                      'Number of F-Eval During Jac-Eval         ',
-                      'Number of Root Evaluations               ',
-                      'Number of Error Test Failures            ',
-                      'Number of Nonlinear Iterations           ',
-                      'Number of Nonlinear Convergence Failures ']
-        
-        if self.stats != None:
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] += stats_values[x]
-        else:
-            self.stats = {}
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] = stats_values[x]
+        if self.store_state:
+            flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
+            flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
+            if self.iter == 1:
+                njevals = 0
+                nrevalsLS = 0
+            else:
+                flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
+                flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
+            flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
+            flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
+            flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
+            flag = CVodeGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+            
+            stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
+            stats_text = ['Number of Steps                          ',
+                          'Number of Function Evaluations           ',
+                          'Number of Jacobian Evaluations           ',
+                          'Number of F-Eval During Jac-Eval         ',
+                          'Number of Root Evaluations               ',
+                          'Number of Error Test Failures            ',
+                          'Number of Nonlinear Iterations           ',
+                          'Number of Nonlinear Convergence Failures ']
+            
+            if self.stats != None:
+                for x in range(len(stats_text)):
+                    self.stats[stats_text[x]] += stats_values[x]
+            else:
+                self.stats = {}
+                for x in range(len(stats_text)):
+                    self.stats[stats_text[x]] = stats_values[x]
+                    
+        self.store_state = False
     
     def treat_disc(self,flag,tret):
         cdef int* event_info_
