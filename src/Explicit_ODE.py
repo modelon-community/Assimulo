@@ -632,6 +632,7 @@ class CVode(Explicit_ODE, Sundials):
         """
         self.Integrator.post_process = self.post_process
         if self._flag_init:
+            self.Integrator.store_statistics()
             self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
             
         return self.Integrator.run(t,tfinal,nt)

@@ -149,4 +149,4 @@ def test_explicit():
     run_basic_test()
 
 if __name__=='__main__':
-    run_example()
+    run_basic_test()
