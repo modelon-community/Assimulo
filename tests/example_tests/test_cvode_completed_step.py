@@ -75,12 +75,48 @@ def run_example():
     assert exp_sim.tt[0] == 0.5
     assert exp_sim.tt[1] == 1.0
     assert exp_sim.tt[-1] == 5.0
+    
+def run_example2():
+    global exp_mod
+    global exp_sim
+    
+    def f(t,y):
+        ydot = -y[0]
+        return N.array([ydot])
+
+    def completed_step(solver):
+        if solver.t[-1] > 10 and solver.reini:
+            solver.reini = False
+            return 1
+        else:
+            return 0
+    
+    exp_mod = Explicit_Problem()
+    exp_mod.f = f
+    exp_mod.completed_step = completed_step
+    exp_mod.y0 = 4.0
+    exp_mod.problem_name = 'Example Completed Steps'
+    
+    exp_sim = CVode(exp_mod)
+    exp_sim.reini = True
+    
+    exp_sim.simulate(20.)
+    
+    x = exp_sim.stats.keys()[4]
+    assert exp_sim.stats[x] == 77
 
 def test_cvode_completed_step():
     """
     Runs the test_cvode_completed_step.py
     """
     run_example()
+    
+def test_cvode_completed_step_statistics():
+    """
+    Runs the test_cvode_completed_step_statistics.
+    """
+    run_example2()
 
 if __name__=='__main__':
     run_example()
+    run_example2()
