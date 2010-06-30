@@ -21,8 +21,11 @@ class Test_Explicit_ODE:
         
         
         simulator = Explicit_ODE(Test, [1.0 , 1.0], 1)
-        assert simulator.t[0] == 1.0
-        assert simulator.y[0][0] == 1.0
+        #assert simulator.t[0] == 1.0
+        #assert simulator.y[0][0] == 1.0
+        assert simulator.t_cur == 1.0
+        assert simulator.y_cur[0] == 1.0
+        
         
     def test_call(self):
         """
@@ -40,7 +43,10 @@ class Test_Explicit_ODE:
         nose.tools.assert_raises(Explicit_ODE_Exception, simulator, -1.0)
         nose.tools.assert_raises(Explicit_ODE_Exception, simulator, 'test')
         simulator.reset()
-        [t,y] = simulator(1.0,10)
+        #[t,y] = simulator(1.0,10)
+        simulator(1.0,10)
+        t = simulator.t
+        y = simulator.y
         
         assert len(t) == 11 #11 Due to t0 is counted as well
         #simulator = Explicit_Euler(problem,y0)
@@ -101,9 +107,9 @@ class Test_Explicit_Euler:
         t = 0.0
         tfinal = 1.0
         y = 1.0
-        nt = 10
+        dt = 0.1
         
-        values = self.simulator.integrate(t,y,tfinal,nt)
+        values = self.simulator.integrate(t,y,tfinal,dt)
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.100000)
         nose.tools.assert_almost_equal(y, 1.100000)
@@ -199,9 +205,9 @@ class Test_RungeKutta4:
         t = 0.0
         tfinal = 0.10
         y = 1.0
-        nt = 2
+        dt = 0.05
         
-        values = self.simulator.integrate(t,y,tfinal,nt)
+        values = self.simulator.integrate(t,y,tfinal,dt)
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.050000)
         nose.tools.assert_almost_equal(y, 1.050000)
@@ -239,7 +245,7 @@ class Test_CVode:
         """
         
         assert self.simulator.f == 'Test function'
-        assert self.simulator.y[0][0] == 1.0
+        assert self.simulator.y_cur == 1.0
         assert self.simulator.discr == 'Adams'
         assert self.simulator.iter == 'FixedPoint'
         assert self.simulator.maxord == 12
@@ -267,7 +273,7 @@ class Test_CVode:
         
         assert simulator.f == problem.f
         assert simulator.switches == switches
-        assert simulator.y[0][0] == 1.0
+        assert simulator.y_cur == 1.0
         assert simulator.problem_spec[0][0] == simulator.f
         assert simulator.problem_spec[0][1] == simulator.jac
         assert simulator.problem_spec[1][0] == simulator.event_fcn
@@ -381,9 +387,10 @@ class Test_CVode:
         sim.temp = 0
         sim.post_process = True
         sim.simulate(10., 100)
-        assert sim.temp == 100
+        print sim.temp
+        assert sim.temp == 101
         sim.simulate(20.)
-        assert sim.temp == 110
+        assert sim.temp == 112
         
     def test_max_order(self):
         """

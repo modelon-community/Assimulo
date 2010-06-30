@@ -41,15 +41,6 @@ class Problem(object):
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
             
-        def post_process(self, solver, t, y)
-            Allows for users to specify how the data handling is done for example.
-            It is not allowed to change the values of the states in this method.
-            This method gets called if the property post_process = True in the solver
-            and it is called at each communication point (if specified) or at each
-            internal point if no communication points are specified. Also after each
-            time and state event. Currently it is only supported when using Sundials
-            solvers.
-            
     Parameters (optional)::
     
         problem_name
@@ -77,14 +68,6 @@ class Problem(object):
         """
         if solver.verbosity >= solver.NORMAL:
             print 'No event handling defined.'
-    
-    def post_process(self, solver, t, y):
-        """
-        Method for specifying post process handling. Only
-        available when using Sundials.
-        """
-        if solver.verbosity >= solver.NORMAL:
-            print 'No post processing defined for the problem.'
     
     
 class Implicit_Problem(Problem):
@@ -176,6 +159,14 @@ class Explicit_Problem(Problem):
                 
                 Returns:
                     A numpy matrix of size len(y)*len(y).
+            
+            def post_process(self, solver, t, y)
+                Allows for users to specify how the data handling is done for example.
+                It is not allowed to change the values of the states in this method.
+                If the property post_process = True (in the solver), this method gets called at each
+                internal time point or at each communication point. If post_process 
+                (in the solver) is not set, this method is called at an event or when
+                the simulation have finnished.
         
         Parameters (optional)::
         
@@ -198,4 +189,13 @@ class Explicit_Problem(Problem):
         The rhs (right-hand-side) for a ODE problem.
         """
         raise Problem_Exception('The right-hand-side is not specified.')
+        
+    def post_process(self, solver, t, y):
+        """
+        Method for specifying post process handling. Default store the 
+        values into the solver.t and solver.y. If this is changed the
+        plotting functionality wont work.
+        """
+        solver.t.extend([t])
+        solver.y.extend([y])
 

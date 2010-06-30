@@ -623,8 +623,8 @@ cdef class CVode_wrap:
             return False
 
         
-    def run(self,t0,tf,nt):
-        cdef realtype dt             # time increment
+    def run(self,t0,tf,dt):
+        #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
         cdef int i,itask
@@ -634,16 +634,16 @@ cdef class CVode_wrap:
         flag = CVodeSetStopTime(self.mem, tf)
         sol=[]
         tret=t0
-        if nt > 0:
-            dt=(tf-t0)/nt
-            for i in range(1,nt+1):
+        if dt > 0.0:
+            i = 1
+            while tret < tf:
                 tout=t0+i*dt
                 flag=0
                 flags=CVode(self.mem,tout,self.curr_state,&tret,CV_NORMAL)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
                     sundials_error(flags,2,tret)
                     #raise SundialsError,"CVode run error at t=%s with flag %s" %(tret, flags)
-                sol.append((tret,nv2arr(self.curr_state)))
+                sol.append((np.array(tret),nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
@@ -651,12 +651,13 @@ cdef class CVode_wrap:
                 if self.treat_disc(flags,tret):
                     break
                 if self.post_process:
-                    if i == nt:
+                    if tout == tf:
                         flags=1
                     break
                 #if self.comp_step:
                 #    if completed_step(self.comp_step_method) != 0:
                 #        break
+                i = i+1
             else:
                 flags=1
         else: # one step mode
@@ -671,7 +672,7 @@ cdef class CVode_wrap:
                 flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
                     sundials_error(flags,2,tret)
-                sol.append((tret,nv2arr(self.curr_state)))
+                sol.append((np.array(tret),nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 flag = CVodeGetCurrentOrder(self.mem, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)

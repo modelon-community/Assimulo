@@ -82,7 +82,7 @@ class Explicit_ODE(ODE):
             if isinstance(y0, int) or isinstance(y0, float):
                 y0 = [y0]
             self._problem.y0 = y0[:]
-            self.y = [N.array(y0, dtype=float)]
+            self.y_cur = N.array(y0, dtype=float)
         except ValueError:
             raise Explicit_ODE_Exception('Initial values must be a scalar/list/array of type int or float.')
         
@@ -107,13 +107,18 @@ class Explicit_ODE(ODE):
 
         try:
             if isinstance(t0, list):
-                self.t = [float(t0[0])]
+                self.t_cur = float(t0[0])
             else:
-                self.t = [float(t0)]
-            self._problem.t0 = self.t[0]
+                self.t_cur = float(t0)
+            self._problem.t0 = self.t_cur
         except ValueError:
             raise Explicit_ODE_Exception('Initial time must be an integer or float.')
-            
+        
+        self.t_cur = N.array(self.t_cur)
+        self.y_cur = N.array(self.y_cur)
+        
+        self.y = []
+        self.t = []
             
     def reset(self):
         """
@@ -162,7 +167,7 @@ class Explicit_ODE(ODE):
         except ValueError:
             raise Explicit_ODE_Exception('Final time must be an integer or float.')
             
-        if self.t[-1] > tfinal:
+        if self.t_cur > tfinal:
             raise Explicit_ODE_Exception('Final time must be greater than start time.')
         
         if not isinstance(ncp, int):
@@ -172,36 +177,59 @@ class Explicit_ODE(ODE):
             if self.verbosity > self.QUIET:
                 print 'Number of communication points must be a positive integer, setting' \
                       ' nt = 0.'
-                      
-        if self.completed_step and ncp != 0:
-            mode_special = True
-            dist_space = [(x+1)*(tfinal-self.t[-1])/ncp for x in range(ncp+1)]
-            ncp = 0
-        else:
-            mode_special = False
-        
+
         ncp_ori = ncp
         tfinal_ori = tfinal
         time_start = time.clock()
         
-        while N.abs(self.t[-1]-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t[-1]-tfinal_ori)/(ncp+1.0)):
+        t0 = self.t_cur
+        y0 = self.y_cur
+        last_logg = t0
+        
+        if ncp != 0 and self.completed_step:
+            mode = 'SPECIAL'
+            dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
+            dt = 0.0
+        elif ncp != 0:
+            dt = (tfinal-t0)/ncp
+            mode = 'NORMAL'
+        else:
+            dt = 0.0
+            mode = 'ONE_STEP'
+        
+        self._problem.post_process(self,t0,y0) #Logg the first point
+        
+        while N.abs(self.t_cur-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t_cur-tfinal_ori)/(ncp+1.0)):
             
-            tevent = self._problem.time_event_fcn(self.t[-1], self.y[-1], self.switches)
+            tevent = self._problem.time_event_fcn(self.t_cur, self.y_cur, self.switches)
             if tevent == None:
                 tfinal = tfinal_ori
             else:
                 tfinal = tevent if tevent < tfinal_ori else tfinal_ori
-                if ncp > 0:
-                    ncp = (tevent-self.t[-1])/(tfinal_ori-self.t[0])*ncp_ori
 
-            solution = list(self.integrate(self.t[-1], self.y[-1], tfinal,int(ncp)))
-
-            self.t.extend(q[0] for q in solution)
-            self.y.extend(q[1] for q in solution)
+            solution = list(self.integrate(self.t_cur, self.y_cur, tfinal,dt))
+            tt, yy = solution[-1]
+            self.t_cur = tt.copy()
+            self.y_cur = yy.copy()
             
+            if mode == 'ONE_STEP': #Logg all the internal steps.
+                for q in solution:
+                    self._problem.post_process(self,q[0],q[1])
+                last_logg = self.t_cur
+            elif mode == 'NORMAL': #Logg at specific time-points.
+                for q in solution:
+                    self._problem.post_process(self,q[0],q[1])
+                last_logg = self.t_cur
+            elif mode == 'SPECIAL':
+                while dist_space[0] <= self.t_cur:
+                    self._problem.post_process(self, dist_space[0], self.interpolate(dist_space[0],0))
+                    last_logg = dist_space[0].copy()
+                    dist_space.pop(0)
+            
+            #Check if there is a time event
             if tevent == None:
                 teventflag = False
-            elif N.abs(self.t[-1]-tevent)< self._SAFETY**0.5:
+            elif N.abs(self.t_cur-tevent)< self._SAFETY**0.5:
                 teventflag = True
             else:
                 teventflag = False
@@ -214,7 +242,7 @@ class Explicit_ODE(ODE):
                     [tevent,event_info]=self.disc_info
                 
                 #Log the information
-                self._log_event_info.append([self.t[-1], event_info])
+                self._log_event_info.append([self.t_cur, event_info])
                 
                 if self.verbosity > self.NORMAL:
                     print 'A discontinuity occured at t = %e.'%tevent
@@ -236,19 +264,8 @@ class Explicit_ODE(ODE):
             if self.completed_step: #If the option completed is set.
                 self._flag_init = self._flag_init or self._problem.completed_step(self)
             
-            if self.post_process: #If the option post process is set.
-                if mode_special:
-                    while dist_space[0] <= self.t[-1]:
-                        self._problem.post_process(self, dist_space[0], self.interpolate(dist_space[0],0))
-                        dist_space.pop(0)
-                else:
-                    self._problem.post_process(self, self.t[-1], self.y[-1])
-            
-            if ncp > 0:
-                ncp = ncp_ori-len(self.y)+1
-                if ncp < 0:
-                    ncp = 0
-        
+            if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
+                self._problem.post_process(self, self.t_cur, self.y_cur)
         
         time_stop = time.clock()
         
@@ -256,7 +273,7 @@ class Explicit_ODE(ODE):
             self.print_statistics()
             print 'Elapsed simulation time:', time_stop-time_start, 'seconds.'
         
-        return [self.t, self.y]
+        #return [self.t, self.y]
     
     def re_init(self,t0, y0):
         """
@@ -271,7 +288,7 @@ class Explicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
-        if len(self.y[-1]) != len(y0):
+        if len(self.y_cur) != len(y0):
             raise Explicit_ODE_Exception('y0 must be of the same length as the original problem.')
         Explicit_ODE.__init__(self, self._problem,y0,t0)
     
@@ -320,15 +337,15 @@ class Explicit_Euler(Explicit_ODE):
     """
     Explicit Euler.
     """
-    def integrate(self, t, y, tf, nt):
+    def integrate(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """
-        if nt <= 0.0:
+        if dt <= 0.0:
             raise Explicit_ODE_Exception('Explicit Euler is a fixed step-size method. Provide' \
                                          ' the number of communication points.')
         
-        self.h = N.array((tf-self.t[-1])/nt)
+        self.h = dt
 
         for i in range(self.maxsteps):
             if t >= tf:
@@ -434,7 +451,7 @@ class RungeKutta34(Explicit_ODE):
     initstep = property(_get_initial_step,_set_initial_step)
         
     
-    def integrate(self, t, y, tf, nt):
+    def integrate(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """
@@ -487,15 +504,15 @@ class RungeKutta4(Explicit_ODE):
     """
     Runge-Kutta of order 4.
     """
-    def integrate(self, t, y, tf, nt):
+    def integrate(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """
-        if nt <= 0.0:
+        if dt <= 0.0:
             raise Explicit_ODE_Exception('RungeKutta4 is a fixed step-size method. Provide' \
                                          ' the number of communication points.')
         
-        self.h = N.array((tf-self.t[-1])/nt)
+        self.h = dt
 
         for i in range(self.maxsteps):
             if t >= tf:
@@ -593,10 +610,10 @@ class CVode(Explicit_ODE, Sundials):
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
             if self.switches == None:
-                trial = self._problem.jac(self.t[-1],self.y[-1])
+                trial = self._problem.jac(self._problem.t0,self._problem.y0)
             else:
-                trial = self._problem.jac(self.t[-1],self.y[-1], self.switches)
-            if trial.shape != (len(self.y[-1]),len(self.y[-1])):
+                trial = self._problem.jac(self._problem.t0,self._problem.y0, self.switches)
+            if trial.shape != (len(self._problem.y0),len(self._problem.y0)):
                 raise Explicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
             
             self.jac = self._problem.jac    
@@ -611,22 +628,15 @@ class CVode(Explicit_ODE, Sundials):
         if hasattr(problem, 'completed_step'):
             self.completed_step = True
             self.Integrator.comp_step = True
-        #    self._comp = [self.__completed_step]
-        #    self.Integrator.set_completed_method(self._comp)
         
         if hasattr(self, '_ROOT'):
             self.problem_spec = [self._RHS, self._ROOT]
         else:
             self.problem_spec = [self._RHS]
         
-    #def __completed_step(self):
-    #    """
-    #    Callback function for the problem class completed_step method.
-    #    NOTE: This is not the recommended use.
-    #    """
-    #    return self._problem.completed_step(self)
+
     
-    def integrate(self,t,y,tfinal,nt):
+    def integrate(self,t,y,tfinal,dt):
         """
         Simulates the problem up until tfinal.
         """
@@ -635,7 +645,7 @@ class CVode(Explicit_ODE, Sundials):
             self.Integrator.store_statistics()
             self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
             
-        return self.Integrator.run(t,tfinal,nt)
+        return self.Integrator.run(t,tfinal,dt)
     
     def _set_discr_method(self,discr='Adams'):
         """
@@ -960,5 +970,5 @@ class CVode(Explicit_ODE, Sundials):
     @property
     def is_disc(self):
         """Method to test if we are at an event."""
-        return self.t[-1]==self.Integrator.event_time
+        return self.t_cur==self.Integrator.event_time
         
