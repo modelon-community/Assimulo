@@ -22,7 +22,7 @@ def run_example():
         return tnext
         
     def handle_event(solver, event_info):
-        solver.y[-1]+= 1.0
+        solver.y_cur+= 1.0
     
     exp_mod = Explicit_Problem()
     exp_mod.f = f
@@ -35,37 +35,42 @@ def run_example():
     exp_sim = CVode(exp_mod)
     exp_sim(5.,100)
     nose.tools.assert_almost_equal(exp_sim.y[19], 0.950000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[20], 2.00000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[59], 5.950000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[60], 7.00000, 4)
-    assert len(exp_sim.t) == 101
+    nose.tools.assert_almost_equal(exp_sim.y[20], 1.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[21], 2.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[62], 5.950000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[64], 7.00000, 4)
+    assert len(exp_sim.t) == 105
 
     #Explicit_Euler
     exp_sim = Explicit_Euler(exp_mod)
     exp_sim(5.,100)
     nose.tools.assert_almost_equal(exp_sim.y[19], 0.950000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[20], 2.00000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[59], 5.900000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[60], 5.950000, 4)
-    assert len(exp_sim.t) == 102
+    nose.tools.assert_almost_equal(exp_sim.y[20], 1.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[21], 2.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[62], 5.900000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[63], 5.950000, 4)
+    #print len(exp_sim.t)
+    assert len(exp_sim.t) == 108
     
     #RungeKutta4
     exp_sim = RungeKutta4(exp_mod)
     exp_sim(5.,100)
     nose.tools.assert_almost_equal(exp_sim.y[19], 0.950000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[20], 2.00000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[59], 5.900000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[60], 5.950000, 4)
-    assert len(exp_sim.t) == 102
+    nose.tools.assert_almost_equal(exp_sim.y[20], 1.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[21], 2.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[62], 5.900000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[63], 5.950000, 4)
+    assert len(exp_sim.t) == 108
     
     #RungeKutta34
     exp_sim = RungeKutta34(exp_mod)
     exp_sim(5.)
-    nose.tools.assert_almost_equal(exp_sim.y[3], 2.0000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[6], 4.00000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[12], 7.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[3], 1.0000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[4], 2.0000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[8], 4.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[16], 7.00000, 4)
     nose.tools.assert_almost_equal(exp_sim.y[-1], 9.00000, 4)
-    assert len(exp_sim.t) == 16
+    assert len(exp_sim.t) == 20
         
 def test_explicit_time_event():
     """

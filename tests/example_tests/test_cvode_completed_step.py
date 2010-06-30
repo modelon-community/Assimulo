@@ -26,7 +26,7 @@ def run_example():
     
     #CVode
     exp_sim = CVode(exp_mod)
-    
+
     #Testing
     exp_sim.numb = 0
     
@@ -41,11 +41,11 @@ def run_example():
     exp_sim(5.,100)
 
     assert 7 == exp_sim.numb
-    
+
     
     def post_process(solver, t, y):
-        solver.tt += [t]
-        solver.yy += y
+        solver.t += [t]
+        solver.y += [y]
         solver.test_post =solver.test_post+1
         
     exp_mod.post_process = post_process
@@ -55,26 +55,25 @@ def run_example():
     exp_sim.test_post = 0
     exp_sim.numb = 0
     
-    exp_sim.tt = []
-    exp_sim.yy = []
+    exp_sim.t = []
+    exp_sim.y = []
     
     exp_sim(5.)
+    
     assert len(exp_sim.y)-1 == exp_sim.numb
-    assert exp_sim.test_post == exp_sim.numb
+    assert exp_sim.test_post == exp_sim.numb+1
     
     exp_sim.reset()
-    exp_sim.tt = []
-    exp_sim.yy = []
-    
+    exp_sim.t = []
+    exp_sim.y = []
     exp_sim.test_post = 0
     exp_sim.numb = 0
-
     exp_sim(5.,10)
     assert 7 == exp_sim.numb
-    assert 10 == exp_sim.test_post
-    assert exp_sim.tt[0] == 0.5
-    assert exp_sim.tt[1] == 1.0
-    assert exp_sim.tt[-1] == 5.0
+    assert 11 == exp_sim.test_post
+    assert exp_sim.t[1] == 0.5
+    assert exp_sim.t[2] == 1.0
+    assert exp_sim.t[-1] == 5.0
     
 def run_example2():
     global exp_mod
@@ -85,7 +84,7 @@ def run_example2():
         return N.array([ydot])
 
     def completed_step(solver):
-        if solver.t[-1] > 10 and solver.reini:
+        if solver.t_cur > 10 and solver.reini:
             solver.reini = False
             return 1
         else:
@@ -101,7 +100,6 @@ def run_example2():
     exp_sim.reini = True
     
     exp_sim.simulate(20.)
-    
     x = exp_sim.stats.keys()[4]
     assert exp_sim.stats[x] == 77
 

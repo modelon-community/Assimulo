@@ -11,6 +11,8 @@ def run_example():
         ydot = -y[0]
         return N.array([ydot])
     def post_process(solver, t, y):
+        solver.t.extend([t])
+        solver.y.extend([y])
         solver.temp += 1
     global exp_mod
     global exp_sim
@@ -22,7 +24,7 @@ def run_example():
     y0 = 4.0 #Initial conditions
     exp_sim = CVode(exp_mod,y0) #Create a CVode solver
     exp_sim.temp = 0
-    exp_sim.post_process = True
+    #exp_sim.post_process = True
     exp_sim.verbosity = exp_sim.SCREAM
     exp_sim.iter = 'Newton' #Default 'FixedPoint'
     exp_sim.discr = 'BDF' #Default 'Adams'
@@ -30,7 +32,7 @@ def run_example():
     exp_sim.rtol = 1e-4 #Default 1e-6
     exp_sim.simulate(5.,10) #Simulate 5 seconds
 
-    assert len(exp_sim.y) == 11
+    assert exp_sim.temp == 11
     assert exp_sim.stats != None
     assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0] == y0
