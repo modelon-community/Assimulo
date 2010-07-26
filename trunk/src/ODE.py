@@ -17,6 +17,8 @@
 
 import numpy as N
 import pylab as P
+import scipy as S
+import scipy.linalg as LIN
 import time
 
 class ODE_Exception(Exception):

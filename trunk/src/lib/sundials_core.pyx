@@ -654,9 +654,6 @@ cdef class CVode_wrap:
                     if tout == tf:
                         flags=1
                     break
-                #if self.comp_step:
-                #    if completed_step(self.comp_step_method) != 0:
-                #        break
                 i = i+1
             else:
                 flags=1

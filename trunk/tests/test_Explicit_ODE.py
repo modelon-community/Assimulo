@@ -302,7 +302,7 @@ class Test_CVode:
         This tests the functionality of the property usejac.
         """
         f = lambda t,x: x
-        jac = lambda t,x: N.array([x*x])
+        jac = lambda t,x: N.array([x[0]*x[0]]).reshape(1,1)
         
         prob = Explicit_Problem()
         prob.f = f
