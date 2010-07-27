@@ -1377,7 +1377,7 @@ class Radau5(Radau_Common,Explicit_ODE):
 
         if (self._rejected or self._first) and err >= 1.: #If the step was rejected, use the more expensive error estimation
             self._nfcn += 1
-            err_v = self.f(self._tc,self._yc+err)
+            err_v = self.f(self._tc,self._yc+err_v)
             err_v =  N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,err_v+temp)))
             err = N.linalg.norm(err_v/scal)
             err = max(err/N.sqrt(self._leny),1.e-10)
