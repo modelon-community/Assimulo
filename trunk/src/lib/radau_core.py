@@ -16,7 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pylab as P
-#from Assimulo.Explicit_ODE import Explicit_ODE_Exception
+
+class Radau_Exception(Exception):
+    pass
+    
 
 class Radau_Common(object):
     """
@@ -60,26 +63,6 @@ class Radau_Common(object):
         P.xlabel('Number of steps')
         P.show()
     
-    def _set_initial_step(self, initstep):
-        """
-        This determines the initial step-size to be used in the integration.
-        
-            Parameters::
-                initstep    
-                            - Default '0.01'.
-                            
-                            - Should be float.
-                            
-                                Example:
-                                    initstep = 0.01
-        """
-        try:
-            initstep = float(initstep)
-        except (ValueError, TypeError):
-            raise Explicit_ODE_Exception('The initial step must be an integer or float.')
-        
-        self.__initstep = initstep
-    
     def _set_newt(self, newt):
         """
         Maximal number of Newton iterations.
@@ -93,6 +76,11 @@ class Radau_Common(object):
                             Example:
                                 newt = 10
         """
+        try:
+            newt = int(newt)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The newt must be an integer or float.')
+            
         self.__newt = newt
 		
     def _get_newt(self):
@@ -126,6 +114,11 @@ class Radau_Common(object):
                             Example:
                                 fnewt = 0.05
         """
+        try:
+            fnewt = float(fnewt)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The fnewt must be an integer or float.')
+            
         self.__fnewt = fnewt
         
     def _get_fnewt(self):
@@ -159,6 +152,11 @@ class Radau_Common(object):
                             Example:
                                 safe = 0.8
         """
+        try:
+            safe = float(safe)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The safe must be an integer or float.')
+            
         self.__safe = safe
         
     def _get_safe(self):
@@ -193,6 +191,11 @@ class Radau_Common(object):
                             Example:
                                 thet = 0.01
         """
+        try:
+            thet = float(thet)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The thet must be an integer or float.')
+            
         self.__thet = thet
         
     def _get_thet(self):
@@ -230,9 +233,9 @@ class Radau_Common(object):
                                 
         """
         if not isinstance(max_h,float):
-            raise Explicit_ODE_Exception('Maximal stepsize must be a (scalar) float.')
+            raise Radau_Exception('Maximal stepsize must be a (scalar) float.')
         if max_h < 0.0:
-            raise Explicit_ODE_Exception('Maximal stepsize must be a positive (scalar) float.')
+            raise Radau_Exception('Maximal stepsize must be a positive (scalar) float.')
         self.__max_h=max_h
     
     def _get_max_h(self):
@@ -253,6 +256,26 @@ class Radau_Common(object):
         return self.__max_h
         
     maxh=property(_get_max_h,_set_max_h)    
+    
+    def _set_initial_step(self, initstep):
+        """
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters::
+                initstep    
+                            - Default '0.01'.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
+        """
+        try:
+            initstep = float(initstep)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The initial step must be an integer or float.')
+        
+        self.__initstep = initstep
     
     def _get_initial_step(self):
         """
@@ -287,6 +310,11 @@ class Radau_Common(object):
                             Example:
                                 quot1 = 0.9
         """
+        try:
+            quot1 = float(quot1)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The quot1 must be an integer or float.')
+        
         self.__quot1 = quot1
     
     def _get_quot1(self):
@@ -321,6 +349,11 @@ class Radau_Common(object):
                             Example:
                                 quot2 = 1.3
         """
+        try:
+            quot2 = float(quot2)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The quot2 must be an integer or float.')
+            
         self.__quot2 = quot2
     
     def _get_quot2(self):
@@ -356,6 +389,11 @@ class Radau_Common(object):
                             Example:
                                 fac1 = 0.1
         """
+        try:
+            fac1 = float(fac1)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The fac1 must be an integer or float.')
+            
         self.__fac1 = fac1
     def _get_fac1(self):
         """
@@ -388,6 +426,11 @@ class Radau_Common(object):
                             Example:
                                 fac2 = 10.0
         """
+        try:
+            fac2 = float(fac2)
+        except (ValueError, TypeError):
+            raise Radau_Exception('The fac2 must be an integer or float.')
+            
         self.__fac2 = fac2
     def _get_fac2(self):
         """

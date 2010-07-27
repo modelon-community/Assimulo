@@ -1040,7 +1040,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         self.initstep = 0.01
         self.newt = 7 #Maximum number of newton iterations
         self.thet = 1.e-3 #Boundary for re-calculation of jac
-        self.fnewt = None #Stopping critera for Newtons Method
+        self.fnewt = 0 #Stopping critera for Newtons Method
         self.quot1 = 1.0 #Parameters for changing step-size (lower bound)
         self.quot2 = 1.2 #Parameters for changing step-size (upper bound)
         self.fac1 = 0.2 #Parameters for step-size selection (lower bound)
@@ -1084,7 +1084,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         
         self._fac_con = 1.0
         
-        if self.fnewt == None:
+        if self.fnewt == 0:
             self.fnewt = max(10.*self._eps/self.rtol,min(0.03,self.rtol**0.5))
             
         self._f0 = self.f(t,y)
@@ -1165,11 +1165,11 @@ class Radau5(Radau_Common,Explicit_ODE):
                 self._rejected = False
                 self._curjac = False
                 
-                if self._oldoldh == self.h and (self._theta <= self.thet or self._curiter==1):
+                if self._oldoldh == self.h and (self._theta <= self.thet):# or self._curiter==1):
                     self._needjac = False
                     self._needLU = False
                 else:
-                    if self._theta <= self.thet or self._curiter == 1:
+                    if self._theta <= self.thet: #or self._curiter == 1:
                         self._needjac = False
                         self._needLU = True
                     else:
@@ -1360,7 +1360,10 @@ class Radau5(Radau_Common,Explicit_ODE):
         
         if h < self._eps:
             raise Explicit_ODE_Exception('Step-size to small at %e with h = %e'%(self._tc,self.h))
-    
+        
+        if h > self.maxh:
+            h = self.maxh
+        
         return h
         
     def estimate_error(self):
