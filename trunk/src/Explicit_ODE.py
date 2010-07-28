@@ -268,6 +268,9 @@ class Explicit_ODE(ODE):
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
                 self._problem.post_process(self, self.t_cur, self.y_cur)
         
+        #Simulation complete, call finalize
+        self._problem.finalize(self)
+        
         time_stop = time.clock()
         
         if self.verbosity >= self.NORMAL:

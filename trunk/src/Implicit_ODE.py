@@ -241,6 +241,10 @@ class Implicit_ODE(ODE):
                 ncp = ncp_ori-len(self.y)+1
                 if ncp < 0:
                     ncp = 0
+        
+        #Simulation complete, call finalize
+        self._problem.finalize(self)            
+        
         time_stop = time.clock()
         
         if self.verbosity >= self.NORMAL:
