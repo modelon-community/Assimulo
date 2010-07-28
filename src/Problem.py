@@ -40,6 +40,10 @@ class Problem(object):
         def initiate(self)
             Used to supply a specialized initialization construct. Gets called when
             (solver).initiate() is called.
+        
+        def finalize(self, solver)
+            Used for specifying finalization. Gets called in the simulate method,
+            after the simulation have been preformed.
             
     Parameters (optional)::
     
@@ -69,6 +73,13 @@ class Problem(object):
         if solver.verbosity >= solver.NORMAL:
             print 'No event handling defined.'
     
+    def finalize(self,solver):
+        """
+        Method for specifying the finalization options when the simulation have
+        finnished.
+        """
+        pass
+
     
 class Implicit_Problem(Problem):
     """
@@ -198,4 +209,5 @@ class Explicit_Problem(Problem):
         """
         solver.t.extend([t])
         solver.y.extend([y])
-
+        
+    
