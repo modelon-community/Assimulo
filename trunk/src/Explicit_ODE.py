@@ -263,7 +263,7 @@ class Explicit_ODE(ODE):
                 self._flag_init = False
             
             if self.completed_step: #If the option completed is set.
-                self._flag_init = self._flag_init or self._problem.completed_step(self)
+                self._flag_init = self._problem.completed_step(self) or self._flag_init
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
                 self._problem.post_process(self, self.t_cur, self.y_cur)
