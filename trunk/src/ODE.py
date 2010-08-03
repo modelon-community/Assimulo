@@ -41,12 +41,15 @@ class ODE(object):
             #Test if the solver is being reinitiated and if so, keep the settings.
             self.verbosity
         except AttributeError:
+            #Default values
             self.verbosity = self.NORMAL #Output level
             self.maxsteps = 10000 #Max number of steps
             self.atol = 1.0e-6 #Absolute tolerance
             self.rtol = 1.0e-6 #Relative tolerance
-            self.completed_step = False #Completed step option
             self.store_cont = False #No continuous logging
+            
+            #Internal values
+            self._completed_step = False #Completed step option
             
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps

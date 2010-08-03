@@ -703,7 +703,7 @@ cdef class IDA_wrap:
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype suppress_alg,jacobian, store_cont,store_state
+        public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
         public int icopt
         public npy_intp num_event_fcn
         N_Vector curr_state
@@ -713,6 +713,7 @@ cdef class IDA_wrap:
         self.dim=dim
         self.store_cont = False
         self.store_state = False
+        self.comp_step = False
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
         self.t0 = t0
@@ -908,6 +909,8 @@ cdef class IDA_wrap:
                 if self.treat_disc(flags,tret):
                     break
                 if self.store_cont:
+                    break
+                if self.comp_step:
                     break
             else:
                 flags=1

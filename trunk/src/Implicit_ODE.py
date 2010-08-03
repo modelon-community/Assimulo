@@ -212,7 +212,11 @@ class Implicit_ODE(ODE):
         y0  = self.y_cur
         yd0 = self.yd_cur
         
-        if ncp != 0:
+        if ncp != 0 and self._completed_step:
+            mode = 'SPECIAL'
+            dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
+            dt = 0.0
+        elif ncp != 0:
             dt = (tfinal-t0)/ncp
             mode = 'NORMAL'
         else:
@@ -235,9 +239,15 @@ class Implicit_ODE(ODE):
             self.y_cur  = temp_y.copy()
             self.yd_cur = temp_y.copy()
             
-            for q in solution:
-                self._problem.handle_result(self,q[0],q[1],q[2])
-            last_logg = self.t_cur
+            if mode == 'SPECIAL':
+                while dist_space[0] <= self.t_cur:
+                    self._problem.handle_result(self, dist_space[0], self.interpolate(dist_space[0],0),self.interpolate(dist_space[0],1))
+                    last_logg = dist_space[0].copy()
+                    dist_space.pop(0)
+            else:
+                for q in solution:
+                    self._problem.handle_result(self,q[0],q[1],q[2])
+                last_logg = self.t_cur
 
             if self.is_disc: #Is discontinious?
                 [tevent,event_info]=self.disc_info
@@ -262,7 +272,13 @@ class Implicit_ODE(ODE):
                 self._flag_init = True
             else:
                 self._flag_init = False
-
+                
+            if self._completed_step: #If the option completed is set.
+                self._flag_init = self._problem.completed_step(self) or self._flag_init
+            
+            if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
+                self._problem.handle_result(self, self.t_cur, self.y_cur, self.yd_cur)
+                
         #Simulation complete, call finalize
         self._problem.finalize(self)            
         
@@ -467,10 +483,9 @@ class IDA(Implicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RES]
         
-        #if hasattr(problem, 'completed_step'):
-        #    self.Integrator.comp_step = True
-        #    self._comp = [self.completed_step]
-        #    self.Integrator.set_completed_method(self._comp)
+        if hasattr(problem, 'completed_step'):
+            self._completed_step = True
+            self.Integrator.comp_step = True
         
         #Default values
         self.tout1 = 0.001

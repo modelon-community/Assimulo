@@ -355,3 +355,32 @@ class Test_IDA:
         
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
+    
+    def test_completed_step(self):
+        """
+        This tests the functionality of the method completed_step.
+        """
+        def f(t,y,yd):
+            res_1 = y[0] + y[1]+1.0
+            res_2 = y[1]
+            return [res_1, res_2]
+        def completed_step(solver):
+            solver._nstepevents += 1
+        mod = Implicit_Problem()
+        mod.f = f
+        mod.completed_step = completed_step
+        
+        y0 = [-1.0, 0.0]
+        yd0 = [1.0 , 0.0]
+        sim = IDA(mod, y0, yd0)
+        sim._nstepevents = 0
+        
+        sim.simulate(2., 100)
+        assert len(sim.t) == 101
+        assert sim._nstepevents == 22
+        
+        sim = IDA(mod, y0, yd0)
+        sim._nstepevents = 0
+        sim.simulate(2.)
+        assert len(sim.t) == 23
+        assert sim._nstepevents == 22

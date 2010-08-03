@@ -44,6 +44,29 @@ class Problem(object):
         def finalize(self, solver)
             Used for specifying finalization. Gets called in the simulate method,
             after the simulation have been preformed.
+        
+        def completed_step(self, solver)
+            This method is intended to be used for events which does not require good accuracy
+            and is called after each successful step taken by the solver. An example of use is
+            that of simulating a Pendulum which require a change of the coordinate system during
+            the simulation.
+            
+            This is separated from the event functions (state and time) in the sense that
+            this method is between numerics of the problem and numerics of the solver.
+            The state and time functions are between the numerics of the solver and physics
+            of the problem.
+            
+                Parameters::
+                
+                    solver
+                        The solver object.
+                
+                Return::
+                
+                    True
+                        Indicating that the solver is to be reinitiated.
+                    False
+                        Indicating that the solver is NOT to be reinitiated.
             
     Parameters (optional)::
     

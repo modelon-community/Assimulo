@@ -187,7 +187,7 @@ class Explicit_ODE(ODE):
         y0 = self.y_cur
         last_logg = t0
         
-        if ncp != 0 and self.completed_step:
+        if ncp != 0 and self._completed_step:
             mode = 'SPECIAL'
             dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
             dt = 0.0
@@ -214,20 +214,16 @@ class Explicit_ODE(ODE):
             self.t_cur = tt.copy()
             self.y_cur = yy.copy()
             
-            if mode == 'ONE_STEP': #Logg all the internal steps.
-                for q in solution:
-                    self._problem.handle_result(self,q[0],q[1])
-                last_logg = self.t_cur
-            elif mode == 'NORMAL': #Logg at specific time-points.
-                for q in solution:
-                    self._problem.handle_result(self,q[0],q[1])
-                last_logg = self.t_cur
-            elif mode == 'SPECIAL':
+            if mode == 'SPECIAL':
                 while dist_space[0] <= self.t_cur:
                     self._problem.handle_result(self, dist_space[0], self.interpolate(dist_space[0],0))
                     last_logg = dist_space[0].copy()
                     dist_space.pop(0)
-            
+            else:
+                for q in solution:
+                    self._problem.handle_result(self,q[0],q[1])
+                last_logg = self.t_cur
+                
             #Check if there is a time event
             if tevent == None:
                 teventflag = False
@@ -263,7 +259,7 @@ class Explicit_ODE(ODE):
             else:
                 self._flag_init = False
             
-            if self.completed_step: #If the option completed is set.
+            if self._completed_step: #If the option completed is set.
                 self._flag_init = self._problem.completed_step(self) or self._flag_init
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
@@ -631,7 +627,7 @@ class CVode(Explicit_ODE, Sundials):
             self._RHS = [self.f]
         
         if hasattr(problem, 'completed_step'):
-            self.completed_step = True
+            self._completed_step = True
             self.Integrator.comp_step = True
         
         if hasattr(self, '_ROOT'):
