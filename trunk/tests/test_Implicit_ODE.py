@@ -23,9 +23,9 @@ class Test_Implicit_ODE:
         
         
         simulator = Implicit_ODE(res, [1 , 1.0], [2, 2.0], 1)
-        assert simulator.t[0] == 1.0
-        assert simulator.y[0][0] == 1.0
-        assert simulator.yd[0][0] == 2.0
+        assert simulator.t_cur == 1.0
+        assert simulator.y_cur[0] == 1.0
+        assert simulator.yd_cur[0] == 2.0
         
         
     def test_call(self):
@@ -41,9 +41,9 @@ class Test_Implicit_ODE:
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, -1.0)
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, 'test')
         print simulator.problem_spec[0][0]
-        [t,y,yd] = simulator(1.0,10)
+        simulator(1.0,10)
         
-        assert len(t) == 11 #11 Due to t0 is counted as well
+        assert len(simulator.t) == 11 #11 Due to t0 is counted as well
         
     def test_reset(self):
         """
@@ -97,7 +97,7 @@ class Test_IDA:
         assert self.simulator.switches == None
         assert self.simulator.maxsteps == 10000
         assert self.simulator.verbosity == self.simulator.NORMAL
-        assert self.simulator.y[0][0] == 1.0
+        assert self.simulator.y_cur[0] == 1.0
         
         nose.tools.assert_raises(Implicit_ODE_Exception, IDA, 'Test function', 'test', [1.0])
         nose.tools.assert_raises(Implicit_ODE_Exception, IDA, 'Test function', [1.0], [1.0], switches0='Error')
@@ -120,7 +120,7 @@ class Test_IDA:
         
         assert simulator.res_fcn == 'Test function'
         assert simulator.switches == switches
-        assert simulator.yd[0][0] == 1.0
+        assert simulator.yd_cur[0] == 1.0
         assert simulator.problem_spec[0][0] == simulator.res_fcn
         assert simulator.problem_spec[0][1] == simulator.jac
         assert simulator.problem_spec[1][0] == simulator.event_fcn
@@ -144,26 +144,29 @@ class Test_IDA:
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
-    def test_post_process(self):
+    def test_handle_result(self):
         """
-        This function tests the post processing.
+        This function tests the handle result.
         """
         f = lambda t,x,xd: x**0.25-xd
-        def post_process(solver, t ,y):
+        def handle_result(solver, t ,y, yd):
             solver.temp+=1
-        
         
         prob = Implicit_Problem()
         prob.f = f
-        prob.post_process = post_process
+        prob.handle_result = handle_result
         
         sim = IDA(prob, [1.0],[1.0])
         sim.temp = 0
-        sim.post_process = True
+        sim.store_cont = True
+        assert sim.stats == None
         sim.simulate(10., 100)
-        assert sim.temp == 100
+        print sim.temp
+        assert sim.stats != None
+        assert sim.temp == 101
         sim.simulate(20)
-        assert sim.temp == 114
+        print sim.temp
+        assert sim.temp == 141
         
     def test_max_order(self):
         """

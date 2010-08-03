@@ -198,7 +198,8 @@ class Explicit_ODE(ODE):
             dt = 0.0
             mode = 'ONE_STEP'
         
-        self._problem.post_process(self,t0,y0) #Logg the first point
+        self._problem.handle_result(self,t0,y0) #Logg the first point
+        self._flag_init = True #Reinitiate the solver
         
         while N.abs(self.t_cur-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t_cur-tfinal_ori)/(ncp+1.0)):
             
@@ -215,15 +216,15 @@ class Explicit_ODE(ODE):
             
             if mode == 'ONE_STEP': #Logg all the internal steps.
                 for q in solution:
-                    self._problem.post_process(self,q[0],q[1])
+                    self._problem.handle_result(self,q[0],q[1])
                 last_logg = self.t_cur
             elif mode == 'NORMAL': #Logg at specific time-points.
                 for q in solution:
-                    self._problem.post_process(self,q[0],q[1])
+                    self._problem.handle_result(self,q[0],q[1])
                 last_logg = self.t_cur
             elif mode == 'SPECIAL':
                 while dist_space[0] <= self.t_cur:
-                    self._problem.post_process(self, dist_space[0], self.interpolate(dist_space[0],0))
+                    self._problem.handle_result(self, dist_space[0], self.interpolate(dist_space[0],0))
                     last_logg = dist_space[0].copy()
                     dist_space.pop(0)
             
@@ -266,7 +267,7 @@ class Explicit_ODE(ODE):
                 self._flag_init = self._problem.completed_step(self) or self._flag_init
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
-                self._problem.post_process(self, self.t_cur, self.y_cur)
+                self._problem.handle_result(self, self.t_cur, self.y_cur)
         
         #Simulation complete, call finalize
         self._problem.finalize(self)
@@ -644,7 +645,7 @@ class CVode(Explicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.post_process = self.post_process
+        self.Integrator.store_cont = self.store_cont
         if self._flag_init:
             self.Integrator.store_statistics()
             self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)

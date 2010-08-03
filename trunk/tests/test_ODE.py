@@ -64,15 +64,15 @@ class Test_ODE:
         assert tf == 10
         assert ncp == 100
         
-    def test_post_process(self):
+    def test_store_cont(self):
         """
-        This tests the functionality of the property post_process.
+        This tests the functionality of the property store_cont.
         """
         
-        assert self.simulator.post_process == False #Test the default value
+        assert self.simulator.store_cont == False #Test the default value
         
-        self.simulator.post_process = True
-        assert self.simulator.post_process == True
+        self.simulator.store_cont = True
+        assert self.simulator.store_cont == True
         
         
         

@@ -109,6 +109,9 @@ class Implicit_Problem(Problem):
                 
                 Returns:
                     A numpy array of size len(y)*len(y).
+                    
+            def handle_result(self, solver, t, y, yd)
+                See docstring of handle_result.
           
         Parameters (optional)::
           
@@ -132,6 +135,45 @@ class Implicit_Problem(Problem):
         The residual function for a DAE problem.
         """
         raise Problem_Exception('The residual function is not specified.')
+        
+    def handle_result(self, solver, t, y, yd):
+        """
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors, solver.(t/y/yd). If this is changed the
+        plotting functionality will not work. The method works differently depending
+        of certain options.
+        
+        Cases:
+        
+            Radau5 and IDA (no events)
+            
+                    Gets called whenever the simulation have finnished with a call for
+                    each time point specified with the number of communication points or
+                    for each internal time point (if number of communication points == 0)
+        
+            IDA (with events)
+            
+                    Gets called as above with the extension that it is called also at each
+                    event.
+            
+            IDA (with completed_step method or store_cont property)
+            
+                    Gets called at each internal time point.
+        
+            Parameters::
+            
+                solver
+                    The solver object.
+                t
+                    Time.
+                y
+                    State.
+                yd
+                    State derivatives.
+        """
+        solver.t.extend([t])
+        solver.y.extend([y])
+        solver.yd.extend([yd])
         
 class Explicit_Problem(Problem):
     """
@@ -171,13 +213,8 @@ class Explicit_Problem(Problem):
                 Returns:
                     A numpy matrix of size len(y)*len(y).
             
-            def post_process(self, solver, t, y)
-                Allows for users to specify how the data handling is done for example.
-                It is not allowed to change the values of the states in this method.
-                If the property post_process = True (in the solver), this method gets called at each
-                internal time point or at each communication point. If post_process 
-                (in the solver) is not set, this method is called at an event or when
-                the simulation have finnished.
+            def handle_result(self, solver, t, y)
+                See docstring of handle_result.
         
         Parameters (optional)::
         
@@ -201,13 +238,41 @@ class Explicit_Problem(Problem):
         """
         raise Problem_Exception('The right-hand-side is not specified.')
         
-    def post_process(self, solver, t, y):
+    def handle_result(self, solver, t, y):
         """
-        Method for specifying post process handling. Default store the 
-        values into the solver.t and solver.y. If this is changed the
-        plotting functionality wont work.
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors, solver.(t/y). If this is changed the
+        plotting functionality will not work. The method works differently depending
+        of certain options.
+        
+        Cases:
+        
+            Radau5, RungeKutta4, RungeKutta34, Explicit_Euler, CVode (no events)
+            
+                    Gets called whenever the simulation have finnished with a call for
+                    each time point specified with the number of communication points or
+                    for each internal time point (if number of communication points == 0)
+        
+            CVode (with events)
+            
+                    Gets called as above with the extension that it is called also at each
+                    event.
+            
+            CVode (with method completed_step or property store_cont)
+            
+                    Gets called at each internal time point.
+        
+            Parameters::
+            
+                solver
+                    The solver object.
+                t
+                    Time.
+                y
+                    State.
+                yd
+                    State derivatives.
         """
         solver.t.extend([t])
         solver.y.extend([y])
-        
     
