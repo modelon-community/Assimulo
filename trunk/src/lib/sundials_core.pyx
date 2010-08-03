@@ -491,7 +491,7 @@ cdef class CVode_wrap:
         public dict stats
         public dict detailed_info
         public booleantype jacobian, store_cont, comp_step, store_state
-        public npy_intp num_event_fcn
+        public npy_intp num_state_events
         #void* comp_step_method
         N_Vector curr_state
         N_Vector temp_nvector
@@ -518,8 +518,8 @@ cdef class CVode_wrap:
             flag=CVodeInit(self.mem, cv_rhs, t0,self.curr_state)
             if flag!=CV_SUCCESS:
                 raise Exception,"CVode Initialization Error"
-            if self.num_event_fcn>0: 
-                flag = CVodeRootInit(self.mem, self.num_event_fcn, cv_root)
+            if self.num_state_events>0: 
+                flag = CVodeRootInit(self.mem, self.num_state_events, cv_root)
                 if flag!=CV_SUCCESS:
                     raise Exception,"CV root-finding initialization error"
         else:
@@ -608,13 +608,13 @@ cdef class CVode_wrap:
         """
         if flag == CV_ROOT_RETURN:
             # Allocate memory for the event_info_ vector and initialize to zeros
-            event_info_ = <int*> malloc(self.num_event_fcn*sizeof(int))
-            for k in range(self.num_event_fcn):
+            event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
+            for k in range(self.num_state_events):
                 event_info_[k] = 0
                 # Fetch data on which root functions that became zero and store in class
             flag = CVodeGetRootInfo(self.mem, event_info_)
-            self.event_info =  PyArray_SimpleNew(1,&self.num_event_fcn ,NPY_INT)
-            for k in range(self.num_event_fcn):
+            self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
+            for k in range(self.num_state_events):
                 self.event_info[k] = event_info_[k]
             # Remember to deallocate
             free(event_info_)
@@ -655,12 +655,10 @@ cdef class CVode_wrap:
                 if self.store_cont:
                     break
         else: # one step mode
-            
             if self.detailed_info == None:
                 self.detailed_info = {}
                 self.detailed_info['qlast'] = []
                 self.detailed_info['qcurrent'] = []
-        
             while tret < tf:
                 flag=0
                 flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
@@ -705,7 +703,7 @@ cdef class IDA_wrap:
         public dict detailed_info
         public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
         public int icopt
-        public npy_intp num_event_fcn
+        public npy_intp num_state_events
         N_Vector curr_state
         N_Vector curr_deriv
         N_Vector temp_nvector
@@ -730,8 +728,8 @@ cdef class IDA_wrap:
             flag=IDAInit(self.mem, ida_res, t0, self.curr_state, self.curr_deriv)
             if flag!=IDA_SUCCESS:
                     raise Exception,"IDA Initialization Error"
-            if self.num_event_fcn>0: 
-                flag = IDARootInit(self.mem, self.num_event_fcn, ida_root)
+            if self.num_state_events>0: 
+                flag = IDARootInit(self.mem, self.num_state_events, ida_root)
                 if flag!=IDA_SUCCESS:
                     raise Exception,"IDA root-finding initialization error"
         else:
@@ -839,13 +837,13 @@ cdef class IDA_wrap:
         """
         if flag == IDA_ROOT_RETURN:
             # Allocate memory for the event_info_ vector and initialize to zeros
-            event_info_ = <int*> malloc(self.num_event_fcn*sizeof(int))
-            for k in range(self.num_event_fcn):
+            event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
+            for k in range(self.num_state_events):
                 event_info_[k] = 0
                 # Fetch data on which root functions that became zero and store in class
             flag = IDAGetRootInfo(self.mem, event_info_)
-            self.event_info =  PyArray_SimpleNew(1,&self.num_event_fcn ,NPY_INT)
-            for k in range(self.num_event_fcn):
+            self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
+            for k in range(self.num_state_events):
                 self.event_info[k] = event_info_[k]
 
             # Remember to deallocate

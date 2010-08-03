@@ -120,11 +120,24 @@ class Implicit_Problem(Problem):
         
         Available (optional) options::
         
-            def event_fcn(self ,t ,y ,yd, sw)
+            def state_events(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
                 
                 Returns:
                     A numpy array.
+                
+            def time_events(self, t, y, yd, sw)
+                Defines the time events. This function should return
+                the next time-point for a time event. At a time-event
+                the usual method handle_event is called for the specific
+                handling. If there are no more time events. This function
+                should return None.
+                
+                Returns:
+                    Float
+                        The time-point for the next time-event.
+                    None
+                        No time-event.
                 
             def jac(self, c, t, y, yd, sw)
                 Defines the Jacobian, which should be of the form
@@ -214,13 +227,13 @@ class Explicit_Problem(Problem):
         
         Available (optional) options::
         
-            def event_fcn(self ,t ,y, sw)
+            def state_events(self ,t ,y, sw)
                 Defines the event (root) functions.
                 
                 Returns:
                     A numpy array.
                     
-            def time_event_fcn(self, t, y, sw) or time_event_fcn(self, t, y)
+            def time_events(self, t, y, sw)
                 Defines the time events. This function should return
                 the next time-point for a time event. At a time-event
                 the usual method handle_event is called for the specific
@@ -228,7 +241,10 @@ class Explicit_Problem(Problem):
                 should return None.
                 
                 Returns:
-                    A float.
+                    Float
+                        The time-point for the next time-event.
+                    None
+                        No time-event.
                 
             def jac(self, t, y, sw=None)
                 Defines the jacobian. J=df/dx.
@@ -249,12 +265,6 @@ class Explicit_Problem(Problem):
                 Defines the starting values of the switches. 
                 Should be a list of booleans.
     """
-    def time_event_fcn(self, t, y, sw=None):
-        """
-        The time event function.
-        """
-        return None
-    
     def f(self, t, y, sw=None):
         """
         The rhs (right-hand-side) for a ODE problem.

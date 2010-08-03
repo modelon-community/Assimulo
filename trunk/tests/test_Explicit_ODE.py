@@ -259,11 +259,11 @@ class Test_CVode:
         
         
         f = 'Test function'
-        event_fcn = lambda t,x,sw: x
+        state_events = lambda t,x,sw: x
         jac = lambda t,x,sw: N.zeros([len(x),len(x)])
         problem = Explicit_Problem()
         problem.f = f
-        problem.event_fcn = event_fcn
+        problem.state_events = state_events
         problem.jac = jac
         y0 = [1.0]
 
@@ -276,7 +276,7 @@ class Test_CVode:
         assert simulator.y_cur == 1.0
         assert simulator.problem_spec[0][0] == simulator.f
         assert simulator.problem_spec[0][1] == simulator.jac
-        assert simulator.problem_spec[1][0] == simulator.event_fcn
+        assert simulator.problem_spec[1][0] == simulator.state_events
         assert simulator.problem_spec[1][1] == switches
          
         
@@ -432,7 +432,7 @@ class Test_CVode:
         class Prob_CVode(Explicit_Problem):
             f = lambda self,t,y,sw: [1.0]
             y0 = [1.0]
-            event_fcn = lambda self,t,y,sw: [t-1.0, t]
+            state_events = lambda self,t,y,sw: [t-1.0, t]
         
         switches=[False,True]
         f = Prob_CVode()

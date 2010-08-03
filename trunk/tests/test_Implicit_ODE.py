@@ -104,7 +104,7 @@ class Test_IDA:
         
         my_Prob = Implicit_Problem()
         my_Prob.f = 'Test function'
-        my_Prob.event_fcn = lambda t,x,xd,sw: x
+        my_Prob.state_events = lambda t,x,xd,sw: x
         
         def jac(c,t,y,yd,sw):
             re = N.zeros([len(y),len(y)])
@@ -123,7 +123,7 @@ class Test_IDA:
         assert simulator.yd_cur[0] == 1.0
         assert simulator.problem_spec[0][0] == simulator.res_fcn
         assert simulator.problem_spec[0][1] == simulator.jac
-        assert simulator.problem_spec[1][0] == simulator.event_fcn
+        assert simulator.problem_spec[1][0] == simulator.state_events
         assert simulator.problem_spec[1][1] == switches
     
     def test_interpolate(self):
@@ -345,7 +345,7 @@ class Test_IDA:
         """
         class Prob_IDA(Implicit_Problem):
             f = lambda self,t,y,yd,sw: [y[0]-1.0]
-            event_fcn = lambda self,t,y,yd,sw: [t-1.0, t]
+            state_events = lambda self,t,y,yd,sw: [t-1.0, t]
             y0 = [1.0]
             yd0 = [1.0]
         switches = [False,True]

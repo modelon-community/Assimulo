@@ -41,7 +41,7 @@ class Extended_Problem(Implicit_Problem):
     problem_name = 'Function with consistency problem'
     
     #The event function
-    def event_fcn(self,t,y,yd,sw):
+    def state_events(self,t,y,yd,sw):
         """
         This is our function that keep track of our events, when the sign
         of any of the events has changed, we have an event.
@@ -62,9 +62,9 @@ class Extended_Problem(Implicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
+            b_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
+            a_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             
             event_info = self.check_eIter(b_mode, a_mode)
             
@@ -92,7 +92,7 @@ class Extended_Problem(Implicit_Problem):
         Helper function for handle_event to determine if we have event
         iteration.
         
-            Input: Values of the event indicator functions (event_fcn)
+            Input: Values of the event indicator functions (state_events)
             before and after we have changed mode of operations.
         """
         
@@ -128,7 +128,7 @@ def run_example():
     #Plot
     iter_sim.plot()
     
-
+    
 if __name__=="__main__":
     run_example()
     

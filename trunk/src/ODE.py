@@ -49,8 +49,9 @@ class ODE(object):
             self.store_cont = False #No continuous logging
             
             #Internal values
-            self._completed_step = False #Completed step option
-            
+            self._completed_step = False #Completed step option.
+            self._time_function  = False #Time event function specified.
+        
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps
         self._log_event_info = []
