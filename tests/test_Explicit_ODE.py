@@ -441,3 +441,28 @@ class Test_CVode:
         
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
+    
+    def test_completed_step(self):
+        """
+        This tests the functionality of the method completed_step.
+        """
+        f = lambda t,x: x**0.25
+        def completed_step(solver):
+            solver._nstepevents += 1
+        mod = Explicit_Problem()
+        mod.f = f
+        mod.completed_step = completed_step
+        
+        y0 = [1.0]
+        sim = CVode(mod, y0)
+        sim._nstepevents = 0
+        
+        sim.simulate(2., 100)
+        assert len(sim.t) == 101
+        assert sim._nstepevents == 19
+        
+        sim = CVode(mod, y0)
+        sim._nstepevents = 0
+        sim.simulate(2.)
+        assert len(sim.t) == 20
+        assert sim._nstepevents == 19
