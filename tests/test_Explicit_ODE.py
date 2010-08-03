@@ -370,27 +370,28 @@ class Test_CVode:
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
         
-    def test_post_process(self):
+    def test_handle_result(self):
         """
-        This function tests the post processing.
+        This function tests the handle result.
         """
         f = lambda t,x: x**0.25
-        def post_process(solver,t,y):
+        def handle_result(solver,t,y):
             solver.temp+=1
         
         
         prob = Explicit_Problem()
         prob.f = f
-        prob.post_process = post_process
+        prob.handle_result = handle_result
         
         sim = CVode(prob, [1.0])
         sim.temp = 0
-        sim.post_process = True
+        sim.store_cont = True
         sim.simulate(10., 100)
         print sim.temp
         assert sim.temp == 101
         sim.simulate(20.)
-        assert sim.temp == 112
+        print sim.temp
+        assert sim.temp == 118
         
     def test_max_order(self):
         """

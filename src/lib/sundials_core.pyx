@@ -26,6 +26,7 @@ http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 """
 from __future__ import division
 import numpy as np
+import math
 from numpy cimport ndarray, NPY_DOUBLE, npy_intp, NPY_INT
 
 # ==============================================
@@ -489,7 +490,7 @@ cdef class CVode_wrap:
         public ndarray abstol_ar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype jacobian, post_process, comp_step, store_state
+        public booleantype jacobian, store_cont, comp_step, store_state
         public npy_intp num_event_fcn
         #void* comp_step_method
         N_Vector curr_state
@@ -501,7 +502,7 @@ cdef class CVode_wrap:
         self.dim=dim
         self.discr=1
         self.iter=1
-        self.post_process = False
+        self.store_cont = False
         self.store_state = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
         cdef flag
@@ -623,11 +624,11 @@ cdef class CVode_wrap:
             return False
 
         
-    def run(self,t0,tf,dt):
+    def run(self,float t0,float tf,float dt):
         #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
-        cdef int i,itask
+        cdef int i,itask,nt
         cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
@@ -635,14 +636,13 @@ cdef class CVode_wrap:
         sol=[]
         tret=t0
         if dt > 0.0:
-            i = 1
-            while tret < tf:
+            nt = int(math.ceil((tf-t0)/dt))
+            for i in xrange(1, nt+1):
                 tout=t0+i*dt
                 flag=0
                 flags=CVode(self.mem,tout,self.curr_state,&tret,CV_NORMAL)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
                     sundials_error(flags,2,tret)
-                    #raise SundialsError,"CVode run error at t=%s with flag %s" %(tret, flags)
                 sol.append((np.array(tret),nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
@@ -650,13 +650,10 @@ cdef class CVode_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
-                if self.post_process:
-                    if tout == tf:
-                        flags=1
+                if i == nt:
+                    flags=1
+                if self.store_cont:
                     break
-                i = i+1
-            else:
-                flags=1
         else: # one step mode
             
             if self.detailed_info == None:
@@ -681,17 +678,11 @@ cdef class CVode_wrap:
                     break
                 if self.comp_step:
                     break
-                if self.post_process:
+                if self.store_cont:
                     break
+            else:
+                flags = 1
                 
-        # Store statistics
-        #flag = CVodeGetIntegratorStats(self.mem, &nsteps, &fevals,
-        #                        &nlinsetups, &netfails, &qlast, &qcur,
-        #                        &hinused, &hlast, &hcur, &tcur)
-        #self.stats={'Steps':nsteps,'F-Evals':fevals, 'LinSystem Setups':nlinsetups, 'ErrorTest Failures':netfails,
-        #        'Last Order':qlast,'Current Order':qcur,'Avarage Order':avar,'Computed Initial StepSize':hinused,'Last StepSize':hlast,
-        #        'Current Stepsize':hcur,'Time interval':[t0,tcur],'Method':self.method[self.discr-1],
-        #        'Iteration':self.iteration[self.iter-1]}
         if flags >= 1:
             self.store_statistics()
         # Free memory
@@ -712,7 +703,7 @@ cdef class IDA_wrap:
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public dict detailed_info
-        public booleantype suppress_alg,jacobian, post_process
+        public booleantype suppress_alg,jacobian, store_cont,store_state
         public int icopt
         public npy_intp num_event_fcn
         N_Vector curr_state
@@ -720,11 +711,12 @@ cdef class IDA_wrap:
         N_Vector temp_nvector
     def __init__(self,dim):
         self.dim=dim
-        self.post_process = False
-        #self.comp_step = False
+        self.store_cont = False
+        self.store_state = False
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
         self.t0 = t0
+        self.store_state = True
         self.curr_state=arr2nv(u)
         self.curr_deriv=arr2nv(ud)
         self.max_steps = max_steps
@@ -784,33 +776,36 @@ cdef class IDA_wrap:
         Retrieves and stores the statistics.
         """
         cdef long int nsteps, nrevals,njevals,nrevalsLS,ngevals,netfails,nniters,nncfails
-        
-        flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
-        flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
-        flag = IDADlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-        flag = IDADlsGetNumResEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
-        flag = IDAGetNumGEvals(self.mem, &ngevals) #Number of root evals
-        flag = IDAGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-        flag = IDAGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-        flag = IDAGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
-        
-        stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-        stats_text = ['Number of Steps                          ',
-                      'Number of Function Evaluations           ',
-                      'Number of Jacobian Evaluations           ',
-                      'Number of F-Eval During Jac-Eval         ',
-                      'Number of Root Evaluations               ',
-                      'Number of Error Test Failures            ',
-                      'Number of Nonlinear Iterations           ',
-                      'Number of Nonlinear Convergence Failures ']
-        if self.stats != None:
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] += stats_values[x]
-        else:
-            self.stats = {}
-            for x in range(len(stats_text)):
-                self.stats[stats_text[x]] = stats_values[x]
 
+        if self.store_state:
+            flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
+            flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
+            flag = IDADlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
+            flag = IDADlsGetNumResEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
+            flag = IDAGetNumGEvals(self.mem, &ngevals) #Number of root evals
+            flag = IDAGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
+            flag = IDAGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
+            flag = IDAGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+            
+            stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
+            stats_text = ['Number of Steps                          ',
+                          'Number of Function Evaluations           ',
+                          'Number of Jacobian Evaluations           ',
+                          'Number of F-Eval During Jac-Eval         ',
+                          'Number of Root Evaluations               ',
+                          'Number of Error Test Failures            ',
+                          'Number of Nonlinear Iterations           ',
+                          'Number of Nonlinear Convergence Failures ']
+            if self.stats != None:
+                for x in range(len(stats_text)):
+                    self.stats[stats_text[x]] += stats_values[x]
+            else:
+                self.stats = {}
+                for x in range(len(stats_text)):
+                    self.stats[stats_text[x]] = stats_values[x]
+        
+        self.store_state = False
+        
     def calc_IC(self,method, direction, lsoff):
         """
         This calculates the initial conditions with the built in SUNDIALS
@@ -859,45 +854,38 @@ cdef class IDA_wrap:
         else:
             return False
    
-    def run(self,t0,tf,nt):
-        cdef realtype dt             # time increment
+    def run(self,float t0,float tf,float dt):
+        #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
-        cdef int i,itask
+        cdef int i,itask, nt
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
         flag = IDASetStopTime(self.mem, tf)
         sol=[]
         tret=t0
-        if nt > 0:
-            dt=(tf-t0)/nt
-            for i in range(1,nt+1):
+        if dt > 0.0:
+            nt = int(math.ceil((tf-t0)/dt))
+            for i in xrange(1, nt+1):
                 tout=t0+i*dt
                 flag=0
                 flags=0
                 flags=IDASolve(self.mem,tout,&tret, self.curr_state, self.curr_deriv,IDA_NORMAL)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
                     sundials_error(flags,1,tret)
-                    #raise Exception,"IDA run error at t=%s with flag %s" %(tret, flags)
-                sol.append((tret,nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
+                sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
-                if self.post_process:
-                    if i == nt:
-                        flags=1
+                if i == nt:
+                    flags =1
+                if self.store_cont:
                     break
-                #if self.comp_step:
-                #    if completed_step(self.comp_step_method) != 0:
-                #        break
-            else:
-                flags=1
         else: # one step mode
-        
             if self.detailed_info == None:
                 self.detailed_info = {}
                 self.detailed_info['qlast'] = []
@@ -909,7 +897,7 @@ cdef class IDA_wrap:
                 flags=IDASolve(self.mem,tf,&tret, self.curr_state,self.curr_deriv,IDA_ONE_STEP)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
                     sundials_error(flags,1,tret)
-                sol.append((tret,nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
+                sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 flag = IDAGetCurrentOrder(self.mem, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)
@@ -919,22 +907,13 @@ cdef class IDA_wrap:
                 avar=float(self._ordersum)/self._count_output
                 if self.treat_disc(flags,tret):
                     break
-                if self.post_process:
+                if self.store_cont:
                     break
-                #if self.comp_step:
-                #    if completed_step(self.comp_step_method) != 0:
-                #        break
-                
+            else:
+                flags=1
         if flags >= 1:
             self.store_statistics()
-        # Store statistics
-        #flag = IDAGetIntegratorStats(self.mem, &nsteps, &fevals,
-        #                        &nlinsetups, &netfails, &qlast, &qcur,
-        #                        &hinused, &hlast, &hcur, &tcur)
-        #self.stats={'Steps':nsteps,'F-Evals':fevals, 'LinSystem Setups':nlinsetups, 'ErrorTest Failures':netfails,
-        #        'Last Order':qlast,'Current Order':qcur,'Avarage Order':avar,'Computed Initial StepSize':hinused,'Last StepSize':hlast,
-        #        'Current Stepsize':hcur,'Time interval':[t0,tcur]}
-        
+
         # Free memory
         #IDAFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)

@@ -62,9 +62,9 @@ class Extended_Problem(Implicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.event_fcn(solver.t[-1], solver.y[-1], solver.yd[-1], solver.switches)
+            b_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.event_fcn(solver.t[-1], solver.y[-1], solver.yd[-1], solver.switches)
+            a_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             
             event_info = self.check_eIter(b_mode, a_mode)
             

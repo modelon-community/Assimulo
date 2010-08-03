@@ -45,9 +45,9 @@ class ODE(object):
             self.maxsteps = 10000 #Max number of steps
             self.atol = 1.0e-6 #Absolute tolerance
             self.rtol = 1.0e-6 #Relative tolerance
-            self.post_process = False #Post processing option
             self.completed_step = False #Completed step option
-    
+            self.store_cont = False #No continuous logging
+            
         #Internal values
         self._SAFETY = 100*N.finfo('double').eps
         self._log_event_info = []
@@ -248,14 +248,12 @@ class ODE(object):
         Should print the statistics.
         """
         pass
-        
-    def _get_post_process(self):
+    
+    def _get_store_cont(self):
         """
-        Defines the post process actions. When set to True handling
-        is given to the post process method defined in the Problem at
-        each time-step taken. For Sundials methods this can either
-        be at an internal time-step (in simulate, ncp=0) or at 
-        communication points, (in simulate, ncp>0).
+        Defines how the method handle_result is called. For more information
+        see the help text under handle_result in either Implicit_Problem or
+        Explicit_Problem .
         
             Parameters::
             
@@ -265,17 +263,14 @@ class ODE(object):
                         - Should be convertable to boolean.
                         
                             Example:
-                                post_process = True
+                                store_cont = True
         """
-        return self.__postprocess
-        
-    def _set_post_process(self, post):
+        return self.__storecont
+    def _set_store_cont(self, cont):
         """
-        Defines the post process actions. When set to True handling
-        is given to the post process method defined in the Problem at
-        each time-step taken. For Sundials methods this can either
-        be at an internal time-step (in simulate, ncp=0) or at 
-        communication points, (in simulate, ncp>0).
+        Defines how the method handle_result is called. For more information
+        see the help text under handle_result in either Implicit_Problem or
+        Explicit_Problem .
         
             Parameters::
             
@@ -285,8 +280,9 @@ class ODE(object):
                         - Should be convertable to boolean.
                         
                             Example:
-                                post_process = True
+                                store_cont = True
         """
-        self.__postprocess = bool(post)
-
-    post_process = property(_get_post_process, _set_post_process)
+        self.__storecont = bool(cont)
+        
+    store_cont = property(_get_store_cont, _set_store_cont)
+    

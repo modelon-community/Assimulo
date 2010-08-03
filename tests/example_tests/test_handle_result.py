@@ -10,7 +10,7 @@ def run_example():
     def f(t,y):
         ydot = -y[0]
         return N.array([ydot])
-    def post_process(solver, t, y):
+    def handle_result(solver, t, y):
         solver.t.extend([t])
         solver.y.extend([y])
         solver.temp += 1
@@ -18,7 +18,7 @@ def run_example():
     global exp_sim
     exp_mod = Explicit_Problem()
     exp_mod.f = f
-    exp_mod.post_process = post_process
+    exp_mod.handle_result = handle_result
     exp_mod.problem_name = 'Simple CVode Example'
 
     y0 = 4.0 #Initial conditions
@@ -77,7 +77,7 @@ def run_example2():
     
     #CVode
     exp_sim = CVode(exp_mod)
-    exp_sim.post_process = True
+    exp_sim.store_cont = True
     exp_sim(5.,10)
     #exp_sim.plot()
     

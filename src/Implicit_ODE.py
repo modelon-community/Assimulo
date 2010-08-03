@@ -103,6 +103,8 @@ class Implicit_ODE(ODE):
                 yd0 = [yd0]
             self._problem.y0 = y0[:]
             self._problem.yd0 = yd0[:]
+            self.y_cur = N.array(y0, dtype=float)
+            self.yd_cur = N.array(yd0, dtype=float)
             self.y = [N.array(y0, dtype=float)]
             self.yd = [N.array(yd0, dtype=float)]
         except ValueError:
@@ -116,14 +118,20 @@ class Implicit_ODE(ODE):
         
         try:
             if isinstance(t0, list):
-                self.t = [float(t0[0])]
+                self.t_cur = float(t0[0])
             else:
-                self.t = [float(t0)]
-            self._problem.t0 = self.t[0]
+                self.t_cur = float(t0)
+            self._problem.t0 = self.t_cur
         except ValueError:
             raise Implicit_ODE_Exception('Initial time must be an integer or float.')
 
-    
+        self.t_cur  = N.array(self.t_cur)
+        self.y_cur  = N.array(self.y_cur)
+        self.yd_cur = N.array(self.yd_cur)
+        
+        self.t  = []
+        self.y  = []
+        self.yd = []
     
     
     def integrate(self, t, y, yd, tf,nt):
@@ -152,7 +160,7 @@ class Implicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
-        if len(self.y[-1]) != len(y0) or len(self.yd[-1]) != len(yd0):
+        if len(self.y_cur) != len(y0) or len(self.yd_cur) != len(yd0):
             raise Explicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         Implicit_ODE.__init__(self, self._problem,y0,yd0,t0)
@@ -186,10 +194,11 @@ class Implicit_ODE(ODE):
         """
         try:
             tfinal = float(tfinal)
+            tfinal = N.array(tfinal)
         except ValueError:
             raise Implicit_ODE_Exception('Final time must be an integer or float.')
             
-        if self.t[-1] > tfinal:
+        if self.t_cur > tfinal:
             raise Implicit_ODE_Exception('Final time must be greater than start time.')
         if not isinstance(ncp, int):
             raise Implicit_ODE_Exception('Number of communication points must be an integer.')
@@ -197,25 +206,44 @@ class Implicit_ODE(ODE):
             ncp = 0
             if self.verbosity > self.QUIET:
                 print 'Number of communication points must be a positive integer, setting' \
-                      ' nt = 0.'
+                        ' nt = 0.'
+        
+        t0  = self.t_cur
+        y0  = self.y_cur
+        yd0 = self.yd_cur
+        
+        if ncp != 0:
+            dt = (tfinal-t0)/ncp
+            mode = 'NORMAL'
+        else:
+            dt = 0.0
+            mode = 'ONE_STEP'
+        
         ncp_ori = ncp
         time_start = time.clock()
         
-        while N.abs(self.t[-1]-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t[-1]-tfinal)/(ncp+1.0)):
-            
-            solution = list(self.integrate(self.t[-1], self.y[-1], self.yd[-1], tfinal,int(ncp)))
+        self._problem.handle_result(self,t0,y0,yd0) #Logg the first point
+        self._flag_init = True #Reinitiate the solver
         
-            self.t.extend(q[0] for q in solution)
-            self.y.extend(q[1] for q in solution)
-            self.yd.extend(q[2] for q in solution)
+        while N.abs(self.t_cur-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t_cur-tfinal)/(ncp+1.0)):
             
+            solution = list(self.integrate(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
+
+            temp_t, temp_y, temp_yd = solution[-1]
+            
+            self.t_cur  = temp_t.copy()
+            self.y_cur  = temp_y.copy()
+            self.yd_cur = temp_y.copy()
+            
+            for q in solution:
+                self._problem.handle_result(self,q[0],q[1],q[2])
+            last_logg = self.t_cur
+
             if self.is_disc: #Is discontinious?
                 [tevent,event_info]=self.disc_info
                 
-                
-                
                 #Log the information
-                self._log_event_info.append([self.t[-1], event_info])
+                self._log_event_info.append([self.t_cur, event_info])
                 
                 if self.verbosity > self.NORMAL:
                     print 'A discontinuity occured at t = %e.'%tevent
@@ -234,15 +262,7 @@ class Implicit_ODE(ODE):
                 self._flag_init = True
             else:
                 self._flag_init = False
-            
-            if self.post_process:
-                self._problem.post_process(self, self.t[-1],self.y[-1])
-            
-            if ncp > 0:
-                ncp = ncp_ori-len(self.y)+1
-                if ncp < 0:
-                    ncp = 0
-        
+
         #Simulation complete, call finalize
         self._problem.finalize(self)            
         
@@ -253,7 +273,7 @@ class Implicit_ODE(ODE):
             print 'Elapsed simulation time:', time_stop-time_start, 'seconds.'
         
         
-        return [self.t, self.y, self.yd]
+        #return [self.t, self.y, self.yd]
         
         
     def plot(self, mask=None, der=False, **kwargs):
@@ -398,7 +418,7 @@ class IDA(Implicit_ODE, Sundials):
         if hasattr(self._problem, 'algvar'): #Check if the algebraic components are defined in the Problem specifications
             self.algvar = self._problem.algvar
         else:
-            self.algvar = [1.0]*len(self.y[0]) #No algebraic variables are set
+            self.algvar = [1.0]*len(self.y_cur) #No algebraic variables are set
             
         
         
@@ -426,10 +446,10 @@ class IDA(Implicit_ODE, Sundials):
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
             if self.switches == None:
-                trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1])
+                trial = self._problem.jac(1,self._problem.t0,self.y_cur,self.yd_cur)
             else:
-                trial = self._problem.jac(1,self.t[-1],self.y[-1],self.yd[-1], self.switches)
-            if trial.shape != (len(self.y[-1]),len(self.y[-1])):
+                trial = self._problem.jac(1,self._problem.t0,self.y_cur,self.yd_cur, self.switches)
+            if trial.shape != (len(self.y_cur),len(self.y_cur)):
                 raise Implicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
             
             self.jac = self._problem.jac
@@ -459,12 +479,6 @@ class IDA(Implicit_ODE, Sundials):
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
-    
-    #def completed_step(self):
-    #    """
-    #    Callback function for the problem class completed_step method.
-    #    """
-    #    return self._problem.completed_step(self)
     
     def _set_calcIC_tout1(self, tout1):
         """
@@ -629,7 +643,7 @@ class IDA(Implicit_ODE, Sundials):
             
         See SUNDIALS IDA documentation 4.5.4 for more details.
         """
-        self.Integrator.idinit(self.t[-1], self.problem_spec, self.y[-1], self.yd[-1], self.maxord, self.maxsteps,self.initstep,self.maxh)
+        self.Integrator.idinit(self.t_cur, self.problem_spec, self.y_cur, self.yd_cur, self.maxord, self.maxsteps,self.initstep,self.maxh)
         
         if method == 'IDA_YA_YDP_INIT':
             [flag, y, yd] = self.Integrator.calc_IC(method,self.tout1,self.lsoff)
@@ -642,17 +656,18 @@ class IDA(Implicit_ODE, Sundials):
         if flag < 0:
             raise Sundials_Exception('Calculation of initial conditions failed. IDA returned flag %d'%flag)
         else:
-            self.y[-1] = y
-            self.yd[-1] = yd
+            self.y_cur = y
+            self.yd_cur = yd
         
-        return [self.y[-1], self.yd[-1]]
+        return [self.y_cur, self.yd_cur]
     
     def integrate(self,t,y,yd,tfinal,nt=0):
         """
         Simulates the problem up until tfinal.
         """
-        self.Integrator.post_process = self.post_process
+        self.Integrator.store_cont = self.store_cont
         if self._flag_init:
+            self.Integrator.store_statistics()
             self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh)
         
         return self.Integrator.run(t,tfinal,nt)
@@ -910,7 +925,7 @@ class IDA(Implicit_ODE, Sundials):
     @property
     def is_disc(self):
         """Method to test if we are at an event."""
-        return self.t[-1]==self.Integrator.event_time
+        return self.t_cur==self.Integrator.event_time
 
 
 
@@ -1068,7 +1083,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         
     index = property(_get_index,_set_index)
     
-    def integrate(self, t, y, yd, tf,nt):
+    def integrate(self, t, y, yd, tf,dt):
         """
         Integrates (t,y,yd) values until t > tf
         """
@@ -1087,8 +1102,8 @@ class Radau5(Radau_Common,Implicit_ODE):
         self._yc = y
         self._ydc = yd 
         
-        if nt > 0:
-            dist_space = [(x+1)*(tf-t)/nt for x in range(int(nt)+1)]
+        if dt > 0.0:
+            dist_space = [(x+1)*dt for x in range(int((tf-t)/dt)+1)]
         
         for i in range(self.maxsteps):
             if t >= tf:
@@ -1098,7 +1113,7 @@ class Radau5(Radau_Common,Implicit_ODE):
             self._yc = y
             self._ydc = yd
             
-            if nt > 0:
+            if dt > 0.0:
                 while dist_space[0] <= t:
                     yy,yyd=self.interpolate(dist_space[0],y)
                     yield dist_space[0], yy, yyd

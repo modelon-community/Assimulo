@@ -63,9 +63,9 @@ class Extended_Problem(Implicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.event_fcn(solver.t[-1], solver.y[-1], solver.yd[-1], solver.switches)
+            b_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.event_fcn(solver.t[-1], solver.y[-1], solver.yd[-1], solver.switches)
+            a_mode = self.event_fcn(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
             
             event_info = self.check_eIter(b_mode, a_mode)
             
@@ -127,10 +127,10 @@ def test_disc():
     assert iter_sim.yd[-1][0] == 1.0
     assert iter_sim.yd[-1][1] == 0.0
     assert iter_sim.yd[-1][2] == 0.0
-    
-    assert iter_sim.y[-1][0] == 8.0
-    assert iter_sim.y[-1][1] == 3.0
-    assert iter_sim.y[-1][2] == 2.0
+
+    nose.tools.assert_almost_equal(iter_sim.y[-1][0], 8.0000000, 5)
+    nose.tools.assert_almost_equal(iter_sim.y[-1][1], 3.0000000, 5)
+    nose.tools.assert_almost_equal(iter_sim.y[-1][2], 2.0000000, 5)
     
 
 if __name__=="__main__":

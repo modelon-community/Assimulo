@@ -43,15 +43,15 @@ def run_example():
     assert 7 == exp_sim.numb
 
     
-    def post_process(solver, t, y):
+    def handle_result(solver, t, y):
         solver.t += [t]
         solver.y += [y]
         solver.test_post =solver.test_post+1
         
-    exp_mod.post_process = post_process
+    exp_mod.handle_result = handle_result
     
     exp_sim = CVode(exp_mod)
-    exp_sim.post_process = True
+    exp_sim.store_cont = True
     exp_sim.test_post = 0
     exp_sim.numb = 0
     
