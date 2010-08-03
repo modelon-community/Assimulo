@@ -23,6 +23,8 @@ def run_example():
         
     def handle_event(solver, event_info):
         solver.y_cur+= 1.0
+        assert event_info[0] == []
+        assert event_info[1] == True
     
     exp_mod = Explicit_Problem()
     exp_mod.f = f

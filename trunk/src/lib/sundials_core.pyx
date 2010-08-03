@@ -492,6 +492,7 @@ cdef class CVode_wrap:
         public dict detailed_info
         public booleantype jacobian, store_cont, comp_step, store_state
         public npy_intp num_state_events
+        public booleantype sim_complete
         #void* comp_step_method
         N_Vector curr_state
         N_Vector temp_nvector
@@ -504,6 +505,7 @@ cdef class CVode_wrap:
         self.iter=1
         self.store_cont = False
         self.store_state = False
+        self.sim_complete = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
         cdef flag
         self.curr_state=arr2nv(u)
@@ -682,6 +684,7 @@ cdef class CVode_wrap:
                 flags = 1
                 
         if flags >= 1:
+            self.sim_complete = True
             self.store_statistics()
         # Free memory
         #CVodeFree(&self.mem)
@@ -704,6 +707,7 @@ cdef class IDA_wrap:
         public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
         public int icopt
         public npy_intp num_state_events
+        public booleantype sim_complete
         N_Vector curr_state
         N_Vector curr_deriv
         N_Vector temp_nvector
@@ -712,6 +716,7 @@ cdef class IDA_wrap:
         self.store_cont = False
         self.store_state = False
         self.comp_step = False
+        self.sim_complete
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
         self.t0 = t0
@@ -913,6 +918,7 @@ cdef class IDA_wrap:
             else:
                 flags=1
         if flags >= 1:
+            self.sim_complete = True
             self.store_statistics()
 
         # Free memory
