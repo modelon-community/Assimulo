@@ -187,10 +187,6 @@ class Implicit_ODE(ODE):
                     
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
-                 
-        Returns the computed solution which is also saved in 'solver'.t
-                                                             'solver'.y
-                                                             'solver'.yd
         """
         try:
             tfinal = float(tfinal)
@@ -224,12 +220,13 @@ class Implicit_ODE(ODE):
             mode = 'ONE_STEP'
         
         ncp_ori = ncp
+        tfinal_ori = tfinal
         time_start = time.clock()
         
         self._problem.handle_result(self,t0,y0,yd0) #Logg the first point
         self._flag_init = True #Reinitiate the solver
         
-        while N.abs(self.t_cur-tfinal) > self._SAFETY*(N.abs(tfinal)+N.abs(self.t_cur-tfinal)/(ncp+1.0)):
+        while self.t_cur < tfinal_ori:
             
             solution = list(self.integrate(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
 
@@ -451,13 +448,13 @@ class IDA(Implicit_ODE, Sundials):
         self.switches = switches0
         self._problem.switches0 = switches0
         
-        #Determine if we have an event function and sets the integration data
-        if hasattr(problem, 'event_fcn'):
-            self.event_fcn = self._problem.event_fcn
-            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
-            self._ROOT = [self.event_fcn, self.switches]
+        #Determine if we have an state event function and sets the integration data
+        if hasattr(problem, 'state_events'):
+            self.state_events = self._problem.state_events
+            self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
+            self._ROOT = [self.state_events, self.switches]
         else:
-            self.Integrator.num_event_fcn=0
+            self.Integrator.num_state_events=0
         
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):

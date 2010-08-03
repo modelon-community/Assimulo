@@ -10,7 +10,7 @@ def run_example():
         ydot = 1.0
         return N.array([ydot])
     
-    def time_event_fcn(t,y,sw):
+    def time_events(t,y,sw):
         events = [1.0, 2.0, 2.5, 3.0]
         for ev in events:
             if t < ev:
@@ -26,7 +26,7 @@ def run_example():
     
     exp_mod = Explicit_Problem()
     exp_mod.f = f
-    exp_mod.time_event_fcn = time_event_fcn
+    exp_mod.time_events = time_events
     exp_mod.handle_event = handle_event
     exp_mod.y0 = 0.0
     exp_mod.problem_name = 'Test explicit time event.'

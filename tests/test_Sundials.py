@@ -14,7 +14,7 @@ class Test_Sundials:
         """
         class Prob_IDA(Implicit_Problem):
             f = lambda self,t,y,yd,sw: [y[0]-1.0]
-            event_fcn = lambda self,t,y,yd,sw: [t-1.0, t]
+            state_events = lambda self,t,y,yd,sw: [t-1.0, t]
             y0 = [1.0]
             yd0 = [1.0]
             
@@ -23,7 +23,7 @@ class Test_Sundials:
         class Prob_CVode(Explicit_Problem):
             f = lambda self,t,y,sw: [1.0]
             y0 = [1.0]
-            event_fcn = lambda self,t,y,sw: [t-1.0, t]
+            state_events = lambda self,t,y,sw: [t-1.0, t]
         
         switches=[False, True]
         f = Prob_CVode()

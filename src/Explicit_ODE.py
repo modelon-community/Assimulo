@@ -115,6 +115,9 @@ class Explicit_ODE(ODE):
         except ValueError:
             raise Explicit_ODE_Exception('Initial time must be an integer or float.')
         
+        if hasattr(self._problem, 'time_events'):
+            self._time_function  = True
+        
         self.t_cur = N.array(self.t_cur)
         self.y_cur = N.array(self.y_cur)
         
@@ -157,10 +160,6 @@ class Explicit_ODE(ODE):
                     
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
-                 
-        Returns the computed solution which is also saved in 'solver'.t
-                                                             'solver'.y
-                    
         """
 
         try:
@@ -201,13 +200,15 @@ class Explicit_ODE(ODE):
         self._problem.handle_result(self,t0,y0) #Logg the first point
         self._flag_init = True #Reinitiate the solver
         
-        while N.abs(self.t_cur-tfinal_ori) > self._SAFETY*(N.abs(tfinal_ori)+N.abs(self.t_cur-tfinal_ori)/(ncp+1.0)):
+        while self.t_cur < tfinal_ori:
             
-            tevent = self._problem.time_event_fcn(self.t_cur, self.y_cur, self.switches)
-            if tevent == None:
-                tfinal = tfinal_ori
-            else:
-                tfinal = tevent if tevent < tfinal_ori else tfinal_ori
+            #Time event function is specified.
+            if self._time_function:
+                tevent = self._problem.time_events(self.t_cur, self.y_cur, self.switches)
+                if tevent == None:
+                    tfinal = tfinal_ori
+                else:
+                    tfinal = tevent if tevent < tfinal_ori else tfinal_ori
 
             solution = list(self.integrate(self.t_cur, self.y_cur, tfinal,dt))
             tt, yy = solution[-1]
@@ -225,7 +226,7 @@ class Explicit_ODE(ODE):
                 last_logg = self.t_cur
                 
             #Check if there is a time event
-            if tevent == None:
+            if tfinal == tfinal_ori:
                 teventflag = False
             elif N.abs(self.t_cur-tevent)< self._SAFETY**0.5:
                 teventflag = True
@@ -601,12 +602,12 @@ class CVode(Explicit_ODE, Sundials):
 
         
         #Determine if we have an event function and sets the integration data
-        if hasattr(problem, 'event_fcn'):
-            self.event_fcn = self._problem.event_fcn #problem.event_fcn
-            self.Integrator.num_event_fcn=len(self.event_fcn(self._problem.t0,self._problem.y0,self._problem.switches0))
-            self._ROOT = [self.event_fcn, self._problem.switches0]
+        if hasattr(problem, 'state_events'):
+            self.state_events = self._problem.state_events #problem.state_events
+            self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
+            self._ROOT = [self.state_events, self._problem.switches0]
         else:
-            self.Integrator.num_event_fcn=0
+            self.Integrator.num_state_events=0
         
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
