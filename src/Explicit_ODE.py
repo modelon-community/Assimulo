@@ -227,18 +227,15 @@ class Explicit_ODE(ODE):
                 
             #Check if there is a time event
             if tfinal == tfinal_ori:
-                teventflag = False
-            elif N.abs(self.t_cur-tevent)< self._SAFETY**0.5:
-                teventflag = True
+                time_event = False
             else:
-                teventflag = False
+                time_event = self.simulation_complete()
             
-            if self.is_disc or teventflag: #Is discontinious?
-            
-                if teventflag:
-                    [tevent, event_info] = [tevent, []]
-                else:
-                    [tevent,event_info]=self.disc_info
+            if self.is_disc or time_event: #Is discontinious?
+                
+                event_info = [[],time_event]
+                if self.is_disc:
+                    event_info[0] = self.disc_info
                 
                 #Log the information
                 self._log_event_info.append([self.t_cur, event_info])
@@ -973,6 +970,21 @@ class CVode(Explicit_ODE, Sundials):
     def is_disc(self):
         """Method to test if we are at an event."""
         return self.t_cur==self.Integrator.event_time
+        
+    def simulation_complete(self):
+        """
+        Method which returns a boolean value determining if the
+        simulation completed to tfinal. Used for determining 
+        time-events.
+        
+            Returns::
+            
+                sim_complete
+                            - Boolean value
+                                -True for success
+                                -False for not complete
+        """
+        return self.Integrator.sim_complete
         
 
 class Radau5(Radau_Common,Explicit_ODE):

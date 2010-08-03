@@ -47,6 +47,7 @@ class ODE(object):
             self.atol = 1.0e-6 #Absolute tolerance
             self.rtol = 1.0e-6 #Relative tolerance
             self.store_cont = False #No continuous logging
+            self.sim_complete = False #Simulation finnished? Used for time-events
             
             #Internal values
             self._completed_step = False #Completed step option.
@@ -143,6 +144,21 @@ class ODE(object):
         """Method to test if we are at an event."""
         return False
         
+    def simulation_complete(self):
+        """
+        Method which returns a boolean value determining if the
+        simulation completed to tfinal. Used for determining 
+        time-events.
+        
+            Returns::
+            
+                sim_complete
+                            - Boolean value
+                                -True for success
+                                -False for not complete
+        """
+        #return self.sim_complete
+        return True
     
     #Verbosity levels
     QUIET = 0
