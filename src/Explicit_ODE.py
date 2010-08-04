@@ -235,13 +235,13 @@ class Explicit_ODE(ODE):
                 
                 event_info = [[],time_event]
                 if self.is_disc:
-                    event_info[0] = self.disc_info
+                    event_info[0] = self.disc_info[1]
                 
                 #Log the information
                 self._log_event_info.append([self.t_cur, event_info])
                 
                 if self.verbosity > self.NORMAL:
-                    print 'A discontinuity occured at t = %e.'%tevent
+                    print 'A discontinuity occured at t = %e.'%self.t_cur
                 if self.verbosity >= self.LOUD:
                     print 'Current switches: ', self.switches
                     print 'Event info: ', event_info

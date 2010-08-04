@@ -240,7 +240,50 @@ class Test_IDA:
 
         nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746596311, places=7)
         
-    
+    def test_time_event(self):
+        """
+        This tests the functionality of the time event function.
+        """
+        f = lambda t,x,xd: xd-x
+        
+        def time_events(t, y, yd, sw):
+            if sw[0]:
+                return 1.0
+            if sw[1]:
+                return 3.0
+            return None
+        
+        def handle_event(solver, event_info):
+            
+            if event_info[1]:
+                solver.y_cur  = N.array([1.0])
+                solver.yd_cur = N.array([1.0])
+                
+                if not solver.switches[0]:
+                    solver.switches[1] = False
+                
+                if solver.switches[0]:
+                    solver.switches[0] = False
+        
+        mod = Implicit_Problem()
+        mod.f = f
+        mod.time_events = time_events
+        mod.handle_event = handle_event
+        mod.switches0 = [True, True]
+        
+        sim = IDA(mod, [1.0],[1.0])
+        
+        sim.simulate(5.0)
+
+        nose.tools.assert_almost_equal(sim.y[38], 1.0000000, 5)
+        nose.tools.assert_almost_equal(sim.y[87], 1.0000000, 5)
+        
+        sim = IDA(mod, [1.0],[1.0])
+        sim.simulate(2.0)
+        
+        nose.tools.assert_almost_equal(sim.t[-1], 2.0000000, 5)
+        
+        
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.

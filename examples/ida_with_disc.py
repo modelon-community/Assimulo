@@ -59,6 +59,7 @@ class Extended_Problem(Implicit_Problem):
         Event handling. This functions is called when Assimulo finds an event as
         specified by the event functions.
         """
+        event_info = event_info[0] #We only look at the state events information.
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             

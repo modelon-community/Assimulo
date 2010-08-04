@@ -124,7 +124,10 @@ class Implicit_ODE(ODE):
             self._problem.t0 = self.t_cur
         except ValueError:
             raise Implicit_ODE_Exception('Initial time must be an integer or float.')
-
+        
+        if hasattr(self._problem, 'time_events'):
+            self._time_function  = True
+        
         self.t_cur  = N.array(self.t_cur)
         self.y_cur  = N.array(self.y_cur)
         self.yd_cur = N.array(self.yd_cur)
@@ -228,6 +231,14 @@ class Implicit_ODE(ODE):
         
         while self.t_cur < tfinal_ori:
             
+            #Time event function is specified.
+            if self._time_function:
+                tevent = self._problem.time_events(self.t_cur, self.y_cur, self.yd_cur, self.switches)
+                if tevent == None:
+                    tfinal = tfinal_ori
+                else:
+                    tfinal = tevent if tevent < tfinal_ori else tfinal_ori
+            
             solution = list(self.integrate(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
 
             temp_t, temp_y, temp_yd = solution[-1]
@@ -246,14 +257,23 @@ class Implicit_ODE(ODE):
                     self._problem.handle_result(self,q[0],q[1],q[2])
                 last_logg = self.t_cur
 
-            if self.is_disc: #Is discontinious?
-                [tevent,event_info]=self.disc_info
+            #Check if there is a time event
+            if tfinal == tfinal_ori:
+                time_event = False
+            else:
+                time_event = self.simulation_complete()
+            
+            if self.is_disc or time_event: #Is discontinious?
+                
+                event_info = [[],time_event]
+                if self.is_disc:
+                    event_info[0] = self.disc_info[1]
                 
                 #Log the information
                 self._log_event_info.append([self.t_cur, event_info])
                 
                 if self.verbosity > self.NORMAL:
-                    print 'A discontinuity occured at t = %e.'%tevent
+                    print 'A discontinuity occured at t = %e.'%self.t_cur
                 if self.verbosity >= self.LOUD:
                     print 'Current switches: ', self.switches
                     print 'Event info: ', event_info
