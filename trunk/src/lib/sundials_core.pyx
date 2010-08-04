@@ -194,6 +194,7 @@ cdef extern from "idas/idas.h":
     #Results
     int IDAGetSens(void *ida_mem, realtype tret, N_Vector *yS)
     int IDAGetSensDky(void *ida_mem, realtype t, int k, N_Vector *dkyS)
+    int IDAGetSensDky1(void *ida_mem, realtype t, int k, int i, N_Vector dkyS)
     
     #Options (optional)
     int IDASetSensParams(void *ida_mem, realtype *p, realtype *pbar, int *plist)
@@ -326,7 +327,8 @@ cdef int sundials_error(int flag, int solver, float time) except -1:
                     -26: 'The time t is outside the last step taken.',
                     -27: 'The vector argument where derivative should be stored is NULL.',
                     -41: 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
-                    -42: 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.'}
+                    -42: 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
+                    -43: 'The sensitivity identifier is not valid.'}
     else:           #CVode
         err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
                     -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
@@ -746,7 +748,7 @@ cdef class IDA_wrap:
         public dict stats
         public dict detailed_info
         public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
-        public int icopt
+        public int icopt, nbr_params
         public npy_intp num_state_events
         public booleantype sim_complete
         N_Vector curr_state
@@ -757,7 +759,8 @@ cdef class IDA_wrap:
         self.store_cont = False
         self.store_state = False
         self.comp_step = False
-        self.sim_complete
+        self.sim_complete = False
+        self.nbr_params = 0
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
         self.t0 = t0
@@ -815,6 +818,52 @@ cdef class IDA_wrap:
             sundials_error(flag,1,t)
         
         return nv2arr(temp)
+        
+    def get_sens_res(self,realtype t, int k, int i=-1):
+        """
+        This method class the internal method IDAGetSensDky which computes the k-th derivatives
+        of the interpolating polynomials for the sensitivity variables at time t.
+        
+            Parameters::
+                    
+                    t
+                        - Specifies the time at which sensitivity information is requested. The time
+                          t must fall within the interval defined by the last successful step taken
+                          by IDAS.
+                    
+                    k   
+                        - The order of derivatives.
+                        
+                    i
+                        - Specifies the sensitivity derivative vector to be returned (0<=i<=Ns)
+                        
+            Return::
+            
+                    A matrix containing the Ns vectors or a vector if i is specified.
+        """
+        cdef N_Vector dkyS=N_VNew_Serial(self.dim)
+        
+        if i==-1:
+            
+            matrix = []
+            
+            for x in range(self.nbr_params):
+                flag = IDAGetSensDky1(self.mem, t, k, x, dkyS)
+                
+                if flag<0:
+                    sundials_error(flag,1,t)
+                
+                matrix += nv2arr(dkyS)
+            
+            return np.array(matrix)
+        else:
+            flag = IDAGetSensDky1(self.mem, t, k, i, dkyS)
+            
+            if flag <0:
+                sundials_error(flag,1,t)
+            
+            return nv2arr(dkyS)
+
         
     def store_statistics(self):
         """
