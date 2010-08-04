@@ -178,6 +178,41 @@ cdef extern from "idas/idas.h":
     int IDAGetNumErrTestFails(void *ida_mem, long int *netfails) #Number of local error test failures
     int IDAGetNumNonlinSolvIters(void *ida_mem, long int *nniters) #Number of nonlinear iteration
     int IDAGetNumNonlinSolvConvFails(void *ida_mem, long int *nncfails) #Number of nonlinear conv failures
+    
+    #Start Sensitivities
+    #---------------------------
+    ctypedef int (*IDASensResFn)(int Ns, realtype t, N_Vector yy, N_Vector yp, N_Vector *yS, N_Vector *ypS, N_Vector *resvalS, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+    int IDASensInit(void *ida_mem, int Ns, int ism, IDASensResFn resS, N_Vector *ySO, N_Vector *ypSO)
+    int IDASensReInit(void *ida_mem, int ism, N_Vector *ySO, N_Vector *ypSO)
+    
+    #Options
+    int IDASensToggleOff(void *ida_mem)
+    int IDASensSStolerances(void *ida_mem, realtype reltolS, realtype *abstolS)
+    int IDASensSVtolerances(void *ida_mem, realtype reltolS, N_Vector *abstolS)
+    int IDAEEtolerances(void *ida_mem)
+    
+    #Results
+    int IDAGetSens(void *ida_mem, realtype tret, N_Vector *yS)
+    int IDAGetSensDky(void *ida_mem, realtype t, int k, N_Vector *dkyS)
+    
+    #Options (optional)
+    int IDASetSensParams(void *ida_mem, realtype *p, realtype *pbar, int *plist)
+    int IDASetSensDQMethod(void *ida_mem, int DQtype, realtype DQrhomax)
+    int IDASetSensErrCon(void *ida_mem, booleantype errconS)
+    int IDASetSensMaxNonlinIters(void *ida_mem, int maxcorS)
+    
+    #Statistics
+    int IDAGetSensNumResEvals(void *ida_mem, long int nfSevals)
+    int IDAGetNumResEvalsSens(void *ida_mem, long int nfevalsS)
+    int IDAGetSensNumErrTestFails(void *ida_mem, long int nSetfails)
+    int IDAGetSensNumLinSolvSetups(void *ida_mem, long int nlinsetupsS)
+    int IDAGetSensStats(void *ida_mem, long int nfSevals, long int nfevalsS, long int nSetfails, long int nlinsetupsS)
+    int IDAGetSensNumNonlinSolvIters(void *ida_mem, long int nSniters)
+    int IDAGetSeonsNumNonlinSolvConvFails(void *ida_mem, long int nSncfails)
+    int IDAGetSensNonlinSolvStats(void *ida_mem, long int nSniters, long int nSncfails)
+    
+    #End Sensitivities
+    #--------------------------
 
 cdef extern from "idas/idas_dense.h":
     int IDADense(void *ida_mem, long int N)
@@ -223,6 +258,10 @@ DEF IDA_ROOTF_IND      = 0   # Index to user data root function
 DEF IDA_SW_IND         = 1   # Index to user data root switches
 DEF IDA_YA_YDP_INIT    = 1   # See IDA Documentation 4.5.4
 DEF IDA_Y_INIT         = 2   # See IDA Documentation 4.5.4
+DEF IDA_SIMULTANEOUS   = 1   # Simultaneous corrector forward sensitivity method.
+DEF IDA_STAGGERED      = 2   # Staggered corrector forward sensitivity method.
+DEF IDA_CENTERED       = 1   # Central difference quotient approximation (2nd order) of the sensitivity RHS.
+DEF IDA_FORWARD        = 2   # Forward difference quotient approximation (1st order) of the sensitivity RHS.
 #d) IDA out
 DEF IDA_SUCCESS        = 0   # Successful function return.   
 DEF IDA_TSTOP_RETURN   = 1   # IDASolve succeeded by reaching the specified stopping point.
@@ -285,7 +324,9 @@ cdef int sundials_error(int flag, int solver, float time) except -1:
                     -24: 'Zero value of some error weight component.',
                     -25: 'The k-th derivative is not available.',
                     -26: 'The time t is outside the last step taken.',
-                    -27: 'The vector argument where derivative should be stored is NULL.'}
+                    -27: 'The vector argument where derivative should be stored is NULL.',
+                    -41: 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
+                    -42: 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.'}
     else:           #CVode
         err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
                     -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
