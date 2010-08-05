@@ -385,7 +385,7 @@ class IDA(Implicit_ODE, Sundials):
     Sundials IDA.
     """
     
-    def __init__(self, problem, y0=None, yd0=None, t0=None, switches0=None):
+    def __init__(self, problem, y0=None, yd0=None, t0=None, switches0=None, p0=None):
         """
         Initiates the solver.
         
@@ -494,6 +494,26 @@ class IDA(Implicit_ODE, Sundials):
             self.usejac = False
             self._RES = [self.res_fcn]
         
+        #Check for sensitivites
+        #----------------
+        sens = False
+        
+        if p0 == None:
+            if hasattr(problem, 'p0'):
+                self.p = problem.y0
+                sens = True
+        else:
+            self.p = p0
+            sens = True
+        
+        if sens:
+            #Set information to the solver IDAS
+            self.Integrator.nbr_params = len(p0)
+            self.Integrator.p = N.array(p0)
+            self._RES = [len(p0)]+self._RES #Indicator for Cython
+        else:
+            self._RES = [0]+self._RES #Indicator for Cython
+        #-------------End Sensitivity initiation
         
         if hasattr(self, '_ROOT'):
             self.problem_spec = [self._RES, self._ROOT]
@@ -576,14 +596,19 @@ class IDA(Implicit_ODE, Sundials):
         """
         self.__usejac = bool(jac)
         
+        try:
+            sens = [self.problem_spec[0][0]]
+        except AttributeError:
+            sens = [0]
+        
         if not bool(jac):
             self.Integrator.jacobian = False
-            self._RES = [self.res_fcn]
+            self._RES = sens+[self.res_fcn]
         else:
             self.Integrator.jacobian = True
             if not hasattr(self, 'jac'):
                 raise Implicit_ODE_Exception('No jacobian defined.')
-            self._RES = [self.res_fcn, self.jac]
+            self._RES = sens+[self.res_fcn, self.jac]
             
         if hasattr(self, '_ROOT'):
             self.problem_spec = [self._RES, self._ROOT]

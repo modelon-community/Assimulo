@@ -121,8 +121,9 @@ class Test_IDA:
         assert simulator.res_fcn == 'Test function'
         assert simulator.switches == switches
         assert simulator.yd_cur[0] == 1.0
-        assert simulator.problem_spec[0][0] == simulator.res_fcn
-        assert simulator.problem_spec[0][1] == simulator.jac
+        assert simulator.problem_spec[0][0] == 0
+        assert simulator.problem_spec[0][1] == simulator.res_fcn
+        assert simulator.problem_spec[0][2] == simulator.jac
         assert simulator.problem_spec[1][0] == simulator.state_events
         assert simulator.problem_spec[1][1] == switches
     
@@ -297,15 +298,17 @@ class Test_IDA:
         
         sim = IDA(prob, [0],[0])
         
-        assert sim._RES[0] == f
-        assert sim._RES[1] == jac
-        assert sim.problem_spec[0][0] == f
-        assert sim.problem_spec[0][1] == jac
+        assert sim._RES[1] == f
+        assert sim._RES[2] == jac
+        assert sim.problem_spec[0][0] == 0
+        assert sim.problem_spec[0][1] == f
+        assert sim.problem_spec[0][2] == jac
         sim.usejac = False
-        assert sim._RES[0] == f
-        assert len(sim._RES) == 1
-        assert sim.problem_spec[0][0] == f
-        assert len(sim.problem_spec[0]) == 1
+        assert sim._RES[1] == f
+        assert len(sim._RES) == 2
+        assert sim.problem_spec[0][0] == 0
+        assert sim.problem_spec[0][1] == f
+        assert len(sim.problem_spec[0]) == 2
     
     def test_run(self):
         """

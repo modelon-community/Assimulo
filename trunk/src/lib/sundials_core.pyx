@@ -260,8 +260,9 @@ DEF CV_RTFUNC_FAIL    = -10 # The rootfinding function failed in an unrecoverabl
 DEF IDA_NORMAL         = 1   # Solver returns at specified output time.
 DEF IDA_ONE_STEP       = 2   # Solver returns after each successful step.
 DEF IDA_RES_IND        = 0   # Index to user data residual handling
-DEF IDA_RESF_IND       = 0   # Index to user data residual
-DEF IDA_JAC_IND        = 1   # Index to user data jacobian
+DEF IDA_SENS_IND       = 0   # Index to indicator for sensitivites
+DEF IDA_RESF_IND       = 1   # Index to user data residual
+DEF IDA_JAC_IND        = 2   # Index to user data jacobian
 DEF IDA_ROOT_IND       = 1   # Index to user data root handling
 DEF IDA_ROOTF_IND      = 0   # Index to user data root function
 DEF IDA_SW_IND         = 1   # Index to user data root switches
@@ -305,6 +306,13 @@ cdef nv2arr(N_Vector v):
 #    x = np.empty(n)
 #    for i in range(n):
 #        x[i] = v_data[i]
+    return x
+    
+cdef realtype2arr(realtype *data, int n):
+    """Create new numpy array from realtype*"""
+    import_array()
+    cdef ndarray x=np.empty(n)
+    memcpy(x.data, data, n*sizeof(double))
     return x
 
 cdef int sundials_error(int flag, int solver, float time) except -1:
@@ -442,17 +450,32 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
         switch=False
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
-    try:
-        if switch:
-            res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
-        else:
-            res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
-        for i in range(n):
-            resptr[i]=res[i]
-        return 0
-    except:
-        return 1 # recoverable error (see Sundials description)
-        
+    
+    nparam = (<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_SENS_IND]
+    if nparam!=0: #SENSITIVITY
+        p = realtype2arr((<UserData*> user_data).params,nparam)
+        try:
+            if switch:
+                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,sw=switch,p=p)  # call to the python residual function
+            else:
+                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,p)
+            for i in range(n):
+                resptr[i]=res[i]
+            return 0
+        except:
+            return 1 # recoverable error (see Sundials description)
+    else: #NO SENSITIVITY
+        try:
+            if switch:
+                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
+            else:
+                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
+            for i in range(n):
+                resptr[i]=res[i]
+            return 0
+        except:
+            return 1 # recoverable error (see Sundials description)
+            
 cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jac,
                  void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
@@ -702,6 +725,8 @@ cdef class CVode_wrap:
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
+                if flags == 1:
+                    break
                 if self.treat_disc(flags,tret):
                     break
                 if i == nt:
@@ -771,6 +796,7 @@ cdef class IDA_wrap:
         N_Vector *ySO, *ydSO
         UserData *uData
         cdef UserData tempStruct
+        public object p
     def __init__(self,dim):
         
         self.dim=dim
@@ -839,8 +865,6 @@ cdef class IDA_wrap:
         #Are there sensitivities to be calculated?
         if self.nbr_params > 0:
             self.set_sensitivity_options(t0,user_data,u,ud)
-    #def set_completed_method(self,data):
-    #    self.comp_step_method = <void*>data
     
     def interpolate(self, t, k):
         """
@@ -856,7 +880,79 @@ cdef class IDA_wrap:
             sundials_error(flag,1,t)
         
         return nv2arr(temp)
+    
+    def set_sensitivity_options(self,t0,user_data,y,yd):
+        """
+        Sets the sensitivity information.
+        """
+        #Create the initial matrices
+        self.ySO  = N_VCloneVectorArray_Serial(self.nbr_params, arr2nv(y))
+        self.ydSO = N_VCloneVectorArray_Serial(self.nbr_params, arr2nv(yd))
+        cdef IDASensResFn empty_p
+        cdef realtype ZERO = 0.0
+        cdef realtype *pbar
+        cdef int *plist
         
+        #Filling the start vectors
+        for i in range(self.nbr_params):
+             N_VConst_Serial(ZERO,  self.ySO[i]);
+             N_VConst_Serial(ZERO, self.ydSO[i]);
+
+        if self.sens_activated:
+            flag = IDASensReInit(self.mem, self.ism, self.ySO, self.ydSO)
+            
+            if flag<0:
+                sundials_error(flag,1,t0)
+        else:
+            flag = IDASensInit(self.mem, self.nbr_params, self.ism, empty_p, self.ySO, self.ydSO)
+            
+            if flag<0:
+                sundials_error(flag,1,t0)
+            
+            self.sens_activated = True
+        
+        self.uData.params = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        
+        for i in range(self.nbr_params):
+            self.uData.params[i] = self.p[i]
+        #self.uData.params = self.p
+        #Specify problem parameter information for sensitivity calculations
+        flag = IDASetSensParams(self.mem, self.uData.params, pbar, plist)
+
+        if flag<0:
+            sundials_error(flag,1,t0)
+        
+        #Specify the difference quotient strategy
+        flag = IDASetSensDQMethod(self.mem, self.DQtype, self.DQrhomax)
+        
+        if flag<0:
+            sundials_error(flag,1,t0)
+        
+        #Specify the error control strategy
+        flag = IDASetSensErrCon(self.mem, self.errconS)
+        
+        if flag<0:
+            sundials_error(flag,1,t0)
+        
+        #Specify the maximum number of nonlinear solver iterations
+        flag = IDASetSensMaxNonlinIters(self.mem, self.maxcorS)
+        
+        if flag<0:
+            sundials_error(flag,1,t0)
+        
+        #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
+        flag = IDASensEEtolerances(self.mem)
+        
+        if flag<0:
+            sundials_error(flag,1,t0)
+        
+        #Should the sensitivities be calculated this time around?
+        if self.sensToggleOff:
+            flag = IDASensToggleOff(self.mem)
+            
+            if flag<0:
+                sundials_error(flag,1,t0)
+    
     def get_sens_res(self,realtype t, int k, int i=-1):
         """
         This method class the internal method IDAGetSensDky which computes the k-th derivatives
@@ -997,6 +1093,8 @@ cdef class IDA_wrap:
         flag = IDASetStopTime(self.mem, tf)
         sol=[]
         tret=t0
+        print dt
+        print tf
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
             for i in xrange(1, nt+1):
@@ -1011,6 +1109,8 @@ cdef class IDA_wrap:
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
+                if flags == 1:
+                    break
                 if self.treat_disc(flags,tret):
                     break
                 if i == nt:
@@ -1048,7 +1148,6 @@ cdef class IDA_wrap:
         if flags >= 1:
             self.sim_complete = True
             self.store_statistics()
-
         # Free memory
         #IDAFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)
