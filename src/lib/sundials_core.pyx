@@ -76,6 +76,14 @@ cdef extern from "nvector/nvector_serial.h":
         realtype* data
     ctypedef _N_VectorContent_Serial* N_VectorContent_Serial
     cdef N_Vector N_VMake_Serial(long int vec_length, realtype *v_data)
+    N_Vector *N_VCloneVectorArray_Serial(int count, N_Vector w)
+    N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w)
+    void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v)
+    void N_VConst_Serial(realtype c, N_Vector z)
+
+cdef struct UserData:
+    void *data
+    realtype *params
 
 cdef extern from "sundials/sundials_direct.h":
     cdef struct _DlsMat:
@@ -189,7 +197,7 @@ cdef extern from "idas/idas.h":
     int IDASensToggleOff(void *ida_mem)
     int IDASensSStolerances(void *ida_mem, realtype reltolS, realtype *abstolS)
     int IDASensSVtolerances(void *ida_mem, realtype reltolS, N_Vector *abstolS)
-    int IDAEEtolerances(void *ida_mem)
+    int IDASensEEtolerances(void *ida_mem)
     
     #Results
     int IDAGetSens(void *ida_mem, realtype tret, N_Vector *yS)
@@ -429,16 +437,16 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
     try:
         if switch:
-            res=(<object> user_data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
+            res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
         else:
-            res=(<object> user_data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
+            res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
         for i in range(n):
             resptr[i]=res[i]
         return 0
@@ -453,15 +461,15 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     y = nv2arr(yv)
     yd = nv2arr(yvdot)
     try:
-        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     cdef realtype* col_i=DENSE_COL(Jac,0)
     try:
         if switch:
-            jacobian=(<object> user_data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
+            jacobian=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
         else:
-            jacobian=(<object> user_data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
+            jacobian=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
         
         for i in range(Neq):
             col_i = DENSE_COL(Jac, i)
@@ -479,11 +487,11 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> user_data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     try:
-        rootf=(<object> user_data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
+        rootf=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
@@ -553,6 +561,7 @@ cdef class CVode_wrap:
         cdef flag
         self.curr_state=arr2nv(u)
         self.store_state = True
+        self.sim_complete = False
         self.max_steps = max_steps
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
         if self.mem == NULL:
@@ -733,8 +742,12 @@ cdef class CVode_wrap:
         #CVodeFree(&self.mem)
         #N_VDestroy_Serial(self.curr_state)
         return sol
-        
-        
+
+#cdef class UserData:
+#    cdef:
+#        object data
+#        realtype *params
+
 cdef class IDA_wrap:
     """Class to wrap Sundials IDA"""
     cdef:
@@ -743,28 +756,49 @@ cdef class IDA_wrap:
         public int dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
-        public realtype t0
+        public realtype t0, DQrhomax
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public dict detailed_info
         public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
-        public int icopt, nbr_params
+        public booleantype sens_activated
+        public int icopt, nbr_params, DQtype, maxcorS, ism, Ns
         public npy_intp num_state_events
-        public booleantype sim_complete
+        public booleantype sim_complete, errconS, sensToggleOff
         N_Vector curr_state
         N_Vector curr_deriv
         N_Vector temp_nvector
+        N_Vector *ySO, *ydSO
+        UserData *uData
+        cdef UserData tempStruct
     def __init__(self,dim):
+        
         self.dim=dim
         self.store_cont = False
         self.store_state = False
         self.comp_step = False
         self.sim_complete = False
         self.nbr_params = 0
+        
+        #Default values
+        self.DQtype   = IDA_CENTERED #Specifies the difference quotient type
+        self.DQrhomax = 0.0 #Positive value of the selction parameter used in deciding switching
+        self.errconS  = False #Specifies whether sensitivity variables are included in the error control mechanism
+        self.maxcorS  = 3 #Maximum number of nonlinear solver iterations for sensitivity variables per step.
+        self.sens_activated = False #The sensitivities are not allocated
+        self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
+        self.sensToggleOff = False #Toggle the sensitivity calculations off
+        self.uData = &self.tempStruct
+        
+    def __del__(self):
+        free(self.uData.params)
+        
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
+        self.uData.data = <void*>user_data
         self.t0 = t0
         self.store_state = True
+        self.sim_complete = False
         self.curr_state=arr2nv(u)
         self.curr_deriv=arr2nv(ud)
         self.max_steps = max_steps
@@ -797,10 +831,14 @@ cdef class IDA_wrap:
         flag = IDADense(self.mem, self.dim)
         if self.jacobian:
             flag = IDADlsSetDenseJacFn(self.mem, ida_jac)
-        flag = IDASetUserData(self.mem, <void*> user_data)
+        #flag = IDASetUserData(self.mem, <void*> user_data)
+        flag = IDASetUserData(self.mem, self.uData)
         flag = IDASetId(self.mem, arr2nv(self.algvar))
         flag = IDASetSuppressAlg(self.mem, self.suppress_alg)
         
+        #Are there sensitivities to be calculated?
+        if self.nbr_params > 0:
+            self.set_sensitivity_options(t0,user_data,u,ud)
     #def set_completed_method(self,data):
     #    self.comp_step_method = <void*>data
     
@@ -853,7 +891,7 @@ cdef class IDA_wrap:
                 if flag<0:
                     sundials_error(flag,1,t)
                 
-                matrix += nv2arr(dkyS)
+                matrix += [nv2arr(dkyS)]
             
             return np.array(matrix)
         else:
