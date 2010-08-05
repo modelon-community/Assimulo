@@ -136,11 +136,14 @@ class Implicit_Problem(Problem):
     """
     Problem for our implicit integrators.
     
-        Must define the problem function f(self, t, y, yd, sw=None)
+        Must define the problem function f(self, t, y, yd, sw=None, p=None)
         
         Mandatory option::
         
-            def f(self, t, y, yd) or f(self, t, y, yd, sw)
+            def f(self, t, y, yd)        or 
+            def f(self, t, y, yd, sw)    or   (sw = Switches in case of discontinuities)
+            def f(self, t, y, yd, p)     or   (p = Parameters for which sensitivites are to be calculated)
+            def f(self, t, y, yd, sw, p)      (Both)
                 Defines the residual of the problem.
                 
                 Returns:
@@ -192,6 +195,8 @@ class Implicit_Problem(Problem):
                 Defines the differential and algebraic components of the problem.
                 Should be a list of integers. For more information, see the
                 property algvar in Implicit_ODE.IDA
+            p0
+                Defines the starting value of the parameters.
     """
     
     def f(self, t, y, yd, sw=None):
