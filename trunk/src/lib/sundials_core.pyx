@@ -1093,8 +1093,6 @@ cdef class IDA_wrap:
         flag = IDASetStopTime(self.mem, tf)
         sol=[]
         tret=t0
-        print dt
-        print tf
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
             for i in xrange(1, nt+1):
