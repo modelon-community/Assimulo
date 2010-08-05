@@ -678,7 +678,7 @@ cdef class CVode_wrap:
             return False
 
         
-    def run(self,float t0,float tf,float dt):
+    def run(self,realtype t0,realtype tf,float dt):
         #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
@@ -986,7 +986,7 @@ cdef class IDA_wrap:
         else:
             return False
    
-    def run(self,float t0,float tf,float dt):
+    def run(self,realtype t0,realtype tf,float dt):
         #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
