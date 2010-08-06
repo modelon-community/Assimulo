@@ -984,7 +984,342 @@ class IDA(Implicit_ODE, Sundials):
         """Method to test if we are at an event."""
         return self.t_cur==self.Integrator.event_time
 
-
+    
+    #SENSITIVITY METHODS
+    def interpolate_sensitivity(self, t, k, p=-1):
+        """        
+        Calls Sundials internal function IDAGetSensDky1 that computes the interpolated 
+        values of the k-th derivative of the sensitivity p for any value of t in the 
+        last internal step taken by IDA.
+        
+            Parameters::
+                t
+                    - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
+                      internal time reached, and hu is the last internal step size used successfully.
+                      
+                    - Must be a float.
+                      
+                k
+                    - Must be non-negative and samller than the last internal order used.
+                    
+                    - Must be an integer.
+                    
+                p
+                    - An integer to determine of which parameter the solution is to be computed.
+                    
+                    - Default value -1 indicates that all is to be calculated.
+                    
+                    - Must be an integer.
+                    
+            Returns::
+            
+                A numpy array of the calculated sensitivites.
+        """
+        try:
+            t = float(t)
+        except (TypeError, ValueError):
+            raise Implicit_ODE_Exception('t must be convertable to a float.')
+        try:
+            k = int(k)
+        except (TypeError, ValueError):
+            raise Implicit_ODE_Exception('k must be convertable to an integer.')
+        try:
+            p = int(p)
+        except (TypeError, ValueError):
+            raise Implicit_ODE_Exception('p must be convertable to an integer.')
+            
+        return self.Integrator.interpolate_sensitivity(t,k,p)
+        
+    def _set_DQtype(self, dqtype):
+        """
+        Specifies the difference quotient type in the sensitivity calculations
+        and can be either 'IDA_CENTERED' or 'IDA_FORWARD'.
+        
+            Parameters::
+            
+                DQtype 
+                        - A string of either 'IDA_CENTERED' or 'IDA_FORWARD'
+                        - Default 'IDA_CENTERED'
+                        
+            Returns::
+            
+                The current value of DQtype.
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensDQMethod' 
+        """
+        if not isinstance(dqtype, str):
+            raise Implicit_ODE_Exception('DQtype must be string.')
+        
+        if dqtype.upper() == 'IDA_CENTERED':
+            self.Integrator.DQtype = 1
+        elif dqtype.upper() == 'IDA_FORWARD':
+            self.Integrator.DQtype = 2
+        else:
+            raise Implicit_ODE_Exception('DQtype must be either "IDA_CENTERED" or "IDA_FORWARD".')
+            
+    def _get_DQtype(self):
+        """
+        Specifies the difference quotient type in the sensitivity calculations
+        and can be either 'IDA_CENTERED' or 'IDA_FORWARD'.
+        
+            Parameters::
+            
+                DQtype 
+                        - A string of either 'IDA_CENTERED' or 'IDA_FORWARD'
+                        - Default 'IDA_CENTERED'
+                        
+            Returns::
+            
+                The current value of DQtype.
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensDQMethod' 
+        """
+        if self.Integrator.DQtype == 1:
+            return 'IDA_CENTERED'
+        elif self.Integrator.DQtype == 2:
+            return 'IDA_FORWARD'
+        else:
+            raise Implicit_ODE_Exception('Unknown value of DQtype.')
+    
+    DQtype = property(_get_DQtype, _set_DQtype)
+    
+    
+    def _set_DQrhomax(self, dqrhomax):
+        """
+        Specifies the selection parameters used in deciding switching between a simultaneous
+        or separate approximation of the two terms in the sensitivity residual.
+        
+            Parameters::
+            
+                DQrhomax
+                        - A postive float.
+                        - Default 0.0
+                        
+            Returns::
+            
+                The current value of DQrhomax (float)
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensDQMethod' 
+        """
+        try:
+            dqrhomax = float(dqrhomax)
+            if dqrhomax < 0.0:
+                raise Implicit_ODE_Exception('DQrhomax must be a positive float.')
+        except (TypeError, ValueError):
+            raise Implicit_ODE_Exception('DQrhomax must be convertable to a float.')
+            
+        self.Integrator.DQrhomax = dqrhomax
+        
+    def _get_DQrhomax(self):
+        """
+        Specifies the selection parameters used in deciding switching between a simultaneous
+        or separate approximation of the two terms in the sensitivity residual.
+        
+            Parameters::
+            
+                DQrhomax
+                        - A postive float.
+                        - Default 0.0
+                        
+            Returns::
+            
+                The current value of DQrhomax (float)
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensDQMethod' 
+        """
+        return self.Integrator.DQrhomax
+    
+    DQrhomax = property(_get_DQrhomax, _set_DQrhomax)
+    
+    def _set_usesens(self, usesens):
+        """
+        Specifies if the sensitivity calculations should be used or turned off.
+        
+            Parameters::
+            
+                usesens
+                            - A boolean type.
+                            - Default True
+                            
+            Returns::
+            
+                The current value of usesens (boolean)
+        
+        See SUNDIALS IDAS documentation 5.2.1 'IDASensToggleOff' 
+        """
+        self.Integrator.sensToggleOff = not bool(usesens)
+        
+    def _get_usesens(self):
+        """
+        Specifies if the sensitivity calculations should be used or turned off.
+        
+            Parameters::
+            
+                usesens
+                            - A boolean type.
+                            - Default True
+                            
+            Returns::
+            
+                The current value of usesens (boolean)
+        
+        See SUNDIALS IDAS documentation 5.2.1 'IDASensToggleOff' 
+        """
+        return not self.Integrator.sensToggleOff
+        
+    usesens = property(_get_usesens, _set_usesens)
+    
+    def _set_sensitivity_method(self, ism):
+        """
+        Specifies the sensitivity solution method. Can be either
+        'IDA_SIMULTANEOUS' or 'IDA_STAGGERED'.
+        
+            Parameters::
+            
+                ism
+                        - A string of either 'IDA_SIMULTANEOUS' or 'IDA_STAGGERED'
+                        - Default 'IDA_STAGGERED'
+                        
+            Returns::
+            
+                The current value of sensmethod (string)
+        
+        See SUNDIALS IDAS documentation 5.2.1 'IDASensInit'
+        """
+        if not isinstance(ism, str):
+            raise Implicit_ODE_Exception('sensmethod must be string.')
+        
+        if ism.upper() == 'IDA_SIMULTANEOUS':
+            self.Integrator.ism = 1
+        elif ism.upper() == 'IDA_STAGGERED':
+            self.Integrator.ism = 2
+        else:
+            raise Implicit_ODE_Exception('sensmethod must be either "IDA_SIMULTANEOUS" or "IDA_STAGGERED".')
+        
+    def _get_sensitivity_method(self):
+        """
+        Specifies the sensitivity solution method. Can be either
+        'IDA_SIMULTANEOUS' or 'IDA_STAGGERED'.
+        
+            Parameters::
+            
+                ism
+                        - A string of either 'IDA_SIMULTANEOUS' or 'IDA_STAGGERED'
+                        - Default 'IDA_STAGGERED'
+                        
+            Returns::
+            
+                The current value of sensmethod (string)
+        
+        See SUNDIALS IDAS documentation 5.2.1 'IDASensInit'
+        """
+        if self.Integrator.ism == 1:
+            return 'IDA_SIMULTANEOUS'
+        elif self.Integrator.ism == 2:
+            return 'IDA_STAGGERED'
+        else:
+            raise Implicit_ODE_Exception('Unknown value of DQtype.')
+    
+    sensmethod = property(_get_sensitivity_method, _set_sensitivity_method)
+    
+    def _set_suppress_sens(self, suppress_sens):
+        """
+        Specifies whether sensitivity variables are included in the error test
+        or not. True means that the variables are suppressed and not included 
+        in the error test.
+        
+            Parameters::
+            
+                suppress_sens
+                        - A boolean
+                        - Default True
+                        
+            Returns::
+                
+                The current value of suppress_sens (boolean)
+                
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensErrCon'.
+        
+        NOTE:: 
+        
+            That this method does the opposite of IDASetSensERRCon to have 
+            the same meaning as suppress_alg.
+        """
+        self.Integrator.errconS = not bool(suppress_sens)
+        
+    def _get_suppress_sens(self):
+        """
+        Specifies whether sensitivity variables are included in the error test
+        or not. True means that the variables are suppressed and not included 
+        in the error test.
+        
+            Parameters::
+            
+                suppress_sens
+                        - A boolean
+                        - Default True
+                        
+            Returns::
+                
+                The current value of suppress_sens (boolean)
+                
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensErrCon'.
+        
+        NOTE:: 
+        
+            That this method does the opposite of IDASetSensERRCon to have 
+            the same meaning as suppress_alg.
+        """
+        return not self.Integrator.errconS
+    
+    suppress_sens = property(_get_suppress_sens, _set_suppress_sens)
+    
+    def _set_max_nonlin(self, maxsensiter):
+        """
+        Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables per step. (>0)
+        
+            Parameters::
+            
+                maxsensiter 
+                            - An integer
+                            - Default 3
+                            
+            Returns::
+            
+                The current value of maxsensiter.
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensMaxNonlinIters'.
+        """
+        try:
+            maxsensiter = int(maxsensiter)
+            if maxsensiter < 1:
+                raise Implicit_ODE_Exception('maxsensiter must be greater than zero.')
+        except (TypeError, ValueError):
+            raise Implicit_ODE_Exception('maxsensiter must be convertable to an integer.')
+        
+        self.Integrator.maxcorS = maxsensiter
+        
+    def _get_max_nonlin(self):
+        """
+        Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables per step. (>0)
+        
+            Parameters::
+            
+                maxsensiter 
+                            - An integer
+                            - Default 3
+                            
+            Returns::
+            
+                The current value of maxsensiter.
+        
+        See SUNDIALS IDAS documentation 5.2.6 'IDASetSensMaxNonlinIters'.
+        """
+        return self.Integrator.maxcorS
+    
+    maxsensiter = property(_get_max_nonlin, _set_max_nonlin)
 
 class Radau5(Radau_Common,Implicit_ODE):
     """

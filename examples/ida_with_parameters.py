@@ -27,9 +27,9 @@ def run_example():
     def handle_result(solver, t ,y,yd):
         solver.t += [t]
         solver.y += [y]
-        solver.p1 += [solver.Integrator.get_sens_res(t, 0, 0)]
-        solver.p2 += [solver.Integrator.get_sens_res(t, 0, 1)]
-        solver.p3 += [solver.Integrator.get_sens_res(t, 0, 2)]
+        solver.p1 += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p2 += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p3 += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #Create an Assimulo implicit problem
     imp_mod = Implicit_Problem()
@@ -42,7 +42,7 @@ def run_example():
     y0 = [1.0, 0.0, 0.0]        #Initial conditions for y
     yd0 = [0.1, 0.0, 0.0]       #Initial conditions for dy/dt
     p0 = [0.040, 1.0e4, 3.0e7]  #Initial conditions for parameters
-
+    global imp_sim
     #Create an Assimulo implicit solver (IDA)
     imp_sim = IDA(imp_mod,y0,yd0,p0=p0) #Create a IDA solver
     

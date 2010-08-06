@@ -953,7 +953,7 @@ cdef class IDA_wrap:
             if flag<0:
                 sundials_error(flag,1,t0)
     
-    def get_sens_res(self,realtype t, int k, int i=-1):
+    def interpolate_sensitivity(self,realtype t, int k, int i=-1):
         """
         This method class the internal method IDAGetSensDky which computes the k-th derivatives
         of the interpolating polynomials for the sensitivity variables at time t.
