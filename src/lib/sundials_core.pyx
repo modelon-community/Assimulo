@@ -215,10 +215,10 @@ cdef extern from "idas/idas.h":
     int IDAGetNumResEvalsSens(void *ida_mem, long int nfevalsS)
     int IDAGetSensNumErrTestFails(void *ida_mem, long int nSetfails)
     int IDAGetSensNumLinSolvSetups(void *ida_mem, long int nlinsetupsS)
-    int IDAGetSensStats(void *ida_mem, long int nfSevals, long int nfevalsS, long int nSetfails, long int nlinsetupsS)
+    int IDAGetSensStats(void *ida_mem, long int *nfSevals, long int *nfevalsS, long int *nSetfails, long int *nlinsetupsS)
     int IDAGetSensNumNonlinSolvIters(void *ida_mem, long int nSniters)
     int IDAGetSeonsNumNonlinSolvConvFails(void *ida_mem, long int nSncfails)
-    int IDAGetSensNonlinSolvStats(void *ida_mem, long int nSniters, long int nSncfails)
+    int IDAGetSensNonlinSolvStats(void *ida_mem, long int *nSniters, long int *nSncfails)
     
     #End Sensitivities
     #--------------------------
@@ -784,6 +784,7 @@ cdef class IDA_wrap:
         public realtype t0, DQrhomax
         public ndarray abstol_ar,algvar,event_info
         public dict stats
+        public list sens_stats
         public dict detailed_info
         public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
         public booleantype sens_activated
@@ -1004,7 +1005,9 @@ cdef class IDA_wrap:
         Retrieves and stores the statistics.
         """
         cdef long int nsteps, nrevals,njevals,nrevalsLS,ngevals,netfails,nniters,nncfails
-
+        cdef long int nSniters, nSncfails
+        cdef long int nfSevals,nfevalsS,nSetfails,nlinsetupsS
+        
         if self.store_state:
             flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
             flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
@@ -1031,7 +1034,23 @@ cdef class IDA_wrap:
                 self.stats = {}
                 for x in range(len(stats_text)):
                     self.stats[stats_text[x]] = stats_values[x]
-        
+            
+            if self.nbr_params > 0:
+                
+                flag = IDAGetSensStats(self.mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
+                flag = IDAGetSensNonlinSolvStats(self.mem, &nSniters, &nSncfails)
+                
+                stats_values = [nfSevals, nfevalsS, nSetfails, nlinsetupsS,nSniters, nSncfails]
+                
+                if self.sens_stats != None:
+                    for x in range(len(stats_values)):
+                        self.sens_stats[x] += stats_values[x]
+                else:
+                    self.sens_stats = []
+                    for x in range(len(stats_values)):
+                        self.sens_stats += [stats_values[x]]
+            
+            
         self.store_state = False
         
     def calc_IC(self,method, direction, lsoff):
