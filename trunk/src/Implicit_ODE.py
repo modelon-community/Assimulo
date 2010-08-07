@@ -976,6 +976,17 @@ class IDA(Implicit_ODE, Sundials):
             
             for x in keys:
                 print '%s = %s'%(x, statistics[x])
+                
+            if self.problem_spec[0][0]: #Senstivity calculations is on
+                sens_stats = self.get_sensitivity_statistics()
+                
+                print '\nSensitivity Statistics:\n'
+                print 'Number of Sensitivity Calculations             :', sens_stats[0]
+                print 'Number of F-Evals Due to Finite Approximation  :', sens_stats[1]
+                print 'Number of Local Error Test Failures            :', sens_stats[2]
+                print 'Number of Linear Setups                        :', sens_stats[3]
+                print 'Number of Nonlinear iterations                 :', sens_stats[4]
+                print 'Number of Nonlinear Convergance Failures       :', sens_stats[5]
         else:
             print 'No statistics available.'
     
@@ -983,6 +994,27 @@ class IDA(Implicit_ODE, Sundials):
     def is_disc(self):
         """Method to test if we are at an event."""
         return self.t_cur==self.Integrator.event_time
+        
+    def get_sensitivity_statistics(self):
+        """
+        Returns the sensitivity statistics.
+        
+            Returns::
+            
+                A list of statistics.
+                
+            Example::
+            
+                stats = IDA.get_sensitivity_statistics()
+                
+                stats[0] #Number of Sensitivity Calculations
+                stats[1] #Number of F-Evals Due to Finite Approximation
+                stats[2] #Number of Local Error Test Failures
+                stats[3] #Number of Linear Setups            
+                stats[4] #Number of Nonlinear iterations     
+                stats[5] #Number of Nonlinear Convergance Failures
+        """
+        return self.Integrator.sens_stats
 
     
     #SENSITIVITY METHODS
