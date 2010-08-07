@@ -962,7 +962,16 @@ class CVode(Explicit_ODE, Sundials):
             keys.sort()
             
             for x in keys:
-                print '%s = %s'%(x, statistics[x])
+                print ' %s = %s'%(x, statistics[x])
+                
+            print '\nSolver options:\n'
+            print ' Solver                  :  CVode'
+            print ' Linear Multistep Method : ', self.discr
+            print ' Nonlinear Solver        : ' ,self.iter
+            print ' Maxord                  : ' ,self.maxord
+            print ' Tolerances (absolute)   : ' ,self.atol
+            print ' Tolerances (relative)   : ' ,self.rtol
+            print ''
         else:
             print 'No statistics available.'
     
