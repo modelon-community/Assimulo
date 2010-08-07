@@ -975,18 +975,26 @@ class IDA(Implicit_ODE, Sundials):
             keys.sort()
             
             for x in keys:
-                print '%s = %s'%(x, statistics[x])
+                print ' %s = %s'%(x, statistics[x])
                 
             if self.problem_spec[0][0]: #Senstivity calculations is on
                 sens_stats = self.get_sensitivity_statistics()
                 
                 print '\nSensitivity Statistics:\n'
-                print 'Number of Sensitivity Calculations             :', sens_stats[0]
-                print 'Number of F-Evals Due to Finite Approximation  :', sens_stats[1]
-                print 'Number of Local Error Test Failures            :', sens_stats[2]
-                print 'Number of Linear Setups                        :', sens_stats[3]
-                print 'Number of Nonlinear iterations                 :', sens_stats[4]
-                print 'Number of Nonlinear Convergance Failures       :', sens_stats[5]
+                print ' Number of Sensitivity Calculations             :', sens_stats[0]
+                print ' Number of F-Evals Due to Finite Approximation  :', sens_stats[1]
+                print ' Number of Local Error Test Failures            :', sens_stats[2]
+                print ' Number of Linear Setups                        :', sens_stats[3]
+                print ' Number of Nonlinear iterations                 :', sens_stats[4]
+                print ' Number of Nonlinear Convergance Failures       :', sens_stats[5]
+            
+            print '\nSolver options:\n'
+            print ' Solver                :  IDA (BDF)'
+            print ' Maxord                : ' ,self.maxord
+            print ' Suppress Alg          : ' ,self.suppress_alg
+            print ' Tolerances (absolute) : ' ,self.atol
+            print ' Tolerances (relative) : ' ,self.rtol
+            print ''
         else:
             print 'No statistics available.'
     
