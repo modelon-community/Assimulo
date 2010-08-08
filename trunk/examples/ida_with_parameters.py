@@ -47,10 +47,13 @@ def run_example():
     imp_sim = IDA(imp_mod,y0,yd0,p0=p0) #Create a IDA solver
     
     #Sets the paramters
-    imp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e6])
+    imp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
     imp_sim.algvar = [1.0,1.0,0.0]
-    imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
+    #imp_sim.suppress_alg = False #Suppres the algebraic variables on the error test
     imp_sim.store_cont = True #Store data continuous during the simulation
+    imp_sim.pbar = p0
+    #imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
+    #imp_sim.sensmethod = 'IDA_SIMULTANEOUS' #Defines the sensitvity method used
     imp_sim.p1 = [] #Vector for storing the p1 result
     imp_sim.p2 = [] #Vector for storing the p2 result
     imp_sim.p3 = [] #Vector for storing the p3 result

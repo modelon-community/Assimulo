@@ -1360,6 +1360,49 @@ class IDA(Implicit_ODE, Sundials):
         return self.Integrator.maxcorS
     
     maxsensiter = property(_get_max_nonlin, _set_max_nonlin)
+    
+    def _set_pbar(self, pbar):
+        """
+        Specifies the order of magnitude for the parameters. This is useful if IDAS is
+        to estimate tolerances for the sensitivity solution vectors.
+        
+            Parameters::
+            
+                pbar
+                        - An array of positive floats equal to the number of parameters.
+                        - Default array of ones.
+                        
+            Returns::
+            
+                The current value of pbar.
+                
+        See SUNDIALS IDA documentation 5.2.6 'IDASetSensParams'
+        """
+        if len(pbar) != self.Integrator.nbr_params:
+            raise Implicit_ODE_Exception('pbar must be of equal length as the parameters.')
+        
+        self.Integrator.pbar = pbar
+    
+    def _get_pbar(self):
+        """
+        Specifies the order of magnitude for the parameters. This is useful if IDAS is
+        to estimate tolerances for the sensitivity solution vectors.
+        
+            Parameters::
+            
+                pbar
+                        - An array of positive floats equal to the number of parameters.
+                        - Default array of ones.
+                        
+            Returns::
+            
+                The current value of pbar.
+                
+        See SUNDIALS IDA documentation 5.2.6 'IDASetSensParams'
+        """
+        return self.Integrator.pbar
+    
+    pbar = property(_get_pbar, _set_pbar)
 
 class Radau5(Radau_Common,Implicit_ODE):
     """

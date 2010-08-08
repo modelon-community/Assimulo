@@ -797,7 +797,7 @@ cdef class IDA_wrap:
         N_Vector *ySO, *ydSO
         UserData *uData
         cdef UserData tempStruct
-        public object p
+        public object p, pbar
     def __init__(self,dim):
         
         self.dim=dim
@@ -912,14 +912,26 @@ cdef class IDA_wrap:
             
             self.sens_activated = True
         
+        #Sets the parameters to the userdata object.
         self.uData.params = <realtype*> malloc(self.nbr_params*sizeof(realtype))
-        
         for i in range(self.nbr_params):
             self.uData.params[i] = self.p[i]
-        #self.uData.params = self.p
+        
+        #Sets the pbar.
+        pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        if self.pbar != None:
+            for i in range(self.nbr_params):
+                pbar[i] = self.pbar[i]
+        else:
+            for i in range(self.nbr_params):
+                pbar[i] = 1.0
+        
         #Specify problem parameter information for sensitivity calculations
         flag = IDASetSensParams(self.mem, self.uData.params, pbar, plist)
-
+        
+        if self.pbar != None:
+            free(pbar) #Free the allocated space.
+        
         if flag<0:
             sundials_error(flag,1,t0)
         
