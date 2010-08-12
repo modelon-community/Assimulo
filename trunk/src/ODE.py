@@ -47,7 +47,7 @@ class ODE(object):
             self.atol = 1.0e-6 #Absolute tolerance
             self.rtol = 1.0e-6 #Relative tolerance
             self.store_cont = False #No continuous logging
-            self.sim_complete = False #Simulation finnished? Used for time-events
+            self.sim_complete = False #Simulation finished? Used for time-events
             
             #Internal values
             self._completed_step = False #Completed step option.
@@ -61,7 +61,7 @@ class ODE(object):
     def _set_max_steps(self, maxsteps):
         """
         Determines the maximum number of steps the solver is allowed
-        to take to finnish the simulation.
+        to take to finish the simulation.
         
             Parameters::
             
@@ -83,7 +83,7 @@ class ODE(object):
     def _get_max_steps(self):
         """
         Determines the maximum number of steps the solver is allowed
-        to take to finnish the simulation.
+        to take to finish the simulation.
         
             Parameters::
             
