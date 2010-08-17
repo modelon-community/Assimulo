@@ -20,17 +20,19 @@ Ubuntu
 
 Once all the dependencies are satisfied an installation is done by::
 
-    python setup_source.py install --sundials-home=/path/to/sundials
+    python setup_source.py install 
     
 After a successful installation, the package will be located in Pythons dist-packages folder.
 
 .. note::
 
-    The argument::
+    If Sundials have been installed on a different location then the default, the argument::
     
-        --sundials-home 
+        --sundials-home=/path/to/sundials
         
-    should point to where Sundials is installed. If Sundials has been installed using the default path, this argument is not needed as the default path is /usr/local/. If it have been installed anywhere else, this path should point to its location.
+    should point to where Sundials is installed. Example, ::
+    
+        python setup_source.py install -sundials-home=/home/chria/Sundials
 
 .. note::
 
