@@ -182,5 +182,3 @@ and the problem can also be easily plotted by using the plot command, ::
 
     imp_sim.plot() #Plot the solution
     
-Explicit ODE with state events (discontinuities)
-================================================

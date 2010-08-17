@@ -26,6 +26,7 @@ Contents
    installation
    code
    changelog
+   tutorial
 
 
 .. toctree::
