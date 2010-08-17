@@ -23,4 +23,4 @@ To retrieve the latest (develop) version using a subversion software use::
 
 .. warning::
 
-    The latest (develop) version may not function properly given the nature of development.
+    The latest (develop) version may not function properly.
