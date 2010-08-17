@@ -19,7 +19,8 @@ import nose
 import numpy as N
 from Assimulo.lib.radau_core import Radau_Common, Radau_Exception
 from Assimulo.Explicit_ODE import Radau5
-from Assimulo.Problem import Explicit_Problem
+from Assimulo.Implicit_ODE import Radau5 as Radau5Imp
+from Assimulo.Problem import Explicit_Problem, Implicit_Problem
 
 class Test_Radau_Common:
     """
@@ -295,3 +296,57 @@ class Test_Explicit_Radau:
         self.sim.simulate(1.0)
         assert self.sim._nsteps == 142
     
+
+class Test_Implicit_Radau:
+    """
+    Tests the implicit Radau solver.
+    """
+    def setUp(self):
+        """
+        This sets up the test case.
+        """
+        #Define the residual
+        def f(t,y,yd):
+            eps = 1.e-6
+            my = 1./eps
+            yd_0 = y[1]
+            yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
+            
+            res_0 = yd[0]-yd_0
+            res_1 = yd[1]-yd_1
+            
+            return N.array([res_0,res_1])
+        
+        #Define an Assimulo problem
+        imp_mod = Implicit_Problem()
+        imp_mod.f = f
+            
+        #Define an explicit solver
+        y0 = [2.0,-0.6] #Initial conditions
+        yd0 = [-.6,-200000.]
+        self.sim = Radau5Imp(imp_mod,y0,yd0) #Create a Radau5 solve
+        
+        #Sets the parameters
+        self.sim.atol = 1e-4 #Default 1e-6
+        self.sim.rtol = 1e-4 #Default 1e-6
+        self.sim.initstep = 1.e-4 #Initial step-size
+        
+    def test_simulation(self):
+        """
+        Test a simulation of the vanderpol equations.
+        """
+        #Simulate
+        self.sim.simulate(2.) #Simulate 2 seconds
+
+        assert self.sim._nsteps == 272
+    
+    
+    def test_maxh(self):
+        """
+        Tests implicit radau with maxh.
+        """
+        self.sim.maxh = 0.01
+        self.sim.simulate(2.)
+        assert self.sim._nsteps == 437
+        
+        
