@@ -500,21 +500,22 @@ class IDA(Implicit_ODE, Sundials):
         
         if p0 == None:
             if hasattr(problem, 'p0'):
-                self.p = problem.y0
+                self.p = problem.p0
                 sens = True
         else:
             self.p = p0
             sens = True
-        
+
         if sens:
+            self._problem.p0 = self.p
             #Set information to the solver IDAS
-            self.Integrator.nbr_params = len(p0)
-            self.Integrator.p = N.array(p0)
-            self._RES = [len(p0)]+self._RES #Indicator for Cython
+            self.Integrator.nbr_params = len(self.p)
+            self.Integrator.p = N.array(self.p)
+            self._RES = [len(self.p)]+self._RES #Indicator for Cython
         else:
             self._RES = [0]+self._RES #Indicator for Cython
         #-------------End Sensitivity initiation
-        
+
         if hasattr(self, '_ROOT'):
             self.problem_spec = [self._RES, self._ROOT]
         else:
