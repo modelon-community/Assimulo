@@ -216,7 +216,7 @@ class Implicit_Problem(Problem):
         
             Radau5 and IDA (no events)
             
-                    Gets called whenever the simulation have finished with a call for
+                    Gets called whenever the simulation has finished with a call for
                     each time point specified with the number of communication points or
                     for each internal time point (if number of communication points == 0)
         
@@ -315,7 +315,7 @@ class Explicit_Problem(Problem):
         
             Radau5, RungeKutta4, RungeKutta34, Explicit_Euler, CVode (no events)
             
-                    Gets called whenever the simulation have finished with a call for
+                    Gets called whenever the simulation has finished with a call for
                     each time point specified with the number of communication points or
                     for each internal time point (if number of communication points == 0)
         
