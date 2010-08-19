@@ -15,21 +15,22 @@ Tutorial
 Introduction
 ===============
 
-This tutorial will give a short introduction of using the Assimulo package for solving both explicit and implicit ordinary differential equations. The tutorial will focus on the solvers IDA and CVode which is part of the SUNDIALS package written in C. In Assimulo these solvers have been lifted to Python to provide an easy interface and an easy platform for experimenting.
+This tutorial is intended to give a short introduction of using the Assimulo package for solving both explicit and implicit ordinary differential equations. The tutorial focuses on the solvers IDA and CVode which are part of the SUNDIALS package written in C. In Assimulo these solvers have been lifted to Python to provide an easy interface and an easy platform for experimenting.
 
    - This tutorial is intended to be a short introduction for students taking the course `FMNN05 <http://www.maths.lth.se/na/courses/FMNN05/>`_ at `Lund University <http://www.lu.se/>`_ , Lund, Sweden. 
    
 
 .. note::
 
-    - The SUNDIALS code are left unchanged.
+    - The SUNDIALS code is left unchanged.
     - Not all of SUNDIALS parameters are currently lifted to Python.
     
     See also the original `SUNDIALS <http://computation.llnl.gov/casc/sundials/main.html>`_ documentation
 
 .. note::
 
-    If there are any questions about a method or class, it is recommended to have a look at the docstrings using for example IPython. The docstrings are viewed using a question mark (?) after the method/class. Example, ::
+    If there are any questions about a method or class, it is recommended to have a look at the docstrings.  For example, when using IPython, the docstrings are displayed  by entering the name of the method/class followed by 
+    a question mark(?). Example, ::
     
         CVode.atol?
 
@@ -38,7 +39,7 @@ This tutorial will give a short introduction of using the Assimulo package for s
 Explicit Problems (Commonly ODEs)
 =================================
 
-In the next few sections it will be shown how the use the solver CVode to solve an explicit ordinary differential equation (commonly ODE) on the form,
+In the next few sections we show how to use the solver CVode for solving an explicit ordinary differential equation (commonly ODE) on the form,
 
 .. math::
 
@@ -47,9 +48,12 @@ In the next few sections it will be shown how the use the solver CVode to solve 
 Problem formulation
 -----------------------
 
-The problem consists of a 'right-hand-side' (in the ODE case) together with initial conditions for the time and the states. The 'right-hand-side' takes as input the time (t) and the states (y) and returns the calculated state derivatives (yd).
+The problem consists of a 'right-hand-side function' (in the explicit ODE case) together with initial conditions for the time and the states. 
+This has to be packed into a problem class:
 
-An example of a rhs is shown below (Python)::
+The 'right-hand-side function' takes as input the time (t) and the states (y) and returns the calculated state derivatives (yd).
+
+An example of a 'right-hand-side function' rhs is shown below (Python)::
 
     import numpy as N
 
@@ -64,22 +68,24 @@ The initial conditions to the rhs needs to also to be specified::
     y0=N.array([1.0,1.0])
     t0=0.0
 
-Creating an Assimulo solver
-------------------------------
 
-Having defined the differential equation together with a set of initial conditions, lets create a solver object for the problem. But in order to create a solver object a problem object is needed, which is a class from the Assimulo package where a user specifies the problem. ::
+Both, the rhs-function and the initial conditions are packed now into the problem class, 
+being the Python equivalent to an explicit ODE::
     
-    from assimulo.problem import Explicit_Problem #Imports the problem formulation from Assimulo
+    from assimulo.problem import Explicit_Problem  #Imports the problem formulation from Assimulo
     
     model = Explicit_Problem()             #Create an Assimulo problem
     model.f = rhs                          #This is how the rhs connects to the Assimulo problem
+    model.y0 = y0                          # Here we provide the initial conditions
     model.problem_name = 'Linear Test ODE' #Specifies the name of problem (optional)
-    
-And now to create the actual solver object::
+
+Creating an Assimulo solver
+------------------------------    
+And now we create the actual solver object::
 
     from assimulo.explicit_ode import CVode #Imports the solver CVode from Assimulo
 
-    sim = CVode(model, y0, t0)
+    sim = CVode(model, t0)
 
 Simulate
 ----------
@@ -90,7 +96,10 @@ To simulate the problem using the default values, simply specify the final time 
     
     sim.simulate(tfinal) #Use the .simulate method to simulate and provide the final time
     
-This will give all sorts of information in the prompt, the statistics of the solver, how many function calls was needed, among others. Also information about the solver, which options the problem was solved with. The *simulate* method can also take the number of communication points for which the solution should be returned. This is specified by a second argument to *simulate*, *simulate(tfinal,200)*. Which means that the result vector should contain 200 equally spaced points.
+This returns all sorts of information in the prompt, the statistics of the solver, how many function calls was needed, among others. 
+Also information about the solver, which options the problem was solved with. 
+The *simulate* method can also take the number of communication points for which the solution should be returned. 
+This is specified by a second argument, e.g. *sim.simulate(tfinal,200)* means that the result vector should contain 200 equally spaced points.
 
 To plot the simulation result, use the plot method::
 
@@ -131,7 +140,7 @@ For the complete example, :download:`tutorialCVode.py`
 Setting options and parameters
 -------------------------------------
 
-To control the integration, SUNDIALS provide a number of parameters and options which of a few have been lifted up to Python.
+To control the integration, SUNDIALS provides a number of parameters and options which of a few have been lifted up to Python.
 
 Here are some:
 
