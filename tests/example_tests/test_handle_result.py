@@ -1,9 +1,9 @@
 import nose
 import numpy as N
-from Assimulo.Explicit_ODE import *
-from Assimulo.Implicit_ODE import *
-from Assimulo.Problem import Explicit_Problem
-from Assimulo.Problem import Implicit_Problem
+from assimulo.explicit_ode import *
+from assimulo.implicit_ode import *
+from assimulo.problem import Explicit_Problem
+from assimulo.problem import Implicit_Problem
 
 def run_example():
     

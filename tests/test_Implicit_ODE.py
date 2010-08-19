@@ -1,7 +1,7 @@
 import nose
 import numpy as N
-from Assimulo.Implicit_ODE import *
-from Assimulo.Problem import Implicit_Problem
+from assimulo.implicit_ode import *
+from assimulo.problem import Implicit_Problem
 
 
 class Test_Implicit_ODE:

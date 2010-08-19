@@ -1,5 +1,5 @@
-from Assimulo.Problem import Explicit_Problem
-from Assimulo.Explicit_ODE import *
+from assimulo.problem import Explicit_Problem
+from assimulo.explicit_ode import *
 from scipy import *
 
 

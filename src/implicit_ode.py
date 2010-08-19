@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from ODE import *
-from Problem import Implicit_Problem
-from Sundials import Sundials, Sundials_Exception
-from Assimulo.lib.radau_core import Radau_Common
+from ode import *
+from problem import Implicit_Problem
+from sundials import Sundials, Sundials_Exception
+from assimulo.lib.radau_core import Radau_Common
 
 class Implicit_ODE_Exception(Exception):
     """An integrator exception"""

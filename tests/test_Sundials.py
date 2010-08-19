@@ -1,10 +1,10 @@
 import nose
 import numpy as N
-from Assimulo.Sundials import Sundials_Exception, Sundials
-from Assimulo.Implicit_ODE import IDA
-from Assimulo.Explicit_ODE import CVode
-from Assimulo.Problem import Implicit_Problem
-from Assimulo.Problem import Explicit_Problem
+from assimulo.sundials import Sundials_Exception, Sundials
+from assimulo.implicit_ode import IDA
+from assimulo.explicit_ode import CVode
+from assimulo.problem import Implicit_Problem
+from assimulo.problem import Explicit_Problem
 
 class Test_Sundials:
     
