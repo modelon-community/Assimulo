@@ -125,9 +125,9 @@ def test_disc():
     iter_sim.verbosity = iter_sim.SCREAM #Set the verbosity
     iter_sim.simulate(10.0,100) #Simulate 10 seconds with 100 communications points
     
-    assert iter_sim.yd[-1][0] == 1.0
-    assert iter_sim.yd[-1][1] == 0.0
-    assert iter_sim.yd[-1][2] == 0.0
+    nose.tools.assert_almost_equal(iter_sim.yd[-1][0],1.000000, 5)
+    nose.tools.assert_almost_equal(iter_sim.yd[-1][1],0.000000, 5)
+    nose.tools.assert_almost_equal(iter_sim.yd[-1][2],0.000000, 5)
 
     nose.tools.assert_almost_equal(iter_sim.y[-1][0], 8.0000000, 5)
     nose.tools.assert_almost_equal(iter_sim.y[-1][1], 3.0000000, 5)
