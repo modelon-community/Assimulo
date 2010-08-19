@@ -74,14 +74,14 @@ class Problem(object):
             after the simulation have been preformed.
         
         def completed_step(self, solver)
-            This method is intended to be used for events which does not require good accuracy
-            and is called after each successful step taken by the solver. An example of use is
-            that of simulating a Pendulum which require a change of the coordinate system during
-            the simulation.
+            This method is intended to be used for events which need not to be hit with high accuracy.
+            It is called after each successful step taken by the solver. An example of use is
+            that of simulating a systems which need to change the coordinate set to avoid singularities.
+            The state, where this coordinate change has to be preformed is normally not very critical. 
             
-            This is separated from the event functions (state and time) in the sense that
-            this method is between numerics of the problem and numerics of the solver.
-            The state and time functions are between the numerics of the solver and physics
+            This is different from the event functions (state and time) in the sense that
+            this method is completely related to the numerics of the solver, while
+            the event functions, couple the numerics of the solver with physics
             of the problem.
             
                 Parameters::
