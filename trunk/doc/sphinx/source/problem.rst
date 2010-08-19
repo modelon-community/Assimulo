@@ -2,14 +2,14 @@
 Problem Class
 =============================
 
-.. autoclass:: Assimulo.Problem.Problem
+.. autoclass:: assimulo.problem.Problem
    :members:
  
 
 Explicit Problem
 -----------------------
  
-.. autoclass:: Assimulo.Problem.Explicit_Problem
+.. autoclass:: assimulo.problem.Explicit_Problem
     :members: 
 
 
@@ -17,5 +17,5 @@ Explicit Problem
 Implicit Problem
 -----------------------
  
-.. autoclass:: Assimulo.Problem.Implicit_Problem
+.. autoclass:: assimulo.problem.Implicit_Problem
     :members:

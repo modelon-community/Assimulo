@@ -11,8 +11,8 @@ or,
     python tutorialCVode.py (in a command prompt)
 """
 import numpy as N
-from Assimulo.Explicit_ODE import CVode #Imports the solver CVode from Assimulo
-from Assimulo.Problem import Explicit_Problem #Imports the problem formulation from Assimulo   
+from assimulo.explicit_ode import CVode #Imports the solver CVode from Assimulo
+from assimulo.problem import Explicit_Problem #Imports the problem formulation from Assimulo   
 
 def run_example():
 

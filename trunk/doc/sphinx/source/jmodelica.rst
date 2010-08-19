@@ -31,7 +31,7 @@ Discontinuous Systems
 --------------------------
 
 
-In the new release of `JModelica.org <http://www.jmodelica.org/story/237>`_ support for if-constructs were implemented which is also supported in the Assimulo solvers :doc:`IDA <solver_IDA>` and :doc:`CVode <solver_CVode>`. 
+In the new release of `JModelica.org <http://www.jmodelica.org/story/237>`_ support for if-constructs were implemented which is also supported in the Assimulo solvers :doc:`IDA <solver_imp_IDA>` and :doc:`CVode <solver_exp_CVode>`. 
 
 .. note::
 
@@ -43,7 +43,7 @@ But as Assimulo just reports the events, and gives control back to the user via 
    :align: center
 
 
-When Assimulo finds an event, the control is given to *handle_event* which enters an event iteration loop. In this loop the switches are turned according to the information provided by Assimulo about which event indicator have fired. After turning the switches the new mode corresponding to the new switches are initiated according to Sundials option `'IDA_YA_YDP_INIT' <https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#SECTION00554000000000000000>`_ which is implemented by use of :class:`IDA.make_consistecy <Assimulo.Implicit_ODE.IDA.make_consistency>` . After the initiation the iteration conditions are evaluated, which checks for if the initiation triggered another event in which case the loop continues. If the initiation does not trigger another event, the simulation continues.
+When Assimulo finds an event, the control is given to *handle_event* which enters an event iteration loop. In this loop the switches are turned according to the information provided by Assimulo about which event indicator have fired. After turning the switches the new mode corresponding to the new switches are initiated according to Sundials option `'IDA_YA_YDP_INIT' <https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#SECTION00554000000000000000>`_ which is implemented by use of :class:`IDA.make_consistecy <assimulo.implicit_ode.IDA.make_consistency>` . After the initiation the iteration conditions are evaluated, which checks for if the initiation triggered another event in which case the loop continues. If the initiation does not trigger another event, the simulation continues.
 
 Also, the event handling is dependent on *moving* the event indicators a small epsilon depending on if they are in the upper region or in the lower region.
 

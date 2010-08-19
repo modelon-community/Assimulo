@@ -1,7 +1,7 @@
 ODE
 =========================
 
-.. automodule:: Assimulo.ODE
+.. automodule:: assimulo.ode
    :members:
   
  
@@ -9,7 +9,7 @@ ODE
 Implicit ODE
 =============================
 
-.. autoclass:: Assimulo.Implicit_ODE.Implicit_ODE
+.. autoclass:: assimulo.implicit_ode.Implicit_ODE
    :members:
    :inherited-members:
    :show-inheritance:
@@ -17,8 +17,17 @@ Implicit ODE
 IDA
 -----
 
-.. autoclass:: Assimulo.Implicit_ODE.IDA
+.. autoclass:: assimulo.implicit_ode.IDA
    :members:
    :inherited-members:
    :show-inheritance:
  
+ 
+Radau5
+---------
+ 
+.. autoclass:: assimulo.implicit_ode.Radau5
+   :members:
+   :inherited-members:
+   :show-inheritance:
+   :exclude-members: is_disc, print_event_info

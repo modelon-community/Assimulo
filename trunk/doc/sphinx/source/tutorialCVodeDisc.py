@@ -11,8 +11,8 @@ or,
     python tutorialCVodeDisc.py (in a command prompt)
 """
 import numpy as N
-from Assimulo.Problem import Explicit_Problem
-from Assimulo.Explicit_ODE import CVode
+from assimulo.problem import Explicit_Problem
+from assimulo.explicit_ode import CVode
 
 
 def run_example():

@@ -69,7 +69,7 @@ Creating an Assimulo solver
 
 Having defined the differential equation together with a set of initial conditions, lets create a solver object for the problem. But in order to create a solver object a problem object is needed, which is a class from the Assimulo package where a user specifies the problem. ::
     
-    from Assimulo.Problem import Explicit_Problem #Imports the problem formulation from Assimulo
+    from assimulo.problem import Explicit_Problem #Imports the problem formulation from Assimulo
     
     model = Explicit_Problem()             #Create an Assimulo problem
     model.f = rhs                          #This is how the rhs connects to the Assimulo problem
@@ -77,7 +77,7 @@ Having defined the differential equation together with a set of initial conditio
     
 And now to create the actual solver object::
 
-    from Assimulo.Explicit_ODE import CVode #Imports the solver CVode from Assimulo
+    from assimulo.explicit_ode import CVode #Imports the solver CVode from Assimulo
 
     sim = CVode(model, y0, t0)
 
@@ -198,7 +198,7 @@ Creating an Assimulo solver
 
 Having defined the differential equation together with a set of initial conditions, lets create a solver object for the problem. But in order to create a solver object a problem object is needed, which is a class from the Assimulo package where a user specifies the problem. ::
     
-    from Assimulo.Problem import Implicit_Problem #Imports the problem formulation from Assimulo
+    from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
     
     model = Implicit_Problem()             #Create an Assimulo problem
     model.f = residual                     #This is how the residual connects to the Assimulo problem
@@ -206,7 +206,7 @@ Having defined the differential equation together with a set of initial conditio
     
 And now to create the actual solver object::
 
-    from Assimulo.Implicit_ODE import IDA #Imports the solver IDA from Assimulo
+    from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
 
     sim = IDA(model, y0, yd0, t0)
 
