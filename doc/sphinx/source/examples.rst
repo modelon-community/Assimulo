@@ -17,8 +17,8 @@ In the example an object dropped in a gravitational-field is simulated.
 We first start by importing the necessary classes from Assimulo::
 
     import numpy as N
-    from Assimulo.Explicit_ODE import CVode
-    from Assimulo.Problem import Explicit_Problem
+    from assimulo.explicit_ode import CVode
+    from assimulo.problem import Explicit_Problem
     
 Here we imported an explicit solver, CVode together with the base class for an explicit problem. Also we imported the numpy package for use of the numpy array.
 
@@ -89,8 +89,8 @@ This example shows how to use Assimulo to solve an implicit ODE together with th
 We first start by importing the necessary classes from Assimulo::
 
     import numpy as N
-    from Assimulo.Implicit_ODE import IDA
-    from Assimulo.Problem import Implicit_Problem
+    from assimulo.implicit_ode import IDA
+    from assimulo.problem import Implicit_Problem
 
 Here we imported an implicit solver, IDA, together with the base class for an implicit problem. 
 Also we imported the numpy package for use of the numpy array.

@@ -11,8 +11,8 @@ or,
     python tutorialIDA.py (in a command prompt)
 """
 import numpy as N
-from Assimulo.Problem import Implicit_Problem #Imports the problem formulation from Assimulo
-from Assimulo.Implicit_ODE import IDA #Imports the solver IDA from Assimulo
+from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
+from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
 
 
 def run_example():

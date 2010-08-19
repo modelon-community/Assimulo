@@ -1,14 +1,14 @@
 ODE
 =========================
 
-.. automodule:: Assimulo.ODE
+.. automodule:: assimulo.ode
    :members:
 
  
 Explicit ODE
 =========================
  
-.. autoclass:: Assimulo.Explicit_ODE.Explicit_ODE
+.. autoclass:: assimulo.explicit_ode.Explicit_ODE
     :members:
     :inherited-members:
     :show-inheritance:
@@ -17,7 +17,7 @@ Explicit ODE
 CVode
 -----
 
-.. autoclass:: Assimulo.Explicit_ODE.CVode
+.. autoclass:: assimulo.explicit_ode.CVode
    :members:
    :inherited-members:
    :show-inheritance:
@@ -26,31 +26,37 @@ CVode
 Explicit Euler
 --------------
 
-.. autoclass:: Assimulo.Explicit_ODE.Explicit_Euler
+.. autoclass:: assimulo.explicit_ode.Explicit_Euler
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info, print_statistics
+   :exclude-members: is_disc, print_event_info
 
    
 Runge-Kutta
 ----------------
 
-.. autoclass:: Assimulo.Explicit_ODE.RungeKutta4
+.. autoclass:: assimulo.explicit_ode.RungeKutta4
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info, print_statistics
+   :exclude-members: is_disc, print_event_info
 
    
 Adaptive Runge-Kutta
 ---------------------
 
-.. autoclass:: Assimulo.Explicit_ODE.RungeKutta34
+.. autoclass:: assimulo.explicit_ode.RungeKutta34
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info, print_statistics
+   :exclude-members: is_disc, print_event_info
 
+Radau5
+---------------------
 
-
+.. autoclass:: assimulo.explicit_ode.Radau5
+   :members:
+   :inherited-members:
+   :show-inheritance:
+   :exclude-members: is_disc, print_event_info
