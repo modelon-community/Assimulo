@@ -1,10 +1,20 @@
 --- CHANGELOG ---
 
 --- Assimulo-1.1.x (Not released yet)---
+    * Fixed a bug with re-init resulting in resetting the options.
+    * Moved the result handling to the problem class.
+    * Renamed the event function to state_events.
+    * Improved the information displayed after a simulation (mainly for IDA and CVode).
+    * Added support for step events (completed_step).
+    * Added support for time events.
+    * Implemented basic support for calculating sensitivities using IDAS.
+    * Renamed the modules to correspond to Python standard (all lowercase).
+      Classes starts with a capital letter.
+    * Implemented Radau5 for both explicit and implicit problems.
     * Wrapped an interpolate method from Sundials (IDAGetDky, CVodeGetDky)
     * Changed from using IDA to IDAS
-    * Changed Assimulo.Problem.Problem_Name to problem_name.
-    * Changed Assimulo.ODE.problemname to problem_name.
+    * Changed assimulo.problem.Problem_Name to problem_name.
+    * Changed assimulo.ODE.problemname to problem_name.
     * Fixed a bugg when printing information when used FixedPoint.
     * Changed algvar to be more type independent.
     * Added **kwargs to the plotting functionality.
