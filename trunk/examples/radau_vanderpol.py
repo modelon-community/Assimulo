@@ -1,7 +1,7 @@
 import numpy as N
-from Assimulo.Explicit_ODE import Radau5 as Radau5Exp
-from Assimulo.Problem import Explicit_Problem, Implicit_Problem
-from Assimulo.Implicit_ODE import Radau5 as Radau5Imp
+from assimulo.explicit_ode import Radau5 as Radau5Exp
+from assimulo.problem import Explicit_Problem, Implicit_Problem
+from assimulo.implicit_ode import Radau5 as Radau5Imp
 
 def run_example_explicit():
     

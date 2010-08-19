@@ -1,5 +1,5 @@
 import nose
-from Assimulo.ODE import *
+from assimulo.ode import *
 
 class Test_ODE:
     

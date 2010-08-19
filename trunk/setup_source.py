@@ -31,15 +31,15 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
     setup(name='Assimulo_Source',
-      version='b1.02',
+      version='trunk',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
       url='http://wwww.jmodelica.org/assimulo',
-      package_dir = {'Assimulo':'src'},
-      packages=['Assimulo', 'Assimulo.lib'],
+      package_dir = {'assimulo':'src'},
+      packages=['assimulo', 'assimulo.lib'],
       cmdclass = {'build_ext': build_ext},
-      ext_package='Assimulo',
+      ext_package='assimulo',
       ext_modules = [
         Extension('lib.sundials_core',
             [cordir],

@@ -1,6 +1,6 @@
 import numpy as N
-from Assimulo.Explicit_ODE import CVode
-from Assimulo.Problem import Explicit_Problem
+from assimulo.explicit_ode import CVode
+from assimulo.problem import Explicit_Problem
 
 def run_example():
     

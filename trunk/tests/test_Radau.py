@@ -17,10 +17,10 @@
 
 import nose
 import numpy as N
-from Assimulo.lib.radau_core import Radau_Common, Radau_Exception
-from Assimulo.Explicit_ODE import Radau5
-from Assimulo.Implicit_ODE import Radau5 as Radau5Imp
-from Assimulo.Problem import Explicit_Problem, Implicit_Problem
+from assimulo.lib.radau_core import Radau_Common, Radau_Exception
+from assimulo.explicit_ode import Radau5
+from assimulo.implicit_ode import Radau5 as Radau5Imp
+from assimulo.problem import Explicit_Problem, Implicit_Problem
 
 class Test_Radau_Common:
     """

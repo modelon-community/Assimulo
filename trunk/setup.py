@@ -12,14 +12,14 @@ else:
     lib_file = 'sundials_core.so'
 
 setup(name='Assimulo',
-      version='b1.02',
+      version='trunk',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
       url='http://wwww.jmodelica.org/assimulo',
-      package_dir = {'Assimulo':'src'},
-      packages=['Assimulo', 'Assimulo.lib'],
-      package_data={'Assimulo.lib':[lib_file]}
+      package_dir = {'assimulo':'src'},
+      packages=['assimulo', 'assimulo.lib'],
+      package_data={'assimulo.lib':[lib_file]}
      )
 
 
