@@ -68,6 +68,7 @@ class Radau_Common(object):
         Maximal number of Newton iterations.
         
             Parameters::
+            
                 newt
                         - Default '7'.
                         
