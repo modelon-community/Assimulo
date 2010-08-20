@@ -96,7 +96,7 @@ To simulate the problem using the default values, simply specify the final time 
     
     sim.simulate(tfinal) #Use the .simulate method to simulate and provide the final time
     
-This returns all sorts of information in the prompt, the statistics of the solver, how many function calls was needed, among others. 
+This returns all sorts of information in the prompt, the statistics of the solver, how many function calls were needed, among others. 
 Also information about the solver, which options the problem was solved with. 
 The *simulate* method can also take the number of communication points for which the solution should be returned. 
 This is specified by a second argument, e.g. *sim.simulate(tfinal,200)* means that the result vector should contain 200 equally spaced points.
@@ -169,7 +169,7 @@ For the full range of available options see each solver, for example `CVode <sol
 Implicit Problems (Commonly DAEs)
 =================================
 
-In the next few sections it will be shown how to use the solver IDA to solve an implicit ordinary differential equation (commonly DAE) on the form,
+In the next sections we show how to use the solver IDA to solve an implicit ordinary differential equation (commonly DAE) on the form,
 
 .. math::
 
@@ -178,7 +178,10 @@ In the next few sections it will be shown how to use the solver IDA to solve an 
 Problem formulation
 ----------------------
 
-The problem consists of a residual function (f) together with initial values for the time, states and state derivatives. The residual takes as input time (t), state (y) and state derivative (yd) and returns a vector. Also the initial conditions should be consistent, meaning that the residual should return a zero vector for the initial values.
+The problem consists of a residual function (F) together with initial values for the time, states and state derivatives. 
+The residual takes as input time (t), state (y) and state derivative (yd) and returns a vector. 
+
+The initial data should be consistent, i.e. the residual should return a zero vector when called with these values.
 
 An example of a residual is shown below (Python)::
 
@@ -194,30 +197,31 @@ An example of a residual is shown below (Python)::
 
         return N.array([res_0,res_1,res_2,res_3,res_4])
 
-The initial conditions to the residual needs also to be specified::
+The initial conditions to the residual need also to be specified::
 
     #The initial conditions
     t0  = 0.0 #Initial time
-    y0  = [1.0, 0.0, 0.0, 0.0, 0.0] #Initial conditions
-    yd0 = [0.0, 0.0, 0.0, -9.82, 0.0] #Initial conditions
-
-
-Creating an Assimulo solver
-------------------------------
-
-Having defined the differential equation together with a set of initial conditions, lets create a solver object for the problem. But in order to create a solver object a problem object is needed, which is a class from the Assimulo package where a user specifies the problem. ::
+    y0  = [1.0, 0.0, 0.0, 0.0, 0.0] #Initial states
+    yd0 = [0.0, 0.0, 0.0, -9.82, 0.0] #Initial state derivatives
     
+All this is packed into an Assimulo problem class:
+
     from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
     
     model = Implicit_Problem()             #Create an Assimulo problem
     model.f = residual                     #This is how the residual connects to the Assimulo problem
     model.problem_name = 'Pendulum'        #Specifies the name of problem (optional)
-    
+    model.y0 = y0
+    model.yd0 = yd0   
+
+Creating an Assimulo solver
+------------------------------
+
 And now to create the actual solver object::
 
     from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
 
-    sim = IDA(model, y0, yd0, t0)
+    sim = IDA(model, t0)
 
 Simulate
 ----------
@@ -229,7 +233,7 @@ To simulate the problem using the default values, simply specify the final time 
     
     sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
     
-This will give all sorts of information in the prompt, the statistics of the solver, how many function calls was needed, among others. Also information about the solver, which options the problem was solved with.
+This will give all sorts of information in the prompt, the statistics of the solver, how many function calls were needed, among others. Also information about the solver, which options the problem was solved with.
 
 To plot the simulation result, use the plot method::
 
@@ -268,19 +272,23 @@ For the complete example, :download:`tutorialIDA.py`
 
 .. _tutDisc:
 
-Discontinuity problems (CVode)
+Discontinuous problems (CVode)
 ===============================
 
-Discontinuities (or discontinuities in higher derivatives) can have a negative effect on the performance of ODE and DAE solvers, when no care is taken to stop the integration at discontinuities and to re-initialize the simulation. This part of the tutorial will show how to use the solver CVode together with a problem with discontinuities.
+Discontinuities (or discontinuities in higher derivatives) can have a negative effect on the performance of ODE and DAE solvers, 
+when no care is taken to stop the integration at discontinuities and to re-initialize the simulation. 
+This part of the tutorial will show how to use the solver CVode together with a problem with discontinuities.
 
-For detecting discontinuities a method called state events (can also be called event function or root function) needs to be specified by the user. This method should contain the information about the discontinuit(y/ies) and be defined to return a vector of all the current values of the equations and when one of the equations return zero, an event have been detected. 
+For detecting discontinuities a method called state_events (can also be called event function or root function) 
+needs to be specified by the user. This method should contain the information about the discontinuities and should 
+return a vector of all the current values of the equations and when one of the equations returns zero, an event has been detected. 
 
-When simulation models with discontinuities, the rhs method is extended with another input called the switches (sw)::
+When simulating models with discontinuities, the rhs method is extended by an additional input parameter called the switches (sw)::
 
     def rhs(t,y,sw):
         ...
         
-which can be used to switch between different modes of the problem. The switches are a vector of booleans. The state event method is defined as, ::
+which can be used to switch between different modes of the problem. The switches are a vector of Booleans. The state event method is defined as, ::
 
     def state_events(t,y,sw):
         ...
