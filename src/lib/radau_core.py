@@ -88,6 +88,7 @@ class Radau_Common(object):
         Maximal number of Newton iterations.
         
             Parameters::
+            
                 newt
                         - Default '7'.
                         
@@ -106,6 +107,7 @@ class Radau_Common(object):
         Smaller values of fnewt make the code slower, but safer.
         
             Parameters::
+            
                 fnewt
                         - Default min(0.03,rtol**0.5)
                         
@@ -144,6 +146,7 @@ class Radau_Common(object):
         The safety factor in the step-size prediction.
         
             Parameters::
+            
                 safe
                         - Default '0.9'
                         
@@ -164,6 +167,7 @@ class Radau_Common(object):
         The safety factor in the step-size prediction.
         
             Parameters::
+            
                 safe
                         - Default '0.9'
                         
@@ -183,6 +187,7 @@ class Radau_Common(object):
         Negative thet forces the code to compute the Jacobian after every accepted step.
         
             Parameters::
+            
                 thet
                         - Default '0.003'
                         
@@ -205,6 +210,7 @@ class Radau_Common(object):
         Negative thet forces the code to compute the Jacobian after every accepted step.
         
             Parameters::
+            
                 thet
                         - Default '0.003'
                         
@@ -262,6 +268,7 @@ class Radau_Common(object):
         This determines the initial step-size to be used in the integration.
         
             Parameters::
+            
                 initstep    
                             - Default '0.01'.
                             
@@ -302,6 +309,7 @@ class Radau_Common(object):
         This saves LU-decompositions and computing time for large systems.
         
             Parameters::
+            
                 quot1
                         - Default 1.0
                         
@@ -323,6 +331,7 @@ class Radau_Common(object):
         This saves LU-decompositions and computing time for large systems.
         
             Parameters::
+            
                 quot1
                         - Default 1.0
                         
@@ -341,6 +350,7 @@ class Radau_Common(object):
         This saves LU-decompositions and computing time for large systems.
         
             Parameters::
+        
                 quot2
                         - Default 1.2
                         
@@ -362,6 +372,7 @@ class Radau_Common(object):
         This saves LU-decompositions and computing time for large systems.
         
             Parameters::
+            
                 quot2
                         - Default 1.2
                         
@@ -381,6 +392,7 @@ class Radau_Common(object):
         subject to the restriction fac1 <= current step-size / old step-size <= fac2.
         
             Parameters::
+            
                 fac1
                         - Default 0.2
                         
@@ -401,6 +413,7 @@ class Radau_Common(object):
         subject to the restriction fac1 <= current step-size / old step-size <= fac2.
         
             Parameters::
+            
                 fac1
                         - Default 0.2
                         
@@ -418,6 +431,7 @@ class Radau_Common(object):
         subject to the restriction fac1 <= current step-size / old step-size <= fac2.
         
             Parameters::
+            
                 fac2
                         - Default 8.0
                         
@@ -438,6 +452,7 @@ class Radau_Common(object):
         subject to the restriction fac1 <= current step-size / old step-size <= fac2.
         
             Parameters::
+            
                 fac2
                         - Default 8.0
                         

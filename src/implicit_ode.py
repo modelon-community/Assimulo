@@ -778,6 +778,7 @@ class IDA(Implicit_ODE, Sundials):
         step taken by IDA.
         
             Parameters::
+            
                 t
                     - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
                       internal time reached, and hu is the last internal step size used successfully.
@@ -1034,6 +1035,7 @@ class IDA(Implicit_ODE, Sundials):
         last internal step taken by IDA.
         
             Parameters::
+            
                 t
                     - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
                       internal time reached, and hu is the last internal step size used successfully.

@@ -416,6 +416,7 @@ class RungeKutta34(Explicit_ODE):
         This determines the initial step-size to be used in the integration.
         
             Parameters::
+            
                 initstep    
                             - Default '0.01'.
                             
@@ -927,6 +928,7 @@ class CVode(Explicit_ODE, Sundials):
         step taken by CVode.
         
             Parameters::
+            
                 t
                     - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
                       internal time reached, and hu is the last internal step size used successfully.
