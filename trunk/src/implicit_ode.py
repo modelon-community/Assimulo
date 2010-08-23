@@ -692,8 +692,8 @@ class IDA(Implicit_ODE, Sundials):
                                   components of yd given the differential components
                                   of y. The algebraic components of y must have been
                                   specified with the property 'algvar'. The property
-                                  'tout1' is also used in the calculations which should
-                                  represent the the next output point.
+                                  'IDA.tout1' is  used in the calculations. It 
+                                  represents the the next output point.
                                 
                         - 'IDA_Y_INIT' 
                                 - This tries to calculate all components
