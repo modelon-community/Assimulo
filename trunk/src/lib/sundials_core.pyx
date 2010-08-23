@@ -929,8 +929,8 @@ cdef class IDA_wrap:
         #Specify problem parameter information for sensitivity calculations
         flag = IDASetSensParams(self.mem, self.uData.params, pbar, plist)
         
-        #if self.pbar != None:
-        #    free(pbar) #Free the allocated space.
+        if self.pbar != None:
+            free(pbar) #Free the allocated space.
         
         if flag<0:
             sundials_error(flag,1,t0)
