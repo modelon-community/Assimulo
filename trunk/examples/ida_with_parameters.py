@@ -62,10 +62,10 @@ def run_example():
     imp_sim.make_consistency('IDA_YA_YDP_INIT')
     
     #Simulate
-    imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
+    #imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
     
     #Plot
-    imp_sim.plot() #Plot the solution
+    #imp_sim.plot() #Plot the solution
     
     
 
