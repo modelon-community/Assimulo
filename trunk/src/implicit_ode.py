@@ -75,7 +75,7 @@ class Implicit_ODE(ODE):
         ODE.__init__(self) #Sets general attributes
         
         if problem == None:
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of a Implicit_Problem')
+            raise Implicit_ODE_Exception('Problem cannot be None. It has be a subclass of a Implicit_Problem')
         
         if isinstance(problem, Implicit_Problem):
             self._problem = problem
@@ -910,7 +910,7 @@ class IDA(Implicit_ODE, Sundials):
             Parameters::
             
                 algvar  
-                        - The value True(1.0) indicates an differential
+                        - The value True(1.0) indicates a differential
                           variable and the value False(0.0) indicates an
                           algebraic variable.
                           
@@ -949,7 +949,7 @@ class IDA(Implicit_ODE, Sundials):
             Parameters::
             
                 algvar  
-                        - The value True(1.0) indicates an differential
+                        - The value True(1.0) indicates a differential
                           variable and the value False(0.0) indicates an
                           algebraic variable.
                           
