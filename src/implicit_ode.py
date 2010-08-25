@@ -164,7 +164,7 @@ class Implicit_ODE(ODE):
         See information in the __init__ method.
         """
         if len(self.y_cur) != len(y0) or len(self.yd_cur) != len(yd0):
-            raise Explicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
+            raise Implicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         Implicit_ODE.__init__(self, self._problem,y0,yd0,t0)
 
@@ -795,11 +795,11 @@ class IDA(Implicit_ODE, Sundials):
         try:
             t = float(t)
         except (TypeError, ValueError):
-            raise Explicit_ODE_Exception('t must be convertable to a float.')
+            raise Implicit_ODE_Exception('t must be convertable to a float.')
         try:
             k = int(k)
         except (TypeError, ValueError):
-            raise Explicit_ODE_Exception('k must be convertable to an integer.')
+            raise Implicit_ODE_Exception('k must be convertable to an integer.')
             
         return self.Integrator.interpolate(t,k)
 
@@ -1441,7 +1441,7 @@ class Radau5(Radau_Common,Implicit_ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Explicit_Problem' class.
+                              of the 'Implicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.
