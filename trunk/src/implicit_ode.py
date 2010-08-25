@@ -171,6 +171,8 @@ class Implicit_ODE(ODE):
     def __call__(self, tfinal, ncp=0):
         """
         Calls the integrator to perform the simulation over the given time-interval.
+        If a second call to simulate is performed, the simulation starts from the last
+        given final time.
         
             Parameters::
             
