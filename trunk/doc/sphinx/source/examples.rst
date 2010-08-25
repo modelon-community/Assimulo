@@ -84,7 +84,7 @@ Implicit ODE
 
 This example shows how to use Assimulo to solve an implicit ODE together with the solver IDA. 
 
-(The full example can be found in the examples catalogue, ``ida_with_jac´´.py)
+(The full example can be found in the examples catalogue, ``ida_with_jac.py``)
 
 We first start by importing the necessary classes from Assimulo::
 

@@ -176,7 +176,7 @@ autoclass_content = 'both'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Assimulo.tex', u'Assimulo Documentation',
+  ('contents', 'Assimulo.tex', u'Assimulo Documentation',
    u'Christian Andersson and Claus Führer', 'manual'),
 ]
 
