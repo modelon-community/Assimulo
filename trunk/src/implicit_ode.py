@@ -881,7 +881,7 @@ class IDA(Implicit_ODE, Sundials):
         self.Integrator.suppress_alg=suppress_alg
     def _get_suppress_alg(self):
         """
-        A boolean flag which indicates that the error-tests are 
+        A Boolean flag which indicates that the error-tests are 
         suppressed on algebraic variables. The algebraic variables
         are defined by setting the property 'algvar'.
         
@@ -904,8 +904,11 @@ class IDA(Implicit_ODE, Sundials):
     
     def _set_algvar(self,algvar):
         """
-        A vector for defining which variables are differential and
+        A list for defining which variables are differential and
         which are algebraic.
+        This list is used when excluding algebraic variables from the error test
+        by setting suppress_alg=True  and it is used, when computing consistent initial 
+        values using the method make_consistency
         
             Parameters::
             
