@@ -32,7 +32,7 @@
     * Added support to switch between using the user defined jacobian
       in CVode or not.
     * Added support to switch between using the user defined jacobian
-      in IDA or not.
+      in CVode or not.
     * Added support for user-defined Jacobians when using CVode.
     * Added support for user-defined Jacobians when using IDA.
 

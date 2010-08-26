@@ -59,10 +59,10 @@ class Test_ODE:
         
         self.simulator.__call__ = call
         
-        #[tf, ncp] = self.simulator.simulate(10, 100)
+        [tf, ncp] = self.simulator.simulate(10, 100)
         
-        #assert tf == 10
-        #assert ncp == 100
+        assert tf == 10
+        assert ncp == 100
         
     def test_store_cont(self):
         """

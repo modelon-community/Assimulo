@@ -17,8 +17,8 @@
 
 """
 Cython Wrapper for interfacing Python with CVode and IDA (Sundials Version 2.4.0)
-Claus Fuhrer,        Lund University        
-Christian Andersson, Lund University        
+Claus Fuhrer,        Lund University        October 2009
+Christian Andersson, Lund University        Februari 2010
 
 see also Jon Olav Vik: 
 http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
@@ -27,9 +27,7 @@ http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 from __future__ import division
 import numpy as np
 import math
-import traceback
 from numpy cimport ndarray, NPY_DOUBLE, npy_intp, NPY_INT
-from numpy.linalg.linalg import LinAlgError
 
 # ==============================================
 # external definitions from numpy headers
@@ -464,12 +462,8 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             for i in range(n):
                 resptr[i]=res[i]
             return 0
-        except(LinAlgError,ZeroDivisionError):
-            return 1 # recoverable error (see Sundials description)
         except:
-            print "Unexpected error, probably due to a programing error in rhs/res function:\n"
-            traceback.print_exc()
-            return -1
+            return 1 # recoverable error (see Sundials description)
     else: #NO SENSITIVITY
         try:
             if switch:
@@ -479,12 +473,8 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             for i in range(n):
                 resptr[i]=res[i]
             return 0
-        except(LinAlgError,ZeroDivisionError):
-            return 1 # recoverable error (see Sundials description)
         except:
-            print "Unexpected error, probably due to a programing error in rhs/res function:\n"
-            traceback.print_exc()
-            return -1
+            return 1 # recoverable error (see Sundials description)
             
 cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jac,
                  void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):

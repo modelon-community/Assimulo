@@ -75,7 +75,7 @@ class Implicit_ODE(ODE):
         ODE.__init__(self) #Sets general attributes
         
         if problem == None:
-            raise Implicit_ODE_Exception('Problem cannot be None. It has be a subclass of a Implicit_Problem')
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of a Implicit_Problem')
         
         if isinstance(problem, Implicit_Problem):
             self._problem = problem
@@ -164,15 +164,13 @@ class Implicit_ODE(ODE):
         See information in the __init__ method.
         """
         if len(self.y_cur) != len(y0) or len(self.yd_cur) != len(yd0):
-            raise Implicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
+            raise Explicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         Implicit_ODE.__init__(self, self._problem,y0,yd0,t0)
 
     def __call__(self, tfinal, ncp=0):
         """
         Calls the integrator to perform the simulation over the given time-interval.
-        If a second call to simulate is performed, the simulation starts from the last
-        given final time.
         
             Parameters::
             
@@ -694,8 +692,8 @@ class IDA(Implicit_ODE, Sundials):
                                   components of yd given the differential components
                                   of y. The algebraic components of y must have been
                                   specified with the property 'algvar'. The property
-                                  'IDA.tout1' is  used in the calculations. It 
-                                  represents the the next output point.
+                                  'tout1' is also used in the calculations which should
+                                  represent the the next output point.
                                 
                         - 'IDA_Y_INIT' 
                                 - This tries to calculate all components
@@ -780,7 +778,6 @@ class IDA(Implicit_ODE, Sundials):
         step taken by IDA.
         
             Parameters::
-            
                 t
                     - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
                       internal time reached, and hu is the last internal step size used successfully.
@@ -795,11 +792,11 @@ class IDA(Implicit_ODE, Sundials):
         try:
             t = float(t)
         except (TypeError, ValueError):
-            raise Implicit_ODE_Exception('t must be convertable to a float.')
+            raise Explicit_ODE_Exception('t must be convertable to a float.')
         try:
             k = int(k)
         except (TypeError, ValueError):
-            raise Implicit_ODE_Exception('k must be convertable to an integer.')
+            raise Explicit_ODE_Exception('k must be convertable to an integer.')
             
         return self.Integrator.interpolate(t,k)
 
@@ -883,7 +880,7 @@ class IDA(Implicit_ODE, Sundials):
         self.Integrator.suppress_alg=suppress_alg
     def _get_suppress_alg(self):
         """
-        A Boolean flag which indicates that the error-tests are 
+        A boolean flag which indicates that the error-tests are 
         suppressed on algebraic variables. The algebraic variables
         are defined by setting the property 'algvar'.
         
@@ -906,16 +903,13 @@ class IDA(Implicit_ODE, Sundials):
     
     def _set_algvar(self,algvar):
         """
-        A list for defining which variables are differential and
+        A vector for defining which variables are differential and
         which are algebraic.
-        This list is used when excluding algebraic variables from the error test
-        by setting suppress_alg=True  and it is used, when computing consistent initial 
-        values using the method make_consistency
         
             Parameters::
             
                 algvar  
-                        - The value True(1.0) indicates a differential
+                        - The value True(1.0) indicates an differential
                           variable and the value False(0.0) indicates an
                           algebraic variable.
                           
@@ -954,7 +948,7 @@ class IDA(Implicit_ODE, Sundials):
             Parameters::
             
                 algvar  
-                        - The value True(1.0) indicates a differential
+                        - The value True(1.0) indicates an differential
                           variable and the value False(0.0) indicates an
                           algebraic variable.
                           
@@ -1040,7 +1034,6 @@ class IDA(Implicit_ODE, Sundials):
         last internal step taken by IDA.
         
             Parameters::
-            
                 t
                     - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
                       internal time reached, and hu is the last internal step size used successfully.
@@ -1441,7 +1434,7 @@ class Radau5(Radau_Common,Implicit_ODE):
             
                 problem     
                             - The problem to be solved. Should be an instance
-                              of the 'Implicit_Problem' class.
+                              of the 'Explicit_Problem' class.
                               
                 y0          
                             - Default 'None'. The initial values for the states.

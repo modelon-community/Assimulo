@@ -43,7 +43,7 @@ class Extended_Problem(Implicit_Problem):
     #The event function
     def state_events(self,t,y,yd,sw):
         """
-        This is our function that keeps track of our events. When the sign
+        This is our function that keep track of our events, when the sign
         of any of the events has changed, we have an event.
         """
         event_0 = y[1] - 1.0 

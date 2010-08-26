@@ -223,9 +223,7 @@ class ODE(object):
     
     def simulate(self,tfinal, ncp=0):
         """
-        Calls the integrator to perform the simulation over the given time-interval. 
-        If a second call to simulate is performed, the simulation starts from the last
-        given final time.
+        Calls the integrator to perform the simulation over the given time-interval.
         
             Parameters::
             
@@ -246,8 +244,9 @@ class ODE(object):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
                  
+        Returns the computed solution.
         """
-        self.__call__(tfinal,ncp)
+        return self.__call__(tfinal,ncp)
     
     def initiate(self):
         """

@@ -11,7 +11,7 @@ Explicit ODE
 This example shows how to use Assimulo to solve an explicit ODE together with the solver CVode. 
 In the example an object dropped in a gravitational-field is simulated.
  
-(The full example code can be found in the examples catalog, ``cvode_with_jac.py``.) 
+(The full example code can be found in the examples catalog, ``test_CVode_Jacobian.py``.) 
 
 
 We first start by importing the necessary classes from Assimulo::
@@ -73,7 +73,7 @@ The problem can also be easily plotted by using the plot command, ::
 
     exp_sim.plot() #Plot the solution
    
-If only the first solution component has to be plotted set, ::
+If only the first solution component has to be plotted set
 
     exp_sim.plot(mask=[1,0])
 
@@ -84,7 +84,7 @@ Implicit ODE
 
 This example shows how to use Assimulo to solve an implicit ODE together with the solver IDA. 
 
-(The full example can be found in the examples catalogue, ``ida_with_jac.py``)
+(The full example can be found in the examples catalogue, test_Jacobian_IDA.py)
 
 We first start by importing the necessary classes from Assimulo::
 

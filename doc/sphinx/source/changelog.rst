@@ -3,26 +3,6 @@
 Changelog
 ==========
 
---- Assimulo-1.1b1 ---
-    * Fixed a bug with re-init resulting in resetting the options.
-    * Moved the result handling to the problem class.
-    * Renamed the event function to state_events.
-    * Improved the information displayed after a simulation (mainly for IDA and CVode).
-    * Added support for step events (completed_step).
-    * Added support for time events.
-    * Implemented basic support for calculating sensitivities using IDAS.
-    * Renamed the modules to correspond to Python standard (all lowercase).
-      Classes starts with a capital letter.
-    * Implemented Radau5 for both explicit and implicit problems.
-    * Wrapped an interpolate method from Sundials (IDAGetDky, CVodeGetDky)
-    * Changed from using IDA to IDAS
-    * Changed assimulo.problem.Problem_Name to problem_name.
-    * Changed assimulo.ODE.problemname to problem_name.
-    * Fixed a bugg when printing information when used FixedPoint.
-    * Changed algvar to be more type independent.
-    * Added \*\*kwargs to the plotting functionality.
-
-
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.
     * Added a .simulate function for use when simulating instead of
@@ -36,12 +16,11 @@ Changelog
     * Added support to switch between using the user defined jacobian
       in CVode or not.
     * Added support to switch between using the user defined jacobian
-      in IDA or not.
+      in CVode or not.
     * Added support for user-defined Jacobians when using CVode.
     * Added support for user-defined Jacobians when using IDA.
 
 --- Assimulo-1.0b1 ---
     * The rough first version.
-
 
 
