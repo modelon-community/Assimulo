@@ -31,7 +31,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
     setup(name='Assimulo_Source',
-      version='Assimulo-1.1.x',
+      version='Assimulo-1.1b1',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',

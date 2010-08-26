@@ -12,7 +12,7 @@ else:
     lib_file = 'sundials_core.so'
 
 setup(name='Assimulo',
-      version='Assimulo-1.1.x',
+      version='Assimulo-1.1b1',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
