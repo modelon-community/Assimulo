@@ -37,72 +37,67 @@ include "sundials_core.pxi" #Includes the constants (textual include)
 #to Assimulo.Problem.
 #=====================================
 
-cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* user_data):
+cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
     Wraps  Python rhs-callback function to obtain CVode required interface
     see also ctypedef statement above
     """
+    cdef UserData *pData = <UserData*>problem_data
     y=nv2arr(yv)
     cdef realtype* ydotptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
+
     try:
-        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
-    except:
-        switch=False
-        pass
-    try:
-        if switch:
-            ydot=(<object> user_data)[CV_RHS_IND][CV_RHSF_IND](t,y,switch)  # call to the python rhs function
+        if pData.sw != NULL:
+            ydot=(<object>pData.RHS)(t,y,<list>pData.sw) #Call the Python rhs function
         else:
-            ydot=(<object> user_data)[CV_RHS_IND][CV_RHSF_IND](t,y)
+            ydot=(<object>pData.RHS)(t,y) #Call the Python rhs function
         for i in range(n):
             ydotptr[i]=ydot[i]
-        return 0
+        return CV_SUCCESS
     except:
-        return 1 # recoverable error (see Sundials description)
+        return CV_REC_ERR #Recoverable Error (See Sundials description)
 
-cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
     Wraps Python jacobian-callback function to obtain CV required interface.
     """
+    cdef UserData *pData = <UserData*>problem_data
     y = nv2arr(yv)
-    try:
-        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
-    except:
-        switch=False
+
     cdef realtype* col_i=DENSE_COL(Jac,0)
     try:
-        if switch:
-            jacobian=(<object> user_data)[CV_RHS_IND][CV_JAC_IND](t,y,switch)  # call to the python residual function
+        if pData.sw != NULL:
+            jacobian=(<object>pData.JAC)(t,y,<list>pData.sw)  # call to the python residual function
         else:
-            jacobian=(<object> user_data)[CV_RHS_IND][CV_JAC_IND](t,y)
+            jacobian=(<object>pData.JAC)(t,y)
         
         for i in range(Neq):
             col_i = DENSE_COL(Jac, i)
             for j in range(Neq):
                 col_i[j] = jacobian[j,i]
-        return 0
-    except: #None recoverable
-        return -1
+        return CVDLS_SUCCESS
+    except:
+        return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 
-cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* user_data):
+cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     """
     Wraps  Python root-callback function to obtain CV required interface
     see also ctypedef statement above
     """
+    cdef UserData *pData = <UserData*>problem_data
     y=nv2arr(yv)
+
     try:
-        switch=(<object> user_data)[CV_ROOT_IND][CV_SW_IND]
-    except:
-        switch=False
-    try:
-        rootf=(<object> user_data)[CV_ROOT_IND][CV_ROOTF_IND](t,y,switch)  # call to the python root function 
+        rootf=(<object>pData.ROOT)(t,y,<list>pData.sw)  #Call to the Python root function 
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
-        return 0
+        return CV_SUCCESS
     except:
-        return 1 # generates an error of type IDA_RTFUNC_FAIL
+        return CV_RTFUNC_FAIL  # Unrecoverable Error
+        
 cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* user_data):
     """
     Wraps  Python res-callback function to obtain IDA required interface
@@ -276,10 +271,44 @@ class CVodeError(SundialsError):
     pass    
 
         
-# =====================================================================
-#  Wrapper Class definition
-# =====================================================================
-cdef class CVode_wrap:
+# Solver classes
+#===============
+
+cdef class Sundials:
+    """
+    Base class for wrapping the Sundials solvers to Python.
+    """
+    cdef UserData uData #A struct containing information about the problem
+    cdef UserData *ppData #A pointer to the problem data
+    
+    def __cinit__(self):
+        self.uData = UserData()
+        self.ppData = &self.uData
+        pass
+    
+    cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None):
+        """
+        Sets the problem information to the problem struct.
+        """
+        #Sets the residual or rhs
+        self.uData.RHS = <void*>RHS
+        self.uData.dim = dim
+        self.uData.memSize = dim*sizeof(realtype)
+        
+        if ROOT != None: #Sets the root function
+            self.uData.ROOT = <void*>ROOT
+            self.uData.dimRoot = dimRoot
+            self.uData.memSizeRoot = dimRoot*sizeof(realtype)
+    
+        if JAC != None: #Sets the jacobian
+            self.uData.JAC = <void*>JAC
+            self.uData.memSizeJac = dim*dim*sizeof(realtype)
+            
+        if SENS != None: #Sets the sensitivity function
+            self.uData.SENS = <void*>SENS
+
+
+cdef class CVode_wrap(Sundials):
     """Class to wrap CVode"""
     cdef:
         void* mem
@@ -293,11 +322,13 @@ cdef class CVode_wrap:
         public booleantype jacobian, store_cont, comp_step, store_state
         public npy_intp num_state_events
         public booleantype sim_complete
+        public switches
         #void* comp_step_method
         N_Vector curr_state
         N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
+    
     def __init__(self,dim):
         self.comp_step = False
         self.dim=dim
@@ -306,7 +337,7 @@ cdef class CVode_wrap:
         self.store_cont = False
         self.store_state = False
         self.sim_complete = False
-    def cvinit(self,t0,user_data,u,maxord, max_steps, init_step):
+    def cvinit(self,t0,user_data,u,maxord, max_steps, init_step, switches = None):
         cdef flag
         self.curr_state=arr2nv(u)
         self.store_state = True
@@ -318,13 +349,15 @@ cdef class CVode_wrap:
             self.mem=CVodeCreate(self.discr, self.iter)
             if self.mem == NULL:
                 raise Exception, 'CVodeCreate: Memory allocation failed'
-            flag=CVodeInit(self.mem, cv_rhs, t0,self.curr_state)
-            if flag!=CV_SUCCESS:
-                raise Exception,"CVode Initialization Error"
-            if self.num_state_events>0: 
-                flag = CVodeRootInit(self.mem, self.num_state_events, cv_root)
-                if flag!=CV_SUCCESS:
-                    raise Exception,"CV root-finding initialization error"
+            flag = CVodeInit(self.mem, cv_rhs, t0,self.curr_state)
+            if flag < 0:
+                raise CVodeError(flag, t0)
+                
+            if self.uData.ROOT != NULL: 
+                self.uData.sw = <void*>switches
+                flag = CVodeRootInit(self.mem, self.uData.dimRoot, cv_root)
+                if flag < 0:
+                    raise CVodeError(flag, t0)
         else:
             flag = CVodeReInit(self.mem, t0, self.curr_state)
         if self.abstol_ar[0] > 0:
@@ -338,9 +371,11 @@ cdef class CVode_wrap:
         flag = CVodeSetMaxNumSteps(self.mem, self.max_steps)
         flag = CVodeSetInitStep(self.mem, init_step)
         flag=CVDense(self.mem, self.dim)
-        if self.jacobian:
+        
+        if self.uData.JAC != NULL:
             flag = CVDlsSetDenseJacFn(self.mem, cv_jac)
-        flag = CVodeSetUserData(self.mem, <void*>user_data)
+        
+        flag = CVodeSetUserData(self.mem, <void*>self.ppData)
         try:
             flag= CVodeSetMaxStep(self.mem, self.max_h)
         except AttributeError:
@@ -495,12 +530,9 @@ cdef class CVode_wrap:
         #N_VDestroy_Serial(self.curr_state)
         return sol
 
-#cdef class UserData:
-#    cdef:
-#        object data
-#        realtype *params
 
-cdef class IDA_wrap:
+
+cdef class IDA_wrap(Sundials):
     """Class to wrap Sundials IDA"""
     cdef:
         void* mem
@@ -522,7 +554,7 @@ cdef class IDA_wrap:
         N_Vector curr_deriv
         N_Vector temp_nvector
         N_Vector *ySO, *ydSO
-        UserData *uData
+        UserData *uDataT
         cdef UserData tempStruct
         public object p, pbar
     def __init__(self,dim):
@@ -542,14 +574,14 @@ cdef class IDA_wrap:
         self.sens_activated = False #The sensitivities are not allocated
         self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
         self.sensToggleOff = False #Toggle the sensitivity calculations off
-        self.uData = &self.tempStruct
+        self.uDataT = &self.tempStruct
         
     def __del__(self):
         free(self.uData.params)
         
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
-        self.uData.data = <void*>user_data
+        self.uDataT.data = <void*>user_data
         self.t0 = t0
         self.store_state = True
         self.sim_complete = False
@@ -586,7 +618,7 @@ cdef class IDA_wrap:
         if self.jacobian:
             flag = IDADlsSetDenseJacFn(self.mem, ida_jac)
         #flag = IDASetUserData(self.mem, <void*> user_data)
-        flag = IDASetUserData(self.mem, self.uData)
+        flag = IDASetUserData(self.mem, self.uDataT)
         flag = IDASetId(self.mem, arr2nv(self.algvar))
         flag = IDASetSuppressAlg(self.mem, self.suppress_alg)
         
