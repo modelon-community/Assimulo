@@ -370,7 +370,7 @@ class Test_IDA:
             res_1 = y[0] + y[1]+1.0
             res_2 = y[1]
             print res_1
-            return [res_1, res_2]
+            return N.array([res_1, res_2])
         my_Prob = Implicit_Problem()
         my_Prob.f = f
         
@@ -390,7 +390,7 @@ class Test_IDA:
         This tests the functionality of the property is_disc.
         """
         class Prob_IDA(Implicit_Problem):
-            f = lambda self,t,y,yd,sw: [y[0]-1.0]
+            f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: [t-1.0, t]
             y0 = [1.0]
             yd0 = [1.0]
@@ -409,7 +409,7 @@ class Test_IDA:
         def f(t,y,yd):
             res_1 = y[0] + y[1]+1.0
             res_2 = y[1]
-            return [res_1, res_2]
+            return N.array([res_1, res_2])
         def completed_step(solver):
             solver._nstepevents += 1
         mod = Implicit_Problem()

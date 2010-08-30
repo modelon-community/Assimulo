@@ -14,7 +14,7 @@ def run_example():
     
     #Defines the jacobian
     def jac(t,y):
-        j = N.array([[0,1],[0,0]])
+        j = N.array([[0,1.],[0,0]])
         return j
     
     #Defines an Assimulo explicit problem
