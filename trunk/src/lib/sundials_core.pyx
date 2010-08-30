@@ -30,62 +30,12 @@ include "sundials_core.pxd" #Should really be "from sundials_core.pxd cimport *"
                             #But the setup.py script does not seem to work
                             #if this is the case.
 include "sundials_core.pxi" #Includes the constants (textual include)
-   
-cdef int sundials_error(int flag, int solver, float time) except -1:
-    """
-    Raises an Sundials error and prints suitable error message.
-    """  
-    if solver == 1: #IDA
-        err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
-                    -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
-                    -3: 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
-                    -4: 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
-                    -5: 'The linear solvers initialization function failed.',
-                    -6: 'The linear solvers setup function failed in an unrecoverable manner.',
-                    -7: 'The linear solvers solve function failed in an unrecoverable manner.',
-                    -8: 'The user-provided residual function failed in an unrecoverable manner.',
-                    -9: 'The user-provided residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
-                    -10: 'The rootfinding function failed in an unrecoverable manner.',
-                    -11: 'The inequality constraints were violated and the solver was unable to recover.',
-                    -12: 'The user-provided residual function failed recoverable on the first call.',
-                    -13: 'The line search failed.',
-                    -14: 'The residual function, linear solver setup function or linear solver solve function had a recoverable failure. But IDACalcIC could not recover.',
-                    -20: 'The ida_mem argument was NULL.',
-                    -21: 'A memory allocation failed.',
-                    -22: 'One of the function inputs is illegal.',
-                    -23: 'The IDA memory was not allocated by a call to IDAInit.',
-                    -24: 'Zero value of some error weight component.',
-                    -25: 'The k-th derivative is not available.',
-                    -26: 'The time t is outside the last step taken.',
-                    -27: 'The vector argument where derivative should be stored is NULL.',
-                    -41: 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
-                    -42: 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
-                    -43: 'The sensitivity identifier is not valid.'}
-    else:           #CVode
-        err_mess = {-1: 'The solver took max internal steps but could not reach tout.',
-                    -2: 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
-                    -3: 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
-                    -4: 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
-                    -5: 'The linear solvers initialization function failed.',
-                    -6: 'The linear solvers setup function failed in an unrecoverable manner.',
-                    -7: 'The linear solvers solve function failed in an unrecoverable manner.',
-                    -8: 'The user-provided rhs function failed in an unrecoverable manner.',
-                    -9: 'The right-hand side function failed at the first call.',
-                    -10: 'The right-hand side function had repetead recoverable errors.',
-                    -11: 'The right-hand side function had a recoverable error, but no recovery is possible.',
-                    -12: 'The rootfinding function failed in an unrecoverable manner.',
-                    -20: 'A memory allocation failed.',
-                    -21: 'The cvode_mem argument was NULL.',
-                    -22: 'One of the function inputs is illegal.',
-                    -23: 'The CVode memory block was not allocated by a call to CVodeMalloc.',
-                    -24: 'The derivative order k is larger than the order used.',
-                    -25: 'The time t is outside the last step taken.',
-                    -26: 'The output derivative vector is NULL.',
-                    -27: 'The output and initial times are too close to each other.'}
-    try:    
-        raise SundialsError, err_mess[flag]+' At time %f'%time
-    except KeyError:
-        raise SundialsError, 'Sundials failed with flag %s. At time %f'%(flag,time)
+
+
+#=====================================
+#This section contains the callback functions used for connecting Sundials
+#to Assimulo.Problem.
+#=====================================
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* user_data):
     """
@@ -245,33 +195,86 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
         return 0
     except:
         return 1 # generates an error of type IDA_RTFUNC_FAIL
-        
+    
 
+#=====================
+# CLASS IMPLEMENTATION
+#=====================
+
+# Error handling
+# ==============
 
 class SundialsError(Exception):
-    def __init__(self, value):
+    """
+    Sundials exception
+    """
+    def __init__(self, value, t = 0.0):
         self.value = value
+        self.t = t
+        
     def __str__(self):
-        return repr(self.value)
+        try:
+            return repr(self.msg[self.value]+' At time %f.'%self.t)    
+        except KeyError:
+            return repr('Sundials failed with flag %s. At time %f.'%(self.value, self.t))
 
-def eval_rhs(t,y,func):
+class IDAError(SundialsError):
     """
-    Evaluates specific CVode rhs function for test purposes only
+    Defines the IDAError and provides the textual error message.
     """
-    cdef N_Vector yv=arr2nv(y)
-    cdef N_Vector yvdot=arr2nv(np.zeros(len(y)))
-    cv_rhs(t,yv,yvdot,<void *>func)
-    return nv2arr(yvdot)
+    msg = { IDA_TOO_MUCH_WORK    : 'The solver took max internal steps but could not reach tout.',
+            IDA_TOO_MUCH_ACC     : 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
+            IDA_ERR_FAIL         : 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
+            IDA_CONV_FAIL        : 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
+            IDA_LINIT_FAIL       : 'The linear solvers initialization function failed.',
+            IDA_LSETUP_FAIL      : 'The linear solvers setup function failed in an unrecoverable manner.',
+            IDA_LSOLVE_FAIL      : 'The linear solvers solve function failed in an unrecoverable manner.',
+            IDA_RES_FAIL         : 'The user-provided residual function failed in an unrecoverable manner.',
+            IDA_REP_RES_FAIL     : 'The user-provided residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
+            IDA_RTFUNC_FAIL      : 'The rootfinding function failed in an unrecoverable manner.',
+            IDA_CONSTR_FAIL      : 'The inequality constraints were violated and the solver was unable to recover.',
+            IDA_FIRST_RES_FAIL   : 'The user-provided residual function failed recoverable on the first call.',
+            IDA_LINESEARCH_FAIL  : 'The line search failed.',
+            IDA_NO_RECOVERY      : 'The residual function, linear solver setup function or linear solver solve function had a recoverable failure. But IDACalcIC could not recover.',
+            IDA_MEM_NULL         : 'The ida_mem argument was NULL.',
+            IDA_MEM_FAIL         : 'A memory allocation failed.',
+            IDA_ILL_INPUT        : 'One of the function inputs is illegal.',
+            IDA_NO_MALLOC        : 'The IDA memory was not allocated by a call to IDAInit.',
+            IDA_BAD_EWT          : 'Zero value of some error weight component.',
+            IDA_BAD_K            : 'The k-th derivative is not available.',
+            IDA_BAD_T            : 'The time t is outside the last step taken.',
+            IDA_BAD_DKY          : 'The vector argument where derivative should be stored is NULL.',
+            IDA_SRES_FAIL        : 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
+            IDA_REP_SRES_ERR     : 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
+            IDA_BAD_IS           : 'The sensitivity identifier is not valid.'}
+    pass
+    
+class CVodeError(SundialsError):
+    """
+    Defines the CVodeError and provides the textual error message.
+    """
+    msg = { CV_TOO_MUCH_WORK     : 'The solver took max internal steps but could not reach tout.',
+            CV_TOO_MUCH_ACC      : 'The solver could not satisfy the accuracy demanded by the user for some internal step.',
+            CV_ERR_FAIL          : 'Error test failures occurred too many times during one internal time step or minimum step size was reached.',
+            CV_CONV_FAIL         : 'Convergence test failures occurred too many times during one internal time step or minimum step size was reached.',
+            CV_LINIT_FAIL        : 'The linear solvers initialization function failed.',
+            CV_LSETUP_FAIL       : 'The linear solvers setup function failed in an unrecoverable manner.',
+            CV_LSOLVE_FAIL       : 'The linear solvers solve function failed in an unrecoverable manner.',
+            CV_RHSFUNC_FAIL      : 'The user-provided rhs function failed in an unrecoverable manner.',
+            CV_FIRST_RHSFUNC_ERR : 'The right-hand side function failed at the first call.',
+            CV_REPTD_RHSFUNC_ERR : 'The right-hand side function had repetead recoverable errors.',
+            CV_UNREC_RHSFUNC_ERR : 'The right-hand side function had a recoverable error, but no recovery is possible.',
+            CV_RTFUNC_FAIL       : 'The rootfinding function failed in an unrecoverable manner.',
+            CV_MEM_FAIL          : 'A memory allocation failed.',
+            CV_MEM_NULL          : 'The cvode_mem argument was NULL.',
+            CV_ILL_INPUT         : 'One of the function inputs is illegal.',
+            CV_NO_MALLOC         : 'The CVode memory block was not allocated by a call to CVodeMalloc.',
+            CV_BAD_K             : 'The derivative order k is larger than the order used.',
+            CV_BAD_T             : 'The time t is outside the last step taken.',
+            CV_BAD_DKY           : 'The output derivative vector is NULL.',
+            CV_TOO_CLOSE         : 'The output and initial times are too close to each other.'}
+    pass    
 
-def eval_res(t,y,yd,func):
-    """
-    Evaluates specific IDA res function for test purposes only
-    """
-    cdef N_Vector yv=arr2nv(y)
-    cdef N_Vector yvd=arr2nv(yd)
-    cdef N_Vector resid=arr2nv(np.zeros(len(y)))
-    flag=ida_res(t,yv,yvd,resid,<void *>func)
-    return nv2arr(resid),flag
         
 # =====================================================================
 #  Wrapper Class definition
@@ -352,12 +355,13 @@ cdef class CVode_wrap:
         t must be within the last internal step. k is the derivative of y which
         can be from zero to the current order.
         """
+        cdef flag
         cdef N_Vector temp=N_VNew_Serial(self.dim)
         
         flag = CVodeGetDky(self.mem, t, k, temp)
         
         if flag < 0:
-            sundials_error(flag,2,t)
+            raise CVodeError(flag, t)
         
         return nv2arr(temp)
     
@@ -442,7 +446,7 @@ cdef class CVode_wrap:
                 flag=0
                 flags=CVode(self.mem,tout,self.curr_state,&tret,CV_NORMAL)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
-                    sundials_error(flags,2,tret)
+                    raise CVodeError(flags, tret)
                 sol.append((np.array(tret),nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
@@ -465,7 +469,7 @@ cdef class CVode_wrap:
                 flag=0
                 flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
-                    sundials_error(flags,2,tret)
+                    raise CVodeError(flags, tret)
                 sol.append((np.array(tret),nv2arr(self.curr_state)))
                 flag = CVodeGetLastOrder(self.mem, &qlast)
                 flag = CVodeGetCurrentOrder(self.mem, &qcurrent)
@@ -596,12 +600,13 @@ cdef class IDA_wrap:
         t must be within the last internal step. k is the derivative of y which
         can be from zero to the current order.
         """
+        cdef flag
         cdef N_Vector temp=N_VNew_Serial(self.dim)
         
         flag = IDAGetDky(self.mem, t, k, temp)
         
         if flag < 0:
-            sundials_error(flag,1,t)
+            raise IDAError(flag, t)
         
         return nv2arr(temp)
     
@@ -626,12 +631,12 @@ cdef class IDA_wrap:
             flag = IDASensReInit(self.mem, self.ism, self.ySO, self.ydSO)
             
             if flag<0:
-                sundials_error(flag,1,t0)
+                raise IDAError(flag, t0)
         else:
             flag = IDASensInit(self.mem, self.nbr_params, self.ism, empty_p, self.ySO, self.ydSO)
             
             if flag<0:
-                sundials_error(flag,1,t0)
+                raise IDAError(flag, t0)
             
             self.sens_activated = True
         
@@ -656,38 +661,38 @@ cdef class IDA_wrap:
             free(pbar) #Free the allocated space.
         
         if flag<0:
-            sundials_error(flag,1,t0)
+            raise IDAError(flag, t0)
         
         #Specify the difference quotient strategy
         flag = IDASetSensDQMethod(self.mem, self.DQtype, self.DQrhomax)
         
         if flag<0:
-            sundials_error(flag,1,t0)
+            raise IDAError(flag, t0)
         
         #Specify the error control strategy
         flag = IDASetSensErrCon(self.mem, self.errconS)
         
         if flag<0:
-            sundials_error(flag,1,t0)
+            raise IDAError(flag, t0)
         
         #Specify the maximum number of nonlinear solver iterations
         flag = IDASetSensMaxNonlinIters(self.mem, self.maxcorS)
         
         if flag<0:
-            sundials_error(flag,1,t0)
+            raise IDAError(flag, t0)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
         flag = IDASensEEtolerances(self.mem)
         
         if flag<0:
-            sundials_error(flag,1,t0)
+            raise IDAError(flag, t0)
         
         #Should the sensitivities be calculated this time around?
         if self.sensToggleOff:
             flag = IDASensToggleOff(self.mem)
             
             if flag<0:
-                sundials_error(flag,1,t0)
+                raise IDAError(flag, t0)
     
     def interpolate_sensitivity(self,realtype t, int k, int i=-1):
         """
@@ -712,6 +717,7 @@ cdef class IDA_wrap:
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
         cdef N_Vector dkyS=N_VNew_Serial(self.dim)
+        cdef flag
         
         if i==-1:
             
@@ -721,7 +727,7 @@ cdef class IDA_wrap:
                 flag = IDAGetSensDky1(self.mem, t, k, x, dkyS)
                 
                 if flag<0:
-                    sundials_error(flag,1,t)
+                    raise IDAError(flag, t)
                 
                 matrix += [nv2arr(dkyS)]
             
@@ -730,7 +736,7 @@ cdef class IDA_wrap:
             flag = IDAGetSensDky1(self.mem, t, k, i, dkyS)
             
             if flag <0:
-                sundials_error(flag,1,t)
+                raise IDAError(flag, t)
             
             return nv2arr(dkyS)
 
@@ -855,7 +861,7 @@ cdef class IDA_wrap:
                 flags=0
                 flags=IDASolve(self.mem,tout,&tret, self.curr_state, self.curr_deriv,IDA_NORMAL)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    sundials_error(flags,1,tret)
+                    raise IDAError(flags, tret)
                 sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 self._count_output+=1
@@ -880,7 +886,7 @@ cdef class IDA_wrap:
                 flags=0
                 flags=IDASolve(self.mem,tf,&tret, self.curr_state,self.curr_deriv,IDA_ONE_STEP)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    sundials_error(flags,1,tret)
+                    raise IDAError(flags, tret)
                 sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
                 flag = IDAGetLastOrder(self.mem, &qlast)
                 flag = IDAGetCurrentOrder(self.mem, &qcurrent)
