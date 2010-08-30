@@ -31,6 +31,9 @@ import traceback
 from numpy cimport ndarray, NPY_DOUBLE, npy_intp, NPY_INT
 from numpy.linalg.linalg import LinAlgError
 
+
+include "sundials_core.pxi" #Includes the constants (textual include)
+
 # ==============================================
 # external definitions from numpy headers
 # ==============================================
@@ -224,61 +227,11 @@ cdef extern from "idas/idas.h":
     
     #End Sensitivities
     #--------------------------
-
+ 
 cdef extern from "idas/idas_dense.h":
     int IDADense(void *ida_mem, long int N)
     ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
-
-#===============================================================
-# Constants
-#===============================================================
-#a) CVODE in
-DEF CV_RHS_IND        = 0   # Index to user data rhs handling
-DEF CV_RHSF_IND       = 0   # Index to user data rhs
-DEF CV_JAC_IND        = 1   # Index to user data jacobian
-DEF CV_ROOT_IND       = 1   # Index to user data root handling
-DEF CV_ROOTF_IND      = 0   # Index to user data root function
-DEF CV_SW_IND         = 1   # Index to user data root switches
-DEF CV_ADAMS = 1
-DEF CV_BDF   = 2
-DEF CV_FUNCTIONAL = 1
-DEF CV_NEWTON     = 2
-DEF CV_SS = 1
-DEF CV_SV = 2
-DEF CV_WF = 3
-DEF CV_NORMAL         = 1
-DEF CV_ONE_STEP       = 2
-DEF CV_NORMAL_TSTOP   = 3
-DEF CV_ONE_STEP_TSTOP = 4
-#b) CVODE out
-DEF CV_SUCCESS = 0
-DEF CV_TSTOP_RETURN = 1
-DEF CV_ROOT_RETURN = 2
-DEF CV_ROOT_RETURN    = 2   # CVSolve succeeded and found one or more roots.
-DEF CV_RTFUNC_FAIL    = -10 # The rootfinding function failed in an unrecoverable manner.
-
-#c) IDA in
-DEF IDA_NORMAL         = 1   # Solver returns at specified output time.
-DEF IDA_ONE_STEP       = 2   # Solver returns after each successful step.
-DEF IDA_RES_IND        = 0   # Index to user data residual handling
-DEF IDA_SENS_IND       = 0   # Index to indicator for sensitivites
-DEF IDA_RESF_IND       = 1   # Index to user data residual
-DEF IDA_JAC_IND        = 2   # Index to user data jacobian
-DEF IDA_ROOT_IND       = 1   # Index to user data root handling
-DEF IDA_ROOTF_IND      = 0   # Index to user data root function
-DEF IDA_SW_IND         = 1   # Index to user data root switches
-DEF IDA_YA_YDP_INIT    = 1   # See IDA Documentation 4.5.4
-DEF IDA_Y_INIT         = 2   # See IDA Documentation 4.5.4
-DEF IDA_SIMULTANEOUS   = 1   # Simultaneous corrector forward sensitivity method.
-DEF IDA_STAGGERED      = 2   # Staggered corrector forward sensitivity method.
-DEF IDA_CENTERED       = 1   # Central difference quotient approximation (2nd order) of the sensitivity RHS.
-DEF IDA_FORWARD        = 2   # Forward difference quotient approximation (1st order) of the sensitivity RHS.
-#d) IDA out
-DEF IDA_SUCCESS        = 0   # Successful function return.   
-DEF IDA_TSTOP_RETURN   = 1   # IDASolve succeeded by reaching the specified stopping point.
-DEF IDA_ROOT_RETURN    = 2   # IDASolve succeeded and found one or more roots.
-DEF IDA_RTFUNC_FAIL    = -10 # The rootfinding function failed in an unrecoverable manner.
 
 # ===============================================================
 #  Module level functions
