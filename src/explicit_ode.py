@@ -599,6 +599,7 @@ class CVode(Explicit_ODE, Sundials):
         self.iter = 'FixedPoint' #Setting default iteration to FixedPoint
         self.maxord = 12 #Setting default maxord to maximum
         self.initstep = 0.0 #Setting the initial step to be estimated
+        self.problem_data = {}
 
         
         #Determine if we have an event function and sets the integration data
@@ -606,6 +607,8 @@ class CVode(Explicit_ODE, Sundials):
             self.state_events = self._problem.state_events #problem.state_events
             self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
             self._ROOT = [self.state_events, self._problem.switches0]
+            self.problem_data['ROOT'] = self.state_events
+            self.problem_data['dimRoot'] = self.Integrator.num_state_events
         else:
             self.Integrator.num_state_events=0
         
@@ -622,10 +625,14 @@ class CVode(Explicit_ODE, Sundials):
             self.Integrator.jacobian = True
             self.usejac = True
             self._RHS = [self.f, self._problem.jac]
+            self.problem_data['JAC']=self.jac
         else:
             self.Integrator.jacobian = False
             self.usejac = False
             self._RHS = [self.f]
+            
+        self.problem_data['RHS']=self.f
+        self.problem_data['dim']=len(self._problem.y0)
         
         if hasattr(problem, 'completed_step'):
             self._completed_step = True
@@ -636,6 +643,7 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RHS]
         
+        self.Integrator.set_problem_info(**self.problem_data)
 
     
     def integrate(self,t,y,tfinal,dt):
@@ -645,7 +653,7 @@ class CVode(Explicit_ODE, Sundials):
         self.Integrator.store_cont = self.store_cont
         if self._flag_init:
             self.Integrator.store_statistics()
-            self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep)
+            self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep,self.switches)
             
         return self.Integrator.run(t,tfinal,dt)
     
