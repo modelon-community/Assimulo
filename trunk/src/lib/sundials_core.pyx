@@ -42,7 +42,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     Wraps  Python rhs-callback function to obtain CVode required interface
     see also ctypedef statement above
     """
-    cdef UserData *pData = <UserData*>problem_data
+    cdef ProblemData *pData = <ProblemData*>problem_data
     y=nv2arr(yv)
     cdef realtype* ydotptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
@@ -63,7 +63,7 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac,
     """
     Wraps Python jacobian-callback function to obtain CV required interface.
     """
-    cdef UserData *pData = <UserData*>problem_data
+    cdef ProblemData *pData = <ProblemData*>problem_data
     y = nv2arr(yv)
 
     cdef realtype* col_i=DENSE_COL(Jac,0)
@@ -86,11 +86,13 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     Wraps  Python root-callback function to obtain CV required interface
     see also ctypedef statement above
     """
-    cdef UserData *pData = <UserData*>problem_data
+    cdef ProblemData *pData = <ProblemData*>problem_data
     y=nv2arr(yv)
-
     try:
-        rootf=(<object>pData.ROOT)(t,y,<list>pData.sw)  #Call to the Python root function 
+        if pData.sw != NULL:
+            rootf=(<object>pData.ROOT)(t,y,<list>pData.sw)  #Call to the Python root function
+        else:
+            rootf=(<object>pData.ROOT)(t,y,None)  #Call to the Python root function
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
@@ -106,20 +108,20 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
     
-    nparam = (<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_SENS_IND]
+    nparam = (<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_SENS_IND]
     if nparam!=0: #SENSITIVITY
-        p = realtype2arr((<UserData*> user_data).params,nparam)
+        p = realtype2arr((<ProblemData*> user_data).params,nparam)
         try:
             if switch:
-                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,sw=switch,p=p)  # call to the python residual function
+                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,sw=switch,p=p)  # call to the python residual function
             else:
-                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,p)
+                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,p)
             for i in range(n):
                 resptr[i]=res[i]
             return 0
@@ -132,9 +134,9 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     else: #NO SENSITIVITY
         try:
             if switch:
-                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
+                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
             else:
-                res=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
+                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
             for i in range(n):
                 resptr[i]=res[i]
             return 0
@@ -153,15 +155,15 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     y = nv2arr(yv)
     yd = nv2arr(yvdot)
     try:
-        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     cdef realtype* col_i=DENSE_COL(Jac,0)
     try:
         if switch:
-            jacobian=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
+            jacobian=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
         else:
-            jacobian=(<object> (<UserData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
+            jacobian=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
         
         for i in range(Neq):
             col_i = DENSE_COL(Jac, i)
@@ -179,11 +181,11 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
     try:
-        switch=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
+        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
     except:
         switch=False
     try:
-        rootf=(<object> (<UserData*> user_data).data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
+        rootf=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
         rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
         for i in range(rootf.shape[0]):
             gout[i]=rootf[i]
@@ -278,40 +280,39 @@ cdef class Sundials:
     """
     Base class for wrapping the Sundials solvers to Python.
     """
-    cdef UserData uData #A struct containing information about the problem
-    cdef UserData *ppData #A pointer to the problem data
+    cdef void* solver
+    cdef ProblemData pData #A struct containing information about the problem
+    cdef ProblemData *ppData #A pointer to the problem data
     
     def __cinit__(self):
-        self.uData = UserData()
-        self.ppData = &self.uData
-        pass
+        self.pData = ProblemData() 
+        self.ppData = &self.pData
     
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None):
         """
         Sets the problem information to the problem struct.
         """
         #Sets the residual or rhs
-        self.uData.RHS = <void*>RHS
-        self.uData.dim = dim
-        self.uData.memSize = dim*sizeof(realtype)
+        self.pData.RHS = <void*>RHS
+        self.pData.dim = dim
+        self.pData.memSize = dim*sizeof(realtype)
         
         if ROOT != None: #Sets the root function
-            self.uData.ROOT = <void*>ROOT
-            self.uData.dimRoot = dimRoot
-            self.uData.memSizeRoot = dimRoot*sizeof(realtype)
+            self.pData.ROOT = <void*>ROOT
+            self.pData.dimRoot = dimRoot
+            self.pData.memSizeRoot = dimRoot*sizeof(realtype)
     
         if JAC != None: #Sets the jacobian
-            self.uData.JAC = <void*>JAC
-            self.uData.memSizeJac = dim*dim*sizeof(realtype)
+            self.pData.JAC = <void*>JAC
+            self.pData.memSizeJac = dim*dim*sizeof(realtype)
             
         if SENS != None: #Sets the sensitivity function
-            self.uData.SENS = <void*>SENS
+            self.pData.SENS = <void*>SENS
 
 
 cdef class CVode_wrap(Sundials):
     """Class to wrap CVode"""
     cdef:
-        void* mem
         public int discr, iter, dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
@@ -324,7 +325,7 @@ cdef class CVode_wrap(Sundials):
         public booleantype sim_complete
         public switches
         #void* comp_step_method
-        N_Vector curr_state
+        N_Vector curr_state, y_cur
         N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
@@ -339,50 +340,83 @@ cdef class CVode_wrap(Sundials):
         self.sim_complete = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step, switches = None):
         cdef flag
-        self.curr_state=arr2nv(u)
+        self.y_cur=arr2nv(u)
         self.store_state = True
         self.sim_complete = False
         self.max_steps = max_steps
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
-        if self.mem == NULL:
-            # Newinitialization
-            self.mem=CVodeCreate(self.discr, self.iter)
-            if self.mem == NULL:
-                raise Exception, 'CVodeCreate: Memory allocation failed'
-            flag = CVodeInit(self.mem, cv_rhs, t0,self.curr_state)
-            if flag < 0:
-                raise CVodeError(flag, t0)
-                
-            if self.uData.ROOT != NULL: 
-                self.uData.sw = <void*>switches
-                flag = CVodeRootInit(self.mem, self.uData.dimRoot, cv_root)
-                if flag < 0:
-                    raise CVodeError(flag, t0)
-        else:
-            flag = CVodeReInit(self.mem, t0, self.curr_state)
+        
+        self.update_solver(t0, u, switches) #Update the solver
+        
         if self.abstol_ar[0] > 0:
-            flag = CVodeSVtolerances(self.mem, self.reltol, arr2nv(self.abstol_ar))
+            flag = CVodeSVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
         else:
-            flag = CVodeSStolerances(self.mem, self.reltol, self.abstol)
+            flag = CVodeSStolerances(self.solver, self.reltol, self.abstol)
         if flag!=CV_SUCCESS:
                 raise Exception,"CVode Tolerance Initialization  Error"
         if maxord:
-            flag=CVodeSetMaxOrd(self.mem, maxord)
-        flag = CVodeSetMaxNumSteps(self.mem, self.max_steps)
-        flag = CVodeSetInitStep(self.mem, init_step)
-        flag=CVDense(self.mem, self.dim)
+            flag=CVodeSetMaxOrd(self.solver, maxord)
+        flag = CVodeSetMaxNumSteps(self.solver, self.max_steps)
+        flag = CVodeSetInitStep(self.solver, init_step)
         
-        if self.uData.JAC != NULL:
-            flag = CVDlsSetDenseJacFn(self.mem, cv_jac)
-        
-        flag = CVodeSetUserData(self.mem, <void*>self.ppData)
         try:
-            flag= CVodeSetMaxStep(self.mem, self.max_h)
+            flag= CVodeSetMaxStep(self.solver, self.max_h)
         except AttributeError:
             pass
     
-    #def set_completed_method(self,data):
-    #    self.comp_step_method = <void*>data
+    cdef update_solver(self, t0, y0, sw0 = None):
+        """
+        Create or reinitiate the solver.
+        """
+        cdef int flag #Used for return
+        
+        self.y_cur  = arr2nv(y0)
+        
+        #Updates the switches
+        if sw0 != None:
+            self.switches = sw0
+            self.pData.sw = <void*>self.switches
+        
+        if self.solver == NULL: #The solver is not initialized
+        
+            self.solver=CVodeCreate(self.discr, self.iter) #Create solver
+            if self.solver == NULL:
+                CVodeError(CV_MEM_FAIL)
+            
+            #Specify the residual and the initial conditions to the solver
+            flag = CVodeInit(self.solver, cv_rhs, t0, self.y_cur)
+            if flag < 0:
+                CVodeError(flag, t0)
+                
+            #Specify the use of the internal dense linear algebra functions.
+            flag = CVDense(self.solver, self.pData.dim)
+            if flag < 0:
+                CVodeError(flag, t0)
+            
+            #Specify the root function to the solver
+            if self.pData.ROOT != NULL:
+                flag = CVodeRootInit(self.solver, self.pData.dimRoot, cv_root)
+                
+                if flag < 0:
+                    CVodeError(flag,t0)
+            
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL:
+                flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
+                if flag < 0:
+                    CVodeError(flag,t0)
+            
+        else: #The solver needs to be reinitialized
+            
+            #Reinitialize
+            flag = CVodeReInit(self.solver, t0, self.y_cur)
+            if flag < 0:
+                CVodeError(flag, t0)
+        
+        #Set the user data
+        flag = CVodeSetUserData(self.solver, <void*>self.ppData)
+        if flag < 0:
+            CVodeError(flag, t0)
     
     def interpolate(self, t, k):
         """
@@ -391,14 +425,14 @@ cdef class CVode_wrap(Sundials):
         can be from zero to the current order.
         """
         cdef flag
-        cdef N_Vector temp=N_VNew_Serial(self.dim)
+        cdef N_Vector dky=N_VNew_Serial(self.dim)
         
-        flag = CVodeGetDky(self.mem, t, k, temp)
+        flag = CVodeGetDky(self.solver, t, k, dky)
         
         if flag < 0:
             raise CVodeError(flag, t)
         
-        return nv2arr(temp)
+        return nv2arr(dky)
     
     def store_statistics(self):
         """
@@ -407,18 +441,18 @@ cdef class CVode_wrap(Sundials):
         cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
         
         if self.store_state:
-            flag = CVodeGetNumSteps(self.mem, &nsteps) #Number of steps
-            flag = CVodeGetNumRhsEvals(self.mem, &nrevals) #Number of function evals
+            flag = CVodeGetNumSteps(self.solver, &nsteps) #Number of steps
+            flag = CVodeGetNumRhsEvals(self.solver, &nrevals) #Number of function evals
             if self.iter == 1:
                 njevals = 0
                 nrevalsLS = 0
             else:
-                flag = CVDlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-                flag = CVDlsGetNumRhsEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals            
-            flag = CVodeGetNumGEvals(self.mem, &ngevals) #Number of root evals
-            flag = CVodeGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-            flag = CVodeGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-            flag = CVodeGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+                flag = CVDlsGetNumJacEvals(self.solver, &njevals) #Number of jac evals
+                flag = CVDlsGetNumRhsEvals(self.solver, &nrevalsLS) #Number of res evals due to jac evals            
+            flag = CVodeGetNumGEvals(self.solver, &ngevals) #Number of root evals
+            flag = CVodeGetNumErrTestFails(self.solver, &netfails) #Number of local error test failures
+            flag = CVodeGetNumNonlinSolvIters(self.solver, &nniters) #Number of nonlinear iteration
+            flag = CVodeGetNumNonlinSolvConvFails(self.solver, &nncfails) #Number of nonlinear conv failures
             
             stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
             stats_text = ['Number of Steps                          ',
@@ -451,7 +485,7 @@ cdef class CVode_wrap(Sundials):
             for k in range(self.num_state_events):
                 event_info_[k] = 0
                 # Fetch data on which root functions that became zero and store in class
-            flag = CVodeGetRootInfo(self.mem, event_info_)
+            flag = CVodeGetRootInfo(self.solver, event_info_)
             self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
             for k in range(self.num_state_events):
                 self.event_info[k] = event_info_[k]
@@ -471,7 +505,7 @@ cdef class CVode_wrap(Sundials):
         cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
-        flag = CVodeSetStopTime(self.mem, tf)
+        flag = CVodeSetStopTime(self.solver, tf)
         sol=[]
         tret=t0
         if dt > 0.0:
@@ -479,11 +513,11 @@ cdef class CVode_wrap(Sundials):
             for i in xrange(1, nt+1):
                 tout=t0+i*dt
                 flag=0
-                flags=CVode(self.mem,tout,self.curr_state,&tret,CV_NORMAL)
+                flags=CVode(self.solver,tout,self.y_cur,&tret,CV_NORMAL)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
                     raise CVodeError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.curr_state)))
-                flag = CVodeGetLastOrder(self.mem, &qlast)
+                sol.append((np.array(tret),nv2arr(self.y_cur)))
+                flag = CVodeGetLastOrder(self.solver, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
@@ -502,12 +536,12 @@ cdef class CVode_wrap(Sundials):
                 self.detailed_info['qcurrent'] = []
             while tret < tf:
                 flag=0
-                flags=CVode(self.mem,tf,self.curr_state,&tret,CV_ONE_STEP)
+                flags=CVode(self.solver,tf,self.y_cur,&tret,CV_ONE_STEP)
                 if flags<0 and flags!=CV_TSTOP_RETURN:
                     raise CVodeError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.curr_state)))
-                flag = CVodeGetLastOrder(self.mem, &qlast)
-                flag = CVodeGetCurrentOrder(self.mem, &qcurrent)
+                sol.append((np.array(tret),nv2arr(self.y_cur)))
+                flag = CVodeGetLastOrder(self.solver, &qlast)
+                flag = CVodeGetCurrentOrder(self.solver, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)
                 self.detailed_info['qcurrent'].append(qcurrent)
                 self._count_output+=1
@@ -554,8 +588,8 @@ cdef class IDA_wrap(Sundials):
         N_Vector curr_deriv
         N_Vector temp_nvector
         N_Vector *ySO, *ydSO
-        UserData *uDataT
-        cdef UserData tempStruct
+        ProblemData *uDataT
+        cdef ProblemData tempStruct
         public object p, pbar
     def __init__(self,dim):
         
@@ -577,7 +611,7 @@ cdef class IDA_wrap(Sundials):
         self.uDataT = &self.tempStruct
         
     def __del__(self):
-        free(self.uData.params)
+        free(self.uDataT.params)
         
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
         cdef flag
@@ -673,9 +707,9 @@ cdef class IDA_wrap(Sundials):
             self.sens_activated = True
         
         #Sets the parameters to the userdata object.
-        self.uData.params = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        self.uDataT.params = <realtype*> malloc(self.nbr_params*sizeof(realtype))
         for i in range(self.nbr_params):
-            self.uData.params[i] = self.p[i]
+            self.uDataT.params[i] = self.p[i]
         
         #Sets the pbar.
         pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
@@ -687,7 +721,7 @@ cdef class IDA_wrap(Sundials):
                 pbar[i] = 1.0
         
         #Specify problem parameter information for sensitivity calculations
-        flag = IDASetSensParams(self.mem, self.uData.params, pbar, plist)
+        flag = IDASetSensParams(self.mem, self.uDataT.params, pbar, plist)
         
         if self.pbar != None:
             free(pbar) #Free the allocated space.

@@ -258,8 +258,8 @@ cdef extern from "idas/idas_dense.h":
 # Problem information struct
 #===========================
 
-#Define a user data struct which handles all the data about a problem
-cdef struct UserData:
+#Define a problem data struct which handles all the data about a problem
+cdef struct ProblemData:
     void *RHS          #Should store the residual or the right-hand-side
     void *ROOT         #Should store the root function
     void *JAC          #Should store the jacobian
