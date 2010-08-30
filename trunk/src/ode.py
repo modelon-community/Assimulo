@@ -199,7 +199,7 @@ class ODE(object):
         
             Parameters::
             
-                verbosity   
+                    verbosity   
                             - Default 'NORMAL'. Can be set to either,
                                 
                                 - QUIET = 0
@@ -220,6 +220,23 @@ class ODE(object):
         self.__verbosity = verbosity
         
     verbosity = property(_get_verbosity, _set_verbosity)
+    
+    def print_verbos(self,text,minimal_verbosity_level):
+        """
+        Conditional message printing.
+        text is printed if the desired verbosity level is greater or equal 
+        the minimal verbosity level for this message.
+        
+        Parameters::
+            text                               text string
+            minimal_verbosity_level            integer in range 0 (Quiet) to 4 (Scream)
+            
+        Depends on the attribute self.verbosity
+        """ 
+        if self.verbosity not in self.VERBOSE_VALUES:
+            raise ODE_Exception('Verbosity values must be within %s - %s'%(self.QUIET, self.SCREAM))    
+        if self.verbosity >= minimal_verbosity_level:
+            print(text)
     
     def simulate(self,tfinal, ncp=0):
         """
