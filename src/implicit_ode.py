@@ -824,14 +824,12 @@ class IDA(Implicit_ODE, Sundials):
         if not isinstance(maxord,int):
             raise Sundials_Exception('The maximal order must be an integer.')
         if maxord > 5:
-            if self.verbosity > self.QUIET:
-                print 'The set maximal order is greater than that of the BDF. ' \
-                      'Setting the maximal order to BDF maximum.'
+            self.print_verbos('The given maximal order is greater than the maximal order of the BDF. ' \
+                      'Setting the maximal order to BDF maximum.',self.WHISPER)
             self.__maxord=5
         elif maxord < 1:
-            if self.verbosity > self.QUIET:
-                print 'The set maximal order is lower than the minimum of BDF. ' \
-                      'Setting the maximal order to BDF minimum.'
+            self.print_verbos('The given maximal order is lower than the minimum of BDF. ' \
+                      'Setting the maximal order to BDF minimum.',self.WHISPER)
             self.__maxord=1
         else:
             self.__maxord=maxord
