@@ -30,7 +30,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
     
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
-    setup(name='Assimulo_Source',
+    setup(name='Assimulo',
       version='trunk',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
@@ -43,7 +43,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
       ext_modules = [
         Extension('lib.sundials_core',
             [cordir],
-            include_dirs=[incdirs, N.get_include ()],
+            include_dirs=[incdirs, N.get_include()],
             library_dirs=[libdirs],
             libraries=['sundials_cvode','sundials_idas','sundials_nvecserial']),
     ],
