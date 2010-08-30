@@ -221,14 +221,15 @@ class ODE(object):
         
     verbosity = property(_get_verbosity, _set_verbosity)
     
-    def print_verbos(self,text,minimal_verbosity_level):
+    def print_verbos(self,list,minimal_verbosity_level):
         """
         Conditional message printing.
-        text is printed if the desired verbosity level is greater or equal 
+        The items in list are printed if the desired verbosity level is greater or equal 
         the minimal verbosity level for this message.
         
         Parameters::
-            text                               text string
+        
+            list                               list opr tuple of items to be printed
             minimal_verbosity_level            integer in range 0 (Quiet) to 4 (Scream)
             
         Depends on the attribute self.verbosity
@@ -236,7 +237,8 @@ class ODE(object):
         if self.verbosity not in self.VERBOSE_VALUES:
             raise ODE_Exception('Verbosity values must be within %s - %s'%(self.QUIET, self.SCREAM))    
         if self.verbosity >= minimal_verbosity_level:
-            print(text)
+            for expr in list:
+                print expr
     
     def simulate(self,tfinal, ncp=0):
         """
