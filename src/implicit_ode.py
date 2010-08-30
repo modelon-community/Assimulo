@@ -205,9 +205,8 @@ class Implicit_ODE(ODE):
             raise Implicit_ODE_Exception('Number of communication points must be an integer.')
         if ncp < 0:
             ncp = 0
-            if self.verbosity > self.QUIET:
-                print 'Number of communication points must be a positive integer, setting' \
-                        ' nt = 0.'
+            self.print_verbos(['Number of communication points must be a positive integer, setting' \
+                        ' nt = 0.'], self.WHISPER)
         
         t0  = self.t_cur
         y0  = self.y_cur
@@ -274,17 +273,13 @@ class Implicit_ODE(ODE):
                 #Log the information
                 self._log_event_info.append([self.t_cur, event_info])
                 
-                if self.verbosity > self.NORMAL:
-                    print 'A discontinuity occured at t = %e.'%self.t_cur
-                if self.verbosity >= self.LOUD:
-                    print 'Current switches: ', self.switches
-                    print 'Event info: ', event_info
+                self.print_verbos(['A discontinuity occured at t = %e.'%self.t_cur,'\n',
+                              'Current switches: ', self.switches,'\n',
+                              'Event info: ', event_info],self.LOUD)
 
-                if self.verbosity >= self.SCREAM:
-                    self.print_statistics() #Prints statistics
+                self.print_statistics(self.SCREAM) #Prints statistics
                     
-                if self.verbosity > self.NORMAL:
-                    print 'Calling problem specified event handling...'
+                self.print_verbos(['Calling problem specified event handling...'],self.LOUD)
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
@@ -303,9 +298,8 @@ class Implicit_ODE(ODE):
         
         time_stop = time.clock()
         
-        if self.verbosity >= self.NORMAL:
-            self.print_statistics()
-            print 'Elapsed simulation time:', time_stop-time_start, 'seconds.'
+        self.print_statistics(self.NORMAL)
+        self.print_verbos(['Elapsed simulation time:', time_stop-time_start, 'seconds.'],self.NORMAL)
         
         
         #return [self.t, self.y, self.yd]
@@ -824,12 +818,12 @@ class IDA(Implicit_ODE, Sundials):
         if not isinstance(maxord,int):
             raise Sundials_Exception('The maximal order must be an integer.')
         if maxord > 5:
-            self.print_verbos('The given maximal order is greater than the maximal order of the BDF. ' \
-                      'Setting the maximal order to BDF maximum.',self.WHISPER)
+            self.print_verbos(['The given maximal order is greater than the maximal order of the BDF. ', 
+                      'Setting the maximal order to BDF maximum.'],self.WHISPER)
             self.__maxord=5
         elif maxord < 1:
-            self.print_verbos('The given maximal order is lower than the minimum of BDF. ' \
-                      'Setting the maximal order to BDF minimum.',self.WHISPER)
+            self.print_verbos(['The given maximal order is lower than the minimum of BDF. ', 
+                      'Setting the maximal order to BDF minimum.'],self.WHISPER)
             self.__maxord=1
         else:
             self.__maxord=maxord
@@ -968,10 +962,14 @@ class IDA(Implicit_ODE, Sundials):
 
     algvar=property(_get_algvar,_set_algvar)
     
-    def print_statistics(self):
+    def print_statistics(self,minimal_verbosity=0):
         """
-        Prints the run-time statistics for the problem.
+        Prints the run-time statistics for the problem
+        if self.verbosity >= minimal_verbosity
+        
         """
+        if self.verbosity < minimal_verbosity:
+            return None
         print 'Final Run Statistics: %s \n' % self.problem_name
         statistics = self.stats
         
@@ -1646,8 +1644,8 @@ class Radau5(Radau_Common,Implicit_ODE):
                 ho = self.h
                 self.h = self.adjust_stepsize(self._err)
                 
-                if self.verbosity >= self.SCREAM:
-                    print 'Rejecting step at ', t, 'with old stepsize', ho, 'and new ', self.h, '. Error: ', self._err
+                self.print_verbos(['Rejecting step at ', t, 'with old stepsize', ho, 'and new ',
+                                   self.h, '. Error: ', self._err],self.SCREAM)
                 
                 if self._curjac or self._curiter == 1:
                     self._needjac = False
@@ -1656,8 +1654,8 @@ class Radau5(Radau_Common,Implicit_ODE):
                     self._needjac = True
                     self._needLU = True
             else:
-                if self.verbosity >= self.SCREAM:
-                    print 'Accepting step at ', t,'with stepsize ', self.h, '. Error: ', self._err
+                
+                self.print_verbos(['Accepting step at ', t,'with stepsize ', self.h, '. Error: ', self._err],self.SCREAM)
                 self._nsteps += 1
                 
                 tn = t+self.h #Preform the step
@@ -1787,8 +1785,7 @@ class Radau5(Radau_Common,Implicit_ODE):
                 self._Z = Z.real
                 break
             else: #Iteration failed
-                if self.verbosity >= self.SCREAM:
-                    print 'Iteration failed at time %e with step-size %e'%(t,self.h)
+                self.print_verbos(['Iteration failed at time %e with step-size %e'%(t,self.h)],self.SCREAM)
                 self._nniterfail += 1
                 self._rejected = True #The step is rejected
                 
