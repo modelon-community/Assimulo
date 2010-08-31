@@ -1,7 +1,7 @@
-Implicit Problems (Commonly DAEs)
+Implicit Problems (DAEs)
 =================================
 
-In the next sections we show how to use the solver IDA to solve an implicit ordinary differential equation (commonly DAE) on the form,
+In the next sections we show how to use the solver IDA to solve an implicit ordinary differential equation (DAE) on the form,
 
 .. math::
 
@@ -10,10 +10,13 @@ In the next sections we show how to use the solver IDA to solve an implicit ordi
 Problem formulation
 ----------------------
 
-The problem consists of a residual function (F) together with initial values for the time, states and state derivatives. 
-The residual takes as input time (t), state (y) and state derivative (yd) and returns a vector. 
+The problem consists of a residual function :math:`F` together with initial values for the time, states and state derivatives. 
+The residual takes as input time :math:`t`, state :math:`y` and state derivative :math:`\dot{y}` and returns a vector. This vector
+is a zero vector if the data corresponds to a point on the solution, i.e. *consistent data*, otherwise the data is inconsistent and the 
+numerical solver attempts to change :math:`y` and :math:`\dot{y}` before proceeding in time :math:`t`.
+   
 
-The initial data should be consistent, i.e. the residual should return a zero vector when called with these values.
+The initial data should be consistent. Otherwise a numerical method might encounter problems at the start.
 
 An example of a residual is shown below (Python)::
 
@@ -36,7 +39,7 @@ The initial conditions to the residual need also to be specified::
     y0  = [1.0, 0.0, 0.0, 0.0, 0.0] #Initial states
     yd0 = [0.0, 0.0, 0.0, -9.82, 0.0] #Initial state derivatives
     
-All this is packed into an Assimulo problem class:
+All this is packed into an Assimulo problem class::
 
     from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
     
@@ -44,16 +47,17 @@ All this is packed into an Assimulo problem class:
     model.f = residual                     #This is how the residual connects to the Assimulo problem
     model.problem_name = 'Pendulum'        #Specifies the name of problem (optional)
     model.y0 = y0
+    model.t0 = t0
     model.yd0 = yd0   
 
-Creating an Assimulo solver
-------------------------------
+Creating an Assimulo solver instance
+------------------------------------
 
-And now to create the actual solver object::
+And now to create the actual solver object for SUNDIAL's IDA::
 
     from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
 
-    sim = IDA(model, t0)
+    sim = IDA(model)
 
 Simulate
 ----------
