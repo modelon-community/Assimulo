@@ -108,98 +108,97 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     except:
         return CV_RTFUNC_FAIL  # Unrecoverable Error
         
-cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* user_data):
+cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data):
     """
-    Wraps  Python res-callback function to obtain IDA required interface
-    see also ctypedef statement above
+    This method is used to connect the Assimulo.Problem.f to the Sundials
+    residual function.
     """
+    cdef ProblemData *pData = <ProblemData*>problem_data
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
-    try:
-        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
-    except:
-        switch=False
+
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef long int n=(<N_VectorContent_Serial>yv.content).length
     
-    nparam = (<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_SENS_IND]
-    if nparam!=0: #SENSITIVITY
-        p = realtype2arr((<ProblemData*> user_data).params,nparam)
+    if pData.dimSens!=0: #SENSITIVITY
+        p = realtype2arr(<realtype*>pData.p,pData.dimSens)
         try:
-            if switch:
-                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,sw=switch,p=p)  # call to the python residual function
+            if pData.sw != NULL:
+                res=(<object>pData.RHS)(t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
             else:
-                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,p)
+                res=(<object>pData.RHS)(t,y,yd,p)
             for i in range(n):
                 resptr[i]=res[i]
-            return 0
+            return IDA_SUCCESS
         except(LinAlgError,ZeroDivisionError):
-            return 1 # recoverable error (see Sundials description)
+            return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             print "Unexpected error, probably due to a programing error in rhs/res function:\n"
             traceback.print_exc()
             return -1
     else: #NO SENSITIVITY
         try:
-            if switch:
-                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd,switch)  # call to the python residual function
+            if pData.sw != NULL:
+                res=(<object>pData.RHS)(t,y,yd,<list>pData.sw)  #Call to the Python residual function
             else:
-                res=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_RESF_IND](t,y,yd)
+                res=(<object>pData.RHS)(t,y,yd)
             for i in range(n):
                 resptr[i]=res[i]
-            return 0
+            return IDA_SUCCESS
         except(LinAlgError,ZeroDivisionError):
-            return 1 # recoverable error (see Sundials description)
+            return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             print "Unexpected error, probably due to a programing error in rhs/res function:\n"
             traceback.print_exc()
             return -1
             
 cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jac,
-                 void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                 void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
-    Wraps Python jacobian-callback function to obtain IDA required interface.
+    This method is used to connect the Assimulo.Problem.jac to the Sundials
+    Jacobian function.
     """
+    cdef ProblemData *pData = <ProblemData*>problem_data
     y = nv2arr(yv)
     yd = nv2arr(yvdot)
-    try:
-        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
-    except:
-        switch=False
+
     cdef realtype* col_i=DENSE_COL(Jac,0)
     try:
-        if switch:
-            jacobian=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd,switch)  # call to the python residual function
+        if pData.sw != NULL:
+            jacobian=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
         else:
-            jacobian=(<object> (<ProblemData*> user_data).data)[IDA_RES_IND][IDA_JAC_IND](c,t,y,yd)
+            jacobian=(<object>pData.JAC)(c,t,y,yd)
         
         for i in range(Neq):
             col_i = DENSE_COL(Jac, i)
             for j in range(Neq):
                 col_i[j] = jacobian[j,i]
-        return 0
+        return IDADLS_SUCCESS
     except: #None recoverable
         return -1
 
-cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* user_data):
+cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):
     """
-    Wraps  Python root-callback function to obtain IDA required interface
-    see also ctypedef statement above
+    This method is used to connect the Assimulo.Problem.state_events to the Sundials
+    root function.
     """
+    cdef ProblemData *pData = <ProblemData*>problem_data
+    
     y=nv2arr(yv)
     yd=nv2arr(yvdot)
+    
     try:
-        switch=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_SW_IND]
+        if pData.sw != NULL:
+            root=(<object>pData.ROOT)(t,y,yd,<list>pData.sw)  #Call to the Python root function
+        else:
+            root=(<object>pData.ROOT)(t,y,yd,None)  #Call to the Python root function
+        
+        root = np.asarray(root).reshape(-1) # Make sure we get a vector
+        for i in range(root.shape[0]):
+            gout[i]=root[i]
+        return IDA_SUCCESS
     except:
-        switch=False
-    try:
-        rootf=(<object> (<ProblemData*> user_data).data)[IDA_ROOT_IND][IDA_ROOTF_IND](t,y,yd,switch)  # call to the python root function 
-        rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
-        for i in range(rootf.shape[0]):
-            gout[i]=rootf[i]
-        return 0
-    except:
-        return 1 # generates an error of type IDA_RTFUNC_FAIL
+        return IDA_RTFUNC_FAIL  # Unrecoverable Error
     
 
 #=====================
@@ -294,12 +293,14 @@ cdef class Sundials:
     cdef ndarray y_nd #Storage for the states
     cdef ndarray yd_nd #Storage for the derivatives
     cdef list sol #List for storing the solution
+    cdef N_Vector y_cur, yd_cur #Store the states and state derivatives
+    cdef public switches #Store the switches
     
     def __cinit__(self):
         self.pData = ProblemData() 
         self.ppData = &self.pData
     
-    cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None):
+    cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
         Sets the problem information to the problem struct.
         """
@@ -325,6 +326,11 @@ cdef class Sundials:
             
         if SENS != None: #Sets the sensitivity function
             self.pData.SENS = <void*>SENS
+        
+        if dimSens != None: #Sensitivity parameters (does not need the sensitivity function)
+            self.pData.dimSens = dimSens
+        else:
+            self.pData.dimSens = 0
 
 
 cdef class CVode_wrap(Sundials):
@@ -340,9 +346,8 @@ cdef class CVode_wrap(Sundials):
         public booleantype jacobian, store_cont, comp_step, store_state
         public npy_intp num_state_events
         public booleantype sim_complete
-        public switches
         #void* comp_step_method
-        N_Vector curr_state, y_cur
+        N_Vector curr_state,
         N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
@@ -397,42 +402,42 @@ cdef class CVode_wrap(Sundials):
         
             self.solver=CVodeCreate(self.discr, self.iter) #Create solver
             if self.solver == NULL:
-                CVodeError(CV_MEM_FAIL)
+                raise CVodeError(CV_MEM_FAIL)
             
             #Specify the residual and the initial conditions to the solver
             flag = CVodeInit(self.solver, cv_rhs, t0, self.y_cur)
             if flag < 0:
-                CVodeError(flag, t0)
+                raise CVodeError(flag, t0)
                 
             #Specify the use of the internal dense linear algebra functions.
             flag = CVDense(self.solver, self.pData.dim)
             if flag < 0:
-                CVodeError(flag, t0)
+                raise CVodeError(flag, t0)
             
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 flag = CVodeRootInit(self.solver, self.pData.dimRoot, cv_root)
                 
                 if flag < 0:
-                    CVodeError(flag,t0)
+                    raise CVodeError(flag,t0)
             
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL:
                 flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
                 if flag < 0:
-                    CVodeError(flag,t0)
+                    raise CVodeError(flag,t0)
             
         else: #The solver needs to be reinitialized
             
             #Reinitialize
             flag = CVodeReInit(self.solver, t0, self.y_cur)
             if flag < 0:
-                CVodeError(flag, t0)
+                raise CVodeError(flag, t0)
         
         #Set the user data
         flag = CVodeSetUserData(self.solver, <void*>self.ppData)
         if flag < 0:
-            CVodeError(flag, t0)
+            raise CVodeError(flag, t0)
     
     cpdef interpolate(self, t, k):
         """
@@ -608,7 +613,6 @@ cdef class CVode_wrap(Sundials):
 cdef class IDA_wrap(Sundials):
     """Class to wrap Sundials IDA"""
     cdef:
-        void* mem
         #void* comp_step_method
         public int dim, maxord, _ordersum,_count_output, max_h
         public long int max_steps
@@ -627,8 +631,6 @@ cdef class IDA_wrap(Sundials):
         N_Vector curr_deriv
         N_Vector temp_nvector
         N_Vector *ySO, *ydSO
-        ProblemData *uDataT
-        cdef ProblemData tempStruct
         public object p, pbar
     def __init__(self,dim):
         
@@ -647,58 +649,93 @@ cdef class IDA_wrap(Sundials):
         self.sens_activated = False #The sensitivities are not allocated
         self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
         self.sensToggleOff = False #Toggle the sensitivity calculations off
-        self.uDataT = &self.tempStruct
         
     def __del__(self):
-        free(self.uDataT.params)
+        pass
+        #free(self.uDataT.params)
         
-    def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h):
+    def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h, switches = None):
         cdef flag
-        self.uDataT.data = <void*>user_data
         self.t0 = t0
         self.store_state = True
         self.sim_complete = False
-        self.curr_state=arr2nv(u)
-        self.curr_deriv=arr2nv(ud)
         self.max_steps = max_steps
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
-        if self.mem == NULL:
-            # Newinitialization
-            self.mem=IDACreate()
-            if self.mem == NULL:
-                raise Exception, 'IDA: Memory allocation failed'
-            flag=IDAInit(self.mem, ida_res, t0, self.curr_state, self.curr_deriv)
-            if flag!=IDA_SUCCESS:
-                    raise Exception,"IDA Initialization Error"
-            if self.num_state_events>0: 
-                flag = IDARootInit(self.mem, self.num_state_events, ida_root)
-                if flag!=IDA_SUCCESS:
-                    raise Exception,"IDA root-finding initialization error"
-        else:
-            flag = IDAReInit(self.mem, t0, self.curr_state, self.curr_deriv)
+        
+        self.update_solver(t0, u, ud, switches)
+        
         if self.abstol_ar[0] > 0:
-            flag = IDASVtolerances(self.mem, self.reltol, arr2nv(self.abstol_ar))
+            flag = IDASVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
         else:
-            flag = IDASStolerances(self.mem, self.reltol, self.abstol)
+            flag = IDASStolerances(self.solver, self.reltol, self.abstol)
         if flag!=IDA_SUCCESS:
                 raise Exception,"IDA Tolerance Initialization  Error"
         if maxord:
-            flag=IDASetMaxOrd(self.mem, maxord)
-        flag = IDASetMaxNumSteps(self.mem, self.max_steps)
-        flag = IDASetInitStep(self.mem, init_step)
-        flag = IDASetMaxStep(self.mem, max_h)
-        flag = IDADense(self.mem, self.dim)
-        if self.jacobian:
-            flag = IDADlsSetDenseJacFn(self.mem, ida_jac)
-        #flag = IDASetUserData(self.mem, <void*> user_data)
-        flag = IDASetUserData(self.mem, self.uDataT)
-        flag = IDASetId(self.mem, arr2nv(self.algvar))
-        flag = IDASetSuppressAlg(self.mem, self.suppress_alg)
+            flag=IDASetMaxOrd(self.solver, maxord)
+        flag = IDASetMaxNumSteps(self.solver, self.max_steps)
+        flag = IDASetInitStep(self.solver, init_step)
+        flag = IDASetMaxStep(self.solver, max_h)
+        flag = IDASetId(self.solver, arr2nv(self.algvar))
+        flag = IDASetSuppressAlg(self.solver, self.suppress_alg)
         
         #Are there sensitivities to be calculated?
         if self.nbr_params > 0:
             self.set_sensitivity_options(t0,user_data,u,ud)
+    
+    cdef update_solver(self, t0, y0, yd0, sw0 = None):
+        """
+        Create or reinitiate the solver.
+        """
+        cdef int flag #Used for return
+
+        self.y_cur = arr2nv(y0)
+        self.yd_cur = arr2nv(yd0)
         
+        #Updates the switches
+        if sw0 != None:
+            self.switches = sw0
+            self.pData.sw = <void*>self.switches
+        
+        if self.solver == NULL: #The solver is not initialized
+        
+            self.solver=IDACreate() #Create solver
+            if self.solver == NULL:
+                raise IDAError(IDA_MEM_FAIL)
+            
+            #Specify the residual and the initial conditions to the solver
+            flag = IDAInit(self.solver, ida_res, t0, self.y_cur, self.yd_cur)
+            if flag < 0:
+                raise IDAError(flag, t0)
+                
+            #Specify the use of the internal dense linear algebra functions.
+            flag = IDADense(self.solver, self.pData.dim)
+            if flag < 0:
+                raise IDAError(flag, t0)
+            
+            #Specify the root function to the solver
+            if self.pData.ROOT != NULL:
+                flag = IDARootInit(self.solver, self.pData.dimRoot, ida_root)
+                
+                if flag < 0:
+                    raise IDAError(flag,t0)
+            
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL:
+                flag = IDADlsSetDenseJacFn(self.solver, ida_jac)
+                if flag < 0:
+                    raise IDAError(flag,t0)
+            
+        else: #The solver needs to be reinitialized
+            
+            #Reinitialize
+            flag = IDAReInit(self.solver, t0, self.y_cur, self.yd_cur)
+            if flag < 0:
+                raise IDAError(flag, t0)
+        
+        #Set the user data
+        flag = IDASetUserData(self.solver, <void*>self.ppData)
+        if flag < 0:
+            raise IDAError(flag, t0)
     
     def interpolate(self, t, k):
         """
@@ -707,14 +744,14 @@ cdef class IDA_wrap(Sundials):
         can be from zero to the current order.
         """
         cdef flag
-        cdef N_Vector temp=N_VNew_Serial(self.dim)
+        cdef N_Vector dky=N_VNew_Serial(self.dim)
         
-        flag = IDAGetDky(self.mem, t, k, temp)
+        flag = IDAGetDky(self.solver, t, k, dky)
         
         if flag < 0:
             raise IDAError(flag, t)
         
-        return nv2arr(temp)
+        return nv2arr(dky)
     
     def set_sensitivity_options(self,t0,user_data,y,yd):
         """
@@ -734,12 +771,12 @@ cdef class IDA_wrap(Sundials):
              N_VConst_Serial(ZERO, self.ydSO[i]);
 
         if self.sens_activated:
-            flag = IDASensReInit(self.mem, self.ism, self.ySO, self.ydSO)
+            flag = IDASensReInit(self.solver, self.ism, self.ySO, self.ydSO)
             
             if flag<0:
                 raise IDAError(flag, t0)
         else:
-            flag = IDASensInit(self.mem, self.nbr_params, self.ism, empty_p, self.ySO, self.ydSO)
+            flag = IDASensInit(self.solver, self.nbr_params, self.ism, empty_p, self.ySO, self.ydSO)
             
             if flag<0:
                 raise IDAError(flag, t0)
@@ -747,9 +784,9 @@ cdef class IDA_wrap(Sundials):
             self.sens_activated = True
         
         #Sets the parameters to the userdata object.
-        self.uDataT.params = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
         for i in range(self.nbr_params):
-            self.uDataT.params[i] = self.p[i]
+            self.pData.p[i] = self.p[i]
         
         #Sets the pbar.
         pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
@@ -761,7 +798,7 @@ cdef class IDA_wrap(Sundials):
                 pbar[i] = 1.0
         
         #Specify problem parameter information for sensitivity calculations
-        flag = IDASetSensParams(self.mem, self.uDataT.params, pbar, plist)
+        flag = IDASetSensParams(self.solver, self.pData.p, pbar, plist)
         
         if self.pbar != None:
             free(pbar) #Free the allocated space.
@@ -770,32 +807,32 @@ cdef class IDA_wrap(Sundials):
             raise IDAError(flag, t0)
         
         #Specify the difference quotient strategy
-        flag = IDASetSensDQMethod(self.mem, self.DQtype, self.DQrhomax)
+        flag = IDASetSensDQMethod(self.solver, self.DQtype, self.DQrhomax)
         
         if flag<0:
             raise IDAError(flag, t0)
         
         #Specify the error control strategy
-        flag = IDASetSensErrCon(self.mem, self.errconS)
+        flag = IDASetSensErrCon(self.solver, self.errconS)
         
         if flag<0:
             raise IDAError(flag, t0)
         
         #Specify the maximum number of nonlinear solver iterations
-        flag = IDASetSensMaxNonlinIters(self.mem, self.maxcorS)
+        flag = IDASetSensMaxNonlinIters(self.solver, self.maxcorS)
         
         if flag<0:
             raise IDAError(flag, t0)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
-        flag = IDASensEEtolerances(self.mem)
+        flag = IDASensEEtolerances(self.solver)
         
         if flag<0:
             raise IDAError(flag, t0)
         
         #Should the sensitivities be calculated this time around?
         if self.sensToggleOff:
-            flag = IDASensToggleOff(self.mem)
+            flag = IDASensToggleOff(self.solver)
             
             if flag<0:
                 raise IDAError(flag, t0)
@@ -830,7 +867,7 @@ cdef class IDA_wrap(Sundials):
             matrix = []
             
             for x in range(self.nbr_params):
-                flag = IDAGetSensDky1(self.mem, t, k, x, dkyS)
+                flag = IDAGetSensDky1(self.solver, t, k, x, dkyS)
                 
                 if flag<0:
                     raise IDAError(flag, t)
@@ -839,7 +876,7 @@ cdef class IDA_wrap(Sundials):
             
             return np.array(matrix)
         else:
-            flag = IDAGetSensDky1(self.mem, t, k, i, dkyS)
+            flag = IDAGetSensDky1(self.solver, t, k, i, dkyS)
             
             if flag <0:
                 raise IDAError(flag, t)
@@ -856,14 +893,14 @@ cdef class IDA_wrap(Sundials):
         cdef long int nfSevals,nfevalsS,nSetfails,nlinsetupsS
         
         if self.store_state:
-            flag = IDAGetNumSteps(self.mem, &nsteps) #Number of steps
-            flag = IDAGetNumResEvals(self.mem, &nrevals) #Number of res evals
-            flag = IDADlsGetNumJacEvals(self.mem, &njevals) #Number of jac evals
-            flag = IDADlsGetNumResEvals(self.mem, &nrevalsLS) #Number of res evals due to jac evals
-            flag = IDAGetNumGEvals(self.mem, &ngevals) #Number of root evals
-            flag = IDAGetNumErrTestFails(self.mem, &netfails) #Number of local error test failures
-            flag = IDAGetNumNonlinSolvIters(self.mem, &nniters) #Number of nonlinear iteration
-            flag = IDAGetNumNonlinSolvConvFails(self.mem, &nncfails) #Number of nonlinear conv failures
+            flag = IDAGetNumSteps(self.solver, &nsteps) #Number of steps
+            flag = IDAGetNumResEvals(self.solver, &nrevals) #Number of res evals
+            flag = IDADlsGetNumJacEvals(self.solver, &njevals) #Number of jac evals
+            flag = IDADlsGetNumResEvals(self.solver, &nrevalsLS) #Number of res evals due to jac evals
+            flag = IDAGetNumGEvals(self.solver, &ngevals) #Number of root evals
+            flag = IDAGetNumErrTestFails(self.solver, &netfails) #Number of local error test failures
+            flag = IDAGetNumNonlinSolvIters(self.solver, &nniters) #Number of nonlinear iteration
+            flag = IDAGetNumNonlinSolvConvFails(self.solver, &nncfails) #Number of nonlinear conv failures
             
             stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
             stats_text = ['Number of Steps                          ',
@@ -884,8 +921,8 @@ cdef class IDA_wrap(Sundials):
             
             if self.nbr_params > 0:
                 
-                flag = IDAGetSensStats(self.mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
-                flag = IDAGetSensNonlinSolvStats(self.mem, &nSniters, &nSncfails)
+                flag = IDAGetSensStats(self.solver, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
+                flag = IDAGetSensNonlinSolvStats(self.solver, &nSniters, &nSncfails)
                 
                 stats_values = [nfSevals, nfevalsS, nSetfails, nlinsetupsS,nSniters, nSncfails]
                 
@@ -912,17 +949,17 @@ cdef class IDA_wrap(Sundials):
             self.icopt = IDA_YA_YDP_INIT 
         
         tout1 = self.t0+direction #tout1 is needed for the solver to determine the direction of the integration
-        if self.mem == NULL:
+        if self.solver == NULL:
             raise Exception, "IDA must be initialized"
         
-        flag = IDASetLineSearchOffIC(self.mem, lsoff)
+        flag = IDASetLineSearchOffIC(self.solver, lsoff)
         
-        flag = IDACalcIC(self.mem, self.icopt, tout1)
+        flag = IDACalcIC(self.solver, self.icopt, tout1)
         
         if flag == IDA_SUCCESS: #Gets the calculated values
-            flag = IDAGetConsistentIC(self.mem, self.curr_state, self.curr_deriv)
+            flag = IDAGetConsistentIC(self.solver, self.y_cur, self.yd_cur)
         
-        return [flag, nv2arr(self.curr_state), nv2arr(self.curr_deriv)]
+        return [flag, nv2arr(self.y_cur), nv2arr(self.yd_cur)]
         
     
     def treat_disc(self,flag,tret):
@@ -936,7 +973,7 @@ cdef class IDA_wrap(Sundials):
             for k in range(self.num_state_events):
                 event_info_[k] = 0
                 # Fetch data on which root functions that became zero and store in class
-            flag = IDAGetRootInfo(self.mem, event_info_)
+            flag = IDAGetRootInfo(self.solver, event_info_)
             self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
             for k in range(self.num_state_events):
                 self.event_info[k] = event_info_[k]
@@ -956,7 +993,7 @@ cdef class IDA_wrap(Sundials):
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
-        flag = IDASetStopTime(self.mem, tf)
+        flag = IDASetStopTime(self.solver, tf)
         sol=[]
         tret=t0
         if dt > 0.0:
@@ -965,11 +1002,11 @@ cdef class IDA_wrap(Sundials):
                 tout=t0+i*dt
                 flag=0
                 flags=0
-                flags=IDASolve(self.mem,tout,&tret, self.curr_state, self.curr_deriv,IDA_NORMAL)
+                flags=IDASolve(self.solver,tout,&tret, self.y_cur, self.yd_cur,IDA_NORMAL)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
                     raise IDAError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
-                flag = IDAGetLastOrder(self.mem, &qlast)
+                sol.append((np.array(tret),nv2arr(self.y_cur),nv2arr(self.yd_cur)))
+                flag = IDAGetLastOrder(self.solver, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
@@ -990,12 +1027,12 @@ cdef class IDA_wrap(Sundials):
             while tret < tf:
                 flag=0
                 flags=0
-                flags=IDASolve(self.mem,tf,&tret, self.curr_state,self.curr_deriv,IDA_ONE_STEP)
+                flags=IDASolve(self.solver,tf,&tret, self.y_cur,self.yd_cur,IDA_ONE_STEP)
                 if flags<0 and flags!=IDA_TSTOP_RETURN:
                     raise IDAError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.curr_state),nv2arr(self.curr_deriv)))
-                flag = IDAGetLastOrder(self.mem, &qlast)
-                flag = IDAGetCurrentOrder(self.mem, &qcurrent)
+                sol.append((np.array(tret),nv2arr(self.y_cur),nv2arr(self.yd_cur)))
+                flag = IDAGetLastOrder(self.solver, &qlast)
+                flag = IDAGetCurrentOrder(self.solver, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)
                 self.detailed_info['qcurrent'].append(qcurrent)
                 self._count_output+=1
@@ -1013,7 +1050,7 @@ cdef class IDA_wrap(Sundials):
             self.sim_complete = True
             self.store_statistics()
         # Free memory
-        #IDAFree(&self.mem)
+        #IDAFree(&self.solver)
         #N_VDestroy_Serial(self.curr_state)
         #N_VDestroy_Serial(self.curr_deriv)
         

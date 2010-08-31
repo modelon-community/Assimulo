@@ -267,13 +267,14 @@ cdef struct ProblemData:
     void *y            #Temporary storage for the states
     void *yd           #Temporary storage for the derivatives
     void *sw           #Storage for the switches
+    realtype *p        #Storage for the parameters
     int dim            #Dimension of the problem
     int dimRoot        #Dimension of the roots
+    int dimSens       #Dimension of the parameters (For sensitivity)
     int memSize        #dim*sizeof(realtype) used when copying memory
     int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
     int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
     void *data         #To be removed.
-    realtype *params
 
 #=================
 # Module functions

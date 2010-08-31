@@ -245,7 +245,7 @@ class Test_IDA:
         """
         This tests the functionality of the time event function.
         """
-        f = lambda t,x,xd: xd-x
+        f = lambda t,x,xd,sw: xd-x
         
         def time_events(t, y, yd, sw):
             if sw[0]:
