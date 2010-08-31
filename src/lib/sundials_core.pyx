@@ -83,19 +83,21 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac,
 
 cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     """
-    Wraps  Python root-callback function to obtain CV required interface
-    see also ctypedef statement above
+    This method is used to connect the Assimulo.Problem.state_events to the Sundials
+    Root-finding function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    y=nv2arr(yv)
+    cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
+    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
+
     try:
         if pData.sw != NULL:
-            rootf=(<object>pData.ROOT)(t,y,<list>pData.sw)  #Call to the Python root function
+            root=(<object>pData.ROOT)(t,(<ndarray>pData.y),<list>pData.sw) #Call to the Python root function 
         else:
-            rootf=(<object>pData.ROOT)(t,y,None)  #Call to the Python root function
-        rootf = np.asarray(rootf).reshape(-1) # Make sure we get a vector
-        for i in range(rootf.shape[0]):
-            gout[i]=rootf[i]
+            root=(<object>pData.ROOT)(t,(<ndarray>pData.y),None) #Call to the Python root function
+            
+        memcpy(gout,<realtype*>root.data,pData.memSizeRoot) #Copy data from the return to the output
+    
         return CV_SUCCESS
     except:
         return CV_RTFUNC_FAIL  # Unrecoverable Error
@@ -283,6 +285,7 @@ cdef class Sundials:
     cdef void* solver
     cdef ProblemData pData #A struct containing information about the problem
     cdef ProblemData *ppData #A pointer to the problem data
+    cdef ndarray y_nd
     
     def __cinit__(self):
         self.pData = ProblemData() 
@@ -340,7 +343,6 @@ cdef class CVode_wrap(Sundials):
         self.sim_complete = False
     def cvinit(self,t0,user_data,u,maxord, max_steps, init_step, switches = None):
         cdef flag
-        self.y_cur=arr2nv(u)
         self.store_state = True
         self.sim_complete = False
         self.max_steps = max_steps
@@ -369,8 +371,13 @@ cdef class CVode_wrap(Sundials):
         Create or reinitiate the solver.
         """
         cdef int flag #Used for return
+        cdef ndarray[realtype, ndim=1, mode='c'] yy = y0
         
-        self.y_cur  = arr2nv(y0)
+        self.y_nd = yy
+        self.y_cur = arr2nv(y0)
+        
+        #Set the ndarray to the problem struct
+        self.pData.y = <void*>self.y_nd
         
         #Updates the switches
         if sw0 != None:
@@ -559,11 +566,12 @@ cdef class CVode_wrap(Sundials):
         if flags >= 1:
             self.sim_complete = True
             self.store_statistics()
-        # Free memory
-        #CVodeFree(&self.mem)
-        #N_VDestroy_Serial(self.curr_state)
-        return sol
 
+        return sol
+    
+    def __dealloc__(self):
+        if self.solver != NULL:
+            CVodeFree(&self.solver)
 
 
 cdef class IDA_wrap(Sundials):

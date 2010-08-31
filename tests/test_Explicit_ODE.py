@@ -259,7 +259,7 @@ class Test_CVode:
         
         
         f = 'Test function'
-        state_events = lambda t,x,sw: x
+        state_events = lambda t,x,sw: N.array(x)
         jac = lambda t,x,sw: N.zeros([len(x),len(x)])
         problem = Explicit_Problem()
         problem.f = f
@@ -432,7 +432,7 @@ class Test_CVode:
         class Prob_CVode(Explicit_Problem):
             f = lambda self,t,y,sw: [1.0]
             y0 = [1.0]
-            state_events = lambda self,t,y,sw: [t-1.0, t]
+            state_events = lambda self,t,y,sw: N.array([t-1.0, t])
         
         switches=[False,True]
         f = Prob_CVode()
