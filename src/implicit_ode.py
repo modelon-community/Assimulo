@@ -448,8 +448,8 @@ class IDA(Implicit_ODE, Sundials):
             self.algvar = self._problem.algvar
         else:
             self.algvar = [1.0]*len(self.y_cur) #No algebraic variables are set
-            
         
+        self.problem_data = {}
         
         if hasattr(self._problem, 'switches0') and switches0 == None:
             switches0 = self._problem.switches0
@@ -469,6 +469,8 @@ class IDA(Implicit_ODE, Sundials):
             self.state_events = self._problem.state_events
             self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
             self._ROOT = [self.state_events, self.switches]
+            self.problem_data['ROOT'] = self.state_events
+            self.problem_data['dimRoot'] = self.Integrator.num_state_events
         else:
             self.Integrator.num_state_events=0
         
@@ -485,10 +487,14 @@ class IDA(Implicit_ODE, Sundials):
             self.Integrator.jacobian = True
             self.usejac = True
             self._RES = [self.res_fcn, self._problem.jac]
+            self.problem_data['JAC']=self.jac
         else:
             self.Integrator.jacobian = False
             self.usejac = False
             self._RES = [self.res_fcn]
+        
+        self.problem_data['RHS']=self.res_fcn
+        self.problem_data['dim']=len(self._problem.y0)
         
         #Check for sensitivites
         #----------------
@@ -507,6 +513,7 @@ class IDA(Implicit_ODE, Sundials):
             #Set information to the solver IDAS
             self.Integrator.nbr_params = len(self.p)
             self.Integrator.p = N.array(self.p)
+            self.problem_data['dimSens'] = len(self.p)
             self._RES = [len(self.p)]+self._RES #Indicator for Cython
         else:
             self._RES = [0]+self._RES #Indicator for Cython
@@ -528,6 +535,9 @@ class IDA(Implicit_ODE, Sundials):
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
+        
+        #Sets the problem data to Sundials
+        self.Integrator.set_problem_info(**self.problem_data)
     
     def _set_calcIC_tout1(self, tout1):
         """
@@ -722,7 +732,7 @@ class IDA(Implicit_ODE, Sundials):
         self.Integrator.store_cont = self.store_cont
         if self._flag_init:
             self.Integrator.store_statistics()
-            self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh)
+            self.Integrator.idinit(t,self.problem_spec,y,yd,self.maxord, self.maxsteps, self.initstep, self.maxh, self.switches)
         
         return self.Integrator.run(t,tfinal,nt)
     
