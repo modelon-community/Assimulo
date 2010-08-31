@@ -1,7 +1,7 @@
-Explicit Problems (Commonly ODEs)
+Explicit Problems (ODEs)
 =================================
 
-In the next few sections we show how to use the solver CVode for solving an explicit ordinary differential equation (commonly ODE) on the form,
+In the next few sections we show how to use the solver CVode for solving an explicit ordinary differential equation (ODE) on the form,
 
 .. math::
 
