@@ -606,9 +606,6 @@ class CVode(Explicit_ODE, Sundials):
         if hasattr(problem, 'state_events'):
             self.state_events = self._problem.state_events #problem.state_events
             self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
-            output = self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0)
-            if not isinstance(output, N.ndarray):
-                raise Explicit_ODE_Exception('The state event function must return a Numpy array.')
             self._ROOT = [self.state_events, self._problem.switches0]
             self.problem_data['ROOT'] = self.state_events
             self.problem_data['dimRoot'] = self.Integrator.num_state_events
@@ -623,7 +620,6 @@ class CVode(Explicit_ODE, Sundials):
                 trial = self._problem.jac(self._problem.t0,self._problem.y0, self.switches)
             if trial.shape != (len(self._problem.y0),len(self._problem.y0)):
                 raise Explicit_ODE_Exception('The Jacobian must be a numpy matrix of size len(f)*len(f).')
-            
             self.jac = self._problem.jac    
             self.Integrator.jacobian = True
             self.usejac = True
@@ -633,7 +629,7 @@ class CVode(Explicit_ODE, Sundials):
             self.Integrator.jacobian = False
             self.usejac = False
             self._RHS = [self.f]
-            
+        
         self.problem_data['RHS']=self.f
         self.problem_data['dim']=len(self._problem.y0)
         
@@ -646,8 +642,48 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RHS]
         
+        # 
+        # TEST METHODS
+        #
+        try:
+            jt = self.problem_data['JAC']
+        except KeyError:
+            jt = None
+        try:
+            rt = self.problem_data['ROOT']
+        except KeyError:
+            rt = None
+        self._assert_return_types(rt,jt,self.switches)
+        
+        
+        #Sets the problem data to Sundials
         self.Integrator.set_problem_info(**self.problem_data)
 
+    def _assert_return_types(self, root = None, jac = None, sw = None):
+        """
+        Tests the provided user methods for correct return types. The
+        methods should all return numpy arrays(matrix) of floats.
+        """
+        if sw == None:
+            testf = self.f(self._problem.t0, self.y_cur)
+        else:
+            testf = self.f(self._problem.t0, self.y_cur, sw)
+            
+        if not isinstance(testf, N.ndarray) or testf.dtype != float:
+            raise Explicit_ODE_Exception('The right-hand-side function must return a numpy array of floats.')
+            
+        if root != None:
+            testr = self.state_events(self._problem.t0, self.y_cur, sw)
+            if not isinstance(testr, N.ndarray) or testr.dtype != float:
+                raise Explicit_ODE_Exception('The state event function must return a numpy array of floats.')
+            
+        if jac != None:
+            if sw == None:
+                testj = self.jac(self._problem.t0, self.y_cur)
+            else:
+                testj = self.jac(self._problem.t0, self.y_cur, sw)
+            if not isinstance(testj, N.ndarray) or testj.dtype != float:
+                raise Explicit_ODE_Exception('The Jacobian function must return a numpy array of floats.')
     
     def integrate(self,t,y,tfinal,dt):
         """

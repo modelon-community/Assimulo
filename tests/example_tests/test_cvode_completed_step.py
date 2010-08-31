@@ -33,11 +33,9 @@ def run_example():
     exp_sim(5.)
 
     assert len(exp_sim.y)-1 == exp_sim.numb
-
     exp_sim.reset()
     
     exp_sim.numb = 0
-    
     exp_sim(5.,100)
 
     assert 7 == exp_sim.numb
@@ -49,7 +47,6 @@ def run_example():
         solver.test_post =solver.test_post+1
         
     exp_mod.handle_result = handle_result
-    
     exp_sim = CVode(exp_mod)
     exp_sim.store_cont = True
     exp_sim.test_post = 0
