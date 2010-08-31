@@ -231,7 +231,7 @@ class Test_CVode:
         """
         This function sets up the test case.
         """
-        f = 'Test function'
+        f = lambda t,y:N.array(y)
         problem = Explicit_Problem()
         problem.f = f
         y0 = [1.0]
@@ -244,7 +244,7 @@ class Test_CVode:
         This tests the functionality of the method __init__.
         """
         
-        assert self.simulator.f == 'Test function'
+        #assert self.simulator.f == 'Test function'
         assert self.simulator.y_cur == 1.0
         assert self.simulator.discr == 'Adams'
         assert self.simulator.iter == 'FixedPoint'
@@ -258,7 +258,7 @@ class Test_CVode:
         nose.tools.assert_raises(Explicit_ODE_Exception, CVode, 'Test function', [1.0], switches0='Error')
         
         
-        f = 'Test function'
+        f = lambda t,y,sw:N.array(y)
         state_events = lambda t,x,sw: N.array(x)
         jac = lambda t,x,sw: N.zeros([len(x),len(x)])
         problem = Explicit_Problem()
@@ -301,14 +301,14 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: x
+        f = lambda t,x: N.array(x)
         jac = lambda t,x: N.array([x[0]*x[0]]).reshape(1,1)
         
         prob = Explicit_Problem()
         prob.f = f
         prob.jac = jac
         
-        sim = CVode(prob, [0])
+        sim = CVode(prob, [0.0])
         
         assert sim._RHS[0] == f
         assert sim._RHS[1] == jac
@@ -356,7 +356,7 @@ class Test_CVode:
         """
         This tests the functionality of the method interpolate.
         """
-        f = lambda t,x: x**0.25
+        f = lambda t,x: N.array(x**0.25)
         
         prob = Explicit_Problem()
         prob.f = f
@@ -430,7 +430,7 @@ class Test_CVode:
         This tests the functionality of the property is_disc.
         """
         class Prob_CVode(Explicit_Problem):
-            f = lambda self,t,y,sw: [1.0]
+            f = lambda self,t,y,sw: N.array([1.0])
             y0 = [1.0]
             state_events = lambda self,t,y,sw: N.array([t-1.0, t])
         

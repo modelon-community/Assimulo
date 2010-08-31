@@ -13,7 +13,7 @@ def run_example():
         return N.array([yd_0,yd_1])
         
     def jac(t,y):
-        j = N.array([[0,1],[0,0]])
+        j = N.array([[0,1],[0,0.]])
         return j
         
     global exp_mod
@@ -35,8 +35,8 @@ def run_example():
     
     assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0][0] == y0[0]
-    nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75011017723, places=8)
-    nose.tools.assert_almost_equal(exp_sim.y[-1][1], -49.1000000, places=4)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75011017723, places=5)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][1], -49.1000000, places=3)
 
 
 def test_jacobian():

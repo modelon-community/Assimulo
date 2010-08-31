@@ -39,44 +39,50 @@ include "sundials_core.pxi" #Includes the constants (textual include)
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
-    Wraps  Python rhs-callback function to obtain CVode required interface
-    see also ctypedef statement above
+    This method is used to connect the Assimulo.Problem.f to the Sundials
+    right-hand-side function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    y=nv2arr(yv)
-    cdef realtype* ydotptr=(<N_VectorContent_Serial>yvdot.content).data
-    cdef long int n=(<N_VectorContent_Serial>yv.content).length
+    cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
+    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
 
     try:
         if pData.sw != NULL:
-            ydot=(<object>pData.RHS)(t,y,<list>pData.sw) #Call the Python rhs function
+            rhs = (<object>pData.RHS)(t,(<ndarray>pData.y),<list>pData.sw)
         else:
-            ydot=(<object>pData.RHS)(t,y) #Call the Python rhs function
-        for i in range(n):
-            ydotptr[i]=ydot[i]
+            rhs = (<object>pData.RHS)(t,(<ndarray>pData.y))
+            
+        memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
+        
         return CV_SUCCESS
     except:
         return CV_REC_ERR #Recoverable Error (See Sundials description)
 
-cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jac, 
+cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
-    Wraps Python jacobian-callback function to obtain CV required interface.
+    This method is used to connect the Assimulo.Problem.jac to the Sundials
+    Jacobian function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    y = nv2arr(yv)
-
-    cdef realtype* col_i=DENSE_COL(Jac,0)
+    cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+    cdef realtype* col_i=DENSE_COL(Jacobian,0)
+    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
+    
     try:
         if pData.sw != NULL:
-            jacobian=(<object>pData.JAC)(t,y,<list>pData.sw)  # call to the python residual function
+            jac=(<object>pData.JAC)(t,(<ndarray>pData.y),<list>pData.sw)
         else:
-            jacobian=(<object>pData.JAC)(t,y)
+            jac=(<object>pData.JAC)(t,(<ndarray>pData.y))
+        
+        #This needs further investigations:
+        #memcpy(Jacobian.data,<realtype*>jac.data, pData.memSizeJac)
         
         for i in range(Neq):
-            col_i = DENSE_COL(Jac, i)
+            col_i = DENSE_COL(Jacobian, i)
             for j in range(Neq):
-                col_i[j] = jacobian[j,i]
+                col_i[j] = jac[j,i]
+
         return CVDLS_SUCCESS
     except:
         return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
@@ -300,6 +306,10 @@ cdef class Sundials:
         self.pData.dim = dim
         self.pData.memSize = dim*sizeof(realtype)
         
+        #Set the ndarray to the problem struct
+        self.y_nd = np.empty(dim)
+        self.pData.y = <void*>self.y_nd
+        
         if ROOT != None: #Sets the root function
             self.pData.ROOT = <void*>ROOT
             self.pData.dimRoot = dimRoot
@@ -371,13 +381,8 @@ cdef class CVode_wrap(Sundials):
         Create or reinitiate the solver.
         """
         cdef int flag #Used for return
-        cdef ndarray[realtype, ndim=1, mode='c'] yy = y0
-        
-        self.y_nd = yy
+
         self.y_cur = arr2nv(y0)
-        
-        #Set the ndarray to the problem struct
-        self.pData.y = <void*>self.y_nd
         
         #Updates the switches
         if sw0 != None:
@@ -570,8 +575,9 @@ cdef class CVode_wrap(Sundials):
         return sol
     
     def __dealloc__(self):
-        if self.solver != NULL:
-            CVodeFree(&self.solver)
+        pass
+        #if self.solver != NULL:
+        #    CVodeFree(&self.solver)
 
 
 cdef class IDA_wrap(Sundials):
