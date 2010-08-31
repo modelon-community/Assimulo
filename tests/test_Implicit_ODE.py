@@ -79,7 +79,7 @@ class Test_IDA:
         This function sets up the test case.
         """
         my_test_prob = Implicit_Problem()
-        my_test_prob.f = 'Test function'
+        my_test_prob.f = lambda t,y,yd: y
         y0 = [1.0]
         yd0 = [1.0]
 
@@ -91,7 +91,7 @@ class Test_IDA:
         This tests the functionality of the method __init__.
         """
         
-        assert self.simulator.res_fcn == 'Test function'
+        #assert self.simulator.res_fcn == 'Test function'
         assert self.simulator.suppress_alg == False
         assert self.simulator.algvar == [1.0]
         assert self.simulator.switches == None
@@ -103,7 +103,7 @@ class Test_IDA:
         nose.tools.assert_raises(Implicit_ODE_Exception, IDA, 'Test function', [1.0], [1.0], switches0='Error')
         
         my_Prob = Implicit_Problem()
-        my_Prob.f = 'Test function'
+        my_Prob.f = lambda t,x,xd,sw: x
         my_Prob.state_events = lambda t,x,xd,sw: x
         
         def jac(c,t,y,yd,sw):
@@ -118,7 +118,7 @@ class Test_IDA:
 
         simulator = IDA(my_Prob,y0,yd0, switches0=switches)
         
-        assert simulator.res_fcn == 'Test function'
+        #assert simulator.res_fcn == 'Test function'
         assert simulator.switches == switches
         assert simulator.yd_cur[0] == 1.0
         assert simulator.problem_spec[0][0] == 0
@@ -391,7 +391,7 @@ class Test_IDA:
         """
         class Prob_IDA(Implicit_Problem):
             f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
-            state_events = lambda self,t,y,yd,sw: [t-1.0, t]
+            state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t])
             y0 = [1.0]
             yd0 = [1.0]
         switches = [False,True]
