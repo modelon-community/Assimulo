@@ -667,6 +667,7 @@ cdef class IDA_wrap(Sundials):
         #Are there sensitivities to be calculated?
         if self.nbr_params > 0:
             self.set_sensitivity_options(t0,user_data,u,ud)
+        
     
     def interpolate(self, t, k):
         """

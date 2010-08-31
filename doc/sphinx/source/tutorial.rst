@@ -16,7 +16,7 @@ Tutorial
 Introduction
 ===============
 
-This tutorial is intended to give a short introduction of using the Assimulo package for solving both explicit and implicit ordinary differential equations. The tutorial focuses on the solvers IDA and CVode which are part of the SUNDIALS package written in C. In Assimulo these solvers have been lifted to Python to provide an easy interface and an easy platform for experimenting.
+This tutorial is intended to give a short introduction to the Assimulo package for solving both explicit and implicit ordinary differential equations. The tutorial focuses on the solvers IDA and CVode which are part of the SUNDIALS package written in C. In Assimulo these solvers have been lifted to Python to provide an easy interface and an easy platform for experimenting.
 
    - This tutorial is intended to be a short introduction for students taking the course `FMNN05 <http://www.maths.lth.se/na/courses/FMNN05/>`_ at `Lund University <http://www.lu.se/>`_ , Lund, Sweden. 
    
@@ -39,4 +39,4 @@ This tutorial is intended to give a short introduction of using the Assimulo pac
 Additional information
 ========================
 
-Included in the Assimulo package there is a number of examples, showing how to use the different solvers on different types of problem. The examples are located in the examples folder.
+The Assimulo package comes with a number of examples, showing how to use the different solvers on different types of problem. The examples are located in the examples folder.
