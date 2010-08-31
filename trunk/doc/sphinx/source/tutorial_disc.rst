@@ -2,32 +2,53 @@
 Discontinuous problems (CVode)
 ===============================
 
+State depending discontinuities
+-------------------------------
+
 Discontinuities (or discontinuities in higher derivatives) can have a negative effect on the performance of ODE and DAE solvers, 
 when no care is taken to stop the integration at discontinuities and to re-initialize the simulation. 
 This part of the tutorial will show how to use the solver CVode together with a problem with discontinuities.
 
-For detecting discontinuities a method called state_events (can also be called event function or root function) 
-needs to be specified by the user. This method should contain the information about the discontinuities and should 
-return a vector of all the current values of the equations and when one of the equations returns zero, an event has been detected. 
+For detecting discontinuities a method called ``state_events`` (can also be called event function or root function) 
+needs to be specified by the user. This method describes a vector valued function :math:`q` 
 
-When simulating models with discontinuities, the rhs method is extended by an additional input parameter called the switches (sw)::
+.. math::
+
+	q: \mathbb{R}^{n_y+1} \rightarrow \mathbb{R}^{n_s} \textrm{ with } (t,y) \mapsto q(t,y)
+
+in such a way, that the :math:`i\mathrm{th}` component of the returned vector crosses zero exactly at the time point, where the :math:`i\mathrm{th}` event occurs.
+
+The view on discontinuous problems is, that we have different differential equations (models), which describe the physical problems
+on different subintervals of the simulation interval. Those subintervals are often not known in advanced. Which model actually is 
+used depends on the values of a Boolean vector of switches ``sw``. Therefor 
+rhs method is extended by an additional input parameter::
 
     def rhs(t,y,sw):
         ...
         
-which can be used to switch between different modes of the problem. The switches are a vector of Booleans. The state event method is defined as, ::
+which is used to indicade which model ahes to me used in the sequel. The ``state_event`` method is defined as, ::
 
     def state_events(t,y,sw):
         ...
 
-During the simulation the state event method is checked for zero crossings and at an event the simulation is aborted and return control to a user specified method *handle_event*, ::
+i.e. it might also depend on the values of the switches.
+
+During the simulation the state event method is checked for zero crossings, caleld an event. At such an event the simulation is interrupted and control is given 
+to a user specified method ``handle_event``, ::
 
     def handle_event(solver, event_info):
         ...
         
-The solver is the current solver object (CVode) and the event_info contains information about the occurred event, which of the equations in *state_events* have crossed zero and also which "way" (1 or -1) together with information about time events, which we leave for now. The state event information are stored in::
+``solver`` is the current solver object (CVode) and ``event_info`` contains information about the occurred event: which of the equations in state events have crossed zero and also in which "way" (1 or -1). 
 
-    event_info[0] #State Events, list of [1,0,0,-1], !=0 means an occurred event.
+``event_info`` is a tuple. Its first component is a list, which informs about state events::
+
+    event_info[0] #State Events, list of [1,0,0,-1], !=0 means an event occurred.
+
+A value -1 indicates that the ``state_event`` function crossed zero from negative to positive and a value +1 indictes that the 
+function became negative in the respective component.
+
+
 
 Example
 ------------------
@@ -47,18 +68,18 @@ This example demonstrates a free pendulum which bounces against an object situat
         return N.array([yd_0, yd_1])
 
 
-During the simulation, the pendulum have to be monitored and checked to see when it hits the wall. The wall is situated at an angle of -45 degrees which gives the following event functions,
+During the simulation, the pendulum has to be monitored and checked to see when it hits the wall. The wall is situated at an angle of -45 degrees which gives the following event functions,
 
 .. math::
     
-    \theta+\frac{\pi}{4} > 0
+    q(t,y)=y+\frac{\pi}{4} 
     
 and in Python code, ::
 
     def state_events(t,y,sw):
         """
-        This is our function that keep track of our events, when the sign
-        of any of the events has changed, we have an event.
+        This is the function that keeps track of  events. When the sign
+        of any of the functions changed, we have an event.
         """
         if sw[0]:
             e_0 = y[0]+N.pi/4.
@@ -67,7 +88,7 @@ and in Python code, ::
 
         return N.array([e_0])
 
-Notice how the event function changes depending on the value of the switch (sw). The idea here is that when the pendulum bounces, the event function is deactivated until it have reached the lowest most point where it is again activated. This is mainly to show how to use the switches for changing between modes of the problem. The method that actually changes the vector of switches is the method for handling the events, ::
+Notice how the event function changes depending on the value of the switch ``sw``. The idea here is that when the pendulum bounces, the event function is deactivated until it has reached the lowest most point where it is activated again. This is mainly to show how to use the switches for changing between modes of the problem. The method that actually changes the vector of switches is the method for handling the events, ::
 
 
     def handle_event(solver, event_info):
@@ -75,20 +96,20 @@ Notice how the event function changes depending on the value of the switch (sw).
         Event handling. This functions is called when Assimulo finds an event as
         specified by the event functions.
         """
-        state_info = event_info[0] #We are only interested in state events info
+        state_info = event_info[0] #We are only interested in state events 
 
-        if state_info[0] != 0: #Check if the first event function have been triggered
+        if state_info[0] != 0: #Check if the first event function has been triggered
             
             if solver.switches[0]: #If the switch is True the pendulum bounces
                 solver.y_cur[1] = -0.9*solver.y_cur[1] #Change the velocity and lose energy
                 
             solver.switches[0] = not solver.switches[0] #Change event function
 
-As seen from the method, we are only interested in the state events so that information is retreived from the event information. Then there is a check to see if the first state event function have been triggered. If the switches are True, there should be a bounce with some energy loss. If the switches are False, the state event equation for the bounce should be reactivated.
+As seen from the method, we are only interested in the state events so that information is retreived from the event information. Then there is a check to see if the first state event function has been triggered. If the switches are ``True``, there should be a bounce with some energy loss. If the switches are ``False``, the state event equation for the bounce is reactivated.
 
 .. note::
 
-    If the event handling changes the vales of the states (or state derivatives in the DAE case) the values to set to solver object are, ::
+    If the event handling changes the values of the states, the values to set to solver object are ::
     
         solver.y_cur (states)
         solver.yd_cur (state derivatives)
