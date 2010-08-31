@@ -606,6 +606,9 @@ class CVode(Explicit_ODE, Sundials):
         if hasattr(problem, 'state_events'):
             self.state_events = self._problem.state_events #problem.state_events
             self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
+            output = self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0)
+            if not isinstance(output, N.ndarray):
+                raise Explicit_ODE_Exception('The state event function must return a Numpy array.')
             self._ROOT = [self.state_events, self._problem.switches0]
             self.problem_data['ROOT'] = self.state_events
             self.problem_data['dimRoot'] = self.Integrator.num_state_events
