@@ -536,8 +536,49 @@ class IDA(Implicit_ODE, Sundials):
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
         
+        # TEST METHODS
+        try:
+            jt = self.problem_data['JAC']
+        except KeyError:
+            jt = None
+        try:
+            rt = self.problem_data['ROOT']
+        except KeyError:
+            rt = None
+        self._assert_return_types(rt,jt,self.switches, sens)
+        
         #Sets the problem data to Sundials
         self.Integrator.set_problem_info(**self.problem_data)
+    
+    def _assert_return_types(self, root = None, jac = None, sw = None, sens = False):
+        """
+        Tests the provided user methods for correct return types. The
+        methods should all return numpy arrays(matrix) of floats.
+        """
+        if sw == None and sens == False:
+            testf = self.res_fcn(self._problem.t0, self.y_cur, self.yd_cur)
+        elif sw==None and sens == True:
+            testf = self.res_fcn(self._problem.t0, self.y_cur, self.yd_cur, self.p)
+        elif sw and sens == False:
+            testf = self.res_fcn(self._problem.t0, self.y_cur, self.yd_cur, sw)
+        else:
+            testf = self.res_fcn(self._problem.t0, self.y_cur, self.yd_cur, sw=sw, p=self.p)
+            
+        if not isinstance(testf, N.ndarray) or testf.dtype != float:
+            raise Implicit_ODE_Exception('The residual function must return a numpy array of floats.')
+            
+        if root != None:
+            testr = self.state_events(self._problem.t0, self.y_cur, self.yd_cur, sw)
+            if not isinstance(testr, N.ndarray) or testr.dtype != float:
+                raise Implicit_ODE_Exception('The state event function must return a numpy array of floats.')
+            
+        if jac != None:
+            if sw == None:
+                testj = self.jac(1.0, self._problem.t0, self.y_cur, self.yd_cur)
+            else:
+                testj = self.jac(1.0, self._problem.t0, self.y_cur, self.yd_cur, sw)
+            if not isinstance(testj, N.ndarray) or testj.dtype != float:
+                raise Implicit_ODE_Exception('The Jacobian function must return a numpy array of floats.')
     
     def _set_calcIC_tout1(self, tout1):
         """

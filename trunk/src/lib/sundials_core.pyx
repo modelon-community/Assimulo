@@ -287,7 +287,7 @@ cdef class Sundials:
     """
     Base class for wrapping the Sundials solvers to Python.
     """
-    cdef void* solver
+    cdef void* solver #Contains the solver (IDA or CVode)
     cdef ProblemData pData #A struct containing information about the problem
     cdef ProblemData *ppData #A pointer to the problem data
     cdef ndarray y_nd #Storage for the states
@@ -297,7 +297,7 @@ cdef class Sundials:
     cdef public switches #Store the switches
     
     def __cinit__(self):
-        self.pData = ProblemData() 
+        self.pData = ProblemData() #Create a new problem struct
         self.ppData = &self.pData
     
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
@@ -962,39 +962,46 @@ cdef class IDA_wrap(Sundials):
         return [flag, nv2arr(self.y_cur), nv2arr(self.yd_cur)]
         
     
-    def treat_disc(self,flag,tret):
+    cdef save_event_info(self,tret):
+        """
+        Store the discontinuity information in event_info and event_time
+        """
         cdef int* event_info_
+        cdef flag
+        
+        # Allocate memory for the event_info_ vector and initialize to zeros
+        event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
+        for k in range(self.num_state_events):
+            event_info_[k] = 0
+            # Fetch data on which root functions that became zero and store in class
+        flag = IDAGetRootInfo(self.solver, event_info_)
+        if flag < 0:
+            raise IDAError(flag, tret)
+            
+        self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
+        for k in range(self.num_state_events):
+            self.event_info[k] = event_info_[k]
+        # Remember to deallocat
+        free(event_info_)
+        self.event_time=tret
+    
+    cdef inline void add_sol_point(self,realtype t, N_Vector y, N_Vector yd):
         """
-        Treats solver returns with root_found flag
+        Store a solution point in the solution list.
         """
-        if flag == IDA_ROOT_RETURN:
-            # Allocate memory for the event_info_ vector and initialize to zeros
-            event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
-            for k in range(self.num_state_events):
-                event_info_[k] = 0
-                # Fetch data on which root functions that became zero and store in class
-            flag = IDAGetRootInfo(self.solver, event_info_)
-            self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
-            for k in range(self.num_state_events):
-                self.event_info[k] = event_info_[k]
-
-            # Remember to deallocate
-            free(event_info_)
-            self.event_time=tret
-            return True
-        else:
-            return False
-   
-    def run(self,realtype t0,realtype tf,float dt):
+        self.sol.append((np.array(t), nv2arr(y), nv2arr(yd)))
+    
+    cpdef run(self,realtype t0,realtype tf,float dt):
         #cdef realtype dt             # time increment
         cdef realtype tret           # return time (not neceeserily tout)
         cdef realtype tout           # communication time
         cdef int i,itask, nt
+        cdef flag, solveFlag
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
         flag = IDASetStopTime(self.solver, tf)
-        sol=[]
+        self.sol=[]
         tret=t0
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
@@ -1002,20 +1009,24 @@ cdef class IDA_wrap(Sundials):
                 tout=t0+i*dt
                 flag=0
                 flags=0
-                flags=IDASolve(self.solver,tout,&tret, self.y_cur, self.yd_cur,IDA_NORMAL)
-                if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    raise IDAError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.y_cur),nv2arr(self.yd_cur)))
+                solveFlag=IDASolve(self.solver,tout,&tret, self.y_cur, self.yd_cur,IDA_NORMAL)
+                if solveFlag < 0:
+                    raise IDAError(solveFlag, tret)
+                
+                self.add_sol_point(tret, self.y_cur, self.yd_cur)
+                
+                if solveFlag == IDA_ROOT_RETURN: #Found a root
+                    self.save_event_info(tret)
+                    break
+
                 flag = IDAGetLastOrder(self.solver, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
-                if flags == 1:
-                    break
-                if self.treat_disc(flags,tret):
+                if solveFlag == 1:
                     break
                 if i == nt:
-                    flags =1
+                    solveFlag =1
                 if self.store_cont:
                     break
         else: # one step mode
@@ -1025,12 +1036,17 @@ cdef class IDA_wrap(Sundials):
                 self.detailed_info['qcurrent'] = []
                 
             while tret < tf:
-                flag=0
-                flags=0
-                flags=IDASolve(self.solver,tf,&tret, self.y_cur,self.yd_cur,IDA_ONE_STEP)
-                if flags<0 and flags!=IDA_TSTOP_RETURN:
-                    raise IDAError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.y_cur),nv2arr(self.yd_cur)))
+                
+                solveFlag=IDASolve(self.solver,tf,&tret, self.y_cur,self.yd_cur,IDA_ONE_STEP)
+                if solveFlag < 0:
+                    raise IDAError(solveFlag, tret)
+                
+                self.add_sol_point(tret, self.y_cur, self.yd_cur)
+                
+                if solveFlag == IDA_ROOT_RETURN: #Found a root
+                    self.save_event_info(tret)
+                    break
+
                 flag = IDAGetLastOrder(self.solver, &qlast)
                 flag = IDAGetCurrentOrder(self.solver, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)
@@ -1038,15 +1054,13 @@ cdef class IDA_wrap(Sundials):
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
-                if self.treat_disc(flags,tret):
-                    break
                 if self.store_cont:
                     break
                 if self.comp_step:
                     break
             else:
-                flags=1
-        if flags >= 1:
+                solveFlag=1
+        if solveFlag >= 1:
             self.sim_complete = True
             self.store_statistics()
         # Free memory
@@ -1054,7 +1068,7 @@ cdef class IDA_wrap(Sundials):
         #N_VDestroy_Serial(self.curr_state)
         #N_VDestroy_Serial(self.curr_deriv)
         
-        return sol                
+        return self.sol                
             
 
 
