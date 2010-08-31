@@ -291,7 +291,9 @@ cdef class Sundials:
     cdef void* solver
     cdef ProblemData pData #A struct containing information about the problem
     cdef ProblemData *ppData #A pointer to the problem data
-    cdef ndarray y_nd
+    cdef ndarray y_nd #Storage for the states
+    cdef ndarray yd_nd #Storage for the derivatives
+    cdef list sol #List for storing the solution
     
     def __cinit__(self):
         self.pData = ProblemData() 
@@ -307,8 +309,10 @@ cdef class Sundials:
         self.pData.memSize = dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        self.y_nd = np.empty(dim)
-        self.pData.y = <void*>self.y_nd
+        self.y_nd  = np.empty(dim)
+        self.yd_nd = np.empty(dim)
+        self.pData.y  = <void*>self.y_nd
+        self.pData.yd = <void*>self.yd_nd
         
         if ROOT != None: #Sets the root function
             self.pData.ROOT = <void*>ROOT
@@ -430,7 +434,7 @@ cdef class CVode_wrap(Sundials):
         if flag < 0:
             CVodeError(flag, t0)
     
-    def interpolate(self, t, k):
+    cpdef interpolate(self, t, k):
         """
         Calls the internal CVodeGetDky for the interpolated values at time t.
         t must be within the last internal step. k is the derivative of y which
@@ -446,7 +450,7 @@ cdef class CVode_wrap(Sundials):
         
         return nv2arr(dky)
     
-    def store_statistics(self):
+    cpdef store_statistics(self):
         """
         Retrieves and stores the statistics.
         """
@@ -486,72 +490,95 @@ cdef class CVode_wrap(Sundials):
                     
         self.store_state = False
     
-    def treat_disc(self,flag,tret):
+    cdef save_event_info(self,tret):
+        """
+        Store the discontinuity information in event_info and event_time
+        """
         cdef int* event_info_
-        """
-        Treats solver returns with root_found flag
-        """
-        if flag == CV_ROOT_RETURN:
-            # Allocate memory for the event_info_ vector and initialize to zeros
-            event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
-            for k in range(self.num_state_events):
-                event_info_[k] = 0
-                # Fetch data on which root functions that became zero and store in class
-            flag = CVodeGetRootInfo(self.solver, event_info_)
-            self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
-            for k in range(self.num_state_events):
-                self.event_info[k] = event_info_[k]
-            # Remember to deallocate
-            free(event_info_)
-            self.event_time=tret
-            return True
-        else:
-            return False
-
+        cdef flag
+        # Allocate memory for the event_info_ vector and initialize to zeros
+        event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
+        for k in range(self.num_state_events):
+            event_info_[k] = 0
         
-    def run(self,realtype t0,realtype tf,float dt):
-        #cdef realtype dt             # time increment
-        cdef realtype tret           # return time (not neceeserily tout)
-        cdef realtype tout           # communication time
+        # Fetch data on which root functions that became zero and store in class
+        flag = CVodeGetRootInfo(self.solver, event_info_)
+        if flag < 0:
+            raise CVodeError(flag,tret)
+        
+        self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
+        for k in range(self.num_state_events):
+            self.event_info[k] = event_info_[k]
+        
+        # Remember to deallocate
+        free(event_info_)
+        self.event_time=tret
+
+    cdef inline void add_sol_point(self,realtype t, N_Vector y):
+        """
+        Store a solution point in the solution list.
+        """
+        self.sol.append((np.array(t), nv2arr(y)))
+        
+    cpdef run(self,realtype t0,realtype tf,float dt):
+        """
+        Runs the simulation.
+        """
+        cdef realtype tret           #Return time (not neceeserily tout)
+        cdef realtype tout           #Communication time
         cdef int i,itask,nt
         cdef realtype hinused,hlast,hcur,tcur
-        #cdef long int nsteps, fevals, nlinsetups, netfails
-        cdef int  qlast, qcurrent
-        flag = CVodeSetStopTime(self.solver, tf)
-        sol=[]
+        cdef int qlast, qcurrent
+        cdef flag, solveFlag
+        
+        flag = CVodeSetStopTime(self.solver, tf) #Set the stop time
+        if flag < 0:
+            raise CVodeError(flag, t0)
+        
+        self.sol=[] #Reset the solution list
         tret=t0
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
             for i in xrange(1, nt+1):
                 tout=t0+i*dt
-                flag=0
-                flags=CVode(self.solver,tout,self.y_cur,&tret,CV_NORMAL)
-                if flags<0 and flags!=CV_TSTOP_RETURN:
-                    raise CVodeError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.y_cur)))
+                
+                solveFlag=CVode(self.solver,tout,self.y_cur,&tret,CV_NORMAL)
+                if solveFlag < 0:
+                    raise CVodeError(solveFlag, tret)
+                
+                self.add_sol_point(tret, self.y_cur)
+                
+                if solveFlag == CV_ROOT_RETURN: #Found a root
+                    self.save_event_info(tret)
+                    break
+
                 flag = CVodeGetLastOrder(self.solver, &qlast)
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
-                if flags == 1:
-                    break
-                if self.treat_disc(flags,tret):
+                if solveFlag == 1:
                     break
                 if i == nt:
-                    flags=1
+                    solveFlag=1
                 if self.store_cont:
                     break
+                    
         else: # one step mode
             if self.detailed_info == None:
                 self.detailed_info = {}
                 self.detailed_info['qlast'] = []
                 self.detailed_info['qcurrent'] = []
             while tret < tf:
-                flag=0
-                flags=CVode(self.solver,tf,self.y_cur,&tret,CV_ONE_STEP)
-                if flags<0 and flags!=CV_TSTOP_RETURN:
-                    raise CVodeError(flags, tret)
-                sol.append((np.array(tret),nv2arr(self.y_cur)))
+                solveFlag=CVode(self.solver,tf,self.y_cur,&tret,CV_ONE_STEP)
+                if solveFlag < 0:
+                    raise CVodeError(solveFlag, tret)
+                
+                self.add_sol_point(tret, self.y_cur)
+                
+                if solveFlag == CV_ROOT_RETURN: #Found a root
+                    self.save_event_info(tret)
+                    break
+                    
                 flag = CVodeGetLastOrder(self.solver, &qlast)
                 flag = CVodeGetCurrentOrder(self.solver, &qcurrent)
                 self.detailed_info['qlast'].append(qlast)
@@ -559,20 +586,18 @@ cdef class CVode_wrap(Sundials):
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
-                if self.treat_disc(flags,tret):
-                    break
                 if self.comp_step:
                     break
                 if self.store_cont:
                     break
             else:
-                flags = 1
+                solveFlag = 1
                 
-        if flags >= 1:
+        if solveFlag >= 1:
             self.sim_complete = True
             self.store_statistics()
 
-        return sol
+        return self.sol
     
     def __dealloc__(self):
         pass
