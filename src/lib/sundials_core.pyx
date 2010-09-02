@@ -42,8 +42,8 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     This method is used to connect the Assimulo.Problem.f to the Sundials
     right-hand-side function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
-    cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
+    cdef ProblemData pData = <ProblemData>problem_data
+    #cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef ndarray y = nv2arr(yv)
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
@@ -68,8 +68,8 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
     This method is used to connect the Assimulo.Problem.jac to the Sundials
     Jacobian function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
-    cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+    cdef ProblemData pData = <ProblemData>problem_data
+    #cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef ndarray y = nv2arr(yv)
@@ -98,8 +98,8 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     This method is used to connect the Assimulo.Problem.state_events to the Sundials
     Root-finding function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
-    cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
+    cdef ProblemData pData = <ProblemData>problem_data
+    #cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef ndarray y = nv2arr(yv)
     
@@ -122,7 +122,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     This method is used to connect the Assimulo.Problem.f to the Sundials
     residual function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
+    cdef ProblemData pData = <ProblemData>problem_data
     cdef ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
@@ -131,12 +131,12 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
      
     if pData.dimSens!=0: #SENSITIVITY
-        #p = realtype2arr(<realtype*>pData.p,pData.dimSens)
+        p = realtype2arr(pData.p,pData.dimSens)
         try:
             if pData.sw != NULL:
-                res=(<object>pData.RHS)(t,y,yd,sw=<list>pData.sw,p=<ndarray>pData.p)  # call to the python residual function
+                res=(<object>pData.RHS)(t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
             else:
-                res=(<object>pData.RHS)(t,y,yd,p=<ndarray>pData.p)
+                res=(<object>pData.RHS)(t,y,yd,p)
             
             #memcpy((<N_VectorContent_Serial>residual.content).data,<realtype*>res.data,pData.memSize)
             for i in range(pData.dim):
@@ -175,7 +175,7 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     This method is used to connect the Assimulo.Problem.jac to the Sundials
     Jacobian function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
+    cdef ProblemData pData = <ProblemData>problem_data
     cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
@@ -202,7 +202,7 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     This method is used to connect the Assimulo.Problem.state_events to the Sundials
     root function.
     """
-    cdef ProblemData *pData = <ProblemData*>problem_data
+    cdef ProblemData pData = <ProblemData>problem_data
     cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
@@ -223,6 +223,22 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     except:
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
     
+
+# Error handling callback functions
+# =================================
+
+cdef int cv_err(int error_code, char *module, char *function, char *msg, void *problem_data):
+    """
+    This method overrides the default handling of error messages.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    
+    if error_code > 0 and pData.verbose > 0: #Warning
+        print '[CVode Warning]', msg
+    
+    if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+        if error_code < 0: #Error
+            print '[CVode Error]', msg
 
 #=====================
 # CLASS IMPLEMENTATION
@@ -274,7 +290,7 @@ class IDAError(SundialsError):
             IDA_SRES_FAIL        : 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
             IDA_REP_SRES_ERR     : 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
             IDA_BAD_IS           : 'The sensitivity identifier is not valid.'}
-    pass
+    pass 
     
 class CVodeError(SundialsError):
     """
@@ -312,7 +328,7 @@ cdef class Sundials:
     """
     cdef void* solver           #Contains the solver (IDA or CVode)
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef ProblemData *ppData    #A pointer to the problem data
+    #cdef ProblemData *ppData    #A pointer to the problem data
     cdef ndarray y_nd           #Storage for the states
     cdef ndarray yd_nd          #Storage for the derivatives
     cdef ndarray p_nd           #Storage for the parameters
@@ -323,7 +339,7 @@ cdef class Sundials:
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
-        self.ppData = &self.pData
+        #self.ppData = &self.pData
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -333,6 +349,9 @@ cdef class Sundials:
         self.pData.RHS = <void*>RHS
         self.pData.dim = dim
         self.pData.memSize = dim*sizeof(realtype)
+        
+        #Default verbosity
+        self.pData.verbose = 0
         
         #Set the ndarray to the problem struct
         self.y_nd   = np.zeros(dim, dtype=float, order='c')
@@ -354,18 +373,20 @@ cdef class Sundials:
         
         if dimSens != None: #Sensitivity parameters (does not need the sensitivity function)
             self.pData.dimSens = dimSens
-            self.p_nd = np.empty(dimSens)
-            self.pData.p = <void*>self.p_nd
-            self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
+            self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+            #self.p_nd = np.empty(dimSens, dtype=float, order='c')
+            #self.pData.p = <void*>self.p_nd
+            #self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
         else:
             self.pData.dimSens = 0
             
     def __dealloc__(self):
+        """Free allocated data."""
         self.y_nd = None
         self.pData.y = NULL
         self.pData.yd = NULL
         if self.pData.dimSens > 0:
-            self.pData.p = NULL
+            free(self.pData.p) #Free the allocated data
 
 
 cdef class CVode_wrap(Sundials):
@@ -458,6 +479,11 @@ cdef class CVode_wrap(Sundials):
                 flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
                 if flag < 0:
                     raise CVodeError(flag,t0)
+                    
+            #Specify the error handling
+            flag = CVodeSetErrHandlerFn(self.solver, cv_err, <void*>self.pData)
+            if flag < 0:
+                raise CVodeError(flag, t0)
             
         else: #The solver needs to be reinitialized
             
@@ -467,7 +493,7 @@ cdef class CVode_wrap(Sundials):
                 raise CVodeError(flag, t0)
         
         #Set the user data
-        flag = CVodeSetUserData(self.solver, <void*>self.ppData)
+        flag = CVodeSetUserData(self.solver, <void*>self.pData)
         if flag < 0:
             raise CVodeError(flag, t0)
     
@@ -680,11 +706,6 @@ cdef class IDA_wrap(Sundials):
         self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
         self.sensToggleOff = False #Toggle the sensitivity calculations off
         
-    #def __del__(self):
-    #    print 'tjo'
-    #    pass
-    #    #free(self.uDataT.params)
-        
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h, switches = None):
         cdef flag
         self.t0 = t0
@@ -710,7 +731,7 @@ cdef class IDA_wrap(Sundials):
         flag = IDASetSuppressAlg(self.solver, self.suppress_alg)
         
         #Are there sensitivities to be calculated?
-        if self.nbr_params > 0:
+        if self.pData.dimSens > 0:
             self.set_sensitivity_options(t0,user_data,u,ud)
     
     cdef update_solver(self, t0, y0, yd0, sw0 = None):
@@ -764,7 +785,7 @@ cdef class IDA_wrap(Sundials):
                 raise IDAError(flag, t0)
         
         #Set the user data
-        flag = IDASetUserData(self.solver, <void*>self.ppData)
+        flag = IDASetUserData(self.solver, <void*>self.pData)
         if flag < 0:
             raise IDAError(flag, t0)
     
@@ -815,9 +836,8 @@ cdef class IDA_wrap(Sundials):
             self.sens_activated = True
          
         #Sets the parameters to the userdata object.
-        #self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
         for i in range(self.pData.dimSens):
-            (<ndarray>self.pData.p)[i] = self.p[i]
+            self.pData.p[i] = self.p[i]
         
         #Sets the pbar.
         pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
@@ -829,7 +849,7 @@ cdef class IDA_wrap(Sundials):
                 pbar[i] = 1.0
         
         #Specify problem parameter information for sensitivity calculations
-        flag = IDASetSensParams(self.solver, self.pp_nd, pbar, plist)
+        flag = IDASetSensParams(self.solver, self.pData.p, pbar, plist)
         
         if self.pbar != None:
             free(pbar) #Free the allocated space.

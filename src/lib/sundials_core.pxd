@@ -140,6 +140,11 @@ cdef extern from "cvode/cvode.h":
     #Functions for retrieving results
     int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky)
     
+    #Functions for error handling
+    ctypedef int (*CVErrHandlerFn)(int error_code, char *module, char *function, char *msg,
+                                   void *eh_data)
+    int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data)
+    
     #Functions for discontinuity handling
     ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data)
     int CVodeRootDirection(void *cvode_mem, int *rootdir)
@@ -273,6 +278,7 @@ cdef extern from "idas/idas_dense.h":
 #===========================
 
 #Define a problem data struct which handles all the data about a problem
+"""
 cdef struct ProblemData:
     void *RHS          #Should store the residual or the right-hand-side
     void *ROOT         #Should store the root function
@@ -288,8 +294,30 @@ cdef struct ProblemData:
     int memSize        #dim*sizeof(realtype) used when copying memory
     int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
     int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
+    int verbose        #Defines the verbosity
     void *data         #To be removed.
+"""
+#ctypedef _ProblemData* ProblemData
 
+cdef class ProblemData:
+    cdef:
+        void *RHS          #Should store the residual or the right-hand-side
+        void *ROOT         #Should store the root function
+        void *JAC          #Should store the jacobian
+        void *SENS         #Should store the sensitivity function
+        void *y            #Temporary storage for the states
+        void *yd           #Temporary storage for the derivatives
+        void *sw           #Storage for the switches
+        realtype *p            #Storage for the parameters
+        int dim            #Dimension of the problem
+        int dimRoot        #Dimension of the roots
+        int dimSens        #Dimension of the parameters (For sensitivity)
+        int memSize        #dim*sizeof(realtype) used when copying memory
+        int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
+        int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
+        int verbose        #Defines the verbosity
+        void *data         #To be removed.
+        
 #=================
 # Module functions
 #=================
@@ -317,6 +345,6 @@ cdef inline nv2arr(N_Vector v):
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
     import_array()
-    cdef ndarray x=np.empty(n)
+    cdef ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
     memcpy(x.data, data, n*sizeof(double))
     return x
