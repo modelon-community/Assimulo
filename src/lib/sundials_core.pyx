@@ -25,7 +25,7 @@ http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 
 """
 from __future__ import division
-#from sundials_core cimport *
+#from sundials_core cimport * sundials_core
 include "sundials_core.pxd" #Should really be "from sundials_core.pxd cimport *"
                             #But the setup.py script does not seem to work
                             #if this is the case.
@@ -44,15 +44,19 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
     cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
-    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
+    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    cdef ndarray y = nv2arr(yv)
+    cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
 
     try:
         if pData.sw != NULL:
-            rhs = (<object>pData.RHS)(t,(<ndarray>pData.y),<list>pData.sw)
+            rhs = (<object>pData.RHS)(t,y,<list>pData.sw)
         else:
-            rhs = (<object>pData.RHS)(t,(<ndarray>pData.y))
+            rhs = (<object>pData.RHS)(t,y)
             
-        memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
+        #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
+        for i in range(pData.dim):
+            resptr[i] = rhs[i]
         
         return CV_SUCCESS
     except:
@@ -67,13 +71,15 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
     cdef ProblemData *pData = <ProblemData*>problem_data
     cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
-    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
+    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    cdef ndarray y = nv2arr(yv)
     
     try:
         if pData.sw != NULL:
-            jac=(<object>pData.JAC)(t,(<ndarray>pData.y),<list>pData.sw)
+            #jac=(<object>pData.JAC)(t,(<ndarray>pData.y),<list>pData.sw)
+            jac=(<object>pData.JAC)(t,y,<list>pData.sw)
         else:
-            jac=(<object>pData.JAC)(t,(<ndarray>pData.y))
+            jac=(<object>pData.JAC)(t,y)
         
         #This needs further investigations:
         #memcpy(Jacobian.data,<realtype*>jac.data, pData.memSizeJac)
@@ -94,15 +100,18 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
     cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
-    (<ndarray>pData.y).data =  <char*>((<N_VectorContent_Serial>yv.content).data)
-
+    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    cdef ndarray y = nv2arr(yv)
+    
     try:
         if pData.sw != NULL:
-            root=(<object>pData.ROOT)(t,(<ndarray>pData.y),<list>pData.sw) #Call to the Python root function 
+            root=(<object>pData.ROOT)(t,y,<list>pData.sw) #Call to the Python root function 
         else:
-            root=(<object>pData.ROOT)(t,(<ndarray>pData.y),None) #Call to the Python root function
+            root=(<object>pData.ROOT)(t,y,None) #Call to the Python root function
             
-        memcpy(gout,<realtype*>root.data,pData.memSizeRoot) #Copy data from the return to the output
+        #memcpy(gout,<realtype*>root.data,pData.memSizeRoot) #Copy data from the return to the output
+        for i in range(pData.dimRoot):
+            gout[i]=root[i]
     
         return CV_SUCCESS
     except:
@@ -114,21 +123,25 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     residual function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    y=nv2arr(yv)
-    yd=nv2arr(yvdot)
-
+    cdef ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
+    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
+    cdef ndarray y = nv2arr(yv)
+    cdef ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
-    cdef long int n=(<N_VectorContent_Serial>yv.content).length
-    
+     
     if pData.dimSens!=0: #SENSITIVITY
-        p = realtype2arr(<realtype*>pData.p,pData.dimSens)
+        #p = realtype2arr(<realtype*>pData.p,pData.dimSens)
         try:
             if pData.sw != NULL:
-                res=(<object>pData.RHS)(t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
+                res=(<object>pData.RHS)(t,y,yd,sw=<list>pData.sw,p=<ndarray>pData.p)  # call to the python residual function
             else:
-                res=(<object>pData.RHS)(t,y,yd,p)
-            for i in range(n):
-                resptr[i]=res[i]
+                res=(<object>pData.RHS)(t,y,yd,p=<ndarray>pData.p)
+            
+            #memcpy((<N_VectorContent_Serial>residual.content).data,<realtype*>res.data,pData.memSize)
+            for i in range(pData.dim):
+                resptr[i] = res[i]
+            
             return IDA_SUCCESS
         except(LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
@@ -142,8 +155,12 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 res=(<object>pData.RHS)(t,y,yd,<list>pData.sw)  #Call to the Python residual function
             else:
                 res=(<object>pData.RHS)(t,y,yd)
-            for i in range(n):
-                resptr[i]=res[i]
+                #res = (<object>pData.RHS)(t,y,yd)
+            
+            #memcpy((<N_VectorContent_Serial>residual.content).data,<realtype*>res.data,pData.memSize)
+            for i in range(pData.dim):
+                resptr[i] = res[i]
+            
             return IDA_SUCCESS
         except(LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
@@ -152,30 +169,33 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             traceback.print_exc()
             return -1
             
-cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jac,
+cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jacobian,
                  void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
     This method is used to connect the Assimulo.Problem.jac to the Sundials
     Jacobian function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    y = nv2arr(yv)
-    yd = nv2arr(yvdot)
-
-    cdef realtype* col_i=DENSE_COL(Jac,0)
+    cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+    cdef realtype* col_i=DENSE_COL(Jacobian,0)
+    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
+    cdef ndarray y = nv2arr(yv)
+    cdef ndarray yd = nv2arr(yvdot)
+    
     try:
         if pData.sw != NULL:
-            jacobian=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
+            jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
         else:
-            jacobian=(<object>pData.JAC)(c,t,y,yd)
+            jac=(<object>pData.JAC)(c,t,y,yd)
         
         for i in range(Neq):
-            col_i = DENSE_COL(Jac, i)
+            col_i = DENSE_COL(Jacobian, i)
             for j in range(Neq):
-                col_i[j] = jacobian[j,i]
+                col_i[j] = jac[j,i]
         return IDADLS_SUCCESS
-    except: #None recoverable
-        return -1
+    except: 
+        return IDADLS_JACFUNC_RECVR #Recoverable Error
 
 cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):
     """
@@ -183,19 +203,22 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     root function.
     """
     cdef ProblemData *pData = <ProblemData*>problem_data
-    
-    y=nv2arr(yv)
-    yd=nv2arr(yvdot)
-    
+    cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
+    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
+    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
+    cdef ndarray y = nv2arr(yv)
+    cdef ndarray yd = nv2arr(yvdot)
+     
     try:
         if pData.sw != NULL:
             root=(<object>pData.ROOT)(t,y,yd,<list>pData.sw)  #Call to the Python root function
         else:
             root=(<object>pData.ROOT)(t,y,yd,None)  #Call to the Python root function
         
-        root = np.asarray(root).reshape(-1) # Make sure we get a vector
-        for i in range(root.shape[0]):
+        #memcpy(gout,<realtype*>root.data,pData.memSizeRoot) #Copy data from the return to the output
+        for i in range(pData.dimRoot):
             gout[i]=root[i]
+        
         return IDA_SUCCESS
     except:
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
@@ -207,7 +230,7 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
 
 # Error handling
 # ==============
-
+ 
 class SundialsError(Exception):
     """
     Sundials exception
@@ -216,7 +239,7 @@ class SundialsError(Exception):
         self.value = value
         self.t = t
         
-    def __str__(self):
+    def __str__(self): 
         try:
             return repr(self.msg[self.value]+' At time %f.'%self.t)    
         except KeyError:
@@ -287,19 +310,21 @@ cdef class Sundials:
     """
     Base class for wrapping the Sundials solvers to Python.
     """
-    cdef void* solver #Contains the solver (IDA or CVode)
-    cdef ProblemData pData #A struct containing information about the problem
-    cdef ProblemData *ppData #A pointer to the problem data
-    cdef ndarray y_nd #Storage for the states
-    cdef ndarray yd_nd #Storage for the derivatives
-    cdef list sol #List for storing the solution
+    cdef void* solver           #Contains the solver (IDA or CVode)
+    cdef ProblemData pData      #A struct containing information about the problem
+    cdef ProblemData *ppData    #A pointer to the problem data
+    cdef ndarray y_nd           #Storage for the states
+    cdef ndarray yd_nd          #Storage for the derivatives
+    cdef ndarray p_nd           #Storage for the parameters
+    cdef realtype* pp_nd        #Pointer to pData.p.data
+    cdef list sol               #List for storing the solution
     cdef N_Vector y_cur, yd_cur #Store the states and state derivatives
-    cdef public switches #Store the switches
+    cdef public switches        #Store the switches
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
         self.ppData = &self.pData
-    
+        
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
         Sets the problem information to the problem struct.
@@ -310,8 +335,8 @@ cdef class Sundials:
         self.pData.memSize = dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        self.y_nd  = np.empty(dim)
-        self.yd_nd = np.empty(dim)
+        self.y_nd   = np.zeros(dim, dtype=float, order='c')
+        self.yd_nd  = np.zeros(dim, dtype=float, order='c')
         self.pData.y  = <void*>self.y_nd
         self.pData.yd = <void*>self.yd_nd
         
@@ -329,8 +354,18 @@ cdef class Sundials:
         
         if dimSens != None: #Sensitivity parameters (does not need the sensitivity function)
             self.pData.dimSens = dimSens
+            self.p_nd = np.empty(dimSens)
+            self.pData.p = <void*>self.p_nd
+            self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
         else:
             self.pData.dimSens = 0
+            
+    def __dealloc__(self):
+        self.y_nd = None
+        self.pData.y = NULL
+        self.pData.yd = NULL
+        if self.pData.dimSens > 0:
+            self.pData.p = NULL
 
 
 cdef class CVode_wrap(Sundials):
@@ -346,9 +381,6 @@ cdef class CVode_wrap(Sundials):
         public booleantype jacobian, store_cont, comp_step, store_state
         public npy_intp num_state_events
         public booleantype sim_complete
-        #void* comp_step_method
-        N_Vector curr_state,
-        N_Vector temp_nvector
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
     
@@ -627,8 +659,6 @@ cdef class IDA_wrap(Sundials):
         public int icopt, nbr_params, DQtype, maxcorS, ism, Ns
         public npy_intp num_state_events
         public booleantype sim_complete, errconS, sensToggleOff
-        N_Vector curr_state
-        N_Vector curr_deriv
         N_Vector temp_nvector
         N_Vector *ySO, *ydSO
         public object p, pbar
@@ -650,9 +680,10 @@ cdef class IDA_wrap(Sundials):
         self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
         self.sensToggleOff = False #Toggle the sensitivity calculations off
         
-    def __del__(self):
-        pass
-        #free(self.uDataT.params)
+    #def __del__(self):
+    #    print 'tjo'
+    #    pass
+    #    #free(self.uDataT.params)
         
     def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h, switches = None):
         cdef flag
@@ -688,7 +719,7 @@ cdef class IDA_wrap(Sundials):
         """
         cdef int flag #Used for return
 
-        self.y_cur = arr2nv(y0)
+        self.y_cur  = arr2nv(y0)
         self.yd_cur = arr2nv(yd0)
         
         #Updates the switches
@@ -782,11 +813,11 @@ cdef class IDA_wrap(Sundials):
                 raise IDAError(flag, t0)
             
             self.sens_activated = True
-        
+         
         #Sets the parameters to the userdata object.
-        self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
-        for i in range(self.nbr_params):
-            self.pData.p[i] = self.p[i]
+        #self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        for i in range(self.pData.dimSens):
+            (<ndarray>self.pData.p)[i] = self.p[i]
         
         #Sets the pbar.
         pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
@@ -798,7 +829,7 @@ cdef class IDA_wrap(Sundials):
                 pbar[i] = 1.0
         
         #Specify problem parameter information for sensitivity calculations
-        flag = IDASetSensParams(self.solver, self.pData.p, pbar, plist)
+        flag = IDASetSensParams(self.solver, self.pp_nd, pbar, plist)
         
         if self.pbar != None:
             free(pbar) #Free the allocated space.
