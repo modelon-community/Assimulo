@@ -29,10 +29,27 @@ import math
 import traceback
 from numpy cimport NPY_DOUBLE, npy_intp, NPY_INT
 from numpy.linalg.linalg import LinAlgError
+
+#==============================================
+#External definitions from Sundials headers
+#==============================================
+
+cdef extern from "sundials/sundials_types.h":
+    ctypedef double realtype
+    ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
+
 #==============================================
 #External definitions from numpy headers
 #==============================================
 cdef extern from "numpy/arrayobject.h":
+
+    ctypedef int npy_intp 
+
+    ctypedef extern class numpy.dtype [object PyArray_Descr]:
+        cdef int type_num, elsize, alignment
+        cdef char type, kind, byteorder, hasobject
+        cdef object fields, typeobj
+        
     ctypedef int intp
     ctypedef extern class numpy.ndarray [object PyArrayObject]:
         cdef char *data
@@ -48,8 +65,8 @@ cdef extern from "numpy/arrayobject.h":
     void* PyArray_GetPtr(ndarray aobj, npy_intp* ind)
     void *PyArray_DATA(ndarray aobj)
 
-    
-    
+import_array()
+
 cdef extern from "Python.h":
     cdef void Py_INCREF( object )
 #==============================================
@@ -65,17 +82,11 @@ cdef extern from "stdlib.h":
 #External definitions from Sundials headers
 #==============================================
 
-cdef extern from "sundials/sundials_types.h":
-    ctypedef double realtype
-    ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
-
 cdef extern from "sundials/sundials_nvector.h":
     cdef struct _generic_N_Vector:
         void* content
     ctypedef _generic_N_Vector* N_Vector
-    N_Vector N_VNew_Serial(long int vec_length)
-    void N_VDestroy_Serial(N_Vector v)
-    void N_VPrint_Serial(N_Vector v)
+    
     
     
 cdef extern from "nvector/nvector_serial.h":
@@ -88,6 +99,9 @@ cdef extern from "nvector/nvector_serial.h":
     N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w)
     void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v)
     void N_VConst_Serial(realtype c, N_Vector z)
+    N_Vector N_VNew_Serial(long int vec_length)
+    void N_VDestroy_Serial(N_Vector v)
+    void N_VPrint_Serial(N_Vector v)
 
 #Struct for handling the Jacobian data
 cdef extern from "sundials/sundials_direct.h":
@@ -267,10 +281,10 @@ cdef struct ProblemData:
     void *y            #Temporary storage for the states
     void *yd           #Temporary storage for the derivatives
     void *sw           #Storage for the switches
-    realtype *p        #Storage for the parameters
+    void *p            #Storage for the parameters
     int dim            #Dimension of the problem
     int dimRoot        #Dimension of the roots
-    int dimSens       #Dimension of the parameters (For sensitivity)
+    int dimSens        #Dimension of the parameters (For sensitivity)
     int memSize        #dim*sizeof(realtype) used when copying memory
     int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
     int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
@@ -294,7 +308,6 @@ cdef inline nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
     cdef long int i
-    cdef npy_intp dims = <npy_intp>n
     import_array()
     cdef ndarray x=np.empty(n)
     #cdef ndarray x = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,v_data)

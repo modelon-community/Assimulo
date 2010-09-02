@@ -748,7 +748,7 @@ class IDA(Implicit_ODE, Sundials):
             
         See SUNDIALS IDA documentation 4.5.4 for more details.
         """
-        self.Integrator.idinit(self.t_cur, self.problem_spec, self.y_cur, self.yd_cur, self.maxord, self.maxsteps,self.initstep,self.maxh)
+        self.Integrator.idinit(self.t_cur, self.problem_spec, self.y_cur, self.yd_cur, self.maxord, self.maxsteps,self.initstep,self.maxh,self.switches)
         
         if method == 'IDA_YA_YDP_INIT':
             [flag, y, yd] = self.Integrator.calc_IC(method,self.tout1,self.lsoff)
