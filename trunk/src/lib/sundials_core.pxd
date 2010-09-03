@@ -197,6 +197,12 @@ cdef extern from "idas/idas.h":
     #Functions for retrieving results
     int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
     
+    #Functions for error handling
+    ctypedef int (*IDAErrHandlerFn)(int error_code, char *module, char *function, char *msg,
+                                    void *eh_data)
+    int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data)
+    
+    
     #Functions for discontinuity handling
     ctypedef int (*IDARootFn)(realtype tt, N_Vector yy, N_Vector yp, realtype *gout, void *user_data)
     int IDASetRootDirection(void *ida_mem, int *rootdir)

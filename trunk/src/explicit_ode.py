@@ -692,7 +692,7 @@ class CVode(Explicit_ODE, Sundials):
         self.Integrator.store_cont = self.store_cont
         if self._flag_init:
             self.Integrator.store_statistics()
-            self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep,self.switches)
+            self.Integrator.cvinit(t,self.problem_spec,y,self.maxord,self.maxsteps,self.initstep,self.verbosity, self.switches)
             
         return self.Integrator.run(t,tfinal,dt)
     
