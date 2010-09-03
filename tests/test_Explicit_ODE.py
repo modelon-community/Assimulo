@@ -320,6 +320,24 @@ class Test_CVode:
         assert sim.problem_spec[0][0] == f
         assert len(sim.problem_spec[0]) == 1
         
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        f = lambda t,x,sw: N.array([1.0])
+        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.switches = [False] #Override the switches to point to another instance
+        
+        mod = Explicit_Problem()
+        mod.f = f
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = CVode(mod, [0.0], switches0=[True])
+        assert sim.switches[0] == True
+        sim.simulate(3)
+        assert sim.switches[0] == False
     
     def test_iter_method(self):
         """
