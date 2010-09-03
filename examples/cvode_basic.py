@@ -25,7 +25,7 @@ def run_example():
     exp_sim.rtol = 1e-4 #Default 1e-6
     
     #Simulate
-    exp_sim.simulate(5) #Simulate 3 seconds
+    exp_sim.simulate(5) #Simulate 5 seconds
     
     #Plot
     exp_sim.plot() #Plot the solution

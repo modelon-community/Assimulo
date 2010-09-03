@@ -239,6 +239,19 @@ cdef int cv_err(int error_code, char *module, char *function, char *msg, void *p
     if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
         if error_code < 0: #Error
             print '[CVode Error]', msg
+            
+cdef int ida_err(int error_code, char *module, char *function, char *msg, void *problem_data):
+    """
+    This method overrides the default handling of error messages.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    
+    if error_code > 0 and pData.verbose > 0: #Warning
+        print '[IDA Warning]', msg
+    
+    if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+        if error_code < 0: #Error
+            print '[IDA Error]', msg
 
 #=====================
 # CLASS IMPLEMENTATION
@@ -379,7 +392,14 @@ cdef class Sundials:
             #self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
         else:
             self.pData.dimSens = 0
-            
+    
+    cdef update_options(self, verbosity):
+        """
+        Updates the simulation options.
+        """
+        #Verbosity
+        self.pData.verbose = verbosity
+    
     def __dealloc__(self):
         """Free allocated data."""
         self.y_nd = None
@@ -413,7 +433,7 @@ cdef class CVode_wrap(Sundials):
         self.store_cont = False
         self.store_state = False
         self.sim_complete = False
-    def cvinit(self,t0,user_data,u,maxord, max_steps, init_step, switches = None):
+    def cvinit(self,t0,user_data,u,maxord, max_steps, init_step, verbosity, switches = None):
         cdef flag
         self.store_state = True
         self.sim_complete = False
@@ -421,6 +441,7 @@ cdef class CVode_wrap(Sundials):
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
         
         self.update_solver(t0, u, switches) #Update the solver
+        self.update_options(verbosity)
         
         if self.abstol_ar[0] > 0:
             flag = CVodeSVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
@@ -706,7 +727,7 @@ cdef class IDA_wrap(Sundials):
         self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
         self.sensToggleOff = False #Toggle the sensitivity calculations off
         
-    def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h, switches = None):
+    def idinit(self,t0,user_data,u,ud,maxord, max_steps, init_step, max_h, verbosity, switches = None):
         cdef flag
         self.t0 = t0
         self.store_state = True
@@ -715,6 +736,7 @@ cdef class IDA_wrap(Sundials):
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
         
         self.update_solver(t0, u, ud, switches)
+        self.update_options(verbosity)
         
         if self.abstol_ar[0] > 0:
             flag = IDASVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
@@ -776,6 +798,11 @@ cdef class IDA_wrap(Sundials):
                 flag = IDADlsSetDenseJacFn(self.solver, ida_jac)
                 if flag < 0:
                     raise IDAError(flag,t0)
+            
+            #Specify the error handling
+            flag = IDASetErrHandlerFn(self.solver, ida_err, <void*>self.pData)
+            if flag < 0:
+                raise IDAError(flag, t0)
             
         else: #The solver needs to be reinitialized
             
