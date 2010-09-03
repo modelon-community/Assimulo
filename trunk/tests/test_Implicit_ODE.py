@@ -402,6 +402,25 @@ class Test_IDA:
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
     
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        f = lambda t,x,xd,sw: N.array([xd[0]- 1.0])
+        state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.switches = [False] #Override the switches to point to another instance
+        
+        mod = Implicit_Problem()
+        mod.f = f
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = IDA(mod, [0.0], [1.0], switches0=[True])
+        assert sim.switches[0] == True
+        sim.simulate(3)
+        assert sim.switches[0] == False
+    
     def test_completed_step(self):
         """
         This tests the functionality of the method completed_step.
