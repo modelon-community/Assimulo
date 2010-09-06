@@ -19,6 +19,7 @@ from ode import *
 from problem import Implicit_Problem
 from sundials import Sundials, Sundials_Exception
 from assimulo.lib.radau_core import Radau_Common
+import warnings
 
 class Implicit_ODE_Exception(Exception):
     """An integrator exception"""
@@ -726,7 +727,7 @@ class IDA(Implicit_ODE, Sundials):
     
     lsoff = property(_get_lsoff, _set_lsoff)
     
-    def make_consistency(self, method):
+    def make_consistent(self, method):
         """
         Directs IDA to try to calculate consistant initial conditions.
             
@@ -765,6 +766,15 @@ class IDA(Implicit_ODE, Sundials):
             self.yd_cur = yd
         
         return [self.y_cur, self.yd_cur]
+        
+    def make_consistency(self, method):
+        """
+        This method is being renamed to 'make_consistent', see docstring on that method.
+        This method is being removed in version 1.4.
+        """
+        warnings.warn('Please use "make_consistent" instead of "make_consistency".')
+        return self.make_consistent(method)
+        
     
     def integrate(self,t,y,yd,tfinal,nt=0):
         """
