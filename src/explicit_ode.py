@@ -806,20 +806,7 @@ class CVode(Explicit_ODE, Sundials):
                                 usejac = False
         """
         self.__usejac = bool(jac)
-        
-        if not bool(jac):
-            self.Integrator.jacobian = False
-            self._RHS = [self.f]
-        else:
-            self.Integrator.jacobian = True
-            if not hasattr(self, 'jac'):
-                raise Explicit_ODE_Exception('No jacobian defined.')
-            self._RHS = [self.f, self.jac]
-            
-        if hasattr(self, '_ROOT'):
-            self.problem_spec = [self._RHS, self._ROOT]
-        else:
-            self.problem_spec = [self._RHS]
+        self.Integrator.usejac = self.__usejac
     
     def _get_usejac(self):
         """

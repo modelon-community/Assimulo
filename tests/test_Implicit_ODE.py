@@ -289,26 +289,26 @@ class Test_IDA:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x,xd: x
-        jac = lambda c,t,x,xd: N.array([x*x])
+        f = lambda t,x,xd: N.array([xd[0]-x[1], xd[1]-9.82])       #Defines the rhs
+        jac = lambda c,t,x,xd: N.array([[c,-1.],[0.,c]]) #Defines the jacobian
+
+        imp_mod = Implicit_Problem()
+        imp_mod.f = f
+        imp_mod.jac = jac
         
-        prob = Implicit_Problem()
-        prob.f = f
-        prob.jac = jac
+        imp_sim = IDA(imp_mod, [1.0,0.0],[0.,-9.82])
         
-        sim = IDA(prob, [0],[0])
-        
-        assert sim._RES[1] == f
-        assert sim._RES[2] == jac
-        assert sim.problem_spec[0][0] == 0
-        assert sim.problem_spec[0][1] == f
-        assert sim.problem_spec[0][2] == jac
-        sim.usejac = False
-        assert sim._RES[1] == f
-        assert len(sim._RES) == 2
-        assert sim.problem_spec[0][0] == 0
-        assert sim.problem_spec[0][1] == f
-        assert len(sim.problem_spec[0]) == 2
+        imp_sim.simulate(3,100)
+        #imp_sim.plot()
+        print imp_sim.y[-1]
+        assert imp_sim.stats['Number of F-Eval During Jac-Eval         '] == 0
+        nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
+        imp_sim.reset()
+        imp_sim.usejac=False
+        imp_sim.simulate(3.,100)
+
+        nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
+        assert imp_sim.stats['Number of F-Eval During Jac-Eval         '] > 0
     
     def test_run(self):
         """
@@ -378,7 +378,7 @@ class Test_IDA:
         yd0 = [1.0 , 0.0]
         simulator = IDA(my_Prob, y0, yd0)
         print simulator.Integrator.jacobian
-        [y, yd] = simulator.make_consistency('IDA_Y_INIT')
+        [y, yd] = simulator.make_consistent('IDA_Y_INIT')
         
         nose.tools.assert_almost_equal(y[1], 0.00000)
         nose.tools.assert_almost_equal(y[0], -1.0000)
