@@ -186,7 +186,8 @@ class Test_IDA:
         assert self.simulator.maxord == 2
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
-
+    
+        
     def test_tout1(self):
         """
         This tests the functionality of the property tout1.
