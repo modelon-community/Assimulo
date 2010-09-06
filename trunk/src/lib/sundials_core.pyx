@@ -349,10 +349,14 @@ cdef class Sundials:
     cdef list sol               #List for storing the solution
     cdef N_Vector y_cur, yd_cur #Store the states and state derivatives
     cdef public switches        #Store the switches
+    cdef public usejac          #Option for turning on and off the jacobian
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
         #self.ppData = &self.pData
+        
+        #Default values
+        self.usejac = True
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -494,12 +498,6 @@ cdef class CVode_wrap(Sundials):
                 
                 if flag < 0:
                     raise CVodeError(flag,t0)
-            
-            #Specify the jacobian to the solver
-            if self.pData.JAC != NULL:
-                flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
-                if flag < 0:
-                    raise CVodeError(flag,t0)
                     
             #Specify the error handling
             flag = CVodeSetErrHandlerFn(self.solver, cv_err, <void*>self.pData)
@@ -512,6 +510,16 @@ cdef class CVode_wrap(Sundials):
             flag = CVodeReInit(self.solver, t0, self.y_cur)
             if flag < 0:
                 raise CVodeError(flag, t0)
+        
+        #Specify the jacobian to the solver
+        if self.pData.JAC != NULL and self.usejac:
+            flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
+            if flag < 0:
+                raise CVodeError(flag,t0)
+        else:
+            flag = CVDlsSetDenseJacFn(self.solver, NULL)
+            if flag < 0:
+                raise CVodeError(flag,t0)
         
         #Set the user data
         flag = CVodeSetUserData(self.solver, <void*>self.pData)
@@ -793,12 +801,6 @@ cdef class IDA_wrap(Sundials):
                 if flag < 0:
                     raise IDAError(flag,t0)
             
-            #Specify the jacobian to the solver
-            if self.pData.JAC != NULL:
-                flag = IDADlsSetDenseJacFn(self.solver, ida_jac)
-                if flag < 0:
-                    raise IDAError(flag,t0)
-            
             #Specify the error handling
             flag = IDASetErrHandlerFn(self.solver, ida_err, <void*>self.pData)
             if flag < 0:
@@ -810,6 +812,16 @@ cdef class IDA_wrap(Sundials):
             flag = IDAReInit(self.solver, t0, self.y_cur, self.yd_cur)
             if flag < 0:
                 raise IDAError(flag, t0)
+        
+        #Specify the jacobian to the solver
+        if self.pData.JAC != NULL and self.usejac:
+            flag = IDADlsSetDenseJacFn(self.solver, ida_jac)
+            if flag < 0:
+                raise IDAError(flag,t0)
+        else:
+            flag = IDADlsSetDenseJacFn(self.solver, NULL)
+            if flag < 0:
+                raise IDAError(flag,t0)
         
         #Set the user data
         flag = IDASetUserData(self.solver, <void*>self.pData)

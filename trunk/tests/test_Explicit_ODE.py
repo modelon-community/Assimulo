@@ -301,24 +301,26 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: N.array(x)
-        jac = lambda t,x: N.array([x[0]*x[0]]).reshape(1,1)
+        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: N.array([[0.,1.],[0.,0.]]) #Defines the jacobian
         
-        prob = Explicit_Problem()
-        prob.f = f
-        prob.jac = jac
+        exp_mod = Explicit_Problem()
+        exp_mod.f = f
+        exp_mod.jac = jac
         
-        sim = CVode(prob, [0.0])
+        exp_sim = CVode(exp_mod, [1.0,0.0])
+        exp_sim.discr='BDF'
+        exp_sim.iter='Newton'
+        exp_sim.simulate(5.,100)
         
-        assert sim._RHS[0] == f
-        assert sim._RHS[1] == jac
-        assert sim.problem_spec[0][0] == f
-        assert sim.problem_spec[0][1] == jac
-        sim.usejac = False
-        assert sim._RHS[0] == f
-        assert len(sim._RHS) == 1
-        assert sim.problem_spec[0][0] == f
-        assert len(sim.problem_spec[0]) == 1
+        assert exp_sim.stats['Number of F-Eval During Jac-Eval         '] == 0
+        nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
+        exp_sim.reset()
+        exp_sim.usejac=False
+        exp_sim.simulate(5.,100)
+
+        nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
+        assert exp_sim.stats['Number of F-Eval During Jac-Eval         '] > 0
         
     def test_switches(self):
         """

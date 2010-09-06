@@ -644,25 +644,7 @@ class IDA(Implicit_ODE, Sundials):
                                 usejac = False
         """
         self.__usejac = bool(jac)
-        
-        try:
-            sens = [self.problem_spec[0][0]]
-        except AttributeError:
-            sens = [0]
-        
-        if not bool(jac):
-            self.Integrator.jacobian = False
-            self._RES = sens+[self.res_fcn]
-        else:
-            self.Integrator.jacobian = True
-            if not hasattr(self, 'jac'):
-                raise Implicit_ODE_Exception('No jacobian defined.')
-            self._RES = sens+[self.res_fcn, self.jac]
-            
-        if hasattr(self, '_ROOT'):
-            self.problem_spec = [self._RES, self._ROOT]
-        else:
-            self.problem_spec = [self._RES]
+        self.Integrator.usejac = self.__usejac
     
     def _get_usejac(self):
         """

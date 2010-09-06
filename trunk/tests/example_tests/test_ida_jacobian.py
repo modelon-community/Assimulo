@@ -58,7 +58,7 @@ def run_example():
     imp_sim.atol = 1e-6 #Default 1e-6
     imp_sim.rtol = 1e-6 #Default 1e-6
     imp_sim.suppress_alg = True 
-    imp_sim.make_consistency('IDA_YA_YDP_INIT')
+    imp_sim.make_consistent('IDA_YA_YDP_INIT')
     imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     #imp_sim.plot() #Plot the solution
     

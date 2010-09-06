@@ -110,7 +110,7 @@ class Extended_Problem(Implicit_Problem):
         """
         Initialize the DAE with the new conditions.
         """
-        solver.make_consistency('IDA_YA_YDP_INIT') #Calculate new initial conditions.
+        solver.make_consistent('IDA_YA_YDP_INIT') #Calculate new initial conditions.
                                                    #see SUNDIALS IDA documentation
                                                    #on the option 'IDA_YA_YDP_INIT'
 
