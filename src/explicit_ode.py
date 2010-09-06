@@ -135,7 +135,7 @@ class Explicit_ODE(ODE):
         self._problem.reset()
         self.re_init(self._problem.t0, self._problem.y0)
     
-    def integrate(self, t, y, tf, nt):
+    def _integrator(self, t, y, tf, nt):
         pass 
 
     def __call__(self, tfinal, ncp=0):
@@ -212,7 +212,7 @@ class Explicit_ODE(ODE):
                 else:
                     tfinal = tevent if tevent < tfinal_ori else tfinal_ori
 
-            solution = list(self.integrate(self.t_cur, self.y_cur, tfinal,dt))
+            solution = list(self._integrator(self.t_cur, self.y_cur, tfinal,dt))
             tt, yy = solution[-1]
             self.t_cur = tt.copy()
             self.y_cur = yy.copy()
@@ -338,9 +338,9 @@ class Explicit_Euler(Explicit_ODE):
     """
     Explicit Euler.
     """
-    def integrate(self, t, y, tf, dt):
+    def _integrator(self, t, y, tf, dt):
         """
-        Integrates (t,y) values until t > tf
+        _integrates (t,y) values until t > tf
         """
         if dt <= 0.0:
             raise Explicit_ODE_Exception('Explicit Euler is a fixed step-size method. Provide' \
@@ -453,7 +453,7 @@ class RungeKutta34(Explicit_ODE):
     initstep = property(_get_initial_step,_set_initial_step)
         
     
-    def integrate(self, t, y, tf, dt):
+    def _integrator(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """
@@ -506,7 +506,7 @@ class RungeKutta4(Explicit_ODE):
     """
     Runge-Kutta of order 4.
     """
-    def integrate(self, t, y, tf, dt):
+    def _integrator(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """
@@ -685,7 +685,7 @@ class CVode(Explicit_ODE, Sundials):
             if not isinstance(testj, N.ndarray) or testj.dtype != float:
                 raise Explicit_ODE_Exception('The Jacobian function must return a numpy array of floats.')
     
-    def integrate(self,t,y,tfinal,dt):
+    def _integrator(self,t,y,tfinal,dt):
         """
         Simulates the problem up until tfinal.
         """
@@ -1135,7 +1135,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         # - Retrieve the Radau5 parameters
         self._load_parameters() #Set the Radau5 parameters
         
-    def integrate(self, t, y, tf, dt):
+    def _integrator(self, t, y, tf, dt):
         """
         Integrates (t,y) values until t > tf
         """

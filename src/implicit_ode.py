@@ -138,7 +138,7 @@ class Implicit_ODE(ODE):
         self.yd = []
     
     
-    def integrate(self, t, y, yd, tf,nt):
+    def _integrator(self, t, y, yd, tf,nt):
         pass
         
     def reset(self):
@@ -241,7 +241,7 @@ class Implicit_ODE(ODE):
                 else:
                     tfinal = tevent if tevent < tfinal_ori else tfinal_ori
             
-            solution = list(self.integrate(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
+            solution = list(self._integrator(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
 
             temp_t, temp_y, temp_yd = solution[-1]
             
@@ -758,7 +758,7 @@ class IDA(Implicit_ODE, Sundials):
         return self.make_consistent(method)
         
     
-    def integrate(self,t,y,yd,tfinal,nt=0):
+    def _integrator(self,t,y,yd,tfinal,nt=0):
         """
         Simulates the problem up until tfinal.
         """
@@ -1605,7 +1605,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         
     index = property(_get_index,_set_index)
     
-    def integrate(self, t, y, yd, tf,dt):
+    def _integrator(self, t, y, yd, tf,dt):
         """
         Integrates (t,y,yd) values until t > tf
         """
