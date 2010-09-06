@@ -767,6 +767,7 @@ class CVode(Explicit_ODE, Sundials):
             raise Explicit_ODE_Exception('The initial step must be an integer or float.')
         
         self.__initstep = initstep
+        self.Integrator.inith = self.__initstep
         
     def _get_initial_step(self):
         """
@@ -930,6 +931,8 @@ class CVode(Explicit_ODE, Sundials):
                 self.__maxord=1
             else:
                 self.__maxord=maxord
+                
+        self.Integrator.maxord = maxord #Sets the maximum order to the solver
     
     def _get_max_ord(self):
         """

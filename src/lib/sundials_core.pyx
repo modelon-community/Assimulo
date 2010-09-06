@@ -348,8 +348,12 @@ cdef class Sundials:
     cdef realtype* pp_nd        #Pointer to pData.p.data
     cdef list sol               #List for storing the solution
     cdef N_Vector y_cur, yd_cur #Store the states and state derivatives
-    cdef public switches        #Store the switches
-    cdef public usejac          #Option for turning on and off the jacobian
+    cdef public switches           #Store the switches
+    cdef public booleantype usejac #Option for turning on and off the jacobian
+    cdef public int maxord         #Defines the maximum order allowed.
+    cdef public realtype inith     #The initial step that is to be used.
+    cdef public ndarray atol       #The absolute tolerance
+    cdef public realtype rtol      #The relative tolerance
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -357,6 +361,8 @@ cdef class Sundials:
         
         #Default values
         self.usejac = True
+        self.maxord = 12
+        self.inith = 0.0
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -397,13 +403,6 @@ cdef class Sundials:
         else:
             self.pData.dimSens = 0
     
-    cdef update_options(self, verbosity):
-        """
-        Updates the simulation options.
-        """
-        #Verbosity
-        self.pData.verbose = verbosity
-    
     def __dealloc__(self):
         """Free allocated data."""
         self.y_nd = None
@@ -416,7 +415,7 @@ cdef class Sundials:
 cdef class CVode_wrap(Sundials):
     """Class to wrap CVode"""
     cdef:
-        public int discr, iter, dim, maxord, _ordersum,_count_output, max_h
+        public int discr, iter, dim, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
         public realtype t0
@@ -453,15 +452,32 @@ cdef class CVode_wrap(Sundials):
             flag = CVodeSStolerances(self.solver, self.reltol, self.abstol)
         if flag!=CV_SUCCESS:
                 raise Exception,"CVode Tolerance Initialization  Error"
-        if maxord:
-            flag=CVodeSetMaxOrd(self.solver, maxord)
         flag = CVodeSetMaxNumSteps(self.solver, self.max_steps)
-        flag = CVodeSetInitStep(self.solver, init_step)
+        
         
         try:
             flag= CVodeSetMaxStep(self.solver, self.max_h)
         except AttributeError:
             pass
+    
+    cdef update_options(self, verbosity):
+        """
+        Updates the simulation options.
+        """
+        cdef flag
+        
+        #Verbosity
+        self.pData.verbose = verbosity
+        
+        #Maximum order
+        flag = CVodeSetMaxOrd(self.solver, self.maxord)
+        if flag < 0:
+            raise CVodeError(flag)
+            
+        #Initial step
+        flag = CVodeSetInitStep(self.solver, self.inith)
+        if flag < 0:
+            raise CVodeError(flag)
     
     cdef update_solver(self, t0, y0, sw0 = None):
         """
@@ -701,7 +717,7 @@ cdef class IDA_wrap(Sundials):
     """Class to wrap Sundials IDA"""
     cdef:
         #void* comp_step_method
-        public int dim, maxord, _ordersum,_count_output, max_h
+        public int dim, _ordersum,_count_output, max_h
         public long int max_steps
         public realtype abstol,reltol,event_time
         public realtype t0, DQrhomax
@@ -752,10 +768,8 @@ cdef class IDA_wrap(Sundials):
             flag = IDASStolerances(self.solver, self.reltol, self.abstol)
         if flag!=IDA_SUCCESS:
                 raise Exception,"IDA Tolerance Initialization  Error"
-        if maxord:
-            flag=IDASetMaxOrd(self.solver, maxord)
         flag = IDASetMaxNumSteps(self.solver, self.max_steps)
-        flag = IDASetInitStep(self.solver, init_step)
+        
         flag = IDASetMaxStep(self.solver, max_h)
         flag = IDASetId(self.solver, arr2nv(self.algvar))
         flag = IDASetSuppressAlg(self.solver, self.suppress_alg)
@@ -763,6 +777,25 @@ cdef class IDA_wrap(Sundials):
         #Are there sensitivities to be calculated?
         if self.pData.dimSens > 0:
             self.set_sensitivity_options(t0,user_data,u,ud)
+    
+    cdef update_options(self, verbosity):
+        """
+        Updates the simulation options.
+        """
+        cdef flag
+        
+        #Verbosity
+        self.pData.verbose = verbosity
+        
+        #Maximum order
+        flag =IDASetMaxOrd(self.solver, self.maxord)
+        if flag < 0:
+            raise IDAError(flag)
+            
+        #Initial step
+        flag = IDASetInitStep(self.solver, self.inith)
+        if flag < 0:
+            raise IDAError(flag)
     
     cdef update_solver(self, t0, y0, yd0, sw0 = None):
         """
