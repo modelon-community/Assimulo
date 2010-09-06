@@ -100,7 +100,7 @@ class Test_Explicit_Euler:
         y0 = 1.0
         self.simulator = Explicit_Euler(problem,y0)
         
-    def test_integrate(self):
+    def test_integrator(self):
         """
         This tests the functionality of the method integrate.
         """
@@ -109,7 +109,7 @@ class Test_Explicit_Euler:
         y = 1.0
         dt = 0.1
         
-        values = self.simulator.integrate(t,y,tfinal,dt)
+        values = self.simulator._integrator(t,y,tfinal,dt)
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.100000)
         nose.tools.assert_almost_equal(y, 1.100000)
@@ -140,7 +140,7 @@ class Test_RungeKutta34:
         y0 = 1
         self.simulator = RungeKutta34(problem,y0)
     
-    def test_integrate(self):
+    def test_integrator(self):
         """
         This tests the functionality of the method integrate.
         """
@@ -150,7 +150,7 @@ class Test_RungeKutta34:
         nt = 0.0
         self.simulator.initstep = 0.1
         
-        values = self.simulator.integrate(t,y,tfinal,nt)
+        values = self.simulator._integrator(t,y,tfinal,nt)
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.100000)
         nose.tools.assert_almost_equal(y, 1.100000)
@@ -207,7 +207,7 @@ class Test_RungeKutta4:
         y = 1.0
         dt = 0.05
         
-        values = self.simulator.integrate(t,y,tfinal,dt)
+        values = self.simulator._integrator(t,y,tfinal,dt)
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.050000)
         nose.tools.assert_almost_equal(y, 1.050000)
