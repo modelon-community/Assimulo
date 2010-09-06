@@ -160,8 +160,8 @@ class Sundials:
             raise Sundials_Exception('Maximal stepsize must be a (scalar) float.')
         if max_h < 0.0:
             raise Sundials_Exception('Maximal stepsize must be a positive (scalar) float.')
-        self.Integrator.max_h=max_h
         self.__max_h=max_h
+        self.Integrator.maxh = self.__max_h
     
     def _get_max_h(self):
         """
