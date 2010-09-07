@@ -29,6 +29,7 @@ for x in S.argv[1:]:
 if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
     
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
+    cordir_KINSOL = O.path.join(O.path.join('src','lib'),'sundials_kinsol_core.pyx')
 
     setup(name='Assimulo',
       version='trunk',
@@ -46,8 +47,15 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
             include_dirs=[incdirs, N.get_include()],
             library_dirs=[libdirs],
             libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial']),
+        Extension('lib.sundials_kinsol_core',
+            [cordir_KINSOL],
+            include_dirs=[incdirs, N.get_include()],
+            library_dirs=[libdirs],
+            libraries=['sundials_kinsol','sundials_nvecserial'])
+            
     ],
     script_args=copy_args
      )
+
 else:
     raise Exception('Could not find Sundials. Recheck Sundials path.')
