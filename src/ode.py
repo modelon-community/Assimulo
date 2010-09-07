@@ -57,6 +57,7 @@ class ODE(object):
         self._SAFETY = 100*N.finfo('double').eps
         self._log_event_info = []
         self._flag_init = True
+        self._flag_reset_statistics = True
     
     def _set_max_steps(self, maxsteps):
         """
