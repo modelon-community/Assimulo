@@ -356,6 +356,7 @@ cdef class Sundials:
     cdef public realtype rtol      #The relative tolerance
     cdef public realtype maxh      #The maximum step-size
     cdef public solver_stats       #Stores the solver statistics
+    cdef public booleantype suppress_alg  #Suppress algebraic components or not
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -366,7 +367,9 @@ cdef class Sundials:
         self.maxord = 12
         self.inith = 0.0
         self.maxh = 0.0
+        self.rtol = 1.e-6
         self.solver_stats = [0,0,0,0,0,0,0,0]
+        self.suppress_alg = False
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -440,6 +443,10 @@ cdef class CVode_wrap(Sundials):
         self.store_cont = False
         self.store_state = False
         self.sim_complete = False
+        
+        #Default values
+        self.atol = np.ones(dim)*1.e-6 #Default tolerance (absolute)
+        
     def cvinit(self,t0,u, maxsteps, verbosity, switches = None):
         cdef flag
         self.store_state = True
@@ -448,13 +455,6 @@ cdef class CVode_wrap(Sundials):
         
         self.update_solver(t0, u, switches) #Update the solver
         self.update_options(verbosity, maxsteps)
-        
-        if self.abstol_ar[0] > 0:
-            flag = CVodeSVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
-        else:
-            flag = CVodeSStolerances(self.solver, self.reltol, self.abstol)
-        if flag!=CV_SUCCESS:
-                raise Exception,"CVode Tolerance Initialization  Error"
         
     
     cdef update_options(self, verbosity, maxsteps):
@@ -483,6 +483,10 @@ cdef class CVode_wrap(Sundials):
             
         #Maximum Number of steps
         flag = CVodeSetMaxNumSteps(self.solver, maxsteps)
+        if flag < 0:
+            raise CVodeError(flag)
+            
+        flag = CVodeSVtolerances(self.solver, self.rtol, arr2nv(self.atol))
         if flag < 0:
             raise CVodeError(flag)
     
@@ -712,14 +716,13 @@ cdef class IDA_wrap(Sundials):
     cdef:
         #void* comp_step_method
         public int dim, _ordersum,_count_output, max_h
-        public long int max_steps
         public realtype abstol,reltol,event_time
         public realtype t0, DQrhomax
         public ndarray abstol_ar,algvar,event_info
         public dict stats
         public list sens_stats
         public dict detailed_info
-        public booleantype suppress_alg,jacobian, store_cont,store_state,comp_step
+        public booleantype jacobian, store_cont,store_state,comp_step
         public booleantype sens_activated
         public int icopt, nbr_params, DQtype, maxcorS, ism, Ns
         public npy_intp num_state_events
@@ -735,6 +738,10 @@ cdef class IDA_wrap(Sundials):
         self.comp_step = False
         self.sim_complete = False
         self.nbr_params = 0
+        
+        #Default values (No sensitivities)
+        self.algvar = np.ones(dim)
+        self.atol = np.ones(dim)*1.e-6 #Default tolerance (absolute)
         
         #Default values
         self.DQtype   = IDA_CENTERED #Specifies the difference quotient type
@@ -754,17 +761,6 @@ cdef class IDA_wrap(Sundials):
         
         self.update_solver(t0, u, ud, switches)
         self.update_options(verbosity, maxsteps)
-        
-        if self.abstol_ar[0] > 0:
-            flag = IDASVtolerances(self.solver, self.reltol, arr2nv(self.abstol_ar))
-        else:
-            flag = IDASStolerances(self.solver, self.reltol, self.abstol)
-        if flag!=IDA_SUCCESS:
-                raise Exception,"IDA Tolerance Initialization  Error"
-        
-        
-        flag = IDASetId(self.solver, arr2nv(self.algvar))
-        flag = IDASetSuppressAlg(self.solver, self.suppress_alg)
         
         #Are there sensitivities to be calculated?
         if self.pData.dimSens > 0:
@@ -796,6 +792,21 @@ cdef class IDA_wrap(Sundials):
             
         #Maximum Number of steps
         flag = IDASetMaxNumSteps(self.solver, maxsteps)
+        if flag < 0:
+            raise IDAError(flag)
+        
+        #Set the algebraic components and the differential
+        flag = IDASetId(self.solver, arr2nv(self.algvar))
+        if flag < 0:
+            raise IDAError(flag)
+        
+        #Suppress algebraic components on the error test
+        flag = IDASetSuppressAlg(self.solver, self.suppress_alg)
+        if flag < 0:
+            raise IDAError(flag)
+            
+        #Set the sensitivity
+        flag = IDASVtolerances(self.solver, self.rtol, arr2nv(self.atol))
         if flag < 0:
             raise IDAError(flag)
     
