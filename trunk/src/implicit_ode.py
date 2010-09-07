@@ -1074,7 +1074,23 @@ class IDA(Implicit_ODE, Sundials):
                 stats[5] #Number of Nonlinear Convergance Failures
         """
         return self.Integrator.sens_stats
-
+    
+    def echo_options(self):
+        """
+        Echo the solver options.
+        """
+        print 'Solver options:\n'
+        print ' Solver                        :  IDA'
+        print ' Linear Multistep Method       :  BDF'
+        print ' Maxord                        : ' ,self.maxord
+        print ' Maximum step-size             : ' ,self.maxh
+        print ' Initial step-size             : ' ,self.initstep
+        print ' Maximum number of steps       : ' ,self.maxsteps
+        print ' Use user-defined Jacobian     : ' ,self.usejac
+        print ' Suppress algebraic components : ' ,self.suppress_alg
+        print ' Differential components       : ' ,self.algvar
+        print ' Tolerances (relative)         : ' ,self.rtol
+        print ' Tolerances (absolute)         : ' ,self.atol
     
     #SENSITIVITY METHODS
     def interpolate_sensitivity(self, t, k, p=-1):

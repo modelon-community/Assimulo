@@ -599,6 +599,7 @@ class CVode(Explicit_ODE, Sundials):
         self.iter = 'FixedPoint' #Setting default iteration to FixedPoint
         self.maxord = 12 #Setting default maxord to maximum
         self.initstep = 0.0 #Setting the initial step to be estimated
+        self.maxh = 0.0 #Setting the maximum absolute step length to infinity
         self.problem_data = {}
 
         
@@ -1038,6 +1039,23 @@ class CVode(Explicit_ODE, Sundials):
                                 -False for not complete
         """
         return self.Integrator.sim_complete
+        
+    def echo_options(self):
+        """
+        Echo the solver options.
+        """
+        print 'Solver options:\n'
+        print ' Solver                    :  CVode'
+        print ' Linear Multistep Method   : ' ,self.discr
+        print ' Nonlinear Solver          : ' ,self.iter
+        print ' Maxord                    : ' ,self.maxord
+        print ' Maximum step-size         : ' ,self.maxh
+        print ' Initial step-size         : ' ,self.initstep
+        print ' Maximum number of steps   : ' ,self.maxsteps
+        print ' Use user-defined Jacobian : ' ,self.usejac
+        print ' Tolerances (relative)     : ' ,self.rtol
+        print ' Tolerances (absolute)     : ' ,self.atol
+        
         
 
 class Radau5(Radau_Common,Explicit_ODE):
