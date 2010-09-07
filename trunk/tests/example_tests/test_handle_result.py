@@ -33,7 +33,7 @@ def run_example():
     exp_sim.simulate(5.,10) #Simulate 5 seconds
 
     assert exp_sim.temp == 11
-    assert exp_sim.stats != None
+    assert exp_sim.stats[0] != 0
     assert exp_sim.problem_name == exp_mod.problem_name
     assert exp_sim.y[0] == y0
     nose.tools.assert_almost_equal(exp_sim.y[-1], 0.02697622, places=8)
@@ -41,9 +41,9 @@ def run_example():
     exp_sim = CVode(exp_mod,y0)
     exp_sim.temp = 0
     exp_sim.post_process = True
-    assert exp_sim.stats == None
+    assert exp_sim.stats[0] == 0
     exp_sim.simulate(5.) #Simulate 5 seconds
-    assert exp_sim.stats != None
+    assert exp_sim.stats[0] != 0
     
 
 def run_example2():

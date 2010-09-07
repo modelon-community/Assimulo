@@ -97,8 +97,7 @@ def run_example2():
     exp_sim.reini = True
     
     exp_sim.simulate(20.)
-    x = exp_sim.stats.keys()[4]
-    assert exp_sim.stats[x] == 77
+    assert exp_sim.stats[0] == 77
 
 def test_cvode_completed_step():
     """

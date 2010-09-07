@@ -313,14 +313,14 @@ class Test_CVode:
         exp_sim.iter='Newton'
         exp_sim.simulate(5.,100)
         
-        assert exp_sim.stats['Number of F-Eval During Jac-Eval         '] == 0
+        assert exp_sim.stats[3] == 0
         nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
         nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
-        assert exp_sim.stats['Number of F-Eval During Jac-Eval         '] > 0
+        assert exp_sim.stats[3] > 0
         
     def test_switches(self):
         """

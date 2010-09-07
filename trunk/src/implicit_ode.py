@@ -1019,11 +1019,14 @@ class IDA(Implicit_ODE, Sundials):
         statistics = self.stats
         
         if statistics!= None:
-            keys = statistics.keys()
-            keys.sort()
-            
-            for x in keys:
-                print ' %s = %s'%(x, statistics[x])
+            print ' Number of Steps                          :', statistics[0]                         
+            print ' Number of Function Evaluations           :', statistics[1]     
+            print ' Number of Jacobian Evaluations           :', statistics[2]        
+            print ' Number of F-Eval During Jac-Eval         :', statistics[3]    
+            print ' Number of Root Evaluations               :', statistics[4]       
+            print ' Number of Error Test Failures            :', statistics[5]       
+            print ' Number of Nonlinear Iterations           :', statistics[6]     
+            print ' Number of Nonlinear Convergence Failures :', statistics[7]
                 
             if self.problem_spec[0][0]: #Senstivity calculations is on
                 sens_stats = self.get_sensitivity_statistics()

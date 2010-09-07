@@ -160,10 +160,10 @@ class Test_IDA:
         sim = IDA(prob, [1.0],[1.0])
         sim.temp = 0
         sim.store_cont = True
-        assert sim.stats == None
+        assert sim.stats[0] == 0
         sim.simulate(10., 100)
         print sim.temp
-        assert sim.stats != None
+        assert sim.stats[0] != 0
         assert sim.temp == 101
         sim.simulate(20)
         print sim.temp
@@ -302,14 +302,14 @@ class Test_IDA:
         imp_sim.simulate(3,100)
         #imp_sim.plot()
         print imp_sim.y[-1]
-        assert imp_sim.stats['Number of F-Eval During Jac-Eval         '] == 0
+        assert imp_sim.stats[3] == 0
         nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
         imp_sim.reset()
         imp_sim.usejac=False
         imp_sim.simulate(3.,100)
 
         nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
-        assert imp_sim.stats['Number of F-Eval During Jac-Eval         '] > 0
+        assert imp_sim.stats[3] > 0
     
     def test_run(self):
         """
