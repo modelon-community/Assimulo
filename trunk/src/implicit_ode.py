@@ -761,6 +761,10 @@ class IDA(Implicit_ODE, Sundials):
         """
         Simulates the problem up until tfinal.
         """
+        if self._flag_reset_statistics:
+            self.Integrator.solver_stats = [0,0,0,0,0,0,0,0]
+            self._flag_reset_statistics = False
+        
         self.Integrator.store_cont = self.store_cont
         if self._flag_init:
             self.Integrator.store_statistics()
