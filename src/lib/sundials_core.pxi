@@ -31,6 +31,11 @@ DEF CV_FUNCTIONAL         = 1
 DEF CV_NEWTON             = 2
 DEF CV_NORMAL             = 1
 DEF CV_ONE_STEP           = 2
+DEF CV_SIMULTANEOUS       = 1
+DEF CV_STAGGERED          = 2
+DEF CV_STAGGERED1         = 3
+DEF CV_CENTERED           = 1
+DEF CV_FORWARD            = 2
 # Iterative solver module
 DEF PREC_RIGHT            = 2
 DEF PREC_BOTH             = 3
@@ -71,6 +76,14 @@ DEF CVDLS_ILL_INPUT       = -3
 DEF CVDLS_MEM_FAIL        = -4 #A memory allocation request failed.
 DEF CVDLS_JACFUNC_UNRECVR = -5
 DEF CVDLS_JACFUNC_RECVR   = -6
+
+# Sensitivity constants
+DEF CV_SRHSFUNC_FAIL      = -41   #The sensitivity right-hand side function failed unrecoverable
+DEF CV_FIRST_SRHSFUNC_ERR = -42   #The sensitivity right-hand side function failed at first call
+DEF CV_REPTD_SRHSFUNC_ERR = -43   #Covergence tests occurred too many times.
+DEF CV_UNREC_SRHSFUNC_ERR = -44   #The sensitivity right-hand side function had a recoverable error but was unable to recover
+DEF CV_BAD_IS             = -45
+
 
 #==========
 # IDA

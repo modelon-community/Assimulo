@@ -119,7 +119,7 @@ cdef extern from "sundials/sundials_direct.h":
     ctypedef _DlsMat* DlsMat
     cdef realtype* DENSE_COL(DlsMat A, int j)
 
-cdef extern from "cvode/cvode.h":
+cdef extern from "cvodes/cvodes.h":
     void* CVodeCreate(int lmm, int iter)
     ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data)
     int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
@@ -167,7 +167,41 @@ cdef extern from "cvode/cvode.h":
                                 long int *nlinsetups, long int *netfails, int *qlast, int *qcur,
                                 realtype *hinused, realtype *hlast, realtype *hcur, realtype *tcur)
     
-cdef extern from "cvode/cvode_dense.h":
+    #Sensitivity methods
+    ctypedef int (*CVSensRhsFn)(int Ns, realtype t, N_Vector y, N_Vector ydot, N_Vector *yS,
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
+    ctypedef int (*CVSensRhs1Fn)(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector *yS,
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
+    int CVodeSensInit(void *cvode_mem, int Ns, int ism, CVSensRhsFn fS, N_Vector *ySO)
+    int CVodeSensInit1(void *cvode_mem, int Ns, int ism, CVSensRhs1Fn fS1, N_Vector *ySO)
+    int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *ySO)
+    int CVodeSensFree(void *cvode_mem)
+    int CVodeSensToggleOff(void *cvode_mem)
+    int CVodeSensSStolerances(void *cvode_mem, realtype reltolS, realtype *abstolS)
+    int CVodeSensSVtolerances(void *cvode_mem, realtype reltolS, N_Vector *abstolS)
+    int CVodeSensEEtolerances(void *cvode_mem)
+    int CVodeGetSens(void *cvode_mem, realtype *tret, N_Vector *yS)
+    int CVodeGetSensDky(void *cvode_mem, realtype t, int k, N_Vector *dkyS)
+    int CVodeGetSens1(void *cvode_mem, realtype *tret, int iss, N_Vector yS)
+    int CVodeGetSensDky1(void *cvode_mem, realtype t, int k, int iss, N_Vector dkyS)
+    int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist)
+    int CVodeSetSensDQMethod(void *cvode_mem, int DQtype, realtype DQrhomax)
+    int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS)
+    int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS)
+    
+    #Statistics
+    int CVodeGetSensNumRhsEvals(void *cvode_mem, long int nfSevals)
+    int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int nfevalsS)
+    int CVodeGetSensNumErrTestFails(void *cvode_mem, long int nSetfails)
+    int CVodeGetSensNumLinSolvSetups(void *cvode_mem, long int nlinsetupsS)
+    int CVodeGetSensErrWeights(void *cvode_mem, N_Vector *eSweight)
+    int CVodeGetSensNumNonlinSolvIters(void *cvode_mem, long int nSniters)
+    int CVodeGetSensNumNonlinSolvConvFails(void *cvode_mem, long int nSncfails)
+    int CVodeGetStgrSensNumNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters)
+    int CVodeGetStgrSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSTGR1ncfails)
+    
+    
+cdef extern from "cvodes/cvodes_dense.h":
     int CVDense(void *cvode_mem, long int N)
     ctypedef int (*CVDlsDenseJacFn)(int N, realtype t, N_Vector y, N_Vector fy, 
                    DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)

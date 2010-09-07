@@ -258,7 +258,7 @@ cdef int ida_err(int error_code, char *module, char *function, char *msg, void *
 #=====================
 
 # Error handling
-# ==============
+# ============== 
  
 class SundialsError(Exception):
     """

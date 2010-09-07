@@ -26,7 +26,7 @@ for x in S.argv[1:]:
     if not x.find('--prefix'):
         copy_args[copy_args.index(x)] = x.replace('/',O.sep)
 
-if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
+if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
     
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
 
@@ -45,7 +45,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvode'), 'cvode.h')):
             [cordir],
             include_dirs=[incdirs, N.get_include()],
             library_dirs=[libdirs],
-            libraries=['sundials_cvode','sundials_idas','sundials_nvecserial']),
+            libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial']),
     ],
     script_args=copy_args
      )
