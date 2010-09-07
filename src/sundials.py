@@ -212,9 +212,26 @@ class Sundials:
     @property
     def stats(self):
         """
-        Attribute that returns the run-time statistics from the Integrator.
+        Returns the run-time statistics.
+        
+            Returns::
+            
+                A list of statistics.
+                
+            Example::
+            
+                stats = IDA/CVode.stats
+                
+                stats[0] # Number of Steps                         
+                stats[1] # Number of Function Evaluations         
+                stats[2] # Number of Jacobian Evaluations         
+                stats[3] # Number of F-Eval During Jac-Eval        
+                stats[4] # Number of Root Evaluations              
+                stats[5] # Number of Error Test Failures           
+                stats[6] # Number of Nonlinear Iterations          
+                stats[7] # Number of Nonlinear Convergence Failures
         """
-        return self.Integrator.stats
+        return self.Integrator.solver_stats
     
     @property
     def disc_info(self):

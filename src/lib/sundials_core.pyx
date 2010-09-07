@@ -355,6 +355,7 @@ cdef class Sundials:
     cdef public ndarray atol       #The absolute tolerance
     cdef public realtype rtol      #The relative tolerance
     cdef public realtype maxh      #The maximum step-size
+    cdef public solver_stats       #Stores the solver statistics
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -365,6 +366,7 @@ cdef class Sundials:
         self.maxord = 12
         self.inith = 0.0
         self.maxh = 0.0
+        self.solver_stats = [0,0,0,0,0,0,0,0]
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -584,22 +586,9 @@ cdef class CVode_wrap(Sundials):
             flag = CVodeGetNumNonlinSolvConvFails(self.solver, &nncfails) #Number of nonlinear conv failures
             
             stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-            stats_text = ['Number of Steps                          ',
-                          'Number of Function Evaluations           ',
-                          'Number of Jacobian Evaluations           ',
-                          'Number of F-Eval During Jac-Eval         ',
-                          'Number of Root Evaluations               ',
-                          'Number of Error Test Failures            ',
-                          'Number of Nonlinear Iterations           ',
-                          'Number of Nonlinear Convergence Failures ']
             
-            if self.stats != None:
-                for x in range(len(stats_text)):
-                    self.stats[stats_text[x]] += stats_values[x]
-            else:
-                self.stats = {}
-                for x in range(len(stats_text)):
-                    self.stats[stats_text[x]] = stats_values[x]
+            for i in range(len(stats_values)):
+                self.solver_stats[i] += stats_values[i]
                     
         self.store_state = False
     
@@ -1039,21 +1028,9 @@ cdef class IDA_wrap(Sundials):
             flag = IDAGetNumNonlinSolvConvFails(self.solver, &nncfails) #Number of nonlinear conv failures
             
             stats_values = [nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails]
-            stats_text = ['Number of Steps                          ',
-                          'Number of Function Evaluations           ',
-                          'Number of Jacobian Evaluations           ',
-                          'Number of F-Eval During Jac-Eval         ',
-                          'Number of Root Evaluations               ',
-                          'Number of Error Test Failures            ',
-                          'Number of Nonlinear Iterations           ',
-                          'Number of Nonlinear Convergence Failures ']
-            if self.stats != None:
-                for x in range(len(stats_text)):
-                    self.stats[stats_text[x]] += stats_values[x]
-            else:
-                self.stats = {}
-                for x in range(len(stats_text)):
-                    self.stats[stats_text[x]] = stats_values[x]
+            
+            for i in range(len(stats_values)):
+                self.solver_stats[i] += stats_values[i]
             
             if self.nbr_params > 0:
                 
