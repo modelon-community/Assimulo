@@ -69,12 +69,12 @@ class Sundials:
                     raise Sundials_Exception('Absolute tolerance must be a float vector or a float scalar.')
                 if tol <= 0.0:
                     raise Sundials_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.Integrator.abstol_ar=N.array(atol)
+            self.Integrator.atol=N.array(atol)
             self.__atol=atol
         else:
             if atol <= 0.0:
                 raise Sundials_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.Integrator.abstol_ar=atol*N.ones(self.Integrator.dim)
+            self.Integrator.atol=atol*N.ones(self.Integrator.dim)
             self.__atol=atol
     
     def _get_atol(self):
@@ -118,7 +118,7 @@ class Sundials:
             raise Sundials_Exception('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
             raise Sundials_Exception('Relative tolerance must be a positive (scalar) float.')
-        self.Integrator.reltol=rtol
+        self.Integrator.rtol=rtol
         self.__rtol=rtol
     
     def _get_rtol(self):
