@@ -913,7 +913,7 @@ cdef class IDA_wrap(Sundials):
             if flag<0:
                 raise IDAError(flag, t0)
         else:
-            flag = IDASensInit(self.solver, self.nbr_params, self.ism, empty_p, self.ySO, self.ydSO)
+            flag = IDASensInit(self.solver, self.nbr_params, self.ism, NULL, self.ySO, self.ydSO)
             
             if flag<0:
                 raise IDAError(flag, t0)
