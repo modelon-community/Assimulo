@@ -50,3 +50,4 @@ Information.
 
 - :class:`CVode.print_statistics() <assimulo.explicit_ode.CVode.print_statistics>` Prints the run-time statistics for the problem.
 - :class:`CVode.print_event_info() <assimulo.explicit_ode.CVode.print_event_info>` Prints the event information.
+- :class:`CVode.echo_options() <assimulo.explicit_ode.CVode.echo_options>` Echo the current solver options.
