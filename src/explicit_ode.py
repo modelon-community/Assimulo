@@ -692,6 +692,7 @@ class CVode(Explicit_ODE, Sundials):
         """
         if self._flag_reset_statistics:
             self.Integrator.solver_stats = [0,0,0,0,0,0,0,0]
+            self.Integrator.solver_sens_stats = [0,0,0,0,0,0]
             self._flag_reset_statistics = False
         
         self.Integrator.store_cont = self.store_cont
