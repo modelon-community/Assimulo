@@ -190,13 +190,16 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS)
     
     #Statistics
-    int CVodeGetSensNumRhsEvals(void *cvode_mem, long int nfSevals)
-    int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int nfevalsS)
-    int CVodeGetSensNumErrTestFails(void *cvode_mem, long int nSetfails)
-    int CVodeGetSensNumLinSolvSetups(void *cvode_mem, long int nlinsetupsS)
+    int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals)
+    int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS)
+    int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails)
+    int CVodeGetSensNumLinSolvSetups(void *cvode_mem, long int *nlinsetupsS)
+    int CVodeGetSensStats(void *cvode_mem, long int *nfSevals, long int *nfevalsS,
+                         long int *nSetfails, long int *nlinsetupsS)
     int CVodeGetSensErrWeights(void *cvode_mem, N_Vector *eSweight)
-    int CVodeGetSensNumNonlinSolvIters(void *cvode_mem, long int nSniters)
-    int CVodeGetSensNumNonlinSolvConvFails(void *cvode_mem, long int nSncfails)
+    int CVodeGetSensNumNonlinSolvIters(void *cvode_mem, long int *nSniters)
+    int CVodeGetSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSncfails)
+    int CVodeGetSensNonlinSolvStats(void *cvode_mem, long int *nSniters, long int *nSncfails)
     int CVodeGetStgrSensNumNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters)
     int CVodeGetStgrSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSTGR1ncfails)
     

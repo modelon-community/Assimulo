@@ -356,7 +356,18 @@ cdef class Sundials:
     cdef public realtype rtol      #The relative tolerance
     cdef public realtype maxh      #The maximum step-size
     cdef public solver_stats       #Stores the solver statistics
+    cdef public solver_sens_stats  #Stores the solver sensitivity statistics
     cdef public booleantype suppress_alg  #Suppress algebraic components or not
+    cdef public booleantype sensToggleOff #Should the sensitivity calculations be turned off?
+    cdef public booleantype errconS #Error control strategy
+    cdef public int maxcorS #Maximum number of nonlinear solver iterations (sens) per step
+    cdef public int DQtype #Difference quotient type
+    cdef public realtype DQrhomax #Selection parameter (sens)
+    cdef booleantype _flag_active_sens #Flag used for determine if reinit sens is required
+    cdef public int ism #Sensitivity solution method
+    cdef public object p #The parameter information
+    cdef public object pbar #
+    cdef N_Vector *ySO #The sensitivity start matrix
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -369,7 +380,17 @@ cdef class Sundials:
         self.maxh = 0.0
         self.rtol = 1.e-6
         self.solver_stats = [0,0,0,0,0,0,0,0]
+        self.solver_sens_stats = [0,0,0,0,0,0]
         self.suppress_alg = False
+        
+        #Default values (Sensitivity)
+        self.sensToggleOff = False #Toggle the sensitivity calculations off
+        self.errconS  = False #Specifies whether sensitivity variables are included in the error control mechanism
+        self.maxcorS  = 3 #Maximum number of nonlinear solver iterations for sensitivity variables per step.
+        self.DQtype   = CV_CENTERED #(IDA_CENTERED) #Specifies the difference quotient type
+        self.DQrhomax = 0.0 #Positive value of the selction parameter used in deciding switching
+        self.ism      = CV_STAGGERED #(IDA_STAGGERED) #The sensitivity solution method
+        self._flag_active_sens = False #The sensitivity is not activated
         
     cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
         """
@@ -403,7 +424,7 @@ cdef class Sundials:
         
         if dimSens != None: #Sensitivity parameters (does not need the sensitivity function)
             self.pData.dimSens = dimSens
-            self.pData.p = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+            self.pData.p = <realtype*> malloc(dimSens*sizeof(realtype))
             #self.p_nd = np.empty(dimSens, dtype=float, order='c')
             #self.pData.p = <void*>self.p_nd
             #self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
@@ -456,6 +477,9 @@ cdef class CVode_wrap(Sundials):
         self.update_solver(t0, u, switches) #Update the solver
         self.update_options(verbosity, maxsteps)
         
+        #Are there sensitivities to be calculated?
+        if self.pData.dimSens > 0:
+            self.update_sens_options(t0,u)
     
     cdef update_options(self, verbosity, maxsteps):
         """
@@ -489,6 +513,74 @@ cdef class CVode_wrap(Sundials):
         flag = CVodeSVtolerances(self.solver, self.rtol, arr2nv(self.atol))
         if flag < 0:
             raise CVodeError(flag)
+    
+    cdef update_sens_options(self,t0,y):
+        """
+        Updates the sensitivity options.
+        """
+        cdef int flag
+        cdef realtype *pbar
+        cdef realtype ZERO = 0.0
+        self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(y))
+        
+        #Filling the start vectors
+        for i in range(self.pData.dimSens):
+             N_VConst_Serial(ZERO,  self.ySO[i]);
+        
+        if self._flag_active_sens:
+            flag = CVodeSensReInit(self.solver, self.ism, self.ySO)
+        else:
+            flag = CVodeSensInit(self.solver, self.pData.dimSens, self.ism, NULL, self.ySO)
+            self._flag_active_sens = True
+        if flag < 0:
+            raise CVodeError(flag, t0)
+            
+        #Sets the parameters to the userdata object.
+        for i in range(self.pData.dimSens):
+            self.pData.p[i] = self.p[i]
+        
+        #Sets the pbar.
+        pbar = <realtype*> malloc(self.pData.dimSens*sizeof(realtype))
+        if self.pbar != None:
+            for i in range(self.pData.dimSens):
+                pbar[i] = self.pbar[i]
+        else:
+            for i in range(self.pData.dimSens):
+                pbar[i] = 1.0
+        
+        #Problem parameter information
+        flag = CVodeSetSensParams(self.solver, self.pData.p, pbar, NULL)
+        if flag < 0:
+            raise CVodeError(flag, t0)
+        
+        free(pbar) #Free the allocated memory
+        
+        #Difference quotient strategy
+        flag = CVodeSetSensDQMethod(self.solver, self.DQtype, self.DQrhomax)
+        if flag < 0:
+            raise CVodeError(flag, t0)
+        
+        #Maximum number of nonlinear iterations
+        flag = CVodeSetSensMaxNonlinIters(self.solver, self.maxcorS)
+        if flag < 0:
+            raise CVodeError(flag, t0)
+        
+        #Specify the error control strategy
+        flag = CVodeSetSensErrCon(self.solver, self.errconS)
+        if flag < 0:
+            raise CVodeError(flag, t0)
+        
+        #Estimate the sensitivity
+        flag = CVodeSensEEtolerances(self.solver)
+        if flag<0:
+            raise CVodeError(flag, t0)
+        
+        #Should the sensitivities be calculated this time around?
+        if self.sensToggleOff:
+            flag = CVodeSensToggleOff(self.solver)
+            
+            if flag<0:
+                raise CVodeError(flag, t0)
     
     cdef update_solver(self, t0, y0, sw0 = None):
         """
@@ -569,11 +661,57 @@ cdef class CVode_wrap(Sundials):
         
         return nv2arr(dky)
     
+    cpdef interpolate_sensitivity(self,realtype t, int k, int i=-1):
+        """
+        This method calls the internal method CVodeGetSensDky which computes the k-th derivatives
+        of the interpolating polynomials for the sensitivity variables at time t.
+        
+            Parameters::
+                    
+                    t
+                        - Specifies the time at which sensitivity information is requested. The time
+                          t must fall within the interval defined by the last successful step taken
+                          by CVodeS.
+                    
+                    k   
+                        - The order of derivatives.
+                        
+                    i
+                        - Specifies the sensitivity derivative vector to be returned (0<=i<=Ns)
+                        
+            Return::
+            
+                    A matrix containing the Ns vectors or a vector if i is specified.
+        """
+        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
+        cdef int flag
+        
+        if i==-1:
+            
+            matrix = []
+            
+            for x in range(self.pData.dimSens):
+                flag = CVodeGetSensDky1(self.solver, t, k, x, dkyS)
+                if flag<0:
+                    raise CVodeError(flag, t)
+                
+                matrix += [nv2arr(dkyS)]
+            
+            return np.array(matrix)
+        else:
+            flag = CVodeGetSensDky1(self.solver, t, k, i, dkyS)
+            if flag <0:
+                raise CVodeError(flag, t)
+            
+            return nv2arr(dkyS)
+    
     cpdef store_statistics(self):
         """
         Retrieves and stores the statistics.
         """
         cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
+        cdef long int nSniters, nSncfails
+        cdef long int nfSevals,nfevalsS,nSetfails,nlinsetupsS
         
         if self.store_state:
             flag = CVodeGetNumSteps(self.solver, &nsteps) #Number of steps
@@ -593,7 +731,17 @@ cdef class CVode_wrap(Sundials):
             
             for i in range(len(stats_values)):
                 self.solver_stats[i] += stats_values[i]
-                    
+            
+            if self.pData.dimSens > 0:
+                
+                flag = CVodeGetSensStats(self.solver, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
+                flag = CVodeGetSensNonlinSolvStats(self.solver, &nSniters, &nSncfails)
+                
+                stats_values = [nfSevals, nfevalsS, nSetfails, nlinsetupsS,nSniters, nSncfails]
+                
+                for x in range(len(stats_values)):
+                    self.solver_sens_stats[x] += stats_values[x]
+                
         self.store_state = False
     
     cdef save_event_info(self,tret):
@@ -717,19 +865,16 @@ cdef class IDA_wrap(Sundials):
         #void* comp_step_method
         public int dim, _ordersum,_count_output, max_h
         public realtype abstol,reltol,event_time
-        public realtype t0, DQrhomax
+        public realtype t0
         public ndarray abstol_ar,algvar,event_info
-        public dict stats
-        public list sens_stats
         public dict detailed_info
         public booleantype jacobian, store_cont,store_state,comp_step
         public booleantype sens_activated
-        public int icopt, nbr_params, DQtype, maxcorS, ism, Ns
+        public int icopt, nbr_params, Ns
         public npy_intp num_state_events
-        public booleantype sim_complete, errconS, sensToggleOff
+        public booleantype sim_complete
         N_Vector temp_nvector
-        N_Vector *ySO, *ydSO
-        public object p, pbar
+        N_Vector *ydSO
     def __init__(self,dim):
         
         self.dim=dim
@@ -743,15 +888,6 @@ cdef class IDA_wrap(Sundials):
         self.algvar = np.ones(dim)
         self.atol = np.ones(dim)*1.e-6 #Default tolerance (absolute)
         
-        #Default values
-        self.DQtype   = IDA_CENTERED #Specifies the difference quotient type
-        self.DQrhomax = 0.0 #Positive value of the selction parameter used in deciding switching
-        self.errconS  = False #Specifies whether sensitivity variables are included in the error control mechanism
-        self.maxcorS  = 3 #Maximum number of nonlinear solver iterations for sensitivity variables per step.
-        self.sens_activated = False #The sensitivities are not allocated
-        self.ism = IDA_STAGGERED #The corrector step for the sensitivity variables takes place at the same time for all sensitivity equations
-        self.sensToggleOff = False #Toggle the sensitivity calculations off
-        
     def idinit(self,t0,u,ud, maxsteps, verbosity, switches = None):
         cdef flag
         self.t0 = t0
@@ -764,7 +900,7 @@ cdef class IDA_wrap(Sundials):
         
         #Are there sensitivities to be calculated?
         if self.pData.dimSens > 0:
-            self.set_sensitivity_options(t0,u,ud)
+            self.update_sens_options(t0,u,ud)
     
     cdef update_options(self, verbosity, maxsteps):
         """
@@ -890,92 +1026,81 @@ cdef class IDA_wrap(Sundials):
         
         return nv2arr(dky)
     
-    def set_sensitivity_options(self,t0,y,yd):
+    cdef update_sens_options(self,t0,y,yd):
         """
         Sets the sensitivity information.
         """
         #Create the initial matrices
-        self.ySO  = N_VCloneVectorArray_Serial(self.nbr_params, arr2nv(y))
-        self.ydSO = N_VCloneVectorArray_Serial(self.nbr_params, arr2nv(yd))
-        cdef IDASensResFn empty_p
+        self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(y))
+        self.ydSO = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(yd))
         cdef realtype ZERO = 0.0
         cdef realtype *pbar
-        cdef int *plist
         
         #Filling the start vectors
-        for i in range(self.nbr_params):
+        for i in range(self.pData.dimSens):
              N_VConst_Serial(ZERO,  self.ySO[i]);
              N_VConst_Serial(ZERO, self.ydSO[i]);
 
-        if self.sens_activated:
+        if self._flag_active_sens:
             flag = IDASensReInit(self.solver, self.ism, self.ySO, self.ydSO)
-            
-            if flag<0:
-                raise IDAError(flag, t0)
         else:
-            flag = IDASensInit(self.solver, self.nbr_params, self.ism, NULL, self.ySO, self.ydSO)
+            flag = IDASensInit(self.solver, self.pData.dimSens, self.ism, NULL, self.ySO, self.ydSO)
+            self._flag_active_sens = True
+        if flag<0:
+            raise IDAError(flag, t0)    
             
-            if flag<0:
-                raise IDAError(flag, t0)
-            
-            self.sens_activated = True
          
         #Sets the parameters to the userdata object.
         for i in range(self.pData.dimSens):
             self.pData.p[i] = self.p[i]
         
         #Sets the pbar.
-        pbar = <realtype*> malloc(self.nbr_params*sizeof(realtype))
+        pbar = <realtype*> malloc(self.pData.dimSens*sizeof(realtype))
         if self.pbar != None:
-            for i in range(self.nbr_params):
+            for i in range(self.pData.dimSens):
                 pbar[i] = self.pbar[i]
         else:
-            for i in range(self.nbr_params):
+            for i in range(self.pData.dimSens):
                 pbar[i] = 1.0
         
         #Specify problem parameter information for sensitivity calculations
-        flag = IDASetSensParams(self.solver, self.pData.p, pbar, plist)
+        flag = IDASetSensParams(self.solver, self.pData.p, pbar, NULL)
         
         if self.pbar != None:
             free(pbar) #Free the allocated space.
-        
+            
         if flag<0:
             raise IDAError(flag, t0)
         
         #Specify the difference quotient strategy
         flag = IDASetSensDQMethod(self.solver, self.DQtype, self.DQrhomax)
-        
         if flag<0:
             raise IDAError(flag, t0)
         
         #Specify the error control strategy
         flag = IDASetSensErrCon(self.solver, self.errconS)
-        
         if flag<0:
             raise IDAError(flag, t0)
         
         #Specify the maximum number of nonlinear solver iterations
         flag = IDASetSensMaxNonlinIters(self.solver, self.maxcorS)
-        
         if flag<0:
             raise IDAError(flag, t0)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
         flag = IDASensEEtolerances(self.solver)
-        
         if flag<0:
             raise IDAError(flag, t0)
         
         #Should the sensitivities be calculated this time around?
         if self.sensToggleOff:
             flag = IDASensToggleOff(self.solver)
-            
             if flag<0:
                 raise IDAError(flag, t0)
     
     def interpolate_sensitivity(self,realtype t, int k, int i=-1):
         """
-        This method class the internal method IDAGetSensDky which computes the k-th derivatives
+        This method calls the internal method IDAGetSensDky which computes the k-th derivatives
         of the interpolating polynomials for the sensitivity variables at time t.
         
             Parameters::
@@ -1002,7 +1127,7 @@ cdef class IDA_wrap(Sundials):
             
             matrix = []
             
-            for x in range(self.nbr_params):
+            for x in range(self.pData.dimSens):
                 flag = IDAGetSensDky1(self.solver, t, k, x, dkyS)
                 
                 if flag<0:
@@ -1043,20 +1168,15 @@ cdef class IDA_wrap(Sundials):
             for i in range(len(stats_values)):
                 self.solver_stats[i] += stats_values[i]
             
-            if self.nbr_params > 0:
+            if self.pData.dimSens > 0:
                 
                 flag = IDAGetSensStats(self.solver, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
                 flag = IDAGetSensNonlinSolvStats(self.solver, &nSniters, &nSncfails)
                 
                 stats_values = [nfSevals, nfevalsS, nSetfails, nlinsetupsS,nSniters, nSncfails]
                 
-                if self.sens_stats != None:
-                    for x in range(len(stats_values)):
-                        self.sens_stats[x] += stats_values[x]
-                else:
-                    self.sens_stats = []
-                    for x in range(len(stats_values)):
-                        self.sens_stats += [stats_values[x]]
+                for x in range(len(stats_values)):
+                    self.solver_sens_stats[x] += stats_values[x]
             
             
         self.store_state = False

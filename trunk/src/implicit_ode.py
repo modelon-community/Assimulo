@@ -763,6 +763,7 @@ class IDA(Implicit_ODE, Sundials):
         """
         if self._flag_reset_statistics:
             self.Integrator.solver_stats = [0,0,0,0,0,0,0,0]
+            self.Integrator.solver_sens_stats = [0,0,0,0,0,0]
             self._flag_reset_statistics = False
         
         self.Integrator.store_cont = self.store_cont
@@ -1077,7 +1078,7 @@ class IDA(Implicit_ODE, Sundials):
                 stats[4] #Number of Nonlinear iterations     
                 stats[5] #Number of Nonlinear Convergance Failures
         """
-        return self.Integrator.sens_stats
+        return self.Integrator.solver_sens_stats
     
     def echo_options(self):
         """
