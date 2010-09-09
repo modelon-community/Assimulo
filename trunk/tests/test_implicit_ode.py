@@ -451,120 +451,19 @@ class Test_IDA:
         assert len(sim.t) == 23
         assert sim._nstepevents == 22
         
-class Test_IDAS:
-    """
-    Test sensitivity methods.
-    """
-    
-    def setUp(self):
-        """
-        This function sets up the test case.
-        """
-        mod = Implicit_Problem()
-        mod.f = lambda t,y,yd,p: N.array([0.0])
-        y0 = [1.0]
-        yd0 = [1.0]
-        p0 = [1.0]
-
-        self.sim = IDA(mod, y0, yd0,p0=p0)
-        
-        
-    def test_DQtype(self):
-        """
-        Tests the property of DQtype.
-        """
-        
-        assert self.sim.DQtype == 'IDA_CENTERED' #Test the default value.
-        
-        self.sim.DQtype = 'IDA_FORWARD'
-        assert self.sim.DQtype == 'IDA_FORWARD'
-        self.sim.DQtype = 'IDA_CENTERED'
-        assert self.sim.DQtype == 'IDA_CENTERED'
-        
-        self.sim.DQtype = 'ida_forward'
-        assert self.sim.DQtype == 'IDA_FORWARD'
-        self.sim.DQtype = 'ida_centered'
-        assert self.sim.DQtype == 'IDA_CENTERED'
-        
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQtype, 1)
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQtype, 'IDA_CE')
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQtype, [1])
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQtype, -1)
-        
-    def test_DQrhomax(self):
-        """
-        Tests the property of DQrhomax.
-        """
-        assert self.sim.DQrhomax == 0.0 #Test the default value.
-        
-        self.sim.DQrhomax = 1.0
-        assert self.sim.DQrhomax == 1.0
-        self.sim.DQrhomax = 10
-        assert self.sim.DQrhomax == 10
-        
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQrhomax, -1)
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQrhomax, 'str')
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQrhomax, [])
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_DQrhomax, -10)
-        
-    def test_usesens(self):
-        """
-        Tests the property of usesens.
-        """
-        assert self.sim.usesens == True #Test the default value.
-        
-        self.sim.usesens = False
-        assert self.sim.usesens == False
-        self.sim.usesens = 0
-        assert self.sim.usesens == False
-        self.sim.usesens = 1
-        assert self.sim.usesens == True
-    
-    def test_sensmethod(self):
-        """
-        Tests the property of sensmethod.
-        """
-        assert self.sim.sensmethod == 'IDA_STAGGERED' #Test the default value
-        
-        self.sim.sensmethod = 'IDA_SIMULTANEOUS'
-        assert self.sim.sensmethod == 'IDA_SIMULTANEOUS'
-        self.sim.sensmethod = 'IDA_STAGGERED'
-        assert self.sim.sensmethod == 'IDA_STAGGERED'
-        
-        self.sim.sensmethod = 'ida_simultaneous'
-        assert self.sim.sensmethod == 'IDA_SIMULTANEOUS'
-        self.sim.sensmethod = 'ida_staggered'
-        assert self.sim.sensmethod == 'IDA_STAGGERED'
-        
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_sensitivity_method, 1)
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_sensitivity_method, 'IDA_CE')
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_sensitivity_method, [1])
-        nose.tools.assert_raises(Implicit_ODE_Exception,self.sim._set_sensitivity_method, -1)
-
-    def test_suppress_sens(self):
-        """
-        Tests the property of suppress_sens.
-        """
-        assert self.sim.suppress_sens == True
-        self.sim.suppress_sens = False
-        assert self.sim.suppress_sens == False
-        self.sim.suppress_sens = 0
-        assert self.sim.suppress_sens == False
-        self.sim.suppress_sens = 1
-        assert self.sim.suppress_sens == True
-
-    def test_maxsensiter(self):
-        """
-        Tests the property of maxsensiter.
-        """
-        assert self.sim.maxsensiter == 3 #Test the default value
-        self.sim.maxsensiter = 1
-        assert self.sim.maxsensiter == 1
-        self.sim.maxsensiter = 10.5
-        assert self.sim.maxsensiter == 10
-        
-        nose.tools.assert_raises(Implicit_ODE_Exception, self.sim._set_max_nonlin, 0)
-        nose.tools.assert_raises(Implicit_ODE_Exception, self.sim._set_max_nonlin, 'str')
-        nose.tools.assert_raises(Implicit_ODE_Exception, self.sim._set_max_nonlin, [])
-        nose.tools.assert_raises(Implicit_ODE_Exception, self.sim._set_max_nonlin, -10)
-        
+#class Test_IDAS:
+#    """
+#    Test sensitivity methods.
+#    """
+#    
+#    def setUp(self):
+#        """
+#        This function sets up the test case.
+#        """
+#        mod = Implicit_Problem()
+#        mod.f = lambda t,y,yd,p: N.array([0.0])
+#        y0 = [1.0]
+#        yd0 = [1.0]
+#        p0 = [1.0]
+#    
+#        self.sim = IDA(mod, y0, yd0,p0=p0)

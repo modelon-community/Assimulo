@@ -542,7 +542,7 @@ class CVode(Explicit_ODE, Sundials):
     """
     Sundials CVode.
     """
-    def __init__(self, problem, y0=None, t0=None, switches0=None):
+    def __init__(self, problem, y0=None, t0=None, switches0=None, p0=None):
         """
         Initiates the solver.
         
@@ -643,6 +643,25 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.problem_spec = [self._RHS]
         
+        #Sensitivity
+        sens = False
+        
+        if p0 == None:
+            if hasattr(problem, 'p0'):
+                self.p = problem.p0
+                sens = True
+        else:
+            self.p = p0
+            sens = True
+
+        if sens:
+            self._problem.p0 = self.p
+            #Set information to the solver IDAS
+            self.Integrator.p = N.array(self.p)
+            self.problem_data['dimSens'] = len(self.p)
+        else:
+            self.problem_data['dimSens'] = 0
+        
         # 
         # TEST METHODS
         #
@@ -654,21 +673,25 @@ class CVode(Explicit_ODE, Sundials):
             rt = self.problem_data['ROOT']
         except KeyError:
             rt = None
-        self._assert_return_types(rt,jt,self.switches)
+        self._assert_return_types(rt,jt,self.switches, sens)
         
         
         #Sets the problem data to Sundials
         self.Integrator.set_problem_info(**self.problem_data)
 
-    def _assert_return_types(self, root = None, jac = None, sw = None):
+    def _assert_return_types(self, root = None, jac = None, sw = None,sens = False):
         """
         Tests the provided user methods for correct return types. The
         methods should all return numpy arrays(matrix) of floats.
         """
-        if sw == None:
+        if sw == None and sens == False:
             testf = self.f(self._problem.t0, self.y_cur)
-        else:
+        elif sw == None and sens == True:
+            testf = self.f(self._problem.t0, self.y_cur, self.p)
+        elif sw and sens == False:
             testf = self.f(self._problem.t0, self.y_cur, sw)
+        else:
+            testf = self.f(self._problem.t0 , self.y_cur, sw=sw, p=self.p)
             
         if not isinstance(testf, N.ndarray) or testf.dtype != float:
             raise Explicit_ODE_Exception('The right-hand-side function must return a numpy array of floats.')
@@ -1013,7 +1036,18 @@ class CVode(Explicit_ODE, Sundials):
             print ' Number of Error Test Failures            :', statistics[5]       
             print ' Number of Nonlinear Iterations           :', statistics[6]     
             print ' Number of Nonlinear Convergence Failures :', statistics[7]
+            
+            if self.problem_data['dimSens'] > 0: #Senstivity calculations is on
+                sens_stats = self.get_sensitivity_statistics()
                 
+                print '\nSensitivity Statistics:\n'
+                print ' Number of Sensitivity Calculations             :', sens_stats[0]
+                print ' Number of F-Evals Due to Finite Approximation  :', sens_stats[1]
+                print ' Number of Local Error Test Failures            :', sens_stats[2]
+                print ' Number of Linear Setups                        :', sens_stats[3]
+                print ' Number of Nonlinear iterations                 :', sens_stats[4]
+                print ' Number of Nonlinear Convergance Failures       :', sens_stats[5]
+            
             print '\nSolver options:\n'
             print ' Solver                  :  CVode'
             print ' Linear Multistep Method : ', self.discr
