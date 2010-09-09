@@ -441,7 +441,7 @@ class Sundials:
                 
         See SUNDIALS documentation '(IDA/CVode)SetSensParams'
         """
-        if len(pbar) != self.Integrator.nbr_params:
+        if len(pbar) != self.problem_data['dimSens']:
             raise Sundials_Exception('pbar must be of equal length as the parameters.')
         
         self.Integrator.pbar = pbar

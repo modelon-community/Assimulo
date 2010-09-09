@@ -47,20 +47,37 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef ndarray y = nv2arr(yv)
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
-
-    try:
-        if pData.sw != NULL:
-            rhs = (<object>pData.RHS)(t,y,<list>pData.sw)
-        else:
-            rhs = (<object>pData.RHS)(t,y)
+    
+    if pData.dimSens>0: #Sensitivity activated
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                rhs = (<object>pData.RHS)(t,y,<list>pData.sw, p=p)
+            else:
+                rhs = (<object>pData.RHS)(t,y,p)
+                
+            #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
+            for i in range(pData.dim):
+                resptr[i] = rhs[i]
             
-        #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
-        for i in range(pData.dim):
-            resptr[i] = rhs[i]
+            return CV_SUCCESS
+        except:
+            return CV_REC_ERR #Recoverable Error (See Sundials description)
         
-        return CV_SUCCESS
-    except:
-        return CV_REC_ERR #Recoverable Error (See Sundials description)
+    else: #No sensitivity
+        try:
+            if pData.sw != NULL:
+                rhs = (<object>pData.RHS)(t,y,<list>pData.sw)
+            else:
+                rhs = (<object>pData.RHS)(t,y)
+                
+            #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
+            for i in range(pData.dim):
+                resptr[i] = rhs[i]
+            
+            return CV_SUCCESS
+        except:
+            return CV_REC_ERR #Recoverable Error (See Sundials description)
 
 cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
@@ -115,8 +132,8 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     
         return CV_SUCCESS
     except:
-        return CV_RTFUNC_FAIL  # Unrecoverable Error
-        
+        return CV_RTFUNC_FAIL  # Unrecoverable Error            
+
 cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data):
     """
     This method is used to connect the Assimulo.Problem.f to the Sundials
