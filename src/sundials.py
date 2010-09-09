@@ -239,3 +239,403 @@ class Sundials:
         Attribute that returns information about an occured event.
         """
         return [self.Integrator.event_time, self.Integrator.event_info]
+        
+    def _set_dqrhomax(self, dqrhomax):
+        """
+        Specifies the selection parameters used in deciding switching between a simultaneous
+        or separate approximation of the two terms in the sensitivity residual.
+        
+            Parameters::
+            
+                DQrhomax
+                        - A postive float.
+                        - Default 0.0
+                        
+            Returns::
+            
+                The current value of DQrhomax (float)
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensDQMethod' 
+        """
+        try:
+            dqrhomax = float(dqrhomax)
+            if dqrhomax < 0.0:
+                raise Sundials_Exception('DQrhomax must be a positive float.')
+        except (TypeError, ValueError):
+            raise Sundials_Exception('DQrhomax must be convertable to a float.')
+            
+        self.Integrator.DQrhomax = dqrhomax
+        
+    def _get_dqrhomax(self):
+        """
+        Specifies the selection parameters used in deciding switching between a simultaneous
+        or separate approximation of the two terms in the sensitivity residual.
+        
+            Parameters::
+            
+                DQrhomax
+                        - A postive float.
+                        - Default 0.0
+                        
+            Returns::
+            
+                The current value of DQrhomax (float)
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensDQMethod' 
+        """
+        return self.Integrator.DQrhomax
+    
+    dqrhomax = property(_get_dqrhomax, _set_dqrhomax)
+    
+    def _set_usesens(self, usesens):
+        """
+        Specifies if the sensitivity calculations should be used or turned off.
+        
+            Parameters::
+            
+                usesens
+                            - A boolean type.
+                            - Default True
+                            
+            Returns::
+            
+                The current value of usesens (boolean)
+        
+        See SUNDIALS documentation '(IDA/CVode)SensToggleOff' 
+        """
+        self.Integrator.sensToggleOff = not bool(usesens)
+        
+    def _get_usesens(self):
+        """
+        Specifies if the sensitivity calculations should be used or turned off.
+        
+            Parameters::
+            
+                usesens
+                            - A boolean type.
+                            - Default True
+                            
+            Returns::
+            
+                The current value of usesens (boolean)
+        
+        See SUNDIALS documentation '(IDA/CVode)SensToggleOff' 
+        """
+        return not self.Integrator.sensToggleOff
+        
+    usesens = property(_get_usesens, _set_usesens)
+    
+    def _set_suppress_sens(self, suppress_sens):
+        """
+        Specifies whether sensitivity variables are included in the error test
+        or not. True means that the variables are suppressed and not included 
+        in the error test.
+        
+            Parameters::
+            
+                suppress_sens
+                        - A boolean
+                        - Default True
+                        
+            Returns::
+                
+                The current value of suppress_sens (boolean)
+                
+        See SUNDIALS documentation '(IDA/CVode)SetSensErrCon'.
+        
+        NOTE:: 
+        
+            That this method does the opposite of (IDA/CVode)SetSensERRCon to have 
+            the same meaning as suppress_alg.
+        """
+        self.Integrator.errconS = not bool(suppress_sens)
+        
+    def _get_suppress_sens(self):
+        """
+        Specifies whether sensitivity variables are included in the error test
+        or not. True means that the variables are suppressed and not included 
+        in the error test.
+        
+            Parameters::
+            
+                suppress_sens
+                        - A boolean
+                        - Default True
+                        
+            Returns::
+                
+                The current value of suppress_sens (boolean)
+                
+        See SUNDIALS documentation '(IDA/CVode)SetSensErrCon'.
+        
+        NOTE:: 
+        
+            That this method does the opposite of (IDA/CVode)SetSensERRCon to have 
+            the same meaning as suppress_alg.
+        """
+        return not self.Integrator.errconS
+    
+    suppress_sens = property(_get_suppress_sens, _set_suppress_sens)
+    
+    def _set_max_nonlin(self, maxsensiter):
+        """
+        Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables per step. (>0)
+        
+            Parameters::
+            
+                maxsensiter 
+                            - An integer
+                            - Default 3
+                            
+            Returns::
+            
+                The current value of maxsensiter.
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensMaxNonlinIters'.
+        """
+        try:
+            maxsensiter = int(maxsensiter)
+            if maxsensiter < 1:
+                raise Sundials_Exception('maxsensiter must be greater than zero.')
+        except (TypeError, ValueError):
+            raise Sundials_Exception('maxsensiter must be convertable to an integer.')
+        
+        self.Integrator.maxcorS = maxsensiter
+        
+    def _get_max_nonlin(self):
+        """
+        Specifies the maximum number of nonlinear solver iterations for
+        sensitivity variables per step. (>0)
+        
+            Parameters::
+            
+                maxsensiter 
+                            - An integer
+                            - Default 3
+                            
+            Returns::
+            
+                The current value of maxsensiter.
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensMaxNonlinIters'.
+        """
+        return self.Integrator.maxcorS
+    
+    maxsensiter = property(_get_max_nonlin, _set_max_nonlin)
+
+    def _set_pbar(self, pbar):
+        """
+        Specifies the order of magnitude for the parameters. This is useful if IDAS is
+        to estimate tolerances for the sensitivity solution vectors.
+        
+            Parameters::
+            
+                pbar
+                        - An array of positive floats equal to the number of parameters.
+                        - Default array of ones.
+                        
+            Returns::
+            
+                The current value of pbar.
+                
+        See SUNDIALS documentation '(IDA/CVode)SetSensParams'
+        """
+        if len(pbar) != self.Integrator.nbr_params:
+            raise Sundials_Exception('pbar must be of equal length as the parameters.')
+        
+        self.Integrator.pbar = pbar
+    
+    def _get_pbar(self):
+        """
+        Specifies the order of magnitude for the parameters. This is useful if IDAS is
+        to estimate tolerances for the sensitivity solution vectors.
+        
+            Parameters::
+            
+                pbar
+                        - An array of positive floats equal to the number of parameters.
+                        - Default array of ones.
+                        
+            Returns::
+            
+                The current value of pbar.
+                
+        See SUNDIALS documentation '(IDA/CVode)SetSensParams'
+        """
+        return self.Integrator.pbar
+    
+    pbar = property(_get_pbar, _set_pbar)
+
+
+    def _set_sensitivity_method(self, ism):
+        """
+        Specifies the sensitivity solution method. Can be either,
+        'SIMULTANEOUS' or 'STAGGERED'.
+            
+        Parameters::
+            
+            ism
+                    - A string of either 'SIMULTANEOUS' or 'STAGGERED'
+                    - Default 'STAGGERED'
+                        
+        Returns::
+            
+            The current value of sensmethod (string)
+        
+        See SUNDIALS documentation '(IDA/CVode)SensInit'
+        """
+        if not isinstance(ism, str):
+            raise Sundials_Exception('sensmethod must be string.')
+        
+        if ism.upper() == 'SIMULTANEOUS':
+            self.Integrator.ism = 1
+        elif ism.upper() == 'STAGGERED':
+            self.Integrator.ism = 2
+        else:
+            raise Sundials_Exception('sensmethod must be either "SIMULTANEOUS" or "STAGGERED".')
+        
+    def _get_sensitivity_method(self):
+        """
+        Specifies the sensitivity solution method. Can be either,
+        'SIMULTANEOUS' or 'STAGGERED'.
+            
+        Parameters::
+            
+            ism
+                    - A string of either 'SIMULTANEOUS' or 'STAGGERED'
+                    - Default 'STAGGERED'
+                        
+        Returns::
+            
+            The current value of sensmethod (string)
+        
+        See SUNDIALS documentation '(IDA/CVode)SensInit'
+        """
+        if self.Integrator.ism == 1:
+            return 'SIMULTANEOUS'
+        elif self.Integrator.ism == 2:
+            return 'STAGGERED'
+        else:
+            raise Sundials_Exception('Unknown value of sensitivity solution method.')
+    
+    sensmethod = property(_get_sensitivity_method, _set_sensitivity_method)
+    
+    def _set_dqtype(self, dqtype):
+        """
+        Specifies the difference quotient type in the sensitivity calculations.
+        Can be either, 'CENTERED' or 'FORWARD'.
+        
+        Parameters::
+            
+            DQtype 
+                    - A string of either 'CENTERED' or 'FORWARD'
+                    - Default 'CENTERED'
+                        
+        Returns::
+            
+            The current value of DQtype.
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensDQMethod' 
+        """
+        if not isinstance(dqtype, str):
+            raise Sundials_Exception('DQtype must be string.')
+        
+        if dqtype.upper() == 'CENTERED':
+            self.Integrator.DQtype = 1
+        elif dqtype.upper() == 'FORWARD':
+            self.Integrator.DQtype = 2
+        else:
+            raise Sundials_Exception('DQtype must be either "CENTERED" or "FORWARD".')
+            
+    def _get_dqtype(self):
+        """
+        Specifies the difference quotient type in the sensitivity calculations.
+        Can be either, 'CENTERED' or 'FORWARD'.
+        
+        Parameters::
+            
+            DQtype 
+                    - A string of either 'CENTERED' or 'FORWARD'
+                    - Default 'CENTERED'
+                        
+        Returns::
+            
+            The current value of DQtype.
+        
+        See SUNDIALS documentation '(IDA/CVode)SetSensDQMethod' 
+        """
+        if self.Integrator.DQtype == 1:
+            return 'CENTERED'
+        elif self.Integrator.DQtype == 2:
+            return 'FORWARD'
+        else:
+            raise Sundials_Exception('Unknown value of DQtype.')
+    
+    dqtype = property(_get_dqtype, _set_dqtype)
+
+    def interpolate_sensitivity(self, t, k, p=-1):
+        """        
+        Calls Sundials internal function (IDA/CVodes)GetSensDky1 that computes the interpolated 
+        values of the k-th derivative of the sensitivity p for any value of t in the 
+        last internal step taken by IDAS or CVodes.
+        
+            Parameters::
+            
+                t
+                    - Must be within tn − hu ≤ t ≤ tn  where tn denotes the current
+                      internal time reached, and hu is the last internal step size used successfully.
+                      
+                    - Must be a float.
+                      
+                k
+                    - Must be non-negative and samller than the last internal order used.
+                    
+                    - Must be an integer.
+                    
+                p
+                    - An integer to determine of which parameter the solution is to be computed.
+                    
+                    - Default value -1 indicates that all is to be calculated.
+                    
+                    - Must be an integer.
+                    
+            Returns::
+            
+                A numpy array of the calculated sensitivites.
+        """
+        try:
+            t = float(t)
+        except (TypeError, ValueError):
+            raise Sundials_Exception('t must be convertable to a float.')
+        try:
+            k = int(k)
+        except (TypeError, ValueError):
+            raise Sundials_Exception('k must be convertable to an integer.')
+        try:
+            p = int(p)
+        except (TypeError, ValueError):
+            raise Sundials_Exception('p must be convertable to an integer.')
+            
+        return self.Integrator.interpolate_sensitivity(t,k,p)
+
+    def get_sensitivity_statistics(self):
+        """
+        Returns the sensitivity statistics.
+        
+            Returns::
+            
+                A list of statistics.
+                
+            Example::
+            
+                stats = IDA.get_sensitivity_statistics()
+                
+                stats[0] #Number of Sensitivity Calculations
+                stats[1] #Number of F-Evals Due to Finite Approximation
+                stats[2] #Number of Local Error Test Failures
+                stats[3] #Number of Linear Setups            
+                stats[4] #Number of Nonlinear iterations     
+                stats[5] #Number of Nonlinear Convergance Failures
+        """
+        return self.Integrator.solver_sens_stats
