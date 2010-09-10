@@ -57,7 +57,7 @@ class NL_Problem(object):
         
         Parameters ::
         
-            x0
+            _x0
                 Defines the initial guess of x
 
     
@@ -77,7 +77,7 @@ class NL_Problem(object):
         
         raise NL_Problem_Exception('The routine used to set x0 is not specified.')
 
-    def get_x0(self,x0):
+    def get_x0(self):
         """
         Gets the initial guess of the problem
         """
