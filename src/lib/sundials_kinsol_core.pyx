@@ -27,6 +27,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
     """
     Residual fct called by KINSOL
     """
+
     cdef:
         int i
         ProblemData pData = <ProblemData>problem_data
@@ -44,6 +45,33 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
         return KIN_SUCCESS
     except:
         return KIN_REC_ERR
+
+cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the Assimulo.Problem.jac to the Sundials
+    Jacobian function.
+    """
+    cdef:
+        ProblemData pData = <ProblemData>problem_data
+        realtype* col_i=DENSE_COL(Jacobian,0)
+        ndarray x = nv2arr(xv)
+    
+    try:
+ 
+        jac=(<object>pData.JAC)(x)
+        
+        #This needs further investigations:
+        #memcpy(Jacobian.data,<realtype*>jac.data, pData.memSizeJac)
+        
+        for i in range(Neq):
+            col_i = DENSE_COL(Jacobian, i)
+            for j in range(Neq):
+                col_i[j] = jac[j,i]
+
+        return KINDLS_SUCCESS
+    except:
+        return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 
 class KINError(Exception):
     """
@@ -81,12 +109,14 @@ cdef class KINSOL_wrap:
         ProblemData pData # A struct containing problem data
         #ProblemData *ppData # Pointer to above mentioned struct
         N_Vector x_cur, x_scale, f_scale
+        booleantype noInitSetup
+        int print_level
 
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
         #self.ppData = &self.pData
 
-    cpdef KINSOL_set_problem_info(self, RHS, dim):
+    cpdef KINSOL_set_problem_info(self, RHS, dim, JAC= None):
         """
         Sets the problem info to the desired struct
         """
@@ -94,17 +124,25 @@ cdef class KINSOL_wrap:
         # Sets residual function
         self.pData.RHS = <void*>RHS
         self.pData.dim = dim
+        if JAC != None:
+            self.pData.JAC = <void*>JAC
 
-    def KINSOL_init(self,RHS,x0,dim):
+    def KINSOL_init(self,RHS,x0,dim, JAC = None):
         """
         Initializes solver
         """        
         cdef int flag
         # Set problem info
-        self.KINSOL_set_problem_info(RHS,dim)
+        self.noInitSetup = False
+        self.print_level = 1
+
+        self.KINSOL_set_problem_info(RHS,dim,JAC)
 
         # Create initial guess from the supplied numpy array
+        print "Before transforming x0"
+        print "x0: ", x0
         self.x_cur = arr2nv(x0)
+        print "After transforming x0"
 
         if self.solver == NULL: # solver runs for the first time
             
@@ -112,17 +150,34 @@ cdef class KINSOL_wrap:
             self.solver = KINCreate()
             if self.solver == NULL:
                 raise KINError(KIN_MEM_FAIL)
+            print "KINSOL created"
+            
+            # Stop solver from performing precond setup
+            flag = KINSetNoInitSetup(self.solver, self.noInitSetup)
+            flag = KINSetPrintLevel(self.solver, self.print_level)
+            if flag < 0:
+                raise KINError(flag)
             
             # Allocate internal memory
             flag = KINInit(self.solver,kin_res,self.x_cur)
             if flag < 0:
                 raise KINError(flag)
+            print "KINSOL initialized"
 
             # Link to linear solver, for the moment not specified by user
             # but this will eventually be implemented
             flag = KINDense(self.solver,self.pData.dim)
             if flag < 0:
                 raise KINError(flag)
+            print "Linear solver connected"
+
+            # If the user supplied a Jacobien, link it to the solver
+            if self.pData.JAC != NULL:
+                flag = KINDlsSetDenseJacFn(self.solver,kin_jac);
+                if flag < 0:
+                    raise KINError(flag)
+                print "Jacobian supplied by user connected"
+            
         else:
             pass
 
@@ -130,6 +185,7 @@ cdef class KINSOL_wrap:
         flag = KINSetUserData(self.solver,<void*>self.pData)
         if flag < 0:
             raise KINError(flag)
+        print "User data set"
 
         # Create scaling vectors filled with ones
         # since the problem is assumed to be scaled
@@ -142,12 +198,18 @@ cdef class KINSOL_wrap:
         solves the function supplied as RHS
         """
         
-        cdef int flag
-        
+        cdef int flag, DLSflag, lsflag
+        print "Calling solver..."
         flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
         if flag < 0:
             print "Error in solve, flag: ", flag
+            DSLflag = KINDlsGetLastFlag(self.solver, &lsflag);
+            if lsflag < 0:
+                print "Last flag from Linear solver: ", lsflag
+            else:
+                print "Jacobian singular at column ", lsflag
             raise KINError(flag)
+        print "Problem solved, returning result"
 
         return nv2arr(self.x_cur)
         

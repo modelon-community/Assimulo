@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from numpy cimport NPY_DOUBLE, npy_intp, NPY_INT
 
 #==============================================
 #External definitions from numpy headers
@@ -216,6 +217,7 @@ cdef extern from "kinsol/kinsol_spils.h":
 cdef class ProblemData:
     cdef:
         void *RHS          # Residual or right-hand-side
+        void *JAC
         int dim            # Dimension of the problem
 
 #=================

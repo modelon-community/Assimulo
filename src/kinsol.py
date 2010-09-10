@@ -18,6 +18,7 @@
 from lib import sundials_kinsol_core
 import numpy as N
 import pylab as P
+from assimulo.non_linear_problem import *
 
 class KINSOL_Exception(Exception):
     pass
@@ -32,7 +33,7 @@ class KINSOL:
         
         self.solver = sundials_kinsol_core.KINSOL_wrap()
         
-    def solve(self,problem):
+    def solve(self,problem,use_jac = True):
         """
         Function called when solving fuction rhs_fct
         
@@ -41,8 +42,24 @@ class KINSOL:
                 instance of NL_problem found in non_linear_problem.py
         """
         # extract info from problem
-        x0 = problem.get_x0()
-        func = problem.f
+        if hasattr(problem,'_x0'):
+            try:
+                x0 = problem.get_x0()
+            except NL_Problem_Exception:
+                raise KINSOL_Exception("Problem has not implemented method 'get_x0'")
+        else:
+            raise KINSOL_Exception("Problem has no instance '_x0'")
+        
+        try:
+            tmp = problem.f(x0)
+            func = problem.f
+        except NL_Problem_Exception:
+            raise KINSOL_Exception("Problem has not implemented method 'f'")
+        
+        if use_jac and hasattr(problem,'jac'):
+            jac = problem.jac
+        else:
+            jac = None
         
         # calculate dimension
         try:
@@ -53,7 +70,10 @@ class KINSOL:
             dim = 0
         
         # Initialize solver and solve
-        self.solver.KINSOL_init(func,x0,dim)
+        if jac != None:
+            self.solver.KINSOL_init(func,x0,dim,jac)
+        else:
+            self.solver.KINSOL_init(func,x0,dim)
         
         return self.solver.KINSOL_solve()
         
