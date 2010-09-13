@@ -3,6 +3,18 @@
 Changelog
 ==========
 
+--- Assimulo-1.2b1 ---
+    * Implemented basic support for calculating sensitivities using CVodes.
+    * Changed from using CVode to CVodes.
+    * Added 'echo' methods used for viewing the current solver settings.
+    * Fixed a bug with the reset method not resetting the statistics.
+    * Fixed a bug which was exposed when overwriting the switches.
+    * Added a custom error method in CVode and IDA.
+    * Fixed a segmentation fault discovered on Mac when IDAS was used.
+    * Renamed the test modules to lowercase.
+    * Renamed the setup script to setup_from_binary (used when a pre-compiled
+      binary is distributed)
+
 --- Assimulo-1.1b1 ---
     * Fixed a bug with re-init resulting in resetting the options.
     * Moved the result handling to the problem class.
@@ -18,10 +30,9 @@ Changelog
     * Changed from using IDA to IDAS
     * Changed assimulo.problem.Problem_Name to problem_name.
     * Changed assimulo.ODE.problemname to problem_name.
-    * Fixed a bugg when printing information when used FixedPoint.
+    * Fixed a bug when printing information when used FixedPoint.
     * Changed algvar to be more type independent.
-    * Added \*\*kwargs to the plotting functionality.
-
+    * Added **kwargs to the plotting functionality.
 
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.
@@ -33,9 +44,9 @@ Changelog
     * Added so that when using IDA or CVode in one-step mode, the 
       current order and the last order are stored.
     * Added option to specify initial step-size in CVode.
-    * Added support to switch between using the user defined jacobian
+    * Added support to switch between using the user defined Jacobian
       in CVode or not.
-    * Added support to switch between using the user defined jacobian
+    * Added support to switch between using the user defined Jacobian
       in IDA or not.
     * Added support for user-defined Jacobians when using CVode.
     * Added support for user-defined Jacobians when using IDA.

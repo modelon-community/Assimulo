@@ -14,11 +14,7 @@ Sundials are displayed.
 
 When using Assimulo together with JModelica.org and the new high-level simulation methods, all the parameters passed in the *solver_args*-dict represents parameters for the specific solver used in Assimulo. ::
  
-    def simulate(model, 
-                 file_name='', 
-                 compiler='modelica', 
-                 compiler_options={}, 
-                 compiler_target='ipopt', 
+    def simulate(self, 
                  algorithm=AssimuloAlg, 
                  alg_args={}, 
                  solver_args={}):
@@ -43,7 +39,7 @@ But as Assimulo just reports the events, and gives control back to the user via 
    :align: center
 
 
-When Assimulo finds an event, the control is given to *handle_event* which enters an event iteration loop. In this loop the switches are turned according to the information provided by Assimulo about which event indicator have fired. After turning the switches the new mode corresponding to the new switches are initiated according to Sundials option `'IDA_YA_YDP_INIT' <https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#SECTION00554000000000000000>`_ which is implemented by use of :class:`IDA.make_consistecy <assimulo.implicit_ode.IDA.make_consistency>` . After the initiation the iteration conditions are evaluated, which checks for if the initiation triggered another event in which case the loop continues. If the initiation does not trigger another event, the simulation continues.
+When Assimulo finds an event, the control is given to *handle_event* which enters an event iteration loop. In this loop the switches are turned according to the information provided by Assimulo about which event indicator have fired. After turning the switches the new mode corresponding to the new switches are initiated according to Sundials option `'IDA_YA_YDP_INIT' <https://computation.llnl.gov/casc/sundials/documentation/ida_guide/node5.html#SECTION00554000000000000000>`_ which is implemented by use of :class:`IDA.make_consistent <assimulo.implicit_ode.IDA.make_consistent>` . After the initiation the iteration conditions are evaluated, which checks for if the initiation triggered another event in which case the loop continues. If the initiation does not trigger another event, the simulation continues.
 
 Also, the event handling is dependent on *moving* the event indicators a small epsilon depending on if they are in the upper region or in the lower region.
 
