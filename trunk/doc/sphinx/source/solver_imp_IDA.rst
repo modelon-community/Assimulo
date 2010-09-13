@@ -39,8 +39,8 @@ Parameters:
 Sensitivity parameters:
 
 - :class:`pbar <assimulo.implicit_ode.IDA.pbar>` Specifies the order of magnitude for the parameters.
-- :class:`DQrhomax <assimulo.implicit_ode.IDA.DQrhomax>` Specifies the selection parameters used in deciding switching between a simultaneous or separate approximation of the two terms in the sensitivity residual.
-- :class:`DQtype <assimulo.implicit_ode.IDA.DQtype>` Specifies the difference quotient type in the sensitivity calculations and can be either 'IDA_CENTERED' or 'IDA_FORWARD'.
+- :class:`dqrhomax <assimulo.implicit_ode.IDA.dqrhomax>` Specifies the selection parameters used in deciding switching between a simultaneous or separate approximation of the two terms in the sensitivity residual.
+- :class:`dqtype <assimulo.implicit_ode.IDA.dqtype>` Specifies the difference quotient type in the sensitivity calculations and can be either 'IDA_CENTERED' or 'IDA_FORWARD'.
 - :class:`usesens <assimulo.implicit_ode.IDA.usesens>` Specifies if the sensitivity calculations should be used or turned off.
 - :class:`suppress_sens <assimulo.implicit_ode.IDA.suppress_sens>` Specifies whether sensitivity variables are included in the error test or not.
 - :class:`sensmethod <assimulo.implicit_ode.IDA.sensmethod>` Specifies the sensitivity solution method.

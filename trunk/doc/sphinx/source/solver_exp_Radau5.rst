@@ -45,6 +45,7 @@ Plot the solution.
 Information.
 
 - :class:`Radau5.print_statistics() <assimulo.explicit_ode.Radau5.print_statistics>` Prints the run-time statistics for the problem.
+- :class:`Radau5.echo_options() <assimulo.explicit_ode.Radau5.echo_options>` Echo the current solver options.
 
 .. note::
 

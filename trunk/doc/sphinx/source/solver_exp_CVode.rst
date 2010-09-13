@@ -34,9 +34,21 @@ Parameters:
 - :class:`problem_name <assimulo.explicit_ode.CVode.problem_name>` Defines the name of the problem.
 - :class:`verbosity <assimulo.explicit_ode.CVode.verbosity>` Defines the verbosity of the integrator.
 
+Sensitivity parameters:
+
+- :class:`pbar <assimulo.explicit_ode.CVode.pbar>` Specifies the order of magnitude for the parameters.
+- :class:`dqrhomax <assimulo.explicit_ode.CVode.dqrhomax>` Specifies the selection parameters used in deciding switching between a simultaneous or separate approximation of the two terms in the sensitivity residual.
+- :class:`dqtype <assimulo.explicit_ode.CVode.dqtype>` Specifies the difference quotient type in the sensitivity calculations and can be either 'IDA_CENTERED' or 'IDA_FORWARD'.
+- :class:`usesens <assimulo.explicit_ode.CVode.usesens>` Specifies if the sensitivity calculations should be used or turned off.
+- :class:`suppress_sens <assimulo.explicit_ode.CVode.suppress_sens>` Specifies whether sensitivity variables are included in the error test or not.
+- :class:`sensmethod <assimulo.explicit_ode.CVode.sensmethod>` Specifies the sensitivity solution method.
+- :class:`maxsensiter <assimulo.explicit_ode.CVode.maxsensiter>` Specifies the maximum number of nonlinear solver iterations for sensitivity variables per step.
+
+
 Methods:
 
 - :class:`interpolate <assimulo.explicit_ode.CVode.interpolate>`
+- :class:`interpolate_sensitivity <assimulo.explicit_ode.CVode.interpolate_sensitivity>`
 
 Simulate the problem.
 
