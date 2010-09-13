@@ -1302,6 +1302,9 @@ class Radau5(Radau_Common,Explicit_ODE):
                     else:
                         self._needjac = True
                         self._needLU = True
+                if self.thet < 0:
+                    self._needjac = True
+                    self._needLU = True
                         
                 self._olderr = max(self._err,1.e-2) #Store the old error
                 break
