@@ -32,7 +32,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
     cordir_KINSOL = O.path.join(O.path.join('src','lib'),'sundials_kinsol_core.pyx')
 
     setup(name='Assimulo',
-      version='trunk',
+      version='Assimulo-1.2.x',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
