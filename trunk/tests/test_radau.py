@@ -335,20 +335,20 @@ class Test_Implicit_Radau:
         """
         Test a simulation of the vanderpol equations.
         """
-        pass
         #Simulate
-        #self.sim.simulate(2.) #Simulate 2 seconds
+        self.sim.simulate(2.) #Simulate 2 seconds
         
-        #assert self.sim._nsteps == 272
+        nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.706272, 3)
     
     
     def test_maxh(self):
         """
         Tests implicit radau with maxh.
         """
-        pass 
-        #self.sim.maxh = 0.01
-        #self.sim.simulate(2.)
-        #assert self.sim._nsteps == 437
-        
-        
+        self.sim.simulate(1.)
+        prev_step = self.sim._nsteps
+        self.sim.reset()
+        self.sim.maxh = 0.01
+        self.sim.simulate(1.)
+        assert self.sim._nsteps > prev_step
+    

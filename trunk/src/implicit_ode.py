@@ -1164,7 +1164,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         self.fac2 = 8.0 #Parameters for step-size selection (upper bound)
         self.maxh = N.inf #Maximum step-size.
         self.safe = 0.9 #Safety factor
-        self.index = [2]*len(y0)
+        self.index = [1]*len(y0)
         
         #Internal values
         self._curjac = False #Current jacobian?
@@ -1209,7 +1209,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         if len(index) == self._2leny:
             self._index = N.array(index)
         elif len(index) == self._leny:
-            self._index = N.array([1]*self._leny+index)
+            self._index = N.array(index+(N.array(index)+1).tolist())
         else:
             raise Implicit_ODE_Exception('Wrong number of variables in the index vector.')
             
@@ -1235,6 +1235,18 @@ class Radau5(Radau_Common,Implicit_ODE):
         """
         Integrates (t,y,yd) values until t > tf
         """
+        if self._flag_reset_statistics:
+            self._nsteps = 0 #Number of steps
+            self._nfcn = 0 #Number of function evaluations
+            self._njac = 0 #Number of jacobian evaluations
+            self._njacfcn = 0 #Number of function evaluations when evaluating the jacobian
+            self._nniter = 0 #Number of nonlinear iterations
+            self._nniterfail = 0 #Number of nonlinear failures
+            self._errfail = 0 #Number of step rejections
+            self._nlu = 0 #Number of LU decompositions
+            self._curiter = 0 #Number of current iterations
+            self._flag_reset_statistics = False
+        
         self._oldh = self.initstep
         self.h = self.initstep
         self._hhfac = self.h
