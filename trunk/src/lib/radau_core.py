@@ -508,3 +508,22 @@ class Radau_Common(object):
         return self.__usejac
     
     usejac = property(_get_usejac,_set_usejac)
+
+    def echo_options(self):
+        """
+        Echo the solver options.
+        """
+        print 'Solver options:\n'
+        print ' Solver                                      :  Radau5'
+        print ' Maximum step-size                           : ' ,self.maxh
+        print ' Initial step-size                           : ' ,self.initstep
+        print ' Maximum number of steps                     : ' ,self.maxsteps
+        print ' Use user-defined Jacobian                   : ' ,self.usejac
+        print ' Tolerances (relative)                       : ' ,self.rtol
+        print ' Tolerances (absolute)                       : ' ,self.atol
+        print ' Maximum number of Newton iterations         : ' ,self.newt
+        print ' Stopping criteria for Newton                : ' ,self.fnewt
+        print ' Safety factor                               : ' ,self.safe
+        print ' Boundary for re-calculation of Jacobian     : ' ,self.thet
+        print ' Parameters for changing step-size (lb, ub)  : ' ,self.quot1,', ', self.quot2
+        print ' Parameters for step-size selection (lb, ub) : ' ,self.fac1 ,', ', self.fac2
