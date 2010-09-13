@@ -132,6 +132,7 @@ class Radau_Common(object):
         Smaller values of fnewt make the code slower, but safer.
         
             Parameters::
+            
                 fnewt
                         - Default min(0.03,rtol**0.5)
                         
