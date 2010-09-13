@@ -295,6 +295,18 @@ class Test_Explicit_Radau:
         self.sim.safe = 0.99
         self.sim.simulate(1.0)
         assert self.sim._nsteps == 142
+        
+    def test_reset_statistics(self):
+        """
+        Tests that the statistics are reset.
+        """
+        self.sim.simulate(1.0)
+        steps = self.sim._nsteps
+        
+        self.sim.reset()
+        self.sim.simulate(1.0)
+        
+        assert self.sim._nsteps < steps*1.5
     
 
 class Test_Implicit_Radau:

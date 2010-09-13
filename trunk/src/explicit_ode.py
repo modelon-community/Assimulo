@@ -1194,6 +1194,18 @@ class Radau5(Radau_Common,Explicit_ODE):
         """
         Integrates (t,y) values until t > tf
         """
+        if self._flag_reset_statistics:
+            self._nsteps = 0 #Number of steps
+            self._nfcn = 0 #Number of function evaluations
+            self._njac = 0 #Number of jacobian evaluations
+            self._njacfcn = 0 #Number of function evaluations when evaluating the jacobian
+            self._nniter = 0 #Number of nonlinear iterations
+            self._nniterfail = 0 #Number of nonlinear failures
+            self._errfail = 0 #Number of step rejections
+            self._nlu = 0 #Number of LU decompositions
+            self._curiter = 0 #Number of current iterations
+            self._flag_reset_statistics = False
+        
         self._oldh = self.initstep
         self.h = self.initstep
         
