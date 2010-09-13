@@ -39,10 +39,12 @@ class Radau_Common(object):
         
     h = property(fget=_get_h,fset=_set_h)
     
-    def print_statistics(self):
+    def print_statistics(self,minimal_verbosity=0):
         """
         Prints the run-time statistics for the problem.
         """
+        if self.verbosity < minimal_verbosity:
+            return None
         print 'Final Run Statistics: %s \n' % self.problem_name
         print 'Number of Steps                          = %s'%(self._nsteps)
         print 'Number of Function Evaluations           = %s'%(self._nfcn)
