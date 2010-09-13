@@ -343,6 +343,16 @@ class Test_Implicit_Radau:
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.initstep = 1.e-4 #Initial step-size
         
+    def test_thet(self):
+        """
+        This tests a negative value of thet.
+        """
+        self.sim.thet = -1
+        self.sim.simulate(.5) #Simulate 2 seconds
+
+        assert self.sim._nsteps == self.sim._njac
+        
+        
     def test_simulation(self):
         """
         Test a simulation of the vanderpol equations.
