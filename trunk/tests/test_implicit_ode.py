@@ -40,7 +40,6 @@ class Test_Implicit_ODE:
         simulator = IDA(my_Prob,y0,yd0)
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, -1.0)
         nose.tools.assert_raises(Implicit_ODE_Exception, simulator, 'test')
-        print simulator.problem_spec[0][0]
         simulator(1.0,10)
         
         assert len(simulator.t) == 11 #11 Due to t0 is counted as well
@@ -121,11 +120,9 @@ class Test_IDA:
         #assert simulator.res_fcn == 'Test function'
         assert simulator.switches == switches
         assert simulator.yd_cur[0] == 1.0
-        assert simulator.problem_spec[0][0] == 0
-        assert simulator.problem_spec[0][1] == simulator.res_fcn
-        assert simulator.problem_spec[0][2] == simulator.jac
-        assert simulator.problem_spec[1][0] == simulator.state_events
-        assert simulator.problem_spec[1][1] == switches
+        assert simulator.problem_data['RHS'] == simulator.res_fcn
+        assert simulator.problem_data['JAC'] == simulator.jac
+        assert simulator.problem_data['ROOT'] == simulator.state_events
     
     def test_interpolate(self):
         """

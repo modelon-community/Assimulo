@@ -274,10 +274,9 @@ class Test_CVode:
         assert simulator.f == problem.f
         assert simulator.switches == switches
         assert simulator.y_cur == 1.0
-        assert simulator.problem_spec[0][0] == simulator.f
-        assert simulator.problem_spec[0][1] == simulator.jac
-        assert simulator.problem_spec[1][0] == simulator.state_events
-        assert simulator.problem_spec[1][1] == switches
+        assert simulator.problem_data['RHS'] == simulator.f
+        assert simulator.problem_data['JAC'] == simulator.jac
+        assert simulator.problem_data['ROOT'] == simulator.state_events
          
         
     def test_discr_method(self):

@@ -468,12 +468,11 @@ class IDA(Implicit_ODE, Sundials):
         #Determine if we have an state event function and sets the integration data
         if hasattr(problem, 'state_events'):
             self.state_events = self._problem.state_events
-            self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
-            self._ROOT = [self.state_events, self.switches]
+            self.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.yd0,self._problem.switches0))
             self.problem_data['ROOT'] = self.state_events
-            self.problem_data['dimRoot'] = self.Integrator.num_state_events
+            self.problem_data['dimRoot'] = self.num_state_events
         else:
-            self.Integrator.num_state_events=0
+            self.num_state_events=0
         
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
@@ -487,12 +486,10 @@ class IDA(Implicit_ODE, Sundials):
             self.jac = self._problem.jac
             self.Integrator.jacobian = True
             self.usejac = True
-            self._RES = [self.res_fcn, self._problem.jac]
             self.problem_data['JAC']=self.jac
         else:
             self.Integrator.jacobian = False
             self.usejac = False
-            self._RES = [self.res_fcn]
         
         self.problem_data['RHS']=self.res_fcn
         self.problem_data['dim']=len(self._problem.y0)
@@ -512,19 +509,11 @@ class IDA(Implicit_ODE, Sundials):
         if sens:
             self._problem.p0 = self.p
             #Set information to the solver IDAS
-            self.Integrator.nbr_params = len(self.p)
             self.Integrator.p = N.array(self.p)
             self.problem_data['dimSens'] = len(self.p)
-            self._RES = [len(self.p)]+self._RES #Indicator for Cython
         else:
-            self._RES = [0]+self._RES #Indicator for Cython
             self.problem_data['dimSens'] = 0
         #-------------End Sensitivity initiation
-
-        if hasattr(self, '_ROOT'):
-            self.problem_spec = [self._RES, self._ROOT]
-        else:
-            self.problem_spec = [self._RES]
         
         if hasattr(problem, 'completed_step'):
             self._completed_step = True

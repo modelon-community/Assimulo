@@ -376,15 +376,16 @@ cdef class Sundials:
     cdef public solver_sens_stats  #Stores the solver sensitivity statistics
     cdef public booleantype suppress_alg  #Suppress algebraic components or not
     cdef public booleantype sensToggleOff #Should the sensitivity calculations be turned off?
-    cdef public booleantype errconS #Error control strategy
-    cdef public int maxcorS #Maximum number of nonlinear solver iterations (sens) per step
-    cdef public int DQtype #Difference quotient type
-    cdef public realtype DQrhomax #Selection parameter (sens)
-    cdef booleantype _flag_active_sens #Flag used for determine if reinit sens is required
-    cdef public int ism #Sensitivity solution method
-    cdef public object p #The parameter information
-    cdef public object pbar #
-    cdef N_Vector *ySO #The sensitivity start matrix
+    cdef public booleantype errconS     #Error control strategy
+    cdef public int maxcorS             #Maximum number of nonlinear solver iterations (sens) per step
+    cdef public int DQtype              #Difference quotient type
+    cdef public realtype DQrhomax       #Selection parameter (sens)
+    cdef booleantype _flag_active_sens  #Flag used for determine if reinit sens is required
+    cdef public int ism                 #Sensitivity solution method
+    cdef public object p                #The parameter information
+    cdef public object pbar 
+    cdef N_Vector *ySO                  #The sensitivity start matrix
+    cdef public npy_intp nbrRoot        #The number of root functions
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -430,7 +431,10 @@ cdef class Sundials:
         if ROOT != None: #Sets the root function
             self.pData.ROOT = <void*>ROOT
             self.pData.dimRoot = dimRoot
+            self.nbrRoot = dimRoot
             self.pData.memSizeRoot = dimRoot*sizeof(realtype)
+        else:
+            self.nbrRoot = 0
     
         if JAC != None: #Sets the jacobian
             self.pData.JAC = <void*>JAC
@@ -460,15 +464,14 @@ cdef class Sundials:
 cdef class CVode_wrap(Sundials):
     """Class to wrap CVode"""
     cdef:
-        public int discr, iter, dim, _ordersum,_count_output, max_h
+        public int discr, iter, dim, _ordersum,_count_output
         public long int max_steps
-        public realtype abstol,reltol,event_time
+        public realtype event_time
         public realtype t0
-        public ndarray abstol_ar,event_info
+        public ndarray event_info
         public dict stats
         public dict detailed_info
         public booleantype jacobian, store_cont, comp_step, store_state
-        public npy_intp num_state_events
         public booleantype sim_complete
     method=['Adams','BDF']
     iteration=['Fixed Point','Newton']
@@ -768,8 +771,8 @@ cdef class CVode_wrap(Sundials):
         cdef int* event_info_
         cdef flag
         # Allocate memory for the event_info_ vector and initialize to zeros
-        event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
-        for k in range(self.num_state_events):
+        event_info_ = <int*> malloc(self.nbrRoot*sizeof(int))
+        for k in range(self.nbrRoot):
             event_info_[k] = 0
         
         # Fetch data on which root functions that became zero and store in class
@@ -777,8 +780,8 @@ cdef class CVode_wrap(Sundials):
         if flag < 0:
             raise CVodeError(flag,tret)
         
-        self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
-        for k in range(self.num_state_events):
+        self.event_info =  PyArray_SimpleNew(1,&self.nbrRoot ,NPY_INT)
+        for k in range(self.nbrRoot):
             self.event_info[k] = event_info_[k]
         
         # Remember to deallocate
@@ -880,15 +883,14 @@ cdef class IDA_wrap(Sundials):
     """Class to wrap Sundials IDA"""
     cdef:
         #void* comp_step_method
-        public int dim, _ordersum,_count_output, max_h
-        public realtype abstol,reltol,event_time
+        public int dim, _ordersum,_count_output
+        public realtype event_time
         public realtype t0
-        public ndarray abstol_ar,algvar,event_info
+        public ndarray algvar,event_info
         public dict detailed_info
         public booleantype jacobian, store_cont,store_state,comp_step
         public booleantype sens_activated
-        public int icopt, nbr_params, Ns
-        public npy_intp num_state_events
+        public int icopt,Ns
         public booleantype sim_complete
         N_Vector temp_nvector
         N_Vector *ydSO
@@ -899,7 +901,6 @@ cdef class IDA_wrap(Sundials):
         self.store_state = False
         self.comp_step = False
         self.sim_complete = False
-        self.nbr_params = 0
         
         #Default values (No sensitivities)
         self.algvar = np.ones(dim)
@@ -1231,16 +1232,16 @@ cdef class IDA_wrap(Sundials):
         cdef flag
         
         # Allocate memory for the event_info_ vector and initialize to zeros
-        event_info_ = <int*> malloc(self.num_state_events*sizeof(int))
-        for k in range(self.num_state_events):
+        event_info_ = <int*> malloc(self.nbrRoot*sizeof(int))
+        for k in range(self.nbrRoot):
             event_info_[k] = 0
             # Fetch data on which root functions that became zero and store in class
         flag = IDAGetRootInfo(self.solver, event_info_)
         if flag < 0:
             raise IDAError(flag, tret)
             
-        self.event_info =  PyArray_SimpleNew(1,&self.num_state_events ,NPY_INT)
-        for k in range(self.num_state_events):
+        self.event_info =  PyArray_SimpleNew(1,&self.nbrRoot ,NPY_INT)
+        for k in range(self.nbrRoot):
             self.event_info[k] = event_info_[k]
         # Remember to deallocat
         free(event_info_)
