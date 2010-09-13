@@ -606,12 +606,11 @@ class CVode(Explicit_ODE, Sundials):
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'state_events'):
             self.state_events = self._problem.state_events #problem.state_events
-            self.Integrator.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
-            self._ROOT = [self.state_events, self._problem.switches0]
+            self.num_state_events=len(self.state_events(self._problem.t0,self._problem.y0,self._problem.switches0))
             self.problem_data['ROOT'] = self.state_events
-            self.problem_data['dimRoot'] = self.Integrator.num_state_events
+            self.problem_data['dimRoot'] = self.num_state_events
         else:
-            self.Integrator.num_state_events=0
+            self.num_state_events=0
         
         #Determine if we have a user supplied jacobian
         if hasattr(self._problem, 'jac'):
@@ -624,12 +623,10 @@ class CVode(Explicit_ODE, Sundials):
             self.jac = self._problem.jac    
             self.Integrator.jacobian = True
             self.usejac = True
-            self._RHS = [self.f, self._problem.jac]
             self.problem_data['JAC']=self.jac
         else:
             self.Integrator.jacobian = False
             self.usejac = False
-            self._RHS = [self.f]
         
         self.problem_data['RHS']=self.f
         self.problem_data['dim']=len(self._problem.y0)
@@ -637,11 +634,6 @@ class CVode(Explicit_ODE, Sundials):
         if hasattr(problem, 'completed_step'):
             self._completed_step = True
             self.Integrator.comp_step = True
-        
-        if hasattr(self, '_ROOT'):
-            self.problem_spec = [self._RHS, self._ROOT]
-        else:
-            self.problem_spec = [self._RHS]
         
         #Sensitivity
         sens = False
