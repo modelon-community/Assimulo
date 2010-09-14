@@ -50,30 +50,32 @@ class KINSOL:
         else:
             raise KINSOL_Exception("Problem has no instance '_x0'")
         
-        try:
-            tmp = problem.f(x0)
-            func = problem.f
-        except NL_Problem_Exception:
-            raise KINSOL_Exception("Problem has not implemented method 'f'")
-        
-        if use_jac and hasattr(problem,'jac'):
-            jac = problem.jac
-        else:
-            jac = None
-        
         # calculate dimension
         try:
             if isinstance(x0, int) or isinstance(x0, float):
                 x0 = [x0]
             dim = len([N.array(x0, dtype=float)][0])
         except ValueError:
-            dim = 0
+            raise KINSOL_Exception("Initial guess must be a Numpy.array with either ints or floats.")
+        
+        try:
+            tmp = problem.f(x0)
+            func = problem.f
+        except NL_Problem_Exception:
+            raise KINSOL_Exception("Problem has not implemented method 'f'")
+        except IndexError:
+            raise KINSOL_Exception("Problem has mismatching f and initial guess")
+        
+        if use_jac and hasattr(problem,'jac'):
+            jac = problem.jac
+        else:
+            jac = None
+        
+        
         
         # Initialize solver and solve
-        if jac != None:
-            self.solver.KINSOL_init(func,x0,dim,jac)
-        else:
-            self.solver.KINSOL_init(func,x0,dim)
+        self.solver.KINSOL_init(func,x0,dim,jac)
+
         
         return self.solver.KINSOL_solve()
         
