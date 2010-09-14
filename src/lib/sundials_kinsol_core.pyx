@@ -126,6 +126,8 @@ cdef class KINSOL_wrap:
         self.pData.dim = dim
         if JAC != None:
             self.pData.JAC = <void*>JAC
+        else:
+            self.pData.JAC = NULL
 
     def KINSOL_init(self,RHS,x0,dim, JAC = None):
         """
@@ -134,15 +136,13 @@ cdef class KINSOL_wrap:
         cdef int flag
         # Set problem info
         self.noInitSetup = False
-        self.print_level = 1
+        self.print_level = 0
 
         self.KINSOL_set_problem_info(RHS,dim,JAC)
 
         # Create initial guess from the supplied numpy array
-        print "Before transforming x0"
-        print "x0: ", x0
         self.x_cur = arr2nv(x0)
-        print "After transforming x0"
+
 
         if self.solver == NULL: # solver runs for the first time
             
@@ -170,16 +170,20 @@ cdef class KINSOL_wrap:
             if flag < 0:
                 raise KINError(flag)
             print "Linear solver connected"
-
-            # If the user supplied a Jacobien, link it to the solver
-            if self.pData.JAC != NULL:
-                flag = KINDlsSetDenseJacFn(self.solver,kin_jac);
-                if flag < 0:
-                    raise KINError(flag)
-                print "Jacobian supplied by user connected"
             
         else:
             pass
+        
+        # If the user supplied a Jacobien, link it to the solver
+        if self.pData.JAC != NULL:
+            flag = KINDlsSetDenseJacFn(self.solver,kin_jac);
+            if flag < 0:
+                raise KINError(flag)
+            print "Jacobian supplied by user connected"
+        else:
+            flag = KINDlsSetDenseJacFn(self.solver,NULL);
+            if flag < 0:
+                raise KINError(flag)
 
         # Link the solver to the supplied problem data
         flag = KINSetUserData(self.solver,<void*>self.pData)
