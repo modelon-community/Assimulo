@@ -18,7 +18,9 @@
 from lib import sundials_kinsol_core
 import numpy as N
 import pylab as P
-from assimulo.non_linear_problem import *
+import operator as O
+import re
+from assimulo.problem_algebraic import *
 
 class KINSOL_Exception(Exception):
     pass
@@ -45,7 +47,7 @@ class KINSOL:
         if hasattr(problem,'_x0'):
             try:
                 x0 = problem.get_x0()
-            except NL_Problem_Exception:
+            except ProblemAlg_Exception:
                 raise KINSOL_Exception("Problem has not implemented method 'get_x0'")
         else:
             raise KINSOL_Exception("Problem has no instance '_x0'")
@@ -61,7 +63,7 @@ class KINSOL:
         try:
             tmp = problem.f(x0)
             func = problem.f
-        except NL_Problem_Exception:
+        except ProblemAlg_Exception:
             raise KINSOL_Exception("Problem has not implemented method 'f'")
         except IndexError:
             raise KINSOL_Exception("Problem has mismatching f and initial guess")
@@ -70,12 +72,32 @@ class KINSOL:
             jac = problem.jac
         else:
             jac = None
+            
+        if hasattr(problem, 'get_constraints'):
+            constraints = problem.get_constraints()
+            if constraints != None:
+                # test if constraints are of correct type
+                if type(constraints).__name__ != 'ndarray':
+                    raise KINSOL_Exception("Constraints must be of type numpy.ndarray")
+                
+                if len(constraints) != len(x0):
+                    raise KINSOL_Exception("Constraints must have same length as x0")
+                # Test if initial guess x0 is consistant with constraints
+                for c,xi in zip(constraints,x0):
+                    if re.search('float',type(c).__name__) == None:
+                        print "Problem with: ", c, type(c).__name__
+                        raise KINSOL_Exception("Constraints must contain floats.")
+                    if abs(c) > 2:
+                        raise KINSOL_Exception("Entries in constraint vector must be between -2 and 2, see documentation.")
+                    if O.xor(c>=0,xi>=0):
+                        raise KINSOL_Exception("Initial guess does not fulfill applied constraints.")
+                
+        else:
+            constraints = None
         
         
-        
-        # Initialize solver and solve
-        self.solver.KINSOL_init(func,x0,dim,jac)
+        # Initialize solver and solve        
+        self.solver.KINSOL_init(func,x0,dim,jac,constraints)
 
-        
         return self.solver.KINSOL_solve()
         
