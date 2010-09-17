@@ -60,7 +60,6 @@ cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian,
     try:
  
         jac=(<object>pData.JAC)(x)
-        
         #This needs further investigations:
         #memcpy(Jacobian.data,<realtype*>jac.data, pData.memSizeJac)
         
@@ -108,7 +107,7 @@ cdef class KINSOL_wrap:
         void* solver 
         ProblemData pData # A struct containing problem data
         #ProblemData *ppData # Pointer to above mentioned struct
-        N_Vector x_cur, x_scale, f_scale
+        N_Vector x_cur, x_scale, f_scale, con_nv
         booleantype noInitSetup
         int print_level
 
@@ -129,7 +128,7 @@ cdef class KINSOL_wrap:
         else:
             self.pData.JAC = NULL
 
-    def KINSOL_init(self,RHS,x0,dim, JAC = None):
+    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None):
         """
         Initializes solver
         """        
@@ -141,6 +140,7 @@ cdef class KINSOL_wrap:
         self.KINSOL_set_problem_info(RHS,dim,JAC)
 
         # Create initial guess from the supplied numpy array
+        # print "x0 got in KINSOL wrapper: ", x0
         self.x_cur = arr2nv(x0)
 
 
@@ -157,6 +157,14 @@ cdef class KINSOL_wrap:
             flag = KINSetPrintLevel(self.solver, self.print_level)
             if flag < 0:
                 raise KINError(flag)
+
+            # If the user has specified constraints, connect them
+            if con != None:
+                print "Applying constraints"
+                self.con_nv = arr2nv(con)
+                flag = KINSetConstraints(self.solver, self.con_nv)
+                if flag < 0:
+                    raise KINError(flag)
             
             # Allocate internal memory
             flag = KINInit(self.solver,kin_res,self.x_cur)
@@ -172,7 +180,17 @@ cdef class KINSOL_wrap:
             print "Linear solver connected"
             
         else:
-            pass
+            # If the user has specified constraints, connect them
+            if con != None:
+                print "Applying constraints"
+                self.con_nv = arr2nv(con)
+                flag = KINSetConstraints(self.solver, self.con_nv)
+                if flag < 0:
+                    raise KINError(flag)
+            else:
+                flag = KINSetConstraints(self.solver, NULL)
+                if flag < 0:
+                    raise KINError(flag)
         
         # If the user supplied a Jacobien, link it to the solver
         if self.pData.JAC != NULL:

@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-class NL_Problem_Exception(Exception):
+class ProblemAlg_Exception(Exception):
     """
     A Problem Exception.
     """
     pass
 
-class NL_Problem(object):
+class ProblemAlgebraic(object):
     """
     Base problem for KINSOL in assimulo.
     
@@ -54,6 +54,21 @@ class NL_Problem(object):
                 
                 Returns:
                     A numpy matrix of size len(input)*len(input).
+                    
+            def get_constraints(self)
+                Used to get the constraints of the problem
+            
+                Returns:
+                    A numpy array, size len(_x0) containing
+                    the constraints, if constraint[i] is:
+                        0.0  - no constraint on x[i]
+                        1.0  - x[i] greater or equal than 0.0
+                        -1.0 - x[i] lesser or equal than 0.0
+                        2.0  - x[i] greater  than 0.0
+                        -2.0 - x[i] lesser than 0.0
+                        
+                    or
+                    None if constraints should not be used
         
         Parameters ::
         
@@ -68,20 +83,20 @@ class NL_Problem(object):
         """
         The residual (right-hand-side) for a non linear problem.
         """
-        raise NL_Problem_Exception('The residual is not specified.')
+        raise ProblemAlg_Exception('The residual is not specified.')
     
     def set_x0(self,x0):
         """
         Sets the initial guess of the problem, sets it to x0
         """
         
-        raise NL_Problem_Exception('The routine used to set x0 is not specified.')
+        raise ProblemAlg_Exception('The routine used to set x0 is not specified.')
 
     def get_x0(self):
         """
         Gets the initial guess of the problem
         """
         
-        raise NL_Problem_Exception('The routine used to get x0 is not specified.')
+        raise ProblemAlg_Exception('The routine used to get x0 is not specified.')
 
     
