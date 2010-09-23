@@ -509,7 +509,98 @@ class Radau_Common(object):
         return self.__usejac
     
     usejac = property(_get_usejac,_set_usejac)
-
+    
+    def _set_atol(self,atol):
+        """
+        Defines the absolute tolerance(s) that is to be used by the solver.
+        Can be set differently for each variable.
+        
+            Parameters::
+            
+                atol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float or a numpy vector
+                          of floats.
+                        
+                            Example:
+                                atol = [1.0e-4, 1.0e-6]
+        """
+        if not isinstance(atol,float):
+            if not isinstance(atol, list) and not isinstance(atol, N.ndarray):
+                raise Radau_Exception('Absolute tolerance must be a float or a float vector.')
+            if len(atol) != self._leny:
+                raise Radau_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
+            for tol in atol:
+                if not isinstance(tol,float):
+                    raise Radau_Exception('Absolute tolerance must be a float vector or a float scalar.')
+                if tol <= 0.0:
+                    raise Radau_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
+            self.__atol=atol
+        else:
+            if atol <= 0.0:
+                raise Radau_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
+            self.__atol=atol
+    
+    def _get_atol(self):
+        """
+        Defines the absolute tolerance(s) that is to be used by the solver.
+        Can be set differently for each variable.
+        
+            Parameters::
+            
+                atol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float or a numpy vector
+                          of floats.
+                        
+                            Example:
+                                atol = [1.0e-4, 1.0e-6]
+        """
+        return self.__atol
+    
+    atol=property(_get_atol,_set_atol)
+    
+    def _set_rtol(self,rtol):
+        """
+        Defines the relative tolerance that is to be used by the solver.
+        
+            Parameters::
+            
+                rtol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float.
+                        
+                            Example:
+                                rtol = 1.0e-4
+                                
+        """
+        if not isinstance(rtol,float):
+            raise Radau_Exception('Relative tolerance must be a (scalar) float.')
+        if rtol <= 0.0:
+            raise Radau_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.__rtol=rtol
+    
+    def _get_rtol(self):
+        """
+        Defines the relative tolerance that is to be used by the solver.
+        
+            Parameters::
+            
+                rtol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float.
+                        
+                            Example:
+                                rtol = 1.0e-4
+        """
+        return self.__rtol
+        
+    rtol=property(_get_rtol,_set_rtol)
+    
     def echo_options(self):
         """
         Echo the solver options.

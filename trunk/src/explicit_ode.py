@@ -407,6 +407,7 @@ class RungeKutta34(Explicit_ODE):
         
         #Default values
         self.initstep = 0.01
+        self.atol = 1.e-6
         
         #Internal values
         # - Statistic values
@@ -600,6 +601,8 @@ class CVode(Explicit_ODE, Sundials):
         self.maxord = 12 #Setting default maxord to maximum
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
+        self.atol = 1.0e-6 #Absolute tolerance
+        self.rtol = 1.0e-6 #Relative tolerance
         self.problem_data = {}
 
         
@@ -1162,6 +1165,8 @@ class Radau5(Radau_Common,Explicit_ODE):
         self.fac2 = 8.0 #Parameters for step-size selection (upper bound)
         self.maxh = N.inf #Maximum step-size.
         self.safe = 0.9 #Safety factor
+        self.atol = 1.0e-6 #Absolute tolerance
+        self.rtol = 1.0e-6 #Relative tolerance
         
         #Internal values
         self._curjac = False #Current jacobian?
