@@ -1180,6 +1180,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         self._olderr = 1.0 #Old error
         self._eps = N.finfo('double').eps
         self._col_poly = N.zeros(self._leny*3)
+        self._type = '(explicit)'
         
         # - Statistic values
         self._nsteps = 0 #Number of steps

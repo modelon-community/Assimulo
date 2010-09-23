@@ -54,6 +54,12 @@ class Radau_Common(object):
         print 'Number of Nonlinear Iterations           = %s'%(self._nniter)
         print 'Number of Nonlinear Convergence Failures = %s'%(self._nniterfail)
         print 'Number of LU decompositions              = %s'%(self._nlu)
+        
+        print '\nSolver options:\n'
+        print ' Solver                  :  Radau5 ' + self._type
+        print ' Tolerances (absolute)   : ' ,self.atol
+        print ' Tolerances (relative)   : ' ,self.rtol
+        print ''
     
     def plot_stepsize(self):
         """

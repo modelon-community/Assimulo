@@ -300,7 +300,7 @@ class Implicit_ODE(ODE):
         time_stop = time.clock()
         
         self.print_statistics(self.NORMAL)
-        self.print_verbos(['Elapsed simulation time:', time_stop-time_start, 'seconds.'],self.NORMAL)
+        self.print_verbos(['Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.'],self.NORMAL)
         
         
         #return [self.t, self.y, self.yd]
@@ -1171,6 +1171,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         self._olderr = 1.0 #Old error
         self._eps = N.finfo('double').eps
         self._col_poly = N.zeros(self._2leny*3)
+        self._type = '(implicit)'
         
         # - Statistic values
         self._nsteps = 0 #Number of steps
