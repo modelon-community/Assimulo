@@ -307,7 +307,33 @@ class Test_Explicit_Radau:
         self.sim.simulate(1.0)
         
         assert self.sim._nsteps < steps*1.5
-    
+        
+    def test_atol(self):
+        """
+        This test the absolute tolerance.
+        """
+        self.sim.simulate(1.0)
+        
+        steps = self.sim._nsteps
+        
+        self.sim.reset()
+        
+        self.sim.rtol = 1e-8
+        self.sim.atol = 1e-8
+        
+        self.sim.simulate(1.0)
+        steps2 = self.sim._nsteps
+        
+        assert steps2 > steps
+        
+        self.sim.reset()
+        self.sim.atol = [1e-8, 1e-8]
+        
+        steps3 = self.sim._nsteps
+        
+        assert steps3==steps2
+        
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
 
 class Test_Implicit_Radau:
     """

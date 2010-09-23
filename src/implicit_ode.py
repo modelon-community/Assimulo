@@ -526,6 +526,9 @@ class IDA(Implicit_ODE, Sundials):
         self.initstep = 0.0 #Setting the initial step to be estimated
         self.maxord = 5 #Maximal order is set to max
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
+        self.atol = 1.0e-6 #Absolute tolerance
+        self.rtol = 1.0e-6 #Relative tolerance
+        
         
         # TEST METHODS
         try:
@@ -1154,6 +1157,8 @@ class Radau5(Radau_Common,Implicit_ODE):
         self.maxh = N.inf #Maximum step-size.
         self.safe = 0.9 #Safety factor
         self.index = [1]*len(y0)
+        self.atol = 1.0e-6 #Absolute tolerance
+        self.rtol = 1.0e-6 #Relative tolerance
         
         #Internal values
         self._curjac = False #Current jacobian?

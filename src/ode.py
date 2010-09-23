@@ -44,8 +44,6 @@ class ODE(object):
             #Default values
             self.verbosity = self.NORMAL #Output level
             self.maxsteps = 10000 #Max number of steps
-            self.atol = 1.0e-6 #Absolute tolerance
-            self.rtol = 1.0e-6 #Relative tolerance
             self.store_cont = False #No continuous logging
             self.sim_complete = False #Simulation finished? Used for time-events
             
