@@ -30,6 +30,8 @@ Parameters:
 - :class:`fnewt <assimulo.implicit_ode.Radau5.fnewt>` Stopping criterion for Newton's method, usually chosen <1.
 - :class:`newt <assimulo.implicit_ode.Radau5.newt>` Maximal number of Newton iterations.
 - :class:`maxh <assimulo.implicit_ode.Radau5.maxh>` Defines the maximal step-size that is to be used by the solver.
+- :class:`rtol <assimulo.implicit_ode.Radau5.rtol>` Defines the relative tolerance that is to be used by the solver.
+- :class:`atol <assimulo.implicit_ode.Radau5.atol>` Defines the absolute tolerance(s) that is to be used by the solver.
 
 Methods:
 
