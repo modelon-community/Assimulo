@@ -387,7 +387,14 @@ class Test_Implicit_Radau:
         self.sim.simulate(2.) #Simulate 2 seconds
         
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.706272, 3)
-    
+        
+    def test_simulation_ncp(self):
+        """
+        Test a simulation with ncp.
+        """
+        self.sim.simulate(1.0, 200) #Simulate 1 second
+        
+        assert len(self.sim.t) == 201
     
     def test_maxh(self):
         """

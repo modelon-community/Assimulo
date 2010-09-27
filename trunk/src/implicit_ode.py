@@ -1270,7 +1270,8 @@ class Radau5(Radau_Common,Implicit_ODE):
             
             if dt > 0.0:
                 while dist_space[0] <= t:
-                    yy,yyd=self.interpolate(dist_space[0],y)
+                    yy  = self.interpolate(dist_space[0],0)
+                    yyd = self.interpolate(dist_space[0],1)
                     yield dist_space[0], yy, yyd
                     dist_space.pop(0)
             else:
@@ -1513,9 +1514,14 @@ class Radau5(Radau_Common,Implicit_ODE):
         
         yout  = self._yc + diff[:self._leny]
         ydout = self._ydc+ diff[self._leny:]
+        
+        if k==0:
+            return yout
+        elif k==1:
+            return ydout
+        else:
+            raise Implicit_ODE_Exception('Unknown value of k. Should be either 0 or 1')
 
-        return yout, ydout
-    
     def jacobian(self, t, y, yd):
         """
         Calculates the Jacobian, either by an approximation or by the user
