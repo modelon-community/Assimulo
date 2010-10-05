@@ -156,27 +156,16 @@ cdef extern from "kinsol/kinsol.h":
 cdef extern from "kinsol/kinsol_dense.h":
     int KINDense(void *kinmem, int N)
 
-cdef extern from "kinsol/kinsol_band.h":
-    int KINBand(void *kinmem, int N, int mupper, int mlower)
-
-cdef extern from "kinsol/kinsol_spgmr.h":
-    int KINSpgmr(void *kinmem, int maxl)
-
-cdef extern from "kinsol/kinsol_spbcgs.h":
-    int KINSpbcg(void *kinmem, int maxl)
-
-cdef extern from "kinsol/kinsol_sptfqmr.h":
-    int KINSptfqmr(void *kinmem, int maxl)
+cdef extern from "kinpinv.h":
+    int KINPinv(void *kinmem, int N)
 
 # functions used for supplying jacobian, and receiving info from linear solver
 cdef extern from "kinsol/kinsol_direct.h":
     # user functions
     ctypedef int (*KINDlsDenseJacFn)(int N, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
-    ctypedef int (*KINDlsBandJacFn)(int N, int mupper, int mlower, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
 
-    # functions used to link user functions to KINSOL
+    # function used to link user functions to KINSOL
     int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
-    int KINDlsSetBandJacFn(void *kinmem, KINDlsBandJacFn jac)
 
     # optional output fcts for linear direct solver
     int KINDlsGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
@@ -185,27 +174,20 @@ cdef extern from "kinsol/kinsol_direct.h":
     int KINDlsGetLastFlag(void *kinmem, int *flag)
     char *KINDlsGetReturnFlagName(int flag)
 
-cdef extern from "kinsol/kinsol_spils.h":
+cdef extern from "kinsol_jmod.h":
     # user functions
-    ctypedef int (*KINSpilsPrecSetupFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, void *user_data, N_Vector vtemp1, N_Vector vtemp2)
-    ctypedef int (*KINSpilsPrecSolveFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, N_Vector vv, void *user_data, N_Vector vtemp)
-    ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, N_Vector uu, booleantype *new_uu, void *J_data)
+    ctypedef int (*KINPinvJacFn)(int N, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
 
-    # optional input fcts for spils solvers
-    int KINSpilsSetMaxRestarts(void *kinmem, int maxrs)
-    int KINSpilsSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn pset, KINSpilsPrecSolveFn psolve)
-    int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jtv)
+    # function used to link user jacobian to KINSOL
+    int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac)
 
-    # optional output fuctions for linear spils solvers
-    int KINSpilsGetWorkSpace(void *kinmem, long int *lenrwSG, long int *leniwSG)
-    int KINSpilsGetNumPrecEvals(void *kinmem, long int *npevals)
-    int KINSpilsGetNumPrecSolves(void *kinmem, long int *npsolves)
-    int KINSpilsGetNumLinIters(void *kinmem, long int *nliters)
-    int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails)
-    int KINSpilsGetNumJtimesEvals(void *kinmem, long int *njvevals)
-    int KINSpilsGetNumFuncEvals(void *kinmem, long int *nfevalsS)
-    int KINSpilsGetLastFlag(void *kinmem, int *flag)
-    char *KINSpilsGetReturnFlagName(int flag)
+    # optional output fcts for linear direct solver
+    int KINPinvGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
+    int KINPinvGetNumJacEvals(void *kinmem, long int *njevalsB)
+    int KINPinvGetNumFuncEvals(void *kinmem, long int *nfevalsB)
+    int KINPinvGetLastFlag(void *kinmem, int *flag)
+    char *KINPinvGetReturnFlagName(int flag)
+    
     
 #=========================
 # END SUNDIALS DEFINITIONS

@@ -174,6 +174,7 @@ cdef class KINSOL_wrap:
 
             # Link to linear solver, for the moment not specified by user
             # but this will eventually be implemented
+            #flag = KINPinv(self.solver,self.pData.dim)
             flag = KINDense(self.solver,self.pData.dim)
             if flag < 0:
                 raise KINError(flag)
@@ -194,12 +195,14 @@ cdef class KINSOL_wrap:
         
         # If the user supplied a Jacobien, link it to the solver
         if self.pData.JAC != NULL:
-            flag = KINDlsSetDenseJacFn(self.solver,kin_jac);
+            #flag = KINPinvSetJacFn(self.solver,kin_jac)
+            flag = KINDlsSetDenseJacFn(self.solver,kin_jac)
             if flag < 0:
                 raise KINError(flag)
             print "Jacobian supplied by user connected"
         else:
-            flag = KINDlsSetDenseJacFn(self.solver,NULL);
+            #flag = KINPinvSetJacFn(self.solver,NULL)
+            flag = KINDlsSetDenseJacFn(self.solver,NULL)
             if flag < 0:
                 raise KINError(flag)
 
@@ -225,11 +228,13 @@ cdef class KINSOL_wrap:
         flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
         if flag < 0:
             print "Error in solve, flag: ", flag
-            DSLflag = KINDlsGetLastFlag(self.solver, &lsflag);
-            if lsflag < 0:
-                print "Last flag from Linear solver: ", lsflag
-            else:
-                print "Jacobian singular at column ", lsflag
+            #lsflag = KINPinvGetLastFlag(self.solver, &lsflag)
+            lsflag = KINDlsGetLastFlag(self.solver, &lsflag)
+            if lsflag != 0:
+                if lsflag <0:
+                    print "Last flag from Linear solver: ", lsflag
+                else:
+                    print "Jacobian singular at column ", lsflag
             raise KINError(flag)
         print "Problem solved, returning result"
 
