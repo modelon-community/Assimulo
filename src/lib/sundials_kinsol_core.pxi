@@ -123,15 +123,15 @@ DEF KINDLS_MEM_FAIL         =-4
 DEF KINDLS_JACFUNC_UNRECVR  =-5
 DEF KINDLS_JACFUNC_RECVR    =-6
 
+ 
 # -----------------------------------------------------------------
-# KINSPILS constants
+# KINPinv constants
 # -----------------------------------------------------------------
 
-DEF KINSPILS_SUCCESS    =0
-
-DEF KINSPILS_MEM_NULL  =-1
-DEF KINSPILS_LMEM_NULL =-2
-DEF KINSPILS_ILL_INPUT =-3
-DEF KINSPILS_MEM_FAIL  =-4
-DEF KINSPILS_PMEM_NULL =-5
-DEF KINSPILS_MAXL      = 10
+DEF KINPINV_SUCCESS         =  0
+DEF KINPINV_MEM_NULL        = -1
+DEF KINPINV_LMEM_NULL       = -2
+DEF KINPINV_ILL_INPUT       = -3
+DEF KINPINV_MEM_FAIL        = -4
+DEF KINPINV_JACFUNC_UNRECVR = -5
+DEF KINPINV_JACFUNC_RECVR   = -6

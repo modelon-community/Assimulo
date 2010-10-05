@@ -28,25 +28,22 @@ class KINSOL_Exception(Exception):
 
 class KINSOL:
     
-    def __init__(self):
+    def __init__(self,problem):
         """
         Create the solver
+        
+        Parameters::
+            problem--
+                instance of ProblemAlgebraic found in problem_algebraic.py
         """
         
         self.solver = sundials_kinsol_core.KINSOL_wrap()
         
-    def solve(self,problem,use_jac = True):
-        """
-        Function called when solving fuction rhs_fct
-        
-        Parameters:
-            problem:
-                instance of NL_problem found in non_linear_problem.py
-        """
         # extract info from problem
-        if hasattr(problem,'_x0'):
+        self.problem = problem
+        if hasattr(self.problem,'_x0'):
             try:
-                x0 = problem.get_x0()
+                _x0 = self.problem.get_x0()
             except ProblemAlg_Exception:
                 raise KINSOL_Exception("Problem has not implemented method 'get_x0'")
         else:
@@ -54,36 +51,35 @@ class KINSOL:
         
         # calculate dimension
         try:
-            if isinstance(x0, int) or isinstance(x0, float):
-                x0 = [x0]
-            dim = len([N.array(x0, dtype=float)][0])
+            if isinstance(_x0, int) or isinstance(_x0, float):
+                self.x0 = [_x0]
+            else:
+                self.x0 = _x0
+            self.dim = len([N.array(self.x0, dtype=float)][0])
         except ValueError:
             raise KINSOL_Exception("Initial guess must be a Numpy.array with either ints or floats.")
         
+        # check for functions and test them
         try:
-            tmp = problem.f(x0)
-            func = problem.f
+            tmp = self.problem.f(self.x0)
+            self.func = self.problem.f
         except ProblemAlg_Exception:
             raise KINSOL_Exception("Problem has not implemented method 'f'")
         except IndexError:
-            raise KINSOL_Exception("Problem has mismatching f and initial guess")
+            raise KINSOL_Exception("Problem has mismatching dimensions of f and initial guess")
         
-        if use_jac and hasattr(problem,'jac'):
-            jac = problem.jac
-        else:
-            jac = None
-            
-        if hasattr(problem, 'get_constraints'):
-            constraints = problem.get_constraints()
-            if constraints != None:
+        # check for constraints and test them
+        if hasattr(self.problem, 'get_constraints'):
+            self.constraints = self.problem.get_constraints()
+            if self.constraints != None:
                 # test if constraints are of correct type
-                if type(constraints).__name__ != 'ndarray':
+                if type(self.constraints).__name__ != 'ndarray':
                     raise KINSOL_Exception("Constraints must be of type numpy.ndarray")
                 
-                if len(constraints) != len(x0):
+                if len(self.constraints) != len(self.x0):
                     raise KINSOL_Exception("Constraints must have same length as x0")
                 # Test if initial guess x0 is consistant with constraints
-                for c,xi in zip(constraints,x0):
+                for c,xi in zip(self.constraints,self.x0):
                     if re.search('float',type(c).__name__) == None:
                         print "Problem with: ", c, type(c).__name__
                         raise KINSOL_Exception("Constraints must contain floats.")
@@ -91,13 +87,41 @@ class KINSOL:
                         raise KINSOL_Exception("Entries in constraint vector must be between -2 and 2, see documentation.")
                     if O.xor(c>=0,xi>=0):
                         raise KINSOL_Exception("Initial guess does not fulfill applied constraints.")
-                
         else:
-            constraints = None
+            self.constraints = None
+            
+        self._use_jac = True
+                
+    def set_jac_usage(self,use_jac):
+        """
+        Set whether to use the jacobian supplied by the model
+        or if we are to calculate it numericaly
+            
+        Parameters::
         
+            use_jac --
+                Boolean set to True if the jacobian is to be 
+                supplied by the model
+                
+        """
+        if type(use_jac).__name__ == 'bool':
+            self._use_jac = use_jac
+        else:
+            raise KINSOL_Exception("The variable sent to 'set_jac_usage' must be a boolean.")
+    
+    def solve(self):
+        """
+        Function called when solving function rhs_fct
         
+        """
+        # check for jacobian and set it if present and to be used
+        if self._use_jac and hasattr(self.problem,'jac'):
+            jac = self.problem.jac
+        else:
+            jac = None
+            
         # Initialize solver and solve        
-        self.solver.KINSOL_init(func,x0,dim,jac,constraints)
+        self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints)
 
         return self.solver.KINSOL_solve()
         
