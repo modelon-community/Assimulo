@@ -158,6 +158,7 @@ cdef class KINSOL_wrap:
             if flag < 0:
                 raise KINError(flag)
 
+
             # If the user has specified constraints, connect them
             if con != None:
                 print "Applying constraints"
@@ -216,6 +217,7 @@ cdef class KINSOL_wrap:
         # since the problem is assumed to be scaled
         self.x_scale = arr2nv(np.ones(self.pData.dim))
         self.f_scale = arr2nv(np.ones(self.pData.dim))
+
     
     def KINSOL_solve(self):
         """
