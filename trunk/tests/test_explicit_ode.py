@@ -444,6 +444,25 @@ class Test_CVode:
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
 
+    def test_max_order_discr(self):
+        """
+        This tests the maximum order when the discretization is changed.
+        """
+        self.simulator.maxord = 7
+        assert self.simulator.maxord == 7
+        
+        self.simulator.discr = 'Adams'
+        assert self.simulator.maxord == 7
+        self.simulator.discr = 'BDF'
+        assert self.simulator.maxord == 5
+        self.simulator.discr = 'Adams'
+        assert self.simulator.maxord == 12
+        self.simulator.maxord = 4
+        self.simulator.discr = 'BDF'
+        assert self.simulator.maxord == 4
+        self.simulator.discr = 'Adams'
+        assert self.simulator.maxord == 4
+
     def test_is_disc(self):
         """
         This tests the functionality of the property is_disc.
