@@ -1042,7 +1042,12 @@ class CVode(Explicit_ODE, Sundials):
                 print ' Number of Linear Setups                        :', sens_stats[3]
                 print ' Number of Nonlinear iterations                 :', sens_stats[4]
                 print ' Number of Nonlinear Convergance Failures       :', sens_stats[5]
-            
+                
+                print '\nSensitivity options:\n'
+                print ' Method                   : ' ,self.sensmethod
+                print ' Difference quotient type : ' ,self.dqtype
+                print ' Suppress Sens            : ' ,self.suppress_sens
+
             print '\nSolver options:\n'
             print ' Solver                  :  CVode'
             print ' Linear Multistep Method : ', self.discr
