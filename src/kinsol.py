@@ -138,11 +138,11 @@ class KINSOL:
                     # the problem is caused by a singular jacobian try a pinv step
                     self.pinv_count += 1
                     self._do_pinv_step()
-                elif error.value == -6:
+                elif error.value == -6 or error.value == -7:
                     self._brute_force()    
                 else:
                     # Other error, send onward as exception
-                    raise KINSOL_Exception(error.msg)
+                    raise KINSOL_Exception(error.msg[error.value])
         
         if not solved:
             raise KINSOL_Exception("Singular Jacobian. Tried using pseudo inverse but stopped after ten steps.")
