@@ -604,7 +604,7 @@ class CVode(Explicit_ODE, Sundials):
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
         self.problem_data = {}
-
+        
         
         #Determine if we have an event function and sets the integration data
         if hasattr(problem, 'state_events'):
@@ -732,17 +732,22 @@ class CVode(Explicit_ODE, Sundials):
                           'BDF' which indicates the use of the BDF
                           method.
                 
-                    Example:
-                        discr = 'BDF'
+            Example::
+                
+                discr = 'BDF'
         
         See SUNDIALS CVODE documentation 2.1 for more details.
         """
         if discr=='BDF':
             self.Integrator.discr=2
-            self.maxord = 5
+            if self.maxord > 5:
+                self.maxord = 5
         elif discr=='Adams':
+            if self.Integrator.discr != 1 and self.maxord == 5:
+                self.Integrator.discr=1
+                self.maxord = 12
             self.Integrator.discr=1
-            self.maxord = 12
+            #self.maxord = 12
         else:
             raise Sundials_Exception('Discretization method must be either Adams or BDF')
             
@@ -955,7 +960,7 @@ class CVode(Explicit_ODE, Sundials):
                 self.__maxord=1
             else:
                 self.__maxord=maxord
-                
+        
         self.Integrator.maxord = maxord #Sets the maximum order to the solver
     
     def _get_max_ord(self):
