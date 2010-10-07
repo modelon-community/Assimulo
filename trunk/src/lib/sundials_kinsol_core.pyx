@@ -92,6 +92,7 @@ class KINError(Exception):
                 KIN_SYSFUNC_FAIL: 'Call to RHS failed.',
                 KIN_FIRST_SYSFUNC_ERR: 'Call to RHS failed on first call',
                 KIN_REPTD_SYSFUNC_ERR: 'Call to RHS failed multiple times.'}
+    value = 0
     def __init__(self, value):
         self.value = value
 

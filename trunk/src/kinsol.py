@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from lib import sundials_kinsol_core
+from lib.sundials_kinsol_core import KINSOL_wrap, KINError
+from scipy.linalg import pinv2
+from numpy.linalg import solve
 import numpy as N
 import pylab as P
 import operator as O
@@ -37,7 +39,7 @@ class KINSOL:
                 instance of ProblemAlgebraic found in problem_algebraic.py
         """
         
-        self.solver = sundials_kinsol_core.KINSOL_wrap()
+        self.solver = KINSOL_wrap()
         
         # extract info from problem
         self.problem = problem
@@ -91,6 +93,8 @@ class KINSOL:
             self.constraints = None
             
         self._use_jac = True
+        self.pinv_count = 0
+        self.lin_count = 0
                 
     def set_jac_usage(self,use_jac):
         """
@@ -121,7 +125,96 @@ class KINSOL:
             jac = None
             
         # Initialize solver and solve        
-        self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints)
-
-        return self.solver.KINSOL_solve()
+        
+        solved = False
+        res = N.zeros(self.x0.__len__())
+        while not solved and self.pinv_count < 10:
+            try:
+                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints)
+                res = self.solver.KINSOL_solve()
+                solved = True
+            except KINError as error:
+                if error.value == -11 :
+                    # the problem is caused by a singular jacobian try a pinv step
+                    self.pinv_count += 1
+                    self._do_pinv_step()
+                elif error.value == -6:
+                    self._brute_force()    
+                else:
+                    # Other error, send onward as exception
+                    raise KINSOL_Exception(error.msg)
+        
+        if not solved:
+            raise KINSOL_Exception("Singular Jacobian. Tried using pseudo inverse but stopped after ten steps.")
+           
+        if self.pinv_count != 0:
+            print self.pinv_count, " steps using the pseudo inverse performed."
+            print self.lin_count, " steps using the numpy.linalg.solve function performed."
+            
+        return res
+            
+    def _do_pinv_step(self):
+        """
+        Method used to perform a step using the pseudo inverse
+        """
+        print "Trying to do a step with the pseudo inverse"
+        if self._use_jac:
+            if hasattr(self.problem,'jac'):
+                # Extract data from problem
+                x0 = self.x0
+                fx = self.func(x0)
+                J  = self.problem.jac(x0)
+                
+                # Calculate pseudo inverse and calculate new step
+                Jpinv = pinv2(J)
+                dx = N.dot(Jpinv,-fx)
+                
+                # Do step in problem
+                self.x0 = x0 + dx
+                self.problem._x0 = self.x0
+                
+            else:
+                raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
+                
+        else:
+            raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse but 'use_jac' is set to false.")
+                
+    def _brute_force(self):
+        """
+        Method used to use a bit of brute force.
+        In the case of difficulties with reducing the residual, the method will newton iterate
+        , without any linesearch, until the (norm of the) residual is once again declining.
+        """
+        print "Trying to solve the problem using a bit of brute force"
+        if self._use_jac:
+            if hasattr(self.problem,'jac'):
+                # Extract data from problem
+                x0 = self.x0
+                fx = self.func(x0)
+                                
+                tol = N.linalg.norm(fx)
+                for i in N.arange(10):
+                    
+                    fx = self.func(x0)
+                    print "|fx|: ", abs(N.linalg.norm(fx))
+                    if N.linalg.norm(fx) < tol :
+                        self.lin_count += i
+                        self.x0 = x0
+                        self.problem._x0 = self.x0
+                        break
+                    
+                    tol = N.linalg.norm(fx)
+                    J  = self.problem.jac(x0)
+                
+                    dx = solve(J,-fx)
+                
+                    x0 = x0 + dx
+                    self.problem._x0 = self.x0
+                
+            else:
+                raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
+                
+        else:
+            raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse but 'use_jac' is set to false.")
+                
         
