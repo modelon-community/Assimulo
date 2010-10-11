@@ -386,6 +386,7 @@ cdef class Sundials:
     cdef public object pbar 
     cdef N_Vector *ySO                  #The sensitivity start matrix
     cdef public npy_intp nbrRoot        #The number of root functions
+    cdef public list p_result           #The sensitivity result matrix
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -451,6 +452,13 @@ cdef class Sundials:
             #self.pp_nd = <realtype*>(<ndarray>self.pData.p).data
         else:
             self.pData.dimSens = 0
+    
+    cdef inline void add_sens_point(self, realtype t):
+        """
+        Store a sensitivity solution point in the solution list.
+        """
+        if self.pData.dimSens > 0:
+            self.p_result += [self.interpolate_sensitivity(t, 0)]
     
     def __dealloc__(self):
         """Free allocated data."""
@@ -810,6 +818,7 @@ cdef class CVode_wrap(Sundials):
             raise CVodeError(flag, t0)
         
         self.sol=[] #Reset the solution list
+        self.p_result = [] #Reset the sensitivity solution list
         tret=t0
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
@@ -821,6 +830,7 @@ cdef class CVode_wrap(Sundials):
                     raise CVodeError(solveFlag, tret)
                 
                 self.add_sol_point(tret, self.y_cur)
+                self.add_sens_point(tret)
                 
                 if solveFlag == CV_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
@@ -848,6 +858,7 @@ cdef class CVode_wrap(Sundials):
                     raise CVodeError(solveFlag, tret)
                 
                 self.add_sol_point(tret, self.y_cur)
+                self.add_sens_point(tret)
                 
                 if solveFlag == CV_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
@@ -1264,6 +1275,7 @@ cdef class IDA_wrap(Sundials):
         cdef int  qlast, qcurrent
         flag = IDASetStopTime(self.solver, tf)
         self.sol=[]
+        self.p_result = []
         tret=t0
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
@@ -1276,6 +1288,7 @@ cdef class IDA_wrap(Sundials):
                     raise IDAError(solveFlag, tret)
                 
                 self.add_sol_point(tret, self.y_cur, self.yd_cur)
+                self.add_sens_point(tret)
                 
                 if solveFlag == IDA_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
@@ -1304,6 +1317,7 @@ cdef class IDA_wrap(Sundials):
                     raise IDAError(solveFlag, tret)
                 
                 self.add_sol_point(tret, self.y_cur, self.yd_cur)
+                self.add_sens_point(tret)
                 
                 if solveFlag == IDA_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
