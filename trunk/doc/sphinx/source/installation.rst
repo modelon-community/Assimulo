@@ -6,7 +6,7 @@ Installation
 
 Dependencies:
     
-- `Python-2.6 (with headers) <http://www.python.org/>`_
+- `Python-2.6 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
 - `Cython <http://www.cython.org/>`_
 - `Numpy <http://numpy.scipy.org/>`_
 - Pylab
@@ -22,7 +22,7 @@ Once all the dependencies are satisfied an installation is done by::
 
     python setup_source.py install 
     
-After a successful installation, the package will be located in Pythons dist-packages folder.
+After a successful installation, the package will be located in Pythons dist-packages folder. For troubleshooting see :ref:`instTrouble`.
 
 .. note::
 
@@ -72,3 +72,20 @@ After a successful installation, the package will be located in pythons dist-pac
         
     Which requires python-nose.
 
+
+.. _instTrouble:
+
+Troubleshooting
+================
+
+Ubuntu 64bits
+---------------
+There have been some problems installing Assimulo on Ubuntu 64bits machines when Sundials have been installed with the default options. The problem generates the following error printout::
+
+    /usr/bin/ld: /home/chria/sundialscode/lib/libsundials_cvodes.a(cvodes.o): relocation R_X86_64_32
+    against `.rodata.str1.1' can not be used when making a shared object; recompile with -fPIC
+    > /home/chria/sundialscode/lib/libsundials_cvodes.a: could not read symbols: Bad value
+    > collect2: ld returned 1 exit status
+    > error: command 'gcc' failed with exit status 1
+    
+To solve this problem, Sundials have to be installed with the configure flag "--enable-shared=yes".
