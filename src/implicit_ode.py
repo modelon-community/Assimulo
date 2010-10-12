@@ -528,6 +528,8 @@ class IDA(Implicit_ODE, Sundials):
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
+        if sens:
+            self.pbar = N.abs(self._problem.p0)
         
         
         # TEST METHODS

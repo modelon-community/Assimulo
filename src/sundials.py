@@ -433,7 +433,7 @@ class Sundials:
             
                 pbar
                         - An array of positive floats equal to the number of parameters.
-                        - Default array of ones.
+                        - Default absolute values of the parameters.
                         
             Returns::
             
@@ -455,7 +455,7 @@ class Sundials:
             
                 pbar
                         - An array of positive floats equal to the number of parameters.
-                        - Default array of ones.
+                        - Default absolute values of the parameters.
                         
             Returns::
             

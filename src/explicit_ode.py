@@ -657,6 +657,10 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.problem_data['dimSens'] = 0
         
+        #Defaul values
+        if sens:
+            self.pbar = N.abs(self._problem.p0)
+        
         # 
         # TEST METHODS
         #

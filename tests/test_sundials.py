@@ -238,3 +238,30 @@ class Test_Sundials:
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, 'str')
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, [])
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, -10)
+        
+    def test_pbar(self):
+        """
+        Tests the property of pbar.
+        """
+        f = lambda t,y,p:N.array([0.0]*len(y))
+        exp_mod = Explicit_Problem()
+        exp_mod.f = f
+        
+        y0 = [1.0]*2
+        p0 = [1000.0, -100.0]
+        
+        exp_sim = CVode(exp_mod,y0,p0=p0)
+        
+        nose.tools.assert_almost_equal(exp_sim.pbar[0], 1000.00000,4)
+        nose.tools.assert_almost_equal(exp_sim.pbar[1], 100.000000,4)
+        
+        f = lambda t,y,yd,p: N.array([0.0]*len(y))
+        imp_mod = Implicit_Problem()
+        imp_mod.f = f
+        
+        yd0 = [0.0]*2
+        
+        imp_sim = IDA(imp_mod, y0,yd0,p0=p0)
+        
+        nose.tools.assert_almost_equal(exp_sim.pbar[0], 1000.00000,4)
+        nose.tools.assert_almost_equal(exp_sim.pbar[1], 100.000000,4)
