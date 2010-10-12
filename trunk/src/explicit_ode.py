@@ -203,7 +203,7 @@ class Explicit_ODE(ODE):
         self._flag_init = True #Reinitiate the solver
         
         while self.t_cur < tfinal_ori:
-            
+
             #Time event function is specified.
             if self._time_function:
                 tevent = self._problem.time_events(self.t_cur, self.y_cur, self.switches)
@@ -345,9 +345,9 @@ class Explicit_Euler(Explicit_ODE):
         if dt <= 0.0:
             raise Explicit_ODE_Exception('Explicit Euler is a fixed step-size method. Provide' \
                                          ' the number of communication points.')
-        
         self.h = dt
-
+        self._hlength = dt
+        
         for i in range(self.maxsteps):
             if t >= tf:
                 break
@@ -363,7 +363,19 @@ class Explicit_Euler(Explicit_ODE):
         """
         f = self.f
         h = self.h
-        return t + h, y + h*f(t, y) 
+        return t + h, y + h*f(t, y)
+        
+    def print_statistics(self):
+        """
+        Should print the statistics.
+        """
+        print 'Final Run Statistics: %s \n' % self.problem_name
+        print 'Step-length          : %s'%(self._hlength)
+        
+        print '\nSolver options:\n'
+        print ' Solver            : Explicit_Euler'
+        print ' Solver type       : Fixed step'
+        print ''
     
     
 class RungeKutta34(Explicit_ODE):
@@ -499,8 +511,13 @@ class RungeKutta34(Explicit_ODE):
         Should print the statistics.
         """
         print 'Final Run Statistics: %s \n' % self.problem_name
-        print 'Number of Steps                           =', self._nsteps
-        print 'Number of Function Evaluations            =', self._nfcn
+        print 'Number of Steps                 :', self._nsteps
+        print 'Number of Function Evaluations  :', self._nfcn
+        
+        print '\nSolver options:\n'
+        print ' Solver            : RungeKutta34'
+        print ' Solver type       : Adaptive'
+        print ''
     
     
 class RungeKutta4(Explicit_ODE):
@@ -516,6 +533,7 @@ class RungeKutta4(Explicit_ODE):
                                          ' the number of communication points.')
         
         self.h = dt
+        self._hlength = dt
 
         for i in range(self.maxsteps):
             if t >= tf:
@@ -537,7 +555,18 @@ class RungeKutta4(Explicit_ODE):
         Y3 = f(t + h/2., y + h*Y2/2.)
         Y4 = f(t + h, y + h*Y3)
         return t+h, y + h/6.*(Y1 + 2.*Y2 + 2.*Y3 + Y4)
-    
+        
+    def print_statistics(self):
+        """
+        Should print the statistics.
+        """
+        print 'Final Run Statistics: %s \n' % self.problem_name
+        print 'Step-length        :', self._hlength
+        
+        print '\nSolver options:\n'
+        print ' Solver            : RungeKutta4'
+        print ' Solver type       : Fixed step'
+        print ''
     
 class CVode(Explicit_ODE, Sundials):
     """
