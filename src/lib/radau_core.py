@@ -46,14 +46,14 @@ class Radau_Common(object):
         if self.verbosity < minimal_verbosity:
             return None
         print 'Final Run Statistics: %s \n' % self.problem_name
-        print 'Number of Steps                          = %s'%(self._nsteps)
-        print 'Number of Function Evaluations           = %s'%(self._nfcn)
-        print 'Number of Jacobian Evaluations           = %s'%(self._njac)
-        print 'Number of F-Eval During Jac-Eval         = %s'%(self._njacfcn)
-        print 'Number of Error Test Failures            = %s'%(self._errfail)
-        print 'Number of Nonlinear Iterations           = %s'%(self._nniter)
-        print 'Number of Nonlinear Convergence Failures = %s'%(self._nniterfail)
-        print 'Number of LU decompositions              = %s'%(self._nlu)
+        print 'Number of Steps                          : %s'%(self._nsteps)
+        print 'Number of Function Evaluations           : %s'%(self._nfcn)
+        print 'Number of Jacobian Evaluations           : %s'%(self._njac)
+        print 'Number of F-Eval During Jac-Eval         : %s'%(self._njacfcn)
+        print 'Number of Error Test Failures            : %s'%(self._errfail)
+        print 'Number of Nonlinear Iterations           : %s'%(self._nniter)
+        print 'Number of Nonlinear Convergence Failures : %s'%(self._nniterfail)
+        print 'Number of LU decompositions              : %s'%(self._nlu)
         
         print '\nSolver options:\n'
         print ' Solver                  :  Radau5 ' + self._type
