@@ -1,6 +1,15 @@
 --- CHANGELOG ---
 
---- Assimulo-1.2.x (Not released yet)---
+--- Assimulo-1.3.x ---
+    * Improved information output from all the solvers.
+    * Implemented basic support for calculating sensitivites using IDAS.
+    * Fixed a bug with the discretization method reseting the maximum
+      order in CVode.
+    * Minor bug fix in implicit Radau interpolate.
+    * Changed the default value of pbar in CVodes and IDAs to the absolute
+      values of the parameters.
+
+--- Assimulo-1.2b1 ---
     * Implemented basic support for calculating sensitivities using CVodes.
     * Changed from using CVode to CVodes.
     * Added 'echo' methods used for viewing the current solver settings.
