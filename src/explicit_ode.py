@@ -420,6 +420,7 @@ class RungeKutta34(Explicit_ODE):
         #Default values
         self.initstep = 0.01
         self.atol = 1.e-6
+        self.rtol = 1.e-6
         
         #Internal values
         # - Statistic values
@@ -464,6 +465,36 @@ class RungeKutta34(Explicit_ODE):
         return self.__initstep
         
     initstep = property(_get_initial_step,_set_initial_step)
+    
+    def _set_atol(self,atol):
+        """
+        Sets the absolute tolerance to be used in the integration.
+        
+            Parameters::
+            
+                atol    
+                            - Default '0.01'.
+                            
+                            - Should be float or an array/list of len(y)
+                            
+                                Example:
+                                    atol=1.e5
+                                    atol=[1.e-5,1.e-4]
+        """
+        try:
+            atol=N.array(atol,float)
+        except ValueError:
+            raise Explicit_ODE_Exception('atol must be a float or a list of floats')            
+        if atol.any() <= 0.:
+            raise Explicit_ODE_Exception('atol must be positive.')        
+        self.__atol=atol
+    def _get_atol(self):
+        """
+        
+        """
+        return self.__atol
+    doc_atol='absolute tolerance.\n Positive float or list/array of positive floats.'    
+    atol = property(_get_atol,_set_atol,doc=doc_atol)
         
     
     def _integrator(self, t, y, tf, dt):
@@ -487,15 +518,15 @@ class RungeKutta34(Explicit_ODE):
         """
         Adjusts the stepsize.
         """
-        if self.error < self.atol*self.atol:
-            self.error = self.atol*self.atol
-        self.h *= (self.atol/self.error)**(1.0/4.0)
+        fac=min((1./self.error)**(1.0/4.0),2.)
+        self.h *= fac
     
     def step(self, t, y):
         """
         This calculates the next step in the integration.
         """
         self._nfcn += 5
+        self._scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
         h = self.h
         Y1 = f(t, y)
@@ -503,7 +534,7 @@ class RungeKutta34(Explicit_ODE):
         Y3 = f(t + h/2, y + h*Y2/2)
         Z3 = f(t + h, y - h*Y1 + 2*h*Y2)
         Y4 = f(t + h, y + h*Y3)
-        self.error = N.linalg.norm(h/6*(2*Y2 + Z3 - 2*Y3 - Y4))
+        self.error = N.linalg.norm(h/6*(2*Y2 + Z3 - 2*Y3 - Y4)/self._scaling) #normalized 
         return t+h, y + h/6*(Y1 + 2*Y2 + 2*Y3 + Y4)
     
     def print_statistics(self):

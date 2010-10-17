@@ -155,25 +155,25 @@ class Test_RungeKutta34:
         nose.tools.assert_almost_equal(t, 0.100000)
         nose.tools.assert_almost_equal(y, 1.100000)
         [t, y] = values.next()
-        nose.tools.assert_almost_equal(t, 1.0)
-        nose.tools.assert_almost_equal(y, 2.0)
+        nose.tools.assert_almost_equal(t, 0.3)
+        nose.tools.assert_almost_equal(y, 1.3)
         
     def test_adjust_stepsize(self):
         """
         This tests the functionality of the method adjust_stesize.
         """
         self.simulator.h = 0.1
-        self.simulator.atol = 1.0
         self.simulator.error = 0.5
         
         self.simulator.adjust_stepsize()
 
-        nose.tools.assert_almost_equal(self.simulator.h, 0.1000)
+        nose.tools.assert_almost_equal(self.simulator.h, 0.118920712)
         
-        self.simulator.atol = 0.1
+        self.simulator.h = 0.1
+        self.simulator.error = 1.e-9
         self.simulator.adjust_stepsize()
         
-        nose.tools.assert_almost_equal(self.simulator.h, 0.05623413)
+        nose.tools.assert_almost_equal(self.simulator.h, 0.2)
     
     def test_step(self):
         """

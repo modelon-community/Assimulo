@@ -66,13 +66,13 @@ def run_example():
     
     #RungeKutta34
     exp_sim = RungeKutta34(exp_mod)
-    exp_sim(5.)
-    nose.tools.assert_almost_equal(exp_sim.y[3], 1.0000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[4], 2.0000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[8], 4.00000, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[16], 7.00000, 4)
+    exp_sim(5.,100)
+    nose.tools.assert_almost_equal(exp_sim.y[7], 1.0000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[8], 2.0000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[16], 4.00000, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[30], 7.00000, 4)
     nose.tools.assert_almost_equal(exp_sim.y[-1], 9.00000, 4)
-    assert len(exp_sim.t) == 20
+    assert len(exp_sim.t) == 39
         
 def test_explicit_time_event():
     """
