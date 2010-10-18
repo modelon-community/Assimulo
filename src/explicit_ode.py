@@ -473,7 +473,7 @@ class RungeKutta34(Explicit_ODE):
             Parameters::
             
                 atol    
-                            - Default '0.01'.
+                            - Default 1.0e-6.
                             
                             - Should be float or an array/list of len(y)
                             
@@ -495,12 +495,53 @@ class RungeKutta34(Explicit_ODE):
             
     def _get_atol(self):
         """
+        Sets the absolute tolerance to be used in the integration.
         
+            Parameters::
+            
+                atol    
+                            - Default 1.0e-6.
+                            
+                            - Should be float or an array/list of len(y)
+                            
+                                Example:
+                                    atol=1.e5
+                                    atol=[1.e-5,1.e-4]
         """
         return self.__atol
-    doc_atol='absolute tolerance.\n Positive float or list/array of positive floats.'    
-    atol = property(_get_atol,_set_atol,doc=doc_atol)
+    
+    atol = property(_get_atol,_set_atol)
+    
+    def _set_rtol(self, rtol):
+        """
+        The relative tolerance to be used in the integration.
         
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        try:
+            self.__rtol = float(rtol)
+        except ValueError:
+            raise Explicit_ODE_Exception('rtol must be a float.')
+            
+    def _get_rtol(self):
+        """
+        The relative tolerance to be used in the integration.
+        
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        return self.__rtol
+    
+    rtol = property(_get_rtol, _set_rtol)
     
     def _integrator(self, t, y, tf, dt):
         """
@@ -551,8 +592,10 @@ class RungeKutta34(Explicit_ODE):
         print 'Number of Function Evaluations  :', self._nfcn
         
         print '\nSolver options:\n'
-        print ' Solver            : RungeKutta34'
-        print ' Solver type       : Adaptive'
+        print ' Solver               : RungeKutta34'
+        print ' Solver type          : Adaptive'
+        print ' Relative tolerance   : ', self.rtol
+        print ' Absolute tolerance   : ', self.atol
         print ''
     
     
