@@ -489,7 +489,7 @@ class RungeKutta34(Explicit_ODE):
             raise Explicit_ODE_Exception('atol must be a float or a list of floats')            
         if (atol<= 0.).any():
             raise Explicit_ODE_Exception('atol must be positive.')        
-        if len(atol)!=1 or len(atol)!=len(self.y_cur):
+        if len(atol)!=1 and len(atol)!=len(self.y_cur):
             raise Explicit_ODE_Exception('atol must be a scalar or a list object with length of y0.')   
         self.__atol=atol
             
