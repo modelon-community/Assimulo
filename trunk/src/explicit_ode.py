@@ -481,13 +481,18 @@ class RungeKutta34(Explicit_ODE):
                                     atol=1.e5
                                     atol=[1.e-5,1.e-4]
         """
+        if isinstance(atol,float):
+            atol=[atol]
         try:
             atol=N.array(atol,float)
         except ValueError:
             raise Explicit_ODE_Exception('atol must be a float or a list of floats')            
-        if atol.any() <= 0.:
+        if (atol<= 0.).any():
             raise Explicit_ODE_Exception('atol must be positive.')        
+        if len(atol)!=1 or len(atol)!=len(self.y_cur):
+            raise Explicit_ODE_Exception('atol must be a scalar or a list object with length of y0.')   
         self.__atol=atol
+            
     def _get_atol(self):
         """
         
