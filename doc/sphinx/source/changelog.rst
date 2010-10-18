@@ -3,6 +3,16 @@
 Changelog
 ==========
 
+--- Assimulo-1.3b1 ---
+    * Improved the tolerance handling in RungeKutta34.
+    * Improved information output from all the solvers.
+    * Implemented basic support for calculating sensitivites using IDAS.
+    * Fixed a bug with the discretization method reseting the maximum
+      order in CVode.
+    * Minor bug fix in implicit Radau interpolate.
+    * Changed the default value of pbar in CVodes and IDAs to the absolute
+      values of the parameters.
+
 --- Assimulo-1.2b1 ---
     * Implemented basic support for calculating sensitivities using CVodes.
     * Changed from using CVode to CVodes.
