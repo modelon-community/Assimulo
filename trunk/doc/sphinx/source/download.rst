@@ -6,14 +6,14 @@ Download
 
 Current version:
 
-    - :download:`Assimulo-1.2b1.zip <Assimulo-1.2b1.zip>`
+    - :download:`Assimulo-1.3b1.zip <Assimulo-1.3b1.zip>`
    
 See :doc:`installation` for instructions on setting up Assimulo.
 
 
 To retrieve the latest version using a subversion software use::
 
-    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-1.2b1
+    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-1.3b1
 
 To retrieve the latest (develop) version using a subversion software use::
 
@@ -27,5 +27,6 @@ To retrieve the latest (develop) version using a subversion software use::
 
 Old versions:
     
+    - :download:`Assimulo-1.2b1.zip <Assimulo-1.2b1.zip>`
     - :download:`Assimulo-1.1b1.zip <Assimulo-1.1b1.zip>`
     - :download:`Assimulo-1.0b2.zip <Assimulo-1.0b2.zip>`
