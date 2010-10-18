@@ -23,6 +23,8 @@ Parameters:
 - :class:`maxsteps <assimulo.explicit_ode.RungeKutta34.maxsteps>` Determines the maximum number of steps the solver is allowed to take to finish the simulation.
 - :class:`problem_name <assimulo.explicit_ode.RungeKutta34.problem_name>` Defines the name of the problem.
 - :class:`verbosity <assimulo.explicit_ode.RungeKutta34.verbosity>` Defines the verbosity of the integrator.
+- :class:`atol <assimulo.explicit_ode.RungeKutta34.atol>` The absolute tolerance to be used in the integration.
+- :class:`rtol <assimulo.explicit_ode.RungeKutta34.rtol>` The relative tolerance to be used in the integration.
 
 Simulate the problem.
 
