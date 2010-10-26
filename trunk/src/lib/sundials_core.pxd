@@ -154,6 +154,7 @@ cdef extern from "cvodes/cvodes.h":
     
     #Functions for retrieving statistics
     int CVodeGetLastOrder(void * cvode_mem,int *qlast)
+    int CVodeGetLastStep(void * cvode_mem, realtype *hlast)
     int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent)
     int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) #Number of steps
     int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) #Number of function evals
@@ -190,6 +191,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS)
     
     #Statistics
+    int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele)               #Estimated local errors
     int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals)
     int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS)
     int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails)
@@ -251,6 +253,8 @@ cdef extern from "idas/idas.h":
     int IDASetLineSearchOffIC(void *ida_mem, booleantype lsoff)
     
     #Functions for retrieving statistics
+    int IDAGetEstLocalErrors(void *ida_mem, N_Vector ele)               #Estimated local errors
+    int IDAGetLastStep(void *ida_mem, realtype *hlast)
     int IDAGetLastOrder(void *ida_mem,int *qlast)                       #Last order used
     int IDAGetCurrentOrder(void *ida_mem,int *qcurrent)                 #Order that is about to be tried
     int IDAGetNumSteps(void *ida_mem, long int *nsteps)                 #Number of steps
@@ -380,7 +384,7 @@ cdef inline nv2arr(N_Vector v):
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
     cdef long int i
     import_array()
-    cdef ndarray x=np.empty(n)
+    cdef ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
     #cdef ndarray x = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,v_data)
     memcpy(x.data, v_data, n*sizeof(double))
     return x
