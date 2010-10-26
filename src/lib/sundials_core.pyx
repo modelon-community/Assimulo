@@ -147,7 +147,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     cdef ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
      
-    if pData.dimSens!=0: #SENSITIVITY
+    if pData.dimSens!=0: #SENSITIVITY 
         p = realtype2arr(pData.p,pData.dimSens)
         try:
             if pData.sw != NULL:
@@ -387,6 +387,7 @@ cdef class Sundials:
     cdef N_Vector *ySO                  #The sensitivity start matrix
     cdef public npy_intp nbrRoot        #The number of root functions
     cdef public list p_result           #The sensitivity result matrix
+    cdef public booleantype save_detailed_info #Save detailed information about the solver
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -401,6 +402,7 @@ cdef class Sundials:
         self.solver_stats = [0,0,0,0,0,0,0,0]
         self.solver_sens_stats = [0,0,0,0,0,0]
         self.suppress_alg = False
+        self.save_detailed_info = False
         
         #Default values (Sensitivity)
         self.sensToggleOff = False #Toggle the sensitivity calculations off
@@ -812,6 +814,7 @@ cdef class CVode_wrap(Sundials):
         cdef realtype hinused,hlast,hcur,tcur
         cdef int qlast, qcurrent
         cdef flag, solveFlag
+        cdef N_Vector errW
         
         flag = CVodeSetStopTime(self.solver, tf) #Set the stop time
         if flag < 0:
@@ -820,6 +823,9 @@ cdef class CVode_wrap(Sundials):
         self.sol=[] #Reset the solution list
         self.p_result = [] #Reset the sensitivity solution list
         tret=t0
+        errW = arr2nv(np.empty(self.pData.dim))
+        
+        
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
             for i in xrange(1, nt+1):
@@ -852,6 +858,8 @@ cdef class CVode_wrap(Sundials):
                 self.detailed_info = {}
                 self.detailed_info['qlast'] = []
                 self.detailed_info['qcurrent'] = []
+                self.detailed_info['hlast'] = []
+                self.detailed_info['errorWeights'] = []
             while tret < tf:
                 solveFlag=CVode(self.solver,tf,self.y_cur,&tret,CV_ONE_STEP)
                 if solveFlag < 0:
@@ -863,11 +871,16 @@ cdef class CVode_wrap(Sundials):
                 if solveFlag == CV_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
                     break
-                    
-                flag = CVodeGetLastOrder(self.solver, &qlast)
-                flag = CVodeGetCurrentOrder(self.solver, &qcurrent)
-                self.detailed_info['qlast'].append(qlast)
-                self.detailed_info['qcurrent'].append(qcurrent)
+                
+                if self.save_detailed_info:
+                    flag = CVodeGetLastOrder(self.solver, &qlast)
+                    flag = CVodeGetCurrentOrder(self.solver, &qcurrent)
+                    flag = CVodeGetLastStep(self.solver, &hlast)
+                    flag = CVodeGetEstLocalErrors(self.solver, errW)
+                    self.detailed_info['qlast'].append(qlast)
+                    self.detailed_info['qcurrent'].append(qcurrent)
+                    self.detailed_info['hlast'].append(hlast)
+                    self.detailed_info['errorWeights'].append(nv2arr(errW))
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
@@ -1273,10 +1286,14 @@ cdef class IDA_wrap(Sundials):
         #cdef realtype hinused,hlast,hcur,tcur
         #cdef long int nsteps, fevals, nlinsetups, netfails
         cdef int  qlast, qcurrent
+        cdef realtype hlast
+        cdef N_Vector errW
         flag = IDASetStopTime(self.solver, tf)
         self.sol=[]
         self.p_result = []
         tret=t0
+        errW = arr2nv(np.empty(self.pData.dim))
+        
         if dt > 0.0:
             nt = int(math.ceil((tf-t0)/dt))
             for i in xrange(1, nt+1):
@@ -1309,24 +1326,30 @@ cdef class IDA_wrap(Sundials):
                 self.detailed_info = {}
                 self.detailed_info['qlast'] = []
                 self.detailed_info['qcurrent'] = []
-                
+                self.detailed_info['hlast'] = []
+                self.detailed_info['errorWeights'] = []
             while tret < tf:
                 
                 solveFlag=IDASolve(self.solver,tf,&tret, self.y_cur,self.yd_cur,IDA_ONE_STEP)
                 if solveFlag < 0:
                     raise IDAError(solveFlag, tret)
-                
+
                 self.add_sol_point(tret, self.y_cur, self.yd_cur)
                 self.add_sens_point(tret)
                 
                 if solveFlag == IDA_ROOT_RETURN: #Found a root
                     self.save_event_info(tret)
                     break
-
-                flag = IDAGetLastOrder(self.solver, &qlast)
-                flag = IDAGetCurrentOrder(self.solver, &qcurrent)
-                self.detailed_info['qlast'].append(qlast)
-                self.detailed_info['qcurrent'].append(qcurrent)
+                
+                if self.save_detailed_info:
+                    flag = IDAGetLastOrder(self.solver, &qlast)
+                    flag = IDAGetCurrentOrder(self.solver, &qcurrent)
+                    flag = IDAGetLastStep(self.solver, &hlast)
+                    flag = IDAGetEstLocalErrors(self.solver, errW)
+                    self.detailed_info['qlast'].append(qlast)
+                    self.detailed_info['qcurrent'].append(qcurrent)
+                    self.detailed_info['hlast'].append(hlast)
+                    self.detailed_info['errorWeights'].append(nv2arr(errW))
                 self._count_output+=1
                 self._ordersum+=qlast
                 avar=float(self._ordersum)/self._count_output
