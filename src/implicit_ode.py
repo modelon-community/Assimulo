@@ -277,7 +277,6 @@ class Implicit_ODE(ODE):
                 self.print_statistics(self.SCREAM) #Prints statistics
                     
                 self.print_verbos(['Calling problem specified event handling...'],self.LOUD)
-                print 'in  implicit ode  ',self.y_cur[0:3],self.yd_cur[0:3]
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
                 self._flag_init = True
