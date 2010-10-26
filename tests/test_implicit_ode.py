@@ -162,9 +162,9 @@ class Test_IDA:
         print sim.temp
         assert sim.stats[0] != 0
         assert sim.temp == 101
-        sim.simulate(20)
+        sim.simulate(20, 40)
         print sim.temp
-        assert sim.temp == 141
+        assert sim.temp == 142
         
     def test_max_order(self):
         """
