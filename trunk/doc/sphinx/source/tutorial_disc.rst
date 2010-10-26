@@ -45,7 +45,7 @@ to a user specified method ``handle_event``, ::
 
     event_info[0] #State Events, list of [1,0,0,-1], !=0 means an event occurred.
 
-A value -1 indicates that the ``state_event`` function crossed zero from negative to positive and a value +1 indictes that the 
+A value +1 indicates that the ``state_event`` function crossed zero from negative to positive and a value -1 indictes that the 
 function became negative in the respective component.
 
 
