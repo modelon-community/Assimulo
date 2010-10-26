@@ -243,11 +243,7 @@ class Implicit_ODE(ODE):
             
             solution = list(self._integrator(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
 
-            temp_t, temp_y, temp_yd = solution[-1]
-            
-            self.t_cur  = temp_t.copy()
-            self.y_cur  = temp_y.copy()
-            self.yd_cur = temp_y.copy()
+            self.t_cur,self.y_cur,self.yd_cur = (result.copy() for result in solution[-1])
             
             if mode == 'SPECIAL':
                 while dist_space[0] <= self.t_cur:
@@ -281,7 +277,7 @@ class Implicit_ODE(ODE):
                 self.print_statistics(self.SCREAM) #Prints statistics
                     
                 self.print_verbos(['Calling problem specified event handling...'],self.LOUD)
-                
+                print 'in  implicit ode  ',self.y_cur[0:3],self.yd_cur[0:3]
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 #self.event_iteration(event_info) #Handles the event iteration
                 self._flag_init = True
