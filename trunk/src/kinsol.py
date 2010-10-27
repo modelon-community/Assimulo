@@ -112,6 +112,24 @@ class KINSOL:
             self._use_jac = use_jac
         else:
             raise KINSOL_Exception("The variable sent to 'set_jac_usage' must be a boolean.")
+        
+    def set_print_level(self,print_level):
+        """
+        Method used to set the print level of KINSOL
+        
+        Parameters::
+            
+            print_level --
+                Integer set to one of 0,1,2,3 where 0 is no info and 3 the
+                most info. For more information please see the documentation for KINSOL.
+        """
+        type_name = type(print_level).__name__
+        if re.search('int',type_name) != None:
+            self.print_level = print_level
+        else:
+            raise KINSOL_Exception("The variable sent to 'set_print_level' must be an integer.")
+            
+        
     
     def solve(self):
         """
@@ -130,7 +148,7 @@ class KINSOL:
         res = N.zeros(self.x0.__len__())
         while not solved and self.pinv_count < 10:
             try:
-                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints)
+                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.print_level)
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:

@@ -129,14 +129,14 @@ cdef class KINSOL_wrap:
         else:
             self.pData.JAC = NULL
 
-    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None):
+    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None, print_level = 0):
         """
         Initializes solver
         """        
         cdef int flag
         # Set problem info
         self.noInitSetup = False
-        self.print_level = 0
+        self.print_level = print_level
 
         self.KINSOL_set_problem_info(RHS,dim,JAC)
 
