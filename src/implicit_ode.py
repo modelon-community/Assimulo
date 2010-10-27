@@ -243,7 +243,11 @@ class Implicit_ODE(ODE):
             
             solution = list(self._integrator(self.t_cur, self.y_cur, self.yd_cur, tfinal,dt))
 
-            self.t_cur,self.y_cur,self.yd_cur = (result.copy() for result in solution[-1])
+            temp_t, temp_y, temp_yd = solution[-1]
+            
+            self.t_cur  = temp_t.copy()
+            self.y_cur  = temp_y.copy()
+            self.yd_cur = temp_y.copy()
             
             if mode == 'SPECIAL':
                 while dist_space[0] <= self.t_cur:
