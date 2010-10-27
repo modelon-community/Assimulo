@@ -247,7 +247,7 @@ class Implicit_ODE(ODE):
             
             self.t_cur  = temp_t.copy()
             self.y_cur  = temp_y.copy()
-            self.yd_cur = temp_y.copy()
+            self.yd_cur = temp_yd.copy()
             
             if mode == 'SPECIAL':
                 while dist_space[0] <= self.t_cur:
