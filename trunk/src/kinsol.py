@@ -95,6 +95,7 @@ class KINSOL:
         self._use_jac = True
         self.pinv_count = 0
         self.lin_count = 0
+        self.print_level = 0
                 
     def set_jac_usage(self,use_jac):
         """
