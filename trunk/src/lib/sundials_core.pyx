@@ -158,7 +158,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             #memcpy((<N_VectorContent_Serial>residual.content).data,<realtype*>res.data,pData.memSize)
             for i in range(pData.dim):
                 resptr[i] = res[i]
-            
+
             return IDA_SUCCESS
         except(LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
@@ -320,7 +320,7 @@ class IDAError(SundialsError):
             IDA_SRES_FAIL        : 'The user-provided sensitivity residual function failed in an unrecoverable manner.',
             IDA_REP_SRES_ERR     : 'The user-provided sensitivity residual function repeatedly returned a recoverable error flag, but the solver was unable to recover.',
             IDA_BAD_IS           : 'The sensitivity identifier is not valid.'}
-    pass 
+    pass  
     
 class CVodeError(SundialsError):
     """
@@ -892,8 +892,9 @@ cdef class CVode_wrap(Sundials):
                 solveFlag = 1
                 
         if solveFlag >= 1:
-            self.sim_complete = True
             self.store_statistics()
+        if solveFlag >= 1 and solveFlag != CV_ROOT_RETURN:
+            self.sim_complete = True
 
         return self.sol
     
@@ -1073,8 +1074,8 @@ cdef class IDA_wrap(Sundials):
         Sets the sensitivity information.
         """
         #Create the initial matrices
-        self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(y))
-        self.ydSO = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(yd))
+        self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, self.y_cur)
+        self.ydSO = N_VCloneVectorArray_Serial(self.pData.dimSens, self.yd_cur)
         cdef realtype ZERO = 0.0
         cdef realtype *pbar
         
@@ -1312,9 +1313,7 @@ cdef class IDA_wrap(Sundials):
                     break
 
                 flag = IDAGetLastOrder(self.solver, &qlast)
-                self._count_output+=1
-                self._ordersum+=qlast
-                avar=float(self._ordersum)/self._count_output
+
                 if solveFlag == 1:
                     break
                 if i == nt:
@@ -1350,9 +1349,7 @@ cdef class IDA_wrap(Sundials):
                     self.detailed_info['qcurrent'].append(qcurrent)
                     self.detailed_info['hlast'].append(hlast)
                     self.detailed_info['errorWeights'].append(nv2arr(errW))
-                self._count_output+=1
-                self._ordersum+=qlast
-                avar=float(self._ordersum)/self._count_output
+
                 if self.store_cont:
                     break
                 if self.comp_step:
@@ -1360,8 +1357,9 @@ cdef class IDA_wrap(Sundials):
             else:
                 solveFlag=1
         if solveFlag >= 1:
-            self.sim_complete = True
             self.store_statistics()
+        if solveFlag >= 1 and solveFlag != IDA_ROOT_RETURN:
+            self.sim_complete = True
         # Free memory
         #IDAFree(&self.solver)
         #N_VDestroy_Serial(self.curr_state)

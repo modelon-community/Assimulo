@@ -38,6 +38,7 @@ cdef extern from "sundials/sundials_types.h":
     ctypedef double realtype
     ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
 
+
 #==============================================
 #External definitions from numpy headers
 #==============================================
@@ -92,6 +93,7 @@ cdef extern from "sundials/sundials_nvector.h":
 cdef extern from "nvector/nvector_serial.h":
     cdef struct _N_VectorContent_Serial:
         long int length
+        booleantype own_data
         realtype* data
     ctypedef _N_VectorContent_Serial* N_VectorContent_Serial
     cdef N_Vector N_VMake_Serial(long int vec_length, realtype *v_data)
@@ -372,11 +374,11 @@ cdef class ProblemData:
 cdef inline N_Vector arr2nv(x):
     x=np.array(x)
     cdef long int n = len(x)
-    cdef ndarray[double, ndim=1,mode='c'] ndx=x
+    cdef ndarray[realtype, ndim=1,mode='c'] ndx=x
     import_array()
     cdef void* data_ptr=PyArray_DATA(ndx)
     cdef N_Vector v=N_VNew_Serial(n)
-    memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(double))
+    memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
     
 cdef inline nv2arr(N_Vector v):
@@ -386,12 +388,12 @@ cdef inline nv2arr(N_Vector v):
     import_array()
     cdef ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
     #cdef ndarray x = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,v_data)
-    memcpy(x.data, v_data, n*sizeof(double))
+    memcpy(x.data, v_data, n*sizeof(realtype))
     return x
 
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
     import_array()
     cdef ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
-    memcpy(x.data, data, n*sizeof(double))
+    memcpy(x.data, data, n*sizeof(realtype))
     return x
