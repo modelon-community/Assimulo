@@ -126,7 +126,12 @@ class KINSOL:
         """
         type_name = type(print_level).__name__
         if re.search('int',type_name) != None:
-            self.print_level = print_level
+            
+            # It is an integer, tes bounds
+            if print_level < 4 and print_level > -1:
+                self.print_level = print_level
+            else:
+                raise KINSOL_Exception("The variable sent to 'set_print_level' must be either 0, 1, 2 or 3.")
         else:
             raise KINSOL_Exception("The variable sent to 'set_print_level' must be an integer.")
             
