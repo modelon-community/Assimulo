@@ -203,6 +203,7 @@ class Test_Explicit_Radau:
         exp_mod = Explicit_Problem()
         exp_mod.f = f
         exp_mod.jac = jac
+        self.mod = exp_mod
             
         #Define an explicit solver
         y0 = [2.0,-0.6] #Initial conditions
@@ -213,6 +214,21 @@ class Test_Explicit_Radau:
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.initstep = 1.e-4 #Initial step-size
         self.sim.usejac = False
+    
+    def test_init(self):
+        """
+        This tests the functionality of Radau5 Explicit Init.
+        """
+        #Test both y0 in problem and not.
+        y0 = [2.0, -0.6]
+        sim = Radau5(self.mod, y0)
+        
+        assert sim._leny == 2
+        
+        self.mod.y0 = y0
+        sim = Radau5(self.mod)
+        
+        assert sim._leny == 2
     
     def test_col(self):
         """
@@ -358,6 +374,7 @@ class Test_Implicit_Radau:
         #Define an Assimulo problem
         imp_mod = Implicit_Problem()
         imp_mod.f = f
+        self.mod = imp_mod
             
         #Define an explicit solver
         y0 = [2.0,-0.6] #Initial conditions
@@ -368,7 +385,24 @@ class Test_Implicit_Radau:
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.initstep = 1.e-4 #Initial step-size
+    
+    def test_init(self):
+        """
+        This tests the functionality of Radau5 Implicit Init.
+        """
+        #Test both y0 in problem and not.
+        y0 = [2.0, -0.6]
+        yd0 = [-.6,-200000.]
+        sim = Radau5Imp(self.mod, y0, yd0)
         
+        assert sim._leny == 2
+        
+        self.mod.y0 = y0
+        self.mod.yd0 = yd0
+        sim = Radau5Imp(self.mod)
+        
+        assert sim._leny == 2
+    
     def test_thet(self):
         """
         This tests a negative value of thet.

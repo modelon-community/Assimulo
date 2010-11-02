@@ -1297,7 +1297,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         self._needLU = True #Need new LU-factorisation?
         self._first = True #First step?
         self._rejected = True #Is the last step rejected?
-        self._leny = len(y0) #Dimension of the problem
+        self._leny = len(self.y_cur) #Dimension of the problem
         self._oldh = 0.0 #Old stepsize
         self._olderr = 1.0 #Old error
         self._eps = N.finfo('double').eps
