@@ -1149,7 +1149,7 @@ class Radau5(Radau_Common,Implicit_ODE):
             self.usejac = False
         
         #Internal values
-        self._leny = len(y0) #Dimension of the problem
+        self._leny = len(self.y_cur) #Dimension of the problem
         self._2leny = 2*self._leny
         
         #Default values
@@ -1163,7 +1163,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         self.fac2 = 8.0 #Parameters for step-size selection (upper bound)
         self.maxh = N.inf #Maximum step-size.
         self.safe = 0.9 #Safety factor
-        self.index = [1]*len(y0)
+        self.index = [1]*self._leny
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
         
