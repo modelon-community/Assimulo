@@ -17,6 +17,7 @@
 
 from lib.sundials_kinsol_core import KINSOL_wrap, KINError
 from scipy.linalg import pinv2
+from scipy.optimize import fminbound
 from numpy.linalg import solve
 import numpy as N
 import pylab as P
@@ -93,9 +94,10 @@ class KINSOL:
             self.constraints = None
             
         self._use_jac = True
-        self.pinv_count = 0
+        self.reg_count = 0
         self.lin_count = 0
         self.print_level = 0
+        self.max_reg = 2.0
                 
     def set_jac_usage(self,use_jac):
         """
@@ -151,32 +153,91 @@ class KINSOL:
         # Initialize solver and solve        
         
         solved = False
+
         res = N.zeros(self.x0.__len__())
-        while not solved and self.pinv_count < 10:
+        while not solved and self.reg_count < 10:
             try:
                 self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.print_level)
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:
                 if error.value == -11 :
-                    # the problem is caused by a singular jacobian try a pinv step
-                    self.pinv_count += 1
-                    self._do_pinv_step()
-                elif error.value == -6 or error.value == -7:
+                    # the problem is caused by a singular jacobian try a regularized step
+                    self.reg_count += 1
+                    self._do_reg_step()
+
+                elif error.value == -7 or error.value == -6 or error.value == -8:
                     self._brute_force()    
                 else:
                     # Other error, send onward as exception
                     raise KINSOL_Exception(error.msg[error.value])
         
         if not solved:
-            raise KINSOL_Exception("Singular Jacobian. Tried using pseudo inverse but stopped after ten steps.")
+            raise KINSOL_Exception("Singular Jacobian. Tried using Tikhonov regularization but stopped after ten steps.")
            
-        if self.pinv_count != 0:
-            print self.pinv_count, " steps using the pseudo inverse performed."
+        if self.reg_count != 0:
+            print self.reg_count, " steps using the Tikhonov regularization performed."
+        if self.lin_count != 0:
             print self.lin_count, " steps using the numpy.linalg.solve function performed."
-            
+
         return res
-            
+    
+    def _do_reg_step(self):
+        """
+        Method used to perform a step using Tikhonov regularization
+        """
+        print "Trying to do a Tikhonov regularized step"
+        if self._use_jac:
+            if hasattr(self.problem,'jac'):
+                # Extract data from problem
+                x0 = self.x0
+                fx = self.func(x0)
+                J  = self.problem.jac(x0)
+                try:
+                    h = fminbound(self._norm_of_next_step,0.001,100.0)
+                    print "Regularization parameter: ", h
+                
+                except:
+                    h = 0.4
+                    print "Could not find optimal regularization parameter. Using 0.4 instead."
+                
+                # Calculate regularisation step if the regularization prameter is not 'too big'
+                if h < self.max_reg:
+                    J_T = J.transpose()
+                    rhs = N.dot(J_T,-fx)
+                    A = N.dot(J_T,J)+(h**2)*N.eye(fx.__len__())
+                    dx = solve(A,rhs)
+                    
+                    # Do step in problem
+                    self.x0 = x0 + dx
+                    self.problem._x0 = self.x0
+                else:
+                    print "Regularization parameter too big, tryig a step using pseudo inverse."
+                    self._do_pinv_step()
+                
+            else:
+                raise KINSOL_Exception("Singular jacobian. Trying to do a step using Tikhonov regularization, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
+                
+        else:
+            raise KINSOL_Exception("Singular jacobian. Trying to do a step using Tikhonov regularization but 'use_jac' is set to false.")
+    
+    def _norm_of_next_step(self,h):
+        """
+        Function used to calculate the norm of the solution after the first step
+        """
+        x0 = self.x0
+        J  = self.problem.jac(x0)
+        fx = self.func(x0)
+        
+        # Calculate pseudo inverse and calculate new step
+        J_T = J.transpose()
+        rhs = N.dot(J_T,-fx)
+        A = N.dot(J_T,J)+(h**2)*N.eye(fx.__len__())
+        dx = solve(A,rhs)
+        
+        # Return norm of solution
+        return N.linalg.norm(self.func(x0+dx))
+    
     def _do_pinv_step(self):
         """
         Method used to perform a step using the pseudo inverse
