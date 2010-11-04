@@ -187,34 +187,34 @@ class Test_KINSOL:
         nose.tools.assert_almost_equal(res2[1],2.0,5)
         nose.tools.assert_almost_equal(res2[2],3.0,5)
         
-    def test_printlevel_usage(self):
+    def test_verbosity_usage(self):
         """
         test if the setting of printout level works
         """
         # test default value
-        nose.tools.assert_equal(self.solve_p1.print_level,0)
+        nose.tools.assert_equal(self.solve_p1.verbosity,0)
         
         # Test for faulty input
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,1.0)
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,True)
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,'a')
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,4)
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,-1)
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,N.ones(3))
-        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_print_level,N.ones(3,dtype = int))
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,1.0)
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,True)
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,'a')
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,4)
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,-1)
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,N.ones(3))
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_p1.set_verbosity,N.ones(3,dtype = int))
         
         # Test if set correctly
-        self.solve_p1.set_print_level(1)
-        nose.tools.assert_equal(self.solve_p1.print_level,1)
+        self.solve_p1.set_verbosity(1)
+        nose.tools.assert_equal(self.solve_p1.verbosity,1)
         
-        self.solve_p1.set_print_level(2)
-        nose.tools.assert_equal(self.solve_p1.print_level,2)
+        self.solve_p1.set_verbosity(2)
+        nose.tools.assert_equal(self.solve_p1.verbosity,2)
         
-        self.solve_p1.set_print_level(3)
-        nose.tools.assert_equal(self.solve_p1.print_level,3)
+        self.solve_p1.set_verbosity(3)
+        nose.tools.assert_equal(self.solve_p1.verbosity,3)
         
-        self.solve_p1.set_print_level(0)
-        nose.tools.assert_equal(self.solve_p1.print_level,0)
+        self.solve_p1.set_verbosity(0)
+        nose.tools.assert_equal(self.solve_p1.verbosity,0)
 
         
         
