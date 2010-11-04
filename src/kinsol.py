@@ -74,6 +74,7 @@ class KINSOL:
         # check for constraints and test them
         if hasattr(self.problem, 'get_constraints'):
             self.constraints = self.problem.get_constraints()
+            
             if self.constraints != None:
                 # test if constraints are of correct type
                 if type(self.constraints).__name__ != 'ndarray':
@@ -96,7 +97,7 @@ class KINSOL:
         self._use_jac = True
         self.reg_count = 0
         self.lin_count = 0
-        self.print_level = 0
+        self.verbosity = 0
         self.max_reg = 2.0
                 
     def set_jac_usage(self,use_jac):
@@ -116,26 +117,26 @@ class KINSOL:
         else:
             raise KINSOL_Exception("The variable sent to 'set_jac_usage' must be a boolean.")
         
-    def set_print_level(self,print_level):
+    def set_verbosity(self,verbosity):
         """
-        Method used to set the print level of KINSOL
+        Method used to set the verbosity of KINSOL
         
         Parameters::
             
-            print_level --
+            verbosity --
                 Integer set to one of 0,1,2,3 where 0 is no info and 3 the
                 most info. For more information please see the documentation for KINSOL.
         """
-        type_name = type(print_level).__name__
+        type_name = type(verbosity).__name__
         if re.search('int',type_name) != None:
             
             # It is an integer, tes bounds
-            if print_level < 4 and print_level > -1:
-                self.print_level = print_level
+            if verbosity < 4 and verbosity > -1:
+                self.verbosity = verbosity
             else:
-                raise KINSOL_Exception("The variable sent to 'set_print_level' must be either 0, 1, 2 or 3.")
+                raise KINSOL_Exception("The variable sent to 'set_verbosity' must be either 0, 1, 2 or 3.")
         else:
-            raise KINSOL_Exception("The variable sent to 'set_print_level' must be an integer.")
+            raise KINSOL_Exception("The variable sent to 'set_verbosity' must be an integer.")
             
         
     
@@ -157,7 +158,8 @@ class KINSOL:
         res = N.zeros(self.x0.__len__())
         while not solved and self.reg_count < 10:
             try:
-                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.print_level)
+                
+                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.verbosity)
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:
@@ -212,7 +214,7 @@ class KINSOL:
                     self.x0 = x0 + dx
                     self.problem._x0 = self.x0
                 else:
-                    print "Regularization parameter too big, tryig a step using pseudo inverse."
+                    print "Regularization parameter too big, trying a step using pseudo inverse."
                     self._do_pinv_step()
                 
             else:
