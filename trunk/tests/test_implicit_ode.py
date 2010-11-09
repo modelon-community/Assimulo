@@ -27,6 +27,20 @@ class Test_Implicit_ODE:
         assert simulator.y_cur[0] == 1.0
         assert simulator.yd_cur[0] == 2.0
         
+        nose.tools.assert_raises(Implicit_ODE_Exception, Implicit_ODE ,res, [], [])
+        
+        res.y0 = []
+        res.yd0 = []
+        
+        nose.tools.assert_raises(Implicit_ODE_Exception, Implicit_ODE ,res)
+        
+        res.y0 = 1.0
+        res.yd0 = 1.0
+        
+        simulator = Implicit_ODE(res)
+        
+        assert simulator.y_cur == 1.0
+        assert simulator.yd_cur == 1.0
         
     def test_call(self):
         """

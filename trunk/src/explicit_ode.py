@@ -87,6 +87,9 @@ class Explicit_ODE(ODE):
         except ValueError:
             raise Explicit_ODE_Exception('Initial values must be a scalar/list/array of type int or float.')
         
+        if len(self.y_cur)==0:
+            raise Explicit_ODE_Exception('Initial values must be provided.')
+        
         if hasattr(self._problem, 'switches0') and switches0 == None:
             switches0 = self._problem.switches0
         

@@ -87,13 +87,13 @@ class Implicit_ODE(ODE):
         
         if y0 == None:
             if hasattr(problem, 'y0'):
-                y0 = problem.y0[:]
+                y0 = problem.y0
             else:
                 raise Implicit_ODE_Exception('y0 must be specified. Either in the problem or in the initialization')
         
         if yd0 == None:
             if hasattr(problem, 'yd0'):
-                yd0 = problem.yd0[:]
+                yd0 = problem.yd0
             else:
                 raise Implicit_ODE_Exception('yd0 must be specified. Either in the problem or in the initialization')
         
@@ -110,6 +110,9 @@ class Implicit_ODE(ODE):
             self.yd = [N.array(yd0, dtype=float)]
         except ValueError:
             raise Implicit_ODE_Exception('Initial values must be a scalar/list/array of type int or float.')
+        
+        if len(self.y_cur)==0:
+            raise Implicit_ODE_Exception('Initial values must be provided.')
         
         if t0 == None:
             if hasattr(problem, 't0'):

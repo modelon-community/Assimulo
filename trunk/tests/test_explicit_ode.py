@@ -26,6 +26,16 @@ class Test_Explicit_ODE:
         assert simulator.t_cur == 1.0
         assert simulator.y_cur[0] == 1.0
         
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test, [])
+        
+        Test.y0 = []
+        
+        nose.tools.assert_raises(Explicit_ODE_Exception, Explicit_ODE, Test)
+        
+        Test.y0 = 1.0
+        
+        simulator = Explicit_ODE(Test)
+        assert simulator.y_cur == 1.0
         
     def test_call(self):
         """
