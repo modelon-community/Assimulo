@@ -229,7 +229,12 @@ class Explicit_ODE(ODE):
                 for q in solution:
                     self._problem.handle_result(self,q[0],q[1])
                 last_logg = self.t_cur
-                
+            
+            if self._completed_step: #If the option completed is set.
+                self._flag_init = self._problem.completed_step(self)
+            else:
+                self._flag_init = False
+            
             #Check if there is a time event
             if tfinal == tfinal_ori:
                 time_event = False
@@ -259,11 +264,6 @@ class Explicit_ODE(ODE):
                 
                 self._problem.handle_event(self, event_info) #self corresponds to the solver
                 self._flag_init = True
-            else:
-                self._flag_init = False
-            
-            if self._completed_step: #If the option completed is set.
-                self._flag_init = self._problem.completed_step(self) or self._flag_init
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
                 self._problem.handle_result(self, self.t_cur, self.y_cur)
