@@ -91,7 +91,8 @@ class KINError(Exception):
                 KIN_LSOLVE_FAIL: 'Error in either psolve or in linear solver routine.',
                 KIN_SYSFUNC_FAIL: 'Call to RHS failed.',
                 KIN_FIRST_SYSFUNC_ERR: 'Call to RHS failed on first call',
-                KIN_REPTD_SYSFUNC_ERR: 'Call to RHS failed multiple times.'}
+                KIN_REPTD_SYSFUNC_ERR: 'Call to RHS failed multiple times.',
+                KIN_STEP_LT_STPTOL: 'Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.'}
     value = 0
     def __init__(self, value):
         self.value = value
@@ -108,8 +109,10 @@ cdef class KINSOL_wrap:
         void* solver 
         ProblemData pData # A struct containing problem data
         #ProblemData *ppData # Pointer to above mentioned struct
-        N_Vector x_cur, x_scale, f_scale, con_nv
+        N_Vector x_cur,x_init, x_scale, f_scale, con_nv
         booleantype noInitSetup
+        realtype norm_of_res
+        ndarray con
         int print_level
 
     def __cinit__(self):
@@ -129,7 +132,7 @@ cdef class KINSOL_wrap:
         else:
             self.pData.JAC = NULL
 
-    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None, print_level = 0):
+    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None, print_level = 0,norm_of_res = 0):
         """
         Initializes solver
         """        
@@ -137,12 +140,15 @@ cdef class KINSOL_wrap:
         # Set problem info
         self.noInitSetup = False
         self.print_level = print_level
-
+        self.norm_of_res = norm_of_res
         self.KINSOL_set_problem_info(RHS,dim,JAC)
+        self.con = con
+
 
         # Create initial guess from the supplied numpy array
         # print "x0 got in KINSOL wrapper: ", x0
         self.x_cur = arr2nv(x0)
+        self.x_init = arr2nv(x0)
 
 
         if self.solver == NULL: # solver runs for the first time
@@ -155,15 +161,41 @@ cdef class KINSOL_wrap:
             
             # Stop solver from performing precond setup
             flag = KINSetNoInitSetup(self.solver, self.noInitSetup)
-            flag = KINSetPrintLevel(self.solver, self.print_level)
             if flag < 0:
                 raise KINError(flag)
 
+            flag = KINSetPrintLevel(self.solver, self.print_level)
+            if flag < 0:
+                raise KINError(flag)
+            
+            flag = KINSetNumMaxIters(self.solver, 100)
+            if flag < 0:
+                raise KINError(flag)
+
+            """
+            flag = KINSetMaxSubSetupCalls(self.solver, 20);
+            if flag < 0:
+                raise KINError(flag)
+                
+            
+            flag = KINSetMaxSetupCalls(self.solver, 1);
+            if flag < 0:
+                raise KINError(flag)
+                
+            
+            flag = KINSetNoResMon(self.solver, True);
+            if flag < 0:
+                raise KINError(flag)
+                """
+            if self.norm_of_res >0:
+                flag = KINSetMaxNewtonStep(self.solver, 1e34)
+                if flag < 0:
+                    raise KINError(flag)
 
             # If the user has specified constraints, connect them
-            if con != None:
+            if self.con != None:
                 print "Applying constraints"
-                self.con_nv = arr2nv(con)
+                self.con_nv = arr2nv(self.con)
                 flag = KINSetConstraints(self.solver, self.con_nv)
                 if flag < 0:
                     raise KINError(flag)
@@ -174,10 +206,9 @@ cdef class KINSOL_wrap:
                 raise KINError(flag)
             print "KINSOL initialized"
 
-            # Link to linear solver, for the moment not specified by user
-            # but this will eventually be implemented
-            #flag = KINPinv(self.solver,self.pData.dim)
-            flag = KINDense(self.solver,self.pData.dim)
+            # Link to linear solver
+            flag = KINPinv(self.solver,self.pData.dim)
+            #flag = KINDense(self.solver,self.pData.dim)
             if flag < 0:
                 raise KINError(flag)
             print "Linear solver connected"
@@ -197,14 +228,14 @@ cdef class KINSOL_wrap:
         
         # If the user supplied a Jacobien, link it to the solver
         if self.pData.JAC != NULL:
-            #flag = KINPinvSetJacFn(self.solver,kin_jac)
-            flag = KINDlsSetDenseJacFn(self.solver,kin_jac)
+            flag = KINPinvSetJacFn(self.solver,kin_jac)
+            #flag = KINDlsSetDenseJacFn(self.solver,kin_jac)
             if flag < 0:
                 raise KINError(flag)
             print "Jacobian supplied by user connected"
         else:
-            #flag = KINPinvSetJacFn(self.solver,NULL)
-            flag = KINDlsSetDenseJacFn(self.solver,NULL)
+            flag = KINPinvSetJacFn(self.solver,NULL)
+            #flag = KINDlsSetDenseJacFn(self.solver,NULL)
             if flag < 0:
                 raise KINError(flag)
 
@@ -226,19 +257,70 @@ cdef class KINSOL_wrap:
         solves the function supplied as RHS
         """
         
-        cdef int flag, DLSflag, lsflag
+        cdef:
+            int flag, DLSflag, lsflag, count,ind
+            ndarray x0
         print "Calling solver..."
+
         flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
-        if flag < 0:
-            print "Error in solve, flag: ", flag
-            #lsflag = KINPinvGetLastFlag(self.solver, &lsflag)
-            lsflag = KINDlsGetLastFlag(self.solver, &lsflag)
-            if lsflag != 0:
-                if lsflag <0:
-                    print "Last flag from Linear solver: ", lsflag
-                else:
-                    print "Jacobian singular at column ", lsflag
+        count = 0
+        if flag > 0:
+            # Probably stuck at a minimum
+            self.x_cur = self.x_init
+            flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
+            
+        if flag > 0:
+            # Stuck at minimum again
             raise KINError(flag)
+
+
+        while flag <0:
+            
+            if (flag == -5):
+                # Try with heuristic
+                raise KINError(42)
+
+            if (flag == -7 or flag == -6):
+                if count == 0:
+                    # First time                    
+                    print "Calling solver again as simple newton."
+                    DLSflag = KINSetMaxSetupCalls(self.solver, 1);
+                    if DLSflag < 0:
+                        raise KINError(DLSflag)
+                    
+                elif count == 1:
+                    # second time
+                    print "Turning of residual monitoring"
+                    DLSflag = KINSetNoResMon(self.solver, True);
+                    if DLSflag < 0:
+                        raise KINError(DLSflag)
+                    
+                elif count == 3:
+                    # fourth time, release the bound on the step
+                    print "Remove limit on stepsize"
+                    DLSflag = KINSetMaxNewtonStep(self.solver, 1.0e34)
+                    if DLSflag < 0:
+                        raise KINError(DLSflag)
+
+                count += 1
+                if count >= 10:
+                    print "Tried with simple newton ten times"
+                    raise KINError(-7)
+
+            else:
+
+                print "Error in solve, flag: ", flag
+                lsflag = KINPinvGetLastFlag(self.solver, &lsflag)
+                #lsflag = KINDlsGetLastFlag(self.solver, &lsflag)
+                if lsflag != 0:
+                    if lsflag <0:
+                        print "Last flag from Linear solver: ", lsflag
+                    else:
+                        print "Jacobian singular at column ", lsflag
+                raise KINError(flag)
+
+            flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
+
         print "Problem solved, returning result"
 
         return nv2arr(self.x_cur)

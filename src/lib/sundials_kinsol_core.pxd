@@ -156,8 +156,8 @@ cdef extern from "kinsol/kinsol.h":
 cdef extern from "kinsol/kinsol_dense.h":
     int KINDense(void *kinmem, int N)
 
-#cdef extern from "kinpinv.h":
-#    int KINPinv(void *kinmem, int N)
+cdef extern from "kinpinv.h":
+    int KINPinv(void *kinmem, int N)
 
 
 # functions used for supplying jacobian, and receiving info from linear solver
@@ -175,19 +175,19 @@ cdef extern from "kinsol/kinsol_direct.h":
     int KINDlsGetLastFlag(void *kinmem, int *flag)
     char *KINDlsGetReturnFlagName(int flag)
 
-#cdef extern from "kinsol_jmod.h":
-#    # user functions
-#    ctypedef int (*KINPinvJacFn)(int N, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
-#
-#    # function used to link user jacobian to KINSOL
-#    int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac)
-#
-#    # optional output fcts for linear direct solver
-#    int KINPinvGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
-#    int KINPinvGetNumJacEvals(void *kinmem, long int *njevalsB)
-#    int KINPinvGetNumFuncEvals(void *kinmem, long int *nfevalsB)
-#    int KINPinvGetLastFlag(void *kinmem, int *flag)
-#    char *KINPinvGetReturnFlagName(int flag)
+cdef extern from "kinsol_jmod.h":
+    # user functions
+    ctypedef int (*KINPinvJacFn)(int N, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+
+    # function used to link user jacobian to KINSOL
+    int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac)
+
+    # optional output fcts for linear direct solver
+    int KINPinvGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
+    int KINPinvGetNumJacEvals(void *kinmem, long int *njevalsB)
+    int KINPinvGetNumFuncEvals(void *kinmem, long int *nfevalsB)
+    int KINPinvGetLastFlag(void *kinmem, int *flag)
+    char *KINPinvGetReturnFlagName(int flag)
     
     
 #=========================
