@@ -30,6 +30,9 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
     
     cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
     cordir_KINSOL = O.path.join(O.path.join('src','lib'),'sundials_kinsol_core.pyx')
+    cordir_KINSOL_jmod = O.path.join(O.path.join('src','lib'),'kinsol_jmod.c')
+    cordir_kinpinv = O.path.join(O.path.join('src','lib'),'kinpinv.c')
+    
 
     setup(name='Assimulo',
       version='trunk',
@@ -48,7 +51,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
             library_dirs=[libdirs],
             libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial']),
         Extension('lib.sundials_kinsol_core',
-            [cordir_KINSOL],
+            [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
             include_dirs=[incdirs, N.get_include()],
             library_dirs=[libdirs],
             libraries=['sundials_kinsol','sundials_nvecserial'])

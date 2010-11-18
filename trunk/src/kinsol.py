@@ -65,6 +65,7 @@ class KINSOL:
         # check for functions and test them
         try:
             tmp = self.problem.f(self.x0)
+            self.norm_of_res = N.linalg.norm(self.x0)
             self.func = self.problem.f
         except ProblemAlg_Exception:
             raise KINSOL_Exception("Problem has not implemented method 'f'")
@@ -93,12 +94,19 @@ class KINSOL:
                         raise KINSOL_Exception("Initial guess does not fulfill applied constraints.")
         else:
             self.constraints = None
+        
+        
+        if hasattr(self.problem, 'check_constraints'):
+            self.check_with_model = True
+        else:
+            self.check_with_model = False 
             
         self._use_jac = True
         self.reg_count = 0
         self.lin_count = 0
         self.verbosity = 0
         self.max_reg = 2.0
+        
                 
     def set_jac_usage(self,use_jac):
         """
@@ -158,8 +166,7 @@ class KINSOL:
         res = N.zeros(self.x0.__len__())
         while not solved and self.reg_count < 10:
             try:
-                
-                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.verbosity)
+                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.verbosity,self.norm_of_res)
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:
@@ -167,8 +174,31 @@ class KINSOL:
                     # the problem is caused by a singular jacobian try a regularized step
                     self.reg_count += 1
                     self._do_reg_step()
+                elif error.value == 42:
+                    # Try the heuristic
+                    if hasattr(self.problem, 'get_heuristic_x0'):
+                        print "----------------------------------------------------"
+                        print "      Solver stuck with zero step-length."
+                        print "----------------------------------------------------"
+                        print "The following variables have start value zero"
+                        print "and min set to zero causing the zero step-lenght."
+                        print "These settings are either set by default or by user."
+                        print ""
 
-                elif error.value == -7 or error.value == -6 or error.value == -8:
+                        self.x0 = self.problem.get_heuristic_x0()
+                        
+                        print ""
+                        print "This setting (start and min to zero) can often"
+                        print "cause problem when initializing the system. "
+                        print ""
+                        print "To avoid this the above variables have"
+                        print "their start attributes reset to one."
+                        print ""
+                        print "Trying to solve the system again..."
+                    else:
+                        raise KINSOL_Exception("Regularization failed due to constraints, tried getting heuristic initial guess but failed.")
+
+                elif error.value == -6 or error.value == -8 :
                     self._brute_force()    
                 else:
                     # Other error, send onward as exception
@@ -181,8 +211,11 @@ class KINSOL:
             print self.reg_count, " steps using the Tikhonov regularization performed."
         if self.lin_count != 0:
             print self.lin_count, " steps using the numpy.linalg.solve function performed."
-
+        if self.check_with_model:
+            self.problem.check_constraints(res)
         return res
+    
+
     
     def _do_reg_step(self):
         """
