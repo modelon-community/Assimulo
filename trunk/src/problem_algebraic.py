@@ -46,6 +46,14 @@ class ProblemAlgebraic(object):
                 
                 Returns:
                     A numpy array of size len(self._x0)
+                    
+            def print_var_info(self,i)
+                Print info on the variable at position i
+                Used by KINSOL to print debug information
+                on a variable e.g. when a constraint is broken 
+                
+                Returns:
+                    -
         
         Available (optional) options::
         
@@ -98,5 +106,12 @@ class ProblemAlgebraic(object):
         """
         
         raise ProblemAlg_Exception('The routine used to get x0 is not specified.')
-
     
+    def print_var_info(self,i):
+        """
+        Print info on the variable at position i
+        Used by KINSOL to print debug information
+        on a variable e.g. when a constraint is broken 
+        """
+        
+        raise ProblemAlg_Exception('The routine print_var_info is not specified.')

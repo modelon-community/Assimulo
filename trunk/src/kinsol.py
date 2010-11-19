@@ -73,6 +73,7 @@ class KINSOL:
             raise KINSOL_Exception("Problem has mismatching dimensions of f and initial guess")
         
         # check for constraints and test them
+        broken_constraints = []
         if hasattr(self.problem, 'get_constraints'):
             self.constraints = self.problem.get_constraints()
             
@@ -84,16 +85,38 @@ class KINSOL:
                 if len(self.constraints) != len(self.x0):
                     raise KINSOL_Exception("Constraints must have same length as x0")
                 # Test if initial guess x0 is consistant with constraints
-                for c,xi in zip(self.constraints,self.x0):
+                for c,xi,i in zip(self.constraints,self.x0,N.arange(0,self.x0.__len__())):
                     if re.search('float',type(c).__name__) == None:
-                        print "Problem with: ", c, type(c).__name__
+                        print "Type problem with: ", c, type(c).__name__
                         raise KINSOL_Exception("Constraints must contain floats.")
                     if abs(c) > 2:
                         raise KINSOL_Exception("Entries in constraint vector must be between -2 and 2, see documentation.")
-                    if O.xor(c>=0,xi>=0):
-                        raise KINSOL_Exception("Initial guess does not fulfill applied constraints.")
+                    
+                    if c != 0.0:
+                        if c == 1.0:
+                            if xi < 0.0:
+                                broken_constraints.append(i)
+                        elif c == 2.0:
+                            if xi <= 0.0:
+                                broken_constraints.append(i)
+                        elif c == -1.0:
+                            if xi > 0.0:
+                                broken_constraints.append(i)
+                        elif c == -2.0:
+                            if xi >= 0.0:
+                                broken_constraints.append(i)
+                        else:
+                            raise KINSOL_Exception("Constraint vector contains illegal elements.")
+                
         else:
             self.constraints = None
+            
+        if broken_constraints != []:
+            print "Variables breaking initial constraint: "
+            for i in broken_constraints:
+                self.problem.print_var_info(i)
+
+            raise KINSOL_Exception("Initial guess does not fulfill applied constraints.")
         
         
         if hasattr(self.problem, 'check_constraints'):
@@ -170,11 +193,7 @@ class KINSOL:
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:
-                if error.value == -11 :
-                    # the problem is caused by a singular jacobian try a regularized step
-                    self.reg_count += 1
-                    self._do_reg_step()
-                elif error.value == 42:
+                if error.value == 42:
                     # Try the heuristic
                     if hasattr(self.problem, 'get_heuristic_x0'):
                         print "----------------------------------------------------"
@@ -197,20 +216,30 @@ class KINSOL:
                         print "Trying to solve the system again..."
                     else:
                         raise KINSOL_Exception("Regularization failed due to constraints, tried getting heuristic initial guess but failed.")
-
-                elif error.value == -6 or error.value == -8 :
-                    self._brute_force()    
+                
+                    """
+                    Following functions commented out since they are moved to C code
+                    elif error.value == -11 :
+                        # the problem is caused by a singular jacobian try a regularized step
+                        self.reg_count += 1
+                        self._do_reg_step()
+                    elif error.value == -6 or error.value == -8 :
+                        self._brute_force()
+                    
+                    """ 
                 else:
                     # Other error, send onward as exception
                     raise KINSOL_Exception(error.msg[error.value])
         
         if not solved:
             raise KINSOL_Exception("Singular Jacobian. Tried using Tikhonov regularization but stopped after ten steps.")
-           
+        """
+        Functionality moved to C-code
         if self.reg_count != 0:
             print self.reg_count, " steps using the Tikhonov regularization performed."
         if self.lin_count != 0:
             print self.lin_count, " steps using the numpy.linalg.solve function performed."
+        """
         if self.check_with_model:
             self.problem.check_constraints(res)
         return res
