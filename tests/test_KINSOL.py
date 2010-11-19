@@ -23,6 +23,9 @@ class Test_KINSOL:
                 
             def get_x0(self):
                 return self._x0
+            
+            def print_var_info(self,i):
+                print "No specific info to print"
         self.p1 = Prob1()
         self.solve_p1 = KINSOL(self.p1)
         
@@ -35,6 +38,9 @@ class Test_KINSOL:
             def get_x0(self):
                 return self._x0
             
+            def print_var_info(self,i):
+                print "No specific info to print"
+            
         self.no_f = Prob_no_f()
         #self.solve_no_f = KINSOL(self.no_f)
         
@@ -46,6 +52,8 @@ class Test_KINSOL:
                 
             def get_x0(self):
                 return self._x0
+            def print_var_info(self,i):
+                print "No specific info to print"
             
         self.no_x0 = Prob_no_f()
         #self.solve_no_x0 = KINSOL(self.no_x0)
@@ -56,6 +64,9 @@ class Test_KINSOL:
             
             def set_x0(self,x0):
                 self._x0 = x0
+                
+            def print_var_info(self,i):
+                print "No specific info to print"
                 
         self.no_getx0 = Prob_no_getx0()
         #self.solve_no_getx0 = KINSOL(self.no_getx0)
@@ -76,6 +87,9 @@ class Test_KINSOL:
             def get_x0(self):
                 return self._x0
             
+            def print_var_info(self,i):
+                print "No specific info to print"
+            
         self.pb_jac = Prob_Jac()
         self.solve_pb_jac = KINSOL(self.pb_jac)
         
@@ -95,6 +109,9 @@ class Test_KINSOL:
                 
             def get_constraints(self):
                 return self._const
+            
+            def print_var_info(self,i):
+                print self._x0[i], "constrained by ", self._const[i]
                 
         self.pb_const = Prob_Const()
         self.solve_pb_const = KINSOL(self.pb_const)
