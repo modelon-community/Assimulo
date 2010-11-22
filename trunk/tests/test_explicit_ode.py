@@ -488,7 +488,42 @@ class Test_CVode:
         assert self.simulator.maxord == 4
         self.simulator.discr = 'Adams'
         assert self.simulator.maxord == 4
-
+    
+    def test_pretype(self):
+        """
+        This tests the precondition option.
+        """
+        assert self.simulator.pretype == 'PREC_NONE'
+        self.simulator.pretype = 'prec_none'
+        assert self.simulator.pretype == 'PREC_NONE'
+        
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_pre_type, -1.0)
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_pre_type, 'PREC_BOTH')
+    
+    def test_maxkrylov(self):
+        """
+        This test the maximum number of krylov subspaces.
+        """
+        assert self.simulator.maxkrylov == 5
+        self.simulator.maxkrylov = 3
+        assert self.simulator.maxkrylov == 3
+        self.simulator.maxkrylov = 4.5
+        assert self.simulator.maxkrylov == 4
+        
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_max_krylov, 'Test')
+    
+    def test_linearsolver(self):
+        """
+        This test the choice of the linear solver.
+        """
+        assert self.simulator.linearsolver == 'DENSE'
+        self.simulator.linearsolver = 'dense'
+        assert self.simulator.linearsolver == 'DENSE'
+        self.simulator.linearsolver = 'spgmr'
+        assert self.simulator.linearsolver == 'SPGMR'
+        
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_linear_solver, 'Test')
+    
     def test_is_disc(self):
         """
         This tests the functionality of the property is_disc.

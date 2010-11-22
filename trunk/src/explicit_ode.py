@@ -714,6 +714,9 @@ class CVode(Explicit_ODE, Sundials):
         self.maxh = 0.0 #Setting the maximum absolute step length to infinity
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
+        self.pretype = 'PREC_NONE' #The preconditioner used (if any)
+        self.maxkrylov = 5 #Max number of krylov subspace (if any)
+        self.linearsolver = 'DENSE' #The linear solver to be used.
         self.problem_data = {}
         
         
@@ -741,6 +744,12 @@ class CVode(Explicit_ODE, Sundials):
         else:
             self.Integrator.jacobian = False
             self.usejac = False
+        
+        #Look for the Jacobian times vector function
+        if hasattr(problem, 'jacv'):
+            self.usejac = True
+            self.jacv = self._problem.jacv
+            self.problem_data['JACV'] = self.jacv
         
         self.problem_data['RHS']=self.f
         self.problem_data['dim']=len(self._problem.y0)
@@ -1103,6 +1112,108 @@ class CVode(Explicit_ODE, Sundials):
         return self.__maxord
 
     maxord=property(_get_max_ord,_set_max_ord)
+    
+    def _get_pre_type(self):
+        """
+        Specifies the preconditioning type. 
+        
+            Parameters::
+            
+                ptype
+                        - Default 'PREC_NONE' which is the currently
+                          only supported.
+                          
+        """
+        return self.__pretype
+        
+    def _set_pre_type(self, ptype):
+        """
+        Specifies the preconditioning type. 
+        
+            Parameters::
+            
+                ptype
+                        - Default 'PREC_NONE' which is the currently
+                          only supported.
+                          
+        """
+        if isinstance(ptype, str):
+            if ptype.upper() == 'PREC_NONE':
+                self.__pretype = ptype.upper()
+                self.Integrator.pretype = 0
+            else:
+                raise Explicit_ODE_Exception('"PREC_NONE" is the only supported option.')
+        else:
+            raise Explicit_ODE_Exception('Must be a string, "PREC_NONE".')
+    
+    pretype=property(_get_pre_type,_set_pre_type)
+    
+    def _get_max_krylov(self):
+        """
+        Maximum dimension of the Krylov subspace to be used.
+        
+            Parameters::
+            
+                maxkrylov
+                        - Default 5
+                        
+                        - Should be an integer.
+        """
+        return self.__maxkrylov
+    
+    def _set_max_krylov(self, mkrylov):
+        """
+        Maximum dimension of the Krylov subspace to be used.
+        
+            Parameters::
+            
+                maxkrylov
+                        - Default 5
+                        
+                        - Should be an integer.
+        """
+        try:
+            mkrylov = int(mkrylov)
+            self.__maxkrylov = mkrylov
+            self.Integrator.max_krylov = mkrylov
+        except ValueError:
+            raise Explicit_ODE_Exception('maxkrylov must be convertable to an integer.')
+    
+    maxkrylov = property(_get_max_krylov, _set_max_krylov)
+    
+    def _get_linear_solver(self):
+        """
+        Specifies the linear solver to be used.
+        
+            Parameters::
+            
+                linearsolver
+                        - Default 'DENSE'. Can also be 'SPGMR'.
+        """
+        return self.__linearsolver
+        
+    def _set_linear_solver(self, lsolver):
+        """
+        Specifies the linear solver to be used.
+        
+            Parameters::
+            
+                linearsolver
+                        - Default 'DENSE'. Can also be 'SPGMR'.
+        """
+        if isinstance(lsolver, str):
+            if lsolver.upper() == 'DENSE':
+                self.__linearsolver = lsolver.upper()
+                self.Integrator.linear_solver = lsolver.upper()
+            elif lsolver.upper() == 'SPGMR':
+                self.__linearsolver = lsolver.upper()
+                self.Integrator.linear_solver = lsolver.upper()
+            else:
+                raise Explicit_ODE_Exception('The linearsolver must be either "DENSE" or "SPGMR".')
+        else:
+            raise Explicit_ODE_Exception('The linearsolver must be a string.')
+    
+    linearsolver = property(_get_linear_solver, _set_linear_solver)
     
     def interpolate(self, t, k):
         """            
