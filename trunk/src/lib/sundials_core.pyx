@@ -388,6 +388,9 @@ cdef class Sundials:
     cdef public npy_intp nbrRoot        #The number of root functions
     cdef public list p_result           #The sensitivity result matrix
     cdef public booleantype save_detailed_info #Save detailed information about the solver
+    cdef public linear_solver #The linear solver used
+    cdef public int pretype #Specifies the preconditioner type
+    cdef public int max_krylov #Maximum number of krylov dimensions
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -403,6 +406,9 @@ cdef class Sundials:
         self.solver_sens_stats = [0,0,0,0,0,0]
         self.suppress_alg = False
         self.save_detailed_info = False
+        self.linear_solver = 'DENSE'
+        self.pretype = PREC_NONE
+        self.max_krylov = 5
         
         #Default values (Sensitivity)
         self.sensToggleOff = False #Toggle the sensitivity calculations off
@@ -413,7 +419,7 @@ cdef class Sundials:
         self.ism      = CV_STAGGERED #(IDA_STAGGERED) #The sensitivity solution method
         self._flag_active_sens = False #The sensitivity is not activated
         
-    cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None):
+    cpdef set_problem_info(self, RHS, dim, ROOT = None, dimRoot = None, JAC = None, SENS = None, dimSens = None, JACV = None):
         """
         Sets the problem information to the problem struct.
         """
@@ -442,6 +448,9 @@ cdef class Sundials:
         if JAC != None: #Sets the jacobian
             self.pData.JAC = <void*>JAC
             self.pData.memSizeJac = dim*dim*sizeof(realtype)
+        
+        if JACV != None: #Sets the jacobian times vector
+            self.pData.JACV = <void*>JACV
             
         if SENS != None: #Sets the sensitivity function
             self.pData.SENS = <void*>SENS
@@ -635,12 +644,20 @@ cdef class CVode_wrap(Sundials):
             flag = CVodeInit(self.solver, cv_rhs, t0, self.y_cur)
             if flag < 0:
                 raise CVodeError(flag, t0)
-                
-            #Specify the use of the internal dense linear algebra functions.
-            flag = CVDense(self.solver, self.pData.dim)
-            if flag < 0:
-                raise CVodeError(flag, t0)
             
+            if self.linear_solver == 'DENSE':
+                #Specify the use of the internal dense linear algebra functions.
+                flag = CVDense(self.solver, self.pData.dim)
+                if flag < 0:
+                    raise CVodeError(flag, t0)
+            elif self.linear_solver == 'SPGMR':
+                #Specify the use of CVSPGMR linear solver.
+                flag = CVSpgmr(self.solver, self.pretype, self.max_krylov)
+                if flag < 0:
+                    raise CVodeError(flag, t0)
+            else:
+                raise CVodeError(100,t0) #Unknown error message
+                
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 flag = CVodeRootInit(self.solver, self.pData.dimRoot, cv_root)
@@ -660,15 +677,27 @@ cdef class CVode_wrap(Sundials):
             if flag < 0:
                 raise CVodeError(flag, t0)
         
-        #Specify the jacobian to the solver
-        if self.pData.JAC != NULL and self.usejac:
-            flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
-            if flag < 0:
-                raise CVodeError(flag,t0)
-        else:
-            flag = CVDlsSetDenseJacFn(self.solver, NULL)
-            if flag < 0:
-                raise CVodeError(flag,t0)
+        if self.linear_solver == 'DENSE':
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL and self.usejac:
+                flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
+                if flag < 0:
+                    raise CVodeError(flag,t0)
+            else:
+                flag = CVDlsSetDenseJacFn(self.solver, NULL)
+                if flag < 0:
+                    raise CVodeError(flag,t0)
+        elif self.linear_solver == 'SPGMR':
+            #Specify the jacobian times vector function
+            if self.pData.JACV != NULL and self.usejac:
+                #flag = CVSpilsSetJacTimesVecFn(self.solver, cv_jacv)
+                #if flag < 0:
+                #    raise CVodeError(flag, t0)
+                pass 
+            else:
+                flag = CVSpilsSetJacTimesVecFn(self.solver, NULL)
+                if flag < 0:
+                    raise CVodeError(flag, t0)
         
         #Set the user data
         flag = CVodeSetUserData(self.solver, <void*>self.pData)

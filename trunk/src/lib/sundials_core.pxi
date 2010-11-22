@@ -37,6 +37,8 @@ DEF CV_STAGGERED1         = 3
 DEF CV_CENTERED           = 1
 DEF CV_FORWARD            = 2
 # Iterative solver module
+DEF PREC_NONE             = 0
+DEF PREC_LEFT             = 1
 DEF PREC_RIGHT            = 2
 DEF PREC_BOTH             = 3
 
