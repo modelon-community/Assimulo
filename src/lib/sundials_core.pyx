@@ -109,6 +109,30 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
         return CVDLS_SUCCESS
     except:
         return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        
+cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
+				    void *problem_data, N_Vector tmp):
+    """
+    This method is used to connect the Assimulo.Problem.jacv to the Sundials
+    Jacobian times vector function.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef ndarray y  = nv2arr(yv)
+    cdef ndarray v  = nv2arr(vv)
+    cdef ndarray fy = nv2arr(fyv)
+    
+    cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
+    
+    try:
+        jacv = (<object>pData.JACV)(t,y,fy,v)
+        
+        for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+        
+        return SPGMR_SUCCESS
+    except:
+        return SPGMR_ATIMES_FAIL_REC
+    
 
 cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     """
@@ -690,10 +714,9 @@ cdef class CVode_wrap(Sundials):
         elif self.linear_solver == 'SPGMR':
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.usejac:
-                #flag = CVSpilsSetJacTimesVecFn(self.solver, cv_jacv)
-                #if flag < 0:
-                #    raise CVodeError(flag, t0)
-                pass 
+                flag = CVSpilsSetJacTimesVecFn(self.solver, cv_jacv)
+                if flag < 0:
+                    raise CVodeError(flag, t0)
             else:
                 flag = CVSpilsSetJacTimesVecFn(self.solver, NULL)
                 if flag < 0:

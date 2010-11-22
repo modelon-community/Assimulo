@@ -78,6 +78,9 @@ DEF CVDLS_ILL_INPUT       = -3
 DEF CVDLS_MEM_FAIL        = -4 #A memory allocation request failed.
 DEF CVDLS_JACFUNC_UNRECVR = -5
 DEF CVDLS_JACFUNC_RECVR   = -6
+# Iterative
+DEF SPGMR_SUCCESS         = 0 #Success, Converged
+DEF SPGMR_ATIMES_FAIL_REC = 5 #The Jacobian-vector function failed recoverably
 
 # Sensitivity constants
 DEF CV_SRHSFUNC_FAIL      = -41   #The sensitivity right-hand side function failed unrecoverable
