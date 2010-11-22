@@ -328,7 +328,6 @@ class Test_IDA:
         """
         pass
         
-        
     def test_algvar(self):
         """
         This tests the functionality of the property algvar.

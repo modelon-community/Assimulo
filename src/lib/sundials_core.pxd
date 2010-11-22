@@ -213,7 +213,16 @@ cdef extern from "cvodes/cvodes_dense.h":
     ctypedef int (*CVDlsDenseJacFn)(int N, realtype t, N_Vector y, N_Vector fy, 
                    DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+
+cdef extern from "cvodes/cvodes_spgmr.h":
+    int CVSpgmr(void *cvode_mem, int pretype, int max1)
     
+cdef extern from "cvodes/cvodes_spils.h":
+    ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
+				    N_Vector y, N_Vector fy,
+				    void *user_data, N_Vector tmp)
+    int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+
 cdef extern from "idas/idas.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
     void* IDACreate()
@@ -353,6 +362,7 @@ cdef class ProblemData:
         void *RHS          #Should store the residual or the right-hand-side
         void *ROOT         #Should store the root function
         void *JAC          #Should store the jacobian
+        void *JACV         #Should store the jacobian times a vector
         void *SENS         #Should store the sensitivity function
         void *y            #Temporary storage for the states
         void *yd           #Temporary storage for the derivatives
