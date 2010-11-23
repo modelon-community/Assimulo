@@ -284,6 +284,12 @@ class Explicit_Problem(Problem):
                 
                 Returns:
                     A numpy matrix of size len(y)*len(y).
+                    
+            def jacv(self, t, y, fy, v)
+                Defines a Jacobian Vector product. df/dx*v.
+                
+                Returns:
+                    A numpy vector of size len(y).
             
             def handle_result(self, solver, t, y)
                 See docstring of handle_result.
