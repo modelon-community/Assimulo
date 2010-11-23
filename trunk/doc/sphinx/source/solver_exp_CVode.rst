@@ -33,6 +33,9 @@ Parameters:
 - :class:`maxsteps <assimulo.explicit_ode.CVode.maxsteps>` Determines the maximum number of steps the solver is allowed to take to finish the simulation.
 - :class:`problem_name <assimulo.explicit_ode.CVode.problem_name>` Defines the name of the problem.
 - :class:`verbosity <assimulo.explicit_ode.CVode.verbosity>` Defines the verbosity of the integrator.
+- :class:`pretype <assimulo.explicit_ode.CVode.pretype>` Specifies the preconditioning type.
+- :class:`maxkrylov <assimulo.explicit_ode.CVode.maxkrylov>` Maximum dimension of the Krylov subspace to be used.
+- :class:`linearsolver <assimulo.explicit_ode.CVode.linearsolver>` Specifies the linear solver to be used.
 
 Sensitivity parameters:
 
