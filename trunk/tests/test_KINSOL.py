@@ -79,7 +79,7 @@ class Test_KINSOL:
             def jac(self,x):
                 self.jac_called = True
                 print "Jacobian called"
-                return N.zeros(3)
+                return N.eye(3)
             
             def set_x0(self,x0):
                 self._x0 = x0
