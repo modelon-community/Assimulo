@@ -264,12 +264,12 @@ cdef class KINSOL_wrap:
 
         flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
         count = 0
-        if flag > 0:
+        if flag > 1:
             # Probably stuck at a minimum
             self.x_cur = self.x_init
             flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
             
-        if flag > 0:
+        if flag > 1:
             # Stuck at minimum again
             raise KINError(flag)
 
