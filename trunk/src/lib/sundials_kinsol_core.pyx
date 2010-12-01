@@ -259,6 +259,7 @@ cdef class KINSOL_wrap:
         
         cdef:
             int flag, DLSflag, lsflag, count,ind
+            long int nb_iters
             ndarray x0
         print "Calling solver..."
 
@@ -275,12 +276,18 @@ cdef class KINSOL_wrap:
 
 
         while flag <0:
+            # Get nbr of non-linear iterations
+            lsflag = KINGetNumNonlinSolvIters(<void*>self.solver, &nb_iters)
+            if lsflag != 0:
+                raise KINError(lsflag)
             
-            if (flag == -5):
-                # Try with heuristic
+            
+            if (flag == -5 and nb_iters == 1):
+                # Cannot take a step bigger than zero on the first iteration
+                # Try with heuristic initial guess
                 raise KINError(42)
 
-            if (flag == -7 or flag == -6):
+            if (flag == -7 or flag == -6 or (flag == -5 and nb_iters > 1)):
                 if count == 0:
                     # First time                    
                     print "Calling solver again as simple newton."
