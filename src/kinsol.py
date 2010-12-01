@@ -187,7 +187,7 @@ class KINSOL:
         solved = False
 
         res = N.zeros(self.x0.__len__())
-        while not solved and self.reg_count < 10:
+        while not solved and self.reg_count < 2:
             try:
                 self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.verbosity,self.norm_of_res)
                 res = self.solver.KINSOL_solve()
@@ -205,6 +205,7 @@ class KINSOL:
                         print ""
 
                         self.x0 = self.problem.get_heuristic_x0()
+                        self.reg_count += 1
                         
                         print ""
                         print "This setting (start and min to zero) can often"
