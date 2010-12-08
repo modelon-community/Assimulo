@@ -371,7 +371,7 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
   }
 
   if (regularized) {
-    printf("Regularized problem\n");
+    if (printfl > 0) printf("Regularized problem\n");
     /* Calculate new right hand side b = J transpose * b */
     
     bx = N_VGetArrayPointer(b);

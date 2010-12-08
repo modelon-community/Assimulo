@@ -157,7 +157,8 @@ cdef class KINSOL_wrap:
             self.solver = KINCreate()
             if self.solver == NULL:
                 raise KINError(KIN_MEM_FAIL)
-            print "KINSOL created"
+            if self.print_level >0:
+                print "KINSOL created"
             
             # Stop solver from performing precond setup
             flag = KINSetNoInitSetup(self.solver, self.noInitSetup)
@@ -194,7 +195,8 @@ cdef class KINSOL_wrap:
 
             # If the user has specified constraints, connect them
             if self.con != None:
-                print "Applying constraints"
+                if self.print_level >0:
+                    print "Applying constraints"
                 self.con_nv = arr2nv(self.con)
                 flag = KINSetConstraints(self.solver, self.con_nv)
                 if flag < 0:
@@ -204,19 +206,22 @@ cdef class KINSOL_wrap:
             flag = KINInit(self.solver,kin_res,self.x_cur)
             if flag < 0:
                 raise KINError(flag)
-            print "KINSOL initialized"
+            if self.print_level >0:
+                print "KINSOL initialized"
 
             # Link to linear solver
             flag = KINPinv(self.solver,self.pData.dim)
             #flag = KINDense(self.solver,self.pData.dim)
             if flag < 0:
                 raise KINError(flag)
-            print "Linear solver connected"
+            if self.print_level >0:
+                print "Linear solver connected"
             
         else:
             # If the user has specified constraints, connect them
             if con != None:
-                print "Applying constraints"
+                if self.print_level >0:
+                    print "Applying constraints"
                 self.con_nv = arr2nv(con)
                 flag = KINSetConstraints(self.solver, self.con_nv)
                 if flag < 0:
@@ -232,7 +237,8 @@ cdef class KINSOL_wrap:
             #flag = KINDlsSetDenseJacFn(self.solver,kin_jac)
             if flag < 0:
                 raise KINError(flag)
-            print "Jacobian supplied by user connected"
+            if self.print_level >0:
+                print "Jacobian supplied by user connected"
         else:
             flag = KINPinvSetJacFn(self.solver,NULL)
             #flag = KINDlsSetDenseJacFn(self.solver,NULL)
@@ -243,7 +249,8 @@ cdef class KINSOL_wrap:
         flag = KINSetUserData(self.solver,<void*>self.pData)
         if flag < 0:
             raise KINError(flag)
-        print "User data set"
+        if self.print_level >0:
+            print "User data set"
 
         # Create scaling vectors filled with ones
         # since the problem is assumed to be scaled
@@ -261,7 +268,8 @@ cdef class KINSOL_wrap:
             int flag, DLSflag, lsflag, count,ind
             long int nb_iters
             ndarray x0
-        print "Calling solver..."
+        if self.print_level >0:
+            print "Calling solver..."
 
         flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
         count = 0
@@ -289,7 +297,7 @@ cdef class KINSOL_wrap:
 
             if (flag == -7 or flag == -6 or (flag == -5 and nb_iters > 1)):
                 if count == 0:
-                    # First time                    
+                    # First time
                     print "Calling solver again as simple newton."
                     DLSflag = KINSetMaxSetupCalls(self.solver, 1);
                     if DLSflag < 0:
@@ -304,6 +312,7 @@ cdef class KINSOL_wrap:
                     
                 elif count == 3:
                     # fourth time, release the bound on the step
+                    
                     print "Remove limit on stepsize"
                     DLSflag = KINSetMaxNewtonStep(self.solver, 1.0e34)
                     if DLSflag < 0:
@@ -311,7 +320,8 @@ cdef class KINSOL_wrap:
 
                 count += 1
                 if count >= 10:
-                    print "Tried with simple newton ten times"
+                    if self.print_level >0:
+                        print "Tried with simple newton ten times"
                     raise KINError(-7)
 
             else:
@@ -327,8 +337,8 @@ cdef class KINSOL_wrap:
                 raise KINError(flag)
 
             flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
-
-        print "Problem solved, returning result"
+        if self.print_level >0:
+            print "Problem solved, returning result"
 
         return nv2arr(self.x_cur)
         
