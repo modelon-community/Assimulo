@@ -243,6 +243,7 @@ class KINSOL:
         """
         if self.check_with_model:
             self.problem.check_constraints(res)
+        print "Problem sent to KINSOL solved."
         return res
     
 
