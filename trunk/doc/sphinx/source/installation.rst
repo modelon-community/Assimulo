@@ -26,7 +26,7 @@ After a successful installation, the package will be located in Pythons dist-pac
 
 .. note::
 
-    If Sundials have been installed on a different location then the default, the argument::
+    If Sundials has been installed on a different location then the default, the argument::
     
         --sundials-home=/path/to/sundials
         

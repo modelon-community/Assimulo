@@ -5,7 +5,7 @@ Assimulo for JModelica.org users
 ================================
 
 
-Assimulo have been incorporated into the JModelica.org platform as the default simulation package. This have been made possible by extending Assimulo's problem classes where the JModelica.org JMI model is modified and adapted to Assimulo. In the Figure below the connection between JModelica.org, Assimulo and
+Assimulo has been incorporated into the JModelica.org platform as the default simulation package. This has been made possible by extending Assimulo's problem classes where the JModelica.org JMI model is modified and adapted to Assimulo. In the Figure below the connection between JModelica.org, Assimulo and
 Sundials are displayed.
 
 .. image:: AssimuloJModelica.png
