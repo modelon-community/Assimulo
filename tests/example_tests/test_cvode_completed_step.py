@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.problem import Explicit_Problem
 
@@ -99,12 +100,14 @@ def run_example2():
     exp_sim.simulate(20.)
     assert exp_sim.stats[0] == 77
 
+@testattr(stddist = True)
 def test_cvode_completed_step():
     """
     Runs the test_cvode_completed_step.py
     """
     run_example()
-    
+
+@testattr(stddist = True)    
 def test_cvode_completed_step_statistics():
     """
     Runs the test_cvode_completed_step_statistics.

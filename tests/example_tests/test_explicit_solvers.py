@@ -1,6 +1,7 @@
 import nose
 import numpy as N
 from scipy import *
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.problem import Explicit_Problem
 
@@ -75,6 +76,7 @@ modTacoma = Explicit_Problem()
 modTacoma.f = bridge
 modTacoma.problem_name = bridge.name
 
+@testattr(stddist = True)
 def test_cvode_BN_tacoma():
 	"""
 	Tacoma bridge CVode BDF Newton
@@ -88,7 +90,8 @@ def test_cvode_BN_tacoma():
 	cv.simulate(10,200)
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
-    
+
+@testattr(stddist = True)
 def test_cvode_BF_tacoma():
 	"""
 	Tacoma bridge CVode BDF Fixed Point
@@ -101,7 +104,8 @@ def test_cvode_BF_tacoma():
 	cv.simulate(10,200)
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
-    
+	
+@testattr(stddist = True)
 def test_cvode_AF_tacoma():
 	"""
 	Tacoma bridge CVode Adams Fixed Point
@@ -113,6 +117,7 @@ def test_cvode_AF_tacoma():
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
 
+@testattr(stddist = True)
 def test_cvode_AN_tacoma():
 	"""
 	Tacoma bridge CVode Adams Newton
@@ -125,6 +130,7 @@ def test_cvode_AN_tacoma():
 	assert abs(cv.y[-1][0]- (-0.3615)) < 2.e-3
 	assert cv.t[-1]==10
 
+@testattr(stddist = True)
 def test_rk_tacoma():
 	"""
 	Tacoma bridge RK4
@@ -135,6 +141,7 @@ def test_rk_tacoma():
 	assert abs(rk4.y[-1][0]- (-0.3615)) < 1.e-3
 	assert rk4.t[-1]==10
 
+@testattr(stddist = True)
 def test_rk34_tacoma():
 	"""
 	Tacoma bridge RK34
@@ -146,6 +153,7 @@ def test_rk34_tacoma():
 	assert abs(rk34.y[-1][0]- (-0.3615)) < 1.e-3
 	assert rk34.t[-1]==10
 
+@testattr(stddist = True)
 def test_explicit():
     run_basic_test()
 

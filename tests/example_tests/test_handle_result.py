@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.implicit_ode import *
 from assimulo.problem import Explicit_Problem
@@ -81,13 +82,14 @@ def run_example2():
     exp_sim(5.,10)
     #exp_sim.plot()
     
-
+@testattr(stddist = True)
 def test_CVode():
     """
     Runs the tests
     """
     run_example()
-    
+
+@testattr(stddist = True)
 def test_post_and_time_event():
     """
     Tests an explicit solver with time event and with post process.

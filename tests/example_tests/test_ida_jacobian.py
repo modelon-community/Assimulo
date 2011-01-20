@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.implicit_ode import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -74,7 +75,8 @@ def run_example():
 
 if __name__=='__main__':
     run_example()
-    
+
+@testattr(stddist = True)
 def test_jac():
     """
     Runs the test.

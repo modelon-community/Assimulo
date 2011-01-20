@@ -2,6 +2,7 @@
 ##     The sensitivity calculations are not fully implemented!
 ##
 import numpy as N
+from assimulo import testattr
 from assimulo.explicit_ode import CVode
 from assimulo.problem import Explicit_Problem
 import nose
@@ -67,7 +68,8 @@ def run_example():
     nose.tools.assert_almost_equal(exp_sim.p1[-1][0], -1.8761, 2) #Values taken from the example in Sundials
     nose.tools.assert_almost_equal(exp_sim.p2[-1][0], 2.9614e-06, 8)
     nose.tools.assert_almost_equal(exp_sim.p3[-1][0], -4.9334e-10, 12)
-        
+
+@testattr(stddist = True)
 def test_cvode_parameters():
     """
     Runs the test_cvode_parameters.

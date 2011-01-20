@@ -2,4 +2,3 @@ include src/lib/*.c
 include src/lib/*.pyx
 include src/lib/*.so
 include src/lib/*.dll
-exclude tests/

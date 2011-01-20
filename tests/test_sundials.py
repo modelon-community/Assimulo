@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.sundials import Sundials_Exception, Sundials
 from assimulo.implicit_ode import IDA
 from assimulo.explicit_ode import CVode
@@ -38,6 +39,7 @@ class Test_Sundials:
     
         self.sim = IDA(mod, y0, yd0,p0=p0)
     
+    @testattr(stddist = True)
     def test_atol(self):
         """
         This tests the functionality of the property atol.
@@ -66,7 +68,7 @@ class Test_Sundials:
             assert self.simulators[i].atol[0] == 1.0
     
     
-    
+    @testattr(stddist = True)
     def test_rtol(self):
         """
         This tests the functionality of the property rtol.
@@ -84,6 +86,7 @@ class Test_Sundials:
             self.simulators[i].rtol = 1001.0
             assert self.simulators[i].rtol == 1001.0
     
+    @testattr(stddist = True)
     def test_maxh(self):
         """
         This tests the functionality of the property maxh.
@@ -100,25 +103,29 @@ class Test_Sundials:
             assert self.simulators[i].maxh == 1.0
             self.simulators[i].maxh = 1001.0
             assert self.simulators[i].maxh == 1001.0
-        
+    
+    @testattr(stddist = True)    
     def test_stats_print(self):
         """
         This tests the functionality of the method stats_print.
         """
         pass
-        
+    
+    @testattr(stddist = True)
     def test_stats(self):
         """
         This tests the functionality of the property stats.
         """
         pass
-        
+    
+    @testattr(stddist = True)    
     def test_plot_stepsize_order(self):
         """
         This tests the functionality of the method plot_stepsize_order.
         """
         pass
-        
+    
+    @testattr(stddist = True)    
     def test_disc_info(self):
         """
         This tests the functionality of the property disc_info.
@@ -139,7 +146,8 @@ class Test_Sundials:
         #assert t == 1.0
         assert info[0] != 0
         assert info[1] == 0
-        
+    
+    @testattr(stddist = True)    
     def test_dqtype(self):
         """
         Tests the property of dqtype.
@@ -161,7 +169,8 @@ class Test_Sundials:
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqtype, 'IDA_CE')
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqtype, [1])
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqtype, -1)
-
+    
+    @testattr(stddist = True)
     def test_dqrhomax(self):
         """
         Tests the property of DQrhomax.
@@ -177,7 +186,8 @@ class Test_Sundials:
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqrhomax, 'str')
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqrhomax, [])
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_dqrhomax, -10)
-        
+    
+    @testattr(stddist = True)    
     def test_usesens(self):
         """
         Tests the property of usesens.
@@ -191,6 +201,7 @@ class Test_Sundials:
         self.sim.usesens = 1
         assert self.sim.usesens == True
 
+    @testattr(stddist = True)
     def test_sensmethod(self):
         """
         Tests the property of sensmethod.
@@ -211,7 +222,8 @@ class Test_Sundials:
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_sensitivity_method, 'IDA_CE')
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_sensitivity_method, [1])
         nose.tools.assert_raises(Sundials_Exception,self.sim._set_sensitivity_method, -1)
-        
+    
+    @testattr(stddist = True)    
     def test_suppress_sens(self):
         """
         Tests the property of suppress_sens.
@@ -223,7 +235,8 @@ class Test_Sundials:
         assert self.sim.suppress_sens == False
         self.sim.suppress_sens = 1
         assert self.sim.suppress_sens == True
-
+    
+    @testattr(stddist = True)
     def test_maxsensiter(self):
         """
         Tests the property of maxsensiter.
@@ -238,7 +251,8 @@ class Test_Sundials:
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, 'str')
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, [])
         nose.tools.assert_raises(Sundials_Exception, self.sim._set_max_nonlin, -10)
-        
+    
+    @testattr(stddist = True)
     def test_pbar(self):
         """
         Tests the property of pbar.
