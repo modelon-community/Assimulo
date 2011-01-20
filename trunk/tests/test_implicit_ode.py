@@ -1,11 +1,13 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.implicit_ode import *
 from assimulo.problem import Implicit_Problem
 
 
 class Test_Implicit_ODE:
     
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -41,7 +43,8 @@ class Test_Implicit_ODE:
         
         assert simulator.y_cur == 1.0
         assert simulator.yd_cur == 1.0
-        
+    
+    @testattr(stddist = True)    
     def test_call(self):
         """
         This tests the functionality of the method __call__.
@@ -57,7 +60,8 @@ class Test_Implicit_ODE:
         simulator(1.0,10)
         
         assert len(simulator.t) == 11 #11 Due to t0 is counted as well
-        
+    
+    @testattr(stddist = True)    
     def test_reset(self):
         """
         This tests the functionality of the method reset.
@@ -98,7 +102,7 @@ class Test_IDA:
 
         self.simulator = IDA(my_test_prob, y0, yd0)
         
-        
+    @testattr(stddist = True)    
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -138,6 +142,7 @@ class Test_IDA:
         assert simulator.problem_data['JAC'] == simulator.jac
         assert simulator.problem_data['ROOT'] == simulator.state_events
     
+    @testattr(stddist = True)
     def test_interpolate(self):
         """
         This tests the functionality of the method interpolate.
@@ -156,6 +161,7 @@ class Test_IDA:
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
+    @testattr(stddist = True)
     def test_handle_result(self):
         """
         This function tests the handle result.
@@ -179,7 +185,8 @@ class Test_IDA:
         sim.simulate(20, 40)
         print sim.temp
         assert sim.temp == 142
-        
+    
+    @testattr(stddist = True)    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
@@ -198,7 +205,7 @@ class Test_IDA:
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
     
-        
+    @testattr(stddist = True)    
     def test_tout1(self):
         """
         This tests the functionality of the property tout1.
@@ -213,6 +220,7 @@ class Test_IDA:
         self.simulator.tout1 = 1
         assert self.simulator.tout1 == 1.0
         
+    @testattr(stddist = True)
     def test_lsoff(self):
         """
         This tests the functionality of the property lsoff.
@@ -228,6 +236,7 @@ class Test_IDA:
         self.simulator.lsoff = False
         assert self.simulator.lsoff == False
     
+    @testattr(stddist = True)
     def test_initstep(self):
         """
         This tests the funtionality of the property initstep.
@@ -253,6 +262,7 @@ class Test_IDA:
 
         nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746596311, places=7)
         
+    @testattr(stddist = True)
     def test_time_event(self):
         """
         This tests the functionality of the time event function.
@@ -296,7 +306,7 @@ class Test_IDA:
         
         nose.tools.assert_almost_equal(sim.t[-1], 2.0000000, 5)
         
-        
+    @testattr(stddist = True)    
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
@@ -322,12 +332,14 @@ class Test_IDA:
         nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
         assert imp_sim.stats[3] > 0
     
+    @testattr(stddist = True)
     def test_run(self):
         """
         This tests the functionality of the property run. (With jacobian)
         """
         pass
-        
+    
+    @testattr(stddist = True)    
     def test_algvar(self):
         """
         This tests the functionality of the property algvar.
@@ -355,7 +367,7 @@ class Test_IDA:
         nose.tools.assert_equal(self.simulator.algvar[1], vector[1])
         nose.tools.assert_equal(self.simulator.algvar[2], vector[2])
         
-        
+    @testattr(stddist = True)    
     def test_suppress_alg(self):
         """
         This tests the functionality of the property suppress_alg.
@@ -373,6 +385,7 @@ class Test_IDA:
         self.simulator.suppress_alg = False
         assert self.simulator.suppress_alg == False
         
+    @testattr(stddist = True)
     def test_make_consistency(self):
         """
         This tests the functionality of the method make_consistency.
@@ -396,6 +409,7 @@ class Test_IDA:
         nose.tools.assert_almost_equal(yd[0], 1.0000)
         nose.tools.assert_almost_equal(yd[1], 0.0000)
      
+    @testattr(stddist = True)
     def test_is_disc(self):
         """
         This tests the functionality of the property is_disc.
@@ -413,6 +427,7 @@ class Test_IDA:
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
     
+    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -432,6 +447,7 @@ class Test_IDA:
         sim.simulate(3)
         assert sim.switches[0] == False
     
+    @testattr(stddist = True)
     def test_completed_step(self):
         """
         This tests the functionality of the method completed_step.

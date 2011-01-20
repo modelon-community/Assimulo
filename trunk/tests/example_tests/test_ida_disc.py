@@ -1,5 +1,6 @@
 import numpy as N
 import nose
+from assimulo import testattr
 from assimulo.implicit_ode import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -115,7 +116,7 @@ class Extended_Problem(Implicit_Problem):
                                                    #on the option 'IDA_YA_YDP_INIT'
 
 
-
+@testattr(stddist = True)
 def test_disc():
     """
     Runs the tests

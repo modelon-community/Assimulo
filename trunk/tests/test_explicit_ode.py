@@ -1,9 +1,11 @@
 import nose
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.problem import Explicit_Problem
 
 class Test_Explicit_ODE:
     
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -36,7 +38,8 @@ class Test_Explicit_ODE:
         
         simulator = Explicit_ODE(Test)
         assert simulator.y_cur == 1.0
-        
+    
+    @testattr(stddist = True)
     def test_call(self):
         """
         This tests the functionality of the method __call__.
@@ -70,6 +73,7 @@ class Test_Explicit_ODE:
         #[t,y] = simulator(1.0,10)
         #assert len(t) == 11 #11 Due to t0 is counted as well
     
+    @testattr(stddist = True)
     def test_reset(self):
         """
         This tests the functionality of the method reset.
@@ -109,7 +113,8 @@ class Test_Explicit_Euler:
         problem.f = f
         y0 = 1.0
         self.simulator = Explicit_Euler(problem,y0)
-        
+    
+    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of the method integrate.
@@ -126,7 +131,8 @@ class Test_Explicit_Euler:
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.200000)
         nose.tools.assert_almost_equal(y, 1.200000)
-        
+    
+    @testattr(stddist = True)
     def test_step(self):
         """
         This tests the functionality of the method step.
@@ -150,6 +156,7 @@ class Test_RungeKutta34:
         y0 = 1
         self.simulator = RungeKutta34(problem,y0)
     
+    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of the method integrate.
@@ -167,7 +174,8 @@ class Test_RungeKutta34:
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.3)
         nose.tools.assert_almost_equal(y, 1.3)
-        
+     
+    @testattr(stddist = True)
     def test_adjust_stepsize(self):
         """
         This tests the functionality of the method adjust_stesize.
@@ -185,6 +193,7 @@ class Test_RungeKutta34:
         
         nose.tools.assert_almost_equal(self.simulator.h, 0.2)
     
+    @testattr(stddist = True)  
     def test_step(self):
         """
         This tests the functionality of the method step.
@@ -195,6 +204,7 @@ class Test_RungeKutta34:
         assert tplus == 0.1
         assert yplus == 1.1
         
+    @testattr(stddist = True)    
     def test_tolerance(self):
         """
         This tests the functionality of the tolerances.
@@ -223,7 +233,8 @@ class Test_RungeKutta4:
         problem.f = f
         y0 = 1
         self.simulator = RungeKutta4(problem,y0)
-        
+     
+    @testattr(stddist = True)
     def test_integrate(self):
         """
         This tests the functionality of the method integrate.
@@ -240,7 +251,8 @@ class Test_RungeKutta4:
         [t, y] = values.next()
         nose.tools.assert_almost_equal(t, 0.10)
         nose.tools.assert_almost_equal(y, 1.10)
-        
+    
+    @testattr(stddist = True)    
     def test_step(self):
         """
         This tests the functionality of the method step.
@@ -264,7 +276,7 @@ class Test_CVode:
         
         self.simulator = CVode(problem,y0)
         
-    
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -304,7 +316,7 @@ class Test_CVode:
         assert simulator.problem_data['JAC'] == simulator.jac
         assert simulator.problem_data['ROOT'] == simulator.state_events
          
-        
+    @testattr(stddist = True)    
     def test_discr_method(self):
         """
         This tests the functionality of the property discr.
@@ -322,6 +334,7 @@ class Test_CVode:
         self.simulator.discr = 'Adams'
         assert self.simulator.discr == 'Adams'
     
+    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
@@ -346,7 +359,8 @@ class Test_CVode:
 
         nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
         assert exp_sim.stats[3] > 0
-        
+    
+    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -366,6 +380,7 @@ class Test_CVode:
         sim.simulate(3)
         assert sim.switches[0] == False
     
+    @testattr(stddist = True)
     def test_iter_method(self):
         """
         This tests the functionality of the property iter.
@@ -383,6 +398,7 @@ class Test_CVode:
         self.simulator.iter = 'FixedPoint'
         assert self.simulator.iter == 'FixedPoint'
     
+    @testattr(stddist = True)
     def test_initial_step(self):
         """
         This tests the functionality of the property initstep.
@@ -397,6 +413,7 @@ class Test_CVode:
         self.simulator.initstep = 1
         assert self.simulator.initstep == 1.0
     
+    @testattr(stddist = True)
     def test_interpolate(self):
         """
         This tests the functionality of the method interpolate.
@@ -414,7 +431,8 @@ class Test_CVode:
         sim.simulate(10.)
         
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
-        
+    
+    @testattr(stddist = True)
     def test_handle_result(self):
         """
         This function tests the handle result.
@@ -437,7 +455,8 @@ class Test_CVode:
         sim.simulate(20.)
         print sim.temp
         assert sim.temp == 118
-        
+    
+    @testattr(stddist = True)    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
@@ -469,7 +488,8 @@ class Test_CVode:
         assert self.simulator.maxord == 2
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
-
+    
+    @testattr(stddist = True)
     def test_max_order_discr(self):
         """
         This tests the maximum order when the discretization is changed.
@@ -488,7 +508,8 @@ class Test_CVode:
         assert self.simulator.maxord == 4
         self.simulator.discr = 'Adams'
         assert self.simulator.maxord == 4
-    
+   
+    @testattr(stddist = True)
     def test_pretype(self):
         """
         This tests the precondition option.
@@ -500,6 +521,7 @@ class Test_CVode:
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_pre_type, -1.0)
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_pre_type, 'PREC_BOTH')
     
+    @testattr(stddist = True)
     def test_maxkrylov(self):
         """
         This test the maximum number of krylov subspaces.
@@ -512,6 +534,7 @@ class Test_CVode:
         
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_max_krylov, 'Test')
     
+    @testattr(stddist = True)
     def test_linearsolver(self):
         """
         This test the choice of the linear solver.
@@ -524,6 +547,7 @@ class Test_CVode:
         
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_linear_solver, 'Test')
     
+    @testattr(stddist = True)
     def test_is_disc(self):
         """
         This tests the functionality of the property is_disc.
@@ -541,6 +565,7 @@ class Test_CVode:
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
     
+    @testattr(stddist = True)
     def test_completed_step(self):
         """
         This tests the functionality of the method completed_step.

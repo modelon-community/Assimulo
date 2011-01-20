@@ -17,6 +17,7 @@
 
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.lib.radau_core import Radau_Common, Radau_Exception
 from assimulo.explicit_ode import Radau5
 from assimulo.implicit_ode import Radau5 as Radau5Imp
@@ -31,7 +32,8 @@ class Test_Radau_Common:
         This sets up the test case.
         """
         self.sim = Radau_Common()
-        
+    
+    @testattr(stddist = True)    
     def test_fac1(self):
         """
         This tests the functionality of the property fac1.
@@ -44,7 +46,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, [-1.0])
     
-    
+    @testattr(stddist = True)
     def test_fac2(self):
         """
         This tests the functionality of the property fac2.
@@ -57,6 +59,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, [-1.0])
     
+    @testattr(stddist = True)
     def test_fnewt(self):
         """
         This tests the functionality of the property fnewt.
@@ -69,6 +72,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, [-1.0])
     
+    @testattr(stddist = True)
     def test_h(self):
         """
         This tests the functionality of the property h.
@@ -78,6 +82,7 @@ class Test_Radau_Common:
         self.sim.h = 0.001
         assert self.sim.h == 0.001
     
+    @testattr(stddist = True)
     def test_initial_step(self):
         """
         This tests the functionality of the property initial step.
@@ -90,6 +95,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, [-1.0])
     
+    @testattr(stddist = True)
     def test_newt(self):
         """
         This tests the functionality of the property newt.
@@ -104,6 +110,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, [-1.0])
     
+    @testattr(stddist = True)
     def test_quot1(self):
         """
         This tests the functionality of the property quot1.
@@ -115,7 +122,8 @@ class Test_Radau_Common:
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, [-1.0])
-        
+    
+    @testattr(stddist = True)    
     def test_quot2(self):
         """
         This tests the functionality of the property quot2.
@@ -128,6 +136,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, [-1.0])
     
+    @testattr(stddist = True)
     def test_safe(self):
         """
         This tests the functionality of the property safe.
@@ -140,6 +149,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, [-1.0])
     
+    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests the functionality of the property thet.
@@ -152,6 +162,7 @@ class Test_Radau_Common:
         nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, [-1.0])
     
+    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
@@ -165,6 +176,7 @@ class Test_Radau_Common:
         self.sim.usejac = []
         assert self.sim.usejac == False
         
+    @testattr(stddist = True)
     def test_print_statistics(self):
         """
         This tests the functionality of the method print statistics.
@@ -215,6 +227,7 @@ class Test_Explicit_Radau:
         self.sim.initstep = 1.e-4 #Initial step-size
         self.sim.usejac = False
     
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of Radau5 Explicit Init.
@@ -230,6 +243,7 @@ class Test_Explicit_Radau:
         
         assert sim._leny == 2
     
+    @testattr(stddist = True)
     def test_col(self):
         """
         This tests the functionality of the collocation polynomial (communication points)
@@ -245,6 +259,7 @@ class Test_Explicit_Radau:
         nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
         
+    @testattr(stddist = True)
     def test_simulation(self):
         """
         This tests the Radau5 with a simulation of the van der pol problem.
@@ -259,7 +274,8 @@ class Test_Explicit_Radau:
         
         nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.8753606, 4)
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
-
+    
+    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the usejac property.
@@ -277,6 +293,7 @@ class Test_Explicit_Radau:
         nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.8753606, 4)
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
 
+    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -286,7 +303,8 @@ class Test_Explicit_Radau:
 
         assert self.sim._nsteps == 284
         assert self.sim._nsteps == self.sim._njac
-        
+    
+    @testattr(stddist = True)
     def test_maxh(self):
         """
         This tests the maximum step length.
@@ -295,6 +313,7 @@ class Test_Explicit_Radau:
         self.sim.simulate(0.5)
         assert max(N.diff(self.sim.t))-N.finfo('double').eps <= 0.01
         
+    @testattr(stddist = True)
     def test_newt(self):
         """
         This tests the maximum number of newton iterations.
@@ -304,6 +323,7 @@ class Test_Explicit_Radau:
         
         assert self.sim._nniterfail == 1
     
+    @testattr(stddist = True)
     def test_safe(self):
         """
         This tests the safety factor in the step-size prediction.
@@ -312,6 +332,7 @@ class Test_Explicit_Radau:
         self.sim.simulate(1.0)
         assert self.sim._nsteps == 142
         
+    @testattr(stddist = True)
     def test_reset_statistics(self):
         """
         Tests that the statistics are reset.
@@ -324,6 +345,7 @@ class Test_Explicit_Radau:
         
         assert self.sim._nsteps < steps*1.5
         
+    @testattr(stddist = True)
     def test_atol(self):
         """
         This test the absolute tolerance.
@@ -386,6 +408,7 @@ class Test_Implicit_Radau:
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.initstep = 1.e-4 #Initial step-size
     
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of Radau5 Implicit Init.
@@ -403,6 +426,7 @@ class Test_Implicit_Radau:
         
         assert sim._leny == 2
     
+    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -412,7 +436,7 @@ class Test_Implicit_Radau:
 
         assert self.sim._nsteps == self.sim._njac
         
-        
+    @testattr(stddist = True)    
     def test_simulation(self):
         """
         Test a simulation of the vanderpol equations.
@@ -421,7 +445,8 @@ class Test_Implicit_Radau:
         self.sim.simulate(2.) #Simulate 2 seconds
         
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.706272, 3)
-        
+    
+    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
@@ -430,6 +455,7 @@ class Test_Implicit_Radau:
         
         assert len(self.sim.t) == 201
     
+    @testattr(stddist = True)
     def test_maxh(self):
         """
         Tests implicit radau with maxh.

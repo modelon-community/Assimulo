@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.problem import Explicit_Problem
 
@@ -73,7 +74,8 @@ def run_example():
     nose.tools.assert_almost_equal(exp_sim.y[30], 7.00000, 4)
     nose.tools.assert_almost_equal(exp_sim.y[-1], 9.00000, 4)
     assert len(exp_sim.t) == 39
-        
+
+@testattr(stddist = True)
 def test_explicit_time_event():
     """
     Runs the test_explicit_time_event.py

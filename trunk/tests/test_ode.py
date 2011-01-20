@@ -1,11 +1,13 @@
 import nose
+from assimulo import testattr
 from assimulo.ode import *
 
 class Test_ODE:
     
     def setUp(self):
         self.simulator = ODE()
-        
+    
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -14,7 +16,8 @@ class Test_ODE:
         
         assert simulator.verbosity == simulator.NORMAL
         assert simulator.maxsteps == 10000
-        
+    
+    @testattr(stddist = True)
     def test_verbosity(self):
         """
         This tests the functionality of the property verbosity.
@@ -32,6 +35,7 @@ class Test_ODE:
         self.simulator.verbosity=4
         assert self.simulator.verbosity==4
         
+    @testattr(stddist = True)
     def test_maxsteps(self):
         """
         This tests the functionality of the property maxsteps.
@@ -50,6 +54,7 @@ class Test_ODE:
         self.simulator.maxsteps=1
         assert self.simulator.maxsteps==1
         
+    @testattr(stddist = True)
     def test_simulate(self):
         """
         This tests the functionality of the method simulate.
@@ -63,7 +68,8 @@ class Test_ODE:
         
         #assert tf == 10
         #assert ncp == 100
-        
+    
+    @testattr(stddist = True)    
     def test_store_cont(self):
         """
         This tests the functionality of the property store_cont.

@@ -1,5 +1,6 @@
 import nose
 import numpy as N
+from assimulo import testattr
 from assimulo.explicit_ode import *
 from assimulo.problem import Explicit_Problem
 
@@ -38,7 +39,7 @@ def run_example():
     nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75011017723, places=5)
     nose.tools.assert_almost_equal(exp_sim.y[-1][1], -49.1000000, places=3)
 
-
+@testattr(stddist = True)
 def test_jacobian():
     """
     Runs the tests.
