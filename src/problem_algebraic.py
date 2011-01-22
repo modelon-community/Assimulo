@@ -58,10 +58,21 @@ class ProblemAlgebraic(object):
         Available (optional) options::
         
             def jac(self,input)
-                Defines the jacobian. J=df/dx.
+                Defines the Jacobian. J=df/dx.
                 
                 Returns:
                     A numpy matrix of size len(input)*len(input).
+                    
+            def sparse_jac(self,input)
+                Defines the Jacobian in sparse CSC format
+                
+                Parameters::
+                
+                    input--
+                        numpy array of same size as x0
+                
+                Returns:
+                    A scipy.sparse.csc.csc_matrix representing the Jacobian
                     
             def get_constraints(self)
                 Used to get the constraints of the problem

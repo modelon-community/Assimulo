@@ -11,9 +11,7 @@ class Test_KINSOL:
         """
         sets up the test case
         """
-        
-        
-        
+          
         class Prob1(ProblemAlgebraic):
             f = lambda self, x:N.array([x[0]-1.0, x[1]-2.0,x[2]-3.0])
             _x0 = [0.0,0.0,0.0]
@@ -115,6 +113,54 @@ class Test_KINSOL:
                 
         self.pb_const = Prob_Const()
         self.solve_pb_const = KINSOL(self.pb_const)
+        
+        class Prob_BadConst(ProblemAlgebraic):
+            f = lambda self, x:N.array([-(x[0]-1.0)**2 +4, x[1]-2.0,x[2]-3.0, x[3]+1,x[4]+2])
+            _x0 = [-1.0,-1.0,0.0,1.0,1.0]
+            _const = N.array([-2.0,-1.0,0.0,1.0,2.0])
+            
+            def set_x0(self,x0):
+                self._x0 = x0
+                
+            def get_x0(self):
+                return self._x0
+            
+            def set_constraints(self,const):
+                self._const = const
+                
+            def get_constraints(self):
+                return self._const
+            
+            def print_var_info(self,i):
+                print self._x0[i], "constrained by ", self._const[i]
+                
+        self.pb_badconst = Prob_BadConst()
+        
+        class Prob_Sparse(ProblemAlgebraic):
+            f = lambda self, x:N.array([-(x[0]-1.0)**2 +4, x[1]-2.0,x[2]-3.0, x[3]+1,x[4]+2])
+            _x0 = [-1.0,-1.0,0.0,1.0,1.0]
+            _const = N.array([-2.0,-1.0,0.0,1.0,2.0])
+            
+            def set_x0(self,x0):
+                self._x0 = x0
+                
+            def get_x0(self):
+                return self._x0
+            
+            def set_constraints(self,const):
+                self._const = const
+                
+            def get_constraints(self):
+                return self._const
+            
+            def sparse_jac(self):
+                pass
+            
+            def print_var_info(self,i):
+                print self._x0[i], "constrained by ", self._const[i]
+                
+        self.pb_sparse = Prob_Sparse()
+        self.solve_pb_sparse = KINSOL(self.pb_sparse)
         
           
     def test_solve(self):
@@ -232,7 +278,46 @@ class Test_KINSOL:
         
         self.solve_p1.set_verbosity(0)
         nose.tools.assert_equal(self.solve_p1.verbosity,0)
-
+        
+    def test_constraints_check(self):
+        """
+        test if the cosntraint checking works properly
+        """
+        
+        bad_solver = KINSOL(self.pb_badconst)
+        
+        self.pb_badconst.set_x0([1.0,-1.0,0.0,1.0,1.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        self.pb_badconst.set_x0([-1.0,1.0,0.0,1.0,1.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        self.pb_badconst.set_x0([-1.0,-1.0,0.0,-1.0,1.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        self.pb_badconst.set_x0([-1.0,-1.0,0.0,1.0,-1.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        self.pb_badconst.set_x0([0.0,-1.0,0.0,1.0,1.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        self.pb_badconst.set_x0([-1.0,-1.0,0.0,1.0,0.0])
+        nose.tools.assert_raises(KINSOL_Exception,KINSOL,self.pb_badconst)
+        
+        self.pb_badconst.set_x0([-1.0,-1.0,-1.0,1.0,1.0])
+        bad_solver = KINSOL(self.pb_badconst)
+        self.pb_badconst.set_x0([-1.0,-1.0,1.0,1.0,1.0])
+        bad_solver = KINSOL(self.pb_badconst)
+        
+    def test_sparsity_settings(self):
+        """
+        test if sparsity settings are set correctly
+        """
+        
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_pb_jac.set_sparsity,True)
+        nose.tools.assert_raises(KINSOL_Exception,self.solve_pb_jac.set_sparsity,False)
+        
+        self.solve_pb_sparse.set_sparsity(True)
+        nose.tools.assert_true(self.solve_pb_sparse.use_sparse)
+        
+        self.solve_pb_sparse.set_sparsity(False)
+        nose.tools.assert_false(self.solve_pb_sparse.use_sparse)
+        
         
         
         

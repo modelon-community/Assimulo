@@ -3,31 +3,32 @@
 extern "C" {
 #endif
 
-#ifndef _PINV_H
-#define _PINV_H
+#ifndef _KINSLU_H
+#define _KINSLU_H
 
-#include "kinsol_jmod.h"
+#include "kinsol_jmod_wSLU.h"
 #include <sundials/sundials_dense.h>
 
 /*
  * -----------------------------------------------------------------
- * Function : KINpinv
+ * Function : KINSLUG
  * -----------------------------------------------------------------
- * A call to the KINpinv function links the main solver with the
- * pinv linear solver. Its arguments are as follows:
+ * A call to the KINSLUG function links the main solver with the
+ * SLUG (SuperLU reGularization implementation)  linear solver.
+ * Its arguments are as follows:
  *
  * kinmem - pointer to an internal memory block allocated during a
  *          prior call to KINCreate
  *
  * N      - problem size
  *
- * The return value of KINpinv is one of:
+ * The return value of KINSLUG is one of:
  *    0                         if successful
  *    int different from zero   otherwise
  * -----------------------------------------------------------------
  */
 
-  SUNDIALS_EXPORT int KINPinv(void *kinmem, int N);
+  SUNDIALS_EXPORT int KINSLUG(void *kinmem, int N);
 
 #endif
 

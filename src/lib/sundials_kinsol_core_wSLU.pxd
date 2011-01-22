@@ -48,6 +48,26 @@ cdef extern from "numpy/arrayobject.h":
 import_array()
 
 #==============================================
+#External definitions from SuperLU headers
+#==============================================
+cdef extern from "slu_ddefs.h":
+    ctypedef int int_t
+    
+    ctypedef enum Stype_t:
+        SLU_NC
+    ctypedef enum Dtype_t:
+        SLU_D
+    ctypedef enum Mtype_t:
+        SLU_GE
+    ctypedef struct SuperMatrix:
+        Stype_t Stype
+        Dtype_t Dtype
+        Mtype_t Mtype
+        int_t nrow
+        int_t ncol
+        void *Store
+    void dCreate_CompCol_Matrix(SuperMatrix *, int, int, int, double *,int *, int *, Stype_t, Dtype_t, Mtype_t)
+#==============================================
 # C headers
 #==============================================
 cdef extern from "string.h":
@@ -164,6 +184,9 @@ cdef extern from "kinsol/kinsol_dense.h":
 cdef extern from "kinpinv.h":
     int KINPinv(void *kinmem, int N)
 
+cdef extern from "kinslug.h":
+    int KINSLUG(void *kinmem, int N)
+
 # functions used for supplying jacobian, and receiving info from linear solver
 cdef extern from "kinsol/kinsol_direct.h":
     # user functions
@@ -179,14 +202,17 @@ cdef extern from "kinsol/kinsol_direct.h":
     int KINDlsGetLastFlag(void *kinmem, int *flag)
     char *KINDlsGetReturnFlagName(int flag)
 
-cdef extern from "kinsol_jmod.h":
+cdef extern from "kinsol_jmod_wSLU.h":
     # user functions
     ctypedef int (*KINPinvJacFn)(int N, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+    ctypedef int (*KINSLUGJacFn)(int N, N_Vector u, N_Vector fu, SuperMatrix *J, void *user_data, N_Vector tmp1, N_Vector tmp2)
 
     # function used to link user jacobian to KINSOL
     int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac)
+    int KINSLUGSetJacFn(void *kinmem, KINSLUGJacFn jac)
     
     # functions used to set regularizationparameter
+    int KINSLUGSetRegParam(void *kinmem, realtype reg_p)
     int KINPinvSetRegParam(void *kinmem, realtype reg_p)
 
     # optional output fcts for linear direct solver
