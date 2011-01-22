@@ -1,14 +1,16 @@
 /*
- * This is a linear solver using the Penrose-Moore pseudoinverse
+ *This is a linear solver using Tikhonov regularization
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "kinsol_jmod_impl.h"
 #include "kinpinv.h"
 #include "kinsol/kinsol_impl.h"
 
 #include <sundials/sundials_direct.h>
+#include <nvector/nvector_serial.h>
 #include <sundials/sundials_math.h>
 
 /* Constants */
@@ -23,8 +25,9 @@
  * =================================================================
  */
 
-/* helper functions */
-int regMatrix(realtype **JTJ_c, realtype **jac, realtype h,int size);
+
+/* help functions */
+void regMatrix(realtype **JTJ_c, realtype **jac, realtype h,int size);
 
 /* KINPinv linit, lsetup, lsolve, and lfree routines */
 
@@ -82,6 +85,7 @@ static void kinPinvFree(KINMem kin_mem);
 #define regularized    (kinpinv_mem->d_regularized)
 #define redojac        (kinpinv_mem->d_redojac)
 #define beta           (kinpinv_mem->d_beta)
+#define reg_param      (kinpinv_mem->d_reg_param)
 
 /* 
  * =================================================================
@@ -205,7 +209,8 @@ int KINPinv(void *kinmem, int N)
 
   /* Attach linear solver memory to integrator memory */
   lmem = kinpinv_mem;
-
+  /* Set reg_param 'not set' */
+  reg_param = 0;
   return(KINPINV_SUCCESS);
 }
 
@@ -246,6 +251,11 @@ static int kinPinvInit(KINMem kin_mem)
     J_data = kin_mem->kin_user_data;
   }
 
+  /* Set regularization parameter */
+  if (reg_param == 0){
+    reg_param = 1;
+  }
+
   last_flag = KINPINV_SUCCESS;
   return(0);
 }
@@ -258,7 +268,7 @@ static int kinPinvInit(KINMem kin_mem)
  * and J is the current prblem jacobian.
  */
 
-int regMatrix(realtype **JTJ_c, realtype **jac, realtype h, int size)
+void regMatrix(realtype **JTJ_c, realtype **jac, realtype h, int size)
 {
   int i,j,k;
 
@@ -271,13 +281,12 @@ int regMatrix(realtype **JTJ_c, realtype **jac, realtype h, int size)
       
       /*Calculate value at RTR(i,j) */
       JTJ_c[j][i] = 0;
-      for (k=0;k<size;k++) JTJ_c[j][i] += jac[k][i]*jac[k][j];
+      for (k=0;k<size;k++) JTJ_c[j][i] += jac[j][k]*jac[i][k];
       
       /* add the regularization parameter on the diagonal */
       if (i==j)JTJ_c[j][i] += h*h;
     }
   }
-  return 0;
 }
 
 /*
@@ -285,7 +294,7 @@ int regMatrix(realtype **JTJ_c, realtype **jac, realtype h, int size)
  * kinPinvSetup
  * -----------------------------------------------------------------
  * This routine does the setup operations for the linear solver and
- * prepares J transpose J  + h^2 I if necessary for rehularization.
+ * prepares J transpose J  + h^2 I if necessary for regularization.
  * -----------------------------------------------------------------
  */
 
@@ -294,10 +303,13 @@ static int kinPinvSetup(KINMem kin_mem)
   KINPinvMem kinpinv_mem;
   long int ier;
   int retval;
-  int i;
+  int i,j;
 
   realtype **JTJ_c ;
   realtype **jac ;
+  realtype rp ;
+  double data;
+  realtype *b;
 
   kinpinv_mem = (KINPinvMem) lmem;
   
@@ -316,7 +328,7 @@ static int kinPinvSetup(KINMem kin_mem)
   /* If the LU factorization failed, perform regularization */
   regularized = FALSE;
   if (ier > 0) {
-      /* Calculate value of jacobian */
+    /* Calculate value of jacobian */
     SetToZero(J);
 
     /* SetToZero(pivots);*/
@@ -327,18 +339,37 @@ static int kinPinvSetup(KINMem kin_mem)
       last_flag = -1;
       return(-1);
     }
-    
+
     /* Calculate J tranpose J */
     SetToZero(JTJ);
 
+    /* Calculate the regularization parameter */
+
+    jac = J->cols;
+    b = N_VGetArrayPointer(fval);
+    rp = 0;
+    for (i = 0;i<n;i++) {
+      data = 0;
+      for(j = 0;j<n;j++) data += jac[i][j]*b[j];
+      rp += data*data ;
+    }
+    printf("rp: %f \n",rp);
+    if (sqrt(rp)<1) {
+      reg_param = sqrt(rp);
+    } else {
+      reg_param = 1;
+    }
+    if (printfl > 0) printf("Regparam: %f, \n ",reg_param);
     /* calculate a regularized matrix */
     JTJ_c = JTJ->cols;
-    jac = J->cols;
-    ier = regMatrix(JTJ_c,jac,0.1,n);
+
+    regMatrix(JTJ_c,jac,reg_param,n);
     
+    /* LU-factorize the regularized matrix*/
     ier = DenseGETRF(JTJ,pivots);
     regularized = TRUE;
   }
+
   redojac = FALSE;
   /* Return 0 if the LU was complete; otherwise return -1 */
   last_flag = ier;
@@ -385,12 +416,13 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
     }
     /* Back-solve and get solution in x */
 
-    N_VScale(ONE,x,b);
+    /*N_VScale(ONE,x,b);*/
+    
 
     DenseGETRS(JTJ, pivots, xd);
 
-    /* Reset problem */
     regularized = FALSE;
+    /* Calculate a fresh jacobian */
     redojac = TRUE;
 
     
@@ -402,8 +434,8 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
     xd = N_VGetArrayPointer(x);
     
     /* Back-solve and get solution in x */
-    
     DenseGETRS(J, pivots, xd);
+
   }
 
   /* Compute the terms Jpnorm and sfdotJp for use in the global strategy
@@ -415,12 +447,7 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
 
      sfdotJp is the dot product of the scaled f vector and the scaled
      vector J*p, where the scaling uses fscale. */
-  bx = N_VGetArrayPointer(uu);
-  /*
-   * for (i=0;i<n;i++){
-   * printf("%f \n",bx[i]+xd[i]);
-   * }
-   */
+
 
   sJpnorm = N_VWL2Norm(b,fscale);
   N_VProd(b, fscale, b);

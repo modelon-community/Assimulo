@@ -24,6 +24,8 @@ extern "C" {
 #include <sundials/sundials_direct.h>
 #include <sundials/sundials_nvector.h>
 
+#include "slu_ddefs.h"
+
 /*
  * =================================================================
  *              K I N D I R E C T     C O N S T A N T S
@@ -106,12 +108,25 @@ extern "C" {
  * problems in which efficiency of access is NOT a major concern. 
  *                                                                
  * -----------------------------------------------------------------
+ * -----------------------------------------------------------------
+ * Type: KINSLUGJacFn
+ * -----------------------------------------------------------------
+ *
+ * Basically the same as above except that instead of passing a
+ * DlsMat to store the Jacobian SuperMatrix is passed.
+ *
+ * -----------------------------------------------------------------
  */
   
   
 typedef int (*KINPinvJacFn)(int N,
 			    N_Vector u, N_Vector fu, 
 			    DlsMat J, void *user_data,
+			    N_Vector tmp1, N_Vector tmp2);
+
+typedef int (*KINSLUGJacFn)(int N,
+			    N_Vector u, N_Vector fu, 
+			    SuperMatrix *J, void *user_data,
 			    N_Vector tmp1, N_Vector tmp2);
   
 
@@ -140,6 +155,11 @@ typedef int (*KINPinvJacFn)(int N,
  */
 
 SUNDIALS_EXPORT int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac);
+
+SUNDIALS_EXPORT int KINSLUGSetJacFn(void *kinmem, KINSLUGJacFn jac);
+
+SUNDIALS_EXPORT int KINSLUGSetRegParam(void *kinmem, realtype reg_p);
+
 SUNDIALS_EXPORT int KINPinvSetRegParam(void *kinmem, realtype reg_p);
 
 /*
@@ -165,7 +185,6 @@ SUNDIALS_EXPORT int KINPinvSetRegParam(void *kinmem, realtype reg_p);
  *    KINPINV_LMEM_NULL if the linear solver memory was NULL
  * -----------------------------------------------------------------
  */
-
 
 SUNDIALS_EXPORT int KINPinvGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB);
 SUNDIALS_EXPORT int KINPinvGetNumJacEvals(void *kinmem, long int *njevalsB);

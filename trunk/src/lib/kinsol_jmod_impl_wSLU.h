@@ -21,7 +21,8 @@
 extern "C" {
 #endif
 
-#include "kinsol_jmod.h"
+#include "kinsol_jmod_wSLU.h"
+#include "slu_ddefs.h"
 
 
 /*
@@ -45,14 +46,28 @@ typedef struct KINPinvMemRec {
 
   booleantype d_jacDQ;     /* TRUE if using internal DQ Jacobian approx.   */
   KINPinvJacFn d_djac;     /* dense Jacobian routine to be called          */
+  KINSLUGJacFn d_spjac;    /* sparse Jacobian routine to be called         */
 
   void *d_J_data;          /* J_data is passed to djac or bjac             */
     
   DlsMat d_J;              /* problem Jacobian                             */
 
+  SuperMatrix *sp_J;       /* sparse problem jacobian                      */
+  SuperMatrix *sp_L;       /* L in the sparse LU factorization             */
+  SuperMatrix *sp_U;       /* U in the sparse LU factorization             */
+  SuperMatrix *sp_B;       /* sparse right hand side                       */
+  int *sp_perm_r;          /* row permutations from partial pivoting       */
+  int *sp_perm_c;          /* column permutation vector                    */
+
+  SuperMatrix *sp_JTJ;     /* Matrix needed for regularisation             */
+
+  superlu_options_t *sp_options; /* options struct for SuperLU             */
+  SuperLUStat_t *sp_stat;  /* statistcis struct for SuperLU                */
+
   int *d_pivots;           /* pivot array for PM = LU                      */
   realtype *d_beta;
   realtype d_reg_param;    /* Regularization parameter                     */
+    
   long int d_nje;          /* no. of calls to jac                          */
     
   long int d_nfeDQ;        /* no. of calls to F due to DQ Jacobian approx. */

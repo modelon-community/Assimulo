@@ -18,8 +18,11 @@
 
 from __future__ import division
 
-include "sundials_kinsol_core.pxd" # Includes fcts from other header files
+import scipy.sparse as ss
+
+include "sundials_kinsol_core_wSLU.pxd" # Includes fcts from other header files
 include "sundials_kinsol_core.pxi" # Includes the constants (textual include)
+
 
 cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
     """
@@ -71,6 +74,46 @@ cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian,
         return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 
 
+cdef int kin_sp_jac(int Neq, N_Vector xv, N_Vector fval, SuperMatrix *Jacobian, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the Assimulo.Problem.sparsejac to the KINSOL 
+    Jacobian function.
+    """
+    cdef:
+        ProblemData pData = <ProblemData>problem_data
+        ndarray x = nv2arr(xv)
+
+        int m,n,nnz,i
+        realtype* nzval = NULL
+        int* rowind = NULL
+        int* colptr = NULL
+        Stype_t S = SLU_NC
+        Dtype_t D = SLU_D
+        Mtype_t M = SLU_GE
+
+    try:
+        # Get jacobian and extract data
+        jac=(<object>pData.JAC)(x)
+        nnz = jac.nnz
+        m = jac.shape[0]
+        n = jac.shape[1]
+        nzval = <realtype*>calloc(len(jac.data),sizeof(realtype))
+        rowind = <int*>calloc(len(jac.indices),sizeof(int))
+        colptr = <int*>calloc(len(jac.indptr),sizeof(int))
+        arr2realtype(jac.data,nzval,len(jac.data))
+        arr2int(jac.indices,rowind,len(jac.indices))
+        arr2int(jac.indptr,colptr,len(jac.indptr))
+
+        # Create the necessary matrix
+        dCreate_CompCol_Matrix(Jacobian, m, n, nnz, nzval, rowind, colptr, S, D, M)
+
+
+        return KINDLS_SUCCESS
+    except:
+        return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+
+
 class KINError(Exception):
     """
     Kinsol exception
@@ -91,8 +134,7 @@ class KINError(Exception):
                 KIN_SYSFUNC_FAIL: 'Call to RHS failed.',
                 KIN_FIRST_SYSFUNC_ERR: 'Call to RHS failed on first call',
                 KIN_REPTD_SYSFUNC_ERR: 'Call to RHS failed multiple times.',
-                KIN_STEP_LT_STPTOL: 'Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.',
-                234: 'KINSOL not compiled with SuperLU, sparse functionality not available.'}
+                KIN_STEP_LT_STPTOL: 'Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.'}
     value = 0
     def __init__(self, value):
         self.value = value
@@ -198,7 +240,7 @@ cdef class KINSOL_wrap:
 
             # Link to linear solver
             if self.sparse:
-                raise KINError(234)
+                flag = KINSLUG(self.solver,self.pData.dim)
             else:
                 flag = KINPinv(self.solver,self.pData.dim)
                 #flag = KINDense(self.solver,self.pData.dim)
@@ -211,7 +253,7 @@ cdef class KINSOL_wrap:
             # Set regularization parameter, if necessary
             if self.reg_param != 0.0:
                 if self.sparse:
-                    raise KINError(234)
+                    flag = KINSLUGSetRegParam(self.solver, self.reg_param)
                 else:
                     flag = KINPinvSetRegParam(self.solver, self.reg_param)
                     
@@ -236,7 +278,7 @@ cdef class KINSOL_wrap:
         # If the user supplied a Jacobien, link it to the solver
         if self.pData.JAC != NULL:
             if sparse:
-                raise KINError(234)
+                flag = KINSLUGSetJacFn(self.solver,kin_sp_jac)
             else:
                 flag = KINPinvSetJacFn(self.solver,kin_jac)
                 #flag = KINDlsSetDenseJacFn(self.solver,kin_jac)
@@ -247,7 +289,7 @@ cdef class KINSOL_wrap:
                 print "Jacobian supplied by user connected"
         else:
             if sparse:
-                raise KINError(234)
+                flag = KINSLUGSetJacFn(self.solver,NULL)
             else:
                 flag = KINPinvSetJacFn(self.solver,NULL)
                 #flag = KINDlsSetDenseJacFn(self.solver,NULL)

@@ -20,11 +20,12 @@
  * =================================================================
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "kinsol/kinsol_impl.h"
-#include "kinsol_jmod_impl.h"
+#include "kinsol_jmod_impl_wSLU.h"
 #include <sundials/sundials_math.h>
 
 /* 
@@ -79,6 +80,7 @@
 #define smu            (kinpinv_mem->d_smu)
 #define jacDQ          (kinpinv_mem->d_jacDQ)
 #define djac           (kinpinv_mem->d_djac)
+#define spjac          (kinpinv_mem->d_spjac)
 #define bjac           (kinpinv_mem->d_bjac)
 #define J              (kinpinv_mem->d_J)
 #define pivots         (kinpinv_mem->d_pivots)
@@ -126,6 +128,7 @@ int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac)
     jacDQ = TRUE;
   }
 
+
   return(KINPINV_SUCCESS);
 }
 
@@ -158,6 +161,62 @@ int KINPinvSetRegParam(void *kinmem, realtype reg_p)
   return(KINPINV_SUCCESS);
 }
 
+/*
+ * -----------------------------------------------------------------
+ * KINSLUGSetRegParam
+ * -----------------------------------------------------------------
+ */
+
+int KINSLUGSetRegParam(void *kinmem, realtype reg_p)
+{
+  KINMem kin_mem;
+  KINPinvMem kinpinv_mem;
+
+  /* Return immediately if kinmem is NULL */
+  if (kinmem == NULL) {
+    KINProcessError(NULL, KINPINV_MEM_NULL, "KINPINV", "KINPinvSetJacFn", MSGD_KINMEM_NULL);
+    return(KINPINV_MEM_NULL);
+  }
+  kin_mem = (KINMem) kinmem;
+
+  if (lmem == NULL) {
+    KINProcessError(kin_mem, KINPINV_LMEM_NULL, "KINPINV", "KINPinvSetJacFn", MSGD_LMEM_NULL);
+    return(KINPINV_LMEM_NULL);
+  }
+  kinpinv_mem = (KINPinvMem) lmem;
+
+  reg_param = reg_p;
+
+  return(KINPINV_SUCCESS);
+}
+
+int KINSLUGSetJacFn(void *kinmem, KINSLUGJacFn jac)
+{
+  KINMem kin_mem;
+  KINPinvMem kinpinv_mem;
+
+  /* Return immediately if kinmem is NULL */
+  if (kinmem == NULL) {
+    KINProcessError(NULL, KINPINV_MEM_NULL, "KINSLUG", "KINSLUGSetJacFn", MSGD_KINMEM_NULL);
+    return(KINPINV_MEM_NULL);
+  }
+  kin_mem = (KINMem) kinmem;
+
+  if (lmem == NULL) {
+    KINProcessError(kin_mem, KINPINV_LMEM_NULL, "KINSLUG", "KINSLUGSetJacFn", MSGD_LMEM_NULL);
+    return(KINPINV_LMEM_NULL);
+  }
+  kinpinv_mem = (KINPinvMem) lmem;
+
+  if (jac != NULL) {
+    jacDQ = FALSE;
+    spjac = jac;
+  } else {
+    jacDQ = TRUE;
+  }
+
+  return(KINPINV_SUCCESS);
+}
 /*
  * -----------------------------------------------------------------
  * KINDlsGetWorkSpace

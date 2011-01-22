@@ -14,8 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+try:
+    from lib.sundials_kinsol_core_wSLU import KINSOL_wrap, KINError
+except:
+    from lib.sundials_kinsol_core import KINSOL_wrap, KINError
 
-from lib.sundials_kinsol_core import KINSOL_wrap, KINError
 from scipy.linalg import pinv2
 from scipy.optimize import fminbound
 from numpy.linalg import solve
@@ -65,7 +68,7 @@ class KINSOL:
         # check for functions and test them
         try:
             tmp = self.problem.f(self.x0)
-            self.norm_of_res = N.linalg.norm(self.x0)
+            self.norm_of_res = 10000*N.linalg.norm(self.x0)
             self.func = self.problem.f
         except ProblemAlg_Exception:
             raise KINSOL_Exception("Problem has not implemented method 'f'")
@@ -129,7 +132,8 @@ class KINSOL:
         self.lin_count = 0
         self.verbosity = 0
         self.max_reg = 2.0
-        
+        self.use_sparse = False
+        self.reg_param = 0.0
                 
     def set_jac_usage(self,use_jac):
         """
@@ -168,28 +172,72 @@ class KINSOL:
                 raise KINSOL_Exception("The variable sent to 'set_verbosity' must be either 0, 1, 2 or 3.")
         else:
             raise KINSOL_Exception("The variable sent to 'set_verbosity' must be an integer.")
-            
         
-    
+    def set_sparsity(self,use_sparse):
+        """
+        Method used to set if the problem should be treated as sparse by
+        the linear solver in KINSOL. If the problem supplied has not implemented
+        a method sparse_jac an exception will be thrown
+        
+        Parameters::
+        
+            use_sparse --
+                Boolean set to True if the problem is to be treated as
+                sparse and False otherwise.
+                
+        """
+        
+        if hasattr(self.problem,'sparse_jac'):
+            self.use_sparse = use_sparse
+        else:
+            raise KINSOL_Exception("The problem must have implemented a method 'sparse_jac' for sparsity to by used.")
+        
+    def set_reg_param(self,reg_param):
+        """
+        Method used to set the regularization parameter.
+        If set to zero the parameter will be set by the solver.
+        
+        Parameters::
+        
+            reg_param --
+                Float larger or equal to zero.
+                
+        """
+        
+        type_name = type(reg_param).__name__
+        if re.search('float',type_name) != None:
+            if reg_param < 0:
+                raise KINSOL_Exception("Value sent to set_reg_param must be equal to or larger than zero.")
+            else:
+                self.reg_param = reg_param
+        else:
+            raise KINSOL_Exception("The variable sent to 'set_reg_param' must be a float.")
     def solve(self):
         """
         Function called when solving function rhs_fct
         
         """
         # check for jacobian and set it if present and to be used
-        if self._use_jac and hasattr(self.problem,'jac'):
-            jac = self.problem.jac
+        if self.use_sparse:
+            if self._use_jac and hasattr(self.problem,'sparse_jac'):
+                jac = self.problem.sparse_jac
+            else:
+                jac = None
         else:
-            jac = None
+            if self._use_jac and hasattr(self.problem,'jac'):
+                jac = self.problem.jac
+            else:
+                jac = None
             
         # Initialize solver and solve        
         
         solved = False
+        local_min = False
 
         res = N.zeros(self.x0.__len__())
-        while not solved and self.reg_count < 2:
+        while (not solved) and self.reg_count < 2:
             try:
-                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.verbosity,self.norm_of_res)
+                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param)
                 res = self.solver.KINSOL_solve()
                 solved = True
             except KINError as error:
@@ -218,154 +266,30 @@ class KINSOL:
                     else:
                         raise KINSOL_Exception("Regularization failed due to constraints, tried getting heuristic initial guess but failed.")
                 
-                    """
-                    Following functions commented out since they are moved to C code
-                    elif error.value == -11 :
-                        # the problem is caused by a singular jacobian try a regularized step
-                        self.reg_count += 1
-                        self._do_reg_step()
-                    elif error.value == -6 or error.value == -8 :
-                        self._brute_force()
-                    
-                    """ 
+
+                elif (error.value == 2):
+                    print "---------------------------------------------------------"
+                    print ""
+                    print " !!! WARNING !!!"
+                    print ""
+                    print " KINSOL has returned a result but the algorithm has converged"
+                    print " to a local minima, the initial values are NOT consistant!"
+                    print ""
+                    print "---------------------------------------------------------"
+                    solved = True
+                    local_min = True
                 else:
                     # Other error, send onward as exception
+                    self.problem.check_constraints(res)
                     raise KINSOL_Exception(error.msg[error.value])
         
         if not solved:
-            raise KINSOL_Exception("Singular Jacobian. Tried using Tikhonov regularization but stopped after ten steps.")
-        """
-        Functionality moved to C-code
-        if self.reg_count != 0:
-            print self.reg_count, " steps using the Tikhonov regularization performed."
-        if self.lin_count != 0:
-            print self.lin_count, " steps using the numpy.linalg.solve function performed."
-        """
+            self.solver.Free_KINSOL()
+            raise KINSOL_Exception("Algorithm exited solution loop without finding a solution, please contact Assimulo support.")
+
         if self.check_with_model:
             self.problem.check_constraints(res)
-        print "Problem sent to KINSOL solved."
+        if not local_min:
+            print "Problem sent to KINSOL solved."
+            
         return res
-    
-
-    
-    def _do_reg_step(self):
-        """
-        Method used to perform a step using Tikhonov regularization
-        """
-        print "Trying to do a Tikhonov regularized step"
-        if self._use_jac:
-            if hasattr(self.problem,'jac'):
-                # Extract data from problem
-                x0 = self.x0
-                fx = self.func(x0)
-                J  = self.problem.jac(x0)
-                try:
-                    h = fminbound(self._norm_of_next_step,0.001,100.0)
-                    print "Regularization parameter: ", h
-                
-                except:
-                    h = 0.4
-                    print "Could not find optimal regularization parameter. Using 0.4 instead."
-                
-                # Calculate regularisation step if the regularization prameter is not 'too big'
-                if h < self.max_reg:
-                    J_T = J.transpose()
-                    rhs = N.dot(J_T,-fx)
-                    A = N.dot(J_T,J)+(h**2)*N.eye(fx.__len__())
-                    dx = solve(A,rhs)
-                    
-                    # Do step in problem
-                    self.x0 = x0 + dx
-                    self.problem._x0 = self.x0
-                else:
-                    print "Regularization parameter too big, trying a step using pseudo inverse."
-                    self._do_pinv_step()
-                
-            else:
-                raise KINSOL_Exception("Singular jacobian. Trying to do a step using Tikhonov regularization, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
-                
-        else:
-            raise KINSOL_Exception("Singular jacobian. Trying to do a step using Tikhonov regularization but 'use_jac' is set to false.")
-    
-    def _norm_of_next_step(self,h):
-        """
-        Function used to calculate the norm of the solution after the first step
-        """
-        x0 = self.x0
-        J  = self.problem.jac(x0)
-        fx = self.func(x0)
-        
-        # Calculate pseudo inverse and calculate new step
-        J_T = J.transpose()
-        rhs = N.dot(J_T,-fx)
-        A = N.dot(J_T,J)+(h**2)*N.eye(fx.__len__())
-        dx = solve(A,rhs)
-        
-        # Return norm of solution
-        return N.linalg.norm(self.func(x0+dx))
-    
-    def _do_pinv_step(self):
-        """
-        Method used to perform a step using the pseudo inverse
-        """
-        print "Trying to do a step with the pseudo inverse"
-        if self._use_jac:
-            if hasattr(self.problem,'jac'):
-                # Extract data from problem
-                x0 = self.x0
-                fx = self.func(x0)
-                J  = self.problem.jac(x0)
-                
-                # Calculate pseudo inverse and calculate new step
-                Jpinv = pinv2(J)
-                dx = N.dot(Jpinv,-fx)
-                
-                # Do step in problem
-                self.x0 = x0 + dx
-                self.problem._x0 = self.x0
-                
-            else:
-                raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
-                
-        else:
-            raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse but 'use_jac' is set to false.")
-                
-    def _brute_force(self):
-        """
-        Method used to use a bit of brute force.
-        In the case of difficulties with reducing the residual, the method will newton iterate
-        , without any linesearch, until the (norm of the) residual is once again declining.
-        """
-        print "Trying to solve the problem using a bit of brute force"
-        if self._use_jac:
-            if hasattr(self.problem,'jac'):
-                # Extract data from problem
-                x0 = self.x0
-                fx = self.func(x0)
-                                
-                tol = N.linalg.norm(fx)
-                for i in N.arange(10):
-                    
-                    fx = self.func(x0)
-                    print "|fx|: ", abs(N.linalg.norm(fx))
-                    if N.linalg.norm(fx) < tol :
-                        self.lin_count += i
-                        self.x0 = x0
-                        self.problem._x0 = self.x0
-                        break
-                    
-                    tol = N.linalg.norm(fx)
-                    J  = self.problem.jac(x0)
-                
-                    dx = solve(J,-fx)
-                
-                    x0 = x0 + dx
-                    self.problem._x0 = self.x0
-                
-            else:
-                raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse, but no jacobian supplied. Using the jacobian of KINSOL is not implemented yet.")
-                
-        else:
-            raise KINSOL_Exception("Singular jacobian. Trying to do a step using the pseudo inverse but 'use_jac' is set to false.")
-                
-        
