@@ -14,15 +14,14 @@ BLASdir = ""
 if S.platform == 'win32':
     incdirs = ''
     libdirs = ''
-    BLASname = 'blaswin32'
 elif S.platform == 'win64':
     incdirs = ''
     libdirs = ''
-    BLASname = 'blaswin64'
 else:
     incdirs = '/usr/local/include'
     libdirs = '/usr/local/lib'
-    BLASname = 'blas'
+    
+BLASname = 'blas'
     
 BLASname_t = ""
 
