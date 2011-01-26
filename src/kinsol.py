@@ -26,6 +26,7 @@ import numpy as N
 import pylab as P
 import operator as O
 import re
+import time
 from assimulo.problem_algebraic import *
 
 class KINSOL_Exception(Exception):
@@ -69,6 +70,7 @@ class KINSOL:
         try:
             tmp = self.problem.f(self.x0)
             self.norm_of_res = 10000*N.linalg.norm(self.x0)
+            #self.norm_of_res = 1e20
             self.func = self.problem.f
         except ProblemAlg_Exception:
             raise KINSOL_Exception("Problem has not implemented method 'f'")
@@ -134,6 +136,7 @@ class KINSOL:
         self.max_reg = 2.0
         self.use_sparse = False
         self.reg_param = 0.0
+        self.exec_time = 0
                 
     def set_jac_usage(self,use_jac):
         """
@@ -238,7 +241,10 @@ class KINSOL:
         while (not solved) and self.reg_count < 2:
             try:
                 self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param)
+                start = time.clock()
                 res = self.solver.KINSOL_solve()
+                stop = time.clock()
+                self.exec_time += (stop - start)
                 solved = True
             except KINError as error:
                 if error.value == 42:
