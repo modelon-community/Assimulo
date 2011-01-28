@@ -136,7 +136,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
             )
     else:
         setup(name='Assimulo',
-              version='trunk',
+              version='1.4.x',
               description='A package for solving ordinary differential equations',
               author='Claus Führer and Christian Andersson',
               author_email='claus@maths.lth.se chria@kth.se',
