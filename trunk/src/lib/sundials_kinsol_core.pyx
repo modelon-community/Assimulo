@@ -15,6 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Cython Wrapper for interfacing Python with KINSOL (Sundials Version 2.4.0)
+Johan Ylikiiskilä Modelon AB
+
+see also Jon Olav Vik: 
+http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
+
+"""
 
 from __future__ import division
 
