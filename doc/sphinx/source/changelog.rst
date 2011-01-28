@@ -3,6 +3,24 @@
 Changelog
 ==========
 
+--- Assimulo-1.4b1 ---
+    * Added option to use SPGMR in CVode (ticket:140).
+    * Added new attributes in CVode, maxkrylov, pretype, linearsolver (ticket:140).
+    * Added option to use a new method in Explicit_Problem, jacv (Jacobian*Vector)
+      (ticket:144).
+    * Fixed a bug with the completed simulation flag (ticket:133).
+    * Fixed a bug when y0 is provided to Radau5 in the problem class (ticket:134).
+    * Added an exception when the number of equations are zero (ticket:136).
+    * Fixed a bug in the calling sequence of an event (ticket:138).
+    * Added option to specify test attributes on tests (ticket:154).
+    * Fixed various documentation inconsistencies.
+    * Added a Kinsol wrapper (ticket:99)
+    * Added a regularization technique (ticket:135).
+    * Added SuperLU as a linear solver in Kinsol (ticket:153).
+    * Fixed various bug related to Kinsol.
+    * Updated the setup script to allow for specifying paths to SuperLU and 
+      Blas (ticket:148).
+
 --- Assimulo-1.3b1 ---
     * Improved the tolerance handling in RungeKutta34.
     * Improved information output from all the solvers.
