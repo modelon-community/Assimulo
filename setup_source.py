@@ -129,7 +129,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
                           [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
                           include_dirs=[incdirs, N.get_include(),SLUincdir],
                           library_dirs=[libdirs,SLUlibdir,BLASdir],
-                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.0',BLASname])
+                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])
             
                           ],
             script_args=copy_args
