@@ -484,18 +484,19 @@ class RungeKutta34(Explicit_ODE):
                                     atol=1.e5
                                     atol=[1.e-5,1.e-4]
         """
-        if isinstance(atol,float):
-            atol=[atol]
         try:
-            atol=N.array(atol,float)
-        except ValueError:
-            raise Explicit_ODE_Exception('atol must be a float or a list of floats')            
-        if (atol<= 0.).any():
-            raise Explicit_ODE_Exception('atol must be positive.')        
-        if len(atol)!=1 and len(atol)!=len(self.y_cur):
-            raise Explicit_ODE_Exception('atol must be a scalar or a list object with length of y0.')   
-        self.__atol=atol
-            
+            atol_arr = N.array(atol, dtype=float)
+            if (atol_arr <= 0.0).any():
+                raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        except (ValueError,TypeError):
+            raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        if atol_arr.size == 1:
+            self.__atol = float(atol)
+        elif atol_arr.size == len(self.y_cur):
+            self.__atol = [float(x) for x in atol]
+        else:
+            raise Explicit_ODE_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
+
     def _get_atol(self):
         """
         Sets the absolute tolerance to be used in the integration.
@@ -527,9 +528,12 @@ class RungeKutta34(Explicit_ODE):
                             - Should be a float.
         """
         try:
-            self.__rtol = float(rtol)
-        except ValueError:
-            raise Explicit_ODE_Exception('rtol must be a float.')
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.__rtol = rtol
             
     def _get_rtol(self):
         """
