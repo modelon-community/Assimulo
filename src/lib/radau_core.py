@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pylab as P
+import numpy as N
 
 class Radau_Exception(Exception):
     pass
@@ -532,22 +533,19 @@ class Radau_Common(object):
                             Example:
                                 atol = [1.0e-4, 1.0e-6]
         """
-        if not isinstance(atol,float):
-            if not isinstance(atol, list) and not isinstance(atol, N.ndarray):
-                raise Radau_Exception('Absolute tolerance must be a float or a float vector.')
-            if len(atol) != self._leny:
-                raise Radau_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
-            for tol in atol:
-                if not isinstance(tol,float):
-                    raise Radau_Exception('Absolute tolerance must be a float vector or a float scalar.')
-                if tol <= 0.0:
-                    raise Radau_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.__atol=atol
+        try:
+            atol_arr = N.array(atol, dtype=float)
+            if (atol_arr <= 0.0).any():
+                raise Radau_Exception('Absolute tolerance must be a positive float or a float vector.')
+        except (ValueError,TypeError):
+            raise Radau_Exception('Absolute tolerance must be a positive float or a float vector.')
+        if atol_arr.size == 1:
+            self.__atol = float(atol)
+        elif atol_arr.size == self._leny:
+            self.__atol = [float(x) for x in atol]
         else:
-            if atol <= 0.0:
-                raise Radau_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.__atol=atol
-    
+            raise Radau_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
+
     def _get_atol(self):
         """
         Defines the absolute tolerance(s) that is to be used by the solver.
@@ -583,7 +581,9 @@ class Radau_Common(object):
                                 rtol = 1.0e-4
                                 
         """
-        if not isinstance(rtol,float):
+        try:
+            rtol = float(rtol)
+        except (ValueError, TypeError):
             raise Radau_Exception('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
             raise Radau_Exception('Relative tolerance must be a positive (scalar) float.')

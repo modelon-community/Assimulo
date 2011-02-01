@@ -48,7 +48,7 @@ class Test_Sundials:
         assert self.simulators[0].atol == 1.0e-6
         
         for i in range(len(self.simulators)):
-            nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, 5)
+            #nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, 5)
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, -1.0)
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, [1.0, 1.0])
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, "Test")
@@ -57,14 +57,19 @@ class Test_Sundials:
             assert self.simulators[i].atol == 1.0e-5
             self.simulators[i].atol = 1.0
             assert self.simulators[i].atol == 1.0
+            self.simulators[i].atol = 1
+            assert self.simulators[i].atol == 1.0
             self.simulators[i].atol = 1001.0
             assert self.simulators[i].atol == 1001.0
             
             self.simulators[i].Integrator.dim = 3
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, [1.0, 1.0])
+            nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_atol, [1.0, 1.0, -1.0])
             self.simulators[i].atol = [1.0, 1.0, 1.0]
             assert self.simulators[i].atol == [1.0, 1.0, 1.0]
             self.simulators[i].atol = N.array([1.0, 1.0, 1.0])
+            assert self.simulators[i].atol[0] == 1.0
+            self.simulators[i].atol = N.array([1, 5, 1.0])
             assert self.simulators[i].atol[0] == 1.0
     
     
@@ -74,7 +79,7 @@ class Test_Sundials:
         This tests the functionality of the property rtol.
         """
         for i in range(len(self.simulators)):
-            nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_rtol, 5)
+            #nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_rtol, 5)
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_rtol, -1.0)
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_rtol, [1.0, 1.0])
             nose.tools.assert_raises(Sundials_Exception, self.simulators[i]._set_rtol, "Test")
@@ -84,6 +89,8 @@ class Test_Sundials:
             self.simulators[i].rtol = 1.0
             assert self.simulators[i].rtol == 1.0
             self.simulators[i].rtol = 1001.0
+            assert self.simulators[i].rtol == 1001.0
+            self.simulators[i].rtol = 1001
             assert self.simulators[i].rtol == 1001.0
     
     @testattr(stddist = True)

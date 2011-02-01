@@ -211,13 +211,16 @@ class Test_RungeKutta34:
         """
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, 'hej')
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, 'hej')
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, -1)
         
         self.simulator.rtol = 1.0
         assert self.simulator._get_rtol() == 1.0
+        self.simulator.rtol = 1
+        assert self.simulator._get_rtol() == 1
         #assert self.simulator.__rtol == 1.0
         
         self.simulator.atol = 1.0
-        assert self.simulator.atol[0] == 1.0
+        assert self.simulator.atol == 1.0
         
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, [1.0,1.0])
     
