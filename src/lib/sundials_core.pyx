@@ -798,12 +798,12 @@ cdef class CVode_wrap(Sundials):
         if self.store_state:
             flag = CVodeGetNumSteps(self.solver, &nsteps) #Number of steps
             flag = CVodeGetNumRhsEvals(self.solver, &nrevals) #Number of function evals
-            if self.iter == 1:
+            if self.iter == 1 or self.linear_solver == 'SPGMR':
                 njevals = 0
                 nrevalsLS = 0
             else:
                 flag = CVDlsGetNumJacEvals(self.solver, &njevals) #Number of jac evals
-                flag = CVDlsGetNumRhsEvals(self.solver, &nrevalsLS) #Number of res evals due to jac evals            
+                flag = CVDlsGetNumRhsEvals(self.solver, &nrevalsLS) #Number of res evals due to jac evals
             flag = CVodeGetNumGEvals(self.solver, &ngevals) #Number of root evals
             flag = CVodeGetNumErrTestFails(self.solver, &netfails) #Number of local error test failures
             flag = CVodeGetNumNonlinSolvIters(self.solver, &nniters) #Number of nonlinear iteration
