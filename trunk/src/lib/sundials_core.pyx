@@ -533,6 +533,8 @@ cdef class CVode_wrap(Sundials):
         
     def cvinit(self,t0,u, maxsteps, verbosity, switches = None):
         cdef flag
+        if self.sim_complete:
+            CVodeFree(&self.solver)
         self.store_state = True
         self.sim_complete = False
         self._ordersum=self._count_output=0 # initialize ordersum and output count for avarage order
@@ -552,7 +554,41 @@ cdef class CVode_wrap(Sundials):
         
         #Verbosity
         self.pData.verbose = verbosity
-        
+
+        #Choose a linear solver if and only if NEWTON is choosen
+        if self.linear_solver == 'DENSE' and self.iter == CV_NEWTON:
+            #Specify the use of the internal dense linear algebra functions.
+            flag = CVDense(self.solver, self.pData.dim)
+            if flag < 0:
+                raise CVodeError(flag)
+                
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL and self.usejac:
+                flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
+                if flag < 0:
+                    raise CVodeError(flag)
+            else:
+                flag = CVDlsSetDenseJacFn(self.solver, NULL)
+                if flag < 0:
+                    raise CVodeError(flag)
+        elif self.linear_solver == 'SPGMR' and self.iter == CV_NEWTON:
+            #Specify the use of CVSPGMR linear solver.
+            flag = CVSpgmr(self.solver, self.pretype, self.max_krylov)
+            if flag < 0:
+                raise CVodeError(flag)
+                
+            #Specify the jacobian times vector function
+            if self.pData.JACV != NULL and self.usejac:
+                flag = CVSpilsSetJacTimesVecFn(self.solver, cv_jacv)
+                if flag < 0:
+                    raise CVodeError(flag)
+            else:
+                flag = CVSpilsSetJacTimesVecFn(self.solver, NULL)
+                if flag < 0:
+                    raise CVodeError(flag)
+        else: #Functional Iteration choosen.
+            pass #raise CVodeError(100,t0) #Unknown error message
+
         #Maximum order
         flag = CVodeSetMaxOrd(self.solver, self.maxord)
         if flag < 0:
@@ -659,7 +695,7 @@ cdef class CVode_wrap(Sundials):
             self.pData.sw = <void*>self.switches
         
         if self.solver == NULL: #The solver is not initialized
-        
+            
             self.solver=CVodeCreate(self.discr, self.iter) #Create solver
             if self.solver == NULL:
                 raise CVodeError(CV_MEM_FAIL)
@@ -668,24 +704,10 @@ cdef class CVode_wrap(Sundials):
             flag = CVodeInit(self.solver, cv_rhs, t0, self.y_cur)
             if flag < 0:
                 raise CVodeError(flag, t0)
-            
-            if self.linear_solver == 'DENSE':
-                #Specify the use of the internal dense linear algebra functions.
-                flag = CVDense(self.solver, self.pData.dim)
-                if flag < 0:
-                    raise CVodeError(flag, t0)
-            elif self.linear_solver == 'SPGMR':
-                #Specify the use of CVSPGMR linear solver.
-                flag = CVSpgmr(self.solver, self.pretype, self.max_krylov)
-                if flag < 0:
-                    raise CVodeError(flag, t0)
-            else:
-                raise CVodeError(100,t0) #Unknown error message
                 
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 flag = CVodeRootInit(self.solver, self.pData.dimRoot, cv_root)
-                
                 if flag < 0:
                     raise CVodeError(flag,t0)
                     
@@ -695,32 +717,10 @@ cdef class CVode_wrap(Sundials):
                 raise CVodeError(flag, t0)
             
         else: #The solver needs to be reinitialized
-            
             #Reinitialize
             flag = CVodeReInit(self.solver, t0, self.y_cur)
             if flag < 0:
                 raise CVodeError(flag, t0)
-        
-        if self.linear_solver == 'DENSE':
-            #Specify the jacobian to the solver
-            if self.pData.JAC != NULL and self.usejac:
-                flag = CVDlsSetDenseJacFn(self.solver, cv_jac)
-                if flag < 0:
-                    raise CVodeError(flag,t0)
-            else:
-                flag = CVDlsSetDenseJacFn(self.solver, NULL)
-                if flag < 0:
-                    raise CVodeError(flag,t0)
-        elif self.linear_solver == 'SPGMR':
-            #Specify the jacobian times vector function
-            if self.pData.JACV != NULL and self.usejac:
-                flag = CVSpilsSetJacTimesVecFn(self.solver, cv_jacv)
-                if flag < 0:
-                    raise CVodeError(flag, t0)
-            else:
-                flag = CVSpilsSetJacTimesVecFn(self.solver, NULL)
-                if flag < 0:
-                    raise CVodeError(flag, t0)
         
         #Set the user data
         flag = CVodeSetUserData(self.solver, <void*>self.pData)
