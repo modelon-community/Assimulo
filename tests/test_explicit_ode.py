@@ -338,6 +338,23 @@ class Test_CVode:
         assert self.simulator.discr == 'Adams'
     
     @testattr(stddist = True)
+    def test_change_discr(self):
+        """
+        This tests that the change from Functional to Newton works
+        """
+        f = lambda t,y: N.array([1.0])
+        exp_mod = Explicit_Problem()
+        exp_mod.f = f
+        y0 = 4.0 #Initial conditions
+        exp_sim = CVode(exp_mod,y0) #Create a CVode solver
+        
+        exp_sim.simulate(1)
+        assert exp_sim.stats[2] == 0
+        exp_sim.iter = "Newton"
+        exp_sim.simulate(2)
+        assert exp_sim.stats[2] > 0
+    
+    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
