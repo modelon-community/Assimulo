@@ -845,6 +845,8 @@ class CVode(Explicit_ODE, Sundials):
         if self._flag_reset_statistics:
             self.Integrator.solver_stats = [0,0,0,0,0,0,0,0]
             self.Integrator.solver_sens_stats = [0,0,0,0,0,0]
+            for x in self.Integrator.statistics.keys():
+                self.Integrator.statistics[x] = 0
             self._flag_reset_statistics = False
         
         self.Integrator.store_cont = self.store_cont
@@ -1265,9 +1267,13 @@ class CVode(Explicit_ODE, Sundials):
         statistics = self.stats
         if statistics!= None:
             print ' Number of Steps                          :', statistics[0]                         
-            print ' Number of Function Evaluations           :', statistics[1]     
-            print ' Number of Jacobian Evaluations           :', statistics[2]        
-            print ' Number of F-Eval During Jac-Eval         :', statistics[3]    
+            print ' Number of Function Evaluations           :', statistics[1]
+            if self.linearsolver == "SPGMR":
+                print ' Number of Jacobian*Vector Evaluations    :', self.Integrator.statistics["JVEC"]
+                print ' Number of F-Evals During Jac*Vec-Evals   :', self.Integrator.statistics["RHSJVEC"]
+            else:     
+                print ' Number of Jacobian Evaluations           :', statistics[2]        
+                print ' Number of F-Eval During Jac-Eval         :', statistics[3]    
             print ' Number of Root Evaluations               :', statistics[4]       
             print ' Number of Error Test Failures            :', statistics[5]       
             print ' Number of Nonlinear Iterations           :', statistics[6]     

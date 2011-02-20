@@ -415,6 +415,7 @@ cdef class Sundials:
     cdef public linear_solver #The linear solver used
     cdef public int pretype #Specifies the preconditioner type
     cdef public int max_krylov #Maximum number of krylov dimensions
+    cdef public statistics
     
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -433,6 +434,7 @@ cdef class Sundials:
         self.linear_solver = 'DENSE'
         self.pretype = PREC_NONE
         self.max_krylov = 5
+        self.statistics = {"JVEC":0, "RHSJVEC":0}
         
         #Default values (Sensitivity)
         self.sensToggleOff = False #Toggle the sensitivity calculations off
@@ -792,15 +794,20 @@ cdef class CVode_wrap(Sundials):
         Retrieves and stores the statistics.
         """
         cdef long int nsteps, nrevals, njevals, nrevalsLS, ngevals, netfails, nniters, nncfails
-        cdef long int nSniters, nSncfails
+        cdef long int nSniters, nSncfails, nfevalsLS, njvevals
         cdef long int nfSevals,nfevalsS,nSetfails,nlinsetupsS
         
         if self.store_state:
             flag = CVodeGetNumSteps(self.solver, &nsteps) #Number of steps
             flag = CVodeGetNumRhsEvals(self.solver, &nrevals) #Number of function evals
-            if self.iter == 1 or self.linear_solver == 'SPGMR':
+            if self.iter == 1:
                 njevals = 0
                 nrevalsLS = 0
+            elif self.linear_solver == "SPGMR":
+                flag = CVSpilsGetNumJtimesEvals(self.solver, &njvevals) #Number of jac*vector
+                flag = CVSpilsGetNumRhsEvals(self.solver, &nfevalsLS) #Number of rhs due to jac*vector
+                self.statistics["JVEC"] += njvevals
+                self.statistics["RHSJVEC"] += nfevalsLS
             else:
                 flag = CVDlsGetNumJacEvals(self.solver, &njevals) #Number of jac evals
                 flag = CVDlsGetNumRhsEvals(self.solver, &nrevalsLS) #Number of res evals due to jac evals
