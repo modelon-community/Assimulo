@@ -3,6 +3,7 @@ import numpy as N
 from assimulo import testattr
 from assimulo.implicit_ode import *
 from assimulo.problem import Implicit_Problem
+from assimulo.exception import *
 
 
 class Test_Implicit_ODE:
@@ -338,6 +339,28 @@ class Test_IDA:
         This tests the functionality of the property run. (With jacobian)
         """
         pass
+    
+    @testattr(stddist = True)
+    def test_terminate_simulation(self):
+        """
+        This tests the functionality of raising TerminateSimulation exception in handle_result.
+        """
+        f = lambda t,y,yd: yd-y
+        g = lambda t,y,yd,sw: N.array([t-1.0, t-2.0])
+        def h(solver, event_info):
+            if solver.t_cur > 1.5:
+                raise TerminateSimulation
+                
+        prob = Implicit_Problem()
+        prob.f = f
+        prob.state_events = g
+        prob.handle_event = h
+    
+        sim = IDA(prob, y0=[1.0], yd0=[1.0])
+        sim.verbosity = 4
+        sim.simulate(2.5)
+        
+        nose.tools.assert_almost_equal(sim.t_cur, 2.000000, 4)
     
     @testattr(stddist = True)    
     def test_algvar(self):
