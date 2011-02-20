@@ -1,6 +1,7 @@
 import nose
 from assimulo import testattr
 from assimulo.explicit_ode import *
+from assimulo.exception import *
 from assimulo.problem import Explicit_Problem
 
 class Test_Explicit_ODE:
@@ -584,6 +585,28 @@ class Test_CVode:
         
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
+        
+    @testattr(stddist = True)
+    def test_terminate_simulation(self):
+        """
+        This tests the functionality of raising TerminateSimulation exception in handle_result.
+        """
+        f = lambda t,y: -y
+        g = lambda t,y,sw: N.array([t-1.0, t-2.0])
+        def h(solver, event_info):
+            if solver.t_cur > 1.5:
+                raise TerminateSimulation
+                
+        prob = Explicit_Problem()
+        prob.f = f
+        prob.state_events = g
+        prob.handle_event = h
+    
+        sim = CVode(prob, y0=[1.0])
+        sim.verbosity = 4
+        sim.simulate(2.5)
+        
+        nose.tools.assert_almost_equal(sim.t_cur, 2.000000, 4)
     
     @testattr(stddist = True)
     def test_completed_step(self):

@@ -19,6 +19,7 @@ from ode import *
 from problem import Explicit_Problem
 from sundials import Sundials, Sundials_Exception
 from assimulo.lib.radau_core import Radau_Common
+from exception import *
 
 class Explicit_ODE_Exception(Exception):
     """ An integrator exception. """
@@ -262,7 +263,12 @@ class Explicit_ODE(ODE):
                 if self.verbosity > self.NORMAL:
                     print 'Calling problem specified event handling...'
                 
-                self._problem.handle_event(self, event_info) #self corresponds to the solver
+                try:
+                    self._problem.handle_event(self, event_info) #self corresponds to the solver
+                except TerminateSimulation:
+                    if self.verbosity > self.NORMAL:
+                        print "Terminating simulation at t = %f after signal from handle_event."%self.t_cur
+                    break
                 self._flag_init = True
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
