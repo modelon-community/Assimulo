@@ -88,4 +88,4 @@ There have been some problems installing Assimulo on Ubuntu 64bits machines when
     > collect2: ld returned 1 exit status
     > error: command 'gcc' failed with exit status 1
     
-To solve this problem, Sundials have to be installed with the configure flag "--enable-shared=yes".
+To solve this problem, Sundials have to be installed with the CFLAGS="-fPIC".

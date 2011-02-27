@@ -3,6 +3,14 @@
 Changelog
 ==========
 
+--- Assimulo-1.4b2 ---
+    * Fixed statistics for SPGMR (ticket:162).
+    * Fixed bug when using fixed point iteration and jacobian related calls 
+      (ticket:152).
+    * Added options to terminate a simulation from handle_event via an 
+      exception (ticket:163).
+    * Fixed problem with atol and integers (ticket:161).
+
 --- Assimulo-1.4b1 ---
     * Added option to use SPGMR in CVode (ticket:140).
     * Added new attributes in CVode, maxkrylov, pretype, linearsolver (ticket:140).
