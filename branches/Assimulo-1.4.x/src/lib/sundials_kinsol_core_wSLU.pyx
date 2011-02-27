@@ -15,7 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Cython Wrapper for interfacing Python with KINSOL (Sundials Version 2.4.0)
+Johan Ylikiiskilä Modelon AB
 
+see also Jon Olav Vik: 
+http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
+
+"""
 from __future__ import division
 
 import scipy.sparse as ss
@@ -156,6 +163,7 @@ cdef class KINSOL_wrap:
         realtype norm_of_res,reg_param
         ndarray con
         int print_level
+        ndarray fscale
 
     def __cinit__(self):
         self.pData = ProblemData() #Create a new problem struct
@@ -174,7 +182,8 @@ cdef class KINSOL_wrap:
         else:
             self.pData.JAC = NULL
 
-    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None,sparse = False, print_level = 0,norm_of_res = 0,reg_param=0):
+
+    def KINSOL_init(self,RHS,x0,dim, JAC = None, con = None,sparse = False, print_level = 0,norm_of_res = 0,reg_param=0,fscale=None):
         """
         Initializes solver
         """        
@@ -187,6 +196,7 @@ cdef class KINSOL_wrap:
         self.KINSOL_set_problem_info(RHS,dim,JAC)
         self.con = con
         self.sparse = sparse
+        self.fscale = fscale
 
 
         # Create initial guess from the supplied numpy array
@@ -307,10 +317,13 @@ cdef class KINSOL_wrap:
         # Create scaling vectors filled with ones
         # since the problem is assumed to be scaled
         self.x_scale = arr2nv(np.ones(self.pData.dim))
-        self.f_scale = arr2nv(np.ones(self.pData.dim))
+        if self.fscale != None:
+            self.f_scale = arr2nv(self.fscale)
+        else:
+            self.f_scale = arr2nv(np.ones(self.pData.dim))
 
     
-    def KINSOL_solve(self):
+    def KINSOL_solve(self,wo_LineSearch):
         """
         Function that should be called after a call to KINSOL_init
         solves the function supplied as RHS
@@ -322,18 +335,22 @@ cdef class KINSOL_wrap:
             ndarray x0
         if self.print_level >0:
             print "Calling solver..."
-
-        flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
-        count = 0
-        if flag > 1:
-            # Probably stuck at a minimum
-            self.x_cur = self.x_init
-            flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
+        
+        if not wo_LineSearch:
+            # Use LineSearch
+            flag = KINSol(<void*>self.solver,self.x_cur,KIN_LINESEARCH,self.x_scale,self.f_scale)
+            count = 0
+            if flag > 1:
+                # Probably stuck at a minimum
+                self.x_cur = self.x_init
+                flag = KINSol(<void*>self.solver,self.x_cur,KIN_NONE,self.x_scale,self.f_scale)
             
-        if flag > 1:
-            # Stuck at minimum again
-            raise KINError(flag)
-
+            if flag > 1:
+                # Stuck at minimum again
+                raise KINError(flag)
+        else:
+            # Don't use linesearch
+            flag = -7
 
         while flag <0:
             # Get nbr of non-linear iterations

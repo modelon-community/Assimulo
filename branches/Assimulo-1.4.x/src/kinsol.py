@@ -77,6 +77,14 @@ class KINSOL:
         except IndexError:
             raise KINSOL_Exception("Problem has mismatching dimensions of f and initial guess")
         
+        # Calculate 'stupid' scaling
+        res = self.problem.f(self.x0)
+        self.fscale = N.ones(self.dim)
+        
+        for i,val in zip(N.arange(self.dim),res):
+            if val > 10:
+                self.fscale[i] = 1.0/val
+        
         # check for constraints and test them
         broken_constraints = []
         if hasattr(self.problem, 'get_constraints'):
@@ -137,6 +145,8 @@ class KINSOL:
         self.use_sparse = False
         self.reg_param = 0.0
         self.exec_time = 0
+        self._use_ls = True
+        self._use_fscale = False
                 
     def set_jac_usage(self,use_jac):
         """
@@ -154,6 +164,41 @@ class KINSOL:
             self._use_jac = use_jac
         else:
             raise KINSOL_Exception("The variable sent to 'set_jac_usage' must be a boolean.")
+        
+    def use_LineSearch(self,use_ls):
+        """
+        Set whether the solver starts using the Linesearch Algorithm
+        or not
+        
+        Parameters::
+            
+            use_ls --
+                Boolean set to True if LineSearch is to
+                be used.
+                
+        """
+        if type(use_ls).__name__ == 'bool':
+            self._use_ls = use_ls
+        else:
+            raise KINSOL_Exception("The variable sent to 'use_LineSearch' must be a boolean.")
+        
+    def use_fscale(self,use_fscale):
+        """
+        Set whether the solver starts using the Linesearch Algorithm
+        or not
+        
+        Parameters::
+            
+            use_ls --
+                Boolean set to True if LineSearch is to
+                be used.
+                
+        """
+        if type(use_fscale).__name__ == 'bool':
+            self._use_fscale = use_fscale
+        else:
+            raise KINSOL_Exception("The variable sent to 'use_fscale' must be a boolean.")   
+        
         
     def set_verbosity(self,verbosity):
         """
@@ -215,6 +260,7 @@ class KINSOL:
                 self.reg_param = reg_param
         else:
             raise KINSOL_Exception("The variable sent to 'set_reg_param' must be a float.")
+        
     def solve(self):
         """
         Function called when solving function rhs_fct
@@ -240,9 +286,12 @@ class KINSOL:
         res = N.zeros(self.x0.__len__())
         while (not solved) and self.reg_count < 2:
             try:
-                self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param)
+                if self._use_fscale:
+                    self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param,self.fscale)
+                else:
+                    self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param,None)
                 start = time.clock()
-                res = self.solver.KINSOL_solve()
+                res = self.solver.KINSOL_solve(not self._use_ls)
                 stop = time.clock()
                 self.exec_time += (stop - start)
                 solved = True

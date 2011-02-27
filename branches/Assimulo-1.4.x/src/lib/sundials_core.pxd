@@ -222,6 +222,9 @@ cdef extern from "cvodes/cvodes_spils.h":
 				    N_Vector y, N_Vector fy,
 				    void *user_data, N_Vector tmp)
     int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+    int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
+    int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
+    
 
 cdef extern from "idas/idas.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)

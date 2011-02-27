@@ -59,23 +59,20 @@ class Sundials:
         
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
-        if not isinstance(atol,float):
-            if not isinstance(atol, list) and not isinstance(atol, N.ndarray):
-                raise Sundials_Exception('Absolute tolerance must be a float or a float vector.')
-            if len(atol) != self.Integrator.dim:
-                raise Sundials_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
-            for tol in atol:
-                if not isinstance(tol,float):
-                    raise Sundials_Exception('Absolute tolerance must be a float vector or a float scalar.')
-                if tol <= 0.0:
-                    raise Sundials_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.Integrator.atol=N.array(atol)
-            self.__atol=atol
+        try:
+            atol_arr = N.array(atol, dtype=float)
+            if (atol_arr <= 0.0).any():
+                raise Sundials_Exception('Absolute tolerance must be a positive float or a float vector.')
+        except (ValueError,TypeError):
+            raise Sundials_Exception('Absolute tolerance must be a positive float or a float vector.')
+        if atol_arr.size == 1:
+            self.Integrator.atol = atol_arr*N.ones(self.Integrator.dim)
+            self.__atol = float(atol)
+        elif atol_arr.size == self.Integrator.dim:
+            self.Integrator.atol = atol_arr
+            self.__atol = [float(x) for x in atol]
         else:
-            if atol <= 0.0:
-                raise Sundials_Exception('Absolute tolerance must be a positive (scalar) float or a positive (vector) float.')
-            self.Integrator.atol=atol*N.ones(self.Integrator.dim)
-            self.__atol=atol
+            raise Sundials_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
     
     def _get_atol(self):
         """
@@ -114,7 +111,9 @@ class Sundials:
                                 rtol = 1.0e-4
                                 
         """
-        if not isinstance(rtol,float):
+        try:
+            rtol = float(rtol)
+        except (ValueError, TypeError):
             raise Sundials_Exception('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
             raise Sundials_Exception('Relative tolerance must be a positive (scalar) float.')

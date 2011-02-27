@@ -42,7 +42,11 @@ class Problem(object):
             event. If there have not been a state event the first element is an empty
             list. The state event list contains a set of integers of values (-1,0,1),
             the values indicates which state event have triggered (determined from 
-            state_event(...) ) and the value indicates to where the state event is 'headed'. 
+            state_event(...) ) and the value indicates to where the state event is 'headed'.
+            
+            Handle event can also raise the exception TerminateSimulation from 
+            assimulo.exception to indicate if the simulation should be terminated 
+            before final time.
             
                 Parameters::
                 

@@ -19,6 +19,7 @@ from ode import *
 from problem import Explicit_Problem
 from sundials import Sundials, Sundials_Exception
 from assimulo.lib.radau_core import Radau_Common
+from exception import *
 
 class Explicit_ODE_Exception(Exception):
     """ An integrator exception. """
@@ -262,7 +263,12 @@ class Explicit_ODE(ODE):
                 if self.verbosity > self.NORMAL:
                     print 'Calling problem specified event handling...'
                 
-                self._problem.handle_event(self, event_info) #self corresponds to the solver
+                try:
+                    self._problem.handle_event(self, event_info) #self corresponds to the solver
+                except TerminateSimulation:
+                    if self.verbosity > self.NORMAL:
+                        print "Terminating simulation at t = %f after signal from handle_event."%self.t_cur
+                    break
                 self._flag_init = True
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
@@ -484,18 +490,19 @@ class RungeKutta34(Explicit_ODE):
                                     atol=1.e5
                                     atol=[1.e-5,1.e-4]
         """
-        if isinstance(atol,float):
-            atol=[atol]
         try:
-            atol=N.array(atol,float)
-        except ValueError:
-            raise Explicit_ODE_Exception('atol must be a float or a list of floats')            
-        if (atol<= 0.).any():
-            raise Explicit_ODE_Exception('atol must be positive.')        
-        if len(atol)!=1 and len(atol)!=len(self.y_cur):
-            raise Explicit_ODE_Exception('atol must be a scalar or a list object with length of y0.')   
-        self.__atol=atol
-            
+            atol_arr = N.array(atol, dtype=float)
+            if (atol_arr <= 0.0).any():
+                raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        except (ValueError,TypeError):
+            raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        if atol_arr.size == 1:
+            self.__atol = float(atol)
+        elif atol_arr.size == len(self.y_cur):
+            self.__atol = [float(x) for x in atol]
+        else:
+            raise Explicit_ODE_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
+
     def _get_atol(self):
         """
         Sets the absolute tolerance to be used in the integration.
@@ -527,9 +534,12 @@ class RungeKutta34(Explicit_ODE):
                             - Should be a float.
         """
         try:
-            self.__rtol = float(rtol)
-        except ValueError:
-            raise Explicit_ODE_Exception('rtol must be a float.')
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.__rtol = rtol
             
     def _get_rtol(self):
         """
@@ -835,6 +845,8 @@ class CVode(Explicit_ODE, Sundials):
         if self._flag_reset_statistics:
             self.Integrator.solver_stats = [0,0,0,0,0,0,0,0]
             self.Integrator.solver_sens_stats = [0,0,0,0,0,0]
+            for x in self.Integrator.statistics.keys():
+                self.Integrator.statistics[x] = 0
             self._flag_reset_statistics = False
         
         self.Integrator.store_cont = self.store_cont
@@ -1255,9 +1267,13 @@ class CVode(Explicit_ODE, Sundials):
         statistics = self.stats
         if statistics!= None:
             print ' Number of Steps                          :', statistics[0]                         
-            print ' Number of Function Evaluations           :', statistics[1]     
-            print ' Number of Jacobian Evaluations           :', statistics[2]        
-            print ' Number of F-Eval During Jac-Eval         :', statistics[3]    
+            print ' Number of Function Evaluations           :', statistics[1]
+            if self.linearsolver == "SPGMR":
+                print ' Number of Jacobian*Vector Evaluations    :', self.Integrator.statistics["JVEC"]
+                print ' Number of F-Evals During Jac*Vec-Evals   :', self.Integrator.statistics["RHSJVEC"]
+            else:     
+                print ' Number of Jacobian Evaluations           :', statistics[2]        
+                print ' Number of F-Eval During Jac-Eval         :', statistics[3]    
             print ' Number of Root Evaluations               :', statistics[4]       
             print ' Number of Error Test Failures            :', statistics[5]       
             print ' Number of Nonlinear Iterations           :', statistics[6]     
