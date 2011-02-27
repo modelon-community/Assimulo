@@ -1,6 +1,7 @@
 import nose
 from assimulo import testattr
 from assimulo.explicit_ode import *
+from assimulo.exception import *
 from assimulo.problem import Explicit_Problem
 
 class Test_Explicit_ODE:
@@ -211,13 +212,16 @@ class Test_RungeKutta34:
         """
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, 'hej')
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, 'hej')
+        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, -1)
         
         self.simulator.rtol = 1.0
         assert self.simulator._get_rtol() == 1.0
+        self.simulator.rtol = 1
+        assert self.simulator._get_rtol() == 1
         #assert self.simulator.__rtol == 1.0
         
         self.simulator.atol = 1.0
-        assert self.simulator.atol[0] == 1.0
+        assert self.simulator.atol == 1.0
         
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, [1.0,1.0])
     
@@ -333,6 +337,23 @@ class Test_CVode:
         assert self.simulator.discr == 'BDF'
         self.simulator.discr = 'Adams'
         assert self.simulator.discr == 'Adams'
+    
+    @testattr(stddist = True)
+    def test_change_discr(self):
+        """
+        This tests that the change from Functional to Newton works
+        """
+        f = lambda t,y: N.array([1.0])
+        exp_mod = Explicit_Problem()
+        exp_mod.f = f
+        y0 = 4.0 #Initial conditions
+        exp_sim = CVode(exp_mod,y0) #Create a CVode solver
+        
+        exp_sim.simulate(1)
+        assert exp_sim.stats[2] == 0
+        exp_sim.iter = "Newton"
+        exp_sim.simulate(2)
+        assert exp_sim.stats[2] > 0
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -564,6 +585,28 @@ class Test_CVode:
         
         #assert simulator.t[-1] == 1.0 #For now, this error serves as prof of discontinuities
         #assert simulator.is_disc == True
+        
+    @testattr(stddist = True)
+    def test_terminate_simulation(self):
+        """
+        This tests the functionality of raising TerminateSimulation exception in handle_result.
+        """
+        f = lambda t,y: -y
+        g = lambda t,y,sw: N.array([t-1.0, t-2.0])
+        def h(solver, event_info):
+            if solver.t_cur > 1.5:
+                raise TerminateSimulation
+                
+        prob = Explicit_Problem()
+        prob.f = f
+        prob.state_events = g
+        prob.handle_event = h
+    
+        sim = CVode(prob, y0=[1.0])
+        sim.verbosity = 4
+        sim.simulate(2.5)
+        
+        nose.tools.assert_almost_equal(sim.t_cur, 2.000000, 4)
     
     @testattr(stddist = True)
     def test_completed_step(self):

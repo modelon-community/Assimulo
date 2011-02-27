@@ -19,6 +19,7 @@ from ode import *
 from problem import Implicit_Problem
 from sundials import Sundials, Sundials_Exception
 from assimulo.lib.radau_core import Radau_Common
+from assimulo.exception import *
 import warnings
 
 class Implicit_ODE_Exception(Exception):
@@ -290,8 +291,12 @@ class Implicit_ODE(ODE):
                     
                 self.print_verbos(['Calling problem specified event handling...'],self.LOUD)
                 
-                self._problem.handle_event(self, event_info) #self corresponds to the solver
-                #self.event_iteration(event_info) #Handles the event iteration
+                try:
+                    self._problem.handle_event(self, event_info) #self corresponds to the solver
+                except TerminateSimulation:
+                    if self.verbosity > self.NORMAL:
+                        print "Terminating simulation at t = %f after signal from handle_event."%self.t_cur
+                    break
                 self._flag_init = True
             
             if self._flag_init and last_logg == self.t_cur: #Logg after the event handling if there was a communication point there.
