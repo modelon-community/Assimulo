@@ -18,7 +18,7 @@ else:
 
 
 setup(name='Assimulo',
-      version='1.4.x',
+      version='1.4b2',
       description='A package for solving ordinary differential equations',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
