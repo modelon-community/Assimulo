@@ -1273,7 +1273,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         self._ydc = yd 
         
         if dt > 0.0:
-            dist_space = [(x+1)*dt for x in range(int((tf-t)/dt)+1)]
+            dist_space = [t+(x+1)*dt for x in range(int((tf-t)/dt)+1)]
         
         for i in range(self.maxsteps):
             if t >= tf:

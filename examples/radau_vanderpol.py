@@ -34,7 +34,8 @@ def run_example_explicit():
     #Plot
     exp_sim.plot(mask=[1,0],marker='o') #Plot the solution
     
-    assert exp_sim._nsteps == 285 #For test purpose
+    x1 = N.array(exp_sim.y)[:,0]
+    assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
 
 def run_example_implicit():
     
@@ -71,7 +72,8 @@ def run_example_implicit():
     #Plot
     imp_sim.plot(mask=[1,0],marker='o') #Plot the solution
     
-    assert imp_sim._nsteps == 272
+    x1 = N.array(imp_sim.y)[:,0]
+    assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
 
 if __name__=='__main__':
     run_example_explicit()

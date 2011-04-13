@@ -1479,7 +1479,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         
         if dt > 0.0:
             ncp = (tf-t)/dt
-            dist_space = [(x+1)*(tf-t)/ncp for x in range(int(ncp)+1)]
+            dist_space = [t+(x+1)*(tf-t)/ncp for x in range(int(ncp)+1)]
         
         for i in range(self.maxsteps):
             if t >= tf:
