@@ -219,7 +219,7 @@ class Implicit_ODE(ODE):
         
         if ncp != 0 and self._completed_step:
             mode = 'SPECIAL'
-            dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
+            dist_space = [t0+(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
             dt = 0.0
         elif ncp != 0:
             dt = (tfinal-t0)/ncp
