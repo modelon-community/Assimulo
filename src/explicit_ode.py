@@ -789,7 +789,10 @@ class CVode(Explicit_ODE, Sundials):
         
         #Defaul values
         if sens:
-            self.pbar = N.abs(self._problem.p0)
+            if hasattr(problem, 'pbar'):
+                self.pbar = self._problem.pbar
+            else:
+                self.pbar = N.abs(self._problem.p0)
         
         # 
         # TEST METHODS

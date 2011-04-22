@@ -537,8 +537,10 @@ class IDA(Implicit_ODE, Sundials):
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
         if sens:
-            self.pbar = N.abs(self._problem.p0)
-        
+            if hasattr(problem, 'pbar'):
+                self.pbar = self._problem.pbar
+            else:
+                self.pbar = N.abs(self._problem.p0)
         
         # TEST METHODS
         try:
