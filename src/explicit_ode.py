@@ -793,6 +793,8 @@ class CVode(Explicit_ODE, Sundials):
                 self.pbar = self._problem.pbar
             else:
                 self.pbar = N.abs(self._problem.p0)
+            if hasattr(self._problem, 'yS0'):
+                self.yS0 = self._problem.yS0
         
         # 
         # TEST METHODS
