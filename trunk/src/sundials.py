@@ -465,7 +465,42 @@ class Sundials:
         return self.Integrator.pbar
     
     pbar = property(_get_pbar, _set_pbar)
+    
+    def _get_yS0(self):
+        """
+        Specifies the initial guess for the sensitivity calculation.
+        
+            Parameters::
+            
+                yS0
+                        - An matrix with the dimension len(y)*len(p).
+                        
+            Returns::
+            
+                The current value of yS0
+                
+        See SUNDIALS documentation '(IDA/CVode)SensInit'
+        """
+        return self.Integrator.yS0
 
+    def _set_yS0(self, yS0):
+        """
+        Specifies the initial guess for the sensitivity calculation.
+        
+            Parameters::
+            
+                yS0
+                        - An matrix with the dimension len(y)*len(p).
+                        
+            Returns::
+            
+                The current value of yS0
+                
+        See SUNDIALS documentation '(IDA/CVode)SensInit'
+        """
+        self.Integrator.yS0 = yS0
+        
+    yS0 = property(_get_yS0, _set_yS0)
 
     def _set_sensitivity_method(self, ism):
         """

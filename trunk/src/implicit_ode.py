@@ -520,6 +520,7 @@ class IDA(Implicit_ODE, Sundials):
             #Set information to the solver IDAS
             self.Integrator.p = N.array(self.p)
             self.problem_data['dimSens'] = len(self.p)
+            
         else:
             self.problem_data['dimSens'] = 0
         #-------------End Sensitivity initiation
@@ -538,6 +539,8 @@ class IDA(Implicit_ODE, Sundials):
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
         if sens:
+            if hasattr(self._problem, 'yS0'):
+                self.yS0 = self._problem.yS0
             if hasattr(problem, 'pbar'):
                 self.pbar = self._problem.pbar
             else:
