@@ -216,6 +216,7 @@ class Implicit_ODE(ODE):
         t0  = self.t_cur
         y0  = self.y_cur
         yd0 = self.yd_cur
+        last_logg = t0
         
         if ncp != 0 and self._completed_step:
             mode = 'SPECIAL'
@@ -1016,6 +1017,21 @@ class IDA(Implicit_ODE, Sundials):
         return self.Integrator.algvar    
 
     algvar=property(_get_algvar,_set_algvar)
+    
+    def simulation_complete(self):
+        """
+        Method which returns a boolean value determining if the
+        simulation completed to tfinal. Used for determining 
+        time-events.
+        
+            Returns::
+            
+                sim_complete
+                            - Boolean value
+                                -True for success
+                                -False for not complete
+        """
+        return self.Integrator.sim_complete
     
     def print_statistics(self,minimal_verbosity=0):
         """
