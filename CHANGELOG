@@ -1,5 +1,12 @@
 --- CHANGELOG ---
 
+--- Assimulo-1.4b3 ---
+    * Fixed bug with t0 != 0 when using time events and step events
+      (ticket:173)
+    * Added support for specifying initial conditions for sensitivity
+      variables (ticket:105)
+    * Allowed pbar to specified in the problem (ticket:172)
+
 --- Assimulo-1.4b2 ---
     * Fixed statistics for SPGMR (ticket:162).
     * Fixed bug when using fixed point iteration and jacobian related calls 

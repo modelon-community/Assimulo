@@ -131,4 +131,4 @@ Example.::
     sim.discr='BDF'
     sim.iter='Newton'
 
-For the full range of available options see each solver, for example `CVode <solver_CVode.html>`_ or `IDA <solver_IDA.html>`_ .
+For the full range of available options see each solver, for example `CVode <solver_exp_CVode.html>`_ or `IDA <solver_imp_IDA.html>`_ .
