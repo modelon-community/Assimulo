@@ -409,6 +409,7 @@ cdef class Sundials:
     cdef public object p                #The parameter information
     cdef public object pbar 
     cdef N_Vector *ySO                  #The sensitivity start matrix
+    cdef public yS0                     #The sensitivity Provided start matrix
     cdef public npy_intp nbrRoot        #The number of root functions
     cdef public list p_result           #The sensitivity result matrix
     cdef public booleantype save_detailed_info #Save detailed information about the solver
@@ -430,6 +431,7 @@ cdef class Sundials:
         self.solver_stats = [0,0,0,0,0,0,0,0]
         self.solver_sens_stats = [0,0,0,0,0,0]
         self.suppress_alg = False
+        self.yS0 = None
         self.save_detailed_info = False
         self.linear_solver = 'DENSE'
         self.pretype = PREC_NONE
@@ -622,11 +624,15 @@ cdef class CVode_wrap(Sundials):
         cdef int flag
         cdef realtype *pbar
         cdef realtype ZERO = 0.0
+        cdef realtype ONE = 1.0
         self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, arr2nv(y))
         
         #Filling the start vectors
         for i in range(self.pData.dimSens):
              N_VConst_Serial(ZERO,  self.ySO[i]);
+             if self.yS0 != None:
+                for j in range(self.pData.dim):
+                    (<N_VectorContent_Serial>self.ySO[i].content).data[j] = self.yS0[i,j]
         
         if self._flag_active_sens:
             flag = CVodeSensReInit(self.solver, self.ism, self.ySO)
@@ -1142,6 +1148,9 @@ cdef class IDA_wrap(Sundials):
         for i in range(self.pData.dimSens):
              N_VConst_Serial(ZERO,  self.ySO[i]);
              N_VConst_Serial(ZERO, self.ydSO[i]);
+             if self.yS0 != None:
+                for j in range(self.pData.dim):
+                    (<N_VectorContent_Serial>self.ySO[i].content).data[j] = self.yS0[i,j]
 
         if self._flag_active_sens:
             flag = IDASensReInit(self.solver, self.ism, self.ySO, self.ydSO)

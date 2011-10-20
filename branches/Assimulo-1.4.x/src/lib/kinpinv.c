@@ -233,6 +233,10 @@ int KINPinv(void *kinmem, int N)
   lmem = kinpinv_mem;
   /* Set reg_param 'not set' */
   reg_param = 0;
+  redojac=0 ;
+  regularized = FALSE ;
+  nje   = 0;
+  nfeDQ = 0;
   return(KINPINV_SUCCESS);
 }
 
@@ -334,7 +338,7 @@ static int kinPinvSetup(KINMem kin_mem)
   realtype *b;
 
   kinpinv_mem = (KINPinvMem) lmem;
-  
+
   /* Calculate value of jacobian */
   nje++;
   SetToZero(J);
@@ -375,7 +379,7 @@ static int kinPinvSetup(KINMem kin_mem)
       for(j = 0;j<n;j++) data += jac[i][j]*b[j];
       rp += data*data ;
     }
-    printf("rp: %f \n",rp);
+    /*printf("rp: %f \n",rp);*/
     if (sqrt(rp)<1) {
       reg_param = sqrt(rp);
     } else {
@@ -420,13 +424,12 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
   kinpinv_mem = (KINPinvMem) lmem;
 
   if (redojac) {
-    return 1;
+    return(1);
   }
 
   if (regularized) {
     if (printfl > 0) printf("Regularized problem\n");
     /* Calculate new right hand side b = J transpose * b */
-    
     bx = N_VGetArrayPointer(b);
     xd = N_VGetArrayPointer(x);
     jac = J->cols;
@@ -493,7 +496,6 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
 static void kinPinvFree(KINMem kin_mem)
 {
   KINPinvMem  kinpinv_mem;
-
   kinpinv_mem = (KINPinvMem) lmem;
   
   DestroyMat(J);

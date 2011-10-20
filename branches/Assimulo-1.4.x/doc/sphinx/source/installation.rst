@@ -9,7 +9,7 @@ Dependencies:
 - `Python-2.6 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
 - `Cython <http://www.cython.org/>`_
 - `Numpy <http://numpy.scipy.org/>`_
-- Pylab
+- `Pylab <http://matplotlib.sourceforge.net/>`_
 - `Sundials-2.4 <http://computation.llnl.gov/casc/sundials/main.html>`_
 
 
