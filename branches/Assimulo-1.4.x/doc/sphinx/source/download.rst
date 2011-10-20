@@ -6,7 +6,7 @@ Download
 
 Current version:
 
-    - `Assimulo-1.4b3.zip <https://trac.jmodelica.org/assimulo/export/275/releases/Assimulo-1.4b3.zip>`_
+    - `Assimulo-1.4b3.zip <https://trac.jmodelica.org/assimulo/export/287/releases/Assimulo-1.4b3.zip>`_
    
 See :doc:`installation` for instructions on setting up Assimulo. Christoph Gohlke have also created one-click windows installers for Assimulo which are available `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/#assimulo>`_ .
 
