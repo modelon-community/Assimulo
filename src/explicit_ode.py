@@ -194,7 +194,7 @@ class Explicit_ODE(ODE):
         
         if ncp != 0 and self._completed_step:
             mode = 'SPECIAL'
-            dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
+            dist_space = [t0+(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
             dt = 0.0
         elif ncp != 0:
             dt = (tfinal-t0)/ncp
@@ -202,7 +202,7 @@ class Explicit_ODE(ODE):
         else:
             dt = 0.0
             mode = 'ONE_STEP'
-        
+
         self._problem.handle_result(self,t0,y0) #Logg the first point
         self._flag_init = True #Reinitiate the solver
         
@@ -789,7 +789,12 @@ class CVode(Explicit_ODE, Sundials):
         
         #Defaul values
         if sens:
-            self.pbar = N.abs(self._problem.p0)
+            if hasattr(problem, 'pbar'):
+                self.pbar = self._problem.pbar
+            else:
+                self.pbar = N.abs(self._problem.p0)
+            if hasattr(self._problem, 'yS0'):
+                self.yS0 = self._problem.yS0
         
         # 
         # TEST METHODS
@@ -1479,7 +1484,7 @@ class Radau5(Radau_Common,Explicit_ODE):
         
         if dt > 0.0:
             ncp = (tf-t)/dt
-            dist_space = [(x+1)*(tf-t)/ncp for x in range(int(ncp)+1)]
+            dist_space = [t+(x+1)*(tf-t)/ncp for x in range(int(ncp)+1)]
         
         for i in range(self.maxsteps):
             if t >= tf:

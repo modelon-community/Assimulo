@@ -216,10 +216,11 @@ class Implicit_ODE(ODE):
         t0  = self.t_cur
         y0  = self.y_cur
         yd0 = self.yd_cur
+        last_logg = t0
         
         if ncp != 0 and self._completed_step:
             mode = 'SPECIAL'
-            dist_space = [(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
+            dist_space = [t0+(x+1)*(tfinal-self.t_cur)/ncp for x in range(ncp+1)]
             dt = 0.0
         elif ncp != 0:
             dt = (tfinal-t0)/ncp
@@ -519,6 +520,7 @@ class IDA(Implicit_ODE, Sundials):
             #Set information to the solver IDAS
             self.Integrator.p = N.array(self.p)
             self.problem_data['dimSens'] = len(self.p)
+            
         else:
             self.problem_data['dimSens'] = 0
         #-------------End Sensitivity initiation
@@ -537,8 +539,12 @@ class IDA(Implicit_ODE, Sundials):
         self.atol = 1.0e-6 #Absolute tolerance
         self.rtol = 1.0e-6 #Relative tolerance
         if sens:
-            self.pbar = N.abs(self._problem.p0)
-        
+            if hasattr(self._problem, 'yS0'):
+                self.yS0 = self._problem.yS0
+            if hasattr(problem, 'pbar'):
+                self.pbar = self._problem.pbar
+            else:
+                self.pbar = N.abs(self._problem.p0)
         
         # TEST METHODS
         try:
@@ -1015,6 +1021,21 @@ class IDA(Implicit_ODE, Sundials):
 
     algvar=property(_get_algvar,_set_algvar)
     
+    def simulation_complete(self):
+        """
+        Method which returns a boolean value determining if the
+        simulation completed to tfinal. Used for determining 
+        time-events.
+        
+            Returns::
+            
+                sim_complete
+                            - Boolean value
+                                -True for success
+                                -False for not complete
+        """
+        return self.Integrator.sim_complete
+    
     def print_statistics(self,minimal_verbosity=0):
         """
         Prints the run-time statistics for the problem
@@ -1273,7 +1294,7 @@ class Radau5(Radau_Common,Implicit_ODE):
         self._ydc = yd 
         
         if dt > 0.0:
-            dist_space = [(x+1)*dt for x in range(int((tf-t)/dt)+1)]
+            dist_space = [t+(x+1)*dt for x in range(int((tf-t)/dt)+1)]
         
         for i in range(self.maxsteps):
             if t >= tf:
