@@ -1,5 +1,10 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.0.x --- (Not released)
+    * Replaced setup_source.py and setup_binary.py with a single setup.py.
+    * Base code migrated to Cython. 
+    * Multiple name changes. (To be specified)
+
 --- Assimulo-1.4b2 ---
     * Fixed statistics for SPGMR (ticket:162).
     * Fixed bug when using fixed point iteration and jacobian related calls 

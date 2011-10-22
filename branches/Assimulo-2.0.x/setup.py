@@ -3,8 +3,11 @@
 from distutils.core import setup, Extension
 from Cython.Distutils import build_ext
 import numpy as N
+import logging as L
 import sys as S
 import os as O
+
+#L.basicConfig(format='%(levelname)s:%(message)s')
 
 incdirs = ''
 libdirs = ''
@@ -29,7 +32,6 @@ copy_args=S.argv[1:]
 
 for x in S.argv[1:]:
     if not x.find('--sundials-home'):
-        print x[16:]
         incdirs = O.path.join(x[16:],'include')
         libdirs = O.path.join(x[16:],'lib')
         copy_args.remove(x)
@@ -37,15 +39,21 @@ for x in S.argv[1:]:
         copy_args[copy_args.index(x)] = x.replace('/',O.sep)
     if not x.find('--superlu-home'):
         SLUdir = x[15:]
-        print SLUdir
         copy_args.remove(x)
     if not x.find('--blas-home'):
         BLASdir = x[12:]
-        print BLASdir
         copy_args.remove(x)
     if not x.find('--blas-name'):
-        print x[12:]
         BLASname_t = x[12:]
+        copy_args.remove(x)
+    if not x.find('--log'):
+        level = x[6:]
+        try:
+            num_level = getattr(L, level.upper())
+        except AttributeError:
+            L.warning("No log-level defined for: "+level)
+            num_level = 30
+        L.basicConfig(level=num_level)
         copy_args.remove(x)
 
 if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -68,19 +76,19 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
         SLUlibdir = O.path.join(SLUdir,'lib')
         if not O.path.exists(O.path.join(SLUincdir,'supermatrix.h')):
             wSLU = False
-            print "--------------- WARNING ---------------"
-            print "Could not find SuperLU at the given path."
-            print "usage: --superlu-home=path"
-            print "KINSOL will not be compiled with support for SUperLU."
+            L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
+            L.debug("Could not find SuperLU at the given path.")
+            L.debug("usage: --superlu-home=path")
+            L.debug("KINSOL will not be compiled with support for SUperLU.")
             
-        print "SLUinc: ",SLUincdir
-        print "SLUlib: ", SLUlibdir
+        L.debug("SLUinc: "+SLUincdir)
+        L.debug("SLUlib: "+SLUlibdir)
 
     else:
-        print "--------------- WARNING ---------------"
-        print "No path to SuperLU supplied, KINSOL will not be compiled with support for SUperLU."
-        print "usage: --superlu-home=path"
-        print "Note: the path required is to the folder where the folders 'SRC' and 'lib' are found."
+        L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
+        L.debug("No path to SuperLU supplied, KINSOL will not be compiled with support for SUperLU.")
+        L.debug("usage: --superlu-home=path")
+        L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
         wSLU = False
         
     if BLASname_t != "":
@@ -93,20 +101,20 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
         BLASname_t = "lib" + BLASname
            
     if BLASdir == "":
-        print "--------------- WARNING ---------------"
-        print "No path to BLAS supplied, KINSOL will not be compiledwith support for SUperLU."
-        print "usage: --blas-home=path"
-        print "Note: the path required is to where the static library","lib"+BLASname,"is found"
+        L.warning("No path to BLAS supplied, disabling support. View more information using --log=DEBUG")
+        L.debug("No path to BLAS supplied, KINSOL will not be compiled with support for SUperLU.")
+        L.debug("usage: --blas-home=path")
+        L.debug("Note: the path required is to where the static library lib"+BLASname+" is found")
         wSLU = False
     else:
         if not O.path.exists(O.path.join(BLASdir,BLASname_t+'.a')):
-            print "--------------- WARNING ---------------"
-            print "Could not find BLAS at the given path."
-            print "usage: --blas-home=path"
-            print "KINSOL will not be compiled with support for SUperLU."
+            L.warning("Could not find BLAS, disabling support. View more information using --log=DEBUG")
+            L.debug("Could not find BLAS at the given path.")
+            L.debug("usage: --blas-home=path")
+            L.debug("KINSOL will not be compiled with support for SUperLU.")
             wSLU = False
             
-        print "BLAS: ", BLASdir + "/" + BLASname_t
+        L.debug("BLAS: "+BLASdir+"/"+BLASname_t)
         
     if wSLU:
         setup(name='Assimulo',
@@ -129,8 +137,11 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
                           [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
                           include_dirs=[incdirs, N.get_include(),SLUincdir],
                           library_dirs=[libdirs,SLUlibdir,BLASdir],
-                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])
-            
+                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname]),
+                Extension('problem',[O.path.join('src','problem.pyx')],
+                          include_dirs=[N.get_include()]),
+                Extension('ode',[O.path.join('src','ode.pyx')],
+                          include_dirs=[N.get_include()])
                           ],
             script_args=copy_args
             )
@@ -142,7 +153,7 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
               author_email='claus@maths.lth.se chria@kth.se',
               url='http://wwww.jmodelica.org/assimulo',
               package_dir = {'assimulo':'src'},
-              packages=['assimulo', 'assimulo.lib'],
+              packages=['assimulo', 'assimulo.lib','assimulo.solvers'],
               cmdclass = {'build_ext': build_ext},
               ext_package='assimulo',
               ext_modules = [
@@ -155,8 +166,12 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
                           [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
                           include_dirs=[incdirs, N.get_include()],
                           library_dirs=[libdirs],
-                          libraries=['sundials_kinsol','sundials_nvecserial'])
-            
+                          libraries=['sundials_kinsol','sundials_nvecserial']),
+                Extension('problem',[O.path.join('src','problem.pyx')],
+                          include_dirs=[N.get_include()]),
+                Extension('ode',[O.path.join('src','ode.pyx')],
+                          include_dirs=[N.get_include()])
+                
                           ],
             script_args=copy_args
             )

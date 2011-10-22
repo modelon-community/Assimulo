@@ -574,6 +574,8 @@ class Test_CVode:
         This tests the functionality of the property is_disc.
         """
         class Prob_CVode(Explicit_Problem):
+            def __init__(self):
+                pass
             f = lambda self,t,y,sw: N.array([1.0])
             y0 = [1.0]
             state_events = lambda self,t,y,sw: N.array([t-1.0, t])

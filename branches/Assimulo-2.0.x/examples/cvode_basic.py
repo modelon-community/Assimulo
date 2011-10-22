@@ -1,5 +1,5 @@
 import numpy as N
-from assimulo.explicit_ode import CVode
+from assimulo.solvers.cvode import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example():
@@ -10,13 +10,11 @@ def run_example():
         return N.array([ydot])
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem()
-    exp_mod.f = f
+    exp_mod = Explicit_Problem(f, y0=4)
     exp_mod.problem_name = 'Simple CVode Example'
     
     #Define an explicit solver
-    y0 = 4.0 #Initial conditions
-    exp_sim = CVode(exp_mod,y0) #Create a CVode solver
+    exp_sim = CVode(exp_mod) #Create a CVode solver
     
     #Sets the parameters
     exp_sim.iter = 'Newton' #Default 'FixedPoint'

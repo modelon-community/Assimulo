@@ -1,5 +1,6 @@
 import numpy as N
-from assimulo.explicit_ode import *
+from assimulo.solvers.euler import *
+from assimulo.solvers.runge_kutta import *
 from assimulo.problem import Explicit_Problem
 
 def run_example():
@@ -17,12 +18,15 @@ def run_example():
 
     #Explicit Euler
     #==============
-    exp_sim = Explicit_Euler(exp_mod) #Create a explicit Euler solver
-    
+    exp_sim = ExplicitEuler(exp_mod) #Create a explicit Euler solver
+    #exp_sim.solver_options["continuous_output"] = True
     #Simulate
-    exp_sim.simulate(3,100) #Simulate 3 seconds
-    exp_sim.simulate(5,100) #Simulate 2 second more
+    exp_sim.simulate(3) #Simulate 3 seconds
     
+    #exp_sim.reset()
+    
+    exp_sim.simulate(5,100) #Simulate 2 second more
+
     #Plot
     exp_sim.plot() #Plot the solution
     
@@ -40,7 +44,7 @@ def run_example():
     exp_sim.plot()
     
     #===========
-    
+
     
     #RungeKutta34
     #=============
@@ -55,7 +59,7 @@ def run_example():
     #Reset the solver
     exp_sim.reset()
     
-    exp_sim.initstep = 0.1 #Sets the initial step, default = 0.01
+    exp_sim.inith = 0.1 #Sets the initial step, default = 0.01
     
     #Simulate
     exp_sim.simulate(5) #Simulate 5 seconds

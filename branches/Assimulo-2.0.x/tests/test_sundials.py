@@ -14,6 +14,8 @@ class Test_Sundials:
         This sets up the test case.
         """
         class Prob_IDA(Implicit_Problem):
+            def __init__(self):
+                pass
             f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t])
             y0 = [1.0]
@@ -22,6 +24,8 @@ class Test_Sundials:
         res = Prob_IDA()
         
         class Prob_CVode(Explicit_Problem):
+            def __init__(self):
+                pass
             f = lambda self,t,y,sw: N.array([1.0])
             y0 = [1.0]
             state_events = lambda self,t,y,sw: N.array([t-1.0, t])

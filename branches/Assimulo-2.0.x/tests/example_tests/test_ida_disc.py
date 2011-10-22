@@ -18,6 +18,9 @@ t=10    , [True, False, False]  (End of simulation)
 #Extend Assimulos problem definition
 class Extended_Problem(Implicit_Problem):
     
+    def __init__(self):
+        pass
+    
     #Sets the initial conditons directly into the problem
     y0 = [0.0, -1.0, 0.0]
     yd0 = [-1.0, 0.0, 0.0]
