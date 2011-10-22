@@ -1,0 +1,307 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2010 Modelon AB
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+import numpy as N
+
+from assimulo.ode import *
+from assimulo.explicit_ode import Explicit_ODE
+
+class RungeKutta34(Explicit_ODE):
+    """
+    Adaptive Runge-Kutta of order four.
+    Obs. Step rejection not implemented.
+    """
+    def __init__(self, problem):
+        """
+        Initiates the solver.
+        
+            Parameters::
+            
+                problem     
+                            - The problem to be solved. Should be an instance
+                              of the 'Explicit_Problem' class.                       
+        """
+        Explicit_ODE.__init__(self, problem) #Calls the base class
+        
+        #Solver options
+        self.solver_options["atol"] = 1.0e-6
+        self.solver_options["rtol"] = 1.0e-6
+        self.solver_options["inith"] = 0.01
+        self.solver_options["maxsteps"] = 10000
+        
+        #Internal temporary result vector
+        self.Y1 = N.array([0.0]*len(problem.y0))
+        self.Y2 = N.array([0.0]*len(problem.y0))
+        self.Y3 = N.array([0.0]*len(problem.y0))
+        self.Y4 = N.array([0.0]*len(problem.y0))
+        self.Z3 = N.array([0.0]*len(problem.y0))
+        
+        #RHS-Function
+        self.f = problem.rhs_internal
+        
+        #Solver support
+        self.solver_support["one_step_mode"] = True
+        
+        #Internal values
+        # - Statistic values
+        self._nsteps = 0 #Number of steps
+        self._nfcn = 0 #Number of function evaluations
+        
+    def _set_initial_step(self, initstep):
+        try:
+            initstep = float(initstep)
+        except (ValueError, TypeError):
+            raise Explicit_ODE_Exception('The initial step must be an integer or float.')
+        
+        self.solver_options["inith"] = initstep
+        
+    def _get_initial_step(self):
+        """
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters::
+            
+                initstep    
+                            - Default '0.01'.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    initstep = 0.01
+        """
+        return self.solver_options["inith"]
+        
+    inith = property(_get_initial_step,_set_initial_step)
+    
+    def _set_atol(self,atol):
+
+        try:
+            atol_arr = N.array(atol, dtype=float)
+            if (atol_arr <= 0.0).any():
+                raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        except (ValueError,TypeError):
+            raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
+        if atol_arr.size == 1:
+            self.solver_options["atol"] = float(atol)
+        elif atol_arr.size == len(self.y_cur):
+            self.solver_options["atol"] = [float(x) for x in atol]
+        else:
+            raise Explicit_ODE_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
+
+    def _get_atol(self):
+        """
+        Sets the absolute tolerance to be used in the integration.
+        
+            Parameters::
+            
+                atol    
+                            - Default 1.0e-6.
+                            
+                            - Should be float or an array/list of len(y)
+                            
+                                Example:
+                                    atol=1.e5
+                                    atol=[1.e-5,1.e-4]
+        """
+        return self.solver_options["atol"]
+    
+    atol = property(_get_atol,_set_atol)
+    
+    def _set_rtol(self, rtol):
+        try:
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.solver_options["rtol"] = rtol
+            
+    def _get_rtol(self):
+        """
+        The relative tolerance to be used in the integration.
+        
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        return self.solver_options["rtol"]
+    
+    rtol = property(_get_rtol, _set_rtol)
+    
+    def _get_maxsteps(self):
+        """
+        The maximum number of steps allowed to be taken to reach the
+        final time.
+        
+            Parameters::
+            
+                maxsteps
+                            - Default 10000
+                            
+                            - Should be a positive integer
+        """
+        return self.solver_options["maxsteps"]
+    
+    def _set_maxsteps(self, max_steps):
+        try:
+            max_steps = int(max_steps)
+        except (TypeError, ValueError):
+            raise Explicit_ODE_Exception("Maximum number of steps must be a positive integer.")
+        self.solver_options["maxsteps"] = max_steps
+    
+    maxsteps = property(_get_maxsteps, _set_maxsteps)
+    
+    def one_step_mode(self, t, y, tf, initialize, *args):
+        if initialize:
+            self.solver_iterator = self.integrator(t,y,tf,*args)
+
+        return self.solver_iterator.next()
+    
+    def integrator(self, t, y, tf, *args):
+        """
+        Integrates (t,y) values until t > tf
+        """
+        maxsteps = self.solver_options["maxsteps"]
+        h = self.solver_options["inith"]
+        h = min(h, N.abs(tf-t))
+        
+        for i in range(maxsteps):
+            if t+h < tf:
+                t, y, error = self.step(t, y, h)
+                self._nsteps += 1
+                yield ID_OK, t,y
+                h=self.adjust_stepsize(h,error)
+                h=min(h, N.abs(tf-t))
+            else:
+                break
+        else:
+            raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
+            
+        t, y, error = self.step(t, y, h)
+        self._nsteps += 1
+        yield ID_COMPLETE, t, y
+    
+    def adjust_stepsize(self, h, error):
+        """
+        Adjusts the stepsize.
+        """
+        fac=min((1.0/error)**(1.0/4.0),2.)
+        h *= fac
+        
+        return h
+        
+    def step(self, t, y, h):
+        """
+        This calculates the next step in the integration.
+        """
+        self._nfcn += 5
+        
+        scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
+        f = self.f
+        
+        f(self.Y1, t, y)
+        f(self.Y2, t + h/2., y + h*self.Y1/2.)
+        f(self.Y3, t + h/2., y + h*self.Y2/2.)
+        f(self.Z3, t + h, y - h*self.Y1 + 2.0*h*self.Y2)
+        f(self.Y4, t + h, y + h*self.Y3)
+        
+        error = N.linalg.norm(h/6*(2*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
+        
+        return t+h, y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4), error
+    
+    def print_statistics(self, verbose):
+        """
+        Should print the statistics.
+        """
+        self.logg_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
+        self.logg_message(' Number of Steps                : %s '%(self._nsteps),             verbose)
+        self.logg_message(' Number of Function Evaluations : %s '%(self._nfcn),               verbose)
+        self.logg_message('\nSolver options:\n',                                              verbose)
+        self.logg_message(' Solver             : RungeKutta4',                                verbose)
+        self.logg_message(' Solver type        : Adaptive',                                   verbose)
+        self.logg_message(' Relative tolerance : ' + str(self.solver_options["rtol"]),        verbose)
+        self.logg_message(' Absolute tolerance : ' + str(self.solver_options["atol"]) + '\n', verbose)
+    
+    
+class RungeKutta4(Explicit_ODE):
+    """
+    Runge-Kutta of order 4.
+    """
+    def __init__(self, problem):
+        Explicit_ODE.__init__(self, problem) #Calls the base class
+        
+        #Solver options
+        self.solver_options["h"] = 0.01
+        
+        #Internal temporary result vector
+        self.Y1 = N.array([0.0]*len(problem.y0))
+        self.Y2 = N.array([0.0]*len(problem.y0))
+        self.Y3 = N.array([0.0]*len(problem.y0))
+        self.Y4 = N.array([0.0]*len(problem.y0))
+        
+        #RHS-Function
+        self.f = problem.rhs_internal
+        
+        #Solver support
+        self.solver_support["one_step_mode"] = True
+        
+    def one_step_mode(self, t, y, tf, initialize, *args):
+        if initialize:
+            self.solver_iterator = self.integrator(t,y,tf,*args)
+
+        return self.solver_iterator.next()
+    
+    def integrator(self, t, y, tf, *args):
+        """
+        Integrates (t,y) values until t > tf
+        """
+        h = self.solver_options["h"]
+        h = min(h, N.abs(tf-t))
+        
+        while t+h < tf:
+            t, y = self.step(t, y, h)
+            yield ID_OK, t,y
+            h=min(h, N.abs(tf-t))
+        else:
+            t, y = self.step(t, y, h)
+            yield ID_COMPLETE, t, y
+    
+    def step(self, t, y, h):
+        """
+        This calculates the next step in the integration.
+        """
+        f = self.f
+        
+        f(self.Y1, t, y)
+        f(self.Y2, t + h/2., y + h*self.Y1/2.)
+        f(self.Y3, t + h/2., y + h*self.Y2/2.)
+        f(self.Y4, t + h, y + h*self.Y3)
+        
+        return t+h, y + h/6.*(self.Y1 + 2.*self.Y2 + 2.*self.Y3 + self.Y4)
+        
+    def print_statistics(self, verbose):
+        """
+        Should print the statistics.
+        """
+        self.logg_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        self.logg_message(' Step-length          : %s '%(self.solver_options["h"]), verbose)
+        self.logg_message('\nSolver options:\n',                                    verbose)
+        self.logg_message(' Solver            : RungeKutta4',                       verbose)
+        self.logg_message(' Solver type       : Fixed step\n',                      verbose)

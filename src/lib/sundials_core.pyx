@@ -1038,6 +1038,11 @@ cdef class IDA_wrap(Sundials):
         flag = IDASetMaxNumSteps(self.solver, maxsteps)
         if flag < 0:
             raise IDAError(flag)
+            
+        #Maximum Number of error test failures
+        flag = IDASetMaxErrTestFails(self.solver, 20)
+        if flag < 0:
+            raise IDAError(flag) 
         
         #Set the algebraic components and the differential
         flag = IDASetId(self.solver, arr2nv(self.algvar))

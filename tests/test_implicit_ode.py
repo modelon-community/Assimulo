@@ -438,6 +438,8 @@ class Test_IDA:
         This tests the functionality of the property is_disc.
         """
         class Prob_IDA(Implicit_Problem):
+            def __init__(self):
+                pass
             f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t])
             y0 = [1.0]

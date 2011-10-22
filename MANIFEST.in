@@ -9,6 +9,7 @@ include src/lib/*.dylib
 include CHANGELOG
 include INSTALL
 include README
-include setup_source.py
-include setup_from_binary.py
+include setup.py
 include examples/*
+include src/solvers/*
+include src/*

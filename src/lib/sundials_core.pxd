@@ -243,6 +243,7 @@ cdef extern from "idas/idas.h":
     int IDASetUserData(void *ida_mem,void *user_data)
     int IDASetInitStep(void *ida_mem, realtype hin)
     int IDASetStopTime(void *ida_mem, realtype tstop)
+    int IDASetMaxErrTestFails(void *ida_mem, int maxnef)
     int IDASetMaxNumSteps(void *ida_mem, long int mxsteps)
     int IDASetMaxOrd(void *ida_mem, int maxord)
     int IDASetMaxStep(void* ida_mem, realtype hmax)
