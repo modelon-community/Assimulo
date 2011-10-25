@@ -115,19 +115,19 @@ cdef class ODE:
         
         #Determine if we are using one step mode or normal mode
         if self.internal_flags['step_events'] or self.solver_options['continuous_output']:
-            ONE_STEP = True
+            ONE_STEP = 1
         else:
-            ONE_STEP = False
+            ONE_STEP = 0
         
         #Determine if the output should be interpolated or not
         if output_list == None:
-            INTERPOLATE_OUTPUT = False
+            INTERPOLATE_OUTPUT = 0
         else:
-            INTERPOLATE_OUTPUT = True
+            INTERPOLATE_OUTPUT = 1
 
         #Time and Step events
-        TIME_EVENT = self.internal_flags['time_events']
-        STEP_EVENT = self.internal_flags["step_events"]
+        TIME_EVENT = 1 if self.internal_flags['time_events'] is True else 0
+        STEP_EVENT = 1 if self.internal_flags["step_events"] is True else 0
 
         #Simulation starting, call initialize
         self.problem.initialize(self)

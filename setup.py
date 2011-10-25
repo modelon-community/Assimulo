@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup, Extension
 from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 import numpy as N
 import logging as L
 import sys as S
 import os as O
+import shutil as SH
 
 #L.basicConfig(format='%(levelname)s:%(message)s')
 
@@ -13,6 +15,8 @@ incdirs = ''
 libdirs = ''
 SLUdir = ""
 BLASdir = ""
+BLASname = 'blas'
+BLASname_t = ""
 
 if S.platform == 'win32':
     incdirs = ''
@@ -24,9 +28,7 @@ else:
     incdirs = '/usr/local/include'
     libdirs = '/usr/local/lib'
     
-BLASname = 'blas'
-    
-BLASname_t = ""
+
 
 copy_args=S.argv[1:]
 
@@ -55,22 +57,89 @@ for x in S.argv[1:]:
             num_level = 30
         L.basicConfig(level=num_level)
         copy_args.remove(x)
+        
+def pre_processing():
+    def create_dir(d):
+        try:
+            O.mkdir(d) #Create the build directory
+        except:
+            pass #Directory already exists
+    create_dir(O.path.join("build"))
+    create_dir(O.path.join("build","assimulo"))
+    create_dir(O.path.join(O.path.join("build","assimulo"),"lib"))
+    create_dir(O.path.join(O.path.join("build","assimulo"),"solvers"))
+    
+    fileSrc    = O.listdir("src")
+    fileLib    = O.listdir(O.path.join("src","lib"))
+    fileSolvers= O.listdir(O.path.join("src","solvers"))
+    
+    curdir = O.path.dirname(O.path.abspath(__file__))
+    
+    desSrc = O.path.join(curdir,O.path.join("build","assimulo"))
+    desLib = O.path.join(curdir,O.path.join(O.path.join("build","assimulo"),"lib"))
+    desSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"solvers")
 
-if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-    
-    cordir = O.path.join(O.path.join('src','lib'),'sundials_core.pyx')
-    
-    cordir_KINSOL_wSLU = O.path.join(O.path.join('src','lib'),'sundials_kinsol_core_wSLU.pyx')
-    cordir_KINSOL = O.path.join(O.path.join('src','lib'),'sundials_kinsol_core.pyx')
-    
-    cordir_KINSOL_jmod_wSLU = O.path.join(O.path.join('src','lib'),'kinsol_jmod_wSLU.c')
-    cordir_KINSOL_jmod = O.path.join(O.path.join('src','lib'),'kinsol_jmod.c')
-    
-    cordir_kinpinv = O.path.join(O.path.join('src','lib'),'kinpinv.c')
-    cordir_kinslug = O.path.join(O.path.join('src','lib'),'kinslug.c')
-    cordir_reg_routines = O.path.join(O.path.join('src','lib'),'reg_routines.c')
+    for f in fileSrc:
+        if not O.path.isdir(O.path.join("src",f)):
+            SH.copy2(O.path.join("src",f), desSrc)
+    for f in fileLib:
+        if not O.path.isdir(O.path.join(O.path.join("src","lib"),f)):
+            SH.copy2(O.path.join(O.path.join("src","lib"),f), desLib)
+    for f in fileSolvers:
+        if not O.path.isdir(O.path.join(O.path.join("src","solvers"),f)):
+            SH.copy2(O.path.join(O.path.join("src","solvers"),f), desSolvers)
 
+def check_extensions():
+    
+    #Cythonize main modules
+    ext_list = cythonize(["assimulo/*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()])
+    for i in ext_list:
+        i.include_dirs = [N.get_include()]
+        i.name = "assimulo."+i.name.split(".")[1]
+        #i.extra_compile_args = ["-O2"]
+        #i.extra_link_args
+    
+    #Sundials found
+    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        cordir = O.path.join(O.path.join('assimulo','lib'),'sundials_core.pyx')
+        cordir_KINSOL_wSLU = O.path.join(O.path.join('assimulo','lib'),'sundials_kinsol_core_wSLU.pyx')
+        cordir_KINSOL = O.path.join(O.path.join('assimulo','lib'),'sundials_kinsol_core.pyx')
+    
+        cordir_KINSOL_jmod_wSLU = O.path.join(O.path.join('assimulo','lib'),'kinsol_jmod_wSLU.c')
+        cordir_KINSOL_jmod = O.path.join(O.path.join('assimulo','lib'),'kinsol_jmod.c')
+    
+        cordir_kinpinv = O.path.join(O.path.join('assimulo','lib'),'kinpinv.c')
+        cordir_kinslug = O.path.join(O.path.join('assimulo','lib'),'kinslug.c')
+        cordir_reg_routines = O.path.join(O.path.join('assimulo','lib'),'reg_routines.c')
+        
+        #Add extension for IDAS and CVODES
+        ext_list = ext_list + [Extension('assimulo.lib.sundials_core',
+                              [cordir],
+                              include_dirs=[incdirs, N.get_include()],
+                              library_dirs=[libdirs],
+                              libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial'])]
+    
+        wSLU = check_wSLU()
+        if wSLU:
+            ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
+                          [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
+                          include_dirs=[incdirs, N.get_include(),SLUincdir],
+                          library_dirs=[libdirs,SLUlibdir,BLASdir],
+                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])]
+        else:
+            ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
+                          [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
+                          include_dirs=[incdirs, N.get_include()],
+                          library_dirs=[libdirs],
+                          libraries=['sundials_kinsol','sundials_nvecserial'])]
+    
+    return ext_list
+
+def check_wSLU():
     wSLU = True
+    
+    global BLASname, BLASname_t
+    
     if SLUdir != "":    
         SLUincdir = O.path.join(SLUdir,'SRC')
         SLUlibdir = O.path.join(SLUdir,'lib')
@@ -115,66 +184,24 @@ if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
             wSLU = False
             
         L.debug("BLAS: "+BLASdir+"/"+BLASname_t)
-        
-    if wSLU:
-        setup(name='Assimulo',
-              version='trunk',
-              description='A package for solving ordinary differential equations',
-              author='Claus Führer and Christian Andersson',
-              author_email='claus@maths.lth.se chria@kth.se',
-              url='http://wwww.jmodelica.org/assimulo',
-              package_dir = {'assimulo':'src'},
-              packages=['assimulo', 'assimulo.lib'],
-              cmdclass = {'build_ext': build_ext},
-              ext_package='assimulo',
-              ext_modules = [
-                Extension('lib.sundials_core',
-                          [cordir],
-                          include_dirs=[incdirs, N.get_include()],
-                          library_dirs=[libdirs],
-                          libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial']),
-                Extension('lib.sundials_kinsol_core_wSLU',
-                          [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
-                          include_dirs=[incdirs, N.get_include(),SLUincdir],
-                          library_dirs=[libdirs,SLUlibdir,BLASdir],
-                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname]),
-                Extension('problem',[O.path.join('src','problem.pyx')],
-                          include_dirs=[N.get_include()]),
-                Extension('ode',[O.path.join('src','ode.pyx')],
-                          include_dirs=[N.get_include()])
-                          ],
-            script_args=copy_args
-            )
-    else:
-        setup(name='Assimulo',
-              version='trunk',
-              description='A package for solving ordinary differential equations',
-              author='Claus Führer and Christian Andersson',
-              author_email='claus@maths.lth.se chria@kth.se',
-              url='http://wwww.jmodelica.org/assimulo',
-              package_dir = {'assimulo':'src'},
-              packages=['assimulo', 'assimulo.lib','assimulo.solvers'],
-              cmdclass = {'build_ext': build_ext},
-              ext_package='assimulo',
-              ext_modules = [
-                Extension('lib.sundials_core',
-                          [cordir],
-                          include_dirs=[incdirs, N.get_include()],
-                          library_dirs=[libdirs],
-                          libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial']),
-                Extension('lib.sundials_kinsol_core',
-                          [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
-                          include_dirs=[incdirs, N.get_include()],
-                          library_dirs=[libdirs],
-                          libraries=['sundials_kinsol','sundials_nvecserial']),
-                Extension('problem',[O.path.join('src','problem.pyx')],
-                          include_dirs=[N.get_include()]),
-                Extension('ode',[O.path.join('src','ode.pyx')],
-                          include_dirs=[N.get_include()])
-                
-                          ],
-            script_args=copy_args
-            )
+    
+    return wSLU
 
-else:
-    raise Exception('Could not find Sundials. Recheck Sundials path.')
+pre_processing()
+O.chdir("build") #Change dir
+      
+ext_list = check_extensions()
+      
+setup(name='Assimulo',
+      version='trunk',
+      description='A package for solving ordinary differential equations',
+      author='Claus Führer and Christian Andersson',
+      author_email='claus@maths.lth.se chria@kth.se',
+      url='http://wwww.jmodelica.org/assimulo',
+      package_dir = {'assimulo':'assimulo'},
+      packages=['assimulo', 'assimulo.lib','assimulo.solvers'],
+      cmdclass = {'build_ext': build_ext},
+      ext_modules = ext_list,
+      script_args=copy_args)
+
+O.chdir("..") #Change back to dir

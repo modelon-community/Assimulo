@@ -9,6 +9,7 @@ include src/lib/*.dylib
 include CHANGELOG
 include INSTALL
 include README
+include src/*.pxd
 include setup.py
 include examples/*
 include src/solvers/*
