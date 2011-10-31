@@ -15,11 +15,11 @@ def run_example():
     exp_mod.f = f #Sets the rhs into the problem
     exp_mod.y0 = 4.0 #Sets the initial conditions
     exp_mod.problem_name = 'Simple Explicit Example'
-
+    
     #Explicit Euler
     #==============
     exp_sim = ExplicitEuler(exp_mod) #Create a explicit Euler solver
-    #exp_sim.solver_options["continuous_output"] = True
+    exp_sim.options["continuous_output"] = True
     #Simulate
     exp_sim.simulate(3) #Simulate 3 seconds
     
@@ -31,12 +31,12 @@ def run_example():
     exp_sim.plot() #Plot the solution
     
     #==============
-
+    
     
     #RungeKutta4
     #===========
     exp_sim = RungeKutta4(exp_mod) #Create a RungeKutta4 solver
-    
+    #exp_sim.options["continuous_output"] = True
     #Simulate
     exp_sim.simulate(5, 100) #Simulate 5 seconds
     
@@ -68,7 +68,7 @@ def run_example():
     exp_sim.plot()
     
     #=============
-
+    
 
 if __name__=='__main__':
     run_example()

@@ -30,7 +30,7 @@ cdef class cProblem:
         """
         Method for specializing initiation.
         """
-        solver.logg_message("No initialization defined for the problem.", LOUD)
+        solver.log_message("No initialization defined for the problem.", LOUD)
     
     cpdef reset(self):
         """
@@ -42,14 +42,14 @@ cdef class cProblem:
         """
         Method that is called when an event has triggered.
         """
-        solver.logg_message("No event handling defined.", NORMAL)
+        solver.log_message("No event handling defined.", NORMAL)
     
     cpdef finalize(self,object solver):
         """
         Method for specifying the finalization options when the simulation have
         finished.
         """
-        solver.logg_message("No finalization defined for the problem.", LOUD)
+        solver.log_message("No finalization defined for the problem.", LOUD)
 
 cdef class cImplicit_Problem(cProblem):
     
@@ -88,9 +88,9 @@ cdef class cExplicit_Problem(cProblem):
         solver.t.extend([t])
         solver.y.extend([y])
         
-    cpdef rhs_internal(self, N.ndarray[double, ndim=1] f, double t, N.ndarray[double, ndim=1] y):
+    cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:
-            f[:] = self.f(t,y)
+            yd[:] = self.f(t,y)
         except:
             return ID_FAIL
         return ID_OK

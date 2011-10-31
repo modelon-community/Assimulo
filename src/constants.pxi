@@ -42,10 +42,15 @@ LOUD     = INFO
 SCREAM   = DEBUG
 
 
-ID_OK       = 0
-ID_DISCARD  = 1
-ID_EVENT    = 2
-ID_COMPLETE = 3
-ID_FAIL     = -1
+DEF ID_OK       = 0
+DEF ID_DISCARD  = 1
+DEF ID_EVENT    = 2
+DEF ID_COMPLETE = 3
+DEF ID_FAIL     = -1
 
+ID_PY_OK       = 0
+ID_PY_DISCARD  = 1
+ID_PY_EVENT    = 2
+ID_PY_COMPLETE = 3
+ID_PY_FAIL     = -1
 

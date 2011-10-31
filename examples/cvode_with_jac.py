@@ -1,5 +1,5 @@
 import numpy as N
-from assimulo.explicit_ode import *
+from assimulo.solvers.cvode import CVode
 from assimulo.problem import Explicit_Problem
 
 
@@ -9,7 +9,7 @@ def run_example():
     def f(t,y):
         yd_0 = y[1]
         yd_1 = -9.82
-
+        #print y, yd_0, yd_1
         return N.array([yd_0,yd_1])
     
     #Defines the jacobian
@@ -18,26 +18,28 @@ def run_example():
         return j
     
     #Defines an Assimulo explicit problem
-    exp_mod = Explicit_Problem()
-    exp_mod.f = f #Sets the rhs
+    y0 = [1.0,0.0] #Initial conditions
+
+    exp_mod = Explicit_Problem(f,y0)
+    
     exp_mod.jac = jac #Sets the jacobian
-    exp_mod.problem_name = 'Example using Jacobian'
+    exp_mod.name = 'Example using Jacobian'
 
     
-    y0 = [1.0,0.0] #Initial conditions
-    exp_sim = CVode(exp_mod,y0) #Create a CVode solver
+    exp_sim = CVode(exp_mod) #Create a CVode solver
     
     #Set the parameters
-    exp_sim.iter = 'Newton' #Default 'FixedPoint'
-    exp_sim.discr = 'BDF' #Default 'Adams'
-    exp_sim.atol = 1e-4 #Default 1e-6
-    exp_sim.rtol = 1e-4 #Default 1e-6
-    
+    exp_sim.options["iter"] = 'Newton' #Default 'FixedPoint'
+    exp_sim.options["discr"] = 'BDF' #Default 'Adams'
+    exp_sim.options["atol"] = [1e-4, 1e-4] #Default 1e-6
+    exp_sim.options["rtol"] = 1e-4 #Default 1e-6
+    #exp_sim.options["continuous_output"] = True
+    exp_sim.options["usejac"] = False
     #Simulate
     exp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
         
     #Plot
-    exp_sim.plot() #Plot the solution
+    exp_sim.plot(linestyle="dashed",marker="o") #Plot the solution
 
 
 if __name__=='__main__':

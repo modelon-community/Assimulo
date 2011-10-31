@@ -25,24 +25,67 @@ import itertools
 from exception import *
 
 include "constants.pxi" #Includes the constants (textual include)
- 
+
+realtype = N.float
+
 cdef class ODE:
     """
     Base class for all our integrators.
     """
     
-    def __init__(self):
+    def __init__(self, problem):
         """
         Defines general starting attributes for a simulation
         problem.
         """
-        self.options = {"solver": "","type": "", "verbosity": NORMAL} #Options dict
-        self.solver_options = {"continuous_output":False}
-        self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.solver_support = {"state_events":False,"interpolated_output":False,"one_step_mode":False} #Flags for determining what the solver supports
+        self.options = {"continuous_output":False,"verbosity":NORMAL}
+        #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
+        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False} #Flags for determining what the solver supports
+        self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
+                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False}
         
         #Data object for storing the event data
         self.event_data = []
+        
+        
+        if problem is None:
+            raise ODE_Exception('The problem needs to be a subclass of a Problem.')
+        
+        #Check Problem for event functions
+        if hasattr(problem, 'time_events'):
+            self.problem_info["time_events"] = True
+        
+        if hasattr(problem, 'state_events'):
+            self.problem_info["state_events"] = True
+        
+        if hasattr(problem, 'step_events'):
+            self.problem_info["step_events"] = True
+        
+        if hasattr(problem, 'y0'):
+            problem.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
+            self.problem_info["dim"] = len(problem.y0)
+        else:
+            raise ODE_Exception('y0 must be specified. Either in the problem or in the initialization')
+        
+        if hasattr(problem, "p0"):
+            problem.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
+            self.problem_info["dimSens"] = len(problem.p0)
+        
+        if hasattr(problem, "sw0"):
+            problem.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
+            self.problem_info["switches"] = True
+        
+        if hasattr(problem, 't0'):
+            problem.t0 = float(problem.t0)
+        else:
+            problem.t0 = 0.0
+            
+        if hasattr(problem, "jac"):
+            self.problem_info["jac_fcn"] = True
+        
+        
+    def __call__(self, double tfinal, int ncp=0, list cpts=None):
+        return simulate(tfinal, ncp, cpts)
         
     cpdef simulate(self, double tfinal, int ncp=0, object ncp_list=None):
         """
@@ -86,19 +129,19 @@ cdef class ODE:
         
         if ncp < 0:
             ncp = 0
-            self.logg_message('Number of communication points must be a positive integer, setting ncp = 0.',WARNING)
+            self.log_message('Number of communication points must be a positive integer, setting ncp = 0.',WARNING)
         
         #Check solver support against current problem
-        if self.internal_flags["step_events"] and self.solver_support["one_step_mode"] is False:
-            self.logg_message("The current solver does not support step events (completed steps). Disabling step events and continues.", WHISPER)
-            self.internal_flags["step_events"] = False
+        if self.problem_info["step_events"] and self.supports["one_step_mode"] is False:
+            self.log_message("The current solver does not support step events (completed steps). Disabling step events and continues.", WHISPER)
+            self.problem_info["step_events"] = False
         
-        if self.solver_support["one_step_mode"] is False and self.solver_options["continuous_output"]:
-            self.logg_message("The current solver does not support continuous output. Setting continuous_output to False and continues.", WHISPER)
+        if self.supports["one_step_mode"] is False and self.options["continuous_output"]:
+            self.log_message("The current solver does not support continuous output. Setting continuous_output to False and continues.", WHISPER)
             self.solver_options["continuous_output"] = False
         
-        if (ncp != 0 or ncp_list != None) and (self.solver_options["continuous_output"] or self.internal_flags["step_events"]) and self.solver_support["interpolated_output"] is False:
-            self.logg_message("The current solver does not support interpolated output. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
+        if (ncp != 0 or ncp_list != None) and (self.options["continuous_output"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
+            self.log_message("The current solver does not support interpolated output. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
             
@@ -114,7 +157,7 @@ cdef class ODE:
             output_index = 0
         
         #Determine if we are using one step mode or normal mode
-        if self.internal_flags['step_events'] or self.solver_options['continuous_output']:
+        if self.problem_info['step_events'] or self.options['continuous_output']:
             ONE_STEP = 1
         else:
             ONE_STEP = 0
@@ -126,8 +169,8 @@ cdef class ODE:
             INTERPOLATE_OUTPUT = 1
 
         #Time and Step events
-        TIME_EVENT = 1 if self.internal_flags['time_events'] is True else 0
-        STEP_EVENT = 1 if self.internal_flags["step_events"] is True else 0
+        TIME_EVENT = 1 if self.problem_info['time_events'] is True else 0
+        STEP_EVENT = 1 if self.problem_info["step_events"] is True else 0
 
         #Simulation starting, call initialize
         self.problem.initialize(self)
@@ -136,7 +179,7 @@ cdef class ODE:
         time_start = time.clock()
         
         #Start the simulation
-        self.__call__(t0, tfinal, output_list, ONE_STEP, INTERPOLATE_OUTPUT, TIME_EVENT, STEP_EVENT)
+        self._simulate(t0, tfinal, output_list, ONE_STEP, INTERPOLATE_OUTPUT, TIME_EVENT, STEP_EVENT)
         
         #End of simulation, stop the clock
         time_stop = time.clock()
@@ -148,14 +191,14 @@ cdef class ODE:
         self.print_statistics(NORMAL)
         
         #Log elapsed time
-        self.logg_message('Simulation interval    : ' + str(t0) + ' - ' + str(self.t_cur) + ' seconds.', NORMAL)
-        self.logg_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
+        self.log_message('Simulation interval    : ' + str(t0) + ' - ' + str(self.t_cur) + ' seconds.', NORMAL)
+        self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
 
-    cpdef logg_message(self, message,int level):
+    cpdef log_message(self, message,int level):
         if level >= self.options["verbosity"]:
-            print message
+            print(message)
             
-    cpdef logg_event(self,double time,object event_info, int level):
+    cpdef log_event(self,double time,object event_info, int level):
         if level >= self.options["verbosity"]:
             self.event_data.append([time,event_info])
             
@@ -163,4 +206,5 @@ cdef class ODE:
         """
         Returns the solver options.
         """
-        return self.solver_options
+        return self.options
+    

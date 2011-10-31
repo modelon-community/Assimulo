@@ -38,10 +38,10 @@ class RungeKutta34(Explicit_ODE):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Solver options
-        self.solver_options["atol"] = 1.0e-6
-        self.solver_options["rtol"] = 1.0e-6
-        self.solver_options["inith"] = 0.01
-        self.solver_options["maxsteps"] = 10000
+        self.options["atol"] = 1.0e-6
+        self.options["rtol"] = 1.0e-6
+        self.options["inith"] = 0.01
+        self.options["maxsteps"] = 10000
         
         #Internal temporary result vector
         self.Y1 = N.array([0.0]*len(problem.y0))
@@ -54,7 +54,7 @@ class RungeKutta34(Explicit_ODE):
         self.f = problem.rhs_internal
         
         #Solver support
-        self.solver_support["one_step_mode"] = True
+        self.supports["one_step_mode"] = True
         
         #Internal values
         # - Statistic values
@@ -67,7 +67,7 @@ class RungeKutta34(Explicit_ODE):
         except (ValueError, TypeError):
             raise Explicit_ODE_Exception('The initial step must be an integer or float.')
         
-        self.solver_options["inith"] = initstep
+        self.options["inith"] = initstep
         
     def _get_initial_step(self):
         """
@@ -83,7 +83,7 @@ class RungeKutta34(Explicit_ODE):
                                 Example:
                                     initstep = 0.01
         """
-        return self.solver_options["inith"]
+        return self.options["inith"]
         
     inith = property(_get_initial_step,_set_initial_step)
     
@@ -96,9 +96,9 @@ class RungeKutta34(Explicit_ODE):
         except (ValueError,TypeError):
             raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
         if atol_arr.size == 1:
-            self.solver_options["atol"] = float(atol)
+            self.options["atol"] = float(atol)
         elif atol_arr.size == len(self.y_cur):
-            self.solver_options["atol"] = [float(x) for x in atol]
+            self.options["atol"] = [float(x) for x in atol]
         else:
             raise Explicit_ODE_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')
 
@@ -117,7 +117,7 @@ class RungeKutta34(Explicit_ODE):
                                     atol=1.e5
                                     atol=[1.e-5,1.e-4]
         """
-        return self.solver_options["atol"]
+        return self.options["atol"]
     
     atol = property(_get_atol,_set_atol)
     
@@ -128,7 +128,7 @@ class RungeKutta34(Explicit_ODE):
             raise Explicit_ODE_Exception('Relative tolerance must be a float.')
         if rtol <= 0.0:
             raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
-        self.solver_options["rtol"] = rtol
+        self.options["rtol"] = rtol
             
     def _get_rtol(self):
         """
@@ -141,7 +141,7 @@ class RungeKutta34(Explicit_ODE):
                             
                             - Should be a float.
         """
-        return self.solver_options["rtol"]
+        return self.options["rtol"]
     
     rtol = property(_get_rtol, _set_rtol)
     
@@ -157,36 +157,43 @@ class RungeKutta34(Explicit_ODE):
                             
                             - Should be a positive integer
         """
-        return self.solver_options["maxsteps"]
+        return self.options["maxsteps"]
     
     def _set_maxsteps(self, max_steps):
         try:
             max_steps = int(max_steps)
         except (TypeError, ValueError):
             raise Explicit_ODE_Exception("Maximum number of steps must be a positive integer.")
-        self.solver_options["maxsteps"] = max_steps
+        self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
     
-    def one_step_mode(self, t, y, tf, initialize, *args):
+    def step(self, t, y, tf, opts):
+        initialize = opts["initialize"]
+        
         if initialize:
-            self.solver_iterator = self.integrator(t,y,tf,*args)
+            self.solver_iterator = self._iter(t,y,tf)
 
         return self.solver_iterator.next()
     
-    def integrator(self, t, y, tf, *args):
+    def integrate(self, t, y, tf, opts):
         """
         Integrates (t,y) values until t > tf
         """
-        maxsteps = self.solver_options["maxsteps"]
-        h = self.solver_options["inith"]
+        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf)))
+        
+        return flags[-1], tlist, ylist
+    
+    def _iter(self,t,y,tf):
+        maxsteps = self.options["maxsteps"]
+        h = self.options["inith"]
         h = min(h, N.abs(tf-t))
         
         for i in range(maxsteps):
             if t+h < tf:
-                t, y, error = self.step(t, y, h)
+                t, y, error = self._step(t, y, h)
                 self._nsteps += 1
-                yield ID_OK, t,y
+                yield ID_PY_OK, t,y
                 h=self.adjust_stepsize(h,error)
                 h=min(h, N.abs(tf-t))
             else:
@@ -194,10 +201,10 @@ class RungeKutta34(Explicit_ODE):
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
             
-        t, y, error = self.step(t, y, h)
+        t, y, error = self._step(t, y, h)
         self._nsteps += 1
-        yield ID_COMPLETE, t, y
-    
+        yield ID_PY_COMPLETE, t, y
+
     def adjust_stepsize(self, h, error):
         """
         Adjusts the stepsize.
@@ -207,7 +214,7 @@ class RungeKutta34(Explicit_ODE):
         
         return h
         
-    def step(self, t, y, h):
+    def _step(self, t, y, h):
         """
         This calculates the next step in the integration.
         """
@@ -230,14 +237,14 @@ class RungeKutta34(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.logg_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
-        self.logg_message(' Number of Steps                : %s '%(self._nsteps),             verbose)
-        self.logg_message(' Number of Function Evaluations : %s '%(self._nfcn),               verbose)
-        self.logg_message('\nSolver options:\n',                                              verbose)
-        self.logg_message(' Solver             : RungeKutta4',                                verbose)
-        self.logg_message(' Solver type        : Adaptive',                                   verbose)
-        self.logg_message(' Relative tolerance : ' + str(self.solver_options["rtol"]),        verbose)
-        self.logg_message(' Absolute tolerance : ' + str(self.solver_options["atol"]) + '\n', verbose)
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
+        self.log_message(' Number of Steps                : %s '%(self._nsteps),             verbose)
+        self.log_message(' Number of Function Evaluations : %s '%(self._nfcn),               verbose)
+        self.log_message('\nSolver options:\n',                                              verbose)
+        self.log_message(' Solver             : RungeKutta4',                                verbose)
+        self.log_message(' Solver type        : Adaptive',                                   verbose)
+        self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
+        self.log_message(' Absolute tolerance : ' + str(self.options["atol"]) + '\n', verbose)
     
     
 class RungeKutta4(Explicit_ODE):
@@ -248,7 +255,7 @@ class RungeKutta4(Explicit_ODE):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Solver options
-        self.solver_options["h"] = 0.01
+        self.options["h"] = 0.01
         
         #Internal temporary result vector
         self.Y1 = N.array([0.0]*len(problem.y0))
@@ -260,30 +267,37 @@ class RungeKutta4(Explicit_ODE):
         self.f = problem.rhs_internal
         
         #Solver support
-        self.solver_support["one_step_mode"] = True
+        self.supports["one_step_mode"] = True
         
-    def one_step_mode(self, t, y, tf, initialize, *args):
+    def step(self, t, y, tf, opts):
+        initialize = opts["initialize"]
+        
         if initialize:
-            self.solver_iterator = self.integrator(t,y,tf,*args)
+            self.solver_iterator = self._iter(t,y,tf)
 
         return self.solver_iterator.next()
     
-    def integrator(self, t, y, tf, *args):
+    def integrate(self, t, y, tf, *args):
         """
         Integrates (t,y) values until t > tf
         """
-        h = self.solver_options["h"]
+        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf)))
+        
+        return flags[-1], tlist, ylist
+    
+    def _iter(self,t,y,tf):
+        h = self.options["h"]
         h = min(h, N.abs(tf-t))
         
         while t+h < tf:
-            t, y = self.step(t, y, h)
-            yield ID_OK, t,y
+            t, y = self._step(t, y, h)
+            yield ID_PY_OK, t,y
             h=min(h, N.abs(tf-t))
         else:
-            t, y = self.step(t, y, h)
-            yield ID_COMPLETE, t, y
+            t, y = self._step(t, y, h)
+            yield ID_PY_COMPLETE, t, y
     
-    def step(self, t, y, h):
+    def _step(self, t, y, h):
         """
         This calculates the next step in the integration.
         """
@@ -300,8 +314,8 @@ class RungeKutta4(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.logg_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        self.logg_message(' Step-length          : %s '%(self.solver_options["h"]), verbose)
-        self.logg_message('\nSolver options:\n',                                    verbose)
-        self.logg_message(' Solver            : RungeKutta4',                       verbose)
-        self.logg_message(' Solver type       : Fixed step\n',                      verbose)
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        self.log_message(' Step-length          : %s '%(self.options["h"]), verbose)
+        self.log_message('\nSolver options:\n',                                    verbose)
+        self.log_message(' Solver            : RungeKutta4',                       verbose)
+        self.log_message(' Solver type       : Fixed step\n',                      verbose)
