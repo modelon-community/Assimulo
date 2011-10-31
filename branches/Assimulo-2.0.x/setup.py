@@ -17,6 +17,7 @@ SLUdir = ""
 BLASdir = ""
 BLASname = 'blas'
 BLASname_t = ""
+debug = False
 
 if S.platform == 'win32':
     incdirs = ''
@@ -47,6 +48,11 @@ for x in S.argv[1:]:
         copy_args.remove(x)
     if not x.find('--blas-name'):
         BLASname_t = x[12:]
+        copy_args.remove(x)
+    if not x.find('--debug'):
+        debug = x[8:]
+        if x[8:].upper() == "TRUE":
+            debug = True
         copy_args.remove(x)
     if not x.find('--log'):
         level = x[6:]
@@ -92,12 +98,27 @@ def pre_processing():
 def check_extensions():
     
     #Cythonize main modules
-    ext_list = cythonize(["assimulo/*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()])
+    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+    
+    #Cythonize Euler
+    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+    
     for i in ext_list:
         i.include_dirs = [N.get_include()]
-        i.name = "assimulo."+i.name.split(".")[1]
-        #i.extra_compile_args = ["-O2"]
-        #i.extra_link_args
+        
+        #Debug
+        if debug:
+            i.extra_compile_args = ["-g"]
+            i.extra_link_args = ["-g"]
+        else:
+            i.extra_compile_args = ["-O2"]
+            
+    #If Sundials
+    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"cvode.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
+        ext_list[-1].library_dirs = [libdirs]
+        ext_list[-1].extra_link_args = ["-lsundials_cvodes", "-lsundials_nvecserial"]
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -111,14 +132,15 @@ def check_extensions():
         cordir_kinpinv = O.path.join(O.path.join('assimulo','lib'),'kinpinv.c')
         cordir_kinslug = O.path.join(O.path.join('assimulo','lib'),'kinslug.c')
         cordir_reg_routines = O.path.join(O.path.join('assimulo','lib'),'reg_routines.c')
-        
+        """
         #Add extension for IDAS and CVODES
         ext_list = ext_list + [Extension('assimulo.lib.sundials_core',
                               [cordir],
                               include_dirs=[incdirs, N.get_include()],
                               library_dirs=[libdirs],
                               libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial'])]
-    
+        """
+        """
         wSLU = check_wSLU()
         if wSLU:
             ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
@@ -132,7 +154,7 @@ def check_extensions():
                           include_dirs=[incdirs, N.get_include()],
                           library_dirs=[libdirs],
                           libraries=['sundials_kinsol','sundials_nvecserial'])]
-    
+        """
     return ext_list
 
 def check_wSLU():
@@ -194,7 +216,7 @@ ext_list = check_extensions()
       
 setup(name='Assimulo',
       version='trunk',
-      description='A package for solving ordinary differential equations',
+      description='A package for solving ordinary differential equations and differential algebraic equations.',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',
       url='http://wwww.jmodelica.org/assimulo',

@@ -10,3 +10,9 @@ class DiscardValue(AssimuloException):
 
 class Explicit_ODE_Exception(AssimuloException):
     pass
+    
+class ODE_Exception(AssimuloException):
+    pass
+
+    
+    

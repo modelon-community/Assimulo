@@ -44,41 +44,12 @@ cdef class Explicit_ODE(ODE):
                               of the 'Explicit_Problem' or 'cExplicit_Problem'
                               class.
         """
-        ODE.__init__(self) #Sets general attributes
-        
-        if problem is None:
-            raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem')
+        ODE.__init__(self, problem) #Sets general attributes
         
         if isinstance(problem, Explicit_Problem):
             self.problem = problem
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')
-        
-        if hasattr(problem, 'y0'):
-            problem.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
-        else:
-            raise Explicit_ODE_Exception('y0 must be specified. Either in the problem or in the initialization')
-        
-        if hasattr(problem, "p0"):
-            problem.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
-        
-        if hasattr(problem, "sw0"):
-            problem.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
-        
-        if hasattr(problem, 't0'):
-            problem.t0 = float(problem.t0)
-        else:
-            problem.t0 = 0.0
-        
-        #Check Problem for event functions
-        if hasattr(self.problem, 'time_events'):
-            self.internal_flags["time_events"] = True
-        
-        if hasattr(self.problem, 'state_events'):
-            self.internal_flags["state_events"] = True
-        
-        if hasattr(self.problem, 'step_events'):
-            self.internal_flags["step_events"] = True
         
         self.t_cur = problem.t0
         self.y_cur = problem.y0.copy()
@@ -122,7 +93,7 @@ cdef class Explicit_ODE(ODE):
         self.t_cur = float(t0)
         self.y_cur = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
 
-    def __call__(self, double t0, double tfinal,output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
+    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT, int STEP_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
@@ -150,21 +121,28 @@ cdef class Explicit_ODE(ODE):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
         """
-        cdef double t_logg, tevent
-        cdef int flag
+        cdef double t_log, tevent
+        cdef int flag, output_index
+        cdef dict opts
         
         y0 = self.y_cur
         t_logg = t0
-        
-        #Logg the first point
+
+        #Log the first point
         self.problem.handle_result(self,t0,y0)
-        
+
         #Reinitiate the solver
         flag_initialize = True
 
         #Start flag
         flag = ID_OK
         tevent = tfinal
+        
+        #Internal solver options
+        opts = {}
+        opts["initialize"] = flag_initialize
+        opts["output_list"] = output_list
+        output_index = 0
         
         while flag != ID_COMPLETE or tevent != tfinal:
             
@@ -175,21 +153,23 @@ cdef class Explicit_ODE(ODE):
             else:
                 tevent = tfinal
             
-            
             if ONE_STEP == 1:
-                #Run in One step mode
-                [flag, t, y]         = self.one_step_mode(self.t_cur, self.y_cur, tevent, flag_initialize)
+                #Run in one step mode
+                [flag, t, y]         = self.step(self.t_cur, self.y_cur, tevent, opts)
                 self.t_cur, self.y_cur = t, y.copy()
                 
                 #Store data depending on situation
                 if INTERPOLATE_OUTPUT == 1:
-                    while output_list[output_index] <= t:
-                        self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
+                    try:
+                        while output_list[output_index] <= t:
+                            self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
                         
-                        #Last logging point
-                        t_logg = output_list[output_index]
-                        
-                        output_index = output_index+1 
+                            #Last logging point
+                            t_logg = output_list[output_index]
+                            
+                            output_index = output_index+1
+                    except IndexError:
+                        pass
                 else:
                     self.problem.handle_result(self,t,y)
                     
@@ -202,9 +182,11 @@ cdef class Explicit_ODE(ODE):
                     flag_initialize = False
             else:
                 #Run in Normal mode
-                [flags, tlist, ylist] = zip(*list(self.integrator(self.t_cur, self.y_cur, tevent, flag_initialize, output_list)))
-                flag, self.t_cur, self.y_cur = flags[-1], tlist[-1], ylist[-1].copy()
-
+                #[flags, tlist, ylist] = zip(*list(self.integrator(self.t_cur, self.y_cur, tevent, flag_initialize, output_list)))
+                #flag, self.t_cur, self.y_cur = flags[-1], tlist[-1], ylist[-1].copy()
+                flag, tlist, ylist = self.integrate(self.t_cur, self.y_cur, tevent, opts)
+                self.t_cur, self.y_cur = tlist[-1], ylist[-1].copy()
+                
                 #Store data
                 map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
                 
@@ -220,10 +202,10 @@ cdef class Explicit_ODE(ODE):
                     event_info[0] = self.state_event_info()
                 
                 #Log the information
-                self.logg_event(self.t_cur, event_info, NORMAL)
-                self.logg_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
-                self.logg_message("Current Switches: " + str(self.switches), LOUD)
-                self.logg_message('Event info: ' + str(event_info), LOUD) 
+                self.log_event(self.t_cur, event_info, NORMAL)
+                self.log_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
+                self.log_message("Current Switches: " + str(self.switches), LOUD)
+                self.log_message('Event info: ' + str(event_info), LOUD) 
                 
                 #Print statistics
                 self.print_statistics(LOUD)
@@ -231,14 +213,18 @@ cdef class Explicit_ODE(ODE):
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
                 except TerminateSimulation: #Terminating the simulation after indication from handle event
-                    self.logg_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
+                    self.log_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
                     break
                     
                 flag_initialize = True
             
+            #Update options
+            opts["initialize"] = flag_initialize
+            
             #Logg after the event handling if there was a communication point there.
             if flag_initialize and t_logg == self.t_cur: 
                 self.problem.handle_result(self, self.t_cur, self.y_cur)
+            
         
     
     def plot(self, mask=None, **kwargs):

@@ -34,7 +34,7 @@ class Implicit_ODE_Exception(Exception):
     """An integrator exception"""
     pass 
 
-class Implicit_ODE(ODE):
+cdef class Implicit_ODE(ODE):
     """
     Baseclass for our implicit ODE integrators.
     """
@@ -49,46 +49,17 @@ class Implicit_ODE(ODE):
                             - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
         """
-        ODE.__init__(self) #Sets general attributes
-        
-        if problem == None:
-            raise Implicit_ODE_Exception('Problem cannot be None. It has be a subclass of a Implicit_Problem')
+        ODE.__init__(self, problem) #Sets general attributes
         
         if isinstance(problem, Implicit_Problem):
             self.problem = problem
         else:
             raise Implicit_ODE_Exception('The problem needs to be a subclass of a Implicit_Problem.')
         
-        if hasattr(problem, 'y0'):
-            problem.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
-        else:
-            raise Implicit_ODE_Exception('y0 must be specified. Either in the problem or in the initialization')
-        
         if hasattr(problem, 'yd0'):
             problem.yd0 = N.array(problem.yd0,dtype=realtype) if len(N.array(problem.yd0,dtype=realtype).shape)>0 else N.array([problem.yd0],dtype=realtype)
         else:
             raise Implicit_ODE_Exception("yd0 must be specified. Either in the problem or in the initialization")
-        
-        if hasattr(problem, "p0"):
-            problem.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
-        
-        if hasattr(problem, "sw0"):
-            problem.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
-        
-        if hasattr(problem, 't0'):
-            problem.t0 = float(problem.t0)
-        else:
-            problem.t0 = 0.0
-        
-        #Check Problem for event functions
-        if hasattr(self.problem, 'time_events'):
-            self.internal_flags["time_events"] = True
-        
-        if hasattr(self.problem, 'state_events'):
-            self.internal_flags["state_events"] = True
-        
-        if hasattr(self.problem, 'step_events'):
-            self.internal_flags["step_events"] = True
         
         self.t_cur  = problem.t0
         self.y_cur  = problem.y0.copy()
@@ -97,9 +68,6 @@ class Implicit_ODE(ODE):
         self.t  = []
         self.y  = []
         self.yd = []
-    
-    def _integrator(self, t, y, yd, tf,nt):
-        pass
         
     def reset(self):
         """
@@ -138,8 +106,8 @@ class Implicit_ODE(ODE):
         self.y_cur  = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
         self.yd_cur = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
 
-    def __call__(self, t0, tfinal, output_list, ONE_STEP, INTERPOLATE_OUTPUT,
-                 TIME_EVENT, STEP_EVENT):
+    cdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
+                 int TIME_EVENT, int STEP_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
         
@@ -169,6 +137,7 @@ class Implicit_ODE(ODE):
         y0  = self.y_cur
         yd0 = self.yd_cur
         t_logg = t0
+        output_index = 0
         
         #Logg the first point
         self.problem.handle_result(self,t0,y0,yd0)
@@ -234,10 +203,10 @@ class Implicit_ODE(ODE):
                     event_info[0] = self.state_event_info()
                 
                 #Log the information
-                self.logg_event(self.t_cur, event_info, NORMAL)
-                self.logg_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
-                self.logg_message("Current Switches: " + str(self.switches), LOUD)
-                self.logg_message('Event info: ' + str(event_info), LOUD) 
+                self.log_event(self.t_cur, event_info, NORMAL)
+                self.log_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
+                self.log_message("Current Switches: " + str(self.switches), LOUD)
+                self.log_message('Event info: ' + str(event_info), LOUD) 
                 
                 #Print statistics
                 self.print_statistics(LOUD)
@@ -245,7 +214,7 @@ class Implicit_ODE(ODE):
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
                 except TerminateSimulation: #Terminating the simulation after indication from handle event
-                    self.logg_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
+                    self.log_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
                     break
                     
                 flag_initialize = True

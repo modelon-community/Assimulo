@@ -26,7 +26,7 @@ http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 
 from __future__ import division
 
-include "sundials_kinsol_core.pxd" # Includes fcts from other header files
+include "sundials_kinsol_includes.pxi" # Includes fcts from other header files
 include "sundials_kinsol_core.pxi" # Includes the constants (textual include)
 
 cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
