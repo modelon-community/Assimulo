@@ -20,7 +20,7 @@ import nose
 from assimulo.solvers.radau5 import *
 from assimulo.problem import Explicit_Problem, Implicit_Problem
 
-def run_example_explicit():
+def run_example_explicit(with_plots=True):
     
     #Define the rhs
     def f(t,y):
@@ -49,12 +49,14 @@ def run_example_explicit():
     exp_sim.simulate(2.) #Simulate 2 seconds
     
     #Plot
-    exp_sim.plot(mask=[1,0],marker='o') #Plot the solution
+    if with_plots:
+        exp_sim.plot(mask=[1,0],marker='o') #Plot the solution
     
+    #Basic test
     x1 = N.array(exp_sim.y)[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
 
-def run_example_implicit():
+def run_example_implicit(with_plots=True):
     
     #Define the residual
     def f(t,y,yd):
@@ -87,8 +89,10 @@ def run_example_implicit():
     imp_sim.simulate(2.) #Simulate 2 seconds
     
     #Plot
-    imp_sim.plot(mask=[1,0],marker='o') #Plot the solution
+    if with_plots:
+        imp_sim.plot(mask=[1,0],marker='o') #Plot the solution
     
+    #Basic test
     x1 = N.array(imp_sim.y)[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
 

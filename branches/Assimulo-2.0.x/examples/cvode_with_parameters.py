@@ -16,10 +16,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import nose
 from assimulo.solvers.sundials import CVode
 from assimulo.problem import Explicit_Problem
 
-def run_example():
+def run_example(with_plots=True):
     #This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
     #----
     #This simple example problem for CVode, due to Robertson, 
@@ -41,11 +42,9 @@ def run_example():
     def handle_result(solver, t ,y):
         solver.t += [t]
         solver.y += [y]
-        #if len(solver.t) !=1:
-        print solver.interpolate_sensitivity(t, 0, 0)
-            #solver.p1 += [solver.interpolate_sensitivity(t, 0, 0)]
-            #solver.p2 += [solver.interpolate_sensitivity(t, 0, 1)]
-            #solver.p3 += [solver.interpolate_sensitivity(t, 0, 2)]
+        solver.p[0] += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p[1] += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p[2] += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #The initial conditions
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
@@ -67,19 +66,22 @@ def run_example():
     exp_sim.discr = 'BDF'
     exp_sim.rtol = 1.e-4
     exp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
-    #exp_sim.pbar = exp_mod.p0 #pbar is used to estimate the tolerances for the parameters
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
-    exp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
+    exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
     exp_sim.options["continuous_output"] = True
-    #exp_sim.p1 = [] #Vector for storing the p1 result
-    #exp_sim.p2 = [] #Vector for storing the p2 result
-    #exp_sim.p3 = [] #Vector for storing the p3 result
+    exp_sim.p = [[],[],[]] #Vector for storing the p result
     
     #Simulate
-    exp_sim.simulate(4,40) #Simulate 4 seconds with 400 communication points
+    exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
+    
+    #Basic test
+    nose.tools.assert_almost_equal(exp_sim.y[-1][0], 9.05518032e-01, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][1], 2.24046805e-05, 4)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][2], 9.44595637e-02, 4)
     
     #Plot
-    exp_sim.plot() #Plot the solution
+    if with_plots:
+        exp_sim.plot() #Plot the solution
     
     
 

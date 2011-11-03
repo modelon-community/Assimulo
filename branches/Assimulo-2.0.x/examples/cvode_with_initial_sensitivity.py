@@ -17,6 +17,7 @@
 
 import numpy as N
 import pylab as P
+import nose
 from assimulo.solvers.sundials import CVode
 from assimulo.problem import Explicit_Problem
 
@@ -89,6 +90,12 @@ def run_example(with_plots=True):
     #Simulate
     exp_sim.simulate(400) #Simulate 400 seconds
     
+    #Basic test
+    nose.tools.assert_almost_equal(exp_sim.y[-1][0], 1577.6552477, 5)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][1], 611.9574565, 5)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][2], 2215.88563217, 5)
+    nose.tools.assert_almost_equal(exp_sim.p[0][1][0], 1.0)
+
     #Plot
     if with_plots:
         P.figure(1)

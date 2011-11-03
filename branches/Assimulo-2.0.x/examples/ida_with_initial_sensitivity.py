@@ -89,6 +89,12 @@ def run_example(with_plots=True):
     #Simulate
     imp_sim.simulate(400) #Simulate 400 seconds
     
+    #Basic test
+    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 1577.6552477,3)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][1], 611.9574565, 3)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][2], 2215.88563217, 3)
+    nose.tools.assert_almost_equal(imp_sim.p[0][1][0], 1.0)
+    
     #Plot
     if with_plots:
         P.figure(2)
