@@ -132,7 +132,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
-     
+    
     if pData.dimSens!=0: #SENSITIVITY 
         p = realtype2arr(pData.p,pData.dimSens)
         try:
@@ -146,7 +146,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
 
             return IDA_SUCCESS
-        except(N.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             print "Unexpected error, probably due to a programing error in rhs/res function:\n"
@@ -165,7 +165,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
             
             return IDA_SUCCESS
-        except(N.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             print "Unexpected error, probably due to a programing error in rhs/res function:\n"
@@ -211,13 +211,13 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
     cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray yd = nv2arr(yvdot)
-     
+    
     try:
         if pData.sw != NULL:
             root=(<object>pData.ROOT)(t,y,yd,<list>pData.sw)  #Call to the Python root function
         else:
             root=(<object>pData.ROOT)(t,y,yd,None)  #Call to the Python root function
-        
+    
         #memcpy(gout,<realtype*>root.data,pData.memSizeRoot) #Copy data from the return to the output
         for i in range(pData.dimRoot):
             gout[i]=root[i]
@@ -269,6 +269,7 @@ cdef class ProblemData:
         void *yd           #Temporary storage for the derivatives
         void *sw           #Storage for the switches
         realtype *p            #Storage for the parameters
+        realtype *pbar
         int dim            #Dimension of the problem
         int dimRoot        #Dimension of the roots
         int dimSens        #Dimension of the parameters (For sensitivity)
@@ -276,7 +277,6 @@ cdef class ProblemData:
         int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
         int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
         int verbose        #Defines the verbosity
-        void *data         #To be removed.
         
 #=================
 # Module functions

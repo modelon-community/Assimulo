@@ -108,17 +108,21 @@ def check_extensions():
         
         #Debug
         if debug:
-            i.extra_compile_args = ["-g"]
+            i.extra_compile_args = ["-g","-fno-strict-aliasing"]
             i.extra_link_args = ["-g"]
         else:
-            i.extra_compile_args = ["-O2"]
+            i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
             
     #If Sundials
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"cvode.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug)
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].extra_link_args = ["-lsundials_cvodes", "-lsundials_nvecserial"]
+        ext_list[-1].extra_link_args = ["-lsundials_cvodes", "-lsundials_nvecserial", "-lsundials_idas"]
+        if debug:
+            ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
+        else:
+            ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):

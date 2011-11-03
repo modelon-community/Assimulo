@@ -20,6 +20,8 @@ import numpy as N
 from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
+from assimulo.exception import *
+
 class RungeKutta34(Explicit_ODE):
     """
     Adaptive Runge-Kutta of order four.
@@ -277,7 +279,7 @@ class RungeKutta4(Explicit_ODE):
 
         return self.solver_iterator.next()
     
-    def integrate(self, t, y, tf, *args):
+    def integrate(self, t, y, tf, opts):
         """
         Integrates (t,y) values until t > tf
         """

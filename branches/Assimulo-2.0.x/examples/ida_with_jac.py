@@ -1,8 +1,26 @@
-import numpy as N
-from assimulo.implicit_ode import IDA
-from assimulo.problem import Implicit_Problem
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
 
-def run_example():
+# Copyright (C) 2011 Modelon AB
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+import numpy as N
+from assimulo.solvers.sundials import IDA
+from assimulo.problem import Implicit_Problem
+import nose
+
+def run_example(with_plots=True):
     
     #Defines the residual
     def f(t,y,yd):
@@ -43,21 +61,20 @@ def run_example():
         
         return jacobian
         
-    #Create an Assimulo implicit problem
-    imp_mod = Implicit_Problem()
-    
-    #Sets the options to the problem
-    imp_mod.f = f #Sets the residual function
-    imp_mod.jac = jac #Sets the jacobian
-    imp_mod.algvar = [1.0,1.0,1.0,1.0,0.0] #Set the algebraic components
-    imp_mod.problem_name = 'Test Jacobian'
-
     #The initial conditons
     y0 = [1.0,0.0,0.0,0.0,5] #Initial conditions
     yd0 = [0.0,0.0,0.0,-9.82,0.0] #Initial conditions
     
+    #Create an Assimulo implicit problem
+    imp_mod = Implicit_Problem(f,y0,yd0)
+    
+    #Sets the options to the problem
+    imp_mod.jac = jac #Sets the jacobian
+    imp_mod.algvar = [1.0,1.0,1.0,1.0,0.0] #Set the algebraic components
+    imp_mod.name = 'Test Jacobian'
+    
     #Create an Assimulo implicit solver (IDA)
-    imp_sim = IDA(imp_mod,y0,yd0) #Create a IDA solver
+    imp_sim = IDA(imp_mod) #Create a IDA solver
     
     #Sets the paramters
     imp_sim.atol = 1e-6 #Default 1e-6
@@ -65,13 +82,18 @@ def run_example():
     imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
     
     #Let Sundials find consistent initial conditions by use of 'IDA_YA_YDP_INIT'
-    imp_sim.make_consistency('IDA_YA_YDP_INIT')
+    imp_sim.make_consistent('IDA_YA_YDP_INIT')
     
     #Simulate
     imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     
+    #Basic tests
+    nose.tools.assert_almost_equal(imp_sim.y[-1][0],0.9401995)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][1],-0.34095124)
+    
     #Plot
-    imp_sim.plot() #Plot the solution
+    if with_plots:
+        imp_sim.plot() #Plot the solution
 
 
 if __name__=='__main__':

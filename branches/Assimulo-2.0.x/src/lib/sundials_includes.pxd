@@ -280,6 +280,7 @@ cdef extern from "idas/idas.h":
     int IDAGetNumErrTestFails(void *ida_mem, long int *netfails)        #Number of local error test failures
     int IDAGetNumNonlinSolvIters(void *ida_mem, long int *nniters)      #Number of nonlinear iteration
     int IDAGetNumNonlinSolvConvFails(void *ida_mem, long int *nncfails) #Number of nonlinear conv failures
+    int IDAGetNonlinSolvStats(void *ida_mem, long int *nniters, long int *nncfails)
     int IDAGetIntegratorStats(void* ida_mem,long int  *nsteps, long int *nrevals, 
                             long int *nlinsetups, long int *netfails, int *klast, 
                             int *kcur, realtype *hinused, realtype *hlast, 

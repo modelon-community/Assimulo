@@ -10,11 +10,13 @@ cdef class ODE:
     cdef public object problem
     
     cdef public double t_cur
-    cdef public N.ndarray y_cur,yd_cur
+    cdef public N.ndarray y_cur,yd_cur, p_cur
     
-    cdef public list t,y,yd
+    cdef public list t,y,yd,p,sw_cur
         
     cpdef log_message(self, message, int level)
     cpdef log_event(self, double time, object event_info, int level)
     cpdef simulate(self, double tfinal, int ncp=*, object ncp_list=*)
     cpdef get_options(self)
+    cpdef finalize(self)
+    cpdef initialize(self)

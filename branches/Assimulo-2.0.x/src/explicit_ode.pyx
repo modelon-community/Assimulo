@@ -51,6 +51,10 @@ cdef class Explicit_ODE(ODE):
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')
         
+        #Check the dimension of the state event function
+        if self.problem_info["state_events"]:
+            self.problem_info["dimRoot"] = len(problem.state_events(problem.t0,problem.y0, problem.sw0))
+        
         self.t_cur = problem.t0
         self.y_cur = problem.y0.copy()
         
@@ -142,13 +146,14 @@ cdef class Explicit_ODE(ODE):
         opts = {}
         opts["initialize"] = flag_initialize
         opts["output_list"] = output_list
+        opts["output_index"] = 0
         output_index = 0
         
         while flag != ID_COMPLETE or tevent != tfinal:
             
             #Time event function is specified.
             if TIME_EVENT == 1:
-                tevent = self.problem.time_events(self.t_cur, self.y_cur, self.switches)
+                tevent = self.problem.time_events(self.t_cur, self.y_cur, self.sw_cur)
                 tevent = tfinal if tevent is None else (tevent if tevent < tfinal else tfinal)
             else:
                 tevent = tfinal
@@ -182,8 +187,6 @@ cdef class Explicit_ODE(ODE):
                     flag_initialize = False
             else:
                 #Run in Normal mode
-                #[flags, tlist, ylist] = zip(*list(self.integrator(self.t_cur, self.y_cur, tevent, flag_initialize, output_list)))
-                #flag, self.t_cur, self.y_cur = flags[-1], tlist[-1], ylist[-1].copy()
                 flag, tlist, ylist = self.integrate(self.t_cur, self.y_cur, tevent, opts)
                 self.t_cur, self.y_cur = tlist[-1], ylist[-1].copy()
                 
@@ -204,7 +207,7 @@ cdef class Explicit_ODE(ODE):
                 #Log the information
                 self.log_event(self.t_cur, event_info, NORMAL)
                 self.log_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
-                self.log_message("Current Switches: " + str(self.switches), LOUD)
+                self.log_message("Current Switches: " + str(self.sw_cur), LOUD)
                 self.log_message('Event info: ' + str(event_info), LOUD) 
                 
                 #Print statistics
@@ -224,8 +227,6 @@ cdef class Explicit_ODE(ODE):
             #Logg after the event handling if there was a communication point there.
             if flag_initialize and t_logg == self.t_cur: 
                 self.problem.handle_result(self, self.t_cur, self.y_cur)
-            
-        
     
     def plot(self, mask=None, **kwargs):
         """
