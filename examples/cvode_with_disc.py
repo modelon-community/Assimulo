@@ -49,10 +49,7 @@ class Extended_Problem(Explicit_Problem):
         yd_0 = (1.0 if sw[0] else -1.0)
         yd_1 = 0.0
         yd_2 = 0.0
-        #res_0 = -yd[0] + (1.0 if sw[0] else -1.0)
-        #res_1 = -y[1] + (-1.0 if sw[1] else 3.0)
-        #res_2 = -y[2] + (0.0 if sw[2] else 2.0)
-        
+
         return N.array([yd_0,yd_1,yd_2])
 
     #Sets a name to our function

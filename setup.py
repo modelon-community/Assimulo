@@ -74,16 +74,19 @@ def pre_processing():
     create_dir(O.path.join("build","assimulo"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"lib"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"solvers"))
+    create_dir(O.path.join(O.path.join("build","assimulo"),"examples"))
     
-    fileSrc    = O.listdir("src")
-    fileLib    = O.listdir(O.path.join("src","lib"))
-    fileSolvers= O.listdir(O.path.join("src","solvers"))
+    fileSrc     = O.listdir("src")
+    fileLib     = O.listdir(O.path.join("src","lib"))
+    fileSolvers = O.listdir(O.path.join("src","solvers"))
+    fileExamples= O.listdir("examples")
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
     desSrc = O.path.join(curdir,O.path.join("build","assimulo"))
     desLib = O.path.join(curdir,O.path.join(O.path.join("build","assimulo"),"lib"))
     desSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"solvers")
+    desExamples = O.path.join(curdir,O.path.join("build","assimulo"),"examples")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -94,6 +97,9 @@ def pre_processing():
     for f in fileSolvers:
         if not O.path.isdir(O.path.join(O.path.join("src","solvers"),f)):
             SH.copy2(O.path.join(O.path.join("src","solvers"),f), desSolvers)
+    for f in fileExamples:
+        if not O.path.isdir(O.path.join("examples",f)):
+            SH.copy2(O.path.join("examples",f), desExamples)
 
 def check_extensions():
     
@@ -225,7 +231,7 @@ setup(name='Assimulo',
       author_email='claus@maths.lth.se chria@kth.se',
       url='http://wwww.jmodelica.org/assimulo',
       package_dir = {'assimulo':'assimulo'},
-      packages=['assimulo', 'assimulo.lib','assimulo.solvers'],
+      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples'],
       cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
       script_args=copy_args)

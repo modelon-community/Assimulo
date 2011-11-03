@@ -149,7 +149,6 @@ def run_example(with_plots=True):
     if with_plots:
         iter_sim.plot()
     
-    
 if __name__=="__main__":
     run_example()
     

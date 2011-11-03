@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import nose
 from assimulo.solvers.sundials import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -65,7 +66,6 @@ def run_example(with_plots=True):
     imp_sim.suppress_alg = False #Suppres the algebraic variables on the error test
     imp_sim.continuous_output = True #Store data continuous during the simulation
     imp_sim.pbar = p0
-    
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
     imp_sim.p = [[],[],[]] #Vector for storing the p result
     
@@ -74,6 +74,11 @@ def run_example(with_plots=True):
     
     #Simulate
     imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
+    
+    #Basic test
+    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 9.05518032e-01, 4)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][1], 2.24046805e-05, 4)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][2], 9.44595637e-02, 4)
     
     #Plot
     if with_plots:
