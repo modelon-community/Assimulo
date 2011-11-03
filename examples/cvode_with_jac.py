@@ -1,9 +1,27 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2011 Modelon AB
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as N
-from assimulo.solvers.cvode import CVode
+import nose
+from assimulo.solvers.sundials import CVode
 from assimulo.problem import Explicit_Problem
 
 
-def run_example():
+def run_example(with_plots=True):
     
     #Defines the rhs
     def f(t,y):
@@ -29,17 +47,21 @@ def run_example():
     exp_sim = CVode(exp_mod) #Create a CVode solver
     
     #Set the parameters
-    exp_sim.options["iter"] = 'Newton' #Default 'FixedPoint'
-    exp_sim.options["discr"] = 'BDF' #Default 'Adams'
-    exp_sim.options["atol"] = [1e-4, 1e-4] #Default 1e-6
-    exp_sim.options["rtol"] = 1e-4 #Default 1e-6
-    #exp_sim.options["continuous_output"] = True
-    exp_sim.options["usejac"] = False
+    exp_sim.iter = 'Newton' #Default 'FixedPoint'
+    exp_sim.discr = 'BDF' #Default 'Adams'
+    exp_sim.atol = 1e-4 #Default 1e-6
+    exp_sim.rtol = 1e-4 #Default 1e-6
+    
     #Simulate
     exp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
+    
+    #Basic tests
+    nose.tools.assert_almost_equal(exp_sim.y[-1][0],-121.75017042)
+    nose.tools.assert_almost_equal(exp_sim.y[-1][1],-49.100000000)
         
     #Plot
-    exp_sim.plot(linestyle="dashed",marker="o") #Plot the solution
+    if with_plots:
+        exp_sim.plot(linestyle="dashed",marker="o") #Plot the solution
 
 
 if __name__=='__main__':

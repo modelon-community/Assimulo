@@ -1,5 +1,23 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2011 Modelon AB
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as N
-from assimulo.implicit_ode import IDA
+import nose
+from assimulo.solvers.sundials import IDA
 from assimulo.problem import Implicit_Problem
 
 """
@@ -19,7 +37,7 @@ class Extended_Problem(Implicit_Problem):
     #Sets the initial conditons directly into the problem
     y0 = [0.0, -1.0, 0.0]
     yd0 = [-1.0, 0.0, 0.0]
-    switches0 = [False,True,True]
+    sw0 = [False,True,True]
     algvar = [1.0, 0.0, 0.0] #Determine which variables are differential and algebraic
     
     
@@ -38,7 +56,7 @@ class Extended_Problem(Implicit_Problem):
         return N.array([res_0,res_1,res_2])
 
     #Sets a name to our function
-    problem_name = 'Function with consistency problem'
+    name = 'Function with consistency problem'
     
     #The event function
     def state_events(self,t,y,yd,sw):
@@ -63,14 +81,11 @@ class Extended_Problem(Implicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
+            b_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.sw_cur)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.switches)
+            a_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.sw_cur)
             
             event_info = self.check_eIter(b_mode, a_mode)
-            
-            if solver.verbosity >= solver.SCREAM:
-                print 'Event iteration?: ', event_info
                 
             if not True in event_info: #Breaks the iteration loop
                 break
@@ -82,11 +97,8 @@ class Extended_Problem(Implicit_Problem):
         """
         for i in range(len(event_info)): #Loop across all event functions
             if event_info[i] != 0:
-                solver.switches[i] = not solver.switches[i] #Turn the switch
+                solver.sw_cur[i] = not solver.sw_cur[i] #Turn the switch
         
-        if solver.verbosity >= solver.LOUD:
-            print 'New switches: ', solver.switches
-    
     #Helper function for handle_event
     def check_eIter(self, before, after):
         """
@@ -115,19 +127,27 @@ class Extended_Problem(Implicit_Problem):
 
 
 
-def run_example():
+def run_example(with_plots=True):
     
     #Create an instance of the problem
     iter_mod = Extended_Problem() #Create the problem
-    
+
     iter_sim = IDA(iter_mod) #Create the solver
-    iter_sim.verbosity = iter_sim.SCREAM #Set the verbosity (used for specifying the output level)
+    
+    iter_sim.verbosity = 0
+    iter_sim.continuous_output = True
     
     #Simulate
     iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
-
+    
+    #Basic test
+    nose.tools.assert_almost_equal(iter_sim.y[-1][0],8.0)
+    nose.tools.assert_almost_equal(iter_sim.y[-1][1],3.0)
+    nose.tools.assert_almost_equal(iter_sim.y[-1][2],2.0)
+    
     #Plot
-    iter_sim.plot()
+    if with_plots:
+        iter_sim.plot()
     
     
 if __name__=="__main__":

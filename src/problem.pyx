@@ -53,12 +53,18 @@ cdef class cProblem:
 
 cdef class cImplicit_Problem(cProblem):
     
-    def __init__(self, object f=None, y0=None, yd0=None,double t0=0.0):
+    def __init__(self, object f=None, y0=None, yd0=None,double t0=0.0, p0=None):
         
-        self.f   = f
-        self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
-        self.yd0 = None if yd0 is None else (N.array(yd0,dtype=realtype) if len(N.array(yd0,dtype=realtype).shape)>0 else N.array([yd0],dtype=realtype))
+        if f!=None:
+            self.f   = f
+        if y0!=None:
+            self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
+        if yd0!=None:
+            self.yd0 = None if yd0 is None else (N.array(yd0,dtype=realtype) if len(N.array(yd0,dtype=realtype).shape)>0 else N.array([yd0],dtype=realtype))
+        if p0!=None:
+            self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
         self.t0  = t0
+        
         
         #Switches for discontinuities 
         pass
@@ -77,11 +83,15 @@ cdef class cImplicit_Problem(cProblem):
         return ID_OK
     
 cdef class cExplicit_Problem(cProblem):
-
-    def __init__(self, object f=None, y0=None,double t0=0.0):
+    
+    def __init__(self, object f=None, y0=None,double t0=0.0, p0=None):
         
-        self.f   = f
-        self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
+        if f!=None:
+            self.f   = f
+        if y0!=None:
+            self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
+        if p0!=None:
+            self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
         self.t0  = t0
     
     cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):

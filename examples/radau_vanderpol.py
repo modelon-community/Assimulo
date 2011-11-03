@@ -1,7 +1,24 @@
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2011 Modelon AB
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as N
-from assimulo.explicit_ode import Radau5 as Radau5Exp
+import nose
+from assimulo.solvers.radau5 import *
 from assimulo.problem import Explicit_Problem, Implicit_Problem
-from assimulo.implicit_ode import Radau5 as Radau5Imp
 
 def run_example_explicit():
     
@@ -14,14 +31,14 @@ def run_example_explicit():
         
         return N.array([yd_0,yd_1])
     
+    y0 = [2.0,-0.6] #Initial conditions
+    
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem()
-    exp_mod.f = f
-    exp_mod.problem_name = 'Van der Pol (explicit)'
+    exp_mod = Explicit_Problem(f,y0)
+    exp_mod.name = 'Van der Pol (explicit)'
     
     #Define an explicit solver
-    y0 = [2.0,-0.6] #Initial conditions
-    exp_sim = Radau5Exp(exp_mod,y0) #Create a Radau5 solver
+    exp_sim = Radau5ODE(exp_mod) #Create a Radau5 solver
     
     #Sets the parameters
     exp_sim.atol = 1e-4 #Default 1e-6
@@ -50,16 +67,16 @@ def run_example_implicit():
         res_1 = yd[1]-yd_1
         
         return N.array([res_0,res_1])
-        
-    #Define an Assimulo problem
-    imp_mod = Implicit_Problem()
-    imp_mod.f = f
-    imp_mod.problem_name = 'Van der Pol (implicit)'
     
-    #Define an explicit solver
     y0 = [2.0,-0.6] #Initial conditions
     yd0 = [-.6,-200000.]
-    imp_sim = Radau5Imp(imp_mod,y0,yd0) #Create a Radau5 solver
+    
+    #Define an Assimulo problem
+    imp_mod = Implicit_Problem(f,y0,yd0)
+    imp_mod.name = 'Van der Pol (implicit)'
+    
+    #Define an explicit solver
+    imp_sim = Radau5DAE(imp_mod) #Create a Radau5 solver
     
     #Sets the parameters
     imp_sim.atol = 1e-4 #Default 1e-6

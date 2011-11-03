@@ -14,5 +14,6 @@ class Explicit_ODE_Exception(AssimuloException):
 class ODE_Exception(AssimuloException):
     pass
 
-    
+class Implicit_ODE_Exception(AssimuloException):
+    pass    
     
