@@ -87,7 +87,7 @@ cdef class ODE:
             self.problem_info["jacv_fcn"] = True
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
-        return simulate(tfinal, ncp, cpts)
+        return self.simulate(tfinal, ncp, cpts)
         
     cpdef simulate(self, double tfinal, int ncp=0, object ncp_list=None):
         """
@@ -205,7 +205,10 @@ cdef class ODE:
         pass
     
     def _set_verbosity(self, verb):
-        self.options["verbosity"] = int(verb)
+        try:
+            self.options["verbosity"] = int(verb)
+        except:
+            raise AssimuloException("Verbosity must be an integer.")
     
     def _get_verbosity(self):
         """

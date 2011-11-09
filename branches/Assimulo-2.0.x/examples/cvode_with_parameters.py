@@ -78,6 +78,9 @@ def run_example(with_plots=True):
     nose.tools.assert_almost_equal(exp_sim.y[-1][0], 9.05518032e-01, 4)
     nose.tools.assert_almost_equal(exp_sim.y[-1][1], 2.24046805e-05, 4)
     nose.tools.assert_almost_equal(exp_sim.y[-1][2], 9.44595637e-02, 4)
+    nose.tools.assert_almost_equal(exp_sim.p[0][-1][0], -1.8761, 2) #Values taken from the example in Sundials
+    nose.tools.assert_almost_equal(exp_sim.p[1][-1][0], 2.9614e-06, 8)
+    nose.tools.assert_almost_equal(exp_sim.p[2][-1][0], -4.9334e-10, 12)
     
     #Plot
     if with_plots:

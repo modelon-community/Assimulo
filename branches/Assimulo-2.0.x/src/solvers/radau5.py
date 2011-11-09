@@ -113,10 +113,15 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Solver support
         self.supports["one_step_mode"] = True
-        self.supports["interpolated_outputs"] = True
+        self.supports["interpolated_output"] = True
         
         # - Retrieve the Radau5 parameters
         self._load_parameters() #Set the Radau5 parameters
+    
+    def initialize(self):
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
     
     def step(self, t, y, tf, opts):
         
@@ -438,7 +443,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._needjac = False #A new jacobian is not needed
         
         if self.usejac: #Retrieve the user-defined jacobian
-            cjac = self._problem.jac(t,y)
+            cjac = self.problem.jac(t,y)
         else:           #Calculate a numeric jacobian
             delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
             Fdelt = N.array([self.problem.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 
@@ -575,7 +580,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
         self.options["maxh"]     = N.inf #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6 #Absolute tolerance
+        self.options["atol"]     = N.array([1.0e-6]*self._leny) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["index"]    = N.array([1]*self._leny+[2]*self._leny)
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
@@ -619,7 +624,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         #Solver support
         self.supports["one_step_mode"] = True
-        self.supports["interpolated_outputs"] = True
+        self.supports["interpolated_output"] = True
         
         # - Retrieve the Radau5 parameters
         self._load_parameters() #Set the Radau5 parameters
@@ -663,6 +668,11 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         return self.options["index"]
         
     index = property(_get_index,_set_index)
+    
+    def initialize(self):
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
     
     def step(self, t, y, yd, tf, opts):
         
@@ -960,7 +970,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         q = N.append(y,yd)
         
         if self.usejac: #Retrieve the user-defined jacobian
-            cjac = self._problem.jac(t,y,yd)
+            cjac = self.problem.jac(t,y,yd)
         else:           #Calculate a numeric jacobian
             delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in q])*N.identity(self._2leny) #Calculate a disturbance
             Fdelt = N.array([self._ode_f(t,q+e) for e in delt]) #Add the disturbance (row by row) 
