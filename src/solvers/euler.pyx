@@ -20,6 +20,7 @@ import numpy as N
 
 #from assimulo.ode import *
 from assimulo.explicit_ode cimport Explicit_ODE
+from assimulo.exception import *
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -85,6 +86,31 @@ cdef class ExplicitEuler(Explicit_ODE):
         """
         self.f(self.yd1,t,y) #The output is stored in yd
         return t + h, y + h*self.yd1
+        
+    def _set_h(self,h):
+        try:
+            self.options["h"] = float(h)
+        except:
+            raise AssimuloException("Step-size must be a (scalar) float.")
+    
+    def _get_h(self):
+        """
+        Defines the step-size that is to be used by the solver.
+        
+            Parameters::
+            
+                maxh    
+                        - Default '0.01'.
+                          
+                        - Should be a float.
+                        
+                            Example:
+                                maxh = 0.01
+                                
+        """
+        return self.options["h"]
+        
+    h=property(_get_h,_set_h)
         
     def print_statistics(self, verbose=NORMAL):
         """

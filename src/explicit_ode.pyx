@@ -149,12 +149,12 @@ cdef class Explicit_ODE(ODE):
         opts["output_index"] = 0
         output_index = 0
         
-        while flag != ID_COMPLETE or tevent != tfinal:
+        while (flag == ID_COMPLETE and tevent == tfinal) is False:
             
             #Time event function is specified.
             if TIME_EVENT == 1:
-                tevent = self.problem.time_events(self.t_cur, self.y_cur, self.sw_cur)
-                tevent = tfinal if tevent is None else (tevent if tevent < tfinal else tfinal)
+                tret = self.problem.time_events(self.t_cur, self.y_cur, self.sw_cur)
+                tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
             
@@ -212,13 +212,13 @@ cdef class Explicit_ODE(ODE):
                 
                 #Print statistics
                 self.print_statistics(LOUD)
-
+                
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
                 except TerminateSimulation: #Terminating the simulation after indication from handle event
                     self.log_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
                     break
-                    
+                
                 flag_initialize = True
             
             #Update options
@@ -227,6 +227,7 @@ cdef class Explicit_ODE(ODE):
             #Logg after the event handling if there was a communication point there.
             if flag_initialize and t_logg == self.t_cur: 
                 self.problem.handle_result(self, self.t_cur, self.y_cur)
+            
     
     def plot(self, mask=None, **kwargs):
         """

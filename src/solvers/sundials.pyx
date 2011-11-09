@@ -48,7 +48,7 @@ cdef class IDA(Implicit_ODE):
     cdef N_Vector *ySO
     cdef N_Vector *ydSO
     cdef object f
-    cdef dict statistics
+    cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
     cdef public N.ndarray yS0
     
@@ -105,6 +105,8 @@ cdef class IDA(Implicit_ODE):
         #Get options from Problem
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
+        elif hasattr(problem, 'p0'):
+            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.problem.p0])
         if hasattr(problem, 'algvar'):
             self.algvar = problem.algvar
         if hasattr(problem, 'yS0'):
@@ -716,6 +718,8 @@ cdef class IDA(Implicit_ODE):
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise Exception("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<0.0).any():
+            raise Exception("atol must be positive.")
     
     def _get_atol(self):
         """
@@ -744,7 +748,7 @@ cdef class IDA(Implicit_ODE):
         try:
             rtol = float(rtol)
         except (ValueError, TypeError):
-            Exception('Relative tolerance must be a (scalar) float.')
+            raise Exception('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
             raise Exception('Relative tolerance must be a positive (scalar) float.')
         
@@ -1034,6 +1038,8 @@ cdef class IDA(Implicit_ODE):
             self.options["dqrhomax"] = float(dqrhomax)
         except (TypeError, ValueError):
             raise Exception('DQrhomax must be convertable to a float.')
+        if self.options["dqrhomax"] < 0.0:
+            raise Exception("DQrhomax must be positive.")
             
     def _get_dqrhomax(self):
         """
@@ -1166,7 +1172,7 @@ cdef class CVode(Explicit_ODE):
     cdef N_Vector yTemp, ydTemp
     cdef N_Vector *ySO
     cdef object f
-    cdef dict statistics
+    cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
     cdef public N.ndarray yS0
     
@@ -1226,6 +1232,8 @@ cdef class CVode(Explicit_ODE):
         #Get options from Problem
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
+        elif hasattr(problem, 'p0'):
+            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.problem.p0])
         if hasattr(problem, 'yS0'):
             self.yS0 = problem.yS0
     
@@ -1728,6 +1736,8 @@ cdef class CVode(Explicit_ODE):
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise Exception("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<0.0).any():
+            raise Exception("atol must be positive.")
     
     def _get_atol(self):
         """
@@ -1756,7 +1766,7 @@ cdef class CVode(Explicit_ODE):
         try:
             rtol = float(rtol)
         except (ValueError, TypeError):
-            Exception('Relative tolerance must be a (scalar) float.')
+            raise Exception('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
             raise Exception('Relative tolerance must be a positive (scalar) float.')
         
@@ -2092,6 +2102,8 @@ cdef class CVode(Explicit_ODE):
             self.options["dqrhomax"] = float(dqrhomax)
         except (TypeError, ValueError):
             raise Exception('DQrhomax must be convertable to a float.')
+        if self.options["dqrhomax"] < 0.0:
+            raise Exception("DQrhomax must be positive.")
             
     def _get_dqrhomax(self):
         """

@@ -164,12 +164,12 @@ cdef class Implicit_ODE(ODE):
         output_index = 0
         
 
-        while flag != ID_COMPLETE or tevent != tfinal:
+        while (flag == ID_COMPLETE and tevent == tfinal) is False:
 
             #Time event function is specified.
             if  TIME_EVENT == 1:
-                tevent = self.problem.time_events(self.t_cur, self.y_cur, self.yd_cur, self.sw_cur)
-                tevent = tfinal if tevent is None else (tevent if tevent < tfinal else tfinal)
+                tret = self.problem.time_events(self.t_cur, self.y_cur, self.yd_cur, self.sw_cur)
+                tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
             

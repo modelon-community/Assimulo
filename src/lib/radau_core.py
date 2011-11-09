@@ -70,7 +70,7 @@ class Radau_Common(object):
         Plots the step-size.
         """
         P.semilogy(N.diff(self.t),drawstyle='steps-post')
-        P.title(self.problem_name)
+        P.title(self.problem.name)
         P.ylabel('Step length')
         P.xlabel('Number of steps')
         P.show()

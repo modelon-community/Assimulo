@@ -88,8 +88,10 @@ def run_example(with_plots=True):
     imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    nose.tools.assert_almost_equal(imp_sim.y[-1][0],0.9401995)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][1],-0.34095124)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][0],0.9401995, places=4)
+    nose.tools.assert_almost_equal(imp_sim.y[-1][1],-0.34095124, places=4)
+    nose.tools.assert_almost_equal(imp_sim.yd[-1][0], -0.88198927, places=4)
+    nose.tools.assert_almost_equal(imp_sim.yd[-1][1], -2.43227069, places=4)
     
     #Plot
     if with_plots:
