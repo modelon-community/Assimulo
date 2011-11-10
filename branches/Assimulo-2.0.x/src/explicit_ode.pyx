@@ -195,6 +195,9 @@ cdef class Explicit_ODE(ODE):
                 
                 #Last logging point
                 t_logg = self.t_cur
+                
+                #Initialize flag to false
+                flag_initialize = False
             
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
@@ -220,7 +223,7 @@ cdef class Explicit_ODE(ODE):
                     break
                 
                 flag_initialize = True
-            
+
             #Update options
             opts["initialize"] = flag_initialize
             

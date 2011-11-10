@@ -120,29 +120,28 @@ class Test_Explicit_Radau5:
         """
         This tests the functionality of the collocation polynomial (communication points)
         """
-        self.sim.continuous_output = True
+        self.sim.continuous_output = False
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
         assert self.sim.statistics["nsteps"] < 300
         
-        nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
+        #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
         
-        self.sim.continuous_output = False
-        
+        self.sim.continuous_output = True
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
         assert self.sim.statistics["nsteps"] < 300
-        
-        nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
+
+        #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
         
-        self.sim_t0.simulate(2.)
-        nose.tools.assert_almost_equal(self.sim.t[0], 1.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim.t[-1], 2.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
+        self.sim_t0.simulate(3.)
+        nose.tools.assert_almost_equal(self.sim_t0.t[0], 1.0000000, 4)
+        nose.tools.assert_almost_equal(self.sim_t0.t[-1], 3.0000000, 4)
+        nose.tools.assert_almost_equal(self.sim_t0.y[-1][0], 1.7061680350, 4)
         
     @testattr(stddist = True)
     def test_simulation(self):
@@ -154,6 +153,22 @@ class Test_Explicit_Radau5:
         assert self.sim.statistics["nsteps"] < 300
 
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
+    
+    @testattr(stddist = True)    
+    def test_simulation_ncp(self):
+        """
+        Test a simulation with ncp.
+        """
+        self.sim.continuous_output = True
+        
+        self.sim.simulate(1.0, 200) #Simulate 1 second
+        assert len(self.sim.t) == 201
+        
+        self.sim.reset()
+        self.sim.continuous_output = False
+        
+        self.sim.simulate(1.0, 200) #Simulate 1 second
+        assert len(self.sim.t) == 201
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -359,18 +374,25 @@ class Test_Implicit_Radau5:
         self.sim.simulate(2.) #Simulate 2 seconds
         nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.706272, 3)
         
-        self.sim_t0.simulate(2.)
-        nose.tools.assert_almost_equal(self.sim.t[0], 1.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim.t[-1], 2.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim.y[-1][0], 1.7061680350, 4)
+        self.sim_t0.simulate(3.)
+        nose.tools.assert_almost_equal(self.sim_t0.t[0], 1.0000000, 4)
+        nose.tools.assert_almost_equal(self.sim_t0.t[-1], 3.0000000, 4)
+        nose.tools.assert_almost_equal(self.sim_t0.y[-1][0], 1.7061680350, 4)
     
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
         """
-        self.sim.simulate(1.0, 200) #Simulate 1 second
+        self.sim.continuous_output = True
         
+        self.sim.simulate(1.0, 200) #Simulate 1 second
+        assert len(self.sim.t) == 201
+        
+        self.sim.reset()
+        self.sim.continuous_output = False
+        
+        self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t) == 201
     
     @testattr(stddist = True)

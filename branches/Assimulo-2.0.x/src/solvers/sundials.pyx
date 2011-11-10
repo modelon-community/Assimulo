@@ -2126,6 +2126,73 @@ cdef class CVode(Explicit_ODE):
     
     dqrhomax = property(_get_dqrhomax, _set_dqrhomax)
     
+    def _set_max_krylov(self, maxkrylov):
+        try:
+            self.options["maxkrylov"] = int(maxkrylov)
+        except:
+            raise Exception("Maximum number of krylov dimension should be an integer.")
+        if self.options["maxkrylov"] < 0:
+            raise Exception("Maximum number of krylov dimension should be an positive integer.")
+            
+    def _get_max_krylov(self):
+        """
+        Specifies the maximum number of dimensions for the krylov subspace to be used.
+        
+            Parameters::
+            
+                    maxkrylov
+                            - A positive integer.
+                            - Default 0
+            
+            Returns::
+            
+                The current value of maxkrylov.
+                
+        See SUNDIALS documentation 'CVSpgmr'
+        """
+        return self.options["maxkrylov"]
+    
+    maxkrylov = property(_get_max_krylov, _set_max_krylov)
+    
+    def _set_pre_cond(self, precond):
+        if precond.upper() == "PREC_NONE":
+            self.options["precond"] = PREC_NONE
+        elif precond.upper() == "PREC_LEFT":
+            self.options["precond"] = PREC_LEFT
+        elif precond.upper() == "PREC_RIGHT":
+            self.options["precond"] = PREC_RIGHT
+        elif precond.upper() == "PREC_BOTH":
+            self.options["precond"] = PREC_BOTH
+        else:
+            raise Exception('Unknown input of precond. Should be either "PREC_NONE", "PREC_LEFT","PREC_RIGHT" or "PREC_BOTH"')
+    def _get_pre_cond(self):
+        """
+        Specifies the preconditioning type.
+        
+            Parameters::
+            
+                    precond
+                            - Should be either "PREC_NONE", "PREC_LEFT"
+                              "PREC_RIGHT" or "PREC_BOTH"
+                            - Default PREC_NONE
+            
+            Returns::
+            
+                The current value of precond (as string).
+                
+        See SUNDIALS documentation 'CVSpgmr'
+        """
+        if self.options["precond"] == PREC_NONE:
+            return "PREC_NONE"
+        elif self.options["precond"] == PREC_LEFT:
+            return "PREC_LEFT"
+        elif self.options["precond"] == PREC_RIGHT:
+            return "PREC_RIGHT"
+        elif self.options["precond"] == PREC_BOTH:
+            return "PREC_BOTH"
+    
+    precond = property(_get_pre_cond, _set_pre_cond)
+    
     def _set_pbar(self, pbar):
         if len(pbar) != self.problem_info['dimSens']:
             raise Exception('pbar must be of equal length as the parameters.')
