@@ -149,7 +149,7 @@ cdef class ODE:
             
         #Determine the output list
         if ncp != 0:
-            output_list = N.linspace(t0,tfinal,ncp+1)
+            output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list != None:
             output_list = N.array(ncp_list, dtype=realtype, ndmin=1)

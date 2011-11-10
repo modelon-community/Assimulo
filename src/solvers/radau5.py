@@ -123,7 +123,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         for k in self.statistics.keys():
             self.statistics[k] = 0
     
-    def step(self, t, y, tf, opts):
+    def step_generator(self, t, y, tf, opts):
         
         if opts["initialize"]:
             self._oldh = self.initstep
@@ -132,7 +132,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.fnewt == 0:
             self.fnewt = max(10.*self._eps/self.rtol,min(0.03,self.rtol**0.5))
-        
+
         self.f(self._f0,t,y)
         self.statistics["nfcn"] +=1
         self._tc = t
@@ -140,27 +140,35 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         for i in xrange(self.maxsteps):
             
-            if t+self.h < tf:
+            if t < tf:
                 t, y = self._step(t, y)
                 self._tc = t
                 self._yc = y
-                yield ID_PY_OK, t,y
                 
                 if self.h > N.abs(tf-t):
                     self.h = N.abs(tf-t)
+                
+                if t < tf:
+                    yield ID_PY_OK, t, y
+                else:
+                    yield ID_PY_COMPLETE, t, y
+                    break
 
-                self._first = False         
-            else:
-                break
+                self._first = False 
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
         
-        t, y = self._step(t,y)
-        yield ID_PY_COMPLETE, t, y
-        
+        #t, y = self._step(t,y)
+        #yield ID_PY_COMPLETE, t, y
+    
+    def step(self, t, y, tf, opts):
+        if opts["initialize"]:
+            self._next_step = self.step_generator(t,y,tf,opts)
+        return self._next_step.next()
+    
     def integrate(self, t, y, tf, opts):
-        [flags, tlist, ylist] = zip(*list(self.step(t, y, tf,opts)))
-        
+        [flags, tlist, ylist] = zip(*list(self.step_generator(t, y, tf,opts)))
+
         return flags[-1], tlist, ylist
         
     def _step(self, t, y):
@@ -455,7 +463,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["njac"] += 1 #add the number of jacobian evaluation
         return cjac
     
-    def interpolate(self, t, k):
+    def interpolate(self, t, k=0):
         """
         Calculates the continuous output from Radau5.
         """
@@ -674,7 +682,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         for k in self.statistics.keys():
             self.statistics[k] = 0
     
-    def step(self, t, y, yd, tf, opts):
+    def step_generator(self, t, y, yd, tf, opts):
         
         if opts["initialize"]:
             self._oldh = self.initstep
@@ -692,27 +700,36 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         for i in xrange(self.maxsteps):
             
-            if t+self.h < tf:
+            if t < tf:
                 t, y, yd = self._step(t, y, yd)
                 self._tc = t
                 self._yc = y
                 self.ydc = yd
-                yield ID_PY_OK, t,y,yd
                 
                 if self.h > N.abs(tf-t):
                     self.h = N.abs(tf-t)
+                
+                if t < tf:
+                    yield ID_PY_OK, t,y,yd
+                else:
+                    yield ID_PY_COMPLETE, t, y, yd
+                    break
 
-                self._first = False         
-            else:
-                break
+                self._first = False 
         else:
             raise Implicit_ODE_Exception('Final time not reached within maximum number of steps')
         
-        t, y, yd = self._step(t,y,yd)
-        yield ID_PY_COMPLETE, t, y, yd
+        #t, y, yd = self._step(t,y,yd)
+        #yield ID_PY_COMPLETE, t, y, yd
+    
+    def step(self, t, y, yd, tf, opts):
+        
+        if opts["initialize"]:
+            self._next_step = self.step_generator(t,y,yd,tf,opts)
+        return self._next_step.next()
     
     def integrate(self, t, y, yd, tf, opts):
-        [flags, tlist, ylist, ydlist] = zip(*list(self.step(t, y, yd, tf,opts)))
+        [flags, tlist, ylist, ydlist] = zip(*list(self.step_generator(t, y, yd, tf,opts)))
         
         return flags[-1], tlist, ylist, ydlist
         
@@ -938,7 +955,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             
         return err
     
-    def interpolate(self, t, k):
+    def interpolate(self, t, k=0):
         """
         Calculates the continuous output from Radau5.
         """

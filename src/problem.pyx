@@ -53,21 +53,19 @@ cdef class cProblem:
 
 cdef class cImplicit_Problem(cProblem):
     
-    def __init__(self, object f=None, y0=None, yd0=None,double t0=0.0, p0=None):
+    def __init__(self, object f=None, y0=None, yd0=None,double t0=0.0, p0=None, sw0=None):
         
         if f!=None:
-            self.f   = f
+            self.f = f
         if y0!=None:
             self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
         if yd0!=None:
             self.yd0 = None if yd0 is None else (N.array(yd0,dtype=realtype) if len(N.array(yd0,dtype=realtype).shape)>0 else N.array([yd0],dtype=realtype))
         if p0!=None:
             self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
+        if sw0!=None:
+            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([p0],dtype=bool))
         self.t0  = t0
-        
-        
-        #Switches for discontinuities 
-        pass
     
     cpdef handle_result(self, solver, t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         
@@ -84,14 +82,16 @@ cdef class cImplicit_Problem(cProblem):
     
 cdef class cExplicit_Problem(cProblem):
     
-    def __init__(self, object f=None, y0=None,double t0=0.0, p0=None):
+    def __init__(self, object f=None, y0=None,double t0=0.0, p0=None, sw0=None):
         
         if f!=None:
-            self.f   = f
+            self.f = f
         if y0!=None:
             self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
         if p0!=None:
             self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
+        if sw0!=None:
+            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([p0],dtype=bool))
         self.t0  = t0
     
     cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):

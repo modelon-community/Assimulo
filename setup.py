@@ -142,15 +142,8 @@ def check_extensions():
         cordir_kinpinv = O.path.join(O.path.join('assimulo','lib'),'kinpinv.c')
         cordir_kinslug = O.path.join(O.path.join('assimulo','lib'),'kinslug.c')
         cordir_reg_routines = O.path.join(O.path.join('assimulo','lib'),'reg_routines.c')
-        """
-        #Add extension for IDAS and CVODES
-        ext_list = ext_list + [Extension('assimulo.lib.sundials_core',
-                              [cordir],
-                              include_dirs=[incdirs, N.get_include()],
-                              library_dirs=[libdirs],
-                              libraries=['sundials_cvodes','sundials_idas','sundials_nvecserial'])]
-        """
-        """
+
+        
         wSLU = check_wSLU()
         if wSLU:
             ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
@@ -164,7 +157,7 @@ def check_extensions():
                           include_dirs=[incdirs, N.get_include()],
                           library_dirs=[libdirs],
                           libraries=['sundials_kinsol','sundials_nvecserial'])]
-        """
+        
     return ext_list
 
 def check_wSLU():

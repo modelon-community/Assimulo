@@ -290,12 +290,15 @@ class Test_CVode:
         """
         This tests the precondition option.
         """
+        print self.simulator.options
+        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         self.simulator.precond = 'prec_none'
+        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         
-        nose.tools.assert_raises(Exception, self.simulator._set_pre_type, -1.0)
-        nose.tools.assert_raises(Exception, self.simulator._set_pre_type, 'PREC_BOTH')
+        nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, -1.0)
+        nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, 'PREC_BOTH1')
     
     @testattr(stddist = True)
     def test_maxkrylov(self):
