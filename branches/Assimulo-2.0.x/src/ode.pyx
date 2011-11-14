@@ -23,6 +23,7 @@ import pylab as P
 import itertools
 
 from exception import *
+from problem import Explicit_Problem, Implicit_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -40,7 +41,7 @@ cdef class ODE:
         """
         self.options = {"continuous_output":False,"verbosity":NORMAL}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False} #Flags for determining what the solver supports
+        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False}
         
@@ -197,7 +198,13 @@ cdef class ODE:
         #Log elapsed time
         self.log_message('Simulation interval    : ' + str(t0) + ' - ' + str(self.t_cur) + ' seconds.', NORMAL)
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
-    
+        
+        #Return the results
+        if isinstance(self.problem, Explicit_Problem):
+            return self.t, N.array(self.y)
+        else:
+            return self.t, N.array(self.y), N.array(self.yd)
+        
     cpdef initialize(self):
         pass
     
@@ -257,7 +264,13 @@ cdef class ODE:
             
     cpdef get_options(self):
         """
-        Returns the solver options.
+        Returns the current solver options.
         """
         return self.options
+        
+    cpdef get_event_data(self):
+        """
+        Returns the event information (if any).
+        """
+        return self.event_data
     

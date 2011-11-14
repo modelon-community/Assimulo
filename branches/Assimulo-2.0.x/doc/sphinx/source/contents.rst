@@ -33,7 +33,8 @@ Contents
    :glob:
    :hidden:
 
-   solver*
+   ODE_*
+   DAE_*
 
 
 Indices and tables

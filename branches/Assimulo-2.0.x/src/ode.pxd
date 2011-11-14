@@ -18,5 +18,6 @@ cdef class ODE:
     cpdef log_event(self, double time, object event_info, int level)
     cpdef simulate(self, double tfinal, int ncp=*, object ncp_list=*)
     cpdef get_options(self)
+    cpdef get_event_data(self)
     cpdef finalize(self)
     cpdef initialize(self)

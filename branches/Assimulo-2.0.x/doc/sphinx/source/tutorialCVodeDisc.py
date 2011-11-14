@@ -11,8 +11,9 @@ or,
     python tutorialCVodeDisc.py (in a command prompt)
 """
 import numpy as N
+import pylab as P
 from assimulo.problem import Explicit_Problem
-from assimulo.explicit_ode import CVode
+from assimulo.solvers.sundials import CVode
 
 
 def run_example():
@@ -51,26 +52,25 @@ def run_example():
 
         if state_info[0] != 0: #Check if the first event function have been triggered
             
-            if solver.switches[0]: #If the switch is True the pendulum bounces
+            if solver.sw_cur[0]: #If the switch is True the pendulum bounces
                 solver.y_cur[1] = -0.9*solver.y_cur[1] #Change the velocity and lose energy
                 
-            solver.switches[0] = not solver.switches[0] #Change event function
+            solver.sw_cur[0] = not solver.sw_cur[0] #Change event function
 
-    #Create an Assimulo Problem
-    mod = Explicit_Problem()
-    
-    mod.f = pendulum                #Sets the rhs to the problem
-    mod.state_events = state_events #Sets the state events to the problem
-    mod.handle_event = handle_event #Sets the event handling to the problem
-    mod.problem_name = 'Pendulum with events'   #Sets the name of the problem
-    
     #Initial values
     y0 = [N.pi/2.0, 0.0] #Initial states
     t0 = 0.0             #Initial time
     switches0 = [True]   #Initial switches
+
+    #Create an Assimulo Problem
+    mod = Explicit_Problem(pendulum, y0, t0, sw0=switches0)
     
+    mod.state_events = state_events #Sets the state events to the problem
+    mod.handle_event = handle_event #Sets the event handling to the problem
+    mod.name = 'Pendulum with events'   #Sets the name of the problem
+
     #Create an Assimulo solver (CVode)
-    sim = CVode(mod, y0, t0,switches0)
+    sim = CVode(mod)
     
     #Specifies options 
     sim.discr = 'Adams'     #Sets the discretization method
@@ -82,11 +82,11 @@ def run_example():
     ncp = 200     #Number of communication points
     tfinal = 10.0 #Final time
     
-    sim.simulate(tfinal, ncp) #Simulate
+    t,y = sim.simulate(tfinal, ncp) #Simulate
     
-    #Simulation info
-    sim.plot()              #Plot
-    sim.print_event_info()  #Print the event statistics
-
+    #Plot
+    P.plot(t,y)
+    P.show()
+    
 if __name__=='__main__':
     run_example()
