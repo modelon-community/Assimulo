@@ -18,4 +18,4 @@
 __all__ = ["cvode_gyro", "cvode_basic", "cvode_with_disc", "cvode_with_initial_sensitivity",
            "cvode_with_jac", "cvode_with_jac_spgmr", "cvode_with_parameters", "euler_basic",
            "rungekutta4_basic", "rungekutta34_basic", "ida_with_disc", "ida_with_initial_sensitivity",
-           "ida_with_jac", "ida_with_parameters", "radau_vanderpol"]
+           "ida_with_jac", "ida_with_parameters", "radau5ode_vanderpol","radau5dae_vanderpol"]

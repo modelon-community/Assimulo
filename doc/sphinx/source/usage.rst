@@ -10,7 +10,7 @@ Explicit Solvers
    :maxdepth: 1
    :glob:
    
-   solver_exp*
+   ODE_*
 
 
 Implicit Solvers
@@ -20,4 +20,4 @@ Implicit Solvers
    :maxdepth: 1
    :glob:
    
-   solver_imp*
+   DAE_*

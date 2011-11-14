@@ -79,9 +79,9 @@ class Test_Examples:
         ida_with_parameters.run_example(with_plots=False)
         
     @testattr(stddist = True)
-    def test_radau_vanderpol_explicit(self):
-        radau_vanderpol.run_example_explicit(with_plots=False)
+    def test_radau5ode_vanderpol(self):
+        radau5ode_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
-    def test_radau_vanderpol_implicit(self):
-        radau_vanderpol.run_example_implicit(with_plots=False)
+    def test_radau5dae_vanderpol(self):
+        radau5dae_vanderpol.run_example(with_plots=False)

@@ -100,6 +100,7 @@ cdef class IDA(Implicit_ODE):
         #Solver support
         self.supports["one_step_mode"] = True
         self.supports["interpolated_output"] = True
+        self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
         
         #Get options from Problem
@@ -461,7 +462,7 @@ cdef class IDA(Implicit_ODE):
     
     cpdef make_consistent(self, method):
         """
-        Directs IDA to try to calculate consistant initial conditions.
+        Directs IDA to try to calculate consistent initial conditions.
             
             Parameters::
             
@@ -1227,6 +1228,7 @@ cdef class CVode(Explicit_ODE):
         #Solver support
         self.supports["one_step_mode"] = True
         self.supports["interpolated_output"] = True
+        self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
         
         #Get options from Problem
@@ -1759,7 +1761,7 @@ cdef class CVode(Explicit_ODE):
         """
         return self.options["atol"]
     
-    atol=property(_get_atol,_set_atol)
+    atol = property(_get_atol,_set_atol)
     
     def _set_rtol(self,rtol):
         
@@ -2283,8 +2285,12 @@ cdef class CVode(Explicit_ODE):
             self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
-        self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
-        self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
+        if self.options["iter"] == "FixedPoint":
+            self.log_message(' Number of Functional Iterations          : '+ str(self.statistics["nniters"]),        verbose)
+            self.log_message(' Number of Functional Convergence Failures: '+ str(self.statistics["nncfails"]),       verbose)
+        else:
+            self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
+            self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
         
         
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on

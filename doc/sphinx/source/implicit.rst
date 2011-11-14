@@ -17,7 +17,7 @@ Implicit ODE
 IDA
 -----
 
-.. autoclass:: assimulo.implicit_ode.IDA
+.. autoclass:: assimulo.solvers.sundials.IDA
    :members:
    :inherited-members:
    :show-inheritance:
@@ -26,8 +26,7 @@ IDA
 Radau5
 ---------
  
-.. autoclass:: assimulo.implicit_ode.Radau5
+.. autoclass:: assimulo.solvers.radau5.Radau5DAE
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info
