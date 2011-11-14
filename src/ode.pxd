@@ -3,7 +3,7 @@ cimport numpy as N
 
 cdef class ODE:
     cdef public dict options, solver_options, problem_info
-    cdef public dict supports
+    cdef public dict supports, statistics
     
     cdef public list event_data
     
@@ -18,6 +18,8 @@ cdef class ODE:
     cpdef log_event(self, double time, object event_info, int level)
     cpdef simulate(self, double tfinal, int ncp=*, object ncp_list=*)
     cpdef get_options(self)
+    cpdef get_supports(self)
+    cpdef get_statistics(self)
     cpdef get_event_data(self)
     cpdef finalize(self)
     cpdef initialize(self)

@@ -46,11 +46,12 @@ def run_example(with_plots=True):
     exp_sim.initstep = 1.e-4 #Initial step-size
     
     #Simulate
-    exp_sim.simulate(2.) #Simulate 2 seconds
+    t, y = exp_sim.simulate(2.) #Simulate 2 seconds
     
     #Plot
     if with_plots:
-        exp_sim.plot(mask=[1,0],marker='o') #Plot the solution
+        P.plot(t,y[:,0], marker='o')
+        P.show()
     
     #Basic test
     x1 = N.array(exp_sim.y)[:,0]

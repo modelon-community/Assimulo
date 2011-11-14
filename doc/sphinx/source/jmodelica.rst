@@ -25,7 +25,7 @@ A list of the different solver specific parameters can be found in the :doc:`usa
 
 
 Discontinuous Systems (for JModelica.org JMI models)
---------------------------
+-------------------------------------------------------
 
 
 In the new release of `JModelica.org <http://www.jmodelica.org/story/237>`_ support for if-constructs were implemented which is also supported in the Assimulo solvers :doc:`IDA <DAE_IDA>` and :doc:`CVode <ODE_CVode>`. 

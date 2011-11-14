@@ -60,9 +60,14 @@ class RungeKutta34(Explicit_ODE):
         
         #Internal values
         # - Statistic values
-        self._nsteps = 0 #Number of steps
-        self._nfcn = 0 #Number of function evaluations
-        
+        self.statistics["nsteps"] = 0 #Number of steps
+        self.statistics["nfcn"] = 0 #Number of function evaluations
+    
+    def initialize(self):
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
+    
     def _set_initial_step(self, initstep):
         try:
             initstep = float(initstep)
@@ -194,7 +199,7 @@ class RungeKutta34(Explicit_ODE):
         for i in range(maxsteps):
             if t+h < tf:
                 t, y, error = self._step(t, y, h)
-                self._nsteps += 1
+                self.statistics["nsteps"] += 1
                 yield ID_PY_OK, t,y
                 h=self.adjust_stepsize(h,error)
                 h=min(h, N.abs(tf-t))
@@ -204,7 +209,7 @@ class RungeKutta34(Explicit_ODE):
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
             
         t, y, error = self._step(t, y, h)
-        self._nsteps += 1
+        self.statistics["nsteps"] += 1
         yield ID_PY_COMPLETE, t, y
 
     def adjust_stepsize(self, h, error):
@@ -220,7 +225,7 @@ class RungeKutta34(Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
-        self._nfcn += 5
+        self.statistics["nfcn"] += 5
         
         scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
@@ -240,8 +245,8 @@ class RungeKutta34(Explicit_ODE):
         Should print the statistics.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
-        self.log_message(' Number of Steps                : %s '%(self._nsteps),             verbose)
-        self.log_message(' Number of Function Evaluations : %s '%(self._nfcn),               verbose)
+        self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
+        self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
         self.log_message('\nSolver options:\n',                                              verbose)
         self.log_message(' Solver             : RungeKutta4',                                verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)

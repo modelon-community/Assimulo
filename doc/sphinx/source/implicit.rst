@@ -1,9 +1,3 @@
-ODE
-=========================
-
-.. automodule:: assimulo.ode
-   :members:
-  
  
 
 Implicit ODE
@@ -11,7 +5,6 @@ Implicit ODE
 
 .. autoclass:: assimulo.implicit_ode.Implicit_ODE
    :members:
-   :inherited-members:
    :show-inheritance:
 
 IDA

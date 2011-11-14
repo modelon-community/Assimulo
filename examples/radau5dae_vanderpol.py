@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import pylab as P
 import nose
 from assimulo.solvers.radau5 import *
 from assimulo.problem import Implicit_Problem
@@ -50,11 +51,12 @@ def run_example(with_plots=True):
     imp_sim.initstep = 1.e-4 #Initial step-size
 
     #Simulate
-    imp_sim.simulate(2.) #Simulate 2 seconds
+    t, y, yd = imp_sim.simulate(2.) #Simulate 2 seconds
     
     #Plot
     if with_plots:
-        imp_sim.plot(mask=[1,0],marker='o') #Plot the solution
+        P.plot(t,y[:,0], marker='o')
+        P.show()
     
     #Basic test
     x1 = N.array(imp_sim.y)[:,0]

@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import pylab as P
 import nose
 from assimulo.solvers.sundials import IDA
 from assimulo.problem import Implicit_Problem
@@ -138,16 +139,17 @@ def run_example(with_plots=True):
     iter_sim.continuous_output = True
     
     #Simulate
-    iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+    t, y, yd = iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
     
     #Basic test
-    nose.tools.assert_almost_equal(iter_sim.y[-1][0],8.0)
-    nose.tools.assert_almost_equal(iter_sim.y[-1][1],3.0)
-    nose.tools.assert_almost_equal(iter_sim.y[-1][2],2.0)
+    nose.tools.assert_almost_equal(y[-1][0],8.0)
+    nose.tools.assert_almost_equal(y[-1][1],3.0)
+    nose.tools.assert_almost_equal(y[-1][2],2.0)
     
     #Plot
     if with_plots:
-        iter_sim.plot()
+        P.plot(t,y)
+        P.show()
     
 if __name__=="__main__":
     run_example()

@@ -35,15 +35,15 @@ def run_example(with_plots=True):
     exp_sim.inith = 0.1 #Sets the initial step, default = 0.01
     
     #Simulate
-    exp_sim.simulate(5) #Simulate 5 seconds
+    t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(exp_sim.y[-1],0.02695199,5)
+    nose.tools.assert_almost_equal(y[-1],0.02695199,5)
     
     #Plot
     if with_plots:
-        exp_sim.plot()
-
+        P.plot(t,y)
+        P.show()
 
 if __name__=='__main__':
     run_example()

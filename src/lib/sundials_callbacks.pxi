@@ -292,10 +292,10 @@ cdef inline N_Vector arr2nv(x):
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
     
-cdef inline nv2arr(N_Vector v):
+cdef inline N.ndarray nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
-    cdef long int i
+    #cdef long int i
     import_array()
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
     #cdef ndarray x = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,v_data)

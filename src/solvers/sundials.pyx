@@ -48,7 +48,7 @@ cdef class IDA(Implicit_ODE):
     cdef N_Vector *ySO
     cdef N_Vector *ydSO
     cdef object f
-    cdef public dict statistics
+    #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
     cdef public N.ndarray yS0
     
@@ -81,7 +81,6 @@ cdef class IDA(Implicit_ODE):
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         
         #Statistics
-        self.statistics = {}
         self.statistics["nfevals"]    = 0 #Function evaluations
         self.statistics["nsteps"]     = 0 #Number of steps
         self.statistics["netfails"]   = 0 #Number of error test failures
@@ -118,7 +117,7 @@ cdef class IDA(Implicit_ODE):
         #Sets the residual or rhs
         self.pt_fcn = self.problem.f
         self.pData.RHS = <void*>self.pt_fcn#<void*>self.problem.f
-        self.pData.dim = self.problem_info["dim"]
+        self.pData.dim = self.problem_info["dim"] 
         self.pData.memSize = self.pData.dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
@@ -1173,7 +1172,7 @@ cdef class CVode(Explicit_ODE):
     cdef N_Vector yTemp, ydTemp
     cdef N_Vector *ySO
     cdef object f
-    cdef public dict statistics
+    #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
     cdef public N.ndarray yS0
     
@@ -1208,7 +1207,6 @@ cdef class CVode(Explicit_ODE):
         self.options["precond"] = PREC_NONE
         
         #Statistics
-        self.statistics = {}
         self.statistics["nfevals"]    = 0 #Function evaluations
         self.statistics["nsteps"]     = 0 #Number of steps
         self.statistics["netfails"]   = 0 #Number of error test failures
