@@ -77,7 +77,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["maxsteps"] = 10000
         
         # - Statistic values
-        self.statistics = {}
         self.statistics["nsteps"] = 0 #Number of steps
         self.statistics["nfcn"] = 0 #Number of function evaluations
         self.statistics["njac"] = 0 #Number of jacobian evaluations
@@ -595,7 +594,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["maxsteps"] = 10000
         
         # - Statistic values
-        self.statistics = {}
         self.statistics["nsteps"] = 0 #Number of steps
         self.statistics["nfcn"] = 0 #Number of function evaluations
         self.statistics["njac"] = 0 #Number of jacobian evaluations

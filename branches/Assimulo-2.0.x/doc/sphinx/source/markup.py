@@ -48,8 +48,12 @@ def mark_solvers():
         file.write('\n')
         file.write(solver_name + '\n')
         file.write('=================================\n\n')
-        file.write('Usage\n--------------\n\n')
-        file.write('Import the solver together with correct problem:: \n\n')
+        file.write('Support\n----------------\n\n')
+        file.write('- State events (root funtions) : '+str(supports["state_events"])+'\n')
+        file.write('- Step events (completed step) : '+str(supports["step_events"])+'\n')
+        file.write('- Time events : '+'True\n')
+        file.write('\nUsage\n--------------\n\n')
+        file.write('Import the solver together with the correct problem:: \n\n')
         file.write('    from assimulo.solvers.'+module_name+' import '+ solver_name+'\n')
         file.write('    from assimulo.problem import '+problem_name+'\n\n')
         file.write('Define the problem. \n\n')
@@ -95,6 +99,8 @@ def mark_solvers():
         
         file.write('Information:\n\n')
         file.write('- :class:`'+solver_name+'.get_options() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_options>` Returns the current solver options.\n')
+        file.write('- :class:`'+solver_name+'.get_supports() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_supports>` Returns the functionality which the solver supports.\n')
+        file.write('- :class:`'+solver_name+'.get_statistics() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_statistics>` Returns the run-time statistics (if any).\n')
         file.write('- :class:`'+solver_name+'.print_statistics() <assimulo.solvers.'+module_name+'.'+solver_name+'.print_statistics>` Prints the run-time statistics for the problem.\n')
         
         file.close()

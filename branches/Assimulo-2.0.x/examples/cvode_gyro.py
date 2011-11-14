@@ -19,6 +19,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.solvers.sundials import CVode
 from scipy import *
 import nose
+import pylab as P
 
 def run_example(with_plots=True):
     
@@ -74,15 +75,16 @@ def run_example(with_plots=True):
     gyro_sim.rtol=1.e-10
     
     #Simulate
-    gyro_sim.simulate(0.1)
+    t, y = gyro_sim.simulate(0.1)
     
     #Basic tests
-    nose.tools.assert_almost_equal(gyro_sim.y[-1][0],692.800241862)
-    nose.tools.assert_almost_equal(gyro_sim.y[-1][8],7.08468221e-1)
+    nose.tools.assert_almost_equal(y[-1][0],692.800241862)
+    nose.tools.assert_almost_equal(y[-1][8],7.08468221e-1)
     
     #Plot
     if with_plots:
-        gyro_sim.plot()
+        P.plot(t,y)
+        P.show()
 
 if __name__=='__main__':
     run_example()

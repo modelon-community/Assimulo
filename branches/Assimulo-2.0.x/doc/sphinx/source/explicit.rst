@@ -10,7 +10,6 @@ Explicit ODE
  
 .. autoclass:: assimulo.explicit_ode.Explicit_ODE
     :members:
-    :inherited-members:
     :show-inheritance:
 
 

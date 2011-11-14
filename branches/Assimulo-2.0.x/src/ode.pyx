@@ -39,6 +39,7 @@ cdef class ODE:
         Defines general starting attributes for a simulation
         problem.
         """
+        self.statistics = {} #Initialize the statistics dictionary
         self.options = {"continuous_output":False,"verbosity":NORMAL}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
@@ -267,6 +268,18 @@ cdef class ODE:
         Returns the current solver options.
         """
         return self.options
+        
+    cpdef get_supports(self):
+        """
+        Returns the functionality which the solver supports.
+        """
+        return self.supports
+        
+    cpdef get_statistics(self):
+        """
+        Returns the run-time statistics (if any).
+        """
+        return self.statistics
         
     cpdef get_event_data(self):
         """
