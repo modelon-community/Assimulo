@@ -21,5 +21,6 @@ cdef class ODE:
     cpdef get_supports(self)
     cpdef get_statistics(self)
     cpdef get_event_data(self)
+    cpdef print_event_data(self)
     cpdef finalize(self)
     cpdef initialize(self)

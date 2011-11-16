@@ -292,6 +292,31 @@ class RungeKutta4(Explicit_ODE):
         
         return flags[-1], tlist, ylist
     
+    def _set_h(self,h):
+        try:
+            self.options["h"] = float(h)
+        except:
+            raise AssimuloException("Step-size must be a (scalar) float.")
+    
+    def _get_h(self):
+        """
+        Defines the step-size that is to be used by the solver.
+        
+            Parameters::
+            
+                maxh    
+                        - Default '0.01'.
+                          
+                        - Should be a float.
+                        
+                            Example:
+                                maxh = 0.01
+                                
+        """
+        return self.options["h"]
+        
+    h=property(_get_h,_set_h)
+    
     def _iter(self,t,y,tf):
         h = self.options["h"]
         h = min(h, N.abs(tf-t))

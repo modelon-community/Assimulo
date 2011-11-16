@@ -40,7 +40,15 @@ cdef class cProblem:
         
     cpdef handle_event(self, object solver, event_info):
         """
-        Method that is called when an event has triggered.
+        Defines how to handle a discontinuity. This functions gets called when
+        a discontinuity has been found in the supplied event functions. The solver
+        is the solver attribute while the event_info is a list of length 2 where
+        the first element is a list containing information about state events and
+        the second element is a boolean for indicating if there have been an time
+        event. If there have not been a state event the first element is an empty
+        list. The state event list contains a set of integers of values (-1,0,1),
+        the values indicates which state event have triggered (determined from 
+        state_event(...) ) and the value indicates to where the state event is 'headed'.
         """
         solver.log_message("No event handling defined.", NORMAL)
     
@@ -68,7 +76,10 @@ cdef class cImplicit_Problem(cProblem):
         self.t0  = t0
     
     cpdef handle_result(self, solver, t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
-        
+        """
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors, solver.(t/y/yd).
+        """
         solver.t.extend([t])
         solver.y.extend([y])
         solver.yd.extend([yd])
@@ -95,6 +106,10 @@ cdef class cExplicit_Problem(cProblem):
         self.t0  = t0
     
     cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
+        """
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors, solver.(t/y).
+        """
         solver.t.extend([t])
         solver.y.extend([y])
         
@@ -106,7 +121,174 @@ cdef class cExplicit_Problem(cProblem):
         return ID_OK
 
 class Implicit_Problem(cImplicit_Problem):
+    """
+        Problem for our implicit integrators (DAEs). A problem
+        consists of the residual function and some initial conditions.
+        
+        Parameters ::
+          
+            f   
+                Function that calculates the residual. Depending on
+                the problem and the support of the solver, this function can
+                have the following input parameters.
+                
+                    f(t,y,yd)      - Normal DAE
+                    f(t,y,yd,sw)   - An DAE with different modes, sw is a list of
+                                     switches (boolean list) which should be held
+                                     constant during the integration and only be
+                                     changed when an event have occured. Used together
+                                     with event functions.
+                    f(t,y,yd,p)    - An DAE with parameters for which sensitivities
+                                     should be calculated.
+                    f(t,y,yd,sw,p) - An DAE with both parameters and switches.
+                    
+                    Returns:
+                        A numpy array of size len(y).
+            y0
+                Defines the starting values of y0.
+            yd0
+                Defines the starting values of yd0.
+            t0
+                Defines the starting time.
+            sw0 (Depending on if the solver supports state events)
+                Defines the starting values of the switches. 
+                Should be a list of booleans.
+            p0 (Depending on if the solver supports sensitivity calculations)
+                Parameters for which sensitivites are to be calculated
+                
+        Parameters (optionally contained in class) ::
+        
+            algvar
+                Defines the differential and algebraic components of the problem.
+                Should be a list of integers. For more information, see the
+                property algvar in IDA.
+        
+        Available (optional) options (depending on the solver support)::
+        
+            def state_events(self ,t ,y ,yd, sw)
+                Defines the event (root) functions.
+                
+                Returns:
+                    A numpy array.
+                
+            def time_events(self, t, y, yd, sw)
+                Defines the time events. This function should return
+                the next time-point for a time event. At a time-event
+                the usual method handle_event is called for the specific
+                handling. If there are no more time events. This function
+                should return None.
+                
+                Returns:
+                    Float
+                        The time-point for the next time-event.
+                    None
+                        No time-event.
+                
+            def jac(self, c, t, y, yd, sw)
+                Defines the Jacobian, which should be of the form
+                J = dF/dx + c*dF/dx'.
+                
+                Returns:
+                    A numpy array of size len(y)*len(y).
+                    
+            def handle_result(self, solver, t, y, yd)
+                Method for specifying how the result is to be handled. 
+                As default the data is stored in three vectors, solver.(t/y/yd).
+                
+            def handle_event(self, object solver, event_info):
+                Defines how to handle a discontinuity. This functions gets called when
+                a discontinuity has been found in the supplied event functions. The solver
+                is the solver attribute while the event_info is a list of length 2 where
+                the first element is a list containing information about state events and
+                the second element is a boolean for indicating if there have been an time
+                event. If there have not been a state event the first element is an empty
+                list. The state event list contains a set of integers of values (-1,0,1),
+                the values indicates which state event have triggered (determined from 
+                state_event(...) ) and the value indicates to where the state event is 'headed'.
+    """
     pass
     
 class Explicit_Problem(cExplicit_Problem):
+    """
+        Problem for our explicit integrators (ODEs). A problem
+        consists of the right-hand-side and some initial conditions.
+ 
+        Parameters::
+            
+            f   
+                Function that calculates the right-hand-side. Depending on
+                the problem and the support of the solver, this function can
+                have the following input parameters.
+                
+                    f(t,y)      - Normal ODE
+                    f(t,y,sw)   - An ODE with different modes, sw is a list of
+                                  switches (boolean list) which should be held
+                                  constant during the integration and only be
+                                  changed when an event have occured. Used together
+                                  with event functions.
+                    f(t,y,p)    - An ODE with parameters for which sensitivities
+                                  should be calculated.
+                    f(t,y,sw,p) - An ODE with both parameters and switches.
+                    
+                    Returns:
+                        A numpy array of size len(y).
+            
+            y0
+                Defines the starting values of y0
+            t0
+                Defines the starting time
+            sw0 (Depending on if the solver supports state events)
+                Defines the starting values of the switches. 
+                Should be a list of booleans.
+            p0 (Depending on if the solver supports sensitivity calculations)
+                Parameters for which sensitivites are to be calculated
+        
+        Available (optional) options (depending on the solver support)::
+        
+            def state_events(self ,t ,y, sw)
+                Defines the event (root) functions.
+                
+                Returns:
+                    A numpy array.
+                    
+            def time_events(self, t, y, sw)
+                Defines the time events. This function should return
+                the next time-point for a time event. At a time-event
+                the usual method handle_event is called for the specific
+                handling. If there are no more time events. This function
+                should return None.
+                
+                Returns:
+                    Float
+                        The time-point for the next time-event.
+                    None
+                        No time-event.
+                
+            def jac(self, t, y, sw=None)
+                Defines the jacobian. J=df/dx.
+                
+                Returns:
+                    A numpy matrix of size len(y)*len(y).
+                    
+            def jacv(self, t, y, fy, v)
+                Defines a Jacobian Vector product. df/dx*v.
+                
+                Returns:
+                    A numpy vector of size len(y).
+            
+            def handle_result(self, solver, t, y)
+                Method for specifying how the result is to be handled. 
+                As default the data is stored in three vectors, solver.(t/y).
+                
+            def handle_event(self, object solver, event_info):
+                Defines how to handle a discontinuity. This functions gets called when
+                a discontinuity has been found in the supplied event functions. The solver
+                is the solver attribute while the event_info is a list of length 2 where
+                the first element is a list containing information about state events and
+                the second element is a boolean for indicating if there have been an time
+                event. If there have not been a state event the first element is an empty
+                list. The state event list contains a set of integers of values (-1,0,1),
+                the values indicates which state event have triggered (determined from 
+                state_event(...) ) and the value indicates to where the state event is 'headed'.
+    """
     pass
