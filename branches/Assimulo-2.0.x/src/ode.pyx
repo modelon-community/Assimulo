@@ -42,7 +42,7 @@ cdef class ODE:
         self.statistics = {} #Initialize the statistics dictionary
         self.options = {"continuous_output":False,"verbosity":NORMAL}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
+        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False}
         
@@ -283,7 +283,20 @@ cdef class ODE:
         
     cpdef get_event_data(self):
         """
-        Returns the event information (if any).
+        Returns the event information (if any). If there exists information
+        about events, it will be returned as a list of tuples where the
+        first value is the time of the occured event and the second is the
+        event information.
         """
         return self.event_data
+        
+    cpdef print_event_data(self):
+        """
+        Prints the event information (if any).
+        """
+        cdef i = 0
+        for i in self.event_data:
+            print 'Time, t = %e'%i[0]
+            print '  Event info, ', i[1]
+        print 'Number of events: ', len(self.event_data)
     

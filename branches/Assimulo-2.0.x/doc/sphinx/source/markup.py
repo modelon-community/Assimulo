@@ -56,16 +56,38 @@ def mark_solvers():
         file.write('Import the solver together with the correct problem:: \n\n')
         file.write('    from assimulo.solvers.'+module_name+' import '+ solver_name+'\n')
         file.write('    from assimulo.problem import '+problem_name+'\n\n')
-        file.write('Define the problem. \n\n')
-        file.write('    :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`\n\n')
-        file.write('Create and modify the solver parameters.\n\n')
-        file.write('Parameters:\n\n')
+        file.write('Define the problem, such as:: \n\n')
+        
+        if solver[1] == "ODE":
+            file.write('    def f('+str_ret[:-3]+'): #Note that y are a 1-D numpy array.\n')
+            file.write('        yd = -1.0\n')
+            file.write('        return N.array([yd]) #Note that the return must be numpy array, Not a scalar.\n\n')
+            file.write('    y0 = [1.0]\n')
+            file.write('    t0 = 1.0\n\n')
+        else:
+            file.write('    def f('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
+            file.write('        res = yd[0]-1.0\n')
+            file.write('        return N.array([res]) #Note that the return must be numpy array, Not a scalar.\n\n')
+            file.write('    y0  = [1.0]\n')
+            file.write('    yd0 = [1.0]\n')
+            file.write('    t0  = 1.0\n\n')
+        file.write('Create a problem instance::\n\n')
+        if solver[1] == "ODE":
+            file.write('    mod = '+problem_name+'(f, y0, t0)\n\n')
+        else:
+            file.write('    mod = '+problem_name+'(f, y0, yd0, t0)\n\n')
+        file.write('.. note::\n\n')
+        file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
+        file.write('Create a solver instance::\n\n')
+        file.write('    sim = '+solver_name+'(mod)\n\n')
+        file.write('Modify (optionally) the solver parameters.\n\n')
+        file.write('    Parameters:\n\n')
         
         iter_options = options.keys()
         iter_options.sort()
         for opt in iter_options:
 
-            str_name = '- :class:`' + opt + ' <assimulo.solvers.' + module_name + '.' +solver_name + '.'+ opt + '>`'
+            str_name = '    - :class:`' + opt + ' <assimulo.solvers.' + module_name + '.' +solver_name + '.'+ opt + '>`'
             
             def find_doc(solv, opt):
                 try:
@@ -101,6 +123,8 @@ def mark_solvers():
         file.write('- :class:`'+solver_name+'.get_options() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_options>` Returns the current solver options.\n')
         file.write('- :class:`'+solver_name+'.get_supports() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_supports>` Returns the functionality which the solver supports.\n')
         file.write('- :class:`'+solver_name+'.get_statistics() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_statistics>` Returns the run-time statistics (if any).\n')
+        file.write('- :class:`'+solver_name+'.get_event_data() <assimulo.solvers.'+module_name+'.'+solver_name+'.get_event_data>` Returns the event information (if any).\n')
+        file.write('- :class:`'+solver_name+'.print_event_data() <assimulo.solvers.'+module_name+'.'+solver_name+'.print_event_data>` Prints the event information (if any).\n')
         file.write('- :class:`'+solver_name+'.print_statistics() <assimulo.solvers.'+module_name+'.'+solver_name+'.print_statistics>` Prints the run-time statistics for the problem.\n')
         
         file.close()

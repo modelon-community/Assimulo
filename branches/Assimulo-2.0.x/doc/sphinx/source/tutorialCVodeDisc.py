@@ -84,6 +84,9 @@ def run_example():
     
     t,y = sim.simulate(tfinal, ncp) #Simulate
     
+    #Print event information
+    sim.print_event_data()
+    
     #Plot
     P.plot(t,y)
     P.show()

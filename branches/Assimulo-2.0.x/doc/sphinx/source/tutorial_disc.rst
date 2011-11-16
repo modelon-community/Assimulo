@@ -182,34 +182,34 @@ together with the statistics. ::
 
 To print the information about occurred events, use the method ::
 
-    sim.print_event_info()
+    sim.print_event_data()
     
 Which prints. ::
 
-    Time, t = 7.795455e-01
-      Event info,  [array([-1], dtype=int32), False]
-    Time, t = 9.832278e-01
-      Event info,  [array([1], dtype=int32), False]
-    Time, t = 2.336937e+00
-      Event info,  [array([-1], dtype=int32), False]
+    Time, t = 7.795457e-01
+      Event info,  [[-1], False]
+    Time, t = 9.832279e-01
+      Event info,  [[1], False]
+    Time, t = 2.336938e+00
+      Event info,  [[-1], False]
     Time, t = 2.557287e+00
-      Event info,  [array([1], dtype=int32), False]
-    Time, t = 3.903297e+00
-      Event info,  [array([-1], dtype=int32), False]
+      Event info,  [[1], False]
+    Time, t = 3.903298e+00
+      Event info,  [[-1], False]
     Time, t = 4.140730e+00
-      Event info,  [array([1], dtype=int32), False]
-    Time, t = 5.485753e+00
-      Event info,  [array([-1], dtype=int32), False]
+      Event info,  [[1], False]
+    Time, t = 5.485752e+00
+      Event info,  [[-1], False]
     Time, t = 5.740509e+00
-      Event info,  [array([1], dtype=int32), False]
-    Time, t = 7.089164e+00
-      Event info,  [array([-1], dtype=int32), False]
-    Time, t = 7.361300e+00
-      Event info,  [array([1], dtype=int32), False]
-    Time, t = 8.716798e+00
-      Event info,  [array([-1], dtype=int32), False]
-    Time, t = 9.006180e+00
-      Event info,  [array([1], dtype=int32), False]
+      Event info,  [[1], False]
+    Time, t = 7.089163e+00
+      Event info,  [[-1], False]
+    Time, t = 7.361299e+00
+      Event info,  [[1], False]
+    Time, t = 8.716797e+00
+      Event info,  [[-1], False]
+    Time, t = 9.006179e+00
+      Event info,  [[1], False]
     Number of events:  12
 
 For the complete example, :download:`tutorialCVodeDisc.py`
