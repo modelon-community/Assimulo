@@ -216,7 +216,6 @@ class Test_CVode:
         t100 = sim.t
         sim.reset()
         sim.simulate(10.)
-        
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
     @testattr(stddist = True)
@@ -353,26 +352,26 @@ class Test_CVode:
         """
         This tests the functionality of the method completed_step.
         """
+        global nsteps
+        nsteps = 0
         f = lambda t,x: x**0.25
         def completed_step(solver):
-            solver._nstepevents += 1
-        mod = Explicit_Problem()
-        mod.f = f
-        mod.completed_step = completed_step
-        
-        y0 = [1.0]
-        sim = CVode(mod, y0)
-        sim._nstepevents = 0
+            global nsteps
+            nsteps += 1
+        mod = Explicit_Problem(f, 1.0)
+        mod.step_events = completed_step
+
+        sim = CVode(mod)
         
         sim.simulate(2., 100)
         assert len(sim.t) == 101
-        assert sim._nstepevents == 19
+        assert nsteps == sim.statistics["nsteps"]
         
-        sim = CVode(mod, y0)
-        sim._nstepevents = 0
+        sim = CVode(mod)
+        nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t) == 20
-        assert sim._nstepevents == 19
+        assert len(sim.t) == sim.statistics["nsteps"]+1
+        assert nsteps == sim.statistics["nsteps"]
         
 class Test_IDA:
     
@@ -413,7 +412,6 @@ class Test_IDA:
         t100 = sim.t
         sim.reset()
         sim.simulate(10.)
-        
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
     @testattr(stddist = True)
@@ -715,30 +713,33 @@ class Test_IDA:
         """
         This tests the functionality of the method completed_step.
         """
+        global nsteps
+        nsteps = 0
         def f(t,y,yd):
             res_1 = y[0] + y[1]+1.0
             res_2 = y[1]
             return N.array([res_1, res_2])
         def completed_step(solver):
-            solver._nstepevents += 1
-        mod = Implicit_Problem()
-        mod.f = f
-        mod.completed_step = completed_step
+            global nsteps
+            nsteps += 1
         
         y0 = [-1.0, 0.0]
-        yd0 = [1.0 , 0.0]
-        sim = IDA(mod, y0, yd0)
-        sim._nstepevents = 0
+        yd0 = [1.0 , 0.0]    
+        
+        mod = Implicit_Problem(f, y0, yd0)
+        mod.step_events = completed_step
+        
+        sim = IDA(mod)
         
         sim.simulate(2., 100)
         assert len(sim.t) == 101
-        assert sim._nstepevents == 22
+        assert nsteps == sim.statistics["nsteps"]
         
-        sim = IDA(mod, y0, yd0)
-        sim._nstepevents = 0
+        sim = IDA(mod)
+        nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t) == 23
-        assert sim._nstepevents == 22
+        assert len(sim.t) == sim.statistics["nsteps"] + 1
+        assert nsteps == sim.statistics["nsteps"]
 
 
 

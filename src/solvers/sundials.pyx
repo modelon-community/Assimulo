@@ -370,10 +370,11 @@ cdef class IDA(Implicit_ODE):
             self.initialize_sensitivity_options()
     
     cpdef integrate(self,double t,N.ndarray[ndim=1, dtype=realtype] y,N.ndarray[ndim=1, dtype=realtype] yd,double tf,dict opts):
-        cdef int flag, output_index, outputs, len_outputs
+        cdef int flag, output_index, normal_mode
         cdef N_Vector yout, ydout
-        cdef double tret = 0.0 
+        cdef double tret = 0.0, tout
         cdef list tr = [], yr = [], ydr = []
+        cdef N.ndarray output_list
         yout = arr2nv(y)
         ydout = arr2nv(yd)
         
@@ -389,30 +390,64 @@ cdef class IDA(Implicit_ODE):
         flag = Sun.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
             raise IDAError(flag, t)
-         
-        #Integration loop
-        while True:
-            
+        
+        #Run in normal mode?
+        normal_mode = 1 if opts["output_list"] != None else 0
+        
+        if normal_mode == 0: 
             #Integration loop
-            flag = Sun.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
-            if flag < 0:
-                raise IDAError(flag, tret)
-            
-            #Store results
-            tr.append(tret)
-            yr.append(nv2arr(yout))
-            ydr.append(nv2arr(ydout))
-            
-            if flag == IDA_ROOT_RETURN: #Found a root
-                flag = ID_EVENT #Convert to Assimulo flags
-                self.store_statistics()
-                break
+            while True:
                 
-            if flag == IDA_TSTOP_RETURN: #Reached tf
+                #Integration loop
+                flag = Sun.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
+                if flag < 0:
+                    raise IDAError(flag, tret)
+                
+                #Store results
+                tr.append(tret)
+                yr.append(nv2arr(yout))
+                ydr.append(nv2arr(ydout))
+                
+                if flag == IDA_ROOT_RETURN: #Found a root
+                    flag = ID_EVENT #Convert to Assimulo flags
+                    self.store_statistics()
+                    break
+                    
+                if flag == IDA_TSTOP_RETURN: #Reached tf
+                    flag = ID_COMPLETE
+                    self.store_statistics()
+                    break
+        else:
+            output_index = opts["output_index"]
+            output_list  = opts["output_list"][output_index:]
+            
+            for tout in output_list:
+                output_index += 1
+                #Integration loop
+                flag = Sun.IDASolve(self.ida_mem,tout,&tret,yout,ydout,IDA_NORMAL)
+                if flag < 0:
+                    raise IDAError(flag, tret)
+                
+                #Store results
+                tr.append(tret)
+                yr.append(nv2arr(yout))
+                ydr.append(nv2arr(ydout))
+                
+                if flag == IDA_ROOT_RETURN: #Found a root
+                    flag = ID_EVENT #Convert to Assimulo flags
+                    self.store_statistics()
+                    break
+                    
+                if flag == IDA_TSTOP_RETURN: #Reached tf
+                    flag = ID_COMPLETE
+                    self.store_statistics()
+                    break
+            else:
                 flag = ID_COMPLETE
                 self.store_statistics()
-                break
-                
+            
+            opts["output_index"] = output_index
+            
         return flag, tr, yr, ydr
     
     
@@ -1467,10 +1502,11 @@ cdef class CVode(Explicit_ODE):
         return flag, tr, yr
     
     cpdef integrate(self,double t,N.ndarray[ndim=1, dtype=realtype] y,double tf,dict opts):
-        cdef int flag, output_index, outputs, len_outputs
+        cdef int flag, output_index, normal_mode
         cdef N_Vector yout
-        cdef double tret = 0.0 
+        cdef double tret = 0.0, tout
         cdef list tr = [], yr = []
+        cdef N.ndarray output_list
         
         yout = arr2nv(y)
         
@@ -1488,28 +1524,57 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(flag, t)
         
         #Run in normal mode?
-        #outputs = 1 if opts["output_list"] not None else 0
-         
-        #Integration loop
-        while True:
+        normal_mode = 1 if opts["output_list"] != None else 0
+        
+        if normal_mode == 0: 
+            #Integration loop
+            while True:
+                    
+                flag = Sun.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
+                if flag < 0:
+                    raise CVodeError(flag, tret)
                 
-            flag = Sun.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
-            if flag < 0:
-                raise CVodeError(flag, tret)
+                #Store results
+                tr.append(tret)
+                yr.append(nv2arr(yout))
+                
+                if flag == CV_ROOT_RETURN: #Found a root
+                    flag = ID_EVENT #Convert to Assimulo flags
+                    self.store_statistics()
+                    break
+                if flag == CV_TSTOP_RETURN: #Reached tf
+                    flag = ID_COMPLETE
+                    self.store_statistics()
+                    break
+        else:
+            output_index = opts["output_index"]
+            output_list  = opts["output_list"][output_index:]
             
-            #Store results
-            tr.append(tret)
-            yr.append(nv2arr(yout))
-            
-            if flag == CV_ROOT_RETURN: #Found a root
-                flag = ID_EVENT #Convert to Assimulo flags
-                self.store_statistics()
-                break
-            if flag == CV_TSTOP_RETURN: #Reached tf
+            for tout in output_list:
+                output_index += 1
+                flag = Sun.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
+                if flag < 0:
+                    raise CVodeError(flag, tret)
+                
+                #Store results
+                tr.append(tret)
+                yr.append(nv2arr(yout))
+                
+                if flag == CV_ROOT_RETURN: #Found a root
+                    flag = ID_EVENT #Convert to Assimulo flags
+                    self.store_statistics()
+                    break
+                if flag == CV_TSTOP_RETURN: #Reached tf
+                    flag = ID_COMPLETE
+                    self.store_statistics()
+                    break
+            else:
                 flag = ID_COMPLETE
                 self.store_statistics()
-                break
-                
+            
+        
+            opts["output_index"] = output_index
+
         return flag, tr, yr
     
     cpdef state_event_info(self):
