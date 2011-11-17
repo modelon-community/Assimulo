@@ -53,14 +53,13 @@ cdef class Explicit_ODE(ODE):
         
         #Check the dimension of the state event function
         if self.problem_info["state_events"]:
-            self.problem_info["dimRoot"] = len(problem.state_events(problem.t0,problem.y0, problem.sw0))
+            self.problem_info["dimRoot"] = len(problem.state_events(self.t0,self.y0, self.sw0))
         
-        self.t_cur = problem.t0
-        self.y_cur = problem.y0.copy()
+        self.t_cur = self.t0
+        self.y_cur = self.y0.copy()
             
     def reset(self):
         """
-        
         Resets the problem. If the problem is defined with a reset method, its called
         and then the method re_init. The re_init method is called with the initial
         values set in the problem, problem.t0 and problem.y0.
@@ -68,7 +67,7 @@ cdef class Explicit_ODE(ODE):
         """
         self.problem.reset()
 
-        self.re_init(self.problem.t0, self.problem.y0)
+        self.re_init(self.t0, self.y0)
         
     def re_init(self,t0, y0):
         """

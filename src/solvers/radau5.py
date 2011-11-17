@@ -105,10 +105,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.f = problem.rhs_internal
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(problem.y0))
-        self.Y2 = N.array([0.0]*len(problem.y0))
-        self.Y3 = N.array([0.0]*len(problem.y0))
-        self._f0 = N.array([0.0]*len(problem.y0))
+        self.Y1 = N.array([0.0]*len(self.y0))
+        self.Y2 = N.array([0.0]*len(self.y0))
+        self.Y3 = N.array([0.0]*len(self.y0))
+        self._f0 = N.array([0.0]*len(self.y0))
         
         #Solver support
         self.supports["one_step_mode"] = True
@@ -619,13 +619,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         #RES-Function
         self.f = problem.res_internal
-        self.RES =  N.array([0.0]*len(problem.y0))
+        self.RES =  N.array([0.0]*len(self.y0))
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(problem.y0))
-        self.Y2 = N.array([0.0]*len(problem.y0))
-        self.Y3 = N.array([0.0]*len(problem.y0))
-        self._f0 = N.array([0.0]*len(problem.y0))
+        self.Y1 = N.array([0.0]*len(self.y0))
+        self.Y2 = N.array([0.0]*len(self.y0))
+        self.Y3 = N.array([0.0]*len(self.y0))
+        self._f0 = N.array([0.0]*len(self.y0))
         
         
         #Solver support
