@@ -40,11 +40,11 @@ def run_example(with_plots=True):
         return N.array([res1,res2,res3])
         
     def handle_result(solver, t ,y,yd):
-        solver.t += [t]
-        solver.y += [y]
-        solver.p[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p[2] += [solver.interpolate_sensitivity(t, 0, 2)]
+        solver.t_sol += [t]
+        solver.y_sol += [y]
+        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #The initial conditons
     y0 = [1.0, 0.0, 0.0]        #Initial conditions for y
@@ -73,12 +73,12 @@ def run_example(with_plots=True):
     imp_sim.make_consistent('IDA_YA_YDP_INIT')
     
     #Simulate
-    imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
+    t, y, yd = imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
     
     #Basic test
-    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 9.05518032e-01, 4)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][1], 2.24046805e-05, 4)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][2], 9.44595637e-02, 4)
+    nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
+    nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
+    nose.tools.assert_almost_equal(y[-1][2], 9.44595637e-02, 4)
     
     #Plot
     if with_plots:

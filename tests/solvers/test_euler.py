@@ -85,8 +85,8 @@ class Test_Explicit_Euler:
         """
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y[-1], 2.0)
+        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
+        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
     
     @testattr(stddist = True)
     def test_step(self):
@@ -98,5 +98,5 @@ class Test_Explicit_Euler:
         self.simulator.h = 0.1
         self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y[-1], 2.0)
+        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
+        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)

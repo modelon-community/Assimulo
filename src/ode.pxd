@@ -13,6 +13,7 @@ cdef class ODE:
     cdef public N.ndarray y_cur,yd_cur, p_cur
     
     cdef public list t,y,yd,p,sw_cur
+    cdef public list t_sol, y_sol, yd_sol, p_sol
         
     cpdef log_message(self, message, int level)
     cpdef log_event(self, double time, object event_info, int level)
@@ -24,3 +25,4 @@ cdef class ODE:
     cpdef print_event_data(self)
     cpdef finalize(self)
     cpdef initialize(self)
+    cdef _reset_solution_variables(self)

@@ -57,9 +57,6 @@ cdef class Explicit_ODE(ODE):
         
         self.t_cur = problem.t0
         self.y_cur = problem.y0.copy()
-        
-        self.t = []
-        self.y = []
             
     def reset(self):
         """
@@ -70,11 +67,7 @@ cdef class Explicit_ODE(ODE):
         
         """
         self.problem.reset()
-        
-        #Resets the results
-        self.t = []
-        self.y = []
-        
+
         self.re_init(self.problem.t0, self.problem.y0)
         
     def re_init(self,t0, y0):

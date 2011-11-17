@@ -138,13 +138,13 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
         
         assert exp_sim.statistics["nfevalsLS"] == 0
-        nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
         
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
-        nose.tools.assert_almost_equal(exp_sim.y[-1][0], -121.75000143, 4)
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
         assert exp_sim.statistics["nfevalsLS"] > 0
     
     @testattr(stddist = True)
@@ -212,8 +212,8 @@ class Test_CVode:
 
         sim = CVode(prob)
         sim.simulate(10., 100)
-        y100 = sim.y
-        t100 = sim.t
+        y100 = sim.y_sol
+        t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
@@ -364,13 +364,13 @@ class Test_CVode:
         sim = CVode(mod)
         
         sim.simulate(2., 100)
-        assert len(sim.t) == 101
+        assert len(sim.t_sol) == 101
         assert nsteps == sim.statistics["nsteps"]
         
         sim = CVode(mod)
         nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t) == sim.statistics["nsteps"]+1
+        assert len(sim.t_sol) == sim.statistics["nsteps"]+1
         assert nsteps == sim.statistics["nsteps"]
         
 class Test_IDA:
@@ -408,8 +408,8 @@ class Test_IDA:
 
         sim = IDA(prob)
         sim.simulate(10., 100)
-        y100 = sim.y
-        t100 = sim.t
+        y100 = sim.y_sol
+        t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
@@ -491,13 +491,13 @@ class Test_IDA:
         sim = IDA(mod)
         sim.simulate(2.0)
 
-        nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746473811, places=7)
+        nose.tools.assert_almost_equal(sim.y_sol[-1][0], -13.4746473811, places=7)
         
         sim.reset()
         sim.inith = 1e-10
         sim.simulate(2.0)
 
-        nose.tools.assert_almost_equal(sim.y[-1][0], -13.4746596311, places=7)
+        nose.tools.assert_almost_equal(sim.y_sol[-1][0], -13.4746596311, places=7)
         
     @testattr(stddist = True)
     def test_time_event(self):
@@ -534,13 +534,13 @@ class Test_IDA:
         
         sim.simulate(5.0)
 
-        nose.tools.assert_almost_equal(sim.y[38], 1.0000000, 5)
-        nose.tools.assert_almost_equal(sim.y[87], 1.0000000, 5)
+        nose.tools.assert_almost_equal(sim.y_sol[38], 1.0000000, 5)
+        nose.tools.assert_almost_equal(sim.y_sol[87], 1.0000000, 5)
         
         sim = IDA(mod, [1.0],[1.0])
         sim.simulate(2.0)
         
-        nose.tools.assert_almost_equal(sim.t[-1], 2.0000000, 5)
+        nose.tools.assert_almost_equal(sim.t_sol[-1], 2.0000000, 5)
         
     @testattr(stddist = True)    
     def test_usejac(self):
@@ -558,13 +558,13 @@ class Test_IDA:
         imp_sim.simulate(3,100)
 
         assert imp_sim.statistics["nfevalsLS"] == 0
-        nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
+        nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
         
         imp_sim.reset()
         imp_sim.usejac=False
         imp_sim.simulate(3.,100)
 
-        nose.tools.assert_almost_equal(imp_sim.y[-1][0], 45.1900000, 4)
+        nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
         assert imp_sim.statistics["nfevalsLS"] > 0
     
     @testattr(stddist = True)
@@ -732,13 +732,13 @@ class Test_IDA:
         sim = IDA(mod)
         
         sim.simulate(2., 100)
-        assert len(sim.t) == 101
+        assert len(sim.t_sol) == 101
         assert nsteps == sim.statistics["nsteps"]
         
         sim = IDA(mod)
         nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t) == sim.statistics["nsteps"] + 1
+        assert len(sim.t_sol) == sim.statistics["nsteps"] + 1
         assert nsteps == sim.statistics["nsteps"]
 
 

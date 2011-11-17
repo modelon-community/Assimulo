@@ -36,15 +36,17 @@ def run_example(with_plots=True):
     exp_sim.options["continuous_output"] = True
     
     #Simulate
-    exp_sim.simulate(3) #Simulate 3 seconds
-    exp_sim.simulate(5,100) #Simulate 2 second more
+    t1, y1 = exp_sim.simulate(3) #Simulate 3 seconds
+    t2, y2 = exp_sim.simulate(5,100) #Simulate 2 second more
 
     #Basic test
-    nose.tools.assert_almost_equal(exp_sim.y[-1], 0.02628193)
+    nose.tools.assert_almost_equal(y2[-1], 0.02628193)
     
     #Plot
     if with_plots:
-        exp_sim.plot() #Plot the solution
+        P.plot(t1, y1, color="b")
+        P.plot(t2, y2, color="b")
+        P.show()
 
 if __name__=='__main__':
     run_example()
