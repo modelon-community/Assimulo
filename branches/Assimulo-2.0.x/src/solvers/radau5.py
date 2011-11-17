@@ -702,7 +702,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 t, y, yd = self._step(t, y, yd)
                 self._tc = t
                 self._yc = y
-                self.ydc = yd
+                self._ydc = yd
                 
                 if self.h > N.abs(tf-t):
                     self.h = N.abs(tf-t)
@@ -716,9 +716,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 self._first = False 
         else:
             raise Implicit_ODE_Exception('Final time not reached within maximum number of steps')
-        
-        #t, y, yd = self._step(t,y,yd)
-        #yield ID_PY_COMPLETE, t, y, yd
     
     def step(self, t, y, yd, tf, opts):
         

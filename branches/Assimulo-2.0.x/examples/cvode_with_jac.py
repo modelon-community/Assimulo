@@ -23,6 +23,7 @@ from assimulo.problem import Explicit_Problem
 
 
 def run_example(with_plots=True):
+    global t,y
     
     #Defines the rhs
     def f(t,y):
@@ -50,14 +51,14 @@ def run_example(with_plots=True):
     #Set the parameters
     exp_sim.iter = 'Newton' #Default 'FixedPoint'
     exp_sim.discr = 'BDF' #Default 'Adams'
-    exp_sim.atol = 1e-4 #Default 1e-6
-    exp_sim.rtol = 1e-4 #Default 1e-6
+    exp_sim.atol = 1e-5 #Default 1e-6
+    exp_sim.rtol = 1e-5 #Default 1e-6
     
     #Simulate
-    t, y = exp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
+    t, y = exp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],-121.75017042)
+    nose.tools.assert_almost_equal(y[-1][0],-121.75000000,4)
     nose.tools.assert_almost_equal(y[-1][1],-49.100000000)
         
     #Plot

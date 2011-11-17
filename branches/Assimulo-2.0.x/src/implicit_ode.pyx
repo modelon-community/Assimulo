@@ -197,7 +197,7 @@ cdef class Implicit_ODE(ODE):
                     t_logg = self.t_cur
                     
                 if STEP_EVENT == 1: #If the option completed step is set.
-                    flag_initialize = self.problem.completed_step(self)
+                    flag_initialize = self.problem.step_events(self)#completed_step(self)
                 else:
                     flag_initialize = False
             else:

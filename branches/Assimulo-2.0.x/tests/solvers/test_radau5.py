@@ -393,6 +393,7 @@ class Test_Implicit_Radau5:
         self.sim.continuous_output = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
+        print len(self.sim.t)
         assert len(self.sim.t) == 201
     
     @testattr(stddist = True)
