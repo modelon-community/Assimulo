@@ -80,9 +80,9 @@ cdef class cImplicit_Problem(cProblem):
         Method for specifying how the result is to be handled. As default the
         data is stored in three vectors, solver.(t/y/yd).
         """
-        solver.t.extend([t])
-        solver.y.extend([y])
-        solver.yd.extend([yd])
+        solver.t_sol.extend([t])
+        solver.y_sol.extend([y])
+        solver.yd_sol.extend([yd])
         
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
@@ -110,8 +110,8 @@ cdef class cExplicit_Problem(cProblem):
         Method for specifying how the result is to be handled. As default the
         data is stored in three vectors, solver.(t/y).
         """
-        solver.t.extend([t])
-        solver.y.extend([y])
+        solver.t_sol.extend([t])
+        solver.y_sol.extend([y])
         
     cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:

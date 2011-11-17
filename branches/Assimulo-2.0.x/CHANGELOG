@@ -3,6 +3,13 @@
 --- Assimulo-2.0.x --- (Not released)
     * Replaced setup_source.py and setup_binary.py with a single setup.py.
     * Base code migrated to Cython. 
+    * Results are now returned from the simulate method.
+    * Options and statistics are now stored in dictionaries.
+    * Results are stored in variables appended with _sol. For example:
+      y -> y_sol. (Also note that the result is now returned from simulate)
+    * Method in IDA make_consistency have been renamed to make_consistent.
+    * Added a method get_support which returns a dictionary with information
+      about what the current solver supports.
     * Multiple name changes. (To be specified)
 
 --- Assimulo-1.4b2 ---

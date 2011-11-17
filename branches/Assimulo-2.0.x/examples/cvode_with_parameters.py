@@ -40,11 +40,11 @@ def run_example(with_plots=True):
         return N.array([yd_0,yd_1,yd_2])
     
     def handle_result(solver, t ,y):
-        solver.t += [t]
-        solver.y += [y]
-        solver.p[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p[2] += [solver.interpolate_sensitivity(t, 0, 2)]
+        solver.t_sol += [t]
+        solver.y_sol += [y]
+        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #The initial conditions
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
@@ -69,18 +69,17 @@ def run_example(with_plots=True):
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
     exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
     exp_sim.options["continuous_output"] = True
-    exp_sim.p = [[],[],[]] #Vector for storing the p result
-    
+
     #Simulate
-    exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
+    t, y = exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
     
     #Basic test
-    nose.tools.assert_almost_equal(exp_sim.y[-1][0], 9.05518032e-01, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[-1][1], 2.24046805e-05, 4)
-    nose.tools.assert_almost_equal(exp_sim.y[-1][2], 9.44595637e-02, 4)
-    nose.tools.assert_almost_equal(exp_sim.p[0][-1][0], -1.8761, 2) #Values taken from the example in Sundials
-    nose.tools.assert_almost_equal(exp_sim.p[1][-1][0], 2.9614e-06, 8)
-    nose.tools.assert_almost_equal(exp_sim.p[2][-1][0], -4.9334e-10, 12)
+    nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
+    nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
+    nose.tools.assert_almost_equal(y[-1][2], 9.44595637e-02, 4)
+    nose.tools.assert_almost_equal(exp_sim.p_sol[0][-1][0], -1.8761, 2) #Values taken from the example in Sundials
+    nose.tools.assert_almost_equal(exp_sim.p_sol[1][-1][0], 2.9614e-06, 8)
+    nose.tools.assert_almost_equal(exp_sim.p_sol[2][-1][0], -4.9334e-10, 12)
     
     #Plot
     if with_plots:

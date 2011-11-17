@@ -87,9 +87,22 @@ cdef class ODE:
             self.problem_info["jac_fcn"] = True
         if hasattr(problem, "jacv"):
             self.problem_info["jacv_fcn"] = True
+            
+        #Reset solution variables
+        self._reset_solution_variables()
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
+        
+    cdef _reset_solution_variables(self):
+        """
+        Resets solution variables.
+        """
+        self.t_sol = []
+        self.y_sol = []
+        self.yd_sol = []
+        self.p_sol = [[] for i in range(self.problem_info["dimSens"])]
+        
         
     cpdef simulate(self, double tfinal, int ncp=0, object ncp_list=None):
         """
@@ -118,6 +131,9 @@ cdef class ODE:
                  
         """
         t0 = self.t_cur
+        
+        #Reset solution variables
+        self._reset_solution_variables()
         
         #Error checking
         try:
@@ -202,9 +218,9 @@ cdef class ODE:
         
         #Return the results
         if isinstance(self.problem, Explicit_Problem):
-            return self.t, N.array(self.y)
+            return self.t_sol, N.array(self.y_sol)
         else:
-            return self.t, N.array(self.y), N.array(self.yd)
+            return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
         
     cpdef initialize(self):
         pass

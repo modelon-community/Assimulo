@@ -54,11 +54,11 @@ def run_example(with_plots=True):
         return N.array([res_0,res_1,res_2])
     
     def handle_result(solver, t ,y,yd):
-        solver.t += [t]
-        solver.y += [y]
-        solver.p[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p[2] += [solver.interpolate_sensitivity(t, 0, 2)]
+        solver.t_sol += [t]
+        solver.y_sol += [y]
+        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #The initial conditions
     y0 = [0.0,0.0,0.0]          #Initial conditions for y
@@ -83,36 +83,34 @@ def run_example(with_plots=True):
     imp_sim.continuous_output = True #Need to be able to store the result using the interpolate methods
     imp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
-    
-    imp_sim.p = [[],[],[]] #Vector for storing the p result
-    
+
     #Simulate
-    imp_sim.simulate(400) #Simulate 400 seconds
+    t, y, yd = imp_sim.simulate(400) #Simulate 400 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(imp_sim.y[-1][0], 1577.6552477,3)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][1], 611.9574565, 3)
-    nose.tools.assert_almost_equal(imp_sim.y[-1][2], 2215.88563217, 3)
-    nose.tools.assert_almost_equal(imp_sim.p[0][1][0], 1.0)
+    nose.tools.assert_almost_equal(y[-1][0], 1577.6552477,3)
+    nose.tools.assert_almost_equal(y[-1][1], 611.9574565, 3)
+    nose.tools.assert_almost_equal(y[-1][2], 2215.88563217, 3)
+    nose.tools.assert_almost_equal(imp_sim.p_sol[0][1][0], 1.0)
     
     #Plot
     if with_plots:
         P.figure(2)
-        P.plot(imp_sim.t, N.array(imp_sim.p[0])[:,0],
-               imp_sim.t, N.array(imp_sim.p[0])[:,1],
-               imp_sim.t, N.array(imp_sim.p[0])[:,2])
+        P.plot(imp_sim.t, N.array(imp_sim.p_sol[0])[:,0],
+               imp_sim.t, N.array(imp_sim.p_sol[0])[:,1],
+               imp_sim.t, N.array(imp_sim.p_sol[0])[:,2])
         P.title("Parameter p1")
         P.legend(("p1/dy1","p1/dy2","p1/dy3"))
         P.figure(3)
-        P.plot(imp_sim.t, N.array(imp_sim.p[1])[:,0],
-               imp_sim.t, N.array(imp_sim.p[1])[:,1],
-               imp_sim.t, N.array(imp_sim.p[1])[:,2])
+        P.plot(imp_sim.t, N.array(imp_sim.p_sol[1])[:,0],
+               imp_sim.t, N.array(imp_sim.p_sol[1])[:,1],
+               imp_sim.t, N.array(imp_sim.p_sol[1])[:,2])
         P.title("Parameter p2")
         P.legend(("p2/dy1","p2/dy2","p2/dy3"))
         P.figure(4)
-        P.plot(imp_sim.t, N.array(imp_sim.p[2])[:,0],
-               imp_sim.t, N.array(imp_sim.p[2])[:,1],
-               imp_sim.t, N.array(imp_sim.p[2])[:,2])
+        P.plot(imp_sim.t, N.array(imp_sim.p_sol[2])[:,0],
+               imp_sim.t, N.array(imp_sim.p_sol[2])[:,1],
+               imp_sim.t, N.array(imp_sim.p_sol[2])[:,2])
         P.title("Parameter p3")
         P.legend(("p3/dy1","p3/dy2","p3/dy3"))
         imp_sim.plot() #Plot the solution

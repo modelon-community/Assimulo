@@ -69,10 +69,6 @@ cdef class Implicit_ODE(ODE):
         self.y_cur  = problem.y0.copy()
         self.yd_cur = problem.yd0.copy()
         
-        self.t  = []
-        self.y  = []
-        self.yd = []
-        
     def reset(self):
         """
         
@@ -82,11 +78,6 @@ cdef class Implicit_ODE(ODE):
         
         """
         self.problem.reset()
-        
-        #Resets the results
-        self.t  = []
-        self.y  = []
-        self.yd = []
         
         self.re_init(self.problem.t0, self.problem.y0, self.problem.yd0)
         

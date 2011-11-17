@@ -35,7 +35,7 @@ def run_example(with_plots=True):
     
     See http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
     """
-    
+    global exp_sim
     def f(t, y, p):
         y1,y2,y3 = y
         k01 = 0.0211
@@ -53,11 +53,11 @@ def run_example(with_plots=True):
         return N.array([yd_0,yd_1,yd_2])
     
     def handle_result(solver, t ,y):
-        solver.t += [t]
-        solver.y += [y]
-        solver.p[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p[2] += [solver.interpolate_sensitivity(t, 0, 2)]
+        solver.t_sol += [t]
+        solver.y_sol += [y]
+        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
+        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
+        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
     
     #The initial conditions
     y0 = [0.0,0.0,0.0]          #Initial conditions for y
@@ -85,35 +85,33 @@ def run_example(with_plots=True):
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
     exp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
     
-    exp_sim.p = [[],[],[]] #Vector for storing the p result
-    
     #Simulate
-    exp_sim.simulate(400) #Simulate 400 seconds
+    t, y = exp_sim.simulate(400) #Simulate 400 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(exp_sim.y[-1][0], 1577.6552477, 5)
-    nose.tools.assert_almost_equal(exp_sim.y[-1][1], 611.9574565, 5)
-    nose.tools.assert_almost_equal(exp_sim.y[-1][2], 2215.88563217, 5)
-    nose.tools.assert_almost_equal(exp_sim.p[0][1][0], 1.0)
+    nose.tools.assert_almost_equal(y[-1][0], 1577.6552477, 5)
+    nose.tools.assert_almost_equal(y[-1][1], 611.9574565, 5)
+    nose.tools.assert_almost_equal(y[-1][2], 2215.88563217, 5)
+    nose.tools.assert_almost_equal(exp_sim.p_sol[0][1][0], 1.0)
 
     #Plot
     if with_plots:
         P.figure(1)
-        P.plot(exp_sim.t, N.array(exp_sim.p[0])[:,0],
-               exp_sim.t, N.array(exp_sim.p[0])[:,1],
-               exp_sim.t, N.array(exp_sim.p[0])[:,2])
+        P.plot(exp_sim.t, N.array(exp_sim.p_sol[0])[:,0],
+               exp_sim.t, N.array(exp_sim.p_sol[0])[:,1],
+               exp_sim.t, N.array(exp_sim.p_sol[0])[:,2])
         P.title("Parameter p1")
         P.legend(("p1/dy1","p1/dy2","p1/dy3"))
         P.figure(2)
-        P.plot(exp_sim.t, N.array(exp_sim.p[1])[:,0],
-               exp_sim.t, N.array(exp_sim.p[1])[:,1],
-               exp_sim.t, N.array(exp_sim.p[1])[:,2])
+        P.plot(exp_sim.t, N.array(exp_sim.p_sol[1])[:,0],
+               exp_sim.t, N.array(exp_sim.p_sol[1])[:,1],
+               exp_sim.t, N.array(exp_sim.p_sol[1])[:,2])
         P.title("Parameter p2")
         P.legend(("p2/dy1","p2/dy2","p2/dy3"))
         P.figure(3)
-        P.plot(exp_sim.t, N.array(exp_sim.p[2])[:,0],
-               exp_sim.t, N.array(exp_sim.p[2])[:,1],
-               exp_sim.t, N.array(exp_sim.p[2])[:,2])
+        P.plot(exp_sim.t, N.array(exp_sim.p_sol[2])[:,0],
+               exp_sim.t, N.array(exp_sim.p_sol[2])[:,1],
+               exp_sim.t, N.array(exp_sim.p_sol[2])[:,2])
         P.title("Parameter p3")
         P.legend(("p3/dy1","p3/dy2","p3/dy3"))
         P.figure(4)
