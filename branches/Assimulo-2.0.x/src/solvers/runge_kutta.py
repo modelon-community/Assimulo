@@ -46,11 +46,11 @@ class RungeKutta34(Explicit_ODE):
         self.options["maxsteps"] = 10000
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(problem.y0))
-        self.Y2 = N.array([0.0]*len(problem.y0))
-        self.Y3 = N.array([0.0]*len(problem.y0))
-        self.Y4 = N.array([0.0]*len(problem.y0))
-        self.Z3 = N.array([0.0]*len(problem.y0))
+        self.Y1 = N.array([0.0]*len(self.y0))
+        self.Y2 = N.array([0.0]*len(self.y0))
+        self.Y3 = N.array([0.0]*len(self.y0))
+        self.Y4 = N.array([0.0]*len(self.y0))
+        self.Z3 = N.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal
@@ -265,10 +265,10 @@ class RungeKutta4(Explicit_ODE):
         self.options["h"] = 0.01
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(problem.y0))
-        self.Y2 = N.array([0.0]*len(problem.y0))
-        self.Y3 = N.array([0.0]*len(problem.y0))
-        self.Y4 = N.array([0.0]*len(problem.y0))
+        self.Y1 = N.array([0.0]*len(self.y0))
+        self.Y2 = N.array([0.0]*len(self.y0))
+        self.Y3 = N.array([0.0]*len(self.y0))
+        self.Y4 = N.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal

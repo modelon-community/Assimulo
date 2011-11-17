@@ -38,7 +38,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         self.options["h"] = 0.01
         
         #Internal temporary result vector
-        self.yd1 = N.array([0.0]*len(problem.y0))
+        self.yd1 = N.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal

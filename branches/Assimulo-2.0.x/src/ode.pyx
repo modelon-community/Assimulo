@@ -63,25 +63,25 @@ cdef class ODE:
             self.problem_info["step_events"] = True
         
         if hasattr(problem, 'y0'):
-            problem.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
-            self.problem_info["dim"] = len(problem.y0)
+            self.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
+            self.problem_info["dim"] = len(self.y0)
         else:
             raise ODE_Exception('y0 must be specified in the problem.')
         
         if hasattr(problem, "p0"):
-            problem.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
-            self.problem_info["dimSens"] = len(problem.p0)
-            self.p_cur = problem.p0.copy()
+            self.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
+            self.problem_info["dimSens"] = len(self.p0)
+            self.p_cur = self.p0.copy()
         
         if hasattr(problem, "sw0"):
-            problem.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
+            self.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
             self.problem_info["switches"] = True
-            self.sw_cur = problem.sw0.tolist()
+            self.sw_cur = self.sw0.tolist()
         
         if hasattr(problem, 't0'):
-            problem.t0 = float(problem.t0)
+            self.t0 = float(problem.t0)
         else:
-            problem.t0 = 0.0
+            self.t0 = 0.0
             
         if hasattr(problem, "jac"):
             self.problem_info["jac_fcn"] = True

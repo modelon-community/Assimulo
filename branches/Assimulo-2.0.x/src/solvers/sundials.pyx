@@ -106,7 +106,7 @@ cdef class IDA(Implicit_ODE):
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
         elif hasattr(problem, 'p0'):
-            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.problem.p0])
+            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.p0])
         if hasattr(problem, 'algvar'):
             self.algvar = problem.algvar
         if hasattr(problem, 'yS0'):
