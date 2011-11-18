@@ -16,20 +16,24 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import pylab as P
 import nose
 from assimulo.solvers.sundials import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    #This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
-    #----
-    #This simple example problem for CVode, due to Robertson, 
-    #is from chemical kinetics, and consists of the following three 
-    #equations:
-    #
-    #   dy1/dt = -p1*y1 + p2*y2*y3
-    #   dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
-    #   dy3/dt = p3*(y2)^2
+    """
+    This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
+
+    This simple example problem for CVode, due to Robertson, 
+    is from chemical kinetics, and consists of the following three 
+    equations::
+    
+       dy1/dt = -p1*y1 + p2*y2*y3
+       dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
+       dy3/dt = p3*(y2)^2
+    
+    """
     
     def f(t, y, p):
         
@@ -39,13 +43,6 @@ def run_example(with_plots=True):
         
         return N.array([yd_0,yd_1,yd_2])
     
-    def handle_result(solver, t ,y):
-        solver.t_sol += [t]
-        solver.y_sol += [y]
-        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
-    
     #The initial conditions
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
     
@@ -53,8 +50,6 @@ def run_example(with_plots=True):
     exp_mod = Explicit_Problem(f,y0)
     
     #Sets the options to the problem
-    exp_mod.handle_result = handle_result #Change the default handling of the result
-    
     exp_mod.p0 = [0.040, 1.0e4, 3.0e7]  #Initial conditions for parameters
     exp_mod.pbar = [0.040, 1.0e4, 3.0e7]
 
@@ -68,7 +63,7 @@ def run_example(with_plots=True):
     exp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
     exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
-    exp_sim.options["continuous_output"] = True
+    exp_sim.continuous_output = True
 
     #Simulate
     t, y = exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
@@ -83,9 +78,8 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        exp_sim.plot() #Plot the solution
-    
-    
+        P.plot(t, y)
+        P.show()  
 
 if __name__=='__main__':
     run_example()

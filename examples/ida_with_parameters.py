@@ -16,20 +16,24 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import pylab as P
 import nose
 from assimulo.solvers.sundials import IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
-    #This is the same example from the Sundials package (idasRoberts_FSA_dns.c)
-    #----
-    #This simple example problem for IDA, due to Robertson, 
-    #is from chemical kinetics, and consists of the following three 
-    #equations:
-    #
-    #   dy1/dt = -p1*y1 + p2*y2*y3
-    #   dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
-    #   0   = y1 + y2 + y3 - 1
+    """
+    This is the same example from the Sundials package (idasRoberts_FSA_dns.c)
+
+    This simple example problem for IDA, due to Robertson, 
+    is from chemical kinetics, and consists of the following three 
+    equations::
+    
+       dy1/dt = -p1*y1 + p2*y2*y3
+       dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
+       0   = y1 + y2 + y3 - 1
+    
+    """
 
     def f(t, y, yd, p):
         
@@ -38,14 +42,7 @@ def run_example(with_plots=True):
         res3 = y[0]+y[1]+y[2]-1
         
         return N.array([res1,res2,res3])
-        
-    def handle_result(solver, t ,y,yd):
-        solver.t_sol += [t]
-        solver.y_sol += [y]
-        solver.p_sol[0] += [solver.interpolate_sensitivity(t, 0, 0)]
-        solver.p_sol[1] += [solver.interpolate_sensitivity(t, 0, 1)]
-        solver.p_sol[2] += [solver.interpolate_sensitivity(t, 0, 2)]
-    
+
     #The initial conditons
     y0 = [1.0, 0.0, 0.0]        #Initial conditions for y
     yd0 = [0.1, 0.0, 0.0]       #Initial conditions for dy/dt
@@ -53,9 +50,6 @@ def run_example(with_plots=True):
     
     #Create an Assimulo implicit problem
     imp_mod = Implicit_Problem(f, y0, yd0,p0=p0)
-    
-    #Sets the options to the problem
-    imp_mod.handle_result = handle_result #Change the default handling of the result
 
     #Create an Assimulo implicit solver (IDA)
     imp_sim = IDA(imp_mod) #Create a IDA solver
@@ -67,24 +61,25 @@ def run_example(with_plots=True):
     imp_sim.continuous_output = True #Store data continuous during the simulation
     imp_sim.pbar = p0
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
-    imp_sim.p = [[],[],[]] #Vector for storing the p result
-    
+
     #Let Sundials find consistent initial conditions by use of 'IDA_YA_YDP_INIT'
     imp_sim.make_consistent('IDA_YA_YDP_INIT')
     
     #Simulate
     t, y, yd = imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
-    
+    print imp_sim.p_sol[0][-1] , imp_sim.p_sol[1][-1], imp_sim.p_sol[0][-1]
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
     nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
     nose.tools.assert_almost_equal(y[-1][2], 9.44595637e-02, 4)
+    nose.tools.assert_almost_equal(imp_sim.p_sol[0][-1][0], -1.8761, 2) #Values taken from the example in Sundials
+    nose.tools.assert_almost_equal(imp_sim.p_sol[1][-1][0], 2.9614e-06, 8)
+    nose.tools.assert_almost_equal(imp_sim.p_sol[2][-1][0], -4.9334e-10, 12)
     
     #Plot
     if with_plots:
-        imp_sim.plot() #Plot the solution
-    
-    
+        P.plot(t,y)
+        P.show()    
 
 if __name__=='__main__':
     run_example()

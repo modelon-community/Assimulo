@@ -189,6 +189,10 @@ cdef class IDA(Implicit_ODE):
     
     cpdef initialize(self):
         
+        #Initialize storing of sensitivyt result in handle_result
+        if self.problem_info['step_events'] or self.options['continuous_output']:
+            self.problem._sensitivity_result = 1
+        
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
@@ -564,7 +568,7 @@ cdef class IDA(Implicit_ODE):
         
         return nv2arr(dky)
         
-    cpdef interpolate_sensitivity(self,double t, int k, int i=-1):
+    cpdef interpolate_sensitivity(self,double t, int k = 0, int i=-1):
         """
         This method calls the internal method IDAGetSensDky which computes the k-th derivatives
         of the interpolating polynomials for the sensitivity variables at time t.
@@ -1406,7 +1410,7 @@ cdef class CVode(Explicit_ODE):
         
         return nv2arr(dky)
         
-    cpdef N.ndarray interpolate_sensitivity(self, realtype t, int k, int i=-1):
+    cpdef N.ndarray interpolate_sensitivity(self, realtype t, int k = 0, int i=-1):
         """
         This method calls the internal method CVodeGetSensDky which computes the k-th derivatives
         of the interpolating polynomials for the sensitivity variables at time t.
@@ -1451,6 +1455,10 @@ cdef class CVode(Explicit_ODE):
             return nv2arr(dkyS)
     
     cpdef initialize(self):
+        
+        #Initialize storing of sensitivyt result in handle_result
+        if self.problem_info['step_events'] or self.options['continuous_output']:
+            self.problem._sensitivity_result = 1
         
         #Reset statistics
         for k in self.statistics.keys():
