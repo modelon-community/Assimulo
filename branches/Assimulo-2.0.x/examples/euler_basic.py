@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import pylab as P
 import nose
 from assimulo.solvers.euler import *
 from assimulo.problem import Explicit_Problem

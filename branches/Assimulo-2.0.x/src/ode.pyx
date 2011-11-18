@@ -91,6 +91,9 @@ cdef class ODE:
         #Reset solution variables
         self._reset_solution_variables()
         
+        #Specify storing of sensitivity to 0
+        problem._sensitivity_result = 0
+        
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
         

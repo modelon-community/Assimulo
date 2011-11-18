@@ -23,6 +23,7 @@ include "constants.pxi" #Includes the constants (textual include)
 realtype = N.float
 
 cdef class cProblem:
+    cdef public int _sensitivity_result
     
     name = '---'
     
@@ -75,14 +76,21 @@ cdef class cImplicit_Problem(cProblem):
             self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([p0],dtype=bool))
         self.t0  = t0
     
-    cpdef handle_result(self, solver, t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         """
         Method for specifying how the result is to be handled. As default the
         data is stored in three vectors, solver.(t/y/yd).
         """
+        cdef int i = 0
+        
         solver.t_sol.extend([t])
         solver.y_sol.extend([y])
         solver.yd_sol.extend([yd])
+        
+        #Store sensitivity result (variable _sensitivity_result are set from the solver by the solver)
+        if self._sensitivity_result == 1:
+            for i in range(solver.problem_info["dimSens"]):
+                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)]
         
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
@@ -110,8 +118,15 @@ cdef class cExplicit_Problem(cProblem):
         Method for specifying how the result is to be handled. As default the
         data is stored in three vectors, solver.(t/y).
         """
+        cdef int i = 0
+        
         solver.t_sol.extend([t])
         solver.y_sol.extend([y])
+        
+        #Store sensitivity result (variable _sensitivity_result are set from the solver by the solver)
+        if self._sensitivity_result == 1:
+            for i in range(solver.problem_info["dimSens"]):
+                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)]
         
     cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:
@@ -193,7 +208,9 @@ class Implicit_Problem(cImplicit_Problem):
                     
             def handle_result(self, solver, t, y, yd)
                 Method for specifying how the result is to be handled. 
-                As default the data is stored in three vectors, solver.(t/y/yd).
+                As default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
+                If the problem to be solved also involve sensitivities these results are
+                stored in p_sol
                 
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
@@ -278,7 +295,9 @@ class Explicit_Problem(cExplicit_Problem):
             
             def handle_result(self, solver, t, y)
                 Method for specifying how the result is to be handled. 
-                As default the data is stored in three vectors, solver.(t/y).
+                As default the data is stored in two vectors, solver.(t_sol/y_sol). If
+                the problem to be solved also involve sensitivities these results are
+                stored in p_sol
                 
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
