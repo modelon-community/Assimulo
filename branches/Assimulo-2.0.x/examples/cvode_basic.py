@@ -41,7 +41,7 @@ def run_example(with_plots=True):
     exp_sim.discr = 'BDF' #Default 'Adams'
     exp_sim.atol = [1e-4] #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    
+
     #Simulate
     t1, y1 = exp_sim.simulate(5,100) #Simulate 5 seconds
     t2, y2 = exp_sim.simulate(7) #Simulate 2 seconds more

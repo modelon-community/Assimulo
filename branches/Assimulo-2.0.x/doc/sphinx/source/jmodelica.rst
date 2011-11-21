@@ -24,7 +24,7 @@ When using Assimulo together with JModelica.org and the new high-level simulatio
 A list of the different solver specific parameters can be found in the :doc:`usage` section. A more detailed description of the available options and interface between JModelica.org and Assimulo can be found in the JModelica.org users guide.
 
 
-Discontinuous Systems (for JModelica.org JMI models)
+Discontinuous Systems (for JModelica.org JMU models)
 -------------------------------------------------------
 
 

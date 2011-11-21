@@ -103,10 +103,11 @@ As seen from the method, we are only interested in the state events so that info
 
 .. note::
 
-    If the event handling changes the values of the states, the values to set to solver object are ::
+    If the event handling changes the values of the states or switches, the values to set to the solver object are ::
     
         solver.y_cur (states)
         solver.yd_cur (state derivatives)
+        solver.sw_cur (switches)
 
 Next, we create the problem as before, with the only difference that we also sets the state events and the handle event function.::
 

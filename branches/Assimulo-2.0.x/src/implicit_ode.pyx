@@ -264,46 +264,49 @@ cdef class Implicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
-        P.figure(1)
-        if not mask:
-            P.plot(self.t, self.y, **kwargs)
+        if len(self.t_sol) > 0:
+            P.figure(1)
+            if not mask:
+                P.plot(self.t_sol, self.y_sol, **kwargs)
+            else:
+                if not isinstance(mask, list):
+                    raise Implicit_ODE_Exception('Mask must be a list of integers')
+                if not len(mask)==len(self.y_sol[-1]):
+                    raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
+                                                 'the number of variables.')
+                for i in range(len(mask)):
+                    if mask[i]:
+                        P.plot(self.t_sol, N.array(self.y_sol)[:,i], **kwargs)
+
+            P.xlabel('time')
+            P.ylabel('state')
+            P.title(self.problem.name)
+
+            
+            if der and not mask:
+                P.figure(2)
+                P.plot(self.t_sol, self.yd_sol, **kwargs)
+                P.xlabel('time')
+                P.ylabel('state derivatives')
+                P.title(self.problem.name)
+            elif mask and der:
+                P.figure(2)
+                if not isinstance(mask, list):
+                    raise Implicit_ODE_Exception('Mask must be a list of integers')
+                if not len(mask)==len(self.yd_sol[-1]):
+                    raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
+                                                 'the number of variables.')
+                for i in range(len(mask)):
+                    if mask[i]:
+                        P.plot(self.t_sol, N.array(self.yd_sol)[:,i], **kwargs)
+                        
+                P.xlabel('time')
+                P.ylabel('state derivatives')
+                P.title(self.problem.name)
+            
+            P.show()
         else:
-            if not isinstance(mask, list):
-                raise Implicit_ODE_Exception('Mask must be a list of integers')
-            if not len(mask)==len(self.y[-1]):
-                raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
-                                             'the number of variables.')
-            for i in range(len(mask)):
-                if mask[i]:
-                    P.plot(self.t, N.array(self.y)[:,i], **kwargs)
-
-        P.xlabel('time')
-        P.ylabel('state')
-        P.title(self.problem.name)
-
-        
-        if der and not mask:
-            P.figure(2)
-            P.plot(self.t, self.yd, **kwargs)
-            P.xlabel('time')
-            P.ylabel('state derivatives')
-            P.title(self.problem.name)
-        elif mask and der:
-            P.figure(2)
-            if not isinstance(mask, list):
-                raise Implicit_ODE_Exception('Mask must be a list of integers')
-            if not len(mask)==len(self.yd[-1]):
-                raise Implicit_ODE_Exception('Mask must be a list of integers of equal length as '\
-                                             'the number of variables.')
-            for i in range(len(mask)):
-                if mask[i]:
-                    P.plot(self.t, N.array(self.yd)[:,i], **kwargs)
-                    
-            P.xlabel('time')
-            P.ylabel('state derivatives')
-            P.title(self.problem.name)
-        
-        P.show()
+            self.log_message("No result for plotting found.",NORMAL)
 
         
 
