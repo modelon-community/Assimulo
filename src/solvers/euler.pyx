@@ -26,8 +26,8 @@ include "constants.pxi" #Includes the constants (textual include)
 
 cdef class ExplicitEuler(Explicit_ODE):
     """
-    This solver solves an explicit ordinary differential equation using
-    the explicit euler method.
+    This solver solves an explicit ordinary differential equation using 
+    the explicit Euler method.
     
     We want to approximate the solution to the ordinary differential 
     equation of the form,
@@ -36,7 +36,7 @@ cdef class ExplicitEuler(Explicit_ODE):
 
         \dot{y} = f(t,y), \quad y(t_0) = y_0 .
         
-    Using the explicit euler method, the approximation is defined as 
+    Using the explicit Euler method, the approximation is defined as 
     follow,
     
     .. math::

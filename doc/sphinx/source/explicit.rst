@@ -48,7 +48,7 @@ Adaptive Runge-Kutta
    :inherited-members:
    :show-inheritance:
 
-Radau5
+Radau5ODE
 ---------------------
 
 .. autoclass:: assimulo.solvers.radau5.Radau5ODE

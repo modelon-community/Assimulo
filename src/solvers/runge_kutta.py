@@ -25,6 +25,7 @@ from assimulo.exception import *
 class RungeKutta34(Explicit_ODE):
     """
     Adaptive Runge-Kutta of order four.
+    
     Obs. Step rejection not implemented.
     """
     def __init__(self, problem):
@@ -256,7 +257,37 @@ class RungeKutta34(Explicit_ODE):
     
 class RungeKutta4(Explicit_ODE):
     """
-    Runge-Kutta of order 4.
+    This solver solves an explicit ordinary differential equation using 
+    a Runge-Kutta method of order 4.
+    
+    We want to approximate the solution to the ordinary differential 
+    equation of the form,
+    
+    .. math::
+
+        \dot{y} = f(t,y), \quad y(t_0) = y_0 .
+        
+    Using a Runge-Kutta method of order 4, the approximation is defined as 
+    follow,
+    
+    .. math::
+    
+        y_{n+1} = y_n + \\frac{1}{6}(k_1+2k_2+2k_3+k_4)
+        
+    where,
+    
+    .. math::
+    
+        k_1 = hf(t_n,y_n)
+        
+        k_2 = hf(t_n+\\frac{1}{2}h,y_n+\\frac{1}{2}k_1)
+        
+        k_3 = hf(t_n+\\frac{1}{2}h,y_n+\\frac{1}{2}k_2)
+        
+        k_4 = hf(t_n+h,y_n+k_3)
+        
+    with :math:`h` being the step-size and :math:`y_n` the previous 
+    solution to the equation.
     """
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class

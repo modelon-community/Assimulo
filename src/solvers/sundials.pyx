@@ -40,7 +40,17 @@ include "sundials_callbacks.pxi"
 
 cdef class IDA(Implicit_ODE):
     """
-    IDA.
+    This class provides a connection to the Sundials 
+    (https://computation.llnl.gov/casc/sundials/main.html) solver IDA.
+    
+    IDA is a variable-order, variable-step multi-step algorithm for 
+    solving differential algebraic equations of the form,
+    
+    .. math::
+    
+        F(t,y,\dot{y})=0, \quad y(t_0) = y_0, \quad \dot{y}(t_0) = \dot{y}_0.
+    
+    IDA includes the Backward Differentiation Formulas (BDFs).
     """
     cdef void* ida_mem
     cdef ProblemData pData      #A struct containing information about the problem
@@ -1204,7 +1214,19 @@ cdef class IDA(Implicit_ODE):
 
 cdef class CVode(Explicit_ODE):
     """
-    CVode.
+    This class provides a connection to the Sundials 
+    (https://computation.llnl.gov/casc/sundials/main.html) solver CVode.
+    
+    CVode is a variable-order, variable-step multi-step algorithm for 
+    solving ordinary differential equations of the form,
+    
+    .. math::
+    
+        \dot{y} = f(t,y), \quad y(t_0) = y_0.
+    
+    CVode includes the Backward Differentiation Formulas (BDFs) which 
+    are suitable for stiff problems and also the Adams-Moulton formulas 
+    for non-stiff systems.
     """
     cdef void* cvode_mem
     cdef ProblemData pData      #A struct containing information about the problem

@@ -16,7 +16,7 @@ IDA
    :show-inheritance:
  
  
-Radau5
+Radau5DAE
 ---------
  
 .. autoclass:: assimulo.solvers.radau5.Radau5DAE
