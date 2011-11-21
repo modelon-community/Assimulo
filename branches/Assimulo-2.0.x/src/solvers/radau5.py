@@ -32,20 +32,15 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     Based on the FORTRAN code by E.Hairer and G.Wanner, which can be found here: 
     http://www.unige.ch/~hairer/software.html
     
-    Details about the implementation (FORTRAN) can be found in the book,
+    Details about the implementation (FORTRAN) can be found in the book,::
     
-    Solving Ordinary Differential Equations II,
-    Stiff and Differential-Algebraic Problems
-    
-    Authors: E. Hairer and G. Wanner
-    Springer-Verlag, ISBN: 3-540-60452-9
+        Solving Ordinary Differential Equations II,
+        Stiff and Differential-Algebraic Problems
+        
+        Authors: E. Hairer and G. Wanner
+        Springer-Verlag, ISBN: 3-540-60452-9
     
     This code is aimed at providing a Python implementation of the original code.
-    
-    Input and bug reports are very welcome.
-    
-    HOMEPAGE:  http://www.jmodelica.org/assimulo
-    FORUM:     http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
     """
     
     def __init__(self, problem):
@@ -545,20 +540,15 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     Based on the FORTRAN code by E.Hairer and G.Wanner, which can be found here: 
     http://www.unige.ch/~hairer/software.html
     
-    Details about the implementation (FORTRAN) can be found in the book,
+    Details about the implementation (FORTRAN) can be found in the book,::
     
-    Solving Ordinary Differential Equations II,
-    Stiff and Differential-Algebraic Problems
-    
-    Authors: E. Hairer and G. Wanner
-    Springer-Verlag, ISBN: 3-540-60452-9
+        Solving Ordinary Differential Equations II,
+        Stiff and Differential-Algebraic Problems
+        
+        Authors: E. Hairer and G. Wanner
+        Springer-Verlag, ISBN: 3-540-60452-9
     
     This code is aimed at providing a Python implementation of the original code.
-    
-    Input and bug reports are very welcome.
-    
-    HOMEPAGE:  http://www.jmodelica.org/assimulo
-    FORUM:     http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
     """
     def __init__(self, problem):
         """

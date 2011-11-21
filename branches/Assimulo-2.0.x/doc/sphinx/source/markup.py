@@ -48,7 +48,8 @@ def mark_solvers():
         file.write('\n')
         file.write(solver_name + '\n')
         file.write('=================================\n\n')
-        file.write('Support\n----------------\n\n')
+        file.write(solver[0].__doc__.replace("\n    ", "\n")) #REMOVES EXTRA INDENTATION
+        file.write('\nSupport\n----------------\n\n')
         file.write('- State events (root funtions) : '+str(supports["state_events"])+'\n')
         file.write('- Step events (completed step) : '+str(supports["step_events"])+'\n')
         file.write('- Time events : '+'True\n')
@@ -61,13 +62,13 @@ def mark_solvers():
         if solver[1] == "ODE":
             file.write('    def f('+str_ret[:-3]+'): #Note that y are a 1-D numpy array.\n')
             file.write('        yd = -1.0\n')
-            file.write('        return N.array([yd]) #Note that the return must be numpy array, Not a scalar.\n\n')
+            file.write('        return N.array([yd]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0 = [1.0]\n')
             file.write('    t0 = 1.0\n\n')
         else:
             file.write('    def f('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
             file.write('        res = yd[0]-1.0\n')
-            file.write('        return N.array([res]) #Note that the return must be numpy array, Not a scalar.\n\n')
+            file.write('        return N.array([res]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0  = [1.0]\n')
             file.write('    yd0 = [1.0]\n')
             file.write('    t0  = 1.0\n\n')
