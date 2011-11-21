@@ -26,7 +26,25 @@ include "constants.pxi" #Includes the constants (textual include)
 
 cdef class ExplicitEuler(Explicit_ODE):
     """
-    Explicit Euler.
+    This solver solves an explicit ordinary differential equation using
+    the explicit euler method.
+    
+    We want to approximate the solution to the ordinary differential 
+    equation of the form,
+    
+    .. math::
+
+        \dot{y} = f(t,y), \quad y(t_0) = y_0 .
+        
+    Using the explicit euler method, the approximation is defined as 
+    follow,
+    
+    .. math::
+    
+        y_{n+1} = y_n + hf(t_n,y_n)
+        
+    with :math:`h` being the step-size and :math:`y_n` the previous 
+    solution to the equation.
     """
     cdef N.ndarray yd1
     cdef object f
