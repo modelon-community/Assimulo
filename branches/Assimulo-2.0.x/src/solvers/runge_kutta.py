@@ -105,7 +105,7 @@ class RungeKutta34(Explicit_ODE):
             raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
         if atol_arr.size == 1:
             self.options["atol"] = float(atol)
-        elif atol_arr.size == len(self.y_cur):
+        elif atol_arr.size == len(self.y):
             self.options["atol"] = [float(x) for x in atol]
         else:
             raise Explicit_ODE_Exception('Absolute tolerance must be a float vector of same dimension as the problem or a scalar.')

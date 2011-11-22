@@ -82,9 +82,9 @@ class Extended_Problem(Implicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.sw_cur)
+            b_mode = self.state_events(solver.t, solver.y, solver.yd, solver.sw)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t_cur, solver.y_cur, solver.yd_cur, solver.sw_cur)
+            a_mode = self.state_events(solver.t, solver.y, solver.yd, solver.sw)
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
@@ -98,7 +98,7 @@ class Extended_Problem(Implicit_Problem):
         """
         for i in range(len(event_info)): #Loop across all event functions
             if event_info[i] != 0:
-                solver.sw_cur[i] = not solver.sw_cur[i] #Turn the switch
+                solver.sw[i] = not solver.sw[i] #Turn the switch
         
     #Helper function for handle_event
     def check_eIter(self, before, after):

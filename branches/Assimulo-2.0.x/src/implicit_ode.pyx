@@ -65,9 +65,9 @@ cdef class Implicit_ODE(ODE):
         if self.problem_info["state_events"]:
             self.problem_info["dimRoot"] = len(problem.state_events(self.t0,self.y0, self.yd0, self.sw0))
         
-        self.t_cur  = self.t0
-        self.y_cur  = self.y0.copy()
-        self.yd_cur = self.yd0.copy()
+        self.t  = self.t0
+        self.y  = self.y0.copy()
+        self.yd = self.yd0.copy()
         
     def reset(self):
         """
@@ -93,13 +93,13 @@ cdef class Implicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
-        if len(self.y_cur) != len(y0) or len(self.yd_cur) != len(yd0):
+        if len(self.y) != len(y0) or len(self.yd) != len(yd0):
             raise Implicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         #Set the new values as the current values
-        self.t_cur  = float(t0)
-        self.y_cur  = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
-        self.yd_cur = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
+        self.t  = float(t0)
+        self.y  = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
+        self.yd = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
 
     cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT, int STEP_EVENT):
@@ -133,8 +133,8 @@ cdef class Implicit_ODE(ODE):
         cdef int flag, output_index
         cdef dict opts
         
-        y0  = self.y_cur
-        yd0 = self.yd_cur
+        y0  = self.y
+        yd0 = self.yd
         t_logg = t0
 
         #Logg the first point
@@ -159,15 +159,15 @@ cdef class Implicit_ODE(ODE):
 
             #Time event function is specified.
             if  TIME_EVENT == 1:
-                tret = self.problem.time_events(self.t_cur, self.y_cur, self.yd_cur, self.sw_cur)
+                tret = self.problem.time_events(self.t, self.y, self.yd, self.sw)
                 tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
             
             if ONE_STEP == 1:
                 #Run in One step mode
-                [flag, t, y, yd]        = self.step(self.t_cur, self.y_cur, self.yd_cur, tevent, opts)
-                self.t_cur, self.y_cur, self.yd_cur = t, y.copy(), yd.copy()
+                [flag, t, y, yd]        = self.step(self.t, self.y, self.yd, tevent, opts)
+                self.t, self.y, self.yd = t, y.copy(), yd.copy()
                 
                 #Store data depending on situation
                 if INTERPOLATE_OUTPUT == 1:
@@ -185,7 +185,7 @@ cdef class Implicit_ODE(ODE):
                     self.problem.handle_result(self,t,y,yd)
                     
                     #Last logging point
-                    t_logg = self.t_cur
+                    t_logg = self.t
                     
                 if STEP_EVENT == 1: #If the option completed step is set.
                     flag_initialize = self.problem.step_events(self)#completed_step(self)
@@ -193,14 +193,14 @@ cdef class Implicit_ODE(ODE):
                     flag_initialize = False
             else:
                 #Run in Normal mode
-                [flag, tlist, ylist, ydlist] = self.integrate(self.t_cur, self.y_cur, self.yd_cur, tevent, opts)
-                self.t_cur, self.y_cur, self.yd_cur = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
+                [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
+                self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
 
                 #Store data
                 map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist, ydlist)
                 
                 #Last logging point
-                t_logg = self.t_cur
+                t_logg = self.t
                 
                 #Initialize flag to false
                 flag_initialize = False
@@ -214,9 +214,9 @@ cdef class Implicit_ODE(ODE):
                     event_info[0] = self.state_event_info()
                 
                 #Log the information
-                self.log_event(self.t_cur, event_info, NORMAL)
-                self.log_message("A discontinuity occured at t = %e."%self.t_cur,NORMAL)
-                self.log_message("Current Switches: " + str(self.sw_cur), LOUD)
+                self.log_event(self.t, event_info, NORMAL)
+                self.log_message("A discontinuity occured at t = %e."%self.t,NORMAL)
+                self.log_message("Current Switches: " + str(self.sw), LOUD)
                 self.log_message('Event info: ' + str(event_info), LOUD) 
                 
                 #Print statistics
@@ -225,7 +225,7 @@ cdef class Implicit_ODE(ODE):
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
                 except TerminateSimulation: #Terminating the simulation after indication from handle event
-                    self.log_message("Terminating simulation at t = %f after signal from handle_event."%self.t_cur, NORMAL)
+                    self.log_message("Terminating simulation at t = %f after signal from handle_event."%self.t, NORMAL)
                     break
                     
                 flag_initialize = True
@@ -234,8 +234,8 @@ cdef class Implicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and t_logg == self.t_cur: 
-                self.problem.handle_result(self, self.t_cur, self.y_cur, self.yd_cur)
+            if flag_initialize and t_logg == self.t: 
+                self.problem.handle_result(self, self.t, self.y, self.yd)
         
     def plot(self, mask=None, der=False, **kwargs):
         """

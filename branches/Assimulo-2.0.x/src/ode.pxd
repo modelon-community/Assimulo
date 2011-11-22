@@ -9,12 +9,12 @@ cdef class ODE:
     
     cdef public object problem
     
-    cdef public double t_cur, t0
-    cdef public N.ndarray y_cur,yd_cur, p_cur
+    cdef public double t, t0
+    cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
     
-    cdef public list t,y,yd,p,sw_cur
-    cdef public list t_sol, y_sol, yd_sol, p_sol
+    #cdef public list t,y,yd,p,sw_cur
+    cdef public list t_sol, y_sol, yd_sol, p_sol, sw
         
     cpdef log_message(self, message, int level)
     cpdef log_event(self, double time, object event_info, int level)
