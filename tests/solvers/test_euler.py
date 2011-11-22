@@ -62,9 +62,9 @@ class Test_Explicit_Euler:
             return tnext
             
         def handle_event(solver, event_info):
-            solver.y_cur+= 1.0
+            solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t_cur, tnext)
+            nose.tools.assert_almost_equal(solver.t, tnext)
             assert event_info[0] == []
             assert event_info[1] == True
     

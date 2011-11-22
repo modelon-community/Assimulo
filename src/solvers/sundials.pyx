@@ -213,12 +213,12 @@ cdef class IDA(Implicit_ODE):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
 
-        self.yTemp  = arr2nv(self.y_cur)
-        self.ydTemp = arr2nv(self.yd_cur)
+        self.yTemp  = arr2nv(self.y)
+        self.ydTemp = arr2nv(self.yd)
         
         #Updates the switches
         if self.problem_info["switches"]:
-            self.pData.sw = <void*>self.sw_cur
+            self.pData.sw = <void*>self.sw
         
         if self.pData.dimSens > 0:
             #Create the initial matrices
@@ -240,42 +240,42 @@ cdef class IDA(Implicit_ODE):
                 raise IDAError(IDA_MEM_FAIL)
             
             #Specify the residual and the initial conditions to the solver
-            flag = Sun.IDAInit(self.ida_mem, ida_res, self.t_cur, self.yTemp, self.ydTemp)
+            flag = Sun.IDAInit(self.ida_mem, ida_res, self.t, self.yTemp, self.ydTemp)
             if flag < 0:
-                raise IDAError(flag, self.t_cur)
+                raise IDAError(flag, self.t)
                 
             #Specify the use of the internal dense linear algebra functions.
             flag = Sun.IDADense(self.ida_mem, self.pData.dim)
             if flag < 0:
-                raise IDAError(flag, self.t_cur)
+                raise IDAError(flag, self.t)
             
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 flag = Sun.IDARootInit(self.ida_mem, self.pData.dimRoot, ida_root)
                 if flag < 0:
-                    raise IDAError(flag,self.t_cur)
+                    raise IDAError(flag,self.t)
             
             #Specify the error handling
             flag = Sun.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
             if flag < 0:
-                raise IDAError(flag, self.t_cur)
+                raise IDAError(flag, self.t)
                 
             if self.pData.dimSens > 0:
                 flag = Sun.IDASensInit(self.ida_mem, self.pData.dimSens, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, NULL, self.ySO, self.ydSO)
                 if flag < 0:
-                    raise IDAError(flag, self.t_cur)
+                    raise IDAError(flag, self.t)
             
         else: #The solver needs to be reinitialized
             
             #Reinitialize
-            flag = Sun.IDAReInit(self.ida_mem, self.t_cur, self.yTemp, self.ydTemp)
+            flag = Sun.IDAReInit(self.ida_mem, self.t, self.yTemp, self.ydTemp)
             if flag < 0:
-                raise IDAError(flag, self.t_cur)
+                raise IDAError(flag, self.t)
                 
             if self.pData.dimSens > 0:
                 flag = Sun.IDASensReInit(self.ida_mem, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, self.ySO, self.ydSO)
                 if flag < 0:
-                    raise IDAError(flag, self.t_cur)
+                    raise IDAError(flag, self.t)
         
         #Specify the jacobian to the solver
         if self.pData.JAC != NULL and self.options["usejac"]:
@@ -291,7 +291,7 @@ cdef class IDA(Implicit_ODE):
         #Set the user data
         flag = Sun.IDASetUserData(self.ida_mem, <void*>self.pData)
         if flag < 0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
     
     cdef initialize_sensitivity_options(self):
         """
@@ -301,7 +301,7 @@ cdef class IDA(Implicit_ODE):
         
         #Sets the parameters to the userdata object.
         for i in range(self.pData.dimSens):
-            self.pData.p[i] = self.p_cur[i]
+            self.pData.p[i] = self.p[i]
         #Sets the pbar to the userdata object.
         for i in range(self.pData.dimSens):
             self.pData.pbar[i] = self.options["pbar"][i]
@@ -309,33 +309,33 @@ cdef class IDA(Implicit_ODE):
         #Specify problem parameter information for sensitivity calculations
         flag = Sun.IDASetSensParams(self.ida_mem, self.pData.p, self.pData.pbar, NULL)
         if flag < 0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
         
         #Specify the difference quotient strategy
         flag = Sun.IDASetSensDQMethod(self.ida_mem, IDA_CENTERED if self.options["dqtype"]=="CENTERED" else IDA_FORWARD, self.options["dqrhomax"])
         if flag<0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
         
         #Specify the error control strategy
         flag = Sun.IDASetSensErrCon(self.ida_mem, self.options["suppress_sens"]==False)
         if flag < 0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
         
         #Specify the maximum number of nonlinear solver iterations
         flag = Sun.IDASetSensMaxNonlinIters(self.ida_mem, self.options["maxcorS"])
         if flag < 0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
         flag = Sun.IDASensEEtolerances(self.ida_mem)
         if flag < 0:
-            raise IDAError(flag, self.t_cur)
+            raise IDAError(flag, self.t)
         
         #Should the sensitivities be calculated this time around?
         if self.options["usesens"] == False:
             flag = Sun.IDASensToggleOff(self.ida_mem)
             if flag < 0:
-                raise IDAError(flag, self.t_cur)
+                raise IDAError(flag, self.t)
     
     
     cdef initialize_options(self):
@@ -544,7 +544,7 @@ cdef class IDA(Implicit_ODE):
         else:
             raise Exception("The method is unknown.")
         
-        direction = self.t_cur+self.options["tout1"] #tout1 is needed for the solver to determine the direction of the integration
+        direction = self.t+self.options["tout1"] #tout1 is needed for the solver to determine the direction of the integration
         
         if self.ida_mem == NULL: 
             raise Exception("IDA must be initialized.")
@@ -557,10 +557,10 @@ cdef class IDA(Implicit_ODE):
             flag = Sun.IDAGetConsistentIC(self.ida_mem, self.yTemp, self.ydTemp)
         
         #Set the calculated values to the current ones
-        self.y_cur  = nv2arr(self.yTemp)
-        self.yd_cur = nv2arr(self.ydTemp)
+        self.y  = nv2arr(self.yTemp)
+        self.yd = nv2arr(self.ydTemp)
         
-        return [flag, self.y_cur, self.yd_cur]
+        return [flag, self.y, self.yd]
     
     cpdef N.ndarray interpolate(self,double t,int k = 0):
         """
@@ -1350,7 +1350,7 @@ cdef class CVode(Explicit_ODE):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
         
-        self.yTemp = arr2nv(self.y_cur)
+        self.yTemp = arr2nv(self.y)
         
         if self.pData.dimSens > 0:
             #Create the initial matrices
@@ -1366,7 +1366,7 @@ cdef class CVode(Explicit_ODE):
 
         #Updates the switches
         if self.problem_info["switches"]:
-            self.pData.sw = <void*>self.sw_cur
+            self.pData.sw = <void*>self.sw
             
         if self.cvode_mem == NULL: #The solver is not initialized
             
@@ -1376,44 +1376,44 @@ cdef class CVode(Explicit_ODE):
                 raise CVodeError(CV_MEM_FAIL)
             
             #Specify the residual and the initial conditions to the solver
-            flag = Sun.CVodeInit(self.cvode_mem, cv_rhs, self.t_cur, self.yTemp)
+            flag = Sun.CVodeInit(self.cvode_mem, cv_rhs, self.t, self.yTemp)
             if flag < 0:
-                raise CVodeError(flag, self.t_cur)
+                raise CVodeError(flag, self.t)
                 
             #Specify the root function to the solver
             if self.problem_info["state_events"]:
                 flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
                 if flag < 0:
-                    raise CVodeError(flag, self.t_cur)
+                    raise CVodeError(flag, self.t)
                     
             #Specify the error handling
             flag = Sun.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
             if flag < 0:
-                raise CVodeError(flag, self.t_cur)
+                raise CVodeError(flag, self.t)
                 
             #Sensitivity
             if self.pData.dimSens > 0:
                 flag = Sun.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
                 if flag < 0:
-                    raise CVodeError(flag, self.t_cur)
+                    raise CVodeError(flag, self.t)
             
         else: #The solver needs to be reinitialized
             #Reinitialize
-            flag = Sun.CVodeReInit(self.cvode_mem, self.t_cur, self.yTemp)
+            flag = Sun.CVodeReInit(self.cvode_mem, self.t, self.yTemp)
             if flag < 0:
-                raise CVodeError(flag, self.t_cur)
+                raise CVodeError(flag, self.t)
             
             #Sensitivity
             if self.pData.dimSens > 0:
                 flag = Sun.CVodeSensReInit(self.cvode_mem, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, self.ySO)
                 if flag < 0:
-                    raise CVodeError(flag, self.t_cur)
+                    raise CVodeError(flag, self.t)
             
             
         #Set the user data
         flag = Sun.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
             
     
     cpdef N.ndarray interpolate(self,double t,int k = 0):
@@ -1640,7 +1640,7 @@ cdef class CVode(Explicit_ODE):
         
         #Sets the parameters to the userdata object.
         for i in range(self.pData.dimSens):
-            self.pData.p[i] = self.p_cur[i]
+            self.pData.p[i] = self.p[i]
         #Sets the pbar to the userdata object.
         for i in range(self.pData.dimSens):
             self.pData.pbar[i] = self.options["pbar"][i]
@@ -1648,33 +1648,33 @@ cdef class CVode(Explicit_ODE):
         #Problem parameter information
         flag = Sun.CVodeSetSensParams(self.cvode_mem, self.pData.p, self.pData.pbar, NULL)
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
         
         #Difference quotient strategy
         flag = Sun.CVodeSetSensDQMethod(self.cvode_mem, CV_CENTERED if self.options["dqtype"]=="CENTERED" else CV_FORWARD, self.options["dqrhomax"])
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
         
         #Maximum number of nonlinear iterations
         flag = Sun.CVodeSetSensMaxNonlinIters(self.cvode_mem, self.options["maxcorS"])
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
         
         #Specify the error control strategy
         flag = Sun.CVodeSetSensErrCon(self.cvode_mem, self.options["suppress_sens"]==False)
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
         
         #Estimate the sensitivity
         flag = Sun.CVodeSensEEtolerances(self.cvode_mem)
         if flag < 0:
-            raise CVodeError(flag, self.t_cur)
+            raise CVodeError(flag, self.t)
         
         #Should the sensitivities be calculated this time around?
         if self.options["usesens"] == False:
             flag = Sun.CVodeSensToggleOff(self.cvode_mem)
             if flag < 0:
-                raise CVodeError(flag, self.t_cur)
+                raise CVodeError(flag, self.t)
     
     cpdef initialize_options(self):
         """

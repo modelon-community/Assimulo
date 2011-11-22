@@ -52,10 +52,10 @@ def run_example():
 
         if state_info[0] != 0: #Check if the first event function have been triggered
             
-            if solver.sw_cur[0]: #If the switch is True the pendulum bounces
-                solver.y_cur[1] = -0.9*solver.y_cur[1] #Change the velocity and lose energy
+            if solver.sw[0]: #If the switch is True the pendulum bounces
+                solver.y[1] = -0.9*solver.y[1] #Change the velocity and lose energy
                 
-            solver.sw_cur[0] = not solver.sw_cur[0] #Change event function
+            solver.sw[0] = not solver.sw[0] #Change event function
 
     #Initial values
     y0 = [N.pi/2.0, 0.0] #Initial states

@@ -71,12 +71,12 @@ cdef class ODE:
         if hasattr(problem, "p0"):
             self.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
             self.problem_info["dimSens"] = len(self.p0)
-            self.p_cur = self.p0.copy()
+            self.p = self.p0.copy()
         
         if hasattr(problem, "sw0"):
             self.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
             self.problem_info["switches"] = True
-            self.sw_cur = self.sw0.tolist()
+            self.sw = self.sw0.tolist()
         
         if hasattr(problem, 't0'):
             self.t0 = float(problem.t0)
@@ -133,7 +133,7 @@ cdef class ODE:
                                              communication points.
                  
         """
-        t0 = self.t_cur
+        t0 = self.t
         
         #Reset solution variables
         self._reset_solution_variables()
@@ -144,7 +144,7 @@ cdef class ODE:
         except ValueError:
             raise AssimuloException('Final time must be an integer or float.')
             
-        if self.t_cur > tfinal:
+        if self.t > tfinal:
             raise AssimuloException('Final time must be greater than start time.')
         
         if not isinstance(ncp, int):
@@ -216,7 +216,7 @@ cdef class ODE:
         self.print_statistics(NORMAL)
         
         #Log elapsed time
-        self.log_message('Simulation interval    : ' + str(t0) + ' - ' + str(self.t_cur) + ' seconds.', NORMAL)
+        self.log_message('Simulation interval    : ' + str(t0) + ' - ' + str(self.t) + ' seconds.', NORMAL)
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
         
         #Return the results

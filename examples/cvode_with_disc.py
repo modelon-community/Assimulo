@@ -79,9 +79,9 @@ class Extended_Problem(Explicit_Problem):
         while True: #Event Iteration
             self.event_switch(solver, event_info) #Turns the switches
             
-            b_mode = self.state_events(solver.t_cur, solver.y_cur, solver.sw_cur)
+            b_mode = self.state_events(solver.t, solver.y, solver.sw)
             self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t_cur, solver.y_cur, solver.sw_cur)
+            a_mode = self.state_events(solver.t, solver.y, solver.sw)
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
@@ -95,7 +95,7 @@ class Extended_Problem(Explicit_Problem):
         """
         for i in range(len(event_info)): #Loop across all event functions
             if event_info[i] != 0:
-                solver.sw_cur[i] = not solver.sw_cur[i] #Turn the switch
+                solver.sw[i] = not solver.sw[i] #Turn the switch
         
     #Helper function for handle_event
     def check_eIter(self, before, after):
@@ -119,8 +119,8 @@ class Extended_Problem(Explicit_Problem):
         """
         Initialize the DAE with the new conditions.
         """
-        solver.y_cur[1] = (-1.0 if solver.sw_cur[1] else 3.0)
-        solver.y_cur[2] = (0.0 if solver.sw_cur[2] else 2.0)
+        solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
+        solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
 
 

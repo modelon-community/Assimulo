@@ -94,10 +94,10 @@ Notice how the event function changes depending on the value of the switch ``sw`
 
         if state_info[0] != 0: #Check if the first event function has been triggered
             
-            if solver.sw_cur[0]: #If the switch is True the pendulum bounces
-                solver.y_cur[1] = -0.9*solver.y_cur[1] #Change the velocity and lose energy
+            if solver.sw[0]: #If the switch is True the pendulum bounces
+                solver.y[1] = -0.9*solver.y[1] #Change the velocity and lose energy
                 
-            solver.sw_cur[0] = not solver.sw_cur[0] #Change event function
+            solver.sw[0] = not solver.sw[0] #Change event function
 
 As seen from the method, we are only interested in the state events so that information is retreived from the event information. Then there is a check to see if the first state event function has been triggered. If the switches are ``True``, there should be a bounce with some energy loss. If the switches are ``False``, the state event equation for the bounce is reactivated.
 
@@ -105,9 +105,9 @@ As seen from the method, we are only interested in the state events so that info
 
     If the event handling changes the values of the states or switches, the values to set to the solver object are ::
     
-        solver.y_cur (states)
-        solver.yd_cur (state derivatives)
-        solver.sw_cur (switches)
+        solver.y (states)
+        solver.yd (state derivatives)
+        solver.sw (switches)
 
 Next, we create the problem as before, with the only difference that we also sets the state events and the handle event function.::
 

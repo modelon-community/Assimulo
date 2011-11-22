@@ -40,7 +40,7 @@ class Test_CVode:
         This tests the functionality of the method __init__.
         """
         #assert self.simulator.f == 'Test function'
-        assert self.simulator.y_cur == 1.0
+        assert self.simulator.y == 1.0
         assert self.simulator.discr == 'BDF'
         assert self.simulator.iter == 'Newton'
         assert self.simulator.maxord == 5
@@ -69,9 +69,9 @@ class Test_CVode:
             return tnext
             
         def handle_event(solver, event_info):
-            solver.y_cur+= 1.0
+            solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t_cur, tnext)
+            nose.tools.assert_almost_equal(solver.t, tnext)
             assert event_info[0] == []
             assert event_info[1] == True
     
@@ -155,7 +155,7 @@ class Test_CVode:
         f = lambda t,x,sw: N.array([1.0])
         state_events = lambda t,x,sw: N.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw_cur = [False] #Override the switches to point to another instance
+            solver.sw = [False] #Override the switches to point to another instance
         
         mod = Explicit_Problem(f,[0.0])
         mod.sw0 = [True]
@@ -164,9 +164,9 @@ class Test_CVode:
         mod.handle_event = handle_event
         
         sim = CVode(mod)
-        assert sim.sw_cur[0] == True
+        assert sim.sw[0] == True
         sim.simulate(3)
-        assert sim.sw_cur[0] == False
+        assert sim.sw[0] == False
     
     @testattr(stddist = True)
     def test_iter_method(self):
@@ -225,7 +225,7 @@ class Test_CVode:
         """
         f = lambda t,x: x**0.25
         def handle_result(solver,t,y):
-            assert solver.t_cur == t
+            assert solver.t == t
         
         prob = Explicit_Problem(f, [1.0])
         prob.handle_result = handle_result
@@ -334,7 +334,7 @@ class Test_CVode:
             def __init__(self):
                 pass
             def handle_event(self, solver, event_info):
-                if solver.t_cur > 1.5:
+                if solver.t > 1.5:
                     raise TerminateSimulation
             f = lambda self,t,y,sw: N.array([1.0])
             y0 = [1.0]
@@ -345,7 +345,7 @@ class Test_CVode:
         simulator = CVode(exp_mod)
         simulator(3.)
         
-        nose.tools.assert_almost_equal(simulator.t_cur, 2.000000, 4)
+        nose.tools.assert_almost_equal(simulator.t, 2.000000, 4)
     
     @testattr(stddist = True)
     def test_completed_step(self):
@@ -393,9 +393,9 @@ class Test_IDA:
         """
         assert self.simulator.suppress_alg == False
         assert self.simulator.algvar[0] == 1.0
-        assert self.simulator.sw_cur == None
+        assert self.simulator.sw == None
         assert self.simulator.maxsteps == 10000
-        assert self.simulator.y_cur[0] == 1.0
+        assert self.simulator.y[0] == 1.0
     
     @testattr(stddist = True)
     def test_interpolate(self):
@@ -421,7 +421,7 @@ class Test_IDA:
         """
         f = lambda t,x,xd: x**0.25-xd
         def handle_result(solver, t ,y, yd):
-            assert solver.t_cur == t
+            assert solver.t == t
         
         prob = Implicit_Problem(f, [1.0],[1.0])
         prob.handle_result = handle_result
@@ -516,14 +516,14 @@ class Test_IDA:
         def handle_event(solver, event_info):
             
             if event_info[1]:
-                solver.y_cur  = N.array([1.0])
-                solver.yd_cur = N.array([1.0])
+                solver.y  = N.array([1.0])
+                solver.yd = N.array([1.0])
                 
-                if not solver.sw_cur[0]:
-                    solver.sw_cur[1] = False
+                if not solver.sw[0]:
+                    solver.sw[1] = False
                 
-                if solver.sw_cur[0]:
-                    solver.sw_cur[0] = False
+                if solver.sw[0]:
+                    solver.sw[0] = False
         
         mod = Implicit_Problem(f,[1.0],[1.0])
         mod.time_events = time_events
@@ -576,7 +576,7 @@ class Test_IDA:
             def __init__(self):
                 pass
             def handle_event(self,solver, event_info):
-                if solver.t_cur > 1.5:
+                if solver.t > 1.5:
                     raise TerminateSimulation
             f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t-2.0])
@@ -589,7 +589,7 @@ class Test_IDA:
         sim = IDA(prob)
         sim.simulate(2.5)
         
-        nose.tools.assert_almost_equal(sim.t_cur, 2.000000, 4)
+        nose.tools.assert_almost_equal(sim.t, 2.000000, 4)
     
     @testattr(stddist = True)    
     def test_algvar(self):
@@ -637,9 +637,9 @@ class Test_IDA:
             return tnext
             
         def handle_event(solver, event_info):
-            solver.y_cur+= 1.0
+            solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t_cur, tnext)
+            nose.tools.assert_almost_equal(solver.t, tnext)
             assert event_info[0] == []
             assert event_info[1] == True
     
@@ -695,7 +695,7 @@ class Test_IDA:
         f = lambda t,x,xd,sw: N.array([xd[0]- 1.0])
         state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw_cur = [False] #Override the switches to point to another instance
+            solver.sw = [False] #Override the switches to point to another instance
         
         mod = Implicit_Problem(f, [0.0],[1.0])
         mod.f = f
@@ -704,9 +704,9 @@ class Test_IDA:
         mod.handle_event = handle_event
         
         sim = IDA(mod)
-        assert sim.sw_cur[0] == True
+        assert sim.sw[0] == True
         sim.simulate(3)
-        assert sim.sw_cur[0] == False
+        assert sim.sw[0] == False
     
     @testattr(stddist = True)
     def test_completed_step(self):

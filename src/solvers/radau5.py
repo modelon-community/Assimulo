@@ -88,7 +88,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._needLU = True #Need new LU-factorisation?
         self._first = True #First step?
         self._rejected = True #Is the last step rejected?
-        self._leny = len(self.y_cur) #Dimension of the problem
+        self._leny = len(self.y) #Dimension of the problem
         self._oldh = 0.0 #Old stepsize
         self._olderr = 1.0 #Old error
         self._eps = N.finfo('double').eps
@@ -563,7 +563,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         Implicit_ODE.__init__(self, problem) #Calls the base class
         
         #Internal values
-        self._leny = len(self.y_cur) #Dimension of the problem
+        self._leny = len(self.y) #Dimension of the problem
         self._2leny = 2*self._leny
         
         #Default values
