@@ -67,9 +67,9 @@ cdef class Explicit_ODE(ODE):
         """
         self.problem.reset()
 
-        self.re_init(self.t0, self.y0)
+        self.re_init(self.t0, self.y0, self.sw0 if self.problem_info["switches"] else None)
         
-    def re_init(self,t0, y0):
+    def re_init(self,t0, y0, sw0=None):
         """
         Reinitiates the solver.
         
@@ -88,6 +88,9 @@ cdef class Explicit_ODE(ODE):
         #Set the new values as the current values
         self.t = float(t0)
         self.y = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
+        
+        if sw0 != None:
+            self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
 
     cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT, int STEP_EVENT):
