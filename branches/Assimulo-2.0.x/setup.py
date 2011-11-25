@@ -234,6 +234,7 @@ ext_list = check_extensions()
       
 setup(name='Assimulo',
       version='trunk',
+      license='GPLv3',
       description='A package for solving ordinary differential equations and differential algebraic equations.',
       author='Claus Führer and Christian Andersson',
       author_email='claus@maths.lth.se chria@kth.se',

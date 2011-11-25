@@ -161,9 +161,32 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         return self._next_step.next()
     
     def integrate(self, t, y, tf, opts):
-        [flags, tlist, ylist] = zip(*list(self.step_generator(t, y, tf,opts)))
+        
+        if opts["output_list"] != None:
+            
+            output_list = opts["output_list"]
+            output_index = opts["output_index"]
+            
+            next_step = self.step_generator(t,y,tf,opts)
+            
+            tlist,ylist = [], []
+            res = [ID_PY_OK]
+            
+            while res[0] != ID_PY_COMPLETE:
+                res = next_step.next()
+                try:
+                    while output_list[output_index] <= res[1]:
+                        tlist.append(output_list[output_index])
+                        ylist.append(self.interpolate(output_list[output_index]))
 
-        return flags[-1], tlist, ylist
+                        output_index = output_index+1
+                except IndexError:
+                    pass
+            return res[0], tlist, ylist
+        else:
+            [flags, tlist, ylist] = zip(*list(self.step_generator(t, y, tf,opts)))
+
+            return flags[-1], tlist, ylist
         
     def _step(self, t, y):
         """
@@ -714,10 +737,34 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         return self._next_step.next()
     
     def integrate(self, t, y, yd, tf, opts):
-        [flags, tlist, ylist, ydlist] = zip(*list(self.step_generator(t, y, yd, tf,opts)))
         
-        return flags[-1], tlist, ylist, ydlist
-        
+        if opts["output_list"] != None:
+            
+            output_list = opts["output_list"]
+            output_index = opts["output_index"]
+            
+            next_step = self.step_generator(t,y,yd,tf,opts)
+            
+            tlist,ylist,ydlist = [], [], []
+            res = [ID_PY_OK]
+            
+            while res[0] != ID_PY_COMPLETE:
+                res = next_step.next()
+                try:
+                    while output_list[output_index] <= res[1]:
+                        tlist.append(output_list[output_index])
+                        ylist.append(self.interpolate(output_list[output_index]))
+                        ydlist.append(self.interpolate(output_list[output_index],k=1))
+
+                        output_index = output_index+1
+                except IndexError:
+                    pass
+            return res[0], tlist, ylist, ydlist
+        else:
+            [flags, tlist, ylist, ydlist] = zip(*list(self.step_generator(t, y, yd, tf,opts)))
+            
+            return flags[-1], tlist, ylist, ydlist
+    
     def _ode_f(self, t, y):
         
         #self.res_fcn(t,y[:self._leny],y[self._leny:])

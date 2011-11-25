@@ -173,7 +173,7 @@ cdef class ODE:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list != None:
-            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)
+            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.array(ncp_list, dtype=realtype, ndmin=1)>t0]
             output_index = 0
         else:
             output_list = None
