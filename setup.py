@@ -231,14 +231,52 @@ pre_processing()
 O.chdir("build") #Change dir
       
 ext_list = check_extensions()
-      
-setup(name='Assimulo',
-      version='trunk',
-      license='GPL',
-      description='A package for solving ordinary differential equations and differential algebraic equations.',
-      author='C. Führer, C. Andersson, J. Åkesson, M. Gäfvert',
-      author_email='chria@maths.lth.se',
-      url='http://www.jmodelica.org/assimulo',
+
+
+
+
+NAME = "Assimulo"
+AUTHOR = "C. Führer, C. Andersson, J. Åkesson, M. Gäfvert"
+AUTHOR_EMAIL = "chria@maths.lth.se"
+VERSION = "trunk"
+LICENSE = "GPL"
+URL = "http://www.jmodelica.org/assimulo"
+DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
+DESCRIPTION = "A package for solving ordinary differential equations and differential algebraic equations."
+PLATFORMS = ["Linux", "Windows", "MacOS X"]
+CLASSIFIERS = [ 'Programming Language :: Python',
+                'Programming Language :: Cython',
+                'Programming Language :: C',
+                'Operating System :: MacOS :: MacOS X',
+                'Operating System :: Microsoft :: Windows',
+                'Operating System :: Unix']
+
+LONG_DESCRIPTION = """
+Assimulo is a Cython / Python based simulation package that allows for 
+simulation of both ordinary differential equations (ODEs), f(t,y), and 
+differential algebraic equations (DAEs), f(t,y,yd). It combines a 
+variety of different solvers written in C and Python via a common 
+high-level interface.
+
+Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of 
+order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
+(https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
+(for ODEs) and IDA (for DAEs). A Python version of Ernst Hairer's code 
+(http://www.unige.ch/~hairer/software.html) Radau5 is also available.
+"""
+
+
+setup(name=NAME,
+      version=VERSION,
+      license=LICENSE,
+      description=DESCRIPTION,
+      long_description=LONG_DESCRIPTION,
+      author=AUTHOR,
+      author_email=AUTHOR_EMAIL,
+      url=URL,
+      download_url=DOWNLOAD_URL,
+      platforms=PLATFORMS,
+      classifiers=CLASSIFIERS,
       package_dir = {'assimulo':'assimulo'},
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples'],
       cmdclass = {'build_ext': build_ext},
