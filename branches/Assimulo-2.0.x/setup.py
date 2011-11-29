@@ -236,7 +236,7 @@ ext_list = check_extensions()
 
 
 NAME = "Assimulo"
-AUTHOR = "C. Führer, C. Andersson, J. Åkesson, M. Gäfvert"
+AUTHOR = "C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
 VERSION = "trunk"
 LICENSE = "GPL"

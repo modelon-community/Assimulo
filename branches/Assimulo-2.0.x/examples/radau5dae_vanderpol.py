@@ -48,7 +48,7 @@ def run_example(with_plots=True):
     #Sets the parameters
     imp_sim.atol = 1e-4 #Default 1e-6
     imp_sim.rtol = 1e-4 #Default 1e-6
-    imp_sim.initstep = 1.e-4 #Initial step-size
+    imp_sim.inith = 1.e-4 #Initial step-size
 
     #Simulate
     t, y, yd = imp_sim.simulate(2.) #Simulate 2 seconds

@@ -44,7 +44,7 @@ def run_example(with_plots=True):
     #Sets the parameters
     exp_sim.atol = 1e-4 #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    exp_sim.initstep = 1.e-4 #Initial step-size
+    exp_sim.inith = 1.e-4 #Initial step-size
     
     #Simulate
     t, y = exp_sim.simulate(2.) #Simulate 2 seconds
