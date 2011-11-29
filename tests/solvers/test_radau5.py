@@ -68,7 +68,7 @@ class Test_Explicit_Radau5:
         #Sets the parameters
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
-        self.sim.initstep = 1.e-4 #Initial step-size
+        self.sim.inith = 1.e-4 #Initial step-size
         self.sim.usejac = False
     
     @testattr(stddist = True)
@@ -296,7 +296,7 @@ class Test_Implicit_Radau5:
         #Sets the parameters
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
-        self.sim.initstep = 1.e-4 #Initial step-size
+        self.sim.inith = 1.e-4 #Initial step-size
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -474,10 +474,10 @@ class Test_Radau_Common:
         """
         This tests the functionality of the property initial step.
         """
-        self.sim.initstep = 0.01
-        assert self.sim.initstep == 0.01
-        self.sim.initstep = 0.001
-        assert self.sim.initstep == 0.001
+        self.sim.inith = 0.01
+        assert self.sim.inith == 0.01
+        self.sim.inith = 0.001
+        assert self.sim.inith == 0.001
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, [-1.0])

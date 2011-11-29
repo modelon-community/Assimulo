@@ -83,13 +83,13 @@ class RungeKutta34(Explicit_ODE):
         
             Parameters::
             
-                initstep    
+                inith    
                             - Default '0.01'.
                             
                             - Should be float.
                             
                                 Example:
-                                    initstep = 0.01
+                                    inith = 0.01
         """
         return self.options["inith"]
         

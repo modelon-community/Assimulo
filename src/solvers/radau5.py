@@ -56,7 +56,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Default values
-        self.options["initstep"] = 0.01
+        self.options["inith"] = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
         self.options["fnewt"]    = 0 #Stopping critera for Newtons Method
@@ -120,8 +120,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def step_generator(self, t, y, tf, opts):
         
         if opts["initialize"]:
-            self._oldh = self.initstep
-            self.h = self.initstep
+            self._oldh = self.inith
+            self.h = self.inith
             self._fac_con = 1.0
         
         if self.fnewt == 0:
@@ -590,7 +590,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._2leny = 2*self._leny
         
         #Default values
-        self.options["initstep"] = 0.01
+        self.options["inith"] = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
         self.options["fnewt"]    = 0 #Stopping critera for Newtons Method
@@ -696,8 +696,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def step_generator(self, t, y, yd, tf, opts):
         
         if opts["initialize"]:
-            self._oldh = self.initstep
-            self.h = self.initstep
+            self._oldh = self.inith
+            self.h = self.inith
             self._fac_con = 1.0
         
         if self.fnewt == 0:

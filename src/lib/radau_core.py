@@ -216,7 +216,7 @@ class Radau_Common(object):
     
     def _set_initial_step(self, initstep):
         try:
-            self.options["initstep"] = float(initstep)
+            self.options["inith"] = float(initstep)
         except (ValueError, TypeError):
             raise Radau_Exception('The initial step must be an integer or float.')
         
@@ -226,17 +226,17 @@ class Radau_Common(object):
         
             Parameters::
             
-                initstep    
+                inith    
                             - Default '0.01'.
                             
                             - Should be float.
                             
                                 Example:
-                                    initstep = 0.01
+                                    inith = 0.01
         """
-        return self.options["initstep"]
+        return self.options["inith"]
         
-    initstep = property(_get_initial_step,_set_initial_step)
+    inith = property(_get_initial_step,_set_initial_step)
     
     
     def _set_quot1(self, quot1):
