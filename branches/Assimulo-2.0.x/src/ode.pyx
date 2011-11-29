@@ -161,7 +161,7 @@ cdef class ODE:
         
         if self.supports["one_step_mode"] is False and self.options["continuous_output"]:
             self.log_message("The current solver does not support continuous output. Setting continuous_output to False and continues.", WHISPER)
-            self.solver_options["continuous_output"] = False
+            self.options["continuous_output"] = False
         
         if (ncp != 0 or ncp_list != None) and (self.options["continuous_output"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
             self.log_message("The current solver does not support interpolated output. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
