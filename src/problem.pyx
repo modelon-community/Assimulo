@@ -62,10 +62,10 @@ cdef class cProblem:
 
 cdef class cImplicit_Problem(cProblem):
     
-    def __init__(self, object f=None, y0=None, yd0=None,double t0=0.0, p0=None, sw0=None):
+    def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, p0=None, sw0=None):
         
-        if f!=None:
-            self.f = f
+        if res != None:
+            self.res = res
         if y0!=None:
             self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
         if yd0!=None:
@@ -94,17 +94,17 @@ cdef class cImplicit_Problem(cProblem):
         
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
-            res[:] = self.f(t,y,yd)
+            res[:] = self.res(t,y,yd)
         except:
             return ID_FAIL
         return ID_OK
     
 cdef class cExplicit_Problem(cProblem):
     
-    def __init__(self, object f=None, y0=None,double t0=0.0, p0=None, sw0=None):
+    def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None):
         
-        if f!=None:
-            self.f = f
+        if rhs != None:
+            self.rhs = rhs
         if y0!=None:
             self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
         if p0!=None:
@@ -130,7 +130,7 @@ cdef class cExplicit_Problem(cProblem):
         
     cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:
-            yd[:] = self.f(t,y)
+            yd[:] = self.rhs(t,y)
         except:
             return ID_FAIL
         return ID_OK
@@ -142,20 +142,20 @@ class Implicit_Problem(cImplicit_Problem):
         
         Parameters ::
           
-            f   
+            res   
                 Function that calculates the residual. Depending on
                 the problem and the support of the solver, this function can
                 have the following input parameters.
                 
-                    f(t,y,yd)      - Normal DAE
-                    f(t,y,yd,sw)   - An DAE with different modes, sw is a list of
-                                     switches (boolean list) which should be held
-                                     constant during the integration and only be
-                                     changed when an event have occured. Used together
-                                     with event functions.
-                    f(t,y,yd,p)    - An DAE with parameters for which sensitivities
-                                     should be calculated.
-                    f(t,y,yd,sw,p) - An DAE with both parameters and switches.
+                    res(t,y,yd)      - Normal DAE
+                    res(t,y,yd,sw)   - An DAE with different modes, sw is a list of
+                                       switches (boolean list) which should be held
+                                       constant during the integration and only be
+                                       changed when an event have occured. Used together
+                                       with event functions.
+                    res(t,y,yd,p)    - An DAE with parameters for which sensitivities
+                                       should be calculated.
+                    res(t,y,yd,sw,p) - An DAE with both parameters and switches.
                     
                     Returns:
                         A numpy array of size len(y).
@@ -232,20 +232,20 @@ class Explicit_Problem(cExplicit_Problem):
  
         Parameters::
             
-            f   
+            rhs 
                 Function that calculates the right-hand-side. Depending on
                 the problem and the support of the solver, this function can
                 have the following input parameters.
                 
-                    f(t,y)      - Normal ODE
-                    f(t,y,sw)   - An ODE with different modes, sw is a list of
-                                  switches (boolean list) which should be held
-                                  constant during the integration and only be
-                                  changed when an event have occured. Used together
-                                  with event functions.
-                    f(t,y,p)    - An ODE with parameters for which sensitivities
-                                  should be calculated.
-                    f(t,y,sw,p) - An ODE with both parameters and switches.
+                    rhs(t,y)      - Normal ODE
+                    rhs(t,y,sw)   - An ODE with different modes, sw is a list of
+                                    switches (boolean list) which should be held
+                                    constant during the integration and only be
+                                    changed when an event have occured. Used together
+                                    with event functions.
+                    rhs(t,y,p)    - An ODE with parameters for which sensitivities
+                                    should be calculated.
+                    rhs(t,y,sw,p) - An ODE with both parameters and switches.
                     
                     Returns:
                         A numpy array of size len(y).

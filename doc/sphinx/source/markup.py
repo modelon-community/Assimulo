@@ -60,13 +60,13 @@ def mark_solvers():
         file.write('Define the problem, such as:: \n\n')
         
         if solver[1] == "ODE":
-            file.write('    def f('+str_ret[:-3]+'): #Note that y are a 1-D numpy array.\n')
+            file.write('    def rhs('+str_ret[:-3]+'): #Note that y are a 1-D numpy array.\n')
             file.write('        yd = -1.0\n')
             file.write('        return N.array([yd]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0 = [1.0]\n')
             file.write('    t0 = 1.0\n\n')
         else:
-            file.write('    def f('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
+            file.write('    def res('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
             file.write('        res = yd[0]-1.0\n')
             file.write('        return N.array([res]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0  = [1.0]\n')
@@ -79,6 +79,8 @@ def mark_solvers():
             file.write('    mod = '+problem_name+'(f, y0, yd0, t0)\n\n')
         file.write('.. note::\n\n')
         file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
+        file.write('.. warning::\n\n')
+        file.write('    When subclassing from a problem class, the function for calculating the right-hand-side (for ODEs) must be named *rhs* and in the case with a residual function (for DAEs) it must be named *res*.\n')
         file.write('Create a solver instance::\n\n')
         file.write('    sim = '+solver_name+'(mod)\n\n')
         file.write('Modify (optionally) the solver parameters.\n\n')

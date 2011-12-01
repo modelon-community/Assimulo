@@ -336,7 +336,7 @@ class Test_CVode:
             def handle_event(self, solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
-            f = lambda self,t,y,sw: N.array([1.0])
+            rhs = lambda self,t,y,sw: N.array([1.0])
             y0 = [1.0]
             sw0 = [False,True]
             state_events = lambda self,t,y,sw:  N.array([t-1.0, t-2.0])
@@ -578,7 +578,7 @@ class Test_IDA:
             def handle_event(self,solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
-            f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
+            res = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t-2.0])
             y0 = [1.0]
             yd0 = [1.0]
@@ -752,7 +752,7 @@ class Test_Sundials:
         class Prob_IDA(Implicit_Problem):
             def __init__(self):
                 pass
-            f = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
+            res = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t])
             y0 = [1.0]
             yd0 = [1.0]
@@ -763,7 +763,7 @@ class Test_Sundials:
         class Prob_CVode(Explicit_Problem):
             def __init__(self):
                 pass
-            f = lambda self,t,y,sw: N.array([1.0])
+            rhs = lambda self,t,y,sw: N.array([1.0])
             state_events = lambda self,t,y,sw: N.array([t-1.0, t])
             y0 = [1.0]
             sw0 = [False, True]
