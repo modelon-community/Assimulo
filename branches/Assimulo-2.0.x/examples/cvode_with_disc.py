@@ -39,8 +39,8 @@ class Extended_Problem(Explicit_Problem):
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     
-    #The residual
-    def f(self,t,y,sw):
+    #The right-hand-side function (rhs)
+    def rhs(self,t,y,sw):
         """
         This is our function we are trying to simulate. During simulation
         the parameter sw should be fixed so that our function is continuous

@@ -471,8 +471,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             cjac = self.problem.jac(t,y)
         else:           #Calculate a numeric jacobian
             delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
-            Fdelt = N.array([self.problem.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 
-            grad = ((Fdelt-self.problem.f(t,y)).T/delt.diagonal()).T
+            Fdelt = N.array([self.problem.rhs(t,y+e) for e in delt]) #Add the disturbance (row by row) 
+            grad = ((Fdelt-self.problem.rhs(t,y)).T/delt.diagonal()).T
             cjac = N.array(grad).T
 
             self.statistics["njacfcn"] += 1+self._leny #Add the number of function evaluations

@@ -125,7 +125,7 @@ cdef class IDA(Implicit_ODE):
         
     cdef set_problem_data(self):
         #Sets the residual or rhs
-        self.pt_fcn = self.problem.f
+        self.pt_fcn = self.problem.res
         self.pData.RHS = <void*>self.pt_fcn#<void*>self.problem.f
         self.pData.dim = self.problem_info["dim"] 
         self.pData.memSize = self.pData.dim*sizeof(realtype)
@@ -1307,7 +1307,7 @@ cdef class CVode(Explicit_ODE):
     cdef set_problem_data(self):
         
         #Sets the residual or rhs
-        self.pt_fcn = self.problem.f
+        self.pt_fcn = self.problem.rhs
         self.pData.RHS = <void*>self.pt_fcn#<void*>self.problem.f
         self.pData.dim = self.problem_info["dim"]
         self.pData.memSize = self.pData.dim*sizeof(realtype)

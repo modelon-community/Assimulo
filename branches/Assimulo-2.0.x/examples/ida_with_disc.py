@@ -43,7 +43,7 @@ class Extended_Problem(Implicit_Problem):
     
     
     #The residual
-    def f(self,t,y,yd,sw):
+    def res(self,t,y,yd,sw):
         """
         This is our function we are trying to simulate. During simulation
         the parameter sw should be fixed so that our function is continuous
