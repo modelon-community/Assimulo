@@ -31,7 +31,7 @@ cimport sundials_includes as Sun
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
 from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, PyArray_DATA, import_array
 from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
-from sundials_includes cimport N_VConst_Serial
+from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
 include "constants.pxi" #Includes the constants (textual include)
 include "sundials_constants.pxi" #Sundials related constants
@@ -461,7 +461,11 @@ cdef class IDA(Implicit_ODE):
                 self.store_statistics()
             
             opts["output_index"] = output_index
-            
+        
+        #Deallocate
+        N_VDestroy_Serial(yout)
+        N_VDestroy_Serial(ydout)
+        
         return flag, tr, yr, ydr
     
     
@@ -505,7 +509,11 @@ cdef class IDA(Implicit_ODE):
         if flag == IDA_TSTOP_RETURN: #Reached tf
             flag = ID_COMPLETE
             self.store_statistics()
-                
+        
+        #Deallocate
+        N_VDestroy_Serial(yout)
+        N_VDestroy_Serial(ydout)
+        
         return flag, tr, yr, ydr
     
     cpdef make_consistent(self, method):
@@ -569,6 +577,7 @@ cdef class IDA(Implicit_ODE):
         can be from zero to the current order.
         """
         cdef flag
+        cdef N.ndarray res
         cdef N_Vector dky=N_VNew_Serial(self.pData.dim)
         
         flag = Sun.IDAGetDky(self.ida_mem, t, k, dky)
@@ -576,7 +585,11 @@ cdef class IDA(Implicit_ODE):
         if flag < 0:
             raise IDAError(flag, t)
         
-        return nv2arr(dky)
+        res = nv2arr(dky)
+        
+        N_VDestroy_Serial(dky) #Deallocate
+        
+        return res
         
     cpdef interpolate_sensitivity(self,double t, int k = 0, int i=-1):
         """
@@ -602,6 +615,7 @@ cdef class IDA(Implicit_ODE):
         """
         cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef flag
+        cdef N.ndarray res
         
         if i==-1:
             
@@ -615,6 +629,8 @@ cdef class IDA(Implicit_ODE):
                 
                 matrix += [nv2arr(dkyS)]
             
+            N_VDestroy_Serial(dkyS)
+            
             return np.array(matrix)
         else:
             flag = Sun.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
@@ -622,7 +638,11 @@ cdef class IDA(Implicit_ODE):
             if flag <0:
                 raise IDAError(flag, t)
             
-            return nv2arr(dkyS)
+            res = nv2arr(dkyS)
+            
+            N_VDestroy_Serial(dkyS)
+            
+            return res
             
     def _set_lsoff(self, lsoff):
         try:
@@ -1423,14 +1443,20 @@ cdef class CVode(Explicit_ODE):
         can be from zero to the current order.
         """
         cdef flag
-        cdef N_Vector dky=N_VNew_Serial(self.pData.dim)
+        cdef N.ndarray res
+        cdef N_Vector dky=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
         flag = Sun.CVodeGetDky(self.cvode_mem, t, k, dky)
         
         if flag < 0:
             raise CVodeError(flag, t)
         
-        return nv2arr(dky)
+        res = nv2arr(dky)
+        
+        #Deallocate N_Vector
+        N_VDestroy_Serial(dky)
+        
+        return res
         
     cpdef N.ndarray interpolate_sensitivity(self, realtype t, int k = 0, int i=-1):
         """
@@ -1456,6 +1482,7 @@ cdef class CVode(Explicit_ODE):
         """
         cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
         cdef int flag
+        cdef N.ndarray res
         
         if i==-1:
             
@@ -1468,13 +1495,19 @@ cdef class CVode(Explicit_ODE):
                 
                 matrix += [nv2arr(dkyS)]
             
+            N_VDestroy_Serial(dkyS)
+            
             return N.array(matrix)
         else:
             flag = Sun.CVodeGetSensDky1(self.cvode_mem, t, k, i, dkyS)
             if flag <0:
                 raise CVodeError(flag, t)
             
-            return nv2arr(dkyS)
+            res = nv2arr(dkyS)
+            
+            N_VDestroy_Serial(dkyS)
+            
+            return res
     
     cpdef initialize(self):
         
@@ -1527,7 +1560,9 @@ cdef class CVode(Explicit_ODE):
         if flag == CV_TSTOP_RETURN: #Reached tf
             flag = ID_COMPLETE
             self.store_statistics()
-            
+        
+        #Deallocate
+        N_VDestroy_Serial(yout)
                 
         return flag, tr, yr
     
@@ -1604,7 +1639,10 @@ cdef class CVode(Explicit_ODE):
             
         
             opts["output_index"] = output_index
-
+        
+        #Deallocate
+        N_VDestroy_Serial(yout)
+        
         return flag, tr, yr
     
     cpdef state_event_info(self):
