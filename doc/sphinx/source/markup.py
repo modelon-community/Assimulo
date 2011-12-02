@@ -80,7 +80,7 @@ def mark_solvers():
         file.write('.. note::\n\n')
         file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
         file.write('.. warning::\n\n')
-        file.write('    When subclassing from a problem class, the function for calculating the right-hand-side (for ODEs) must be named *rhs* and in the case with a residual function (for DAEs) it must be named *res*.\n')
+        file.write('    When subclassing from a problem class, the function for calculating the right-hand-side (for ODEs) must be named *rhs* and in the case with a residual function (for DAEs) it must be named *res*.\n\n')
         file.write('Create a solver instance::\n\n')
         file.write('    sim = '+solver_name+'(mod)\n\n')
         file.write('Modify (optionally) the solver parameters.\n\n')
