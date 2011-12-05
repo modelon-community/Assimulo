@@ -15,11 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-cimport numpy as N
 import numpy as N
+cimport numpy as N
+
+N.import_array()
+
 import numpy.linalg
 import traceback 
-
+ 
 from assimulo.exception import *
 
 from assimulo.explicit_ode cimport Explicit_ODE
