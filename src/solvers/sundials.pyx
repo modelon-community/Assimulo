@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2011 Modelon AB
-#
+# 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 3 of the License.
@@ -17,6 +17,7 @@
 
 import numpy as N
 cimport numpy as N
+from numpy cimport PyArray_DATA
 
 N.import_array()
 
@@ -32,7 +33,7 @@ cimport sundials_includes as Sun
 
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
-from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, PyArray_DATA, import_array
+from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat
 from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
