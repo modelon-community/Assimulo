@@ -9,6 +9,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef N.ndarray y = nv2arr(yv)
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
+    cdef int i
     
     if pData.dimSens>0: #Sensitivity activated
         p = realtype2arr(pData.p,pData.dimSens)
@@ -52,6 +53,7 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef N.ndarray y = nv2arr(yv)
+    cdef int i,j
     
     try:
         if pData.sw != NULL:
@@ -82,6 +84,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
     cdef N.ndarray y  = nv2arr(yv)
     cdef N.ndarray v  = nv2arr(vv)
     cdef N.ndarray fy = nv2arr(fyv)
+    cdef int i
     
     cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
     
@@ -105,6 +108,7 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     #cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef N.ndarray y = nv2arr(yv)
+    cdef int i
     
     try:
         if pData.sw != NULL:
@@ -132,6 +136,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
+    cdef int i
     
     if pData.dimSens!=0: #SENSITIVITY 
         p = realtype2arr(pData.p,pData.dimSens)
@@ -185,6 +190,7 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
     cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray yd = nv2arr(yvdot)
+    cdef int i,j
     
     try:
         if pData.sw != NULL:
@@ -211,6 +217,7 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
     cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray yd = nv2arr(yvdot)
+    cdef int i
     
     try:
         if pData.sw != NULL:
@@ -286,7 +293,6 @@ cdef inline N_Vector arr2nv(x):
     x=N.array(x)
     cdef long int n = len(x)
     cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
-    import_array()
     cdef void* data_ptr=PyArray_DATA(ndx)
     cdef N_Vector v=N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
@@ -295,16 +301,12 @@ cdef inline N_Vector arr2nv(x):
 cdef inline N.ndarray nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
-    #cdef long int i
-    import_array()
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
-    #cdef ndarray x = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,v_data)
     memcpy(x.data, v_data, n*sizeof(realtype))
     return x
 
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
-    import_array()
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
     memcpy(x.data, data, n*sizeof(realtype))
     return x
