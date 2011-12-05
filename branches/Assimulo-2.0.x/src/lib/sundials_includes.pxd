@@ -37,38 +37,6 @@ cdef extern from "sundials/sundials_types.h":
     ctypedef double realtype
     ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
 
-
-#==============================================
-#External definitions from numpy headers
-#==============================================
-cdef extern from "numpy/arrayobject.h":
-
-    ctypedef int npy_intp 
-
-    ctypedef extern class numpy.dtype [object PyArray_Descr]:
-        cdef int type_num, elsize, alignment
-        cdef char type, kind, byteorder, hasobject
-        cdef object fields, typeobj
-        
-    ctypedef int intp
-    ctypedef extern class numpy.ndarray [object PyArrayObject]:
-        cdef char *data
-        cdef int nd
-        cdef intp *dimensions
-        cdef intp *strides
-        cdef int flags
-        
-    cdef object PyArray_SimpleNew(int nd, npy_intp* dims, int typenum)
-    cdef object PyArray_SimpleNewFromData(int nd, npy_intp *dims,
-                                           int typenum, void *data)
-    void import_array() 
-    void* PyArray_GetPtr(ndarray aobj, npy_intp* ind)
-    void *PyArray_DATA(ndarray aobj)
-
-import_array()
-
-cdef extern from "Python.h":
-    cdef void Py_INCREF( object )
 #==============================================
 # C headers
 #==============================================
