@@ -7,7 +7,7 @@ Installation
 Dependencies:
     
 - `Python-2.6 / 2.7 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
-- `Cython <http://www.cython.org/>`_
+- `Cython 0.15 <http://www.cython.org/>`_
 - `Numpy <http://www.scipy.org/Download/>`_
 - `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_

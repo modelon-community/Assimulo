@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2011 Modelon AB
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 3 of the License.
@@ -168,7 +168,16 @@ cdef class IDA(Implicit_ODE):
         
         self.pData.verbose = 2
     
-    def __dealloc__(self): 
+    def __dealloc__(self):
+        
+        if self.yTemp != NULL:
+            #Deallocate N_Vector
+            N_VDestroy_Serial(self.yTemp)
+            
+        if self.ydTemp != NULL:
+            #Deallocate N_Vector
+            N_VDestroy_Serial(self.ydTemp)
+        
         if self.ida_mem != NULL: 
             #Free Memory
             Sun.IDAFree(&self.ida_mem)
@@ -1263,7 +1272,7 @@ cdef class CVode(Explicit_ODE):
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
-        
+
         self.pData = ProblemData()
         
         #Populate the ProblemData
@@ -1323,6 +1332,10 @@ cdef class CVode(Explicit_ODE):
             self.yS0 = problem.yS0
     
     def __dealloc__(self):
+        
+        if self.yTemp != NULL:
+            #Deallocate N_Vector
+            N_VDestroy_Serial(self.yTemp)
         
         if self.cvode_mem != NULL:
             #Free Memory
