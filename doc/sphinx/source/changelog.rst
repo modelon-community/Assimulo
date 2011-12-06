@@ -3,6 +3,26 @@
 Changelog
 ==========
 
+--- Assimulo-2.0b1 --- (Not released)
+    * Replaced setup_source.py and setup_binary.py with a single setup.py.
+    * Base code migrated to Cython. 
+    * Results are now returned from the simulate method.
+    * Options and statistics are now stored in dictionaries.
+    * Results are stored in variables appended with _sol. For example:
+      y -> y_sol. (Also note that the result is now returned from simulate)
+    * The current time and states (state derivative) have changed name from
+      t_cur, y_cur, yd_cur -> t, y, yd.
+    * Method in IDA make_consistency have been renamed to make_consistent.
+    * Added a method get_support which returns a dictionary with information
+      about what the current solver supports.
+    * Change name of the function in Explicit_Problem, f -> rhs
+    * Change name of the function in Implicit_Problem, f -> res
+    * Multiple name changes. (To be specified)
+    * Improved the documentation
+    * Speed improvements in the Sundials wrapper.
+    * Fixed a couple of memory leaks in the Sundials wrapper.
+    * Added support for specifying a list of output points.
+
 --- Assimulo-1.4b3 ---
     * Fixed bug with t0 != 0 when using time events and step events
       (ticket:173)
