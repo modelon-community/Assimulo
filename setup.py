@@ -16,13 +16,16 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from distutils.core import setup, Extension
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
 import numpy as N
 import logging as L
 import sys as S
 import os as O
 import shutil as SH
+try:
+    from Cython.Distutils import build_ext
+    from Cython.Build import cythonize
+except ImportError:
+    raise Exception("Please upgrade to a newer Cython version, >= 0.15.")
 
 #L.basicConfig(format='%(levelname)s:%(message)s')
 
