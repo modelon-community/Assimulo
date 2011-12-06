@@ -95,7 +95,7 @@ Changelog
     * Changed assimulo.ODE.problemname to problem_name.
     * Fixed a bug when printing information when used FixedPoint.
     * Changed algvar to be more type independent.
-    * Added **kwargs to the plotting functionality.
+    * Added kwargs to the plotting functionality.
 
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.
