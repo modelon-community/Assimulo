@@ -10,14 +10,13 @@ Explicit ODE
  
 .. autoclass:: assimulo.explicit_ode.Explicit_ODE
     :members:
-    :inherited-members:
     :show-inheritance:
 
 
 CVode
 -----
 
-.. autoclass:: assimulo.explicit_ode.CVode
+.. autoclass:: assimulo.solvers.sundials.CVode
    :members:
    :inherited-members:
    :show-inheritance:
@@ -26,37 +25,33 @@ CVode
 Explicit Euler
 --------------
 
-.. autoclass:: assimulo.explicit_ode.Explicit_Euler
+.. autoclass:: assimulo.solvers.euler.ExplicitEuler
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info
 
    
 Runge-Kutta
 ----------------
 
-.. autoclass:: assimulo.explicit_ode.RungeKutta4
+.. autoclass:: assimulo.solvers.runge_kutta.RungeKutta4
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info
 
    
 Adaptive Runge-Kutta
 ---------------------
 
-.. autoclass:: assimulo.explicit_ode.RungeKutta34
+.. autoclass:: assimulo.solvers.runge_kutta.RungeKutta34
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info
 
-Radau5
+Radau5ODE
 ---------------------
 
-.. autoclass:: assimulo.explicit_ode.Radau5
+.. autoclass:: assimulo.solvers.radau5.Radau5ODE
    :members:
    :inherited-members:
    :show-inheritance:
-   :exclude-members: is_disc, print_event_info

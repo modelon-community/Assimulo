@@ -10,6 +10,5 @@ Code Documentation
    explicit
    implicit
    problem
-   sundials
    
 
