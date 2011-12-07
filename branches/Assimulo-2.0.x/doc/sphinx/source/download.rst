@@ -5,15 +5,16 @@ Download
 =============
 
 Current version:
-
-    - `Assimulo-1.4b3.zip <https://trac.jmodelica.org/assimulo/export/287/releases/Assimulo-1.4b3.zip>`_
+    
+    - `Assimulo-2.0b1.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/326/releases/Assimulo-2.0b1.win32-py2.7.exe>`_
+    - `Assimulo-2.0b1.zip <https://trac.jmodelica.org/assimulo/export/326/releases/Assimulo-2.0b1.zip>`_
    
 See :doc:`installation` for instructions on setting up Assimulo. Christoph Gohlke has also created one-click windows installers for Assimulo which are available `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/#assimulo>`_ .
 
 
 To retrieve the latest version using a subversion software use::
 
-    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-1.4b3
+    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-2.0b1
 
 To retrieve the latest (develop) version using a subversion software use::
 
@@ -27,6 +28,7 @@ To retrieve the latest (develop) version using a subversion software use::
 
 Old versions:
     
+    - `Assimulo-1.4b3.zip <https://trac.jmodelica.org/assimulo/export/287/releases/Assimulo-1.4b3.zip>`_
     - `Assimulo-1.4b2.zip <https://trac.jmodelica.org/assimulo/export/275/releases/Assimulo-1.4b2.zip>`_
     - `Assimulo-1.4b1.zip <https://trac.jmodelica.org/assimulo/export/275/releases/Assimulo-1.4b1.zip>`_
     - `Assimulo-1.3b1.zip <https://trac.jmodelica.org/assimulo/export/275/releases/Assimulo-1.3b1.zip>`_
