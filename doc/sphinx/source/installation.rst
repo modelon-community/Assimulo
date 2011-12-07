@@ -33,7 +33,7 @@ After a successful installation, the package will be located in Pythons dist-pac
         
     should point to where Sundials is installed. Example, ::
     
-        python setup.py install -sundials-home=/home/chria/Sundials
+        python setup.py install --sundials-home=/home/chria/Sundials
 
 .. note::
 
