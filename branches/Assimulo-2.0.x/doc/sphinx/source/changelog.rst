@@ -3,7 +3,7 @@
 Changelog
 ==========
 
---- Assimulo-2.0b1 --- (Not released)
+--- Assimulo-2.0b1 ---
     * Replaced setup_source.py and setup_binary.py with a single setup.py.
     * Base code migrated to Cython. 
     * Results are now returned from the simulate method.
