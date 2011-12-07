@@ -73,7 +73,7 @@ cdef class cImplicit_Problem(cProblem):
         if p0!=None:
             self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
         if sw0!=None:
-            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([p0],dtype=bool))
+            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool))
         self.t0  = t0
     
     cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
@@ -110,7 +110,7 @@ cdef class cExplicit_Problem(cProblem):
         if p0!=None:
             self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
         if sw0!=None:
-            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([p0],dtype=bool))
+            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool))
         self.t0  = t0
     
     cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
