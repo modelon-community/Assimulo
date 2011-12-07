@@ -1,0 +1,16 @@
+include src/lib/*.c
+include src/lib/*.h
+include src/lib/*.pyx
+include src/lib/*.pyd
+include src/lib/*.pxi
+include src/lib/*.so
+include src/lib/*.dll
+include src/lib/*.dylib
+include CHANGELOG
+include INSTALL
+include README
+include src/*.pxd
+include setup.py
+include examples/*
+include src/solvers/*
+include src/*
