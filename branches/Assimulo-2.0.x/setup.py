@@ -93,11 +93,16 @@ def pre_processing():
     create_dir(O.path.join(O.path.join("build","assimulo"),"lib"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"solvers"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"examples"))
+    create_dir(O.path.join(O.path.join("build","assimulo"),"tests"))
+    create_dir(O.path.join(O.path.join("build","assimulo"),"tests","solvers"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
     fileSolvers = O.listdir(O.path.join("src","solvers"))
     fileExamples= O.listdir("examples")
+    fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
+    fileTests   = O.listdir("tests")
+    fileTestsSolvers = O.listdir(O.path.join("tests","solvers"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -105,6 +110,9 @@ def pre_processing():
     desLib = O.path.join(curdir,O.path.join(O.path.join("build","assimulo"),"lib"))
     desSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"solvers")
     desExamples = O.path.join(curdir,O.path.join("build","assimulo"),"examples")
+    desMain = O.path.join(curdir,"build")
+    desTests = O.path.join(curdir,O.path.join("build","assimulo"),"tests")
+    desTestsSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"tests","solvers")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -118,6 +126,15 @@ def pre_processing():
     for f in fileExamples:
         if not O.path.isdir(O.path.join("examples",f)):
             SH.copy2(O.path.join("examples",f), desExamples)
+    for f in fileMain:
+        if not O.path.isdir(f):
+            SH.copy2(f,desMain)
+    for f in fileTests:
+        if not O.path.isdir(O.path.join("tests",f)):
+            SH.copy2(O.path.join("tests",f), desTests)
+    for f in fileTestsSolvers:
+        if not O.path.isdir(O.path.join("tests","solvers",f)):
+            SH.copy2(O.path.join("tests","solvers",f),desTestsSolvers)
 
 def check_extensions():
     
@@ -230,8 +247,15 @@ def check_wSLU():
     
     return wSLU
 
-pre_processing()
-O.chdir("build") #Change dir
+"""
+Pre-processing is necessary due to the setup of the repository. 
+"""
+if not O.path.isdir("assimulo"):
+    pre_processing()
+    O.chdir("build") #Change dir
+    change_dir = True
+else:
+    change_dir = False
       
 ext_list = check_extensions()
 
@@ -266,6 +290,15 @@ order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS
 (https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
 (for ODEs) and IDA (for DAEs). A Python version of Ernst Hairer's code 
 (http://www.unige.ch/~hairer/software.html) Radau5 is also available.
+
+Documentation and installation instructions can be found at: 
+http://www.jmodelica.org/assimulo . 
+
+For questions and comments, visit: 
+http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
+
+The package requires Numpy, Scipy and Matplotlib and additionally for 
+compiling from source, Cython 0.15 and Sundials 2.4.
 """
 
 
@@ -281,9 +314,10 @@ setup(name=NAME,
       platforms=PLATFORMS,
       classifiers=CLASSIFIERS,
       package_dir = {'assimulo':'assimulo'},
-      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples'],
+      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
       script_args=copy_args)
 
-O.chdir("..") #Change back to dir
+if change_dir:
+    O.chdir("..") #Change back to dir
