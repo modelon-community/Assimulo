@@ -181,6 +181,8 @@ def check_extensions():
         
         wSLU = check_wSLU()
         if wSLU:
+            SLUincdir = O.path.join(SLUdir,'SRC')
+            SLUlibdir = O.path.join(SLUdir,'lib')
             ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
                           [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
                           include_dirs=[incdirs, N.get_include(),SLUincdir],
