@@ -6,9 +6,10 @@ Installation
 
 Dependencies:
     
-- `Python-2.6 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
-- `Cython <http://www.cython.org/>`_
-- `Numpy <http://numpy.scipy.org/>`_
+- `Python-2.6 / 2.7 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
+- `Cython 0.15 <http://www.cython.org/>`_
+- `Numpy <http://www.scipy.org/Download/>`_
+- `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_
 - `Sundials-2.4 <http://computation.llnl.gov/casc/sundials/main.html>`_
 
@@ -20,7 +21,7 @@ Ubuntu
 
 Once all the dependencies are satisfied an installation is done by::
 
-    python setup_source.py install 
+    python setup.py install 
     
 After a successful installation, the package will be located in Pythons dist-packages folder. For troubleshooting see :ref:`instTrouble`.
 
@@ -32,7 +33,7 @@ After a successful installation, the package will be located in Pythons dist-pac
         
     should point to where Sundials is installed. Example, ::
     
-        python setup_source.py install -sundials-home=/home/chria/Sundials
+        python setup.py install --sundials-home=/home/chria/Sundials
 
 .. note::
 
@@ -52,7 +53,7 @@ Installing Sundials on Windows can be a bit tricky but here is a link for instal
 
 Once Sundials and the rest of the packages are installed just install Assimulo by browsing to the folder in the command prompt and type::
 
-    python setup_source.py install --sundials-home=/path/to/sundials
+    python setup.py install --sundials-home=/path/to/sundials
     
 After a successful installation, the package will be located in pythons dist-packages folder.
 

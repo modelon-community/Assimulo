@@ -11,15 +11,10 @@ Documentation contents
 Contents
 ==============
 
-
-.. toctree::
-   :maxdepth: 2
-   
-   usage
-
 .. toctree::
    :maxdepth: 3
    
+   usage
    examples
    jmodelica
    download
@@ -33,7 +28,8 @@ Contents
    :glob:
    :hidden:
 
-   solver*
+   ODE_*
+   DAE_*
 
 
 Indices and tables

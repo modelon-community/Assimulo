@@ -39,4 +39,4 @@ This tutorial is intended to give a short introduction to the Assimulo package f
 Additional information
 ========================
 
-The Assimulo package comes with a number of examples, showing how to use the different solvers on different types of problem. The examples are located in the examples folder.
+The Assimulo package comes with a number of examples, showing how to use the different solvers on different types of problem. These examples can be found :doc:`here <examples>`.

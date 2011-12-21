@@ -11,8 +11,9 @@ or,
     python tutorialIDA.py (in a command prompt)
 """
 import numpy as N
+import pylab as P
 from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
-from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
+from assimulo.solvers.sundials import IDA #Imports the solver IDA from Assimulo
 
 
 def run_example():
@@ -32,19 +33,18 @@ def run_example():
     y0  = [1.0, 0.0, 0.0, 0.0, 0.0] #Initial conditions
     yd0 = [0.0, 0.0, 0.0, -9.82, 0.0] #Initial conditions
 
-    model = Implicit_Problem()             #Create an Assimulo problem
-    model.f = residual                     #This is how the residual connects to the Assimulo problem
-    model.problem_name = 'Pendulum'        #Specifies the name of problem (optional)
+    model = Implicit_Problem(residual, y0, yd0, t0)             #Create an Assimulo problem
+    model.name = 'Pendulum'        #Specifies the name of problem (optional)
 
-    sim = IDA(model, y0, yd0, t0)
+    sim = IDA(model) #Create the IDA solver
         
     tfinal = 10.0        #Specify the final time
     ncp = 500            #Number of communcation points (number of return points)
 
-    sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
-
-    sim.plot() #Plots the result
-
+    t,y,yd = sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
+    
+    P.plot(t,y)
+    P.show()
 
 if __name__=='__main__':
     run_example()
