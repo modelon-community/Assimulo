@@ -1,5 +1,9 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.0 ---
+    * Minor bug fixes in the setup script (ticket:191).
+    * Fixed bug in type checking of switches (ticket:201). 
+
 --- Assimulo-2.0b1 ---
     * Replaced setup_source.py and setup_binary.py with a single setup.py.
     * Base code migrated to Cython. 
