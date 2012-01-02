@@ -2,7 +2,7 @@
 Problem Class
 =============================
 
-.. autoclass:: assimulo.problem.Problem
+.. autoclass:: assimulo.problem.cProblem
    :members:
  
 

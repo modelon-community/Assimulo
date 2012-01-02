@@ -10,10 +10,7 @@ In the next sections we show how to use the solver IDA to solve an implicit ordi
 Problem formulation
 ----------------------
 
-The problem consists of a residual function :math:`F` together with initial values for the time, states and state derivatives. 
-The residual takes as input time :math:`t`, state :math:`y` and state derivative :math:`\dot{y}` and returns a vector. This vector
-is a zero vector if the data corresponds to a point on the solution, i.e. *consistent data*, otherwise the data is inconsistent and the 
-numerical solver attempts to change :math:`y` and :math:`\dot{y}` before proceeding in time :math:`t`.
+The problem consists of a residual function :math:`F` together with initial values for the time, states and state derivatives. The residual takes as input time :math:`t`, state :math:`y` and state derivative :math:`\dot{y}` and returns a vector. This vector is a zero vector if the data corresponds to a point on the solution, i.e. *consistent data*, otherwise the data is inconsistent and the numerical solver attempts to change :math:`y` and :math:`\dot{y}` before proceeding in time :math:`t`.
    
 
 The initial data should be consistent. Otherwise a numerical method might encounter problems at the start.
@@ -21,6 +18,7 @@ The initial data should be consistent. Otherwise a numerical method might encoun
 An example of a residual is shown below (Python)::
 
     import numpy as N
+    import pylab as P
 
     def residual(t,y,yd):
         
@@ -43,37 +41,35 @@ All this is packed into an Assimulo problem class::
 
     from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
     
-    model = Implicit_Problem()             #Create an Assimulo problem
-    model.f = residual                     #This is how the residual connects to the Assimulo problem
-    model.problem_name = 'Pendulum'        #Specifies the name of problem (optional)
-    model.y0 = y0
-    model.t0 = t0
-    model.yd0 = yd0   
+    model = Implicit_Problem(residual, y0, yd0, t0) #Create an Assimulo problem
+    model.name = 'Pendulum'        #Specifies the name of problem (optional)
 
 Creating an Assimulo solver instance
 ------------------------------------
 
 And now to create the actual solver object for SUNDIAL's IDA::
 
-    from assimulo.implicit_ode import IDA #Imports the solver IDA from Assimulo
+    from assimulo.solvers.sundials import IDA #Imports the solver IDA from Assimulo
 
     sim = IDA(model)
 
 Simulate
 ----------
 
-To simulate the problem using the default values, simply specify the final time of the simulation and the number of communication points and simulate::
+To simulate the problem using the default values, simply specify the final time of the simulation and the number of communication points and simulate which returns the result::
 
     tfinal = 10.0        #Specify the final time
     ncp = 500            #Number of communication points (number of return points)
     
-    sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
+    t, y, yd = sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
     
 This will give all sorts of information in the prompt, the statistics of the solver, how many function calls were needed, among others. Also information about the solver, which options the problem was solved with.
 
-To plot the simulation result, use the plot method::
+To plot the simulation result, plot functionality from pylab can be used::
 
-    sim.plot() #Plots the result
+    #Plots the result
+    P.plot(t,y)
+    P.show()
     
 The plot is given below,
 
@@ -101,7 +97,8 @@ together with the statistics. ::
      Suppress Alg          :  False
      Tolerances (absolute) :  1e-06
      Tolerances (relative) :  1e-06
-
+    
+    Simulation interval    : 0.0 - 10.0 seconds.
     Elapsed simulation time: 0.16 seconds.
 
 For the complete example, :download:`tutorialIDA.py`
