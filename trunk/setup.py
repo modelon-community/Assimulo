@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from distutils.core import setup, Extension
+#from distutils.core import setup, Extension
 import numpy as N
 import logging as L
 import sys as S
 import os as O
 import shutil as SH
+from numpy.distutils.misc_util import Configuration
+from numpy.distutils.core import setup
 try:
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
@@ -83,6 +85,8 @@ for x in S.argv[1:]:
         copy_args.remove(x)
         
 def pre_processing():
+    join = O.path.join
+    
     def create_dir(d):
         try:
             O.mkdir(d) #Create the build directory
@@ -95,6 +99,8 @@ def pre_processing():
     create_dir(O.path.join(O.path.join("build","assimulo"),"examples"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"tests"))
     create_dir(O.path.join(O.path.join("build","assimulo"),"tests","solvers"))
+    create_dir(join("build","assimulo","thirdparty"))
+    create_dir(join("build","assimulo","thirdparty","hairer"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -103,6 +109,7 @@ def pre_processing():
     fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
     fileTests   = O.listdir("tests")
     fileTestsSolvers = O.listdir(O.path.join("tests","solvers"))
+    fileThirdPartyHairer = O.listdir(join("thirdparty","hairer"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -113,6 +120,7 @@ def pre_processing():
     desMain = O.path.join(curdir,"build")
     desTests = O.path.join(curdir,O.path.join("build","assimulo"),"tests")
     desTestsSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"tests","solvers")
+    desThirdPartyHairer = join(curdir,"build","assimulo","thirdparty","hairer")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -135,6 +143,11 @@ def pre_processing():
     for f in fileTestsSolvers:
         if not O.path.isdir(O.path.join("tests","solvers",f)):
             SH.copy2(O.path.join("tests","solvers",f),desTestsSolvers)
+    for f in fileThirdPartyHairer:
+        if not O.path.isdir(join("thirdparty","hairer",f)):
+            SH.copy2(join("thirdparty","hairer",f),desThirdPartyHairer)
+        if f == "LICENSE":
+            SH.copy2(join("thirdparty","hairer",f),join(curdir,"build","assimulo","lib"))
 
 def check_extensions():
     
@@ -159,7 +172,7 @@ def check_extensions():
         ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug)
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].extra_link_args = ["-lsundials_cvodes", "-lsundials_nvecserial", "-lsundials_idas"]
+        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         if debug:
             ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
         else:
@@ -183,17 +196,37 @@ def check_extensions():
         if wSLU:
             SLUincdir = O.path.join(SLUdir,'SRC')
             SLUlibdir = O.path.join(SLUdir,'lib')
-            ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
-                          [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
-                          include_dirs=[incdirs, N.get_include(),SLUincdir],
-                          library_dirs=[libdirs,SLUlibdir,BLASdir],
-                          libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])]
+            #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
+            #              [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
+            #              include_dirs=[incdirs, N.get_include(),SLUincdir],
+            #              library_dirs=[libdirs,SLUlibdir,BLASdir],
+            #              libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])]
+            ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo","assimulo"+O.sep+"lib"])
+            ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
+            ext_list[-1].include_dirs = [N.get_include(), SLUincdir, incdirs]
+            ext_list[-1].library_dirs = [libdirs,SLUlibdir,BLASdir]
+            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",BLASname]
+            if debug:
+                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
+            else:
+                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                
         else:
-            ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
-                          [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
-                          include_dirs=[incdirs, N.get_include()],
-                          library_dirs=[libdirs],
-                          libraries=['sundials_kinsol','sundials_nvecserial'])]
+            #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
+            #              [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
+            #              include_dirs=[incdirs, N.get_include()],
+            #              library_dirs=[libdirs],
+            #              libraries=['sundials_kinsol','sundials_nvecserial'])]
+
+            ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+O.sep+"lib"])
+            ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
+            ext_list[-1].include_dirs = [N.get_include(), incdirs]
+            ext_list[-1].library_dirs = [libdirs]
+            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+            if debug:
+                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
+            else:
+                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
         
     return ext_list
 
@@ -249,6 +282,24 @@ def check_wSLU():
     
     return wSLU
 
+
+def check_fortran_extensions():
+    """
+    Adds the Fortran extensions using Numpy's distutils extension.
+    """
+    config = Configuration()
+
+    config.add_extension('assimulo.lib.dopri5',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf'])
+    
+    config.add_extension('assimulo.lib.rodas',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'])
+    
+    config.add_extension('assimulo.lib.radau5',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'])
+    
+    return config.todict()["ext_modules"]
+
 """
 Pre-processing is necessary due to the setup of the repository. 
 """
@@ -260,8 +311,7 @@ else:
     change_dir = False
       
 ext_list = check_extensions()
-
-
+ext_list += check_fortran_extensions()
 
 
 NAME = "Assimulo"
@@ -304,6 +354,7 @@ compiling from source, Cython 0.15 and Sundials 2.4.
 """
 
 
+
 setup(name=NAME,
       version=VERSION,
       license=LICENSE,
@@ -317,8 +368,9 @@ setup(name=NAME,
       classifiers=CLASSIFIERS,
       package_dir = {'assimulo':'assimulo'},
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
-      cmdclass = {'build_ext': build_ext},
+      #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
+      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE']},
       script_args=copy_args)
 
 if change_dir:
