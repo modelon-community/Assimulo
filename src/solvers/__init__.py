@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["euler","radau5","sundials","runge_kutta"]
+__all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler

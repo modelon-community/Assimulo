@@ -6,10 +6,12 @@ INSTALL
 =======
 
 *REQUIREMENTS
-	-Python-2.6 / 2.7 (with headers)
-	-Numpy, Scipy, Pylab
-	-Sundials-2.4.0
-	-Cython
+	- Python-2.6 / 2.7 (with headers)
+	- Numpy, Scipy, Pylab
+	- Sundials-2.4.0
+	- Cython >= 0.15
+    - C-compiler
+    - Fortran-compiler
 
 Installation is performed using the command:
 

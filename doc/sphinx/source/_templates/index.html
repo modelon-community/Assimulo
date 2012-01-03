@@ -10,7 +10,7 @@
  
      
     <p>
-    Assimulo is a Cython/Python based simulation package for solving explicit ordinary differential equations (ODEs) and implicit ordinary differential equations (DAEs). The idea with Assimulo is to create a basis for simulating differential equations and to be easily extended with other solvers. Currently Assimulo wraps the C-based <a target="_parent" href="https://computation.llnl.gov/casc/sundials/main.html">Sundials</a> solvers, IDA and CVode. There is also support for explicit Euler, RungeKutta of order 4 and adaptive RungeKutta of order 4. A Python version of Ernst Hairer's code <a href="http://www.unige.ch/~hairer/software.html">Radau5</a> is also available. The package is created around a core for explicit and implicit problems respectively from where the solvers is connected. To be extendable, Assimulo is also appended with a problem class. See the Figure.
+    Assimulo is a Cython/Python based simulation package for solving explicit ordinary differential equations (ODEs) and implicit ordinary differential equations (DAEs). The idea with Assimulo is to create a basis for simulating differential equations and to be easily extended with other solvers. Currently Assimulo wraps the C-based <a target="_parent" href="https://computation.llnl.gov/casc/sundials/main.html">Sundials</a> solvers, IDA and CVode and the FORTRAN-based solvers Radau5, Rodas and Dopri5 by <a href="http://www.unige.ch/~hairer/software.html">Hairer</a>. There is also support for explicit Euler, RungeKutta of order 4 and adaptive RungeKutta of order 4. The package is created around a core for explicit and implicit problems respectively from where the solvers is connected. To be extendable, Assimulo is also appended with a problem class. See the Figure.
     </p>
 	
 	<p>
@@ -37,6 +37,12 @@
                     <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
                     </li>
                     <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
+                    </li>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
+                    </li>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
                     </li>
                 </ul>
             </li>
