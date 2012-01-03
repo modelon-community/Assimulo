@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from assimulo.problem import Explicit_Problem
-from assimulo.solvers.sundials import CVode
 from scipy import *
-import nose
 import pylab as P
+import nose
+from assimulo.problem import Explicit_Problem
+from assimulo.solvers import CVode
 
 def run_example(with_plots=True):
     

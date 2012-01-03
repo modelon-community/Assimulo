@@ -17,3 +17,8 @@ class ODE_Exception(AssimuloException):
 class Implicit_ODE_Exception(AssimuloException):
     pass    
     
+class Rodas_Exception(AssimuloException):
+    pass
+    
+class Dopri5_Exception(AssimuloException):
+    pass

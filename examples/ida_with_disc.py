@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers.sundials import IDA
+from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
 """

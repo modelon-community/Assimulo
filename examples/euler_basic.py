@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers.euler import *
+from assimulo.solvers import ExplicitEuler
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):

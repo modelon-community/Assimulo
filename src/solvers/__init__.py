@@ -22,3 +22,4 @@ from euler import ExplicitEuler
 from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
 from sundials import IDA, CVode
 from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
+from rosenbrock import RodasODE
