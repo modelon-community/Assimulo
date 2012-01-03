@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers.radau5 import *
+from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):

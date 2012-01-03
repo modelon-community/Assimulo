@@ -26,7 +26,174 @@ from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.lib.radau_core import Radau_Common
 
+from assimulo.lib import radau5
+
 class Radau5ODE(Radau_Common,Explicit_ODE):
+    """
+    Radau IIA fifth-order three-stages with step-size control and 
+    continuous output. Based on the FORTRAN code RADAU5 by E.Hairer and 
+    G.Wanner, which can be found here: 
+    http://www.unige.ch/~hairer/software.html
+    
+    Details about the implementation (FORTRAN) can be found in the book,::
+    
+        Solving Ordinary Differential Equations II,
+        Stiff and Differential-Algebraic Problems
+        
+        Authors: E. Hairer and G. Wanner
+        Springer-Verlag, ISBN: 3-540-60452-9
+    
+    """
+    
+    def __init__(self, problem):
+        """
+        Initiates the solver.
+        
+            Parameters::
+            
+                problem     
+                            - The problem to be solved. Should be an instance
+                              of the 'Explicit_Problem' class.
+        """
+        Explicit_ODE.__init__(self, problem) #Calls the base class
+        
+        #Default values
+        self.options["inith"]    = 0.01
+        self.options["newt"]     = 7 #Maximum number of newton iterations
+        self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
+        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
+        self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
+        self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
+        self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
+        self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
+        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["safe"]     = 0.9 #Safety factor
+        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["rtol"]     = 1.0e-6 #Relative tolerance
+        self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
+        self.options["maxsteps"] = 10000
+        
+        # - Statistic values
+        self.statistics["nsteps"]      = 0 #Number of steps
+        self.statistics["nfcn"]        = 0 #Number of function evaluations
+        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
+        self.statistics["errfail"]     = 0 #Number of step rejections
+        self.statistics["nlu"]         = 0 #Number of LU decompositions
+        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        
+        self._leny = len(self.y) #Dimension of the problem
+        self._type = '(explicit)'
+        
+    def initialize(self):
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
+            
+        self._tlist = []
+        self._ylist = []
+        
+    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+        """
+        This method is called after every successful step taken by Radau5
+        """
+        if self._opts["output_list"] == None:
+            self._tlist.append(t)
+            self._ylist.append(y.copy())
+        else:
+            output_list = self._opts["output_list"]
+            output_index = self._opts["output_index"]
+            try:
+                while output_list[output_index] <= t:
+                    self._tlist.append(output_list[output_index])
+                    
+                    yval = N.empty(self._leny)
+                    for i in range(self._leny):
+                        yval[i] = radau5.contr5(i+1,output_list[output_index], cont)
+                        
+                    self._ylist.append(yval)
+
+                    output_index = output_index+1
+            except IndexError:
+                pass
+            self._opts["output_index"] = output_index
+        
+        return irtrn
+            
+    def integrate(self, t, y, tf, opts):
+        ITOL  = 1 #Both atol and rtol are vectors
+        IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        MLJAC = self.problem_info["dim"] #The jacobian is full
+        MUJAC = self.problem_info["dim"] #See MLJAC
+        IMAS  = 0 #The mass matrix is the identity
+        MLMAS = self.problem_info["dim"] #The mass matrix is full
+        MUMAS = self.problem_info["dim"] #See MLMAS
+        IOUT  = 1 #solout is called after every step
+        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
+        IWORK = N.array([0]*(3*self.problem_info["dim"]+20)) #Work (integer) vector
+        
+        #Setting work options
+        WORK[1] = self.safe
+        WORK[2] = self.thet
+        WORK[3] = self.fnewt
+        WORK[4] = self.quot1
+        WORK[5] = self.quot2
+        WORK[6] = self.maxh
+        WORK[7] = self.fac1
+        WORK[8] = self.fac2
+        
+        #Setting iwork options
+        IWORK[1] = self.maxsteps
+        IWORK[2] = self.newt
+        
+        #Dummy methods
+        mas_dummy = lambda t:x
+        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        
+        #Store the opts
+        self._opts = opts
+        
+        t, y, h, iwork, flag =  radau5.radau5(self.problem.rhs, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+        
+        #Checking return
+        if flag == 1:
+            flag = ID_PY_COMPLETE
+        elif flag == 2:
+            flag = ID_PY_EVENT
+        else:
+            raise Exception("Radau5 failed with flag %d"%flag)
+        
+        #Retrieving statistics
+        self.statistics["nsteps"]      += iwork[16]
+        self.statistics["nfcn"]        += iwork[13]
+        self.statistics["njac"]        += iwork[14]
+        self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["errfail"]     += iwork[17]
+        self.statistics["nlu"]         += iwork[18]
+        
+        return flag, self._tlist, self._ylist
+    
+    def print_statistics(self, verbose=NORMAL):
+        """
+        Prints the run-time statistics for the problem.
+        """
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        
+        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        
+        self.log_message('\nSolver options:\n',                                      verbose)
+        self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
+        self.log_message('',                                                         verbose)
+        
+
+class _Radau5ODE(Radau_Common,Explicit_ODE):
     """
     Radau IIA fifth-order three-stages with step-size control and continuous output.
     Based on the FORTRAN code by E.Hairer and G.Wanner, which can be found here: 
@@ -555,9 +722,195 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.I3 = I3
         self.EIG = eig
 
-
-
 class Radau5DAE(Radau_Common,Implicit_ODE):
+    """
+    Radau IIA fifth-order three-stages with step-size control and 
+    continuous output. Based on the FORTRAN code RADAU5 by E.Hairer and 
+    G.Wanner, which can be found here: 
+    http://www.unige.ch/~hairer/software.html
+    
+    Details about the implementation (FORTRAN) can be found in the book,::
+    
+        Solving Ordinary Differential Equations II,
+        Stiff and Differential-Algebraic Problems
+        
+        Authors: E. Hairer and G. Wanner
+        Springer-Verlag, ISBN: 3-540-60452-9
+    
+    """
+    
+    def __init__(self, problem):
+        """
+        Initiates the solver.
+        
+            Parameters::
+            
+                problem     
+                            - The problem to be solved. Should be an instance
+                              of the 'Explicit_Problem' class.
+        """
+        Implicit_ODE.__init__(self, problem) #Calls the base class
+        
+        #Default values
+        self.options["inith"]    = 0.01
+        self.options["newt"]     = 7 #Maximum number of newton iterations
+        self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
+        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
+        self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
+        self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
+        self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
+        self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
+        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["safe"]     = 0.9 #Safety factor
+        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["rtol"]     = 1.0e-6 #Relative tolerance
+        self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
+        self.options["maxsteps"] = 10000
+        
+        # - Statistic values
+        self.statistics["nsteps"]      = 0 #Number of steps
+        self.statistics["nfcn"]        = 0 #Number of function evaluations
+        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
+        self.statistics["errfail"]     = 0 #Number of step rejections
+        self.statistics["nlu"]         = 0 #Number of LU decompositions
+        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        
+        self._leny = len(self.y) #Dimension of the problem
+        self._type = '(implicit)'
+        
+    def initialize(self):
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
+            
+        self._tlist  = []
+        self._ylist  = []
+        self._ydlist = []
+        
+    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+        """
+        This method is called after every successful step taken by Radau5
+        """
+        if self._opts["output_list"] == None:
+            self._tlist.append(t)
+            self._ylist.append(y[:self._leny].copy())
+            self._ydlist.append(y[self._leny:2*self._leny].copy())
+        else:
+            output_list = self._opts["output_list"]
+            output_index = self._opts["output_index"]
+            try:
+                while output_list[output_index] <= t:
+                    self._tlist.append(output_list[output_index])
+                    
+                    yval = N.empty(self._leny*2)
+                    for i in range(self._leny*2):
+                        yval[i] = radau5.contr5(i+1,output_list[output_index], cont)
+                        
+                    self._ylist.append(yval[:self._leny])
+                    self._ydlist.append(yval[self._leny:2*self._leny])
+
+                    output_index = output_index+1
+            except IndexError:
+                pass
+            self._opts["output_index"] = output_index
+        
+        return irtrn
+            
+    def _mod_f(self, t, y):
+        leny = self._leny
+        res = self.problem.res(t, y[:leny], y[leny:2*leny])
+        return N.append(y[leny:2*leny],res)
+        
+    def _mas_f(self, am):
+        #return N.array([[1]*self._leny+[0]*self._leny])
+        return self._mass_matrix
+        
+    def integrate(self, t, y, yd, tf, opts):
+        ITOL  = 1 #Both atol and rtol are vectors
+        IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        MLJAC = self.problem_info["dim"]*2 #The jacobian is full
+        MUJAC = 0 #self.problem_info["dim"] #See MLJAC
+        IMAS  = 1 #The mass matrix is supplied
+        MLMAS = 0 #The mass matrix is only defined on the diagonal
+        MUMAS = 0 #The mass matrix is only defined on the diagonal
+        IOUT  = 1 #solout is called after every step
+        WORK  = N.array([0.0]*(5*((self.problem_info["dim"]*2)**2+12)+20)) #Work (double) vector
+        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20)) #Work (integer) vector
+        
+        #Setting work options
+        WORK[1] = self.safe
+        WORK[2] = self.thet
+        WORK[3] = self.fnewt
+        WORK[4] = self.quot1
+        WORK[5] = self.quot2
+        WORK[6] = self.maxh
+        WORK[7] = self.fac1
+        WORK[8] = self.fac2
+        
+        #Setting iwork options
+        IWORK[1] = self.maxsteps
+        IWORK[2] = self.newt
+        IWORK[4] = self._leny #Number of index 1 variables
+        IWORK[5] = self._leny #Number of index 2 variables
+        IWORK[8] = self._leny #M1
+        IWORK[9] = self._leny #M2
+        
+        #Dummy methods
+        mas_dummy = lambda t:x
+        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        
+        #Store the opts
+        self._opts = opts
+        
+        #Create y = [y, yd]
+        y = N.append(y,yd)
+        #Create mass matrix
+        #self._mass_matrix = N.array([[1]*self._leny+[0]*self._leny])
+        self._mass_matrix = N.array([[0]*self._leny])
+        
+        atol = N.append(self.atol, self.atol)
+        
+        t, y, h, iwork, flag =  radau5.radau5(self._mod_f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+        
+        #Checking return
+        if flag == 1:
+            flag = ID_PY_COMPLETE
+        elif flag == 2:
+            flag = ID_PY_EVENT
+        else:
+            raise Exception("Radau5 failed with flag %d"%flag)
+        
+        #Retrieving statistics
+        self.statistics["nsteps"]      += iwork[16]
+        self.statistics["nfcn"]        += iwork[13]
+        self.statistics["njac"]        += iwork[14]
+        self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["errfail"]     += iwork[17]
+        self.statistics["nlu"]         += iwork[18]
+        
+        return flag, self._tlist, self._ylist, self._ydlist
+    
+    def print_statistics(self, verbose=NORMAL):
+        """
+        Prints the run-time statistics for the problem.
+        """
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        
+        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        
+        self.log_message('\nSolver options:\n',                                      verbose)
+        self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
+        self.log_message('',                                                         verbose)
+
+class _Radau5DAE(Radau_Common,Implicit_ODE):
     """
     Radau IIA fifth-order three-stages with step-size control and continuous output.
     Based on the FORTRAN code by E.Hairer and G.Wanner, which can be found here: 
