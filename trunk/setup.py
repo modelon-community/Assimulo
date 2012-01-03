@@ -326,6 +326,7 @@ PLATFORMS = ["Linux", "Windows", "MacOS X"]
 CLASSIFIERS = [ 'Programming Language :: Python',
                 'Programming Language :: Cython',
                 'Programming Language :: C',
+                'Programming Language :: Fortran',
                 'Operating System :: MacOS :: MacOS X',
                 'Operating System :: Microsoft :: Windows',
                 'Operating System :: Unix']
@@ -334,14 +335,15 @@ LONG_DESCRIPTION = """
 Assimulo is a Cython / Python based simulation package that allows for 
 simulation of both ordinary differential equations (ODEs), f(t,y), and 
 differential algebraic equations (DAEs), f(t,y,yd). It combines a 
-variety of different solvers written in C and Python via a common 
-high-level interface.
+variety of different solvers written in C, FORTRAN and Python via a 
+common high-level interface.
 
 Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of 
 order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
 (https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
-(for ODEs) and IDA (for DAEs). A Python version of Ernst Hairer's code 
-(http://www.unige.ch/~hairer/software.html) Radau5 is also available.
+(for ODEs) and IDA (for DAEs). Ernst Hairer's 
+(http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
+Dopri5 is also available.
 
 Documentation and installation instructions can be found at: 
 http://www.jmodelica.org/assimulo . 
@@ -350,7 +352,8 @@ For questions and comments, visit:
 http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.15 and Sundials 2.4.
+compiling from source, Cython 0.15 and Sundials 2.4 together with a 
+C-compiler and a FORTRAN-compiler.
 """
 
 

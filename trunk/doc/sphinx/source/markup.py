@@ -19,7 +19,8 @@ def mark_examples():
 def mark_solvers():
 
     solvers = [(sundials.CVode, "ODE"), (sundials.IDA, "DAE"), (radau5.Radau5ODE, "ODE"), (radau5.Radau5DAE, "DAE"),
-               (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE")]
+               (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE"),
+               (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE")]
     
     
     rhs = lambda t,y: [1.0]
@@ -55,7 +56,7 @@ def mark_solvers():
         file.write('- Time events : '+'True\n')
         file.write('\nUsage\n--------------\n\n')
         file.write('Import the solver together with the correct problem:: \n\n')
-        file.write('    from assimulo.solvers.'+module_name+' import '+ solver_name+'\n')
+        file.write('    from assimulo.solvers import '+ solver_name+'\n')
         file.write('    from assimulo.problem import '+problem_name+'\n\n')
         file.write('Define the problem, such as:: \n\n')
         
