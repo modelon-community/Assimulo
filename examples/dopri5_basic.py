@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers import RungeKutta34
+from assimulo.solvers import Dopri5
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
@@ -32,9 +32,8 @@ def run_example(with_plots=True):
     exp_mod = Explicit_Problem(f, 4.0)
     exp_mod.name = 'Simple Explicit Example'
     
-    exp_sim = RungeKutta34(exp_mod) #Create a RungeKutta34 solver
-    exp_sim.inith = 0.1 #Sets the initial step, default = 0.01
-    
+    exp_sim = Dopri5(exp_mod) #Create a Dopri5 solver
+
     #Simulate
     t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
