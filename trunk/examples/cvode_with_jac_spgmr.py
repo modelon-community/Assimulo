@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers.sundials import CVode
+from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 

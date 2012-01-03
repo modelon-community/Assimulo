@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers.runge_kutta import *
+from assimulo.solvers import RungeKutta4
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):

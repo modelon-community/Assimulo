@@ -89,3 +89,7 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_dopri5_basic(self):
         dopri5_basic.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_rodasode_vanderpol(self):
+        rodasode_vanderpol.run_example(with_plots=False)
