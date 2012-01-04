@@ -55,3 +55,19 @@ Radau5ODE
    :members:
    :inherited-members:
    :show-inheritance:
+
+RodasODE
+---------------------
+
+.. autoclass:: assimulo.solvers.rosenbrock.RodasODE
+   :members:
+   :inherited-members:
+   :show-inheritance:
+   
+Dopri5
+---------------------
+
+.. autoclass:: assimulo.solvers.runge_kutta.Dopri5
+   :members:
+   :inherited-members:
+   :show-inheritance:

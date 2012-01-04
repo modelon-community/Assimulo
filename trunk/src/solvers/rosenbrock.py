@@ -24,7 +24,7 @@ from assimulo.exception import *
 
 from assimulo.lib import rodas
 
-class Rodas_Common:
+class Rodas_Common(object):
     
     def _set_atol(self,atol):
         
@@ -255,7 +255,7 @@ class Rodas_Common:
     usejac = property(_get_usejac,_set_usejac)
 
 
-class RodasODE(Explicit_ODE, Rodas_Common):
+class RodasODE(Rodas_Common, Explicit_ODE):
     """
     Rosenbrock method of order (3)4 with step-size control and 
     continuous output.
