@@ -27,7 +27,7 @@ from __future__ import division
 
 import scipy.sparse as ss
 
-include "sundials_kinsol_core_wSLU.pxd" # Includes fcts from other header files
+include "sundials_kinsol_core_wSLU.pxi" # Includes fcts from other header files
 include "sundials_kinsol_core.pxi" # Includes the constants (textual include)
 
 
