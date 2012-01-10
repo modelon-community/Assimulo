@@ -135,6 +135,20 @@ def pre_processing():
     for f in fileTestsSolvers:
         if not O.path.isdir(O.path.join("tests","solvers",f)):
             SH.copy2(O.path.join("tests","solvers",f),desTestsSolvers)
+            
+    #Delete OLD renamed files
+    delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
+    for item in delFiles:
+        dirDel = desSrc
+        for f in item[:-1]:
+            dirDel = O.path.join(dirDel, f)
+        dirDel = O.path.join(dirDel, item[-1])
+        if O.path.exists(dirDel):
+            try:
+                O.remove(dirDel)
+            except:
+                L.warning("Could not remove: "+str(dirDel))
+                
 
 def check_extensions():
     

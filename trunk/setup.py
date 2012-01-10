@@ -148,6 +148,19 @@ def pre_processing():
             SH.copy2(join("thirdparty","hairer",f),desThirdPartyHairer)
         if f == "LICENSE":
             SH.copy2(join("thirdparty","hairer",f),join(curdir,"build","assimulo","lib"))
+            
+    #Delete OLD renamed files
+    delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
+    for item in delFiles:
+        dirDel = desSrc
+        for f in item[:-1]:
+            dirDel = O.path.join(dirDel, f)
+        dirDel = O.path.join(dirDel, item[-1])
+        if O.path.exists(dirDel):
+            try:
+                O.remove(dirDel)
+            except:
+                L.warning("Could not remove: "+str(dirDel))
 
 def check_extensions():
     
