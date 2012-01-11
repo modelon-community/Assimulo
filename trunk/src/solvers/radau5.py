@@ -827,6 +827,10 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         return self._mass_matrix
         
     def integrate(self, t, y, yd, tf, opts):
+        if self.usejac:
+            self.usejac=False
+            self.log_message("Jacobians are not currently supported, disabling.",NORMAL)
+        
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         MLJAC = self.problem_info["dim"]*2 #The jacobian is full
