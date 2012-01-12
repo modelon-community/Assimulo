@@ -155,6 +155,10 @@ cdef class ODE:
             self.log_message('Number of communication points must be a positive integer, setting ncp = 0.',WARNING)
         
         #Check solver support against current problem
+        if self.problem_info["state_events"] and self.supports["state_events"] is False:
+            self.log_message("The current solver does not support state events (root functions). Disabling and continues.", WHISPER)
+            self.problem_info["state_events"] = False
+        
         if self.problem_info["step_events"] and self.supports["one_step_mode"] is False:
             self.log_message("The current solver does not support step events (completed steps). Disabling step events and continues.", WHISPER)
             self.problem_info["step_events"] = False
