@@ -54,25 +54,38 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef N.ndarray y = nv2arr(yv)
     cdef int i,j
-    
-    try:
-        if pData.sw != NULL:
-            #jac=(<object>pData.JAC)(t,(<ndarray>pData.y),<list>pData.sw)
-            jac=(<object>pData.JAC)(t,y,<list>pData.sw)
-        else:
-            jac=(<object>pData.JAC)(t,y)
-        
-        #This needs further investigations:
-        #memcpy(Jacobian.data,<realtype*>jac.data, pData.memSizeJac)
-        
-        for i in range(Neq):
-            col_i = DENSE_COL(Jacobian, i)
-            for j in range(Neq):
-                col_i[j] = jac[j,i]
 
-        return CVDLS_SUCCESS
-    except:
-        return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+    if pData.dimSens>0: #Sensitivity activated
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
+            else:
+                jac=(<object>pData.JAC)(t,y,p)
+                
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+
+            return CVDLS_SUCCESS
+        except:
+            return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+    else:
+        try:
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+            else:
+                jac=(<object>pData.JAC)(t,y)
+    
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+
+            return CVDLS_SUCCESS
+        except:
+            return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         
 cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
 				    void *problem_data, N_Vector tmp):
@@ -192,19 +205,36 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     cdef N.ndarray yd = nv2arr(yvdot)
     cdef int i,j
     
-    try:
-        if pData.sw != NULL:
-            jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
-        else:
-            jac=(<object>pData.JAC)(c,t,y,yd)
+    if pData.dimSens!=0: #SENSITIVITY 
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(c,t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
+            else:
+                jac=(<object>pData.JAC)(c,t,y,yd,p=p)
+            
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+            return IDADLS_SUCCESS
+        except: 
+            return IDADLS_JACFUNC_RECVR #Recoverable Error
+    else:
+        try:
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
+            else:
+                jac=(<object>pData.JAC)(c,t,y,yd)
+            
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+            return IDADLS_SUCCESS
+        except: 
+            return IDADLS_JACFUNC_RECVR #Recoverable Error
         
-        for i in range(Neq):
-            col_i = DENSE_COL(Jacobian, i)
-            for j in range(Neq):
-                col_i[j] = jac[j,i]
-        return IDADLS_SUCCESS
-    except: 
-        return IDADLS_JACFUNC_RECVR #Recoverable Error
 
 cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):
     """
