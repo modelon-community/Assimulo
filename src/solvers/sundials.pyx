@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as N 
 cimport numpy as N
 from numpy cimport PyArray_DATA
 
@@ -24,7 +24,7 @@ N.import_array()
 import numpy.linalg
 import traceback 
  
-from assimulo.exception import *
+from assimulo.exception import * 
 
 from assimulo.explicit_ode cimport Explicit_ODE
 from assimulo.implicit_ode cimport Implicit_ODE
