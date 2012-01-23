@@ -3,6 +3,17 @@
 Changelog
 ==========
 
+--- Assimulo-2.1 ---
+    * Added support for passing in parameters when using Jacobians.
+      (ticket:210)
+    * Added warning when the solver does not support state events.
+      (ticket:209)
+    * Added RODAS by Hairer (ticket:207)
+    * Added RADAU5 by Hairer (ticket:205)
+    * Added DOPRI5 by Hairer (ticket:206)
+    * Renamed the Python version of Radau with the prefix underscore.
+      Radau5ODE -> _Radau5ODE, Radau5DAE -> _Radau5DAE
+
 --- Assimulo-2.0 ---
     * Minor bug fixes in the setup script (ticket:191).
     * Fixed bug in type checking of switches (ticket:201). 
