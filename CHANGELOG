@@ -1,6 +1,10 @@
 --- CHANGELOG ---
 
---- Assimulo-2.1.x ---
+--- Assimulo-2.1 ---
+    * Added support for passing in parameters when using Jacobians.
+      (ticket:210)
+    * Added warning when the solver does not support state events.
+      (ticket:209)
     * Added RODAS by Hairer (ticket:207)
     * Added RADAU5 by Hairer (ticket:205)
     * Added DOPRI5 by Hairer (ticket:206)
