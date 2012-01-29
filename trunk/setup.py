@@ -356,7 +356,7 @@ order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS
 (https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
 (for ODEs) and IDA (for DAEs). Ernst Hairer's 
 (http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
-Dopri5 is also available.
+Dopri5 are also available.
 
 Documentation and installation instructions can be found at: 
 http://www.jmodelica.org/assimulo . 
