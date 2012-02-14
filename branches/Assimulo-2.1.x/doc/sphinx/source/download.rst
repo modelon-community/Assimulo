@@ -6,17 +6,17 @@ Download
 
 Current version:
     
-    - `Assimulo-2.1.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.win32-py2.7.exe>`_
-    - `Assimulo-2.1.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.win32-py2.7.msi>`_
-    - `Assimulo-2.1.zip <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.zip>`_
-    - `Assimulo-2.1.tar.gz <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.tar.gz>`_
+    - `Assimulo-2.1.1.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.win32-py2.7.exe>`_
+    - `Assimulo-2.1.1.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.win32-py2.7.msi>`_
+    - `Assimulo-2.1.1.zip <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.zip>`_
+    - `Assimulo-2.1.1.tar.gz <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.tar.gz>`_
    
 See :doc:`installation` for instructions on setting up Assimulo. Christoph Gohlke has also created one-click windows installers for Assimulo which are available `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/#assimulo>`_ .
 
 
 To retrieve the latest version using a subversion software use::
 
-    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-2.1
+    svn checkout https://svn.jmodelica.org/assimulo/tags/Assimulo-2.1.1
 
 To retrieve the latest (develop) version using a subversion software use::
 
@@ -30,6 +30,10 @@ To retrieve the latest (develop) version using a subversion software use::
 
 Old versions:
     
+    - `Assimulo-2.1.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.win32-py2.7.exe>`_
+    - `Assimulo-2.1.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.win32-py2.7.msi>`_
+    - `Assimulo-2.1.zip <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.zip>`_
+    - `Assimulo-2.1.tar.gz <https://trac.jmodelica.org/assimulo/export/349/releases/Assimulo-2.1.tar.gz>`_
     - `Assimulo-2.0.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/332/releases/Assimulo-2.0.win32-py2.7.exe>`_
     - `Assimulo-2.0.zip <https://trac.jmodelica.org/assimulo/export/332/releases/Assimulo-2.0.zip>`_
     - `Assimulo-2.0.tar.gz <https://trac.jmodelica.org/assimulo/export/332/releases/Assimulo-2.0.tar.gz>`_
