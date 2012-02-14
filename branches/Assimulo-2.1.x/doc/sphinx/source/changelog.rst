@@ -3,6 +3,9 @@
 Changelog
 ==========
 
+--- Assimulo-2.1.1 ---
+    * Fixed problem with binary distribution on Windows (ticket:213)
+
 --- Assimulo-2.1 ---
     * Added support for passing in parameters when using Jacobians.
       (ticket:210)
