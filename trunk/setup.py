@@ -49,7 +49,8 @@ else:
     incdirs = '/usr/local/include'
     libdirs = '/usr/local/lib'
     
-
+static_link_gcc = ["-static-libgcc"]
+static_link_gfortran = ["-static-libgfortran"]
 
 copy_args=S.argv[1:]
 
@@ -74,6 +75,15 @@ for x in S.argv[1:]:
         if x[8:].upper() == "TRUE":
             debug = True
         copy_args.remove(x)
+    if not x.find('--static'):
+        static = x[9:]
+        if x[9:].upper() == "TRUE":
+            static = True
+        else:
+            static = False
+        copy_args.remove(x)
+    else:
+        static = False
     if not x.find('--log'):
         level = x[6:]
         try:
@@ -164,6 +174,11 @@ def pre_processing():
 
 def check_extensions():
     
+    if static:
+        extra_link_flags = static_link_gcc
+    else:
+        extra_link_flags = [""]
+    
     #Cythonize main modules
     ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug)
     
@@ -240,7 +255,10 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-        
+    
+    for i in ext_list:
+        i.extra_link_args += extra_link_flags
+    
     return ext_list
 
 def check_wSLU():
@@ -300,16 +318,24 @@ def check_fortran_extensions():
     """
     Adds the Fortran extensions using Numpy's distutils extension.
     """
+    if static:
+        extra_link_flags = static_link_gfortran+static_link_gcc
+    else:
+        extra_link_flags = [""]
+    
     config = Configuration()
 
     config.add_extension('assimulo.lib.dopri5',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf'])
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
+                         ,extra_link_args=extra_link_flags)#include_dirs=[N.get_include()])
     
     config.add_extension('assimulo.lib.rodas',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'])
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     config.add_extension('assimulo.lib.radau5',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'])
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     return config.todict()["ext_modules"]
 
