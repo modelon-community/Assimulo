@@ -22,7 +22,6 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    global exp_mod, exp_sim
     
     #Define the rhs
     def f(t,y):
