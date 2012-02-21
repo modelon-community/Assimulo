@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from ode cimport ODE     
-from problem import Explicit_Problem
+from problem import Explicit_Problem, Delay_Explicit_Problem
 
 import pylab as P
 import itertools
@@ -46,7 +46,7 @@ cdef class Explicit_ODE(ODE):
         """
         ODE.__init__(self, problem) #Sets general attributes
         
-        if isinstance(problem, Explicit_Problem):
+        if isinstance(problem, Explicit_Problem) or isinstance(problem, Delay_Explicit_Problem):
             self.problem = problem
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')

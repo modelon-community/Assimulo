@@ -37,7 +37,7 @@ SLUdir = ""
 BLASdir = ""
 BLASname = 'blas'
 BLASname_t = ""
-debug = False
+debug = True
 
 if S.platform == 'win32':
     incdirs = ''
@@ -336,7 +336,12 @@ def check_fortran_extensions():
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+
+    config.add_extension('assimulo.lib.radar5',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+
     return config.todict()["ext_modules"]
 
 """
