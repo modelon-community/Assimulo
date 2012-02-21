@@ -99,6 +99,7 @@ class Radar5ODE(Explicit_ODE):
         This method is called after every successful step taken by Radar5
         """
 #        print told, t, hold, y, cont
+        print cont
 #        print told, t, told + hold
         if self._opts["output_list"] == None:
             self._tlist.append(t)
@@ -112,7 +113,7 @@ class Radar5ODE(Explicit_ODE):
                     
                     yval = N.empty(self._leny)
                     for i in range(self._leny):
-                        yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],cont,told,hold)
+                        yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],cont,t,hold)
 #                        yval[i] = radar5.contr5(i+1,output_list[output_index], cont)
                         
                     self._ylist.append(yval)
@@ -409,7 +410,7 @@ class Radar5ODE(Explicit_ODE):
         except (ValueError,TypeError):
             raise Radar_Exception('Maximal stepsize must be a (scalar) float.')
         if self.options["maxh"] < 0:
-            raise Radar_Exception('Maximal stepsize must be a positiv (scalar) float.')
+            raise Radar_Exception('Maximal stepsize must be a positive (scalar) float.')
         
     def _get_max_h(self):
         """
