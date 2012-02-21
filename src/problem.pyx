@@ -134,6 +134,33 @@ cdef class cExplicit_Problem(cProblem):
         except:
             return ID_FAIL
         return ID_OK
+        
+        
+cdef class cDelay_Explicit_Problem(cExplicit_Problem):
+    def __init__(self, object rhs=None, y0=None, phi = None, ntimelags = None, arglag = None, lagcompmap = None, nrdens = None, ipast = None, grid = None, use_jaclag = None, jaclag = None, nlags = None, njacl = None, double t0=0.0, p0=None, sw0=None):
+        cExplicit_Problem.__init__(self, rhs, y0, t0, p0, sw0)
+        
+        if phi != None:
+            self.phi = phi
+        self.ntimelags = ntimelags
+        if arglag != None:
+            self.arglag = arglag
+        self.lagcompmap = lagcompmap
+        self.nrdens = nrdens # Number of solution components for which dense output is needed
+        
+#        self.ipast = N.array(range(len(self.y0)), dtype=int) if nrdens is None else ipast # Which nrdens solution components need dense output
+    
+        self.ngrid = 0 if grid is None else len(grid)
+        self.grid = grid # The integration must stop at these points, with grid[0] > t0, grid[-1] <= tf
+        self.use_jaclag = use_jaclag
+        if jaclag != None:
+            self.jaclag = jaclag
+        self.nlags = nlags # Number of delay arguments to differentiate for
+        self.njacl = njacl # Number of possible delay arguments that fcn can be differentiated with respect to
+        
+            
+class Delay_Explicit_Problem(cDelay_Explicit_Problem):
+    pass
 
 class Implicit_Problem(cImplicit_Problem):
     """
