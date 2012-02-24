@@ -99,7 +99,7 @@ class Radar5ODE(Explicit_ODE):
         This method is called after every successful step taken by Radar5
         """
 #        print told, t, hold, y, cont
-        print cont
+#        print cont
 #        print told, t, told + hold
         if self._opts["output_list"] == None:
             self._tlist.append(t)
@@ -113,6 +113,7 @@ class Radar5ODE(Explicit_ODE):
                     
                     yval = N.empty(self._leny)
                     for i in range(self._leny):
+#                        yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],t,hold)
                         yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],cont,t,hold)
 #                        yval[i] = radar5.contr5(i+1,output_list[output_index], cont)
                         
@@ -126,46 +127,59 @@ class Radar5ODE(Explicit_ODE):
 #        return irtrn
         return 0
 
-    def compute_ydelay(self, t, y, arglag, phi, past, ipast):
-        ydelay = copy.deepcopy(self.problem.lagcompmap)
+
+    def arglag(self, i, t, y, past, ipast):
+        return self.problem.arglag(i,t,y)
         
+
+    def compute_ydelay(self, t, y, arglag, phi,  past, ipast):
+#        print t, len(past)
+        ydelay = copy.deepcopy(self.problem.lagcompmap)
+#        print t, y, arglag, phi, past, ipast
         for i in range(self.problem.ntimelags):
-            theta, pos = radar5.lagr5(i, t, y, self.problem.arglag, past, self.problem.phi, ipast)
+            theta, pos = radar5.lagr5(i, t, y, self.problem.arglag, past,  self.problem.phi,  ipast)
             for j, val in enumerate(self.problem.lagcompmap[i]):
-                ydelay[i][j] = radar5.ylagr5(val, theta, pos, self.problem.phi, past, ipast)
+                ydelay[i][j] = radar5.ylagr5(val, theta, pos, self.problem.phi,  past,  ipast)
 #        print ydelay
         return ydelay
 
-    def F(self, t,y, arglag, phi, past, ipast):
+    def F(self, t,y,  past, ipast):
+        self.past.append(copy.deepcopy(past))
+        self.past_t.append(t)
+#        past[:] = 0
+        print 'F:', past
 #        print t, y, arglag, phi, past, ipast
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
-        ydelay = self.compute_ydelay(t,y, arglag, phi, past, ipast)
+        ydelay = self.compute_ydelay(t,y, None, None,  past,  ipast)
 
         # Now we can compute the right-hand-side
         return self.problem.rhs(t, y, ydelay)
         
-    def Fjac(self, t, y, arglag, phi, past, ipast):
+    def Fjac(self, t, y,   past, ipast):
+        print 'Fjac:', past
 #        print t, y, arglag, phi, past, ipast        
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
-        ydelay = self.compute_ydelay(t,y, arglag, phi, past, ipast)
+        ydelay = self.compute_ydelay(t,y,  None, None,  past,  ipast)
         
         # Now we can compute the right-hand-side
         return self.problem.jac(t, y, ydelay)
 
 
     def integrate(self, t, y, tf, opts):
+        self.past = []
+        self.past_t = []
         ITOL  = 1 #Both atol and rtol are vectors
-        IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        IJAC  = 0 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         MLJAC = self.problem_info["dim"] #The jacobian is full
         MUJAC = self.problem_info["dim"] #See MLJAC
         IMAS  = 0 #The mass matrix is the identity
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*30) #Work (double) vector
-        IWORK = N.array([0]*30) #Work (integer) vector
+        WORK  = N.array([0.0]*20) #Work (double) vector
+        IWORK = N.array([0]*20) #Work (integer) vector
         
         #Setting work options
         WORK[0] = N.finfo(N.double).eps        # Rounding unit
@@ -186,10 +200,11 @@ class Radar5ODE(Explicit_ODE):
         IWORK[7] = 1
         IWORK[10] = self.ieflag
         IWORK[11] = self.mxst
-        IWORK[12] = self.problem.ngrid
+        IWORK[12] = self.problem.ngrid-1
         IWORK[13] = 1
         IWORK[14] = self.problem.nrdens
         
+        past = N.zeros(self.mxst*(4*self.problem.nrdens+2))
 #        print WORK
 #        print IWORK
         
@@ -203,9 +218,9 @@ class Radar5ODE(Explicit_ODE):
         #Store the opts
         self._opts = opts
 
-        t, y, h, iwork, flag = radar5.radar5(self.F,  \
+        t, y, h, iwork, flag = radar5.radar5(self.F,            \
                                        self.problem.phi,        \
-                                       self.problem.arglag,     \
+                                       self.arglag,             \
                                        t,                       \
                                        y.copy(),                \
                                        tf,                      \
@@ -229,7 +244,13 @@ class Radar5ODE(Explicit_ODE):
                                        self.problem.ipast,      \
                                        mas_dummy,               \
                                        MLMAS,                   \
-                                       MUMAS)
+                                       MUMAS,                   \
+                                       past,                    \
+                                       IWORK[14]+1,             \
+#                                       IWORK[14],               \
+                                       self.problem.ngrid,      \
+                                       len(past)                \
+                                       )
                
         #Checking return
         if flag == 1:

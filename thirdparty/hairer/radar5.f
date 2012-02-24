@@ -9,7 +9,7 @@ C     THE LAST SUCCESSFULLY COMPUTED STEP (BY RADAR5).
 C ----------------------------------------------------------
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
-      REAL(kind=DP), dimension(1), intent(in) ::  CONT
+      REAL(kind=DP), dimension(4*N), intent(in) ::  CONT
 C --- REQUIRED CONSTANTS
       COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2
 
@@ -837,7 +837,7 @@ C
      &                  FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,E1,LDE1,ALPHA,
      &                  Z1,Z2,Z3,CONT,F1,F2,F3,IP1,IPHES,SCAL,ERR,CERR,
      &                  FIRST,REJECT,FAC1,ARGLAG,PHI,RPAR,IPAR,
-     &                  IOUT,PAST,IPAST,NRDS,JEFLAG,IEFLAG)
+     &                  IOUT,PAST,IPAST,NRDS,JEFLAG,IEFLAG,LPAST)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
       REAL(kind=DP), dimension(LDJAC,N), intent(in) :: FJAC
@@ -849,11 +849,12 @@ C
       REAL(kind=DP), dimension(N), intent(in)  :: Y0,Y
       REAL(kind=DP), dimension(N) :: F1,F2,F3
       REAL(kind=DP), dimension(N) :: CONT,SCAL
-      REAL(kind=DP), dimension(1), intent(in)  :: PAST
+      REAL(kind=DP), dimension(LPAST), intent(in)  :: PAST
       REAL(kind=DP), dimension(:), allocatable :: W1,W2,Q1,Q2
       INTEGER, dimension(1), intent(in) :: IPAST
       REAL(kind=DP), dimension(1), intent(in)  :: RPAR
       INTEGER, dimension(1), intent(in) :: IPAR
+      INTEGER :: LPAST
 
       LOGICAL FIRST,REJECT,LEFT
       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
@@ -1336,7 +1337,7 @@ CD      ENDIF
         XX=X
 C ---   VALUTA IN  XX
         CALL FCN(N,XX,CONT,F1,ARGLAG,PHI,RPAR,IPAR,
-     &           PAST,IPAST,NRDS)
+     &           PAST,IPAST,NRDS,LPAST)
 CW      WRITE (6,*) 'Seconda premoltiplicazione per la stima di errore '
 CW      WRITE (6,*) 'X, ERR = ',X,ERR
 C ---
@@ -2464,7 +2465,7 @@ C --- REQUIRED CONSTANTS
 
       S=(X-XSOL)/HSOL
 
-	DONTR5=(CONT(I+N)+
+        DONTR5=(CONT(I+N)+
      &   (S-C2M1)*(CONT(I+N2)+CONT(I+N3)*(S-C1M1))+
      &    S*(CONT(I+N2)+CONT(I+N3)*(2.*S-C1M1-C2M1)))/HSOL
      
@@ -2529,7 +2530,8 @@ C
      &                  JACLAG,NLAGS,NJACL, 
      &                  IMAS,SOLOUT,IOUT, 
      &                  WORK,IWORK,RPAR,IPAR,IDID, 
-     &                  GRID,IPAST,MAS,MLMAS,MUMAS) 
+     &                  GRID,IPAST,MAS,MLMAS,MUMAS,
+     &                  LIPAST, LGRID, LPAST, PAST)
 C ---------------------------------------------------------- 
 C     INPUT PARAMETERS   
 C --------------------   
@@ -2967,8 +2969,12 @@ C *** *** *** *** *** *** *** *** *** *** *** *** ***
       REAL(kind=DP), dimension(1), intent(inout) :: GRID 
       INTEGER, dimension(1), intent(inout) :: IPAST 
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
-      INTEGER, dimension(1), intent(in) :: IPAR 
- 
+      INTEGER, dimension(1), intent(in) :: IPAR
+      INTEGER :: LIPAST
+      INTEGER :: LGRID
+      INTEGER :: LPAST
+      REAL(kind=DP), dimension(LPAST),intent(inout) :: PAST
+      
       LOGICAL IMPLCT,NEUTRAL,JBAND,ARRET,STARTN,PRED 
       LOGICAL FLAGS,FLAGN 
  
@@ -3017,14 +3023,14 @@ C ------- NRDENS   NUMBER OF DENSE OUTPUT COMPONENTS
       NRDENS=IWORK(15)
 C ------- NDIMN   NUMBER OF COMPONENTS OF A NEUTRAL PROBLEM
       IF (IMAS.EQ.2) THEN
-	 IF (IWORK(16).EQ.0) THEN
-	  WRITE(6,*) 'NUMBER OF Y COMPONENTS HAS TO BE SPECIFIED'
-	  ARRET=.TRUE.
-	 END IF
-	 NDIMN=IWORK(16)
-	ELSE 
-	 NDIMN=N
-	END IF  	 
+         IF (IWORK(16).EQ.0) THEN
+          WRITE(6,*) 'NUMBER OF Y COMPONENTS HAS TO BE SPECIFIED'
+          ARRET=.TRUE.
+         END IF
+         NDIMN=IWORK(16)
+        ELSE 
+         NDIMN=N
+        END IF           
 C ------- LIPAST   DIMENSION OF VECTOR IPAST 
       LIPAST=NRDENS+1  
       IF(NRDENS.LT.0.OR.NRDENS.GT.N) THEN 
@@ -3251,9 +3257,9 @@ C ------->  PARAMETER FOR THE CONTROL OF DENSE OUTPUT <-------
       END IF 
 C ------->   PARAMETER FOR CONTROLLING THE SEARCH OF BP <-------
       TCKBP=WORK(11)
-	IF (TCKBP.LE.0.D0) THEN
-	      TCKBP=5.D0
-	END IF	       
+        IF (TCKBP.LE.0.D0) THEN
+              TCKBP=5.D0
+        END IF               
    
 C *** *** *** *** *** *** *** *** *** *** *** *** *** 
 C         COMPUTATION OF ARRAY ENTRIES 
@@ -3325,7 +3331,7 @@ C -------- CALL TO CORE INTEGRATOR ------------
      &   IMPLCT,NEUTRAL,NDIMN,JBAND,LDJAC,LDE1,LDMAS2, 
      &   NFCN,NJAC,NSTEP,NACCPT,NREJCT,NDEC,NSOL,NFULL,RPAR,IPAR, 
      &   IPAST,GRID,NRDS,NLAGS,NJACL, 
-     &   NGRID,IEFLAG,WORK(7),TCKBP,ALPHA,ISWJL) 
+     &   NGRID,IEFLAG,WORK(7),TCKBP,ALPHA,ISWJL, LRPAST, PAST) 
       IWORK(13)=NFULL 
       IWORK(14)=NFCN 
       IWORK(15)=NJAC 
@@ -3364,7 +3370,7 @@ C
      &   IMPLCT,NEUTRAL,NDIMN,BANDED,LDJAC,LDE1,LDMAS, 
      &   NFCN,NJAC,NSTEP,NACCPT,NREJCT,NDEC,NSOL,NFULL,RPAR,IPAR, 
      &   IPAST,GRID,NRDS,NLAGS,NJACL, 
-     &   NGRID,IEFLAG,WORK7,TCKBP,ALPHA,ISWJL) 
+     &   NGRID,IEFLAG,WORK7,TCKBP,ALPHA,ISWJL, LPAST, PAST) 
 C ---------------------------------------------------------- 
 C     CORE INTEGRATOR FOR RADAR5 
 C     PARAMETERS SAME AS IN RADAR5 WITH WORKSPACE ADDED  
@@ -3377,7 +3383,7 @@ C     use definitions
       INTEGER, PARAMETER :: DP=kind(1D0) 
       REAL(kind=DP), dimension(1), intent(inout) :: Y 
       REAL(kind=DP), dimension(:), allocatable ::  
-     &                              Z1,Z2,Z3,Y0,SCAL,F1,F2,F3,CONT,PAST 
+     &                              Z1,Z2,Z3,Y0,SCAL,F1,F2,F3,CONT 
       REAL(kind=DP), dimension(:), allocatable :: BPV,UCONT 
       REAL(kind=DP), dimension(:,:), allocatable ::  
      &                              FJAC,FJACS,FMAS,E1,E2R,E2I 
@@ -3397,7 +3403,9 @@ C     use definitions
       INTEGER, dimension(:), allocatable ::  
      &                              IVL,IVE,IVC,ILS 
       INTEGER, dimension(:), allocatable ::  
-     &                              IP1,IP2,IPHES,IPJ 
+     &                              IP1,IP2,IPHES,IPJ
+      INTEGER :: LPAST
+      REAL(kind=DP), dimension(LPAST), intent(inout) :: PAST
  
       LOGICAL FLAGS,FLAGN,FLAGUS 
       LOGICAL QUADR 
@@ -3425,7 +3433,7 @@ C *** *** *** *** *** *** ***
       IF (IMPLCT) ALLOCATE(FMAS(LDMAS,NM1)) 
       ALLOCATE (IP1(NM1),IP2(NM1),IPHES(NM1)) 
       ALLOCATE (E1(LDE1,NM1),E2R(LDE1,NM1),E2I(LDE1,NM1)) 
-      ALLOCATE (PAST(MXST*IDIF)) 
+C      ALLOCATE (PAST(MXST*IDIF)) 
       IF (NLAGS.GT.0) THEN 
        ALLOCATE (FJACS(LDJAC,N),FJACLAG(NJACL)) 
        ALLOCATE (IVL(NJACL),IVE(NJACL),IVC(NJACL), 
@@ -3475,18 +3483,18 @@ C --- GUSTAFFSON TECHNIQUE AFTER BREAKING POINTS IS NOT APPLIED
       ERRACC=1.D0
  
       IRTRN=2 
-      CALL FCN(N,X,Y,Y0,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+      CALL FCN(N,X,Y,Y0,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,LPAST)
       IRTRN=1 
  
 C     TOLMIN
       IF (ITOL.EQ.0) THEN
-	 RTOLM=RTOL(1)
-	ELSE
+         RTOLM=RTOL(1)
+        ELSE
        RTOLM=RTOL(1)
        DO I=2,N
         IF (RTOL(I).LT.RTOLM) RTOLM=RTOL(I)
-	 END DO
-	END IF
+         END DO
+        END IF
  
 C -------- CHECK THE INDEX OF THE PROBLEM -----  
       INDEX1=NIND1.NE.0 
@@ -3559,7 +3567,7 @@ C
       REJECT=.FALSE. 
       FIRST=.TRUE. 
       LAST=.FALSE. 
-	NITER=0
+        NITER=0
       IF ((X+H*1.0001D0-XEND).GE.0.D0) THEN 
          H=XEND-X 
          LAST=.TRUE. 
@@ -3629,9 +3637,9 @@ C -----------------------
 C ----------------------- 
       ALOPT=0.D0 
       NJAC=NJAC+1 
-	IF (BPD) THEN
-	 BPDMEM=.TRUE.
-	 BPD=.FALSE.
+        IF (BPD) THEN
+         BPDMEM=.TRUE.
+         BPD=.FALSE.
       END IF
       IF (IJAC.EQ.0) THEN 
 C --- COMPUTE JACOBIAN MATRIX NUMERICALLY 
@@ -3648,7 +3656,7 @@ C --- JACOBIAN IS BANDED
                   J=J+MD 
                   IF (J.LE.MM*M2) GOTO 12  
                   CALL FCN(N,X,Y,CONT,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,
-     &                     NRDS) 
+     &                     NRDS,LPAST) 
                   J=K+(MM-1)*M2 
                   J1=K 
                   LBEG=MAX(1,J1-MUJAC)+M1 
@@ -3668,11 +3676,11 @@ C --- JACOBIAN IS BANDED
 C --- JACOBIAN IS FULL 
             DO I=1,N 
                YSAFE=Y(I) 
-	         DELT=DSQRT(UROUND*MAX(1.D-5,ABS(YSAFE))) 
-			 Y(I)=YSAFE+DELT 
+                 DELT=DSQRT(UROUND*MAX(1.D-5,ABS(YSAFE))) 
+                         Y(I)=YSAFE+DELT 
                  CALL FCN(N,X,Y,CONT,ARGLAG,PHI, 
-     1	              RPAR,IPAR,PAST,IPAST,NRDS)
-	         DO J=M1+1,N 
+     1                      RPAR,IPAR,PAST,IPAST,NRDS,LPAST)
+                 DO J=M1+1,N 
                  FJAC(J-M1,I)=(CONT(J)-Y0(J))/DELT 
                END DO 
                Y(I)=YSAFE 
@@ -3680,11 +3688,12 @@ C --- JACOBIAN IS FULL
          END IF 
       ELSE 
 C --- COMPUTE JACOBIAN MATRIX ANALYTICALLY
-         CALL JAC(N,X,Y,FJAC,LDJAC,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+         CALL JAC(N,X,Y,FJAC,LDJAC,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,
+     &            LPAST)
       END IF
-	IF (BPDMEM) THEN
-	 BPDMEM=.FALSE.
-	 BPD=.TRUE.
+        IF (BPDMEM) THEN
+         BPDMEM=.FALSE.
+         BPD=.TRUE.
       END IF 
       CALJAC=.TRUE. 
       CALHES=.TRUE. 
@@ -3772,18 +3781,20 @@ C ---
 C ---  LOOP ON LAG TERMS 
        DO IL=1,NLAGS 
 C ---   DELAYED ARGUMENTS ARE COMPUTED 
-        XLAG(1,IL)=ARGLAG(IL,X1,ZL,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+        XLAG(1,IL)=ARGLAG(IL,X1,ZL,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST) 
            IF (XLAG(1,IL).GT.X) ICOUN(1,IL)=1 
-        XLAG(2,IL)=ARGLAG(IL,X2,ZL(N+1),RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+        XLAG(2,IL)=ARGLAG(IL,X2,ZL(N+1),RPAR,IPAR,PHI,PAST,IPAST,NRDS,
+     &          LPAST)
            IF (XLAG(2,IL).GT.X) ICOUN(2,IL)=1 
-        XLAG(3,IL)=ARGLAG(IL,X3,ZL(N2+1),RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+        XLAG(3,IL)=ARGLAG(IL,X3,ZL(N2+1),RPAR,IPAR,PHI,PAST,IPAST,NRDS,
+     &          LPAST) 
            IF (XLAG(3,IL).GT.X) ICOUN(3,IL)=1 
         IF (ICOUN(1,IL)+ICOUN(2,IL)+ICOUN(3,IL).GE.1) CALJACL=.TRUE.
        END DO 
  
        IF (CALJACL) THEN 
         CALL JACLAG(N,X,Y,FJACLAG,ARGLAG,PHI,IVE,IVC,IVL, 
-     &                  RPAR,IPAR,PAST,IPAST,NRDS) 
+     &                  RPAR,IPAR,PAST,IPAST,NRDS,LPAST) 
         IF (.NOT.CALLAG) THEN 
          CALLAG=.TRUE. 
 C --     ORDERING STEP 
@@ -3850,7 +3861,7 @@ C         ACTIVATES IF ALOPT DIFFERENT FROM ZERO
             IK=IVE(KK) 
             JK=IVC(KK) 
             FJAC(IK,JK)=FJAC(IK,JK)+ALOPT*FJACLAG(KK)
-C                       ----S		   
+C                       ----S                   
            END DO 
           ELSE 
            CALJACL=.FALSE. 
@@ -3970,16 +3981,16 @@ C ---     COMPUTE THE RIGHT-HAND SIDE
             END DO 
 C           COMPUTATION OF STAGE VALUES
             CALL FCN(N,X+C1*H,ZL,Z1,ARGLAG,PHI,RPAR,IPAR,PAST,
-     &               IPAST,NRDS) 
+     &               IPAST,NRDS,LPAST) 
             CALL FCN(N,X+C2*H,ZL(N+1),Z2,ARGLAG,PHI,RPAR,IPAR,PAST,
-     &               IPAST,NRDS)
+     &               IPAST,NRDS,LPAST)
             IF (BPD) THEN
 C ---------------------------------------------------------------------- 
 C ---         A BREAKING POINT HAS BEEN DETECTED
 C ---------------------------------------------------------------- 
               LEFT=.FALSE. 
               DBP=ARGLAG(ILBP,X+C2*H,ZL(N+1),RPAR,IPAR,PHI, 
-     &                   PAST,IPAST,NRDS) 
+     &                   PAST,IPAST,NRDS,LPAST) 
               IF (DBP.LT.BPP) LEFT=.TRUE. 
             ELSE IF (LAST) THEN 
 C ---         DISC. FLAG 
@@ -3988,11 +3999,11 @@ C ---         DISC. FLAG
                  ZL(N2+I)=(1.D0-BTOL)*ZL(N2+I)+BTOL*ZL(N+I) 
               END DO 
               CALL FCN(N,XX,ZL(N2+1),Z3,ARGLAG,PHI,RPAR,IPAR,PAST, 
-     &                 IPAST,NRDS) 
+     &                 IPAST,NRDS,LPAST) 
               GO TO 42 
             END IF 
             CALL FCN(N,X+H,ZL(N2+1),Z3,ARGLAG,PHI,RPAR,IPAR,PAST, 
-     &               IPAST,NRDS) 
+     &               IPAST,NRDS,LPAST) 
  42         CONTINUE
     
             NFCN=NFCN+3 
@@ -4013,10 +4024,10 @@ C ---     SOLVE THE LINEAR SYSTEMS
             NSOL=NSOL+1 
             NEWT=NEWT+1 
 C ---       NORM OF DY 
-		  DYNO=0.D0 
-	      DO I=1,N
+                  DYNO=0.D0 
+              DO I=1,N
             END DO
-		  DO I=1,N 
+                  DO I=1,N 
                DENOM=SCAL(I) 
                DYNO=DYNO+(Z1(I)/DENOM)**2+(Z2(I)/DENOM)**2 
      &          +(Z3(I)/DENOM)**2 
@@ -4065,7 +4076,7 @@ C ---          BP IS WRONG
               HP=H*0.99D0
               CALL BPDTCT(N,X,HP,Y,ARGLAG,RPAR,IPAR,UCONT,GRID,NLAGS, 
      &                    FIRST,LAST,XEND,IGRID,BPV,IBP,ILBP,BPP,BPD, 
-     &                    KMAX,PHI,PAST,IPAST,NRDS) 
+     &                    KMAX,PHI,PAST,IPAST,NRDS,LPAST) 
             
               BPC=.TRUE. 
 C ------ 4 
@@ -4103,7 +4114,7 @@ C ---          THERE ARE NOT SMALL DELAYS
                 QNEWT=DMAX1(1.0D-4,DMIN1(20.0D0,DYTH)) 
                 HHFAC=.8D0*QNEWT**(-1.0D0/(4.0D0+NIT-1-NEWT)) 
                 H=HHFAC*H 
-		LAST=.FALSE. 
+                LAST=.FALSE. 
                ELSE IF (INREJ.EQ.2) THEN 
                 H=H*0.55D0 
                 HHFAC=0.55D0 
@@ -4147,29 +4158,29 @@ C ----------------------------------------------------------------
 C ---       ITERATIVE CORRECTION OF THE BREAKING POINT
 C ----------------------------------------------------------------
             IF (BPD) THEN
-	     HNEWT=H
-	     NITER = NITER+1
-	     IF (NITER.GT.NIT) THEN  
+             HNEWT=H
+             NITER = NITER+1
+             IF (NITER.GT.NIT) THEN  
 C              BP WRONG                 
                IBP=IBP-1 
                BPD=.FALSE. 
                LAST=.FALSE. 
                H=H*0.55D0 
                HHFAC=0.55D0
-	       REJECT=.TRUE.
-	       NITER=0 
+               REJECT=.TRUE.
+               NITER=0 
                IF (CALJAC) GOTO 20 
                GOTO 10   
              END IF  
-		    
+                    
              CALL BPACC(N,X,H,Y,ARGLAG,RPAR,IPAR,Z1,Z2,Z3,FIRST,
-     &                  BPV,IBP,ILBP,BPP,KMAX,PHI,PAST,IPAST,NRDS) 
+     &                  BPV,IBP,ILBP,BPP,KMAX,PHI,PAST,IPAST,NRDS,LPAST) 
              IF (ABS(H-HNEWT)/HNEWT.GE.MAX(BTOL,RTOLM*1.D-2)) THEN
               GOTO 20
 C             REF POINT
              ELSE
-	        H=HNEWT
-	        NITER=0
+                H=HNEWT
+                NITER=0
              END IF
             END IF  
 C ----------------------------------------------------------------
@@ -4366,13 +4377,13 @@ C ---------> UNEXPECTED STEP-REJECTION
 C ---     COMPUTE THE RIGHT-HAND SIDE 
             CONT(1:N)=Y(1:N)+Z1(1:N) 
             CALL FCN(N,X+C1*H,CONT,F1,ARGLAG,PHI,RPAR,IPAR,PAST,
-     &               IPAST,NRDS) 
+     &               IPAST,NRDS,LPAST) 
             CONT(1:N)=Y(1:N)+Z2(1:N) 
             CALL FCN(N,X+C2*H,CONT,F2,ARGLAG,PHI,RPAR,IPAR,PAST,
-     &               IPAST,NRDS) 
+     &               IPAST,NRDS,LPAST)
             CONT(1:N)=Y(1:N)+Z3(1:N) 
             CALL FCN(N,XPH,CONT,F3,ARGLAG,PHI,RPAR,IPAR,PAST,
-     &               IPAST,NRDS) 
+     &               IPAST,NRDS,LPAST)
             NFCN=NFCN+3 
 C 
 CCC --->    RHS COMPUTATION 
@@ -4493,7 +4504,7 @@ CCC    ERROR ESTIMATES
      &              FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,E1,LDE1,ALPHA, 
      &              Z1,Z2,Z3,CONT,F1,F2,F3,IP1,IPHES,SCAL,SERR,CERR, 
      &              FIRST,REJECT,FAC1,ARGLAG,PHI,RPAR,IPAR, 
-     &              IOUT,PAST,IPAST,NRDS,JLFLAG,IEFLAG) 
+     &              IOUT,PAST,IPAST,NRDS,JLFLAG,IEFLAG,LPAST) 
  
       FAC=MIN(SAFE,CFAC/(NEWT+2*NIT)) 
  
@@ -4552,7 +4563,7 @@ C ---     LOOK FOR A BP
           HP=H*0.99D0
           CALL BPDTCT(N,X,HP,Y,ARGLAG,RPAR,IPAR,UCONT,GRID,NLAGS, 
      &                FIRST,LAST,XEND,IGRID,BPV,IBP,ILBP,BPP,BPD,
-     &                KMAX,PHI,PAST,IPAST,NRDS) 
+     &                KMAX,PHI,PAST,IPAST,NRDS,LPAST) 
           IF (BPD) REPEAT=.TRUE.
         END IF
       END IF 
@@ -4618,7 +4629,7 @@ C -------------------------------------------------------------------
               CONT(I+N3)=A2-ACONT3 
             ELSE 
 C ---         QUADRATIC APPROXIMATION
-              CONT(I+N3)=0.D0			
+              CONT(I+N3)=0.D0                        
 C ---         INVECE DI:  
 C ---         CONT(I+N3)=CONT(I+N2)-ACONT3 
             END IF 
@@ -4665,7 +4676,7 @@ C ---    COMPUTATION AT BP FOR NEXT STEP
 C ---     LAST HAS TO BE RE/DEFINED
           IF (BPD) THEN 
            IGRID=IGRID-1
-	  END IF 
+          END IF 
 C --- 
           IF (.NOT.IMPLCT.OR.NEUTRAL) THEN  ! EXPLICIT PROBLEM
             HE=DMAX1(H/1.D4,10.D0*UROUND) 
@@ -4674,70 +4685,72 @@ C --------------------
 C -------------------- 
 C --- 
 C ---       EULER STEP
-            CALL FCN(N,X,Y,F2,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+            CALL FCN(N,X,Y,F2,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,
+     &               LPAST) 
             IF (NEUTRAL) THEN
-	        DO I=1,N-NDIMN 
+                DO I=1,N-NDIMN 
                Z2(I)=Y(I)+HE*F2(I) 
               END DO
-		    DO I=1,NDIMN
-	         Z2(N-NDIMN+I)=F2(IPAST(NRDS+I))+HE*F2(N-NDIMN+I)
-	        END DO
+                    DO I=1,NDIMN
+                 Z2(N-NDIMN+I)=F2(IPAST(NRDS+I))+HE*F2(N-NDIMN+I)
+                END DO
             ELSE
-		    DO I=1,N 
+                    DO I=1,N 
                Z2(I)=Y(I)+HE*F2(I) 
               END DO
-		  END IF  
+                  END IF  
 C -------------------- 
             LEFT=.FALSE. 
 C -------------------- 
-            CALL FCN(N,X,Y,F3,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+            CALL FCN(N,X,Y,F3,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,
+     &               LPAST)
             IF (NEUTRAL) THEN
-	        DO I=1,N-NDIMN 
+                DO I=1,N-NDIMN 
                Z3(I)=Y(I)+HE*F3(I) 
               END DO
-		    DO I=1,NDIMN
-	         Z3(N-NDIMN+I)=F3(IPAST(NRDS+I))+HE*F3(N-NDIMN+I)
-	        END DO
+                    DO I=1,NDIMN
+                 Z3(N-NDIMN+I)=F3(IPAST(NRDS+I))+HE*F3(N-NDIMN+I)
+                END DO
             ELSE
-		    DO I=1,N 
+                    DO I=1,N 
                Z3(I)=Y(I)+HE*F3(I) 
               END DO 
             END IF
-            XL =ARGLAG(ILBP,X+HE,Z2,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
-            XLR=ARGLAG(ILBP,X+HE,Z3,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+            XL =ARGLAG(ILBP,X+HE,Z2,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST) 
+            XLR=ARGLAG(ILBP,X+HE,Z3,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST)
             IF (XL.GE.BPP.AND.XLR.GE.BPP) THEN 
              LEFT=.FALSE. 
             ELSE IF (XL.LT.BPP.AND.XLR.LT.BPP) THEN 
              LEFT=.TRUE. 
             ELSE 
              IF (IOUT.EQ.1) THEN 
-		    IF (XL.GT.BPP) THEN
-			 WRITE (6,*) 
+                    IF (XL.GT.BPP) THEN
+                         WRITE (6,*) 
      &        ' WARNING!: SOLUTION DOES NOT EXIST AT X= ',X
               ELSE
-	         WRITE (6,*) 
+                 WRITE (6,*) 
      &        ' WARNING!: SOLUTION IS  NOT UNIQUE AT X= ',X
-	        END IF
+                END IF
               GO TO 980
 C             RETURN 
              END IF
             END IF
 C ---       PROJECTION FOR DERIVATIVE COMPONENTS OF NEUTRAL EXPLICIT PROBLEMS
             PROJECT=.TRUE.
-	    IF (NEUTRAL.AND.PROJECT) THEN
-	       IF (LEFT) THEN
-		    DO J=1,NDIMN
-	         Y(N-NDIMN+J)=F2(IPAST(NRDS+J))
-	        END DO
+            IF (NEUTRAL.AND.PROJECT) THEN
+               IF (LEFT) THEN
+                    DO J=1,NDIMN
+                 Y(N-NDIMN+J)=F2(IPAST(NRDS+J))
+                END DO
             ELSE
-	        DO J=1,NDIMN
-	         Y(N-NDIMN+J)=F3(IPAST(NRDS+J))
-	        END DO
-	       END IF
+                DO J=1,NDIMN
+                 Y(N-NDIMN+J)=F3(IPAST(NRDS+J))
+                END DO
+               END IF
             END IF
-	  ELSE ! GENERAL IMPLICIT
-	      LEFT=.TRUE.
-	  END IF
+          ELSE ! GENERAL IMPLICIT
+              LEFT=.TRUE.
+          END IF
 C --- 
           BPD=.FALSE. 
          END IF  
@@ -4771,12 +4784,12 @@ C ---    FIRST IS RESTORED
          FIRST=.FALSE. 
          IF (LAST) FIRST=.TRUE. 
 C ---    COMPUTATION OF Y0 
-         CALL FCN(N,X,Y,Y0,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS)
-C	   
+         CALL FCN(N,X,Y,Y0,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,LPAST)
+C           
          NFCN=NFCN+1 
          FIRST=.FALSE.  
 C ----------------------------- 
-	 
+         
 C ------ FINAL POINT                               
          IF (LAST) THEN 
  45         CONTINUE
@@ -4792,10 +4805,10 @@ C
 C              LEFT=.FALSE. 
                FIRST=.TRUE. 
                XEND=GRID(IGRID)
-	       IF (ABS(XEND-X).LE.(H*1.D-2)) THEN
-		  IGRID=IGRID+1
-		  GO TO 45 
-	       END IF 
+               IF (ABS(XEND-X).LE.(H*1.D-2)) THEN
+                  IGRID=IGRID+1
+                  GO TO 45 
+               END IF 
                FLAGUS=.FALSE. 
                IF (WORK7.EQ.0.D0) THEN 
                   HMAXN=XEND-X  
@@ -4934,7 +4947,7 @@ C --- RETURN LABEL
       WRITE(6,*) IBP-1,' COMPUTED BREAKING POINTS: '
       WRITE(8,*) 'BREAKING POINTS: '
       DO I=1,IBP
-	WRITE(8,*) BPV(I)
+        WRITE(8,*) BPV(I)
       END DO
       WRITE(8,*) ' -------------- '
       CLOSE(8)
@@ -4946,7 +4959,7 @@ C --- DEALLOCATION OF THE MEMORY
       IF (IMPLCT) DEALLOCATE(FMAS) 
       DEALLOCATE (IP1,IP2,IPHES) 
       DEALLOCATE (E1,E2R,E2I) 
-      DEALLOCATE (PAST) 
+C      DEALLOCATE (PAST) 
       IF (NLAGS.GT.0) THEN 
        DEALLOCATE (FJACS,FJACLAG) 
        DEALLOCATE (IVL,IVE,IVC,ILS,ICOUN) 
@@ -4964,7 +4977,7 @@ C
 C *********************************************************** 
 C 
       SUBROUTINE LAGR5(IL,X,Y,ARGLAG,PAST,THETA,IPOS,RPAR,IPAR,
-     &                 PHI,IPAST,NRDS)
+     &                 PHI,IPAST,NRDS,LPAST)
 C ---------------------------------------------------------- 
 C     THIS FUNCTION CAN BE USED FOR CONTINUOUS OUTPUT IN CONNECTION 
 C     WITH THE OUTPUT-SUBROUTINE FOR RADAR5. IT PROVIDES THE 
@@ -4973,11 +4986,13 @@ C ----------------------------------------------------------
       USE IP_ARRAY 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z) 
       INTEGER, PARAMETER :: DP=kind(1D0) 
-      REAL(kind=DP), dimension(1), intent(in) :: Y,PAST 
+      REAL(kind=DP), dimension(1), intent(in) :: Y
+      REAL(kind=DP), dimension(LPAST), intent(in) :: PAST 
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
       INTEGER, dimension(1), intent(in) :: IPAR 
       INTEGER, dimension(1), intent(in) :: IPAST 
       EXTERNAL PHI
+      INTEGER :: LPAST
 
       LOGICAL FLAGS,FLAGN,FIRST,LAST,REJECT,BPD,LEFT 
 C --- COMMON BLOCKS 
@@ -4986,7 +5001,7 @@ C --- COMMON BLOCKS
       COMMON /POSITS/X0B,UROUND,HMAX,IACT,IRTRN,IDIF,MXST,FLAGS,FLAGN 
 C 
 C --- COMPUTE DEVIATED ARGUMENT FOR IL-TH DELAY 
-      XLAG=ARGLAG(IL,X,Y,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+      XLAG=ARGLAG(IL,X,Y,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST)
 
 C --- INITIAL PHASE 
       THETA=XLAG 
@@ -4997,29 +5012,29 @@ C     MIN VALUE FOR THE SUPER-POSITION NEIGHBOURHOOD OF A BP
 
       COMPAR=UROUND*MAX(ABS(XLAG),ABS(X0B))
       EPSACT=10.D0*COMPAR
-	IF (IACT.GT.1) EPSACT=DMAX1(PAST(IACT-1)*1.D-2,EPSACT)
+        IF (IACT.GT.1) EPSACT=DMAX1(PAST(IACT-1)*1.D-2,EPSACT)
 
       IF (XLAG.LE.X0B) THEN 
 C ---     DEVIATING ARGUMENT ON THE INITIAL SEGMENT         
         IF (.NOT.((IL.EQ.ILBP).AND.(BPD.OR.FIRST))) THEN 
-	    IF (XLAG-X0B.LT.0.D0) THEN
-	      RETURN
-	    ELSE
-	      IPOS=1
-	      THETA=-1.D0 
-	    END IF
-	  ELSE
+            IF (XLAG-X0B.LT.0.D0) THEN
+              RETURN
+            ELSE
+              IPOS=1
+              THETA=-1.D0 
+            END IF
+          ELSE
          IF (ABS(XLAG-X0B).LE.EPSACT) THEN
-	    IF (LEFT) THEN
+            IF (LEFT) THEN
                 IPOS=-1 
                 THETA=XLAG
           ELSE
                 IPOS=1
-	        THETA=(XLAG-(PAST(IPOS)+PAST(IPOS+IDIF-1)))/
-     1     	PAST(IPOS+IDIF-1) 
+                THETA=(XLAG-(PAST(IPOS)+PAST(IPOS+IDIF-1)))/
+     1             PAST(IPOS+IDIF-1) 
           END IF
          ELSE IF (ABS(XLAG-BPP).LE.EPSACT) THEN 
-	    IPOS=-1 
+            IPOS=-1 
           IF (LEFT) THEN 
            IF (XLAG.GT.BPP) THEN 
             IF (BPP.GT.0.D0) THEN 
@@ -5038,9 +5053,9 @@ C ---     DEVIATING ARGUMENT ON THE INITIAL SEGMENT
            END IF 
           END IF 
          END IF
-	  END IF    
-	  RETURN
-	END IF 
+          END IF    
+          RETURN
+        END IF 
 
 C --- COMPUTE THE POSITION OF XLAG 
       IPA = IACT+IDIF 
@@ -5048,7 +5063,7 @@ C --- COMPUTE THE POSITION OF XLAG
       IF (XLAG-PAST(IPA).LT.0.D0) THEN
          WRITE (6,*) ' MEMORY FULL, MXST = ',MXST 
          IRTRN=-1
-	   STOP 
+           STOP 
 C        RETURN 
       END IF 
 
@@ -5091,7 +5106,7 @@ C -----
            IPOS=INEXT 
            GOTO 2 
         END IF
-	  IF (IPOS.EQ.1) THEN 
+          IF (IPOS.EQ.1) THEN 
             IPREV=(MXST-1)*IDIF+1 
         ELSE 
             IPREV=IPOS-IDIF 
@@ -5103,45 +5118,45 @@ C ---
         IF (.NOT.((IL.EQ.ILBP).AND.(BPD.OR.FIRST))) GOTO 10
  
         IF (BPP.EQ.X0B) THEN
-	    IF (LEFT) THEN
-	      IPOS=-1
-	      THETA=XLAG
-	      RETURN
+            IF (LEFT) THEN
+              IPOS=-1
+              THETA=XLAG
+              RETURN
           ELSE
-	      IF (IPOS.EQ.-1) IPOS=1
-	       GO TO 10
-	      END IF
+              IF (IPOS.EQ.-1) IPOS=1
+               GO TO 10
+              END IF
         END IF
 
-	  IPOSB=0  
-	  IF (ABS(BPP-PAST(IPOS)).LE.10.D0*UROUND) THEN
+          IPOSB=0  
+          IF (ABS(BPP-PAST(IPOS)).LE.10.D0*UROUND) THEN
            IPOSB=IPOS
-	  ELSE IF (ABS(BPP-PAST(INEXT)).LE.10.D0*UROUND) THEN
-	     IPOSB=INEXT
-C	  ELSE IF (ABS(BPP-PAST(IPREV)).LE.10.D0*UROUND) THEN
-C	     IPOSB=IPREV
-	  END IF
+          ELSE IF (ABS(BPP-PAST(INEXT)).LE.10.D0*UROUND) THEN
+             IPOSB=INEXT
+C          ELSE IF (ABS(BPP-PAST(IPREV)).LE.10.D0*UROUND) THEN
+C             IPOSB=IPREV
+          END IF
 
         IF (IPOSB.EQ.0) THEN
-	   GO TO 10
-	  END IF
+           GO TO 10
+          END IF
 
         IF (IPOSB.EQ.1) THEN
-	    EPSILON=(PAST(IPOSB+IDIF)-PAST(IPOSB))
-	  ELSE IF (IPOSB.EQ.(MXST-1)*IDIF+1) THEN
-	    EPSILON=(PAST(IPOSB)-PAST(IPOSB-IDIF))
-	  ELSE
-	    EPSILON=DMIN1(PAST(IPOSB+IDIF)-PAST(IPOSB),
+            EPSILON=(PAST(IPOSB+IDIF)-PAST(IPOSB))
+          ELSE IF (IPOSB.EQ.(MXST-1)*IDIF+1) THEN
+            EPSILON=(PAST(IPOSB)-PAST(IPOSB-IDIF))
+          ELSE
+            EPSILON=DMIN1(PAST(IPOSB+IDIF)-PAST(IPOSB),
      1                  PAST(IPOSB)-PAST(IPOSB-IDIF))
-	  END IF
-	  EPSILON=DMAX1(EPSILON*1.D-2,EPSACT)
+          END IF
+          EPSILON=DMAX1(EPSILON*1.D-2,EPSACT)
         
         IF (ABS(XLAG-BPP).GT.EPSILON) GOTO 10 
 
         IF (IPOSB.EQ.1) THEN
-	    IF (LEFT) THEN 
+            IF (LEFT) THEN 
                 IPOS=-1 
-C	          IF (BPP.GT.0.D0) THEN 
+C                  IF (BPP.GT.0.D0) THEN 
 C                  THETA=BPP*(1.D0-100*UROUND) 
 C               ELSE 
 C                  THETA=BPP*(1.D0+100*UROUND) 
@@ -5149,12 +5164,12 @@ C               END IF
 C               SE PERO' IL DATO INIZIALE E' ESTENDIBILE
                 THETA=XLAG
                 RETURN
-	    ELSE 
+            ELSE 
                 IPOS=1 
-	        GO TO 10
-	    END IF
+                GO TO 10
+            END IF
         END IF
-	 
+         
         IF (LEFT) THEN           
 C ---     PREVIOUS INTERVAL HAS TO BE SELECTED
           IPOS=IPOSB-IDIF
@@ -5168,7 +5183,7 @@ C ---------------------------------------------------------
 C ----- COMPUTE THETA (<0): SITUAZIONE PIU' TIPICA     
   10    THETA=(XLAG-(PAST(IPOS)+PAST(IPOS+IDIF-1)))/PAST(IPOS+IDIF-1) 
 C ----- REM: THETA IS NEGATIVE                                  
-	END IF 
+        END IF 
 C --- UPDATE POSITION INSIDE THE MEMORY 
       IPOSV(IL)=IPOS 
 
@@ -5181,7 +5196,7 @@ C -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 C *********************************************************** 
 C 
-      FUNCTION YLAGR5(IC,THETA,IPOS,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+      FUNCTION YLAGR5(IC,THETA,IPOS,PHI,RPAR,IPAR,PAST,IPAST,NRDS,LPAST) 
 C ---------------------------------------------------------- 
 C     THIS FUNCTION CAN BE USED FOR CONTINUOUS OUTPUT IN CONNECTION 
 C     WITH THE SUBROUTINE LAGR5. IT PROVIDES AN APPROXIMATION  
@@ -5193,8 +5208,9 @@ C --- REAL(kind=DP) PHI,YLAGR5
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
       INTEGER, dimension(1), intent(in) :: IPAR 
 C --- 
-      REAL(kind=DP), dimension(1), intent(in) :: PAST 
+      REAL(kind=DP), dimension(LPAST), intent(in) :: PAST 
       INTEGER, dimension(1), intent(in) :: IPAST 
+      INTEGER :: LPAST
       LOGICAL FLAGS,FLAGN 
 C---- COMMON BLOCKS 
       COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2 
@@ -5203,7 +5219,7 @@ C---- COMMON BLOCKS
 C 
 C --- INITIAL PHASE 
       IF (IPOS.EQ.-1) THEN 
-            YLAGR5=PHI(IC,THETA,RPAR,IPAR)   
+            YLAGR5=PHI(IC,THETA,RPAR,IPAR,LPAST)   
 C ---       CALL PHI(IC,THETA,YLAGR5,RPAR,IPAR)
             RETURN 
       END IF 
@@ -5220,7 +5236,7 @@ C --- COMPUTE PLACE OF IC-TH COMPONENT
 C ----- COMPUTE DESIRED APPROXIMATION 
       I=I+IPOS 
       YLAGR5=PAST(I)+THETA*(PAST(NRDS+I)+(THETA-C2M1)*(PAST(2*NRDS+I) 
-     &            +(THETA-C1M1)*(PAST(3*NRDS+I)))) 
+     &            +(THETA-C1M1)*(PAST(3*NRDS+I))))
       RETURN 
       END 
 C 
@@ -5229,7 +5245,7 @@ C
  
 C *********************************************************** 
 C 
-      FUNCTION DLAGR5(IC,THETA,IPOS,PHI,RPAR,IPAR,PAST,IPAST,NRDS) 
+      FUNCTION DLAGR5(IC,THETA,IPOS,PHI,RPAR,IPAR,PAST,IPAST,NRDS,LPAST) 
 C ---------------------------------------------------------- 
 C     THIS FUNCTION CAN BE USED FOR CONTINUOUS OUTPUT IN CONNECTION 
 C     WITH THE SUBROUTINE LAGR5. IT PROVIDES AN APPROXIMATION  
@@ -5241,8 +5257,9 @@ C --- REAL(kind=DP) PHI,DLAGR5
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
       INTEGER, dimension(1), intent(in) :: IPAR 
 CCC  
-      REAL(kind=DP), dimension(1), intent(in) :: PAST 
+      REAL(kind=DP), dimension(LPAST), intent(in) :: PAST 
       INTEGER, dimension(1), intent(in) :: IPAST 
+      INTEGER :: LPAST
       LOGICAL FLAGS,FLAGN 
 C---- COMMON BLOCKS 
       COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2 
@@ -5270,7 +5287,7 @@ C ----- COMPUTE DESIRED APPROXIMATION
       I=I+IPOS 
       DLAGR5=PAST(NRDS+I)+(THETA-C2M1)*(PAST(2*NRDS+I) 
      &     +(THETA-C1M1)*PAST(3*NRDS+I)) 
-     &     +THETA*(PAST(2*NRDS+I)+(2.D0*THETA-C2M1-C1M1)*PAST(3*NRDS+I)) 
+     &     +THETA*(PAST(2*NRDS+I)+(2.D0*THETA-C2M1-C1M1)*PAST(3*NRDS+I))
       DLAGR5=DLAGR5/H 
       RETURN 
       END 
@@ -5281,7 +5298,7 @@ C
 C 
       SUBROUTINE BPDTCT(N,X,H,Y,ARGLAG,RPAR,IPAR,UCONT,GRID,NLAGS, 
      &                  FIRST,LAST,XEND,IGRID,BPV,IBP,ILBP,BPP,BPD,
-     &                  KMAX,PHI,PAST,IPAST,NRDS) 
+     &                  KMAX,PHI,PAST,IPAST,NRDS,LPAST) 
                        
 C ---------------------------------------------------------- 
 C     THIS SUBROUTINE CAN BE USED FOR DETECTING BREAKING POINTS  
@@ -5291,7 +5308,7 @@ C ----------------------------------------------------------
         IMPLICIT DOUBLE PRECISION (A-H,O-Z) 
         INTEGER, PARAMETER :: DP=kind(1D0) 
         REAL(kind=DP), dimension(N) :: Y 
-        REAL(kind=DP), dimension(1), intent(in) :: PAST 
+        REAL(kind=DP), dimension(LPAST), intent(in) :: PAST 
         INTEGER, dimension(1), intent(in) :: IPAST 
         REAL(kind=DP), dimension(:), allocatable :: YADV 
         REAL(kind=DP), dimension(1) :: UCONT 
@@ -5300,6 +5317,7 @@ C ----------------------------------------------------------
         INTEGER, dimension(1) :: IPAR 
         REAL(kind=DP), dimension(1) :: RPAR 
         EXTERNAL PHI
+        INTEGER :: LPAST
         LOGICAL FIRST,LAST,BPD,FLAGS,FLAGN 
 C----   COMMON BLOCKS 
         COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2 
@@ -5313,16 +5331,16 @@ C ---
         ALLOCATE(YADV(N)) 
         COMPAR=UROUND*MAX(ABS(X),ABS(X+H)) 
         
-	XLAST=UCONT(LRC+1) 
+        XLAST=UCONT(LRC+1) 
         HLAST=UCONT(LRC+2) 
         DO IL=1,NLAGS 
-         ALS = ARGLAG(IL,X,Y,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+         ALS = ARGLAG(IL,X,Y,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST) 
 C -----  DEVIATING ARGUMENT AT X 
 C -----  EXTRAPOLATION OF THE COLLOCATION POLYNOMIAL       
          DO IC=1,N 
           YADV(IC)=CONTR5(IC,N,X+H,UCONT,XLAST,HLAST) 
          END DO 
-         ALD = ARGLAG(IL,X+H,YADV,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+         ALD = ARGLAG(IL,X+H,YADV,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST) 
 C -----  DEVIATING ARGUMENT AT X+H        
  
          IF (ABS(ALS-ALD).LE.COMPAR) GO TO 33
@@ -5359,7 +5377,7 @@ C ---       TEST DI CONVERGENZA
             DO IC=1,N 
              YADV(IC)=CONTR5(IC,N,XA,UCONT,XLAST,HLAST) 
             END DO 
-            ALN = ARGLAG(IL,XA,YADV,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+            ALN = ARGLAG(IL,XA,YADV,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST) 
             IF ((ALS-BPP)*(ALN-BPP).LE.0.D0) THEN 
              ALD=ALN 
              THRIGH=THNEW 
@@ -5401,7 +5419,7 @@ C ---       BP ALREADY PRESENT
  
 
       SUBROUTINE BPACC(N,X,H,Y,ARGLAG,RPAR,IPAR,Z1,Z2,Z3,FIRST,
-     &                 BPV,IBP,ILBP,BPP,KMAX,PHI,PAST,IPAST,NRDS) 
+     &                 BPV,IBP,ILBP,BPP,KMAX,PHI,PAST,IPAST,NRDS,LPAST)
                        
 C ---------------------------------------------------------- 
 C     THIS SUBROUTINE CAN BE USED FOR APPROXIMATING BREAKING POINTS  
@@ -5410,13 +5428,14 @@ C ----------------------------------------------------------
         IMPLICIT DOUBLE PRECISION (A-H,O-Z) 
         INTEGER, PARAMETER :: DP=kind(1D0) 
         REAL(kind=DP), dimension(N) :: Y,Z1,Z2,Z3 
-        REAL(kind=DP), dimension(1), intent(in) :: PAST
+        REAL(kind=DP), dimension(LPAST), intent(in) :: PAST
         INTEGER, dimension(1), intent(in) :: IPAST
         REAL(kind=DP), dimension(:), allocatable :: YCONT,YAPP
         REAL(kind=DP), dimension(1) :: BPV 
         INTEGER, dimension(1) :: IPAR 
         REAL(kind=DP), dimension(1) :: RPAR 
         EXTERNAL PHI
+        INTEGER :: LPAST
         LOGICAL FIRST 
 C----   COMMON BLOCKS 
         COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2 
@@ -5455,10 +5474,10 @@ C ---   INITIAL VALUES FOR THE COMPUTATION
         DO I=1,N 
             YAPP(I)=CONTR5(I,N,XL,YCONT,XSOL,HSOL) 
         END DO 
-        ALS = ARGLAG(ILBP,XL,YAPP,RPAR,IPAR,PHI,PAST,IPAST,NRDS)
+        ALS = ARGLAG(ILBP,XL,YAPP,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST)
 C ---
         XR=X+THRIGH*H
-        ALD = ARGLAG(ILBP,XR,YCONT,RPAR,IPAR,PHI,PAST,IPAST,NRDS)
+        ALD = ARGLAG(ILBP,XR,YCONT,RPAR,IPAR,PHI,PAST,IPAST,NRDS,LPAST)
         DO K=1,KMAX 
             THNEW = THRIGH - (ALD-BPP)*(THRIGH-THLEFT)/(ALD-ALS)  
             THLEFT= THRIGH
@@ -5474,7 +5493,8 @@ C ---       TEST DI CONVERGENZA
             DO I=1,N 
              YAPP(I)=CONTR5(I,N,XAP,YCONT,XSOL,HSOL) 
             END DO 
-            ALD = ARGLAG(ILBP,XAP,YAPP,RPAR,IPAR,PHI,PAST,IPAST,NRDS) 
+            ALD = ARGLAG(ILBP,XAP,YAPP,RPAR,IPAR,PHI,PAST,IPAST,NRDS,
+     &                  LPAST) 
             IF (ABS(ALD-ALS).LE.EPSILON) GOTO 36 
         END DO 
 
