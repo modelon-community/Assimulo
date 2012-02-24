@@ -9,7 +9,7 @@ C     THE LAST SUCCESSFULLY COMPUTED STEP (BY RADAR5).
 C ----------------------------------------------------------
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
-      REAL(kind=DP), dimension(4*N), intent(in) ::  CONT
+      REAL(kind=DP), dimension(1), intent(in) ::  CONT
 C --- REQUIRED CONSTANTS
       COMMON /CONSTN/C1,C2,C1M1,C2M1,C1MC2
 
