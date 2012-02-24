@@ -262,7 +262,7 @@ python module radar5 ! in
             integer :: i
             integer :: n
             double precision :: t
-            real(kind=8) dimension(4*n),intent(in) :: cont
+            real(kind=8) dimension(*),intent(in) :: cont
             double precision :: xsol
             double precision :: hsol
             double precision :: c1
