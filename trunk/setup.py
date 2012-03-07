@@ -23,6 +23,7 @@ import os as O
 import shutil as SH
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
+import ctypes.util
 try:
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
@@ -35,6 +36,7 @@ incdirs = ''
 libdirs = ''
 SLUdir = ""
 BLASdir = ""
+LAPACKdir = ""
 BLASname = 'blas'
 BLASname_t = ""
 debug = False
@@ -75,6 +77,9 @@ for x in S.argv[1:]:
         if x[8:].upper() == "TRUE":
             debug = True
         copy_args.remove(x)
+    if not x.find('--lapack-home'):
+        LAPACKdir = x[14:]
+        copy_args.remove(x)
     if not x.find('--static'):
         static = x[9:]
         if x[9:].upper() == "TRUE":
@@ -111,6 +116,7 @@ def pre_processing():
     create_dir(O.path.join(O.path.join("build","assimulo"),"tests","solvers"))
     create_dir(join("build","assimulo","thirdparty"))
     create_dir(join("build","assimulo","thirdparty","hairer"))
+    create_dir(join("build","assimulo","thirdparty","voigtmann"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -120,6 +126,7 @@ def pre_processing():
     fileTests   = O.listdir("tests")
     fileTestsSolvers = O.listdir(O.path.join("tests","solvers"))
     fileThirdPartyHairer = O.listdir(join("thirdparty","hairer"))
+    fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -131,6 +138,7 @@ def pre_processing():
     desTests = O.path.join(curdir,O.path.join("build","assimulo"),"tests")
     desTestsSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"tests","solvers")
     desThirdPartyHairer = join(curdir,"build","assimulo","thirdparty","hairer")
+    desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -158,6 +166,11 @@ def pre_processing():
             SH.copy2(join("thirdparty","hairer",f),desThirdPartyHairer)
         if f == "LICENSE":
             SH.copy2(join("thirdparty","hairer",f),join(curdir,"build","assimulo","lib"))
+    for f in fileThirdPartyVoigtmann:
+        if not O.path.isdir(join("thirdparty","voigtmann",f)):
+            SH.copy2(join("thirdparty","voigtmann",f),desThirdPartyVoigtmann)
+        if f == "LICENSE_GLIMDA":
+            SH.copy2(join("thirdparty","voigtmann",f),join(curdir,"build","assimulo","lib"))
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -337,6 +350,34 @@ def check_fortran_extensions():
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+    #GLIMDA
+    #ADD liblapack and libblas
+    lapack = False
+    blas = False
+    if LAPACKdir != "":
+        lapack = True
+        extra_link_flags += ["-L"+LAPACKdir, "-llapack"]
+    else: #Try to see if Lapack exists in PATH
+        name = ctypes.util.find_library("lapack")
+        if name != None:
+            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            lapack = True
+    if BLASdir != "":
+        blas = True
+        extra_link_flags += ["-L"+BLASdir, "-lblas"]
+    else: #Try to see if Blas exists in PATH
+        name = ctypes.util.find_library("blas")
+        if name != None:
+            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            blas = True
+    
+    if lapack and blas:
+        config.add_extension('assimulo.lib.glimda',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+    else:
+        L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+    
     return config.todict()["ext_modules"]
 
 """
@@ -412,7 +453,8 @@ setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE']},
+      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
+                                'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA']},
       script_args=copy_args)
 
 if change_dir:

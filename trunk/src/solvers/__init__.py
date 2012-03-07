@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock"]
+__all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
+           "glimda"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler
@@ -23,3 +24,8 @@ from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE
 from sundials import IDA, CVode
 from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
 from rosenbrock import RodasODE
+
+try:
+    from glimda import GLIMDA
+except ImportError:
+    print "Could not find GLIMDA"
