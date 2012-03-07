@@ -583,6 +583,29 @@ cdef class IDA(Implicit_ODE):
         
         return [flag, self.y, self.yd]
     
+    cpdef get_last_estimated_errors(self):
+        cdef flag
+        cdef N.ndarray err, pyweight, pyele
+        cdef N_Vector ele=N_VNew_Serial(self.pData.dim)
+        cdef N_Vector eweight=N_VNew_Serial(self.pData.dim)
+        
+        flag = Sun.IDAGetErrWeights(self.ida_mem, eweight)
+        if flag < 0:
+            raise IDAError(flag)
+        flag = Sun.IDAGetEstLocalErrors(self.ida_mem, ele)
+        if flag < 0:
+            raise IDAError(flag)
+        
+        pyweight = nv2arr(eweight)
+        pyele = nv2arr(ele)
+        
+        err = pyweight*pyele
+        
+        N_VDestroy_Serial(ele) #Deallocate
+        N_VDestroy_Serial(eweight) #Deallocate
+        
+        return err
+    
     cpdef N.ndarray interpolate(self,double t,int k = 0):
         """
         Calls the internal IDAGetDky for the interpolated values at time t.

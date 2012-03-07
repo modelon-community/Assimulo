@@ -237,6 +237,7 @@ cdef extern from "idas/idas.h":
     
     #Functions for retrieving statistics
     int IDAGetEstLocalErrors(void *ida_mem, N_Vector ele)               #Estimated local errors
+    int IDAGetErrWeights(void *ida_mem, N_Vector eweight)
     int IDAGetLastStep(void *ida_mem, realtype *hlast)
     int IDAGetLastOrder(void *ida_mem,int *qlast)                       #Last order used
     int IDAGetCurrentOrder(void *ida_mem,int *qcurrent)                 #Order that is about to be tried

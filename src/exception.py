@@ -22,3 +22,6 @@ class Rodas_Exception(AssimuloException):
     
 class Dopri5_Exception(AssimuloException):
     pass
+    
+class GLIMDA_Exception(AssimuloException):
+    pass
