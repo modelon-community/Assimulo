@@ -93,3 +93,11 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_rodasode_vanderpol(self):
         rodasode_vanderpol.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_lsodar_vanderpol(self):
+        lsodar_vanderpol.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_lsodar_with_disc(self):
+        lsodar_with_disc.run_example(with_plots=False)

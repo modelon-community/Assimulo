@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers import Radau5ODE
+from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
@@ -39,13 +39,12 @@ def run_example(with_plots=True):
     exp_mod.name = 'Van der Pol (explicit)'
     
     #Define an explicit solver
-    exp_sim = Radau5ODE(exp_mod) #Create a Radau5 solver
+    exp_sim = LSODAR(exp_mod) #Create a Radau5 solver
     
     #Sets the parameters
     exp_sim.atol = 1e-4 #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    exp_sim.inith = 1.e-4 #Initial step-size
-    
+        
     #Simulate
     t, y = exp_sim.simulate(2.) #Simulate 2 seconds
     
@@ -53,7 +52,7 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t,y[:,0], marker='o')
         P.show()
-
+    
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
