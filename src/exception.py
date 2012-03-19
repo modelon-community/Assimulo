@@ -25,3 +25,6 @@ class Dopri5_Exception(AssimuloException):
     
 class GLIMDA_Exception(AssimuloException):
     pass
+
+class ODEPACK_Exception(AssimuloException):
+    pass

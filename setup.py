@@ -117,6 +117,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty"))
     create_dir(join("build","assimulo","thirdparty","hairer"))
     create_dir(join("build","assimulo","thirdparty","voigtmann"))
+    create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -127,6 +128,7 @@ def pre_processing():
     fileTestsSolvers = O.listdir(O.path.join("tests","solvers"))
     fileThirdPartyHairer = O.listdir(join("thirdparty","hairer"))
     fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
+    fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -139,6 +141,7 @@ def pre_processing():
     desTestsSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"tests","solvers")
     desThirdPartyHairer = join(curdir,"build","assimulo","thirdparty","hairer")
     desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
+    desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -171,6 +174,11 @@ def pre_processing():
             SH.copy2(join("thirdparty","voigtmann",f),desThirdPartyVoigtmann)
         if f == "LICENSE_GLIMDA":
             SH.copy2(join("thirdparty","voigtmann",f),join(curdir,"build","assimulo","lib"))
+    for f in fileThirdPartyHindmarsh:
+        if not O.path.isdir(join("thirdparty","hindmarsh",f)):
+            SH.copy2(join("thirdparty","hindmarsh",f),desThirdPartyHindmarsh)
+        if f == "LICENSE_ODEPACK":
+            SH.copy2(join("thirdparty","hindmarsh",f),join(curdir,"build","assimulo","lib"))
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -350,6 +358,14 @@ def check_fortran_extensions():
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+    #ODEPACK
+    config.add_extension('assimulo.lib.odepack',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+    
     #GLIMDA
     #ADD liblapack and libblas
     lapack = False
@@ -454,7 +470,8 @@ setup(name=NAME,
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
       package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
-                                'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA']},
+                                 'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
+                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK']},
       script_args=copy_args)
 
 if change_dir:
