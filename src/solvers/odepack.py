@@ -156,10 +156,10 @@ class LSODAR(Explicit_ODE):
             opts["output_index"] = output_index
         
         #Retrieving statistics
-        self.statistics["ng"]      += IWORK[9]
+        self.statistics["ng"]            += IWORK[9]
         self.statistics["nsteps"]        += IWORK[10]
-        self.statistics["nfcn"]        += IWORK[11]
-        self.statistics["njac"]        += IWORK[12]
+        self.statistics["nfcn"]          += IWORK[11]
+        self.statistics["njac"]          += IWORK[12]
         
         return flag, tlist, ylist
     
