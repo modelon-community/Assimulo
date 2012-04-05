@@ -449,7 +449,6 @@ cdef class IDA(Implicit_ODE):
             output_list  = opts["output_list"][output_index:]
             
             for tout in output_list:
-                output_index += 1
                 #Integration loop
                 flag = Sun.IDASolve(self.ida_mem,tout,&tret,yout,ydout,IDA_NORMAL)
                 if flag < 0:
@@ -463,12 +462,16 @@ cdef class IDA(Implicit_ODE):
                 if flag == IDA_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
                     self.store_statistics()
+                    if tret == tout:
+                        output_index += 1
                     break
-                    
                 if flag == IDA_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
                     self.store_statistics()
+                    if tret == tout:
+                        output_index += 1
                     break
+                output_index += 1
             else:
                 flag = ID_COMPLETE
                 self.store_statistics()
@@ -1654,9 +1657,8 @@ cdef class CVode(Explicit_ODE):
         else:
             output_index = opts["output_index"]
             output_list  = opts["output_list"][output_index:]
-            
+
             for tout in output_list:
-                output_index += 1
                 flag = Sun.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
                 if flag < 0:
                     raise CVodeError(flag, tret)
@@ -1668,11 +1670,16 @@ cdef class CVode(Explicit_ODE):
                 if flag == CV_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
                     self.store_statistics()
+                    if tret == tout:
+                        output_index += 1
                     break
                 if flag == CV_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
                     self.store_statistics()
+                    if tret == tout:
+                        output_index += 1
                     break
+                output_index += 1
             else:
                 flag = ID_COMPLETE
                 self.store_statistics()

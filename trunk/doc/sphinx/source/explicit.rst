@@ -71,3 +71,11 @@ Dopri5
    :members:
    :inherited-members:
    :show-inheritance:
+   
+LSODAR
+---------------------
+
+.. autoclass:: assimulo.solvers.odepack.LSODAR
+   :members:
+   :inherited-members:
+   :show-inheritance:

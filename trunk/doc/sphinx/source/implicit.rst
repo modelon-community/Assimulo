@@ -23,3 +23,11 @@ Radau5DAE
    :members:
    :inherited-members:
    :show-inheritance:
+
+GLIMDA
+---------
+ 
+.. autoclass:: assimulo.solvers.glimda.GLIMDA
+   :members:
+   :inherited-members:
+   :show-inheritance:

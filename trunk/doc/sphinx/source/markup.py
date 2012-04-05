@@ -20,7 +20,7 @@ def mark_solvers():
 
     solvers = [(sundials.CVode, "ODE"), (sundials.IDA, "DAE"), (radau5.Radau5ODE, "ODE"), (radau5.Radau5DAE, "DAE"),
                (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE"),
-               (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE")]
+               (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE"), (odepack.LSODAR, "ODE"),(glimda.GLIMDA, "DAE")]
     
     
     rhs = lambda t,y: [1.0]

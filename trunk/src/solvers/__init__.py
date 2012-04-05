@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda"]
+           "glimda","odepack"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler
