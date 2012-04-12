@@ -109,6 +109,7 @@ cdef class IDA(Implicit_ODE):
         self.statistics["nSetfails"]  = 0 #Number of error test failures
         self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
         self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
+        self.statistics["nstateevents"] = 0 #Number of state events
         
         #Solver support
         self.supports["one_step_mode"] = True
@@ -437,12 +438,12 @@ cdef class IDA(Implicit_ODE):
                 
                 if flag == IDA_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
-                    self.store_statistics()
+                    self.store_statistics(IDA_ROOT_RETURN)
                     break
                     
                 if flag == IDA_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
-                    self.store_statistics()
+                    self.store_statistics(IDA_TSTOP_RETURN)
                     break
         else:
             output_index = opts["output_index"]
@@ -461,20 +462,20 @@ cdef class IDA(Implicit_ODE):
                 
                 if flag == IDA_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
-                    self.store_statistics()
+                    self.store_statistics(IDA_ROOT_RETURN)
                     if tret == tout:
                         output_index += 1
                     break
                 if flag == IDA_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
-                    self.store_statistics()
+                    self.store_statistics(IDA_TSTOP_RETURN)
                     if tret == tout:
                         output_index += 1
                     break
                 output_index += 1
             else:
                 flag = ID_COMPLETE
-                self.store_statistics()
+                self.store_statistics(flag)
             
             opts["output_index"] = output_index
         
@@ -520,11 +521,11 @@ cdef class IDA(Implicit_ODE):
         
         if flag == IDA_ROOT_RETURN: #Found a root
             flag = ID_EVENT #Convert to Assimulo flags
-            self.store_statistics()
+            self.store_statistics(IDA_ROOT_RETURN)
             
         if flag == IDA_TSTOP_RETURN: #Reached tf
             flag = ID_COMPLETE
-            self.store_statistics()
+            self.store_statistics(IDA_TSTOP_RETURN)
         
         #Deallocate
         N_VDestroy_Serial(yout)
@@ -557,7 +558,7 @@ cdef class IDA(Implicit_ODE):
         cdef double direction
         cdef int icopt, flag
         
-        self.initialize()
+        self.initialize_ida()
         self.initialize_options()
         
         #Determine method
@@ -1197,7 +1198,7 @@ cdef class IDA(Implicit_ODE):
     
     pbar = property(_get_pbar, _set_pbar)
     
-    cdef void store_statistics(self):
+    cdef void store_statistics(self, return_flag):
         """
         Retrieves and stores the statistics.
         """
@@ -1214,6 +1215,9 @@ cdef class IDA(Implicit_ODE):
         flag = Sun.IDAGetNumGEvals(self.ida_mem, &ngevals)
         flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
         flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+        
+        if return_flag == IDA_ROOT_RETURN:
+            self.statistics["nstateevents"] += 1
         
         self.statistics["nsteps"] += nsteps
         self.statistics["nfevals"] += nrevals
@@ -1249,6 +1253,8 @@ cdef class IDA(Implicit_ODE):
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
         self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
         self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
+        if self.pData.dimRoot > 0:
+            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
         
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
             self.log_message('\nSensitivity Statistics:\n', verbose)
@@ -1342,6 +1348,7 @@ cdef class CVode(Explicit_ODE):
         self.statistics["nSetfails"]  = 0 #Number of error test failures
         self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
         self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
+        self.statistics["nstateevents"] = 0 #Number of state events
         
         #Solver support
         self.supports["one_step_mode"] = True
@@ -1598,11 +1605,11 @@ cdef class CVode(Explicit_ODE):
         
         if flag == CV_ROOT_RETURN: #Found a root
             flag = ID_EVENT #Convert to Assimulo flags
-            self.store_statistics()
+            self.store_statistics(CV_ROOT_RETURN)
             
         if flag == CV_TSTOP_RETURN: #Reached tf
             flag = ID_COMPLETE
-            self.store_statistics()
+            self.store_statistics(CV_TSTOP_RETURN)
         
         #Deallocate
         N_VDestroy_Serial(yout)
@@ -1648,11 +1655,11 @@ cdef class CVode(Explicit_ODE):
                 
                 if flag == CV_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
-                    self.store_statistics()
+                    self.store_statistics(CV_ROOT_RETURN)
                     break
                 if flag == CV_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
-                    self.store_statistics()
+                    self.store_statistics(CV_TSTOP_RETURN)
                     break
         else:
             output_index = opts["output_index"]
@@ -1668,21 +1675,21 @@ cdef class CVode(Explicit_ODE):
                 yr.append(nv2arr(yout))
                 
                 if flag == CV_ROOT_RETURN: #Found a root
+                    self.store_statistics(CV_ROOT_RETURN)
                     flag = ID_EVENT #Convert to Assimulo flags
-                    self.store_statistics()
                     if tret == tout:
                         output_index += 1
                     break
                 if flag == CV_TSTOP_RETURN: #Reached tf
+                    self.store_statistics(CV_TSTOP_RETURN)
                     flag = ID_COMPLETE
-                    self.store_statistics()
                     if tret == tout:
                         output_index += 1
                     break
                 output_index += 1
             else:
                 flag = ID_COMPLETE
-                self.store_statistics()
+                self.store_statistics(flag)
             
         
             opts["output_index"] = output_index
@@ -2400,7 +2407,7 @@ cdef class CVode(Explicit_ODE):
     
     pbar = property(_get_pbar, _set_pbar)
     
-    cdef void store_statistics(self):
+    cdef void store_statistics(self, int return_flag):
         """
         Retrieves and stores the statistics.
         """
@@ -2426,6 +2433,8 @@ cdef class CVode(Explicit_ODE):
         flag = Sun.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
                                                                             #Number of nonlinear conv failures
         
+        if return_flag == CV_ROOT_RETURN:
+            self.statistics["nstateevents"] += 1
         self.statistics["nsteps"]    += nsteps
         self.statistics["nfevals"]   += nfevals
         self.statistics["netfails"]  += netfails
@@ -2469,6 +2478,8 @@ cdef class CVode(Explicit_ODE):
         else:
             self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
             self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
+        if self.pData.dimRoot > 0:
+            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
         
         
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
