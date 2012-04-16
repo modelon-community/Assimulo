@@ -94,11 +94,11 @@ class Radar5ODE(Explicit_ODE):
         self._tlist = []
         self._ylist = []
         
-    def _solout(self, told, t, hold, y, cont):
+    def _solout(self,nr, told, t, hold, y, cont,irtrn):
         """
         This method is called after every successful step taken by Radar5
         """
-#        print told, t, hold, y, cont
+        #print "SOLOUT:", told, t, hold, y, cont
 #        print cont
 #        print told, t, told + hold
         if self._opts["output_list"] == None:
@@ -125,38 +125,74 @@ class Radar5ODE(Explicit_ODE):
             self._opts["output_index"] = output_index
         
 #        return irtrn
-        return 0
+        return irtrn
 
+    def coutput(self,t):
+        Nx = self.problem_info["dim"]
+        y = N.zeros(Nx)
+        
+        #theta, pos = radar5.lagr5(0, t, None, self.arglag_coutput, self.past,  self.problem.phi,  self.problem.ipast)
+        theta, pos = radar5.lagr5(10, t, None, self.arglag, self.past,  self.problem.phi,  self.problem.ipast)
+        #print theta, pos
+        for i in range(1,Nx+1):
+            y[i-1] = radar5.ylagr5(i, theta, pos, self.problem.phi,  self.past,  self.problem.ipast)
+            #print y[i-1]
+            #print
+        return y
 
+    #def arglag_coutput(self, i, t, y, past, ipast):
+        #return t
+        
     def arglag(self, i, t, y, past, ipast):
-        return self.problem.arglag(i,t,y)
+    #def arglag(self, i, t, y, phi, past, ipast):
+        #print "ARGLAG", i,t,y, phi, past, ipast
+        #print "ARGLAG", i, t, y, past, ipast
+        if i == 10:
+            return t
+        else:
+            return self.problem.arglag(i,t,y)
         
 
-    def compute_ydelay(self, t, y, arglag, phi,  past, ipast):
+    def compute_ydelay(self, t, y, past, ipast):
 #        print t, len(past)
+        #ipast = [1]
         ydelay = copy.deepcopy(self.problem.lagcompmap)
-#        print t, y, arglag, phi, past, ipast
-        for i in range(self.problem.ntimelags):
-            theta, pos = radar5.lagr5(i, t, y, self.problem.arglag, past,  self.problem.phi,  ipast)
-            for j, val in enumerate(self.problem.lagcompmap[i]):
-                ydelay[i][j] = radar5.ylagr5(val, theta, pos, self.problem.phi,  past,  ipast)
-#        print ydelay
+        #print "YDELAY, ", t, y, past, ipast, len(past)
+        for i in range(1, self.problem.ntimelags+1):
+            #print "Calling LAGR5:", i, t, y, self.arglag, past,  self.problem.phi,  ipast
+            theta, pos = radar5.lagr5(i, t, y, self.arglag, past,  self.problem.phi,  ipast)
+            #print "LAGR5", theta,pos,t,y,past,ipast
+            for j, val in enumerate(self.problem.lagcompmap[i-1]):
+                ydelay[i-1][j] = radar5.ylagr5(val, theta, pos, self.problem.phi,  past,  ipast)
+        #print "YDELAY, ", t, y, past, ipast, len(past)
+        #if abs(ydelay[0][0]) > 1e6:
+        #   print t
+        #   print ydelay
+        #   raise Exception
+        #print "COMPUTE_YDELAY DONE"
         return ydelay
 
-    def F(self, t,y,  past, ipast):
-        self.past.append(copy.deepcopy(past))
-        self.past_t.append(t)
+    #def F(self, t, y, arglag, phi, past, ipast):
+    def F(self, t, y, past, ipast):
+        self.past = copy.deepcopy(past)
+        #self.past.append(copy.deepcopy(past))
+        #self.past_t.append(t)
 #        past[:] = 0
-        print 'F:', past
-#        print t, y, arglag, phi, past, ipast
+        #print 'F:', t, y, past, ipast
+        #print 'F:', t, y, arglag, phi, past, ipast
+        if abs(y[0]) > 1e3:
+            print "F:", t, y,past, ipast, max(abs(past)), min(abs(past))
+        #print past[(abs(past) > 0) & (abs(past) < 1e-6)]
+        #print past[:20]
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
-        ydelay = self.compute_ydelay(t,y, None, None,  past,  ipast)
+        ydelay = self.compute_ydelay(t,y, past,  ipast)
 
         # Now we can compute the right-hand-side
         return self.problem.rhs(t, y, ydelay)
-        
-    def Fjac(self, t, y,   past, ipast):
+    
+    #def Fjac(self, t, y, arglag, phi, past, ipast):    
+    def Fjac(self, t, y, past, ipast):
         print 'Fjac:', past
 #        print t, y, arglag, phi, past, ipast        
         # First find the correct place in the past vector for each time-lag
@@ -168,8 +204,6 @@ class Radar5ODE(Explicit_ODE):
 
 
     def integrate(self, t, y, tf, opts):
-        self.past = []
-        self.past_t = []
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 0 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         MLJAC = self.problem_info["dim"] #The jacobian is full
@@ -178,8 +212,8 @@ class Radar5ODE(Explicit_ODE):
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*20) #Work (double) vector
-        IWORK = N.array([0]*20) #Work (integer) vector
+        WORK  = N.array([0.0]*30) #Work (double) vector
+        IWORK = N.array([0]*30) #Work (integer) vector
         
         #Setting work options
         WORK[0] = N.finfo(N.double).eps        # Rounding unit
@@ -200,11 +234,11 @@ class Radar5ODE(Explicit_ODE):
         IWORK[7] = 1
         IWORK[10] = self.ieflag
         IWORK[11] = self.mxst
-        IWORK[12] = self.problem.ngrid-1
+        IWORK[12] = self.problem.ngrid
         IWORK[13] = 1
         IWORK[14] = self.problem.nrdens
         
-        past = N.zeros(self.mxst*(4*self.problem.nrdens+2))
+        #past = N.zeros(self.mxst*(4*self.problem.nrdens+2))
 #        print WORK
 #        print IWORK
         
@@ -217,8 +251,9 @@ class Radar5ODE(Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-
-        t, y, h, iwork, flag = radar5.radar5(self.F,            \
+        print "INIT", t,y,tf,self.inith, self.problem.ipast
+        print "GRID", self.problem.grid, self.problem.ngrid
+        t, y, h, iwork, flag = radar5.assimulo_radar5(self.F,            \
                                        self.problem.phi,        \
                                        self.arglag,             \
                                        t,                       \
@@ -240,17 +275,17 @@ class Radar5ODE(Explicit_ODE):
                                        IOUT,                    \
                                        WORK,                    \
                                        IWORK,                   \
-                                       self.problem.grid,       \
+                                       self.problem.grid.copy(),       \
                                        self.problem.ipast,      \
                                        mas_dummy,               \
                                        MLMAS,                   \
-                                       MUMAS,                   \
-                                       past,                    \
-                                       IWORK[14]+1,             \
-#                                       IWORK[14],               \
-                                       self.problem.ngrid,      \
-                                       len(past)                \
-                                       )
+                                       MUMAS)#,                   \
+                                       #past,                    \
+                                       #IWORK[14]+1,             \
+##                                       IWORK[14],               \
+                                       #self.problem.ngrid,      \
+                                       #len(past)                \
+                                       #)
                
         #Checking return
         if flag == 1:
@@ -331,7 +366,7 @@ class Radar5ODE(Explicit_ODE):
             self.options["newt"] = int(newt)
         except (ValueError, TypeError):
             raise Radar_Exception('The newt must be an integer or float.')
-		
+        
     def _get_newt(self):
         """
         Maximal number of Newton iterations.
@@ -347,7 +382,7 @@ class Radar5ODE(Explicit_ODE):
                                 newt = 10
         """
         return self.options["newt"]
-		
+        
     newt = property(_get_newt,_set_newt)
     
     def _set_fnewt(self, fnewt):
