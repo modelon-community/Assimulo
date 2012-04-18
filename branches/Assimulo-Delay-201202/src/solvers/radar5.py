@@ -72,6 +72,12 @@ class Radar5ODE(Explicit_ODE):
         self.options["mxst"] = 100 # The maximum number of stored dense output points
         self.options["usejaclag"]   = False
         
+        SQ6 = N.sqrt(6.0)
+        C1 = (4.0-SQ6)/10.0 
+        C2 = (4.0+SQ6)/10.0 
+        self.C1M1 = C1-1.0 
+        self.C2M1 = C2-1.0 
+        
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
@@ -124,29 +130,53 @@ class Radar5ODE(Explicit_ODE):
                 pass
             self._opts["output_index"] = output_index
         
-#        return irtrn
         return irtrn
 
-    def coutput(self,t):
+    #def coutput(self,t):
+        #Nx = self.problem_info["dim"]
+        #y = N.zeros(Nx)
+        
+        #theta, pos = radar5.lagr5(10, t, None, self.arglag, self.past,  self.problem.phi,  self.problem.ipast)
+        #for i in range(1,Nx+1):
+            #y[i-1] = radar5.ylagr5(i, theta, pos, self.problem.phi,  self.past,  self.problem.ipast)
+        #return y
+
+    def coutput(self, t, i = -1):
+        """
+            Return the continous output solution at time t.
+            
+            t: time
+            i: solution component (default -1 gives the whole vector)
+        """
         Nx = self.problem_info["dim"]
         y = N.zeros(Nx)
         
-        #theta, pos = radar5.lagr5(0, t, None, self.arglag_coutput, self.past,  self.problem.phi,  self.problem.ipast)
-        theta, pos = radar5.lagr5(10, t, None, self.arglag, self.past,  self.problem.phi,  self.problem.ipast)
-        #print theta, pos
-        for i in range(1,Nx+1):
-            y[i-1] = radar5.ylagr5(i, theta, pos, self.problem.phi,  self.past,  self.problem.ipast)
-            #print y[i-1]
-            #print
-        return y
-
-    #def arglag_coutput(self, i, t, y, past, ipast):
-        #return t
         
+        # t belongs to the interval (tk[ik], tk[ik+1])
+        ik = N.searchsorted(self.tk, t) - 1
+        
+        I = self.idif*ik
+        
+        H = self.past[I+self.idif-1]
+        theta = (t - (self.past[I] + H))/H
+        
+        
+        if i == -1:
+            return N.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
+        elif i >= 0:
+            return self.cpoly(i, I, theta)
+        else:
+            raise ValueError('i has to be either -1 or a positive integer <= the problem dimension')
+            
+    def cpoly(self, i, I, theta):
+        """
+            Evaluate the I:th dense output polynomial for component i at theta.
+        """
+        nrds = self.problem.nrdens
+        I = I + i + 1
+        return self.past[I] + theta*(self.past[nrds+I] + (theta-self.C2M1)*(self.past[2*nrds+I] + (theta-self.C1M1)*(self.past[3*nrds+I])))  
+
     def arglag(self, i, t, y, past, ipast):
-    #def arglag(self, i, t, y, phi, past, ipast):
-        #print "ARGLAG", i,t,y, phi, past, ipast
-        #print "ARGLAG", i, t, y, past, ipast
         if i == 10:
             return t
         else:
@@ -154,36 +184,18 @@ class Radar5ODE(Explicit_ODE):
         
 
     def compute_ydelay(self, t, y, past, ipast):
-#        print t, len(past)
-        #ipast = [1]
         ydelay = copy.deepcopy(self.problem.lagcompmap)
-        #print "YDELAY, ", t, y, past, ipast, len(past)
         for i in range(1, self.problem.ntimelags+1):
-            #print "Calling LAGR5:", i, t, y, self.arglag, past,  self.problem.phi,  ipast
             theta, pos = radar5.lagr5(i, t, y, self.arglag, past,  self.problem.phi,  ipast)
-            #print "LAGR5", theta,pos,t,y,past,ipast
+
             for j, val in enumerate(self.problem.lagcompmap[i-1]):
                 ydelay[i-1][j] = radar5.ylagr5(val, theta, pos, self.problem.phi,  past,  ipast)
-        #print "YDELAY, ", t, y, past, ipast, len(past)
-        #if abs(ydelay[0][0]) > 1e6:
-        #   print t
-        #   print ydelay
-        #   raise Exception
-        #print "COMPUTE_YDELAY DONE"
+
         return ydelay
 
-    #def F(self, t, y, arglag, phi, past, ipast):
     def F(self, t, y, past, ipast):
-        self.past = copy.deepcopy(past)
-        #self.past.append(copy.deepcopy(past))
-        #self.past_t.append(t)
-#        past[:] = 0
         #print 'F:', t, y, past, ipast
-        #print 'F:', t, y, arglag, phi, past, ipast
-        if abs(y[0]) > 1e3:
-            print "F:", t, y,past, ipast, max(abs(past)), min(abs(past))
-        #print past[(abs(past) > 0) & (abs(past) < 1e-6)]
-        #print past[:20]
+ 
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
         ydelay = self.compute_ydelay(t,y, past,  ipast)
@@ -191,10 +203,7 @@ class Radar5ODE(Explicit_ODE):
         # Now we can compute the right-hand-side
         return self.problem.rhs(t, y, ydelay)
     
-    #def Fjac(self, t, y, arglag, phi, past, ipast):    
     def Fjac(self, t, y, past, ipast):
-        print 'Fjac:', past
-#        print t, y, arglag, phi, past, ipast        
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
         ydelay = self.compute_ydelay(t,y,  None, None,  past,  ipast)
@@ -238,6 +247,10 @@ class Radar5ODE(Explicit_ODE):
         IWORK[13] = 1
         IWORK[14] = self.problem.nrdens
         
+        self.idif = 4*self.problem.nrdens + 2
+        lrpast = self.mxst*self.idif
+        past = N.zeros(lrpast)
+        
         #past = N.zeros(self.mxst*(4*self.problem.nrdens+2))
 #        print WORK
 #        print IWORK
@@ -253,7 +266,8 @@ class Radar5ODE(Explicit_ODE):
         self._opts = opts
         print "INIT", t,y,tf,self.inith, self.problem.ipast
         print "GRID", self.problem.grid, self.problem.ngrid
-        t, y, h, iwork, flag = radar5.assimulo_radar5(self.F,            \
+        #t, y, h, iwork, flag, past = radar5.assimulo_radar5(self.F,            \
+        a = radar5.assimulo_radar5(self.F,            \
                                        self.problem.phi,        \
                                        self.arglag,             \
                                        t,                       \
@@ -279,14 +293,22 @@ class Radar5ODE(Explicit_ODE):
                                        self.problem.ipast,      \
                                        mas_dummy,               \
                                        MLMAS,                   \
-                                       MUMAS)#,                   \
+                                       MUMAS,
+                                       past),
+#                                       lrpast)#,                   \
                                        #past,                    \
                                        #IWORK[14]+1,             \
 ##                                       IWORK[14],               \
                                        #self.problem.ngrid,      \
                                        #len(past)                \
                                        #)
-               
+        t, y, h, iwork, flag, past = a[0]
+        #print a[0]
+        #print len(a[0])
+        self.past = copy.deepcopy(past)
+        self.tk = N.trim_zeros(self.past[::self.idif], 'b')
+        self.hk = N.trim_zeros(self.past[self.idif-1:-1:self.idif], 'b')
+        
         #Checking return
         if flag == 1:
             flag = ID_PY_COMPLETE
