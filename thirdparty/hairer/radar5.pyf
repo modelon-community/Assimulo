@@ -134,7 +134,7 @@ python module radar5 ! in
 		!	double precision :: dontr5
 		!	common /constn/ c1,c2,c1m1,c2m1,c1mc2
 		!end function dontr5
-		subroutine assimulo_radar5(n,fcn,phi,arglag,t,y,xend,h,rtol,atol,itol,jac,ijac,mljac,mujac,jaclag,nlags,njacl,imas,solout,iout,work,iwork,rpar,ipar,idid,grid,ipast,mas,mlmas,mumas,lipast,lgrid) ! in radar5_int.f
+		subroutine assimulo_radar5(n,fcn,phi,arglag,t,y,xend,h,rtol,atol,itol,jac,ijac,mljac,mujac,jaclag,nlags,njacl,imas,solout,iout,work,iwork,rpar,ipar,idid,grid,ipast,mas,mlmas,mumas,lipast,lgrid,past,lrpast) ! in radar5_int.f
 			use ip_array
 			use radcor__user__routines
 			integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
@@ -170,6 +170,8 @@ python module radar5 ! in
 			integer :: mumas
 			integer, optional,intent(in,hide),check(len(ipast)>=lipast),depend(ipast) :: lipast=len(ipast)
 			integer, optional,intent(in,hide),check(len(grid)>=lgrid),depend(grid) :: lgrid=len(grid)
+            double precision, dimension(lrpast), intent(in,out) :: past
+            integer, intent(in) :: lrpast
 			double precision :: x0b
 			double precision :: uround
 			double precision :: hmax

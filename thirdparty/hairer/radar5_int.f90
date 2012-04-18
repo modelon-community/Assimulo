@@ -6,7 +6,8 @@
      &                  IMAS,SOLOUT,IOUT, 
      &                  WORK,IWORK,RPAR,IPAR,IDID, 
      &                  GRID,IPAST,MAS,MLMAS,MUMAS,
-     &                  LIPAST, LGRID)
+     &                  LIPAST, LGRID,
+     &                  PAST,LRPAST)
       USE IP_ARRAY 
       IMPLICIT DOUBLE PRECISION (A-H,O-Z) 
       INTEGER, PARAMETER :: DP=kind(1D0) 
@@ -21,9 +22,13 @@
       INTEGER, dimension(LIPAST), intent(inout) :: IPAST 
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
       INTEGER, dimension(1), intent(in) :: IPAR 
+      
+      REAL(kind=DP), dimension(LRPAST), intent(inout) :: PAST
 
       INTEGER, intent(in) :: LIPAST
       INTEGER, intent(in) :: LGRID
+      INTEGER, intent(in) :: LRPAST
+      
       LOGICAL FLAGS, FLAGN
       EXTERNAL FCN,PHI,ARGLAG,JAC,JACLAG,MAS,SOLOUT 
 C ----> COMMON BLOCKS <---- 
@@ -36,6 +41,7 @@ C ----> COMMON BLOCKS <----
      &                  JACLAG,NLAGS,NJACL, 
      &                  IMAS,SOLOUT,IOUT, 
      &                  WORK,IWORK,RPAR,IPAR,IDID, 
-     &                  GRID,IPAST,MAS,MLMAS,MUMAS)
+     &                  GRID,IPAST,MAS,MLMAS,MUMAS,
+     &                  PAST)
      
       END

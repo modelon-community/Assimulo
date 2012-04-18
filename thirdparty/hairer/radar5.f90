@@ -52,7 +52,8 @@ C
      &                  JACLAG,NLAGS,NJACL, 
      &                  IMAS,SOLOUT,IOUT, 
      &                  WORK,IWORK,RPAR,IPAR,IDID, 
-     &                  GRID,IPAST,MAS,MLMAS,MUMAS) 
+     &                  GRID,IPAST,MAS,MLMAS,MUMAS,
+     &                  PAST,LRPAST) 
 C ---------------------------------------------------------- 
 C     INPUT PARAMETERS   
 C --------------------   
@@ -492,6 +493,9 @@ C *** *** *** *** *** *** *** *** *** *** *** *** ***
       REAL(kind=DP), dimension(1), intent(in) :: RPAR 
       INTEGER, dimension(1), intent(in) :: IPAR 
  
+      REAL(kind=DP), dimension(LRPAST), intent(inout) :: PAST
+      INTEGER, intent(in) :: LRPAST
+ 
       LOGICAL IMPLCT,NEUTRAL,JBAND,ARRET,STARTN,PRED 
       LOGICAL FLAGS,FLAGN 
  
@@ -574,7 +578,7 @@ C ------- CONTROL OF LENGTH OF PAST  -------
       END IF 
 C ------- DIM. of PAST  -------- 
       IDIF=4*NRDS+2 
-      LRPAST=MXST*IDIF 
+C      LRPAST=MXST*IDIF 
 C      WRITE (6,*) ' AT INITIALIZATION, LRPAST = ',LRPAST 
 C -------------------------------------------------  
 C ------- CONTROL OF SIMPLE NEWTON ITERATION  ------- 
@@ -856,7 +860,8 @@ C -------- CALL TO CORE INTEGRATOR ------------
      &   IMPLCT,NEUTRAL,NDIMN,JBAND,LDJAC,LDE1,LDMAS2, 
      &   NFCN,NJAC,NSTEP,NACCPT,NREJCT,NDEC,NSOL,NFULL,RPAR,IPAR, 
      &   IPAST,GRID,NRDS,NLAGS,NJACL, 
-     &   NGRID,IEFLAG,WORK(7),TCKBP,ALPHA,ISWJL) 
+     &   NGRID,IEFLAG,WORK(7),TCKBP,ALPHA,ISWJL,
+     &   PAST,LRPAST) 
       IWORK(13)=NFULL 
       IWORK(14)=NFCN 
       IWORK(15)=NJAC 
@@ -895,7 +900,8 @@ C
      &   IMPLCT,NEUTRAL,NDIMN,BANDED,LDJAC,LDE1,LDMAS, 
      &   NFCN,NJAC,NSTEP,NACCPT,NREJCT,NDEC,NSOL,NFULL,RPAR,IPAR, 
      &   IPAST,GRID,NRDS,NLAGS,NJACL, 
-     &   NGRID,IEFLAG,WORK7,TCKBP,ALPHA,ISWJL) 
+     &   NGRID,IEFLAG,WORK7,TCKBP,ALPHA,ISWJL,
+     &   PAST,LRPAST) 
 C ---------------------------------------------------------- 
 C     CORE INTEGRATOR FOR RADAR5 
 C     PARAMETERS SAME AS IN RADAR5 WITH WORKSPACE ADDED  
@@ -908,7 +914,8 @@ C     use definitions
       INTEGER, PARAMETER :: DP=kind(1D0) 
       REAL(kind=DP), dimension(1), intent(inout) :: Y 
       REAL(kind=DP), dimension(:), allocatable ::  
-     &                              Z1,Z2,Z3,Y0,SCAL,F1,F2,F3,CONT,PAST 
+     &                              Z1,Z2,Z3,Y0,SCAL,F1,F2,F3,CONT
+      REAL(kind=DP), dimension(LRPAST), intent(inout) :: PAST 
       REAL(kind=DP), dimension(:), allocatable :: BPV,UCONT 
       REAL(kind=DP), dimension(:,:), allocatable ::  
      &                              FJAC,FJACS,FMAS,E1,E2R,E2I 
@@ -929,7 +936,8 @@ C     use definitions
      &                              IVL,IVE,IVC,ILS 
       INTEGER, dimension(:), allocatable ::  
      &                              IP1,IP2,IPHES,IPJ 
-      INTEGER :: LRPAST
+C      INTEGER :: LRPAST
+       INTEGER, intent(in) :: LRPAST
  
       LOGICAL FLAGS,FLAGN,FLAGUS 
       LOGICAL QUADR 
@@ -957,8 +965,8 @@ C *** *** *** *** *** *** ***
       IF (IMPLCT) ALLOCATE(FMAS(LDMAS,NM1)) 
       ALLOCATE (IP1(NM1),IP2(NM1),IPHES(NM1)) 
       ALLOCATE (E1(LDE1,NM1),E2R(LDE1,NM1),E2I(LDE1,NM1)) 
-      LRPAST = MXST*IDIF
-      ALLOCATE (PAST(MXST*IDIF)) 
+C      LRPAST = MXST*IDIF
+C      ALLOCATE (PAST(MXST*IDIF)) 
 C      WRITE (6,*) ' IN RADCOR, LRPAST = ',LRPAST
       IF (NLAGS.GT.0) THEN 
        ALLOCATE (FJACS(LDJAC,N),FJACLAG(NJACL)) 
@@ -1542,7 +1550,7 @@ C ---     COMPUTE THE RIGHT-HAND SIDE
              ZL(I+N2)=A1+Z3(I) 
             END DO 
 C           COMPUTATION OF STAGE VALUES
-C		  WRITE(6,*) 'STAGE FCN3'
+C           WRITE(6,*) 'STAGE FCN3'
             CALL FCN(N,X+C1*H,ZL,Z1,ARGLAG,PHI,RPAR,IPAR,PAST,
      &               IPAST,NRDS,
      &  LRPAST) 
@@ -1611,7 +1619,7 @@ C --------------------------------------------------------
 C ---     BAD CONVERGENCE OR NUMBER OF ITERATIONS TO LARGE 
 C --------------------------------------------------------
             IF (NEWT.GT.1.AND.NEWT.LT.NIT) THEN 
-C				WRITE(6,*) 'DYNOLD:', DYNOLD
+C               WRITE(6,*) 'DYNOLD:', DYNOLD
                 THQ=DYNO/DYNOLD 
                 IF (NEWT.EQ.2) THEN 
                    THETA=THQ 
@@ -2374,7 +2382,7 @@ C ---    FIRST IS RESTORED
          FIRST=.FALSE. 
          IF (LAST) FIRST=.TRUE. 
 C ---    COMPUTATION OF Y0 
-C	    WRITE(6,*) 'ERROR ELLER?' 
+C        WRITE(6,*) 'ERROR ELLER?' 
          CALL FCN(N,X,Y,Y0,ARGLAG,PHI,RPAR,IPAR,PAST,IPAST,NRDS,
      &  LRPAST) 
 C       
@@ -2552,7 +2560,7 @@ C --- DEALLOCATION OF THE MEMORY
       IF (IMPLCT) DEALLOCATE(FMAS) 
       DEALLOCATE (IP1,IP2,IPHES) 
       DEALLOCATE (E1,E2R,E2I) 
-      DEALLOCATE (PAST) 
+C      DEALLOCATE (PAST) 
       IF (NLAGS.GT.0) THEN 
        DEALLOCATE (FJACS,FJACLAG) 
        DEALLOCATE (IVL,IVE,IVC,ILS,ICOUN) 
