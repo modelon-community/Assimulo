@@ -38,8 +38,8 @@ from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Seria
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
 include "constants.pxi" #Includes the constants (textual include)
-include "sundials_constants.pxi" #Sundials related constants
-include "sundials_callbacks.pxi"
+include "../lib/sundials_constants.pxi" #Sundials related constants
+include "../lib/sundials_callbacks.pxi"
 
 
 cdef class IDA(Implicit_ODE):
