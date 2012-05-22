@@ -18,11 +18,22 @@
 import numpy as N
 cimport numpy as N
 
+from assimulo.support import set_type_shape_array
+
 include "constants.pxi" #Includes the constants (textual include)
 
-realtype = N.float
-
+    
 cdef class cProblem:
+    def __init__(self,  y0 = None, double t0 = 0.0, p0 = None, sw0 = None):
+        
+        if not y0  is None:
+            self.y0  = set_type_shape_array(y0)
+        if not p0  is None:
+            self.p0 = set_type_shape_array(p0) 
+        if not sw0 is None:
+            self.sw0 = set_type_shape_array(sw0, bool) 
+        self.t0  = t0
+        
     cdef public int _sensitivity_result
     
     name = '---'
@@ -52,6 +63,7 @@ cdef class cProblem:
         state_event(...) ) and the value indicates to where the state event is 'headed'.
         """
         solver.log_message("No event handling defined.", NORMAL)
+       
     
     cpdef finalize(self,object solver):
         """
@@ -62,24 +74,19 @@ cdef class cProblem:
 
 cdef class cImplicit_Problem(cProblem):
     
-    def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, p0=None, sw0=None):
-        
+    def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
+                                                          p0=None, sw0=None):
+        cProblem.__init__(self, y0, t0, p0, sw0)
         if res != None:
             self.res = res
-        if y0!=None:
-            self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
         if yd0!=None:
-            self.yd0 = None if yd0 is None else (N.array(yd0,dtype=realtype) if len(N.array(yd0,dtype=realtype).shape)>0 else N.array([yd0],dtype=realtype))
-        if p0!=None:
-            self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
-        if sw0!=None:
-            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool))
-        self.t0  = t0
+            self.yd0 = set_type_shape_array(yd0)
+        
     
-    cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         """
         Method for specifying how the result is to be handled. As default the
-        data is stored in three vectors, solver.(t/y/yd).
+        data is stored in three vectors: solver.(t/y/yd).
         """
         cdef int i = 0
         
@@ -90,7 +97,36 @@ cdef class cImplicit_Problem(cProblem):
         #Store sensitivity result (variable _sensitivity_result are set from the solver by the solver)
         if self._sensitivity_result == 1:
             for i in range(solver.problem_info["dimSens"]):
-                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)]
+                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)] 
+        
+    cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+        try:
+            res[:] = self.res(t,y,yd)
+        except:
+            return ID_FAIL
+        return ID_OK
+        
+cdef class cOverdetermined_Problem(cProblem):
+    
+    def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
+                                                          p0=None, sw0=None):
+        cProblem.__init__(self, y0, t0, p0, sw0)
+        if res != None:
+            self.res = res
+        if yd0!=None:
+            self.yd0 = set_type_shape_array(yd0)
+        
+    
+    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+        """
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors: solver.(t/y/yd).
+        """
+        cdef int i = 0
+        
+        solver.t_sol.extend([t])
+        solver.y_sol.extend([y])
+        solver.yd_sol.extend([yd])
         
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
@@ -99,24 +135,18 @@ cdef class cImplicit_Problem(cProblem):
             return ID_FAIL
         return ID_OK
     
+    
 cdef class cExplicit_Problem(cProblem):
     
     def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None):
         
+        cProblem.__init__(self, y0, t0, p0, sw0)        
         if rhs != None:
             self.rhs = rhs
-        if y0!=None:
-            self.y0  = None if y0 is None else (N.array(y0,dtype=realtype) if len(N.array(y0,dtype=realtype).shape)>0 else N.array([y0],dtype=realtype))
-        if p0!=None:
-            self.p0 = None if p0 is None else (N.array(p0,dtype=realtype) if len(N.array(p0,dtype=realtype).shape)>0 else N.array([p0],dtype=realtype))
-        if sw0!=None:
-            self.sw0 = None if sw0 is None else (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool))
-        self.t0  = t0
-    
-    cpdef handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
+    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
         """
         Method for specifying how the result is to be handled. As default the
-        data is stored in three vectors, solver.(t/y).
+        data is stored in two vectors: solver.(t/y).
         """
         cdef int i = 0
         
@@ -126,8 +156,8 @@ cdef class cExplicit_Problem(cProblem):
         #Store sensitivity result (variable _sensitivity_result are set from the solver by the solver)
         if self._sensitivity_result == 1:
             for i in range(solver.problem_info["dimSens"]):
-                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)]
-        
+                solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)] 
+                
     cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:
             yd[:] = self.rhs(t,y)
@@ -147,13 +177,13 @@ class Implicit_Problem(cImplicit_Problem):
                 the problem and the support of the solver, this function can
                 have the following input parameters.
                 
-                    res(t,y,yd)      - Normal DAE
+                    res(t,y,yd)   - Normal DAE
                     res(t,y,yd,sw)   - An DAE with different modes, sw is a list of
                                        switches (boolean list) which should be held
                                        constant during the integration and only be
                                        changed when an event have occured. Used together
                                        with event functions.
-                    res(t,y,yd,p)    - An DAE with parameters for which sensitivities
+                    res(t,y,yd,p)   - An DAE with parameters for which sensitivities
                                        should be calculated.
                     res(t,y,yd,sw,p) - An DAE with both parameters and switches.
                     
@@ -165,11 +195,11 @@ class Implicit_Problem(cImplicit_Problem):
                 Defines the starting values of yd0.
             t0
                 Defines the starting time.
-            sw0 (Depending on if the solver supports state events)
-                Defines the starting values of the switches. 
-                Should be a list of booleans.
             p0 (Depending on if the solver supports sensitivity calculations)
                 Parameters for which sensitivites are to be calculated
+            sw0 (Depending on if the solver supports state events)
+                Defines the starting values of the switches. 
+                Should be a list of Booleans.
                 
         Parameters (optionally contained in class) ::
         
@@ -224,7 +254,91 @@ class Implicit_Problem(cImplicit_Problem):
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
-    
+class Overdetermined_Problem(cOverdetermined_Problem):
+    """
+        Problem for integrators for overdetermined DAES (ODAEs). A problem
+        consists of the residual function with more components than state variables 
+        and some initial conditions.
+        
+        Parameters ::
+          
+            res   
+                Function that calculates the residual. Depending on
+                the problem and the support of the solver, this function can
+                have the following input parameters.
+                
+                    res(t,y,yd)   - Normal ODAE
+                    res(t,y,yd,sw)   - An ODAE with different modes, sw is a list of
+                                       switches (boolean list) which should be held
+                                       constant during the integration and only be
+                                       changed when an event have occured. Used together
+                                       with event functions.
+                    
+                    Returns:
+                        A numpy array of size neq > len(y).
+            y0
+                Defines the starting values of y0.
+            yd0
+                Defines the starting values of yd0.
+            t0
+                Defines the starting time.
+            sw0 (Depending on if the solver supports state events)
+                Defines the starting values of the switches. 
+                Should be a list of Booleans.
+                
+        Parameters (optionally contained in class) ::
+        
+            algvar
+                Defines the differential and algebraic components of the problem.
+                Should be a list of integers. For more information, see the
+                property algvar in IDA.
+        
+        Available (optional) options (depending on the solver support)::
+        
+            def state_events(self ,t ,y ,yd, sw)
+                Defines the event (root) functions.
+                
+                Returns:
+                    A numpy array.
+                
+            def time_events(self, t, y, yd, sw)
+                Defines the time events. This function should return
+                the next time-point for a time event. At a time-event
+                the usual method handle_event is called for the specific
+                handling. If there are no more time events. This function
+                should return None.
+                
+                Returns:
+                    Float
+                        The time-point for the next time-event.
+                    None
+                        No time-event.
+                
+            def jac(self, c, t, y, yd, sw)
+                Defines the Jacobian, which should be of the form
+                J = dF/dx + c*dF/dx'.
+                
+                Returns:
+                    A numpy array of size neq*len(y).
+                    
+            def handle_result(self, solver, t, y, yd)
+                Method for specifying how the result is to be handled. 
+                As default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
+                If the problem to be solved also involve sensitivities these results are
+                stored in p_sol
+                
+            def handle_event(self, object solver, event_info):
+                Defines how to handle a discontinuity. This functions gets called when
+                a discontinuity has been found in the supplied event functions. The solver
+                is the solver attribute while the event_info is a list of length 2 where
+                the first element is a list containing information about state events and
+                the second element is a boolean for indicating if there have been an time
+                event. If there have not been a state event the first element is an empty
+                list. The state event list contains a set of integers of values (-1,0,1),
+                the values indicates which state event have triggered (determined from 
+                state_event(...) ) and the value indicates to where the state event is 'headed'.
+    """
+    pass
 class Explicit_Problem(cExplicit_Problem):
     """
         Problem for our explicit integrators (ODEs). A problem
@@ -243,7 +357,7 @@ class Explicit_Problem(cExplicit_Problem):
                                     constant during the integration and only be
                                     changed when an event have occured. Used together
                                     with event functions.
-                    rhs(t,y,p)    - An ODE with parameters for which sensitivities
+                    rhs(t,y,p)  - An ODE with parameters for which sensitivities
                                     should be calculated.
                     rhs(t,y,sw,p) - An ODE with both parameters and switches.
                     
@@ -254,11 +368,11 @@ class Explicit_Problem(cExplicit_Problem):
                 Defines the starting values of y0
             t0
                 Defines the starting time
-            sw0 (Depending on if the solver supports state events)
-                Defines the starting values of the switches. 
-                Should be a list of booleans.
             p0 (Depending on if the solver supports sensitivity calculations)
                 Parameters for which sensitivites are to be calculated
+            sw0 (Depending on if the solver supports state events)
+                Defines the starting values of the switches. 
+                Should be a list of Booleans.
         
         Available (optional) options (depending on the solver support)::
         

@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from ode cimport ODE
-from problem import Implicit_Problem
+from problem import Implicit_Problem, cImplicit_Problem
 
 import pylab as P
 import itertools
@@ -51,10 +51,10 @@ cdef class Implicit_ODE(ODE):
         """
         ODE.__init__(self, problem) #Sets general attributes
         
-        if isinstance(problem, Implicit_Problem):
+        if isinstance(problem, cImplicit_Problem):
             self.problem = problem
         else:
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of a Implicit_Problem.')
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem.')
         
         if hasattr(problem, 'yd0'):
             self.yd0 = N.array(problem.yd0,dtype=realtype) if len(N.array(problem.yd0,dtype=realtype).shape)>0 else N.array([problem.yd0],dtype=realtype)

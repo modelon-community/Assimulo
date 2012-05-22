@@ -118,6 +118,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","hairer"))
     create_dir(join("build","assimulo","thirdparty","voigtmann"))
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
+    create_dir(join("build","assimulo","thirdparty","odassl"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -129,6 +130,7 @@ def pre_processing():
     fileThirdPartyHairer = O.listdir(join("thirdparty","hairer"))
     fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
+    fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -142,6 +144,7 @@ def pre_processing():
     desThirdPartyHairer = join(curdir,"build","assimulo","thirdparty","hairer")
     desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
+    desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -179,6 +182,11 @@ def pre_processing():
             SH.copy2(join("thirdparty","hindmarsh",f),desThirdPartyHindmarsh)
         if f == "LICENSE_ODEPACK":
             SH.copy2(join("thirdparty","hindmarsh",f),join(curdir,"build","assimulo","lib"))
+    for f in fileThirdPartyOdassl:
+        if not O.path.isdir(join("thirdparty","hindmarsh",f)):
+            SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
+        if f == "LICENSE_ODASSL":
+            SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -393,6 +401,14 @@ def check_fortran_extensions():
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+        
+    #ODASSL
+    odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
+    odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+    config.add_extension('assimulo.lib.odassl',
+                         sources=[odassl_dir+file for file in odassl_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     return config.todict()["ext_modules"]
 

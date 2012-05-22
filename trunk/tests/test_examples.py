@@ -93,6 +93,34 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_rodasode_vanderpol(self):
         rodasode_vanderpol.run_example(with_plots=False)
+                
+    @testattr(stddist = True)
+    def test_mech_system_pendulum1(self):
+        """
+        This tests the class Mechanical_system together with ind1 and ida
+        """
+        mech_system_pendulum.run_example('ind1',with_plots=False,with_test=True)
+ 
+    @testattr(stddist = True)
+    def test_mech_system_pendulum2(self):
+        """
+        This tests the class Mechanical_system together with ind2 and ida
+        """
+        mech_system_pendulum.run_example('ind2',with_plots=False,with_test=True)
+        
+    @testattr(stddist = True)
+    def test_mech_system_pendulum3(self):
+        """
+        This tests the class Mechanical_system together with ind3 and ida
+        """
+        mech_system_pendulum.run_example('ind3',with_plots=False,with_test=True)
+        
+    @testattr(stddist = True)
+    def test_mech_system_pendulum_ggl2(self):
+        """
+        This tests the class Mechanical_system together with ggl2 and ida
+        """
+        mech_system_pendulum.run_example('ggl2',with_plots=False,with_test=True)
         
     @testattr(stddist = True)
     def test_lsodar_vanderpol(self):
