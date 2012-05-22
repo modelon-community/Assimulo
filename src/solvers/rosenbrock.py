@@ -21,6 +21,7 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
 from assimulo.exception import *
+from assimulo.support import set_type_shape_array
 
 from assimulo.lib import rodas
 
@@ -28,7 +29,7 @@ class Rodas_Common(object):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self._leny)
@@ -318,7 +319,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
-        This method is called after every successful step taken by Radau5
+        This method is called after every successful step taken by Rodas
         """
         if self._opts["output_list"] == None:
             self._tlist.append(t)
