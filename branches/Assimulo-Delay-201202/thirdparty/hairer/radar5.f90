@@ -1658,6 +1658,7 @@ C ---          BP IS WRONG
                BPD=.FALSE.
               END IF
               HP=H*0.99D0
+              WRITE(6,*) 'Calling BPDTCT from row 1661.'
               CALL BPDTCT(N,X,HP,Y,ARGLAG,RPAR,IPAR,UCONT,GRID,NLAGS, 
      &                    FIRST,LAST,XEND,IGRID,BPV,IBP,ILBP,BPP,BPD, 
      &                    KMAX,PHI,PAST,IPAST,NRDS) 
@@ -2150,6 +2151,7 @@ C ---     BP IS WRONG! REPEAT
         ELSE
 C ---     LOOK FOR A BP        
           HP=H*0.99D0
+          WRITE(6,*) 'Calling BPDTCT from row 2154.'
           CALL BPDTCT(N,X,HP,Y,ARGLAG,RPAR,IPAR,UCONT,GRID,NLAGS, 
      &                FIRST,LAST,XEND,IGRID,BPV,IBP,ILBP,BPP,BPD,
      &                KMAX,PHI,PAST,IPAST,NRDS) 
@@ -2265,6 +2267,7 @@ C ---    COMPUTATION AT BP FOR NEXT STEP
          IF (LAST) THEN 
 C ---     LAST HAS TO BE RE/DEFINED
           IF (BPD) THEN 
+           WRITE(6,*) 'Found a BP at ', X, ', decrementing IGRID.'
            IGRID=IGRID-1
        END IF 
 C --- 
@@ -2391,6 +2394,8 @@ C
 C ----------------------------- 
       
 C ------ FINAL POINT                               
+         WRITE(6, *) 'X:', X
+         WRITE(6, *) 'IGRID:', IGRID
          IF (LAST) THEN 
  45         CONTINUE
             IF (IGRID.EQ.NGRID) THEN 
@@ -2418,7 +2423,8 @@ C              LEFT=.FALSE.
                HNEW=MIN(HNEW,H)
             END IF 
          END IF 
- 
+         WRITE(6,*) 'Before updating hnew and hopt'
+         WRITE(6, *) 'IGRID:', IGRID
          HNEW=MIN(HNEW,HMAXN) 
          HOPT=MIN(H,HNEW) 
          IF (REJECT) HNEW=MIN(HNEW,H)  
@@ -2958,6 +2964,7 @@ C        WRITE(6,*) 'In BPDTCT, ILBP = ', ILBP
         EPSILON=1.D-10
         ALLOCATE(YADV(N)) 
         COMPAR=UROUND*MAX(ABS(X),ABS(X+H)) 
+        WRITE(6,*) 'COMPAR:', COMPAR, X, X+H, UROUND
         
       XLAST=UCONT(LRC+1) 
         HLAST=UCONT(LRC+2) 
