@@ -51,6 +51,13 @@ if __name__ == '__main__':
 	# First solve
     p = Simple()
     p.grid = array([1.0, 0.0])
+    p.grid = array([0.5, 2.1, 0.0])
+    p.grid = array([0.7, 1.0, 1.1, 0.0])
+    p.grid = array([0.7, 1.0, 1.1, 2.5, 3.7, 4.3, 0.0])
+    #p.grid = array([0.7, 1.0, 1.1, 1.5, 3.7, 4.4, 0.0])
+    #p.grid = array([0.2, .7, 2.0, 0.0])
+    #p.grid = array([0.2, .7, 1.0, 2.0, 3.0, 4.0, 5.0, 0.0])
+    
     p.ngrid = len(p.grid)-1
     p.y0 = 0    # sin(pi*0) = 0, so consistent with history function
 
