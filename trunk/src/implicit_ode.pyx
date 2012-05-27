@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from ode cimport ODE
-from problem import Implicit_Problem, cImplicit_Problem
+from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
 
 import pylab as P
 import itertools
@@ -50,11 +50,9 @@ cdef class Implicit_ODE(ODE):
                               of the 'Implicit_Problem' class.
         """
         ODE.__init__(self, problem) #Sets general attributes
+        self.problem = problem
+        self.check_instance()
         
-        if isinstance(problem, cImplicit_Problem):
-            self.problem = problem
-        else:
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem.')
         
         if hasattr(problem, 'yd0'):
             self.yd0 = N.array(problem.yd0,dtype=realtype) if len(N.array(problem.yd0,dtype=realtype).shape)>0 else N.array([problem.yd0],dtype=realtype)
@@ -68,6 +66,9 @@ cdef class Implicit_ODE(ODE):
         self.t  = self.t0
         self.y  = self.y0.copy()
         self.yd = self.yd0.copy()
+    def check_instance(self):
+        if not isinstance(self.problem, cImplicit_Problem):
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem.')
         
     def reset(self):
         """
@@ -259,7 +260,7 @@ cdef class Implicit_ODE(ODE):
                 der     
                         - Default 'False'. When 'True' plots the derivative variables also.
                         
-                        - Should be a boolean.
+                        - Should be a Boolean.
                         
                             Example:
                                 der = True
@@ -310,6 +311,10 @@ cdef class Implicit_ODE(ODE):
             P.show()
         else:
             self.log_message("No result for plotting found.",NORMAL)
+cdef class OverdeterminedDAE(Implicit_ODE):
+    def check_instance(self):
+        if not isinstance(self.problem, Overdetermined_Problem):
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem.')
 
         
 

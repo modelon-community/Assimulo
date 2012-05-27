@@ -121,7 +121,22 @@ class Test_Examples:
         This tests the class Mechanical_system together with ggl2 and ida
         """
         mech_system_pendulum.run_example('ggl2',with_plots=False,with_test=True)
+    
+    @testattr(stddist = True)
+    def test_mech_system_pendulum_ovstab2(self):
+        """
+        This tests the class Mechanical_system together with ovstab2 and odassl
+        """
+        mech_system_pendulum.run_example('ovstab2',with_plots=False,with_test=True)
+            
+    @testattr(stddist = True)
+    def test_mech_system_pendulum_ovstab1(self):
+        """
+        This tests the class Mechanical_system together with ovstab1 and odassl
+        """
+        mech_system_pendulum.run_example('ovstab1',with_plots=False,with_test=True)
         
+    
     @testattr(stddist = True)
     def test_lsodar_vanderpol(self):
         lsodar_vanderpol.run_example(with_plots=False)

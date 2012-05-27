@@ -67,6 +67,11 @@ cdef class ODE:
             self.problem_info["dim"] = len(self.y0)
         else:
             raise ODE_Exception('y0 must be specified in the problem.')
+            
+        if hasattr(problem, 'neq'):  # relevant for overdetermined problems: neq=number of equations >= dim
+            self.problem_info["neq"] = problem.neq
+        else:
+            self.problem_info["neq"] = self.problem_info["dim"]
         
         if hasattr(problem, "p0"):
             self.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)

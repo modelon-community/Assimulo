@@ -218,7 +218,7 @@ class Rodas_Common(object):
             Parameters::
             
                 maxh    
-                        - Default final time - current time.
+                        - Default maxh = final time - current time.
                           
                         - Should be a float.
                         
@@ -235,18 +235,18 @@ class Rodas_Common(object):
     
     def _get_usejac(self):
         """
-        This sets the option to use the user defined jacobian. If a
+        This sets the option to use the user defined Jacobian. If a
         user provided jacobian is implemented into the problem the
-        default setting is to use that jacobian. If not, an
+        default setting is to use that Jacobian. If not, an
         approximation is used.
         
             Parameters::
             
                 usejac  
-                        - True - use user defined jacobian
+                        - True - use user defined Jacobian
                           False - use an approximation
                     
-                        - Should be a boolean.
+                        - Should be a Boolean.
                         
                             Example:
                                 usejac = False
