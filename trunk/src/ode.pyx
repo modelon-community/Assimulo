@@ -248,13 +248,19 @@ cdef class ODE:
     
     def _get_verbosity(self):
         """
-        This determines the level of the output. A smaller value
-        means more output.
+        This determines the level of the output. A larger value
+        means more output. The following values can be set:
+            
+            QUIET   = 50
+            WHISPER = 40
+            NORMAL  = 30
+            LOUD    = 20
+            SCREAM  = 10
         
             Parameters::
             
                 verb  
-                        - Default 30
+                        - Default 30 (NORMAL)
                     
                         - Should be a integer.
 
