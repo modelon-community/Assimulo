@@ -39,7 +39,7 @@ BLASdir = ""
 LAPACKdir = ""
 BLASname = 'blas'
 BLASname_t = ""
-debug = False
+debug_flag = False
 
 if S.platform == 'win32':
     incdirs = ''
@@ -73,9 +73,9 @@ for x in S.argv[1:]:
         BLASname_t = x[12:]
         copy_args.remove(x)
     if not x.find('--debug'):
-        debug = x[8:]
+        debug_flag = x[8:]
         if x[8:].upper() == "TRUE":
-            debug = True
+            debug_flag = True
         copy_args.remove(x)
     if not x.find('--lapack-home'):
         LAPACKdir = x[14:]
@@ -209,16 +209,16 @@ def check_extensions():
         extra_link_flags = [""]
     
     #Cythonize main modules
-    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
     
     #Cythonize Euler
-    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
     
     for i in ext_list:
         i.include_dirs = [N.get_include()]
         
         #Debug
-        if debug:
+        if debug_flag:
             i.extra_compile_args = ["-g","-fno-strict-aliasing"]
             i.extra_link_args = ["-g"]
         else:
@@ -226,11 +226,11 @@ def check_extensions():
             
     #If Sundials
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug)
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
         ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
-        if debug:
+        if debug_flag:
             ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
         else:
             ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
@@ -263,7 +263,7 @@ def check_extensions():
             ext_list[-1].include_dirs = [N.get_include(), SLUincdir, incdirs]
             ext_list[-1].library_dirs = [libdirs,SLUlibdir,BLASdir]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",BLASname]
-            if debug:
+            if debug_flag:
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
@@ -280,7 +280,7 @@ def check_extensions():
             ext_list[-1].include_dirs = [N.get_include(), incdirs]
             ext_list[-1].library_dirs = [libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            if debug:
+            if debug_flag:
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
