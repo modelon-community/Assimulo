@@ -577,7 +577,10 @@ class RungeKutta34(Explicit_ODE):
         """
         Adjusts the stepsize.
         """
-        fac=min((1.0/error)**(1.0/4.0),2.)
+        if error == 0.0:
+            fac = 2.0
+        else:
+            fac=min((1.0/error)**(1.0/4.0),2.)
         h *= fac
         
         return h
