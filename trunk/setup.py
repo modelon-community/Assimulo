@@ -423,6 +423,14 @@ else:
     change_dir = False
       
 ext_list = check_extensions()
+
+#MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
+#HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
+#SAME TIME.
+for e in ext_list:
+    e.extra_f77_compile_args = []
+    e.extra_f90_compile_args = []
+
 ext_list += check_fortran_extensions()
 
 
