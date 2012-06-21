@@ -264,8 +264,8 @@ class Radar5ODE(Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-        print "INIT", t,y,tf,self.inith, self.problem.ipast
-        print "GRID", self.problem.grid, self.problem.ngrid
+        #print "INIT", t,y,tf,self.inith, self.problem.ipast
+        #print "GRID", self.problem.grid, self.problem.ngrid
         #t, y, h, iwork, flag, past = radar5.assimulo_radar5(self.F,            \
         a = radar5.assimulo_radar5(self.F,            \
                                        self.problem.phi,        \

@@ -1306,11 +1306,11 @@ CD       XX = XURO
 CD      ENDIF
         XX=X
 C ---   VALUTA IN  XX
-        WRITE(6,*) 'DECDEL FCN',N,XX,NRDS, SIZE(PAST), SIZE(IPAST), 
-     &   SIZE(CONT), SIZE(F1), SIZE(RPAR), SIZE(IPAR)
+C        WRITE(6,*) 'DECDEL FCN',N,XX,NRDS, SIZE(PAST), SIZE(IPAST), 
+C     &   SIZE(CONT), SIZE(F1), SIZE(RPAR), SIZE(IPAR)
         CALL FCN(N,XX,CONT,F1,ARGLAG,PHI,RPAR,IPAR,
      &           PAST,IPAST,NRDS,LRPAST)
-        WRITE(6,*) 'END DECDEL FCN'
+C        WRITE(6,*) 'END DECDEL FCN'
 CW      WRITE (6,*) 'Seconda premoltiplicazione per la stima di errore '
 CW      WRITE (6,*) 'X, ERR = ',X,ERR
 C ---

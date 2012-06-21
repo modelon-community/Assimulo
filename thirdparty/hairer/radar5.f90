@@ -524,7 +524,7 @@ C      END IF
        FLAGS=.FALSE. 
        FLAGN=.FALSE. 
  
-       IF (IOUT.EQ.1) WRITE (6,*) 'STARTING INTEGRATION...' 
+C       IF (IOUT.EQ.1) WRITE (6,*) 'STARTING INTEGRATION...' 
 C        
 C ------> OPERATIONS RELEVANT TO THE DELAY DEPENDENCE <------ 
 C 
@@ -538,8 +538,8 @@ C -------- ERROR CONTROL
 C -------- NGRID   NUMBER OF PRESCRIBED GRID-POINTS 
       NGRID=IWORK(13) 
       IF (NGRID.LT.0) NGRID=0 
-      IF (IOUT.EQ.1) WRITE(6,*)  
-     &           'NUMBER OF PRESCRIBED GRID POINTS: ',NGRID 
+C      IF (IOUT.EQ.1) WRITE(6,*)  
+C     &           'NUMBER OF PRESCRIBED GRID POINTS: ',NGRID 
 C ------- NRDENS   NUMBER OF DENSE OUTPUT COMPONENTS 
       NRDENS=IWORK(15)
 C ------- NDIMN   NUMBER OF COMPONENTS OF A NEUTRAL PROBLEM
@@ -567,7 +567,7 @@ C ------- LIPAST   DIMENSION OF VECTOR IPAST
             DO 16 I=1,NRDS 
   16           IPAST(I)=I 
       END IF 
-      IF (IOUT.EQ.1) WRITE(6,*) 'NUMBER OF DELAYED COMPONENTS: ',NRDS 
+C      IF (IOUT.EQ.1) WRITE(6,*) 'NUMBER OF DELAYED COMPONENTS: ',NRDS 
 C ------- LRPAST   DIMENSION OF VECTOR PAST 
       MXST=IWORK(12) 
 C ------- CONTROL OF LENGTH OF PAST  ------- 
@@ -741,10 +741,10 @@ C ---->    GRID WITH DISCONTINUITIES  <----
       END IF 
       GRID(NGRID)=XEND 
       
-      WRITE(6,*) 'FINAL GRID: '
-      DO I = 1, NGRID
-        WRITE(6,*) GRID(I)
-      END DO
+C      WRITE(6,*) 'FINAL GRID: '
+C      DO I = 1, NGRID
+C        WRITE(6,*) GRID(I)
+C      END DO
 C -------------------------------------------------------  
  
 C -------> MAXIMAL STEP SIZE <------- 
@@ -847,11 +847,11 @@ C ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1
          IDID=-1 
          RETURN 
       END IF 
-      WRITE(6,*), (IWORK(j), j = 1,30)
-      WRITE(6,*), (WORK(j), j = 1,30)
+C      WRITE(6,*), (IWORK(j), j = 1,30)
+C      WRITE(6,*), (WORK(j), j = 1,30)
 C  136 format (30I3.1)
 C     NUMERICAL KERNEL
-      WRITE(6,*) 'INTEGRATION...'
+C      WRITE(6,*) 'INTEGRATION...'
 C -------- CALL TO CORE INTEGRATOR ------------ 
       CALL RADCOR(N,X,Y,XEND,H,FCN,PHI,ARGLAG,RTOL,ATOL,ITOL, 
      &   JAC,IJAC,MLJAC,MUJAC,JACLAG,MAS,MLMAS,MUMAS,SOLOUT,IOUT,IDID, 
@@ -983,8 +983,8 @@ C     AMPLITUDE OF CONT
       ALLOCATE (CONT(LRC)) 
       ALLOCATE (UCONT(LRC+2)) 
 C --- 
-       OPEN(8,FILE='radar5.log')
-       REWIND 8
+C       OPEN(8,FILE='radar5.log')
+C       REWIND 8
 
 C -------------------------------------------------  
       BPC=.FALSE. 
@@ -999,7 +999,7 @@ C      DO I=1,NLAGS
        DO I=1, SIZE(IPOSV)
        IPOSV(I)=1 
       END DO 
-      WRITE(6,*) 'INIT IPOSV', IPOSV(1),NLAGS
+C      WRITE(6,*) 'INIT IPOSV', IPOSV(1),NLAGS
       X0B=X 
       DO I=1,NGRID 
        IF (GRID(I).GT.X0B) THEN  
@@ -1126,8 +1126,8 @@ C ---  INITIALIZATION FOR THE ARRAY PAST
           PAST(J+2*NRDS+IPA)=0.D0 
           PAST(J+3*NRDS+IPA)=0.D0 
        ENDDO 
-       WRITE (6,*) 
-     &        ' THE INITIALIZATION WAS RUN.', X, Y(1), H
+C       WRITE (6,*) 
+C     &        ' THE INITIALIZATION WAS RUN.', X, Y(1), H
           PAST(IPA+IDIF-1)=H  
 C ---  END OF THE INITIALIZATION      
       FACCON=1.D0 
@@ -1169,16 +1169,16 @@ C ---  END OF THE INITIALIZATION
  
       NFULL=0
       
-      WRITE(6,*) 'COMMON BLOCKS'
+C      WRITE(6,*) 'COMMON BLOCKS'
 C      WRITE(6,*) XEND,IGRID
 C      PRINT *, GRID 
 C      PRINT *, IVL
 C      ,IVE,IVC,ILS
-      WRITE(6,*) FLAGS,FLAGN,FLAGUS,QUADR BPC,BPD,BPDMEM,LEFT,REPEAT
-      WRITE(6,*) REJECT,FIRST,IMPLCT,NEUTRAL,PROJECT,BANDED,CALJAC 
-      WRITE(6,*) STARTN,CALHES,CALJACL,CALLAG 
-      WRITE(6,*) INDEX1,INDEX2,INDEX3,LAST,PRED
-      PRINT *, ATOL, RTOL
+C      WRITE(6,*) FLAGS,FLAGN,FLAGUS,QUADR BPC,BPD,BPDMEM,LEFT,REPEAT
+C      WRITE(6,*) REJECT,FIRST,IMPLCT,NEUTRAL,PROJECT,BANDED,CALJAC 
+C      WRITE(6,*) STARTN,CALHES,CALJACL,CALLAG 
+C      WRITE(6,*) INDEX1,INDEX2,INDEX3,LAST,PRED
+C      PRINT *, ATOL, RTOL
 C      WRITE(6,*) X0B,UROUND,HMAX,IACT,IRTRN,IDIF,MXST,FLAGS,FLAGN 
 C      WRITE(6,*) C1,C2,C1M1,C2M1,C1MC2 
 C      WRITE(6,*) FIRST,LAST,REJECT,BPD 
@@ -1961,7 +1961,7 @@ C ---------> UNEXPECTED STEP-REJECTION
             END IF 
 C ---     COMPUTE THE RIGHT-HAND SIDE 
             CONT(1:N)=Y(1:N)+Z1(1:N) 
-            WRITE(6,*) 'FCN1'
+C            WRITE(6,*) 'FCN1'
             CALL FCN(N,X+C1*H,CONT,F1,ARGLAG,PHI,RPAR,IPAR,PAST,
      &               IPAST,NRDS,
      &  LRPAST) 
@@ -1973,7 +1973,7 @@ C ---     COMPUTE THE RIGHT-HAND SIDE
             CALL FCN(N,XPH,CONT,F3,ARGLAG,PHI,RPAR,IPAR,PAST,
      &               IPAST,NRDS,
      &  LRPAST)
-            WRITE(6,*) 'FCN2'
+C            WRITE(6,*) 'FCN2'
             NFCN=NFCN+3 
 C 
 CCC --->    RHS COMPUTATION 
@@ -2551,13 +2551,13 @@ C --- EXIT CAUSED BY SOLOUT
  
 C --- RETURN LABEL 
  980  CONTINUE 
-      WRITE(6,*) IBP-1,' COMPUTED BREAKING POINTS: '
-      WRITE(8,*) 'BREAKING POINTS: '
-      DO I=1,IBP
-      WRITE(8,*) BPV(I)
-      END DO
-      WRITE(8,*) ' -------------- '
-      CLOSE(8)
+C      WRITE(6,*) IBP-1,' COMPUTED BREAKING POINTS: '
+C      WRITE(8,*) 'BREAKING POINTS: '
+C      DO I=1,IBP
+C      WRITE(8,*) BPV(I)
+C      END DO
+C      WRITE(8,*) ' -------------- '
+C      CLOSE(8)
 
 C --- DEALLOCATION OF THE MEMORY 
       DEALLOCATE (Z1,Z2,Z3,Y0,SCAL,F1,F2,F3) 
