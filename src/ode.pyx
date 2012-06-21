@@ -248,7 +248,7 @@ cdef class ODE:
     
     def _get_verbosity(self):
         """
-        This determines the level of the output. A larger value
+        This determines the level of the output. A smaller value
         means more output. The following values can be set:
             
             QUIET   = 50
