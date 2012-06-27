@@ -472,8 +472,8 @@ For questions and comments, visit:
 http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.15 and Sundials 2.4 together with a 
-C-compiler and a FORTRAN-compiler.
+compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
+together with a C-compiler and a FORTRAN-compiler.
 """
 
 
