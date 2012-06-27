@@ -54,6 +54,7 @@ def run_example(index, with_plots=True, with_test=False):
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index = {}'.format(index)
     dae_pend = IDA(my_pend) if index not in ('ovstab2','ovstab1') else ODASSLODE(my_pend)
+    print my_pend.res(0.,dae_pend.y,dae_pend.yd)
     dae_pend.atol=1.e-6
     dae_pend.rtol=1.e-6
     dae_pend.suppress_alg=True  
