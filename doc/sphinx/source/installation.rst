@@ -14,7 +14,7 @@ Dependencies:
 Additional dependencies for compiling from source:
 
 - `Python-2.6 / 2.7 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
-- `Sundials-2.4/2.5 <http://computation.llnl.gov/casc/sundials/main.html>`_
+- `Sundials-2.4/2.5 <http://computation.llnl.gov/casc/sundials/main.html>`_ (for 64bits machines, install Sundials using -fPIC)
 - `Cython 0.15 <http://www.cython.org/>`_
 - C compiler
 - Fortran compiler

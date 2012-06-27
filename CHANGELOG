@@ -1,7 +1,10 @@
 --- CHANGELOG ---
 
 --- Assimulo-2.2 ---
-    * 
+    * Added the solver LSODAR from ODEPACK (ticket:219)
+    * Added number of state events to the statistics (ticket:224)
+    * Fixed bug when storing result points together with events (ticket:222)
+    * Bug fixes.
 
 --- Assimulo-2.1 ---
     * Added support for passing in parameters when using Jacobians.
