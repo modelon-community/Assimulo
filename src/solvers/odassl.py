@@ -233,9 +233,9 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         lrw = 40+8*ny + neq**2 + 3*neq
         rwork = np.zeros((lrw,))                                                
         liw = 22+neq
-        iwork = np.zeros((liw,),np.int8)                                                                               
-        jac_dummy = lambda x: x
-        info = np.zeros((15,),np.int8)
+        iwork = np.zeros((liw,),np.int)                                                                          
+        jac_dummy = lambda t,x,xp: x
+        info = np.zeros((15,),np.int) 
         info[1] = 1  # Tolerances are vectors  
         info[2] = normal_mode = 0 if opts["output_list"] != None else 1  # intermediate output mode
         info[6] = 1 if self.options["maxh"] > 0.0 else 0       
@@ -260,12 +260,22 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         
         #Store the opts
         self._opts = opts
+        
+        
+        #THIS IS NOT SUPPOSE TO BE NECCESSARY, BUT DUE TO A PROBLEM
+        #REPORTED IN TICKET:244 THIS IS HOWEVER NECCESSARY AS A 
+        #WORKAROUND FOR NOW...
+        def py_residual(t,y,yd):
+            return self.problem.res(t,y,yd)
+        callback_residual = py_residual
+        #----
 
         if normal_mode == 1: # intermediate output mode
+            idid = 1
             while idid==1:
                 t,y,yprime,tf,info,idid,rwork,iwork = \
-                   odassl.odassl(self.problem.res,neq,ny,t,y,yprime,
-                         tf,info,rtol,atol,rwork,iwork,jac_dummy,lrw,liw)
+                   odassl.odassl(callback_residual,neq,ny,t,y,yprime,
+                         tf,info,rtol,atol,rwork,iwork,jac_dummy)
                 tlist.append(t)
                 ylist.append(y.copy())
                 ydlist.append(yprime.copy())
@@ -277,8 +287,8 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
             output_list  = opts["output_list"]
             for tout in output_list: 
                 t,y,yprime,tout,info,idid,rwork,iwork = \
-                  odassl.odassl(self.problem.res,neq,ny,t,y,yprime, \
-                         tout,info,rtol,atol,rwork,iwork,jac_dummy,lrw,liw)
+                  odassl.odassl(callback_residual,neq,ny,t,y,yprime, \
+                         tout,info,rtol,atol,rwork,iwork,jac_dummy)
                 tlist.append(t)
                 ylist.append(y.copy())
                 ydlist.append(yprime.copy())
