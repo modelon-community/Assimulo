@@ -23,5 +23,5 @@ Implicit Problem
 Mechanical Problem 
 -----------------------
 
-.. autoclass:: assimulo.problem.cMechanical_Problem
+.. autoclass:: assimulo.special_systems.cMechanical_System
     :members:

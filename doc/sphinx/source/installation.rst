@@ -6,15 +6,41 @@ Installation
 
 Dependencies:
     
-- `Python-2.6 / 2.7 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
-- `Cython 0.15 <http://www.cython.org/>`_
+- `Python-2.6 / 2.7 <http://www.python.org/>`_
 - `Numpy <http://www.scipy.org/Download/>`_
 - `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_
-- `Sundials-2.4 <http://computation.llnl.gov/casc/sundials/main.html>`_
+
+Additional dependencies for compiling from source:
+
+- `Python-2.6 / 2.7 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
+- `Sundials-2.4/2.5 <http://computation.llnl.gov/casc/sundials/main.html>`_
+- `Cython 0.15 <http://www.cython.org/>`_
+- C compiler
+- Fortran compiler
+- BLAS (only needed for the solver GLIMDA)
+- LAPACK (only needed for the solver GLIMDA)
 
 
 Assimulo is found on the :doc:`download` page.
+
+
+Installation flags
+====================
+
+When installing Assimulo from source there are a number of available flags that can be specified in order to point to dependencies and which should be provided after the install command::
+
+    python setup.py install ...
+    
+The available flags are::
+
+    - "--sundials-home=..." - Point to an Sundials installation
+    - "--blas-home=..." - Point to an BLAS installation
+    - "--lapack-home=..." - Point to an LAPACK installation
+
+Example::
+
+    python setup.py install --sundials-home=/home/chria/Sundials --blas-home=/home/chria/Blas
 
 Ubuntu
 ==========
@@ -27,13 +53,9 @@ After a successful installation, the package will be located in Pythons dist-pac
 
 .. note::
 
-    If Sundials has been installed on a different location then the default, the argument::
+    If Sundials has been installed on a different location then the default, use the sundials flag::
     
         --sundials-home=/path/to/sundials
-        
-    should point to where Sundials is installed. Example, ::
-    
-        python setup.py install --sundials-home=/home/chria/Sundials
 
 .. note::
 
@@ -46,6 +68,12 @@ After a successful installation, the package will be located in Pythons dist-pac
 Windows
 ==========
 
+For installing on Windows it is recommended to download the binary installers from the :doc:`download` page which includes all the solvers available. The below instructions are for installing Assimulo on Windows from source.
+
+.. note::
+
+    Assimulo is also dependent on the Windows redistributable package for Windows.
+
 Installing Sundials on Windows can be a bit tricky but here is a link for installing Sundials using cmake together with Visual Studio, http://sundials.wikidot.com/installation-cmake-vs . However I would recommend using Mingw instead of Visual Studio, here is link for installing Mingw on Windows and setting up Cython to use it, http://docs.cython.org/src/tutorial/appendix.html . If you would like to use Mingw instead of Visual Studio, just follow the above guide for installing Sundials until the step where Visual Studio is used. Instead of following those instructions, browse to Sundials build catalogue using the command prompt and type::
 
     make
@@ -56,14 +84,6 @@ Once Sundials and the rest of the packages are installed just install Assimulo b
     python setup.py install --sundials-home=/path/to/sundials
     
 After a successful installation, the package will be located in pythons dist-packages folder.
-
-.. note::
-
-    The argument::
-    
-        --sundials-home 
-        
-    should point to where sundials is installed.
 
 .. note::
 

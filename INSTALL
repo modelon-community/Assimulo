@@ -8,17 +8,18 @@ INSTALL
 *REQUIREMENTS
 	- Python-2.6 / 2.7 (with headers)
 	- Numpy, Scipy, Pylab
-	- Sundials-2.4.0
+	- Sundials-2.4.0/2.5.0
 	- Cython >= 0.15
     - C-compiler
     - Fortran-compiler
+    - BLAS
+    - LAPACK
 
 Installation is performed using the command:
 
-	'python setup.py install --sundials-home=/path/to/sundials'
+	'python setup.py install --sundials-home=/path/to/sundials --blas-home=/path/to/blas --lapack-home=/path/to/lapack'
 	
-The argument --sundials-home should point to where Sundials have been
-installed. Assimulo is then installed under Python dist-packages. 
+Assimulo is then installed under Python dist-packages. 
 To test the installation, browse to the tests folder and do a 'nosetests'.
 (The testing needs additionally the python-nose package)
 

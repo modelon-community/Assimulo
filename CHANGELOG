@@ -1,5 +1,8 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.2 ---
+    * 
+
 --- Assimulo-2.1 ---
     * Added support for passing in parameters when using Jacobians.
       (ticket:210)
