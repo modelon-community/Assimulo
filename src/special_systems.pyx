@@ -27,9 +27,9 @@ cdef class cMechanical_System:
         .. math::
             :nowrap:
             
-            \begin{eqnarray}
-                \dot{p} & = & v \\
-                M(p) \dot{v} & = & f(t,p,v)-G(p)^\mathrm{T}  \\
+            \\begin{eqnarray}
+                \dot{p} & = & v \\\\
+                M(p) \dot{v} & = & f(t,p,v)-G(p)^\mathrm{T}  \\\\
                 0 & = & g(p)
             \end{eqnarray}
         
