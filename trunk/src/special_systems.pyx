@@ -96,7 +96,7 @@ cdef class cMechanical_System:
         n_p,n_v,n_la=self.n_p, 2*self.n_p, self.n_la
         M=self.mass_matrix
         
-        def set_constraints(self,func,index):
+        def set_constraints(func,index):
             if index=='ind1':
                 constraint=self.constr1
             elif index=='ind2':
@@ -132,19 +132,21 @@ cdef class cMechanical_System:
                           residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)), 
                           constraint(t,y)
                           )) 
+            
             return with_constraint
 
         def res(t,y,yd):
             p,pd=y[0:n_p], yd[0:n_p]
             v,vd=y[n_p:n_v], yd[n_p:n_v]
             Mvd = N.dot(M,vd) if M != None else vd
-            return N.hstack((
-            pd - v, Mvd - self.forces(t,p,v)
-            ))
+            
+            return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
+            
         if n_la==0:
             return res
         else:   
-            return set_constraints(self,res,index)
+            return set_constraints(res,index)
+            
     def generate_problem(self,index):
         # 0. Input check
         index_values=['ind0', 'ind1','ind2', 'ind3','ovstab1','ovstab2','ggl1','ggl2'] 
