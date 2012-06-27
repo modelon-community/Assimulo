@@ -3,15 +3,16 @@
 
 python module odassl__user__routines 
     interface odassl_user_interface 
-        subroutine res(t, neq, ny, y, yprime, delta, ires, rpar, ipar)  
+        subroutine res(t, neq, ny, y, yprime, delta, ires, rpar, ipar)
+            double precision intent(in) :: t  
+            integer intent(in,hide), depend(delta) :: neq=len(delta)  
             integer intent(in,hide), depend(y)     :: ny=len(y)
-            integer intent(in,hide), depend(delta) :: neq=len(delta)                                                   
-            double precision dimension(ny),  intent(in) :: y, yprime 
+            double precision dimension(ny),  intent(in) :: y
+            double precision dimension(ny),  intent(in) :: yprime 
             double precision dimension(neq),  intent(out):: delta  
-            double precision intent(in) :: t 
             double precision dimension(1), intent(hide) :: rpar  
             integer          dimension(1), intent(hide) :: ipar 
-            integer intent(out)::ires     
+            integer intent(hide)::ires
         end subroutine res    
         subroutine jac(t, neq, ny, y, yprime, delta, ires, rpar, ipar)  
             integer intent(in) ::ny, neq                                                   
@@ -20,7 +21,7 @@ python module odassl__user__routines
             double precision :: t 
             double precision dimension(1), intent(hide) :: rpar  
             integer          dimension(1), intent(hide) :: ipar 
-            integer intent(out):: ires          
+            integer intent(hide):: ires          
         end subroutine jac    
     end interface odassl_user_interface
 end python module odassl__user__routines
