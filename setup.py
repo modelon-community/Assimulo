@@ -374,6 +374,15 @@ def check_fortran_extensions():
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+    #ODASSL
+    odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
+    odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+    config.add_extension('assimulo.lib.odassl',
+                         sources=[odassl_dir+file for file in odassl_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+    
+    
     #GLIMDA
     #ADD liblapack and libblas
     lapack = False
@@ -401,14 +410,6 @@ def check_fortran_extensions():
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
-        
-    #ODASSL
-    odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
-    odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-    config.add_extension('assimulo.lib.odassl',
-                         sources=[odassl_dir+file for file in odassl_files],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     return config.todict()["ext_modules"]
 
@@ -437,7 +438,7 @@ ext_list += check_fortran_extensions()
 NAME = "Assimulo"
 AUTHOR = "C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
-VERSION = "trunk"
+VERSION = "2.2"
 LICENSE = "GPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
@@ -472,8 +473,8 @@ For questions and comments, visit:
 http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.15 and Sundials 2.4 together with a 
-C-compiler and a FORTRAN-compiler.
+compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
+together with a C-compiler and a FORTRAN-compiler.
 """
 
 

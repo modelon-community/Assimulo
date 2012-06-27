@@ -481,3 +481,27 @@ class GLIMDA(Implicit_ODE):
         return self.options["maxretry"]
         
     maxretry = property(_get_maxretry, _set_maxretry)
+    
+    def _set_initial_step(self, initstep):
+        try:
+            self.options["inith"] = float(initstep)
+        except (ValueError, TypeError):
+            raise GLIMDA_Exception('The initial step must be an integer or float.')
+        
+    def _get_initial_step(self):
+        """
+        This determines the initial step-size to be used in the integration.
+        
+            Parameters::
+            
+                inith    
+                            - Default '0.01'.
+                            
+                            - Should be float.
+                            
+                                Example:
+                                    inith = 0.01
+        """
+        return self.options["inith"]
+        
+    inith = property(_get_initial_step,_set_initial_step)
