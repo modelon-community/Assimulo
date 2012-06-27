@@ -29,7 +29,17 @@ except ImportError:
 
 class LSODAR(Explicit_ODE):
     """
-        Pass.
+        LOSDAR is a multistep method for solving explicit ordinary 
+        differential equations on the form,
+        
+        .. math::
+    
+            \dot{y} = f(t,y), \quad y(t_0) = y_0.
+            
+        LSODAR automatically switches between using an ADAMS method
+        or an BDF method and is also able to monitor events.
+        
+        LSODAR is part of ODEPACK, http://www.netlib.org/odepack/opkd-sum
     """
     
     def __init__(self, problem):
