@@ -109,6 +109,9 @@ static void kinPinvFree(KINMem kin_mem);
 #define beta           (kinpinv_mem->d_beta)
 #define reg_param      (kinpinv_mem->d_reg_param)
 
+#define ihfun    (kin_mem->kin_ihfun)
+#define ih_data  (kin_mem->kin_ih_data)
+
 /* 
  * =================================================================
  * EXPORTED FUNCTIONS
@@ -337,6 +340,8 @@ static int kinPinvSetup(KINMem kin_mem)
   double data;
   realtype *b;
 
+  char msg[200];
+
   kinpinv_mem = (KINPinvMem) lmem;
 
   /* Calculate value of jacobian */
@@ -385,7 +390,10 @@ static int kinPinvSetup(KINMem kin_mem)
     } else {
       reg_param = 1;
     }
-    if (printfl > 0) printf("Regparam: %f, \n ",reg_param);
+	if (printfl > 0) {
+		sprintf(msg, "Singular jacobian detected, regparam: %f",reg_param);
+		ihfun("KINPINV", "kinPinvSetup", msg, ih_data);
+	}
     /* calculate a regularized matrix */
     JTJ_c = JTJ->cols;
 
@@ -428,7 +436,8 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
   }
 
   if (regularized) {
-    if (printfl > 0) printf("Regularized problem\n");
+    if (printfl > 0)
+		ihfun("KINPINV", "kinPinvSetup", "Solving regularized problem", ih_data);
     /* Calculate new right hand side b = J transpose * b */
     bx = N_VGetArrayPointer(b);
     xd = N_VGetArrayPointer(x);
