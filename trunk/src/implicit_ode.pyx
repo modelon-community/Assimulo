@@ -94,13 +94,16 @@ cdef class Implicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
+        y0 = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
+        yd0 = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
+        
         if len(self.y) != len(y0) or len(self.yd) != len(yd0):
             raise Implicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
         
         #Set the new values as the current values
         self.t  = float(t0)
-        self.y  = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
-        self.yd = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
+        self.y  = y0
+        self.yd = yd0
         
         if sw0 != None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()

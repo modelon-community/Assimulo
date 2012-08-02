@@ -23,4 +23,19 @@ from assimulo.exception import *
 
 class Test_Explicit_ODE:
     pass
-
+    
+    @testattr(stddist = True)
+    def test_re_init(self):
+        
+        rhs = lambda t,y: y
+        
+        prob = Explicit_Problem(rhs, 0.0)
+        solv = Explicit_ODE(prob)
+        
+        assert solv.t == 0.0
+        assert solv.y[0] == 0.0
+        
+        solv.re_init(1.0, 2.0)
+        
+        assert solv.t == 1.0
+        assert solv.y[0] == 2.0
