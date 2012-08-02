@@ -62,7 +62,7 @@ cdef class Explicit_ODE(ODE):
         """
         Resets the problem. If the problem is defined with a reset method, its called
         and then the method re_init. The re_init method is called with the initial
-        values set in the problem, problem.t0 and problem.y0.
+        values provided to the solver (solver.t0 and solver.y0).
         
         """
         self.problem.reset()
