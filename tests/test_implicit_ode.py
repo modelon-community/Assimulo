@@ -22,4 +22,21 @@ from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
 
 class Test_Implicit_ODE:
-    pass
+    
+    @testattr(stddist = True)
+    def test_re_init(self):
+        
+        res = lambda t,y,yd: y
+        
+        prob = Implicit_Problem(res, 0.0, 0.0)
+        solv = Implicit_ODE(prob)
+        
+        assert solv.t == 0.0
+        assert solv.y[0] == 0.0
+        assert solv.yd[0] == 0.0
+        
+        solv.re_init(1.0, 2.0, 3.0)
+        
+        assert solv.t == 1.0
+        assert solv.y[0] == 2.0
+        assert solv.yd[0] == 3.0
