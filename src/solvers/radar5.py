@@ -162,7 +162,14 @@ class Radar5ODE(Explicit_ODE):
         
         
         if i == -1:
-            return N.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
+            # The line below this comment is what's effectively happening,
+            # but it is unfortunately extremely slow compared to the
+            # vectorized version below that doesn't use the cpoly function:
+            #return N.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
+            nrds = self.problem.nrdens
+            I = I + 1
+            I2 = I + self.problem_info["dim"]
+            return self.past[I:I2] + theta*(self.past[nrds+I:nrds+I2] + (theta-self.C2M1)*(self.past[2*nrds+I:2*nrds+I2] + (theta-self.C1M1)*(self.past[3*nrds+I:3*nrds+I2])))  
         elif i >= 0:
             return self.cpoly(i, I, theta)
         else:
