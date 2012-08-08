@@ -15,7 +15,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
         p = realtype2arr(pData.p,pData.dimSens)
         try:
             if pData.sw != NULL:
-                rhs = (<object>pData.RHS)(t,y,<list>pData.sw, p=p)
+                rhs = (<object>pData.RHS)(t,y,sw=<list>pData.sw, p=p)
             else:
                 rhs = (<object>pData.RHS)(t,y,p)
                 
@@ -69,8 +69,11 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
                     col_i[j] = jac[j,i]
 
             return CVDLS_SUCCESS
-        except:
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        except:
+            traceback.print_exc()
+            return CVDLS_JACFUNC_UNRECVR
     else:
         try:
             if pData.sw != NULL:
@@ -84,8 +87,11 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
                     col_i[j] = jac[j,i]
 
             return CVDLS_SUCCESS
-        except:
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        except:
+            traceback.print_exc()
+            return CVDLS_JACFUNC_UNRECVR
         
 cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
 				    void *problem_data, N_Vector tmp):
@@ -101,16 +107,64 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
     
     cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
     
-    try:
-        jacv = (<object>pData.JACV)(t,y,fy,v)
-        
-        for i in range(pData.dim):
+    if pData.dimSens>0: #Sensitivity activated
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,fy,v,sw=<list>pData.sw,p=p)
+            else:
+                jacv = (<object>pData.JACV)(t,y,fy,v,p=p)
+            
+            for i in range(pData.dim):
                 jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC
+    else:
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,fy,v,sw=<list>pData.sw)
+            else:
+                jacv = (<object>pData.JACV)(t,y,fy,v)
+            
+            for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC
+
+"""
+cdef int cv_prec(realtype t, N Vector yv, N Vector fyv, 
+         N Vector rv, N Vector z, realtype gamma, realtype delta, int lr, 
+         void *problem_data, N Vector tmp):
+    
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y  = nv2arr(yv)
+    cdef N.ndarray fy = nv2arr(fyv)
+    cdef N.ndarray r  = nv2arr(rv)
+    cdef int i
+    
+    cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
+    
+    try:
+    
+        zres = (<object>pData.PREC)(t,y,fy,r,...)
+    
+        for i in range(pData.dim):
+            zptr[i] = zres[i]
         
         return SPGMR_SUCCESS
     except:
-        return SPGMR_ATIMES_FAIL_REC
-    
+        return SPGMR_PSOLVE_FAIL_UNREC
+"""
 
 cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     """
@@ -135,7 +189,7 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     
         return CV_SUCCESS
     except:
-        return CV_RTFUNC_FAIL  # Unrecoverable Error           
+        return CV_RTFUNC_FAIL  # Unrecoverable Error
 
 cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data):
     """
@@ -167,9 +221,8 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
         except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
-            print "Unexpected error, probably due to a programing error in rhs/res function:\n"
             traceback.print_exc()
-            return -1
+            return IDA_RES_FAIL
     else: #NO SENSITIVITY
         try:
             if pData.sw != NULL:
@@ -186,9 +239,8 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
         except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
-            print "Unexpected error, probably due to a programing error in rhs/res function:\n"
             traceback.print_exc()
-            return -1
+            return IDA_RES_FAIL
             
 cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jacobian,
                  void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
@@ -218,8 +270,11 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
                 for j in range(Neq):
                     col_i[j] = jac[j,i]
             return IDADLS_SUCCESS
-        except: 
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDADLS_JACFUNC_RECVR #Recoverable Error
+        except:
+            traceback.print_exc()
+            return IDADLS_JACFUNC_UNRECVR
     else:
         try:
             if pData.sw != NULL:
@@ -232,8 +287,11 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
                 for j in range(Neq):
                     col_i[j] = jac[j,i]
             return IDADLS_SUCCESS
-        except: 
+        except(N.linalg.LinAlgError,ZeroDivisionError):
             return IDADLS_JACFUNC_RECVR #Recoverable Error
+        except:
+            traceback.print_exc()
+            return IDADLS_JACFUNC_UNRECVR
         
 
 cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):

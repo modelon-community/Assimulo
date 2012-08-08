@@ -264,6 +264,54 @@ class Test_CVode:
         assert self.simulator.maxord == 5
     
     @testattr(stddist = True)
+    def test_spgmr(self):
+        f = lambda t,y: N.array([y[1], -9.82])
+        fsw = lambda t,y,sw: N.array([y[1], -9.82])
+        fp = lambda t,y,p: N.array([y[1], -9.82])
+        fswp = lambda t,y,sw,p: N.array([y[1], -9.82])
+        jacv = lambda t,y,fy,v: N.dot(N.array([[0,1.],[0,0]]),v)
+        jacvsw = lambda t,y,fy,v,sw: N.dot(N.array([[0,1.],[0,0]]),v)
+        jacvp = lambda t,y,fy,v,p: N.dot(N.array([[0,1.],[0,0]]),v)
+        jacvswp = lambda t,y,fy,v,sw,p: N.dot(N.array([[0,1.],[0,0]]),v)
+        y0 = [1.0,0.0] #Initial conditions
+        
+        def run_sim(exp_mod):
+            exp_sim = CVode(exp_mod) #Create a CVode solver
+            exp_sim.linear_solver = 'SPGMR' #Change linear solver
+
+            #Simulate
+            t, y = exp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
+        
+            #Basic tests
+            nose.tools.assert_almost_equal(y[-1][0],-121.75000000,4)
+            nose.tools.assert_almost_equal(y[-1][1],-49.100000000)
+        
+        exp_mod = Explicit_Problem(f,y0)
+        exp_mod.jacv = jacv #Sets the jacobian
+        run_sim(exp_mod)
+        
+        exp_mod = Explicit_Problem(f,y0)
+        exp_mod.jacv = jacvsw #Sets the jacobian
+        nose.tools.assert_raises(CVodeError,run_sim,exp_mod)
+        
+        exp_mod = Explicit_Problem(fp,y0,p0=1.0)
+        exp_mod.jacv = jacvp #Sets the jacobian
+        run_sim(exp_mod)
+        
+        exp_mod = Explicit_Problem(fsw,y0,sw0=[True])
+        exp_mod.jacv = jacvsw #Sets the jacobian
+        run_sim(exp_mod)
+        
+        exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
+        exp_mod.jacv = jacvswp #Sets the jacobian
+        run_sim(exp_mod)
+        
+        exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
+        exp_mod.jacv = jacvsw #Sets the jacobian
+        nose.tools.assert_raises(CVodeError,run_sim,exp_mod)
+        
+    
+    @testattr(stddist = True)
     def test_max_order_discr(self):
         """
         This tests the maximum order when the discretization is changed.
