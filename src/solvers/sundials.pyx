@@ -488,7 +488,7 @@ cdef class IDA(Implicit_ODE):
     
     cpdef step(self,double t,N.ndarray y, N.ndarray yd, double tf,dict opts):
         cdef int flag
-        cdef N_Vector yout, ydout
+        cdef N_Vector yout, ydout 
         cdef double tret = 0.0
         cdef double tr
         cdef N.ndarray yr, ydr
@@ -1569,7 +1569,7 @@ cdef class CVode(Explicit_ODE):
         for k in self.statistics.keys():
             self.statistics[k] = 0
         
-        self.initialize_cvode()
+        self.initialize_cvode() 
     
     cpdef step(self,double t,N.ndarray y,double tf,dict opts):
         cdef int flag

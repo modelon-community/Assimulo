@@ -81,6 +81,7 @@ DEF CVDLS_JACFUNC_RECVR   = -6
 # Iterative
 DEF SPGMR_SUCCESS         = 0 #Success, Converged
 DEF SPGMR_ATIMES_FAIL_REC = 5 #The Jacobian-vector function failed recoverably
+DEF SPGMR_PSOLVE_FAIL_UNREC = -3 #The preconditioner solve function failed unrecoverably
 
 # Sensitivity constants
 DEF CV_SRHSFUNC_FAIL      = -41   #The sensitivity right-hand side function failed unrecoverable
