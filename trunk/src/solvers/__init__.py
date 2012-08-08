@@ -19,7 +19,7 @@ __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
            "glimda","odepack"]
 
 #Import all the solvers from the different modules
-from euler import ExplicitEuler
+from euler import ExplicitEuler, ImplicitEuler
 from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
 from sundials import IDA, CVode
 from runge_kutta import RungeKutta34, RungeKutta4, Dopri5

@@ -100,3 +100,106 @@ class Test_Explicit_Euler:
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
         nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+
+class Test_Implicit_Euler:
+    
+    def setUp(self):
+        """
+        This function sets up the test case.
+        """
+        f = lambda t,y: 1.0
+        y0 = 1.0
+        
+        self.problem = Explicit_Problem(f, y0)
+        self.simulator = ImplicitEuler(self.problem)
+    
+    @testattr(stddist = True)
+    def test_reset_statistics(self):
+        assert self.simulator.statistics["nsteps"] == 0
+        
+        self.simulator.simulate(5)
+        nsteps = self.simulator.statistics["nsteps"]
+        self.simulator.simulate(6)
+        
+        assert self.simulator.statistics["nsteps"] < nsteps
+    
+    @testattr(stddist = True)
+    def test_h(self):
+        
+        nose.tools.assert_almost_equal(self.simulator.h, 0.01)
+        self.simulator.h = 1.0
+        nose.tools.assert_almost_equal(self.simulator.h, 1.0)
+        nose.tools.assert_raises(AssimuloException, self.simulator._set_h, [1])
+        
+    @testattr(stddist = True)
+    def test_time_event(self):
+        f = lambda t,y: [1.0]
+        global tnext
+        global nevent
+        tnext = 0.0
+        nevent = 0
+        def time_events(t,y,sw):
+            global tnext,nevent
+            events = [1.0, 2.0, 2.5, 3.0]
+            for ev in events:
+                if t < ev:
+                    tnext = ev
+                    break
+                else:
+                    tnext = None
+            nevent += 1
+            return tnext
+            
+        def handle_event(solver, event_info):
+            solver.y+= 1.0
+            global tnext
+            nose.tools.assert_almost_equal(solver.t, tnext)
+            assert event_info[0] == []
+            assert event_info[1] == True
+    
+        exp_mod = Explicit_Problem(f,0.0)
+        exp_mod.time_events = time_events
+        exp_mod.handle_event = handle_event
+        
+        #CVode
+        exp_sim = ExplicitEuler(exp_mod)
+        exp_sim(5.,100)
+        
+        assert nevent == 5
+    
+    @testattr(stddist = True)
+    def test_integrator(self):
+        """
+        This tests the functionality of using the normal mode.
+        """
+        values = self.simulator.simulate(1)
+        
+        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
+        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+    
+    @testattr(stddist = True)
+    def test_step(self):
+        """
+        This tests the functionality of using one step mode.
+        """
+        self.simulator.continuous_output = True
+        
+        self.simulator.h = 0.1
+        self.simulator.simulate(1)
+        
+        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
+        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+    
+    def test_stiff_problem(self):
+        f = lambda t,y: -15.0*y
+        y0 = 1.0
+        
+        problem = Explicit_Problem(f, y0)
+        simulator = ImplicitEuler(problem)
+
+        t,y = simulator.simulate(1)
+        
+        y_correct = lambda t: N.exp(-15*t)
+        
+        abs_err = N.abs(y[:,0]-y_correct(N.array(t)))
+        assert N.max(abs_err) < 0.1
