@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers import ImplicitEuler, CVode
+from assimulo.solvers import ImplicitEuler
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):

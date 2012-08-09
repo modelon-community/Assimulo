@@ -18,7 +18,7 @@
 import nose
 from assimulo import testattr
 from assimulo.solvers import GLIMDA
-from assimulo.problem import Implicit_Problem
+from assimulo.problem import Implicit_Problem, Explicit_Problem
 from assimulo.exception import *
 
 import numpy as N
@@ -58,6 +58,23 @@ class Test_GLIMDA:
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.inith = 1.e-4 #Initial step-size
+    
+    @testattr(stddist = True)
+    def test_simulate_explicit(self):
+        """
+        Test a simulation of an explicit problem using GLIMDA.
+        """
+        f = lambda t,y:N.array(-y)
+        y0 = [1.0]
+        
+        problem = Explicit_Problem(f,y0)
+        simulator = GLIMDA(problem)
+        
+        assert simulator.yd0[0] == -simulator.y0[0]
+        
+        t,y = simulator.simulate(1.0)
+        
+        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
     
     @testattr(stddist = True)
     def test_maxord(self):

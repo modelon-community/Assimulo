@@ -164,6 +164,9 @@ cdef class cExplicit_Problem(cProblem):
         except:
             return ID_FAIL
         return ID_OK
+        
+    cpdef N.ndarray res(self, t, y, yd):
+        return yd-self.rhs(t,y)
 
 class Implicit_Problem(cImplicit_Problem):
     """
