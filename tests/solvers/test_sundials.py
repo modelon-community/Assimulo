@@ -290,9 +290,23 @@ class Test_CVode:
         exp_mod.jacv = jacv #Sets the jacobian
         run_sim(exp_mod)
         
+        #Need someway of suppressing error messages from deep down in the Cython wrapper
+        #See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
+        from cStringIO import StringIO
+        import sys
+        stderr = sys.stderr
+        sys.stderr = StringIO()
+        
         exp_mod = Explicit_Problem(f,y0)
         exp_mod.jacv = jacvsw #Sets the jacobian
         nose.tools.assert_raises(CVodeError,run_sim,exp_mod)
+        
+        exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
+        exp_mod.jacv = jacvsw #Sets the jacobian
+        nose.tools.assert_raises(CVodeError,run_sim,exp_mod)
+        
+        #Restore standard error
+        sys.stderr = stderr
         
         exp_mod = Explicit_Problem(fp,y0,p0=1.0)
         exp_mod.jacv = jacvp #Sets the jacobian
@@ -305,11 +319,6 @@ class Test_CVode:
         exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
         exp_mod.jacv = jacvswp #Sets the jacobian
         run_sim(exp_mod)
-        
-        exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
-        exp_mod.jacv = jacvsw #Sets the jacobian
-        nose.tools.assert_raises(CVodeError,run_sim,exp_mod)
-        
     
     @testattr(stddist = True)
     def test_max_order_discr(self):
@@ -433,7 +442,24 @@ class Test_IDA:
         
         self.problem = Implicit_Problem(f,y0,yd0)
         self.simulator = IDA(self.problem)
+    
+    @testattr(stddist = True)
+    def test_simulate_explicit(self):
+        """
+        Test a simulation of an explicit problem using IDA.
+        """
+        f = lambda t,y:N.array(-y)
+        y0 = [1.0]
         
+        problem = Explicit_Problem(f,y0)
+        simulator = IDA(problem)
+        
+        assert simulator.yd0[0] == -simulator.y0[0]
+        
+        t,y = simulator.simulate(1.0)
+        
+        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
+    
     @testattr(stddist = True)    
     def test_init(self):
         """

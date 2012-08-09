@@ -542,6 +542,23 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.inith = 1.e-4 #Initial step-size
     
     @testattr(stddist = True)
+    def test_simulate_explicit(self):
+        """
+        Test a simulation of an explicit problem using Radau5DAE.
+        """
+        f = lambda t,y:N.array(-y)
+        y0 = [1.0]
+        
+        problem = Explicit_Problem(f,y0)
+        simulator = Radau5DAE(problem)
+        
+        assert simulator.yd0[0] == -simulator.y0[0]
+        
+        t,y = simulator.simulate(1.0)
+        
+        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
+    
+    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y,yd: y-yd
         global tnext

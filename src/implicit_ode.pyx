@@ -17,6 +17,7 @@
 
 from ode cimport ODE
 from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
+from problem import cExplicit_Problem
 
 import pylab as P
 import itertools
@@ -53,11 +54,18 @@ cdef class Implicit_ODE(ODE):
         self.problem = problem
         self.check_instance()
         
+        #Set type of problem
+        self.problem_info["type"] = 1 #Implicit
+        
         
         if hasattr(problem, 'yd0'):
             self.yd0 = N.array(problem.yd0,dtype=realtype) if len(N.array(problem.yd0,dtype=realtype).shape)>0 else N.array([problem.yd0],dtype=realtype)
         else:
-            raise Implicit_ODE_Exception('yd0 must be specified in the problem.')
+            if isinstance(self.problem, cExplicit_Problem): #The problem is an explicit, get the yd0 values from the right-hand-side
+                self.problem_info["type"] = 0 #Change to explicit problem
+                self.yd0 = problem.rhs(self.t0, self.y0)
+            else:
+                raise Implicit_ODE_Exception('yd0 must be specified in the problem.')
         
         #Check the dimension of the state event function
         if self.problem_info["state_events"]:
@@ -66,9 +74,10 @@ cdef class Implicit_ODE(ODE):
         self.t  = self.t0
         self.y  = self.y0.copy()
         self.yd = self.yd0.copy()
+        
     def check_instance(self):
-        if not isinstance(self.problem, cImplicit_Problem):
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem.')
+        if not isinstance(self.problem, cImplicit_Problem) and not isinstance(self.problem, cExplicit_Problem):
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem (or Explicit_Problem).')
         
     def reset(self):
         """
@@ -139,13 +148,17 @@ cdef class Implicit_ODE(ODE):
         cdef double t_log, tevent
         cdef int flag, output_index
         cdef dict opts
+        cdef int type = self.problem_info["type"]
         
         y0  = self.y
         yd0 = self.yd
         t_logg = t0
 
         #Logg the first point
-        self.problem.handle_result(self,t0,y0,yd0)
+        if type == 0:
+            self.problem.handle_result(self,t0,y0)
+        else:
+            self.problem.handle_result(self,t0,y0,yd0)
         
         #Reinitiate the solver
         flag_initialize = True
@@ -180,7 +193,10 @@ cdef class Implicit_ODE(ODE):
                 if INTERPOLATE_OUTPUT == 1:
                     try:
                         while output_list[output_index] <= t:
-                            self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]),self.interpolate(output_list[output_index],1))
+                            if type == 0:
+                                self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
+                            else:
+                                self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]),self.interpolate(output_list[output_index],1))
                             
                             #Last logging point
                             t_logg = output_list[output_index]
@@ -189,7 +205,10 @@ cdef class Implicit_ODE(ODE):
                     except IndexError:
                         pass
                 else:
-                    self.problem.handle_result(self,t,y,yd)
+                    if type == 0:
+                        self.problem.handle_result(self,t,y)
+                    else:
+                        self.problem.handle_result(self,t,y,yd)
                     
                     #Last logging point
                     t_logg = self.t
@@ -204,7 +223,10 @@ cdef class Implicit_ODE(ODE):
                 self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
 
                 #Store data
-                map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist, ydlist)
+                if type == 0:
+                    map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
+                else:
+                    map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist, ydlist)
                 
                 #Last logging point
                 t_logg = self.t
@@ -241,8 +263,11 @@ cdef class Implicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and t_logg == self.t: 
-                self.problem.handle_result(self, self.t, self.y, self.yd)
+            if flag_initialize and t_logg == self.t:
+                if type == 0:
+                    self.problem.handle_result(self, self.t, self.y)
+                else:
+                    self.problem.handle_result(self, self.t, self.y, self.yd)
         
     def plot(self, mask=None, der=False, **kwargs):
         """
