@@ -44,7 +44,7 @@ class Test_Explicit_Euler:
         
     @testattr(stddist = True)
     def test_time_event(self):
-        f = lambda t,y: [1.0]
+        f = lambda t,y: N.array(1.0)
         global tnext
         global nevent
         tnext = 0.0
@@ -100,6 +100,19 @@ class Test_Explicit_Euler:
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
         nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        
+    @testattr(stddist = True)
+    def test_exception(self):
+        """
+        This tests that exceptions are no caught when evaluating the RHS in ExpEuler.
+        """
+        def f(t,y):
+            raise NotImplementedError
+        
+        prob = Explicit_Problem(f,0.0)
+        sim = ExplicitEuler(prob)
+        
+        nose.tools.assert_raises(NotImplementedError, sim.simulate, 1.0)
 
 class Test_Implicit_Euler:
     
@@ -133,7 +146,7 @@ class Test_Implicit_Euler:
         
     @testattr(stddist = True)
     def test_time_event(self):
-        f = lambda t,y: [1.0]
+        f = lambda t,y: N.array(1.0)
         global tnext
         global nevent
         tnext = 0.0
@@ -162,7 +175,7 @@ class Test_Implicit_Euler:
         exp_mod.handle_event = handle_event
         
         #CVode
-        exp_sim = ExplicitEuler(exp_mod)
+        exp_sim = ImplicitEuler(exp_mod)
         exp_sim(5.,100)
         
         assert nevent == 5
@@ -190,6 +203,7 @@ class Test_Implicit_Euler:
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
         nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
     
+    @testattr(stddist = True)
     def test_stiff_problem(self):
         f = lambda t,y: -15.0*y
         y0 = 1.0

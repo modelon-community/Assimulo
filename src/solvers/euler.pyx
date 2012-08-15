@@ -471,8 +471,8 @@ cdef class ExplicitEuler(Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
-        self.f(self.yd1,t,y) #The output is stored in yd
-        return t + h, y + h*self.yd1
+        #self.f(self.yd1,t,y) #The output is stored in yd
+        return t + h, y + h*self.problem.rhs(t,y)
         
     def _set_h(self,h):
         try:
