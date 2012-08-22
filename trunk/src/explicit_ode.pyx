@@ -206,7 +206,7 @@ cdef class Explicit_ODE(ODE):
                 
                 #Log the information
                 self.log_event(self.t, event_info, NORMAL)
-                self.log_message("A discontinuity occured at t = %e."%self.t,NORMAL)
+                self.log_message("A discontinuity occured at t = %e."%self.t,LOUD)
                 self.log_message("Current Switches: " + str(self.sw), LOUD)
                 self.log_message('Event info: ' + str(event_info), LOUD) 
                 
