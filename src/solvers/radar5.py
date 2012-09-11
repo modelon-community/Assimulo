@@ -89,6 +89,10 @@ class Radar5ODE(Explicit_ODE):
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
+        #self._yDelayTemp = copy.deepcopy(self.problem.lagcompmap)
+        self._yDelayTemp = []
+        for i in range(len(self.problem.lagcompmap)):
+            self._yDelayTemp.append([range(len(self.problem.lagcompmap[i]))])
         
 #        if hasattr(problem, 'pbar'):
         
@@ -191,7 +195,7 @@ class Radar5ODE(Explicit_ODE):
         
 
     def compute_ydelay(self, t, y, past, ipast):
-        ydelay = copy.deepcopy(self.problem.lagcompmap)
+        ydelay = self._yDelayTemp
         for i in range(1, self.problem.ntimelags+1):
             theta, pos = radar5.lagr5(i, t, y, self.arglag, past,  self.problem.phi,  ipast)
 
@@ -312,7 +316,8 @@ class Radar5ODE(Explicit_ODE):
         t, y, h, iwork, flag, past = a[0]
         #print a[0]
         #print len(a[0])
-        self.past = copy.deepcopy(past)
+        #self.past = copy.deepcopy(past)
+        self.past = past
         self.tk = N.trim_zeros(self.past[::self.idif], 'b')
         self.hk = N.trim_zeros(self.past[self.idif-1:-1:self.idif], 'b')
         
