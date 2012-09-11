@@ -92,7 +92,7 @@ class Radar5ODE(Explicit_ODE):
         #self._yDelayTemp = copy.deepcopy(self.problem.lagcompmap)
         self._yDelayTemp = []
         for i in range(len(self.problem.lagcompmap)):
-            self._yDelayTemp.append([range(len(self.problem.lagcompmap[i]))])
+            self._yDelayTemp.append(range(len(self.problem.lagcompmap[i])))
         
 #        if hasattr(problem, 'pbar'):
         
