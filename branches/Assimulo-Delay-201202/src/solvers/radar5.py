@@ -70,7 +70,7 @@ class Radar5ODE(Explicit_ODE):
         self.options["tckbp"] = 5.0 # Parameter for controlling the search for breaking points
         self.options["ieflag"] = 0 # Switch between different modes of error control
         self.options["mxst"] = 100 # The maximum number of stored dense output points
-        self.options["usejaclag"]   = False
+        self.options["usejaclag"]   = True if self.problem_info["jaclag_fcn"] else False
         
         SQ6 = N.sqrt(6.0)
         C1 = (4.0-SQ6)/10.0 
@@ -87,12 +87,19 @@ class Radar5ODE(Explicit_ODE):
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
+        #Internal values
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
-        #self._yDelayTemp = copy.deepcopy(self.problem.lagcompmap)
         self._yDelayTemp = []
-        for i in range(len(self.problem.lagcompmap)):
+        self._ntimelags = len(self.problem.lagcompmap)
+        for i in range(self._ntimelags):
             self._yDelayTemp.append(range(len(self.problem.lagcompmap[i])))
+        flat_lagcompmap = []
+        for comp in self.problem.lagcompmap:
+            flat_lagcompmap.extend(comp)
+        self._nrdens = len(N.unique(flat_lagcompmap))
+        self._ipast = N.unique(flat_lagcompmap).tolist()+[0]
+        self._grid = N.array([])
         
 #        if hasattr(problem, 'pbar'):
         
@@ -170,7 +177,7 @@ class Radar5ODE(Explicit_ODE):
             # but it is unfortunately extremely slow compared to the
             # vectorized version below that doesn't use the cpoly function:
             #return N.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
-            nrds = self.problem.nrdens
+            nrds = self._nrdens
             I = I + 1
             I2 = I + self.problem_info["dim"]
             return self.past[I:I2] + theta*(self.past[nrds+I:nrds+I2] + (theta-self.C2M1)*(self.past[2*nrds+I:2*nrds+I2] + (theta-self.C1M1)*(self.past[3*nrds+I:3*nrds+I2])))  
@@ -183,24 +190,21 @@ class Radar5ODE(Explicit_ODE):
         """
             Evaluate the I:th dense output polynomial for component i at theta.
         """
-        nrds = self.problem.nrdens
+        nrds = self._nrdens
         I = I + i + 1
         return self.past[I] + theta*(self.past[nrds+I] + (theta-self.C2M1)*(self.past[2*nrds+I] + (theta-self.C1M1)*(self.past[3*nrds+I])))  
 
     def arglag(self, i, t, y, past, ipast):
-        if i == 10:
-            return t
-        else:
-            return self.problem.arglag(i,t,y)
+        return self.problem.time_lags(t,y)[i-1]
         
 
     def compute_ydelay(self, t, y, past, ipast):
         ydelay = self._yDelayTemp
-        for i in range(1, self.problem.ntimelags+1):
+        for i in range(1, self._ntimelags+1):
             theta, pos = radar5.lagr5(i, t, y, self.arglag, past,  self.problem.phi,  ipast)
 
             for j, val in enumerate(self.problem.lagcompmap[i-1]):
-                ydelay[i-1][j] = radar5.ylagr5(val, theta, pos, self.problem.phi,  past,  ipast)
+                ydelay[i-1][j] = radar5.ylagr5(val+1, theta, pos, self.problem.phi,  past,  ipast)
 
         return ydelay
 
@@ -254,11 +258,11 @@ class Radar5ODE(Explicit_ODE):
         IWORK[7] = 1
         IWORK[10] = self.ieflag
         IWORK[11] = self.mxst
-        IWORK[12] = self.problem.ngrid
+        IWORK[12] = len(self.grid)
         IWORK[13] = 1
-        IWORK[14] = self.problem.nrdens
+        IWORK[14] = self._nrdens
         
-        self.idif = 4*self.problem.nrdens + 2
+        self.idif = 4*self._nrdens + 2
         lrpast = self.mxst*self.idif
         past = N.zeros(lrpast)
         
@@ -300,8 +304,8 @@ class Radar5ODE(Explicit_ODE):
                                        IOUT,                    \
                                        WORK,                    \
                                        IWORK,                   \
-                                       self.problem.grid.copy(),       \
-                                       self.problem.ipast,      \
+                                       self.grid.tolist()+[0.0],       \
+                                       self._ipast,      \
                                        mas_dummy,               \
                                        MLMAS,                   \
                                        MUMAS,
@@ -671,6 +675,12 @@ class Radar5ODE(Explicit_ODE):
     
     usejac = property(_get_usejac,_set_usejac)
     
+    def _set_usejaclag(self, jaclag):
+        self.options["usejaclag"] = bool(jaclag)
+    def _get_usejaclag(self, jaclag):
+        return self.options["usejaclag"]
+    usejaclag = property(_get_usejaclag,_set_usejaclag)
+    
     def _set_atol(self,atol):
         
         self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
@@ -725,6 +735,15 @@ class Radar5ODE(Explicit_ODE):
         return self.options["rtol"]
         
     rtol=property(_get_rtol,_set_rtol)
+    
+    def _get_grid(self):
+        """
+        TODO
+        """
+        return self._grid
+    def _set_grid(self, grid):
+        self._grid
+    grid=property(_get_grid,_set_grid)
     
     def _get_maxsteps(self):
         """
@@ -853,7 +872,7 @@ class Radar5ODE(Explicit_ODE):
         except (TypeError, ValueError):
             raise Radar_Exception("mxst must be a positive integer.")
         if (self.options["mxst"] < 1):
-            raise Radar_Exception("mxst must be either -1, 0, 1 or 2.")
+            raise Radar_Exception("mxst must be a positive integer.")
 
         mxst = property(_get_mxst, _set_mxst)
         
