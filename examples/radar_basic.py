@@ -15,18 +15,10 @@ from assimulo.solvers import radar5
 class Simple(Delay_Explicit_Problem):
     def __init__(self):
         Delay_Explicit_Problem.__init__(self)
-      
-        self.ntimelags = 1          # The number of different time lags
-    
-        self.lagcompmap = [[1]]     # Delay 0 affects component 1 (Note that 1 = 0 here)
-        
-        self.nrdens = 1             # There is 1 component that needs dense output
-        self.ipast = array([1,0])     # Component 1 needs dense output (Note that 1=1 here)
-#        self.ngrid = 0
+        self.lagcompmap = [[0]]     # Delay 0 affects component 0
             
-            
-    def arglag(self, i, t, y):
-        return t - 1.0    # Only one constant time lag, -1
+    def time_lags(self, t, y):
+        return [t - 1.0]    # Only one constant time lag, -1
         
     def rhs(self, t, y, ydelay):
         ytm1 = ydelay[0][0] # y(t-1)
@@ -41,7 +33,7 @@ class Simple(Delay_Explicit_Problem):
 
 
 if __name__ == '__main__':
-    ITOL = 1
+
     RTOL = 1.e-6
     ATOL = 1e-6
     H = 1.e-3
@@ -50,15 +42,8 @@ if __name__ == '__main__':
 
 	# First solve
     p = Simple()
-    p.grid = array([1.0, 0.0])
-    p.grid = array([0.5, 2.1, 0.0])
-    p.grid = array([0.7, 1.0, 1.1, 0.0])
-    p.grid = array([0.7, 1.0, 1.1, 2.5, 3.7, 4.3, 0.0])
-    #p.grid = array([0.7, 1.0, 1.1, 1.5, 3.7, 4.4, 0.0])
-    #p.grid = array([0.2, .7, 2.0, 0.0])
-    #p.grid = array([0.2, .7, 1.0, 2.0, 3.0, 4.0, 5.0, 0.0])
+
     
-    p.ngrid = len(p.grid)-1
     p.y0 = 0    # sin(pi*0) = 0, so consistent with history function
 
     t0 = 0
@@ -66,6 +51,13 @@ if __name__ == '__main__':
     #tf = 1.1
     
     s = radar5.Radar5ODE(p)
+    s.grid = array([1.0])
+    s.grid = array([0.5, 2.1])
+    s.grid = array([0.7, 1.0, 1.1])
+    s.grid = array([0.7, 1.0, 1.1, 2.5, 3.7, 4.3])
+    #s.grid = array([0.7, 1.0, 1.1, 1.5, 3.7, 4.4])
+    #s.grid = array([0.2, .7, 2.0])
+    #s.grid = array([0.2, .7, 1.0, 2.0, 3.0, 4.0, 5.0])
     s.rtol = RTOL
     s.atol = ATOL
     s.mxst = mxst
