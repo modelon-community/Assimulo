@@ -365,6 +365,16 @@ def check_fortran_extensions():
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+
+    config.add_extension('assimulo.lib.radar5',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
     #ODEPACK
     config.add_extension('assimulo.lib.odepack',
@@ -411,6 +421,7 @@ def check_fortran_extensions():
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
+
     return config.todict()["ext_modules"]
 
 """

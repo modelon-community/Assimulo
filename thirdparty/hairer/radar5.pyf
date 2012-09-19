@@ -1,0 +1,293 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module radcor__user__routines
+    interface radcor_user_interface 
+        subroutine fcn(n,x,y,y0,arglag,phi,rpar,ipar,past,ipast,nrds,lrpast) ! in radar5.f90:radcor:unknown_interface
+            integer, intent(in,hide) :: n
+            double precision, intent(in) :: x
+            real(kind=8) dimension(n),intent(in) :: y
+            real(kind=8),dimension(n),intent(out) :: y0
+            double precision :: arglag = 0
+            !external arglag
+            double precision :: phi = 0
+            !external phi
+            real(kind=8) dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            real(kind=8) dimension(lrpast), intent(in) :: past
+            integer dimension(nrds),intent(in) :: ipast
+            integer, intent(in,hide) :: nrds
+            integer, intent(in,hide) :: lrpast
+        end subroutine fcn
+        function phi(i,t,rpar,ipar) result(r) ! in :radar5:radar5.f:radcor:unknown_interface
+            integer, intent(in) :: i
+            real(kind=8), intent(in) :: t
+            real(kind=8) dimension(1), intent(in,hide) :: rpar
+            integer, intent(in,hide) :: ipar
+            real(kind=8) :: r
+        end function phi
+        function arglag(il,x1,zl,rpar,ipar,phi,past,ipast,nrds,lrpast,n) result(r) ! in radar5.f90:radcor:unknown_interface
+            integer, intent(in) :: il
+            double precision, intent(in) :: x1
+            real(kind=8) dimension(n), intent(in) :: zl
+            real(kind=8) dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            double precision ::  phi = 0
+            !external phi
+            !real(kind=8), allocatable,dimension(lrpast) :: past
+            real(kind=8), dimension(lrpast), intent(in) :: past
+            integer dimension(nrds),intent(in) :: ipast
+            integer,intent(in,hide) :: nrds
+            integer,intent(in,hide) :: lrpast
+            integer,intent(in,hide) :: n
+            real(kind=8) :: r
+        end function arglag
+        subroutine solout(nrsol,xosol,xsol,hsol,y,cont,lrc,nsolu,rpar,ipar,irtrn) ! in radar5.f90:radcor:unknown_interface
+            integer,intent(in) :: nrsol
+            double precision, intent(in) :: xosol
+            double precision, intent(in) :: xsol
+            double precision, intent(in) :: hsol
+            real(kind=8) dimension(nsolu),intent(in) :: y
+            real(kind=8), dimension(lrc), intent(in) :: cont
+            integer, intent(in,hide) :: lrc
+            integer, intent(in,hide) :: nsolu
+            real(kind=8) dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer,intent(in,out) :: irtrn
+        end subroutine solout
+        subroutine jac(n,x,y,fjac,ldjac,arglag,phi,rpar,ipar,past,ipast,nrds,lrpast) ! in radar5.f90:radcor:unknown_interface
+            integer, intent(in,hide) :: n
+            double precision, intent(in) :: x
+            real(kind=8) dimension(n),intent(in) :: y
+            real(kind=8), dimension(ldjac,n), intent(out) :: fjac
+            integer, intent(in,hide) :: ldjac
+            double precision :: arglag = 0
+            !external arglag
+            double precision :: phi = 0
+            !external phi
+            real(kind=8) dimension(1),intent(in, hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            real(kind=8), dimension(lrpast), intent(in) :: past
+            integer dimension(nrds),intent(in) :: ipast
+            integer, intent(in,hide) :: nrds
+            integer, intent(in,hide) :: lrpast
+        end subroutine jac
+        subroutine jaclag(n,x,y,fjaclag,arglag,phi,ive,ivc,ivl,rpar,ipar,past,ipast,nrds, lrpast) ! in radar5.f90:radcor:unknown_interface
+            integer, intent(in,hide) :: n
+            double precision, intent(in) :: x
+            real(kind=8) dimension(n),intent(in) :: y
+            real(kind=8), allocatable,dimension(:), intent(out) :: fjaclag
+            !external arglag
+            double precision :: arglag = 0
+            !external phi
+            double precision :: phi = 0
+            integer, allocatable,dimension(:), intent(in) :: ive
+            integer, allocatable,dimension(:), intent(in) :: ivc
+            integer, allocatable,dimension(:), intent(in) :: ivl
+            real(kind=8) dimension(1),intent(in, hide) :: rpar
+            integer dimension(1),intent(in, hide) :: ipar
+            real(kind=8), dimension(lrpast), intent(in) :: past
+            integer dimension(nrds),intent(in) :: ipast
+            integer, intent(in,hide) :: nrds
+            integer, intent(in,hide) :: lrpast
+        end subroutine jaclag
+        subroutine mas(n,am,lmas,rpar,ipar) ! in :radar5:radar5.f:radcor:unknown_interface
+            integer, intent(in, hide) :: n
+            double precision dimension(lmas,n),depend(lmas,n),intent(in,out) :: am
+            integer, optional,intent(hide) :: lmas=1
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine mas
+    end interface radcor_user_interface
+end python module radcor__user__routines
+
+
+python module radar5 ! in 
+    interface  ! in :radar5
+		function contr5(i,n,x,cont,xsol,hsol) ! in contr5.f
+			integer :: i
+			integer :: n
+			double precision :: x
+			real(kind=8) dimension(*),intent(in) :: cont
+			double precision :: xsol
+			double precision :: hsol
+			double precision :: c1
+			double precision :: c2
+			double precision :: c1m1
+			double precision :: c2m1
+			double precision :: c1mc2
+			double precision :: contr5
+			common /constn/ c1,c2,c1m1,c2m1,c1mc2
+		end function contr5
+		!function dontr5(i,n,x,cont,xsol,hsol) ! in dontr5.f
+		!	integer :: i
+		!	integer :: n
+		!	double precision :: x
+		!	real(kind=8) dimension(1),intent(in) :: cont
+		!	double precision :: xsol
+		!	double precision :: hsol
+		!	double precision :: c1
+		!	double precision :: c2
+		!	double precision :: c1m1
+		!	double precision :: c2m1
+		!	double precision :: c1mc2
+		!	double precision :: dontr5
+		!	common /constn/ c1,c2,c1m1,c2m1,c1mc2
+		!end function dontr5
+		subroutine assimulo_radar5(n,fcn,phi,arglag,t,y,xend,h,rtol,atol,itol,jac,ijac,mljac,mujac,jaclag,nlags,njacl,imas,solout,iout,work,iwork,rpar,ipar,idid,grid,ipast,mas,mlmas,mumas,lipast,lgrid,past,lrpast) ! in radar5_int.f
+			use ip_array
+			use radcor__user__routines
+			integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+			external fcn
+			external phi
+			external arglag
+			double precision, intent(in, out) :: t
+			real(kind=8) dimension(n),intent(in,out) :: y
+			double precision, intent(in) :: xend
+			double precision, intent(in, out) :: h
+			real(kind=8) dimension(n),intent(in) :: rtol
+			real(kind=8) dimension(n),intent(in) :: atol
+			integer, intent(in) :: itol
+			external jac
+			integer :: ijac
+			integer :: mljac
+			integer :: mujac
+			external jaclag
+			integer :: nlags
+			integer :: njacl
+			integer :: imas
+			external solout
+			integer :: iout
+			real(kind=8) dimension(30),intent(in) :: work
+			integer dimension(30),intent(in,out) :: iwork
+			real(kind=8) dimension(1),intent(in,hide) :: rpar
+			integer dimension(1),intent(in,hide) :: ipar
+			integer, intent(out) :: idid
+			real(kind=8) dimension(lgrid),intent(in) :: grid
+			integer dimension(lipast),intent(in) :: ipast
+			external mas
+			integer :: mlmas
+			integer :: mumas
+			integer, optional,intent(in,hide),check(len(ipast)>=lipast),depend(ipast) :: lipast=len(ipast)
+			integer, optional,intent(in,hide),check(len(grid)>=lgrid),depend(grid) :: lgrid=len(grid)
+            double precision, dimension(lrpast), intent(in,out) :: past
+            integer, intent(in) :: lrpast
+			double precision :: x0b
+			double precision :: uround
+			double precision :: hmax
+			integer :: iact
+			integer :: irtrn
+			integer :: idif
+			integer :: mxst
+			logical :: flags
+			logical :: flagn
+			common /posits/ x0b,uround,hmax,iact,irtrn,idif,mxst,flags,flagn
+		end subroutine assimulo_radar5
+
+		module ip_array ! in radar5.f90
+			integer dimension(100) :: iposv
+		end module ip_array
+
+		subroutine lagr5(il,x,y,arglag,past,theta,ipos,rpar,ipar,phi,ipast,nrds,lrpast,n) ! in radar5.f90
+			use ip_array
+			use radcor__user__routines
+			integer,intent(in) :: il
+			double precision,intent(in) :: x
+			real(kind=8) dimension(n),intent(in) :: y
+			external arglag
+			real(kind=8) dimension(lrpast),intent(in) :: past
+			double precision, intent(out) :: theta
+			integer, intent(out) :: ipos
+			real(kind=8) dimension(1),intent(in,hide) :: rpar
+			integer dimension(1),intent(in,hide) :: ipar
+			external phi
+			integer dimension(nrds),intent(in) :: ipast
+			integer,intent(in) :: nrds
+			integer,intent(in) :: lrpast
+			integer,intent(in) :: n
+			double precision :: x0b
+			double precision :: uround
+			double precision :: hmax
+			integer :: iact
+			integer :: irtrn
+			integer :: idif
+			integer :: mxst
+			logical :: flags
+			logical :: flagn
+			double precision :: bpp
+			integer :: ilbp
+			logical :: left
+			logical :: first
+			logical :: last
+			logical :: reject
+			logical :: bpd
+			common /posits/ x0b,uround,hmax,iact,irtrn,idif,mxst,flags,flagn
+			common /bpcom/ bpp,ilbp,left
+			common /bplog/ first,last,reject,bpd
+		end subroutine lagr5
+		function ylagr5(ic,theta,ipos,phi,rpar,ipar,past,ipast,nrds, lrpast) ! in radar5.f90
+			use radcor__user__routines
+			integer :: ic
+			double precision :: theta
+			integer :: ipos
+			external phi
+			real(kind=8) dimension(1),intent(in,hide) :: rpar
+			integer dimension(1),intent(in,hide) :: ipar
+			real(kind=8) dimension(lrpast),intent(in) :: past
+			integer dimension(nrds),intent(in) :: ipast
+			integer :: nrds
+			integer :: lrpast
+			double precision :: x0b
+			double precision :: uround
+			double precision :: hmax
+			integer :: iact
+			integer :: irtrn
+			integer :: idif
+			integer :: mxst
+			logical :: flags
+			logical :: flagn
+			double precision :: c1
+			double precision :: c2
+			double precision :: c1m1
+			double precision :: c2m1
+			double precision :: c1mc2
+			double precision :: ylagr5
+			common /posits/ x0b,uround,hmax,iact,irtrn,idif,mxst,flags,flagn
+			common /constn/ c1,c2,c1m1,c2m1,c1mc2
+		end function ylagr5
+		function dlagr5(ic,theta,ipos,phi,rpar,ipar,past,ipast,nrds, lrpast) ! in radar5.f90
+			use radcor__user__routines
+			integer :: ic
+			double precision :: theta
+			integer :: ipos
+			external phi
+			real(kind=8) dimension(1),intent(in,hide) :: rpar
+			integer dimension(1),intent(in,hide) :: ipar
+			real(kind=8) dimension(lrpast),intent(in) :: past
+			integer dimension(nrds),intent(in) :: ipast  
+			integer :: nrds
+			integer :: lrpast
+			double precision :: x0b
+			double precision :: uround
+			double precision :: hmax
+			integer :: iact
+			integer :: irtrn
+			integer :: idif
+			integer :: mxst
+			logical :: flags
+			logical :: flagn
+			double precision :: c1
+			double precision :: c2
+			double precision :: c1m1
+			double precision :: c2m1
+			double precision :: c1mc2
+			double precision :: dlagr5
+			common /posits/ x0b,uround,hmax,iact,irtrn,idif,mxst,flags,flagn
+			common /constn/ c1,c2,c1m1,c2m1,c1mc2
+		end function dlagr5
+
+    end interface 
+end python module radar5
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack"]
+           "glimda","odepack","radar5"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler, ImplicitEuler
@@ -26,6 +26,7 @@ from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
 from rosenbrock import RodasODE
 from odassl import ODASSLODE
 from odepack import LSODAR
+from radar5 import Radar5ODE
 
 try:
     from glimda import GLIMDA

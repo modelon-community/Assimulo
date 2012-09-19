@@ -168,6 +168,30 @@ cdef class cExplicit_Problem(cProblem):
     cpdef N.ndarray res(self, t, y, yd):
         return yd-self.rhs(t,y)
 
+        self.nlags = nlags # Number of delay arguments to differentiate for
+        self.njacl = njacl # Number of possible delay arguments that fcn can be differentiated with respect to
+        
+            
+cdef class cDelay_Explicit_Problem(cExplicit_Problem):
+    def __init__(self, object rhs=None, y0=None, phi = None, arglag = None, lagcompmap = None, jaclag = None, nlags = None, njacl = None, double t0=0.0, p0=None, sw0=None):
+        cExplicit_Problem.__init__(self, rhs, y0, t0, p0, sw0)
+        
+        if phi != None:
+            self.phi = phi
+        if arglag != None:
+            self.arglag = arglag
+        if jaclag != None:
+            self.jaclag = jaclag
+            
+        self.lagcompmap = lagcompmap
+
+        self.nlags = nlags # Number of delay arguments to differentiate for
+        self.njacl = njacl # Number of possible delay arguments that fcn can be differentiated with respect to
+        
+            
+class Delay_Explicit_Problem(cDelay_Explicit_Problem):
+    pass
+
 class Implicit_Problem(cImplicit_Problem):
     """
         Problem for our implicit integrators (DAEs). A problem
