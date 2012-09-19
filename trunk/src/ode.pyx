@@ -23,7 +23,7 @@ import pylab as P
 import itertools
 
 from exception import *
-from problem import Explicit_Problem, Implicit_Problem
+from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -44,7 +44,7 @@ cdef class ODE:
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
-                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0}
+                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False}
                              
         #Type of the problem
         #0 = Explicit
@@ -96,6 +96,8 @@ cdef class ODE:
             self.problem_info["jac_fcn"] = True
         if hasattr(problem, "jacv"):
             self.problem_info["jacv_fcn"] = True
+        if hasattr(problem, "jaclag"):
+            self.problem_info["jaclag_fcn"] = True
             
         #Reset solution variables
         self._reset_solution_variables()
@@ -233,7 +235,7 @@ cdef class ODE:
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
         
         #Return the results
-        if isinstance(self.problem, Explicit_Problem):
+        if isinstance(self.problem, Explicit_Problem) or isinstance(self.problem, Delay_Explicit_Problem):
             return self.t_sol, N.array(self.y_sol)
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
