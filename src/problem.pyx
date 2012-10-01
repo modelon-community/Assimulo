@@ -166,11 +166,7 @@ cdef class cExplicit_Problem(cProblem):
         return ID_OK
         
     cpdef N.ndarray res(self, t, y, yd):
-        return yd-self.rhs(t,y)
-
-        self.nlags = nlags # Number of delay arguments to differentiate for
-        self.njacl = njacl # Number of possible delay arguments that fcn can be differentiated with respect to
-        
+        return yd-self.rhs(t,y)        
             
 cdef class cDelay_Explicit_Problem(cExplicit_Problem):
     def __init__(self, object rhs=None, y0=None, phi = None, arglag = None, lagcompmap = None, jaclag = None, nlags = None, njacl = None, double t0=0.0, p0=None, sw0=None):
