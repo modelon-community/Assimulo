@@ -147,6 +147,10 @@ typedef int (*KINPinvJacFn)(int N,
  */
 
 SUNDIALS_EXPORT int KINPinvSetJacFn(void *kinmem, KINPinvJacFn jac);
+
+/*
+  Set regularization parameter
+  */
 SUNDIALS_EXPORT int KINPinvSetRegParam(void *kinmem, realtype reg_p);
 
 /*

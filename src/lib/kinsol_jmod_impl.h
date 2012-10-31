@@ -66,9 +66,9 @@ typedef struct KINPinvMemRec {
   int d_last_flag;         /* last error return flag                       */
 
   DlsMat d_JTJ;
-  booleantype d_regularized; /* Boolean set to true if problem is regularized*/
+  booleantype d_regularized;  /* Flag if the regularized problem should be solved*/
   booleantype d_redojac;
-    
+      
 } *KINPinvMem;
 
 
