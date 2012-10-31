@@ -164,6 +164,7 @@ int KINPinvSetRegParam(void *kinmem, realtype reg_p)
   return(KINPINV_SUCCESS);
 }
 
+
 /*
  * -----------------------------------------------------------------
  * KINPinvGetWorkSpace
@@ -321,6 +322,7 @@ char *KINPinvGetReturnFlagName(int flag)
   return(name);
 }
 
+
 /* 
  * =================================================================
  * DQ JACOBIAN APPROXIMATIONS
@@ -401,6 +403,14 @@ int kinPinvDQJac(int N,
 
     retval = func(u, ftemp, user_data);
     nfeDQ++;
+    if(retval > 0) {
+        /* try to recover by stepping in the opposite direction */
+        inc = -inc;
+        u_data[j] = ujsaved + inc;
+    
+        retval = func(u, ftemp, user_data);
+        nfeDQ++;
+    }
     if (retval != 0) break; 
 
     u_data[j] = ujsaved;
