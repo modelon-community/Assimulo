@@ -20,7 +20,7 @@ The view on discontinuous problems is, that we have different differential equat
     def rhs(t,y,sw):
         ...
         
-which is used to indicate which model ahes to me used in the sequel. The ``state_event`` method is defined as, ::
+which is used to indicate which model is active. The ``state_event`` method is defined as, ::
 
     def state_events(t,y,sw):
         ...
