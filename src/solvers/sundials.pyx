@@ -1530,7 +1530,8 @@ cdef class CVode(Explicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
+        #cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
+        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef int flag
         cdef N.ndarray res
         
