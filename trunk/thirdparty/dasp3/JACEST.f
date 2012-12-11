@@ -1,6 +1,7 @@
 C=======================================================================             
-      SUBROUTINE JACEST(T,H,A,N,M,WSY,WSZ,ABSREL,SLU,IND)
+      SUBROUTINE JACEST(DZDT,T,H,A,N,M,WSY,WSZ,ABSREL,SLU,IND)
 C=======================================================================            
+      EXTERNAL DZDT
       DIMENSION A(M,1),ABSREL(1),SLU(1),IND(1)
       DOUBLE PRECISION WSY(1),WSZ(1),T,RUNIT
       COMMON /JCIND/ IYN1,IZAUX,IZDIF,IZPC

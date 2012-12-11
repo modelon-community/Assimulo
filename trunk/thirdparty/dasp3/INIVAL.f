@@ -1,5 +1,6 @@
 C=======================================================================
-      SUBROUTINE INIVAL(T,WSY,WSZ,SWPT,N,M,A,NALG,EQ,SLU,IPS,TOL,LFLAG)
+      SUBROUTINE INIVAL(DZDT, T,WSY,WSZ,SWPT,N,M,A,NALG,EQ,SLU,IPS,TOL,
+     *                  LFLAG)
 C=======================================================================
 C
 C       SUBROUTINE INIVAL CALCULATES INITIAL VALUES OF "ALGEBRAIC
@@ -13,7 +14,8 @@ C       IS STRONGLY NONLINEAR.  (LFLAG=5 ON RETURN)
 C             
 C       AUTHOR G SODERLIND 1980-09-01
 C       DOUBLE PRECISION VERSION:       1980-10-22
-C    
+C  
+      EXTERNAL DZDT  
       DIMENSION SLU(1),IPS(1),SWPT(1),A(M,1)
       DOUBLE PRECISION WSY(1),WSZ(1),T,RUNIT,DTEMP
       DOUBLE PRECISION CZIT,CZOLD,CJG,ZJ,ZINC
