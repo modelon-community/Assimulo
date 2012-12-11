@@ -28,3 +28,6 @@ class GLIMDA_Exception(AssimuloException):
 
 class ODEPACK_Exception(AssimuloException):
     pass
+
+class DASP3_Exception(AssimuloException):
+    pass

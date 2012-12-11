@@ -119,6 +119,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","voigtmann"))
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     create_dir(join("build","assimulo","thirdparty","odassl"))
+    create_dir(join("build","assimulo","thirdparty","dasp3"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -131,6 +132,7 @@ def pre_processing():
     fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
+    fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -145,6 +147,7 @@ def pre_processing():
     desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
     desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
+    desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -187,6 +190,9 @@ def pre_processing():
             SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
         if f == "LICENSE_ODASSL":
             SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
+    for f in fileThirdPartyDasp3:
+        if not O.path.isdir(join("thirdparty","dasp3",f)):
+            SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -392,6 +398,13 @@ def check_fortran_extensions():
                          sources=[odassl_dir+file for file in odassl_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+    #DASP3
+    dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
+    dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
+                   'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+    config.add_extension('assimulo.lib.dasp3dp',
+                          sources=[dasp3_dir+file for file in dasp3_files],
+                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
     
     #GLIMDA
     #ADD liblapack and libblas

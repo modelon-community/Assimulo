@@ -135,7 +135,6 @@ cdef class cOverdetermined_Problem(cProblem):
             return ID_FAIL
         return ID_OK
     
-    
 cdef class cExplicit_Problem(cProblem):
     
     def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None):
@@ -183,7 +182,38 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
 
         self.nlags = nlags # Number of delay arguments to differentiate for
         self.njacl = njacl # Number of possible delay arguments that fcn can be differentiated with respect to
+
+cdef class cSingPerturbed_Problem(cExplicit_Problem):
+    
+    def __init__(self, rhs1=None, rhs2=None, eps=None, yy0=None, zz0=None, double t0=0.0):
+        if rhs1 != None:
+            self.rhs1 = rhs1
+        if rhs2 != None:
+            self.rhs2 = rhs2
+        if eps != None:
+            self.eps = eps
+        if yy0 != None:
+            self.yy0 = yy0    
+        if zz0 != None:
+            self.zz0 = zz0
+        # preparing things so that the problem also describes a 
+        # classical explicit problem without exposing teh structure
+        # of a singularly perturped problem    
+        y0=N.hstack((yy0,zz0))
+        self.n = len(yy0)
+        self.m = len(zz0)
+        cExplicit_Problem.__init__(self, y0=y0, t0=t0)   
         
+    def rhs(self,t,y):
+        yy=y[:self.n]
+        zz=y[self.n:]
+        yydot=self.rhs1(t,yy,zz)
+        zzdot=self.rhs2(t,yy,zz)
+        # componentwise division by eps as it is the diagonal of 
+        # a diagonal matrix
+        if self.eps != None: 
+            zzdot /= self.eps 
+        return N.hstack((yydot,zzdot))
             
 class Delay_Explicit_Problem(cDelay_Explicit_Problem):
     pass
@@ -446,5 +476,42 @@ class Explicit_Problem(cExplicit_Problem):
                 list. The state event list contains a set of integers of values (-1,0,1),
                 the values indicates which state event have triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
+    """
+    pass
+class SingPerturbed_Problem(cSingPerturbed_Problem):
+    """
+        Problem for singularly perturbed problems of the form
+        The equation is in the form
+        .. math::
+           :nowrap:
+
+           \begin{eqnarray}
+           \dot{y} & = & \mathrm{rhs}_1(t,y,z) \\
+           \vareps \dot{z} & = & \mathrm{rhs}_(t,y,z)
+           \end{eqnarray}
+ 
+        Parameters::
+            
+            rhs1 
+                Function that calculates the 'slow' right-hand-side: f (in formula above)
+                
+                    rhs1(t,y,z)    - 'slow' ODE
+                    Returns:
+                        A numpy array of size len(y).
+            rhs2 
+                Function that calculates the 'fast' right-hand-side: g (in formula above)
+                
+                    rhs2(t,y,z)    - 'fast' ODE
+                    Returns:
+                        A numpy array of size len(z).
+            eps diagonal of a len(z) x len(z) matrix with small numbers
+                    A numpy array of size len(z)
+            
+            yy0
+                Defines the starting values of y0
+            zz0
+                Defines the starting values of z0
+            t0
+                Defines the starting time
     """
     pass

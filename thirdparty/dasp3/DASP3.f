@@ -1,4 +1,5 @@
-      SUBROUTINE DASP3 (T,TEND,WSY,WSZ,N,M,TOL,ABSREL,WGHT,EPS,
+      SUBROUTINE DASP3 (DYDT, DZDT, OUTPDA, T,TEND,WSY,WSZ,N,M,TOL,
+     *                  ABSREL,WGHT,EPS,
      *                  A,W,SLU,IPS,EQ,IND,LFLAG)
 C       
 C     AUTHOR G SODERLIND, DEPT OF NUMERICAL ANALYSIS,
@@ -96,6 +97,7 @@ C      =6     N<0 OR M<1
 C     
 C-----------------------------------------------------------------------
 C  
+      EXTERNAL DYDT, DZDT, OUTPDA
       DIMENSION WGHT(1),EPS(1),SLU(1),IPS(1),IND(1)
       DIMENSION A(M,1),W(M,1),ABSREL(1)
       DIMENSION BC(3),HH(3),HCOF(3)
@@ -115,6 +117,7 @@ C
 C     
 C       INITIALIZING SECTION
 C     
+C      print *, 'Tol', tol
       IF(N.GE.0 .AND. M.GE.1) GOTO 3
       LFLAG = 6
       RETURN
@@ -176,7 +179,8 @@ C
     2    IF(U.LT.EMIN) EMIN = U
     1    CONTINUE
       IF(NALG.EQ.0) GOTO 9
-         CALL INIVAL(T,WSY,WSZ,ABSREL,N,M,A,NALG,EQ,SLU,IPS,TOL,LFLAG)
+         CALL INIVAL(DZDT, T,WSY,WSZ,ABSREL,N,M,A,NALG,EQ,SLU,IPS,TOL,
+     *               LFLAG)
          IF(LFLAG.NE.0) RETURN
     9 TEMP = AMAX1(10.0,1E7*TOL)
       HMIN = TEMP*RUNIT*(TEND-T)
@@ -341,7 +345,7 @@ C-----------------------------------------------------------------------
 C
       MATEST = MATEST+1
       JMS = 1
-      CALL JACEST(T,H,A,N,M,WSY,WSZ,ABSREL,SLU,IND)
+      CALL JACEST(DZDT,T,H,A,N,M,WSY,WSZ,ABSREL,SLU,IND)
       IF(MATEST.EQ.1) CALL SPAPAT(M,A,IND,EQ,SLU)
       IF(EMIN.EQ.0.) GOTO 2000
       RHOJAC = ABS(CC)*CTRACT(A,M,N,WSZ,ABSREL,SLU,EPS)
