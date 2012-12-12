@@ -27,9 +27,14 @@ from rosenbrock import RodasODE
 from odassl import ODASSLODE
 from odepack import LSODAR
 from radar5 import Radar5ODE
-from dasp3 import DASP3ODE
+
 
 try:
     from glimda import GLIMDA
 except ImportError:
     print "Could not find GLIMDA"
+
+try:
+    from dasp3 import DASP3ODE
+except ImportError:
+    pass
