@@ -399,12 +399,15 @@ def check_fortran_extensions():
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     #DASP3
-    dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
-    dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
-                   'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-    config.add_extension('assimulo.lib.dasp3dp',
-                          sources=[dasp3_dir+file for file in dasp3_files],
-                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+    if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+        dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
+        dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
+                       'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+        config.add_extension('assimulo.lib.dasp3dp',
+                              sources=[dasp3_dir+file for file in dasp3_files],
+                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+    else:
+        L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
     #GLIMDA
     #ADD liblapack and libblas

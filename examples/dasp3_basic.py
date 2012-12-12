@@ -18,7 +18,10 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers import DASP3ODE
+try:
+    from assimulo.solvers import DASP3ODE
+except ImportError:
+    pass
 from assimulo.problem import SingPerturbed_Problem
 
 def run_example(with_plots=True):
