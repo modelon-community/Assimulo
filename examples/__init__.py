@@ -20,5 +20,4 @@ __all__ = ["cvode_gyro", "cvode_basic", "cvode_with_disc", "cvode_with_initial_s
            "rungekutta4_basic", "rungekutta34_basic", "ida_with_disc", "ida_with_initial_sensitivity",
            "ida_with_jac", "ida_with_parameters", "radau5ode_vanderpol","radau5dae_vanderpol",
            "dopri5_basic", "rodasode_vanderpol", "glimda_vanderpol", "lsodar_vanderpol",
-           "lsodar_with_disc","mech_system_pendulum", "euler_vanderpol", "cvode_with_parameters_modified",
-           "dasp3_basic"]
+           "lsodar_with_disc","mech_system_pendulum", "euler_vanderpol", "cvode_with_parameters_modified"]
