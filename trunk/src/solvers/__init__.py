@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack","radar5","dasp3"]
+           "glimda","odepack","radar5"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler, ImplicitEuler
@@ -33,8 +33,3 @@ try:
     from glimda import GLIMDA
 except ImportError:
     print "Could not find GLIMDA"
-
-try:
-    from dasp3 import DASP3ODE
-except ImportError:
-    pass
