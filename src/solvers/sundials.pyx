@@ -1374,6 +1374,42 @@ cdef class CVode(Explicit_ODE):
             #Free Memory
             Sun.CVodeFree(&self.cvode_mem)
     
+    cpdef get_local_errors(self):
+        """
+        Returns the vector of estimated local errors at the current step.
+        """
+        cdef int flag
+        cdef N_Vector ele=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        
+        flag = Sun.CVodeGetEstLocalErrors(self.cvode_mem, ele)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        ele_py = nv2arr(ele)
+        
+        #Deallocate N_Vector
+        N_VDestroy_Serial(ele)
+        
+        return ele_py
+        
+    cpdef get_error_weights(self):
+        """
+        Returns the solution error weights at the current step.
+        """
+        cdef int flag
+        cdef N_Vector eweight=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        
+        flag = Sun.CVodeGetErrWeights(self.cvode_mem, eweight)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        eweight_py = nv2arr(eweight)
+        
+        #Deallocate N_Vector
+        N_VDestroy_Serial(eweight)
+        
+        return eweight_py
+    
     cdef set_problem_data(self):
         
         #Sets the residual or rhs

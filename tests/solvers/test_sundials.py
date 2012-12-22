@@ -35,6 +35,24 @@ class Test_CVode:
         self.simulator = CVode(self.problem)
         
     @testattr(stddist = True)
+    def test_get_error_weights(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_error_weights)
+        
+        self.simulator.simulate(1.0)
+        
+        weights = self.simulator.get_error_weights()
+        assert weights[0] < 1e6
+    
+    @testattr(stddist = True)
+    def test_get_local_errors(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_local_errors)
+    
+        self.simulator.simulate(1.0)
+        
+        err = self.simulator.get_local_errors()
+        assert err[0] < 1e-5
+    
+    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
