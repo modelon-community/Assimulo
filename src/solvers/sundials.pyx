@@ -1392,6 +1392,32 @@ cdef class CVode(Explicit_ODE):
         
         return ele_py
         
+    cpdef get_last_order(self):
+        """
+        Returns the order used on the last successful step.
+        """
+        cdef int flag
+        cdef int qlast
+        
+        flag = Sun.CVodeGetLastOrder(self.cvode_mem, &qlast)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        return qlast
+        
+    cpdef get_current_order(self):
+        """
+        Returns the order to be used on the next step.
+        """
+        cdef int flag
+        cdef int qcur
+        
+        flag = Sun.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        return qcur
+        
     cpdef get_error_weights(self):
         """
         Returns the solution error weights at the current step.
