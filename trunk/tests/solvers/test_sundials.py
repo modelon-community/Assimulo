@@ -33,6 +33,7 @@ class Test_CVode:
         
         self.problem = Explicit_Problem(f,y0)
         self.simulator = CVode(self.problem)
+        self.simulator.verbosity = 0
         
     @testattr(stddist = True)
     def test_get_error_weights(self):
@@ -51,6 +52,24 @@ class Test_CVode:
         
         err = self.simulator.get_local_errors()
         assert err[0] < 1e-5
+    
+    @testattr(stddist = True)
+    def test_get_last_order(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_last_order)
+        
+        self.simulator.simulate(1.0)
+        
+        qlast = self.simulator.get_last_order()
+        assert qlast == 4
+        
+    @testattr(stddist = True)
+    def test_get_current_order(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+        
+        self.simulator.simulate(1.0)
+        
+        qcur = self.simulator.get_current_order()
+        assert qcur == 4
     
     @testattr(stddist = True)
     def test_init(self):
