@@ -162,6 +162,7 @@ cdef extern from "cvodes/cvodes.h":
     
     #Statistics
     int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele)               #Estimated local errors
+    int CVodeGetErrWeights(void *cvode_mem, N_Vector eweight)               #Estimated local errors
     int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals)
     int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS)
     int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails)
