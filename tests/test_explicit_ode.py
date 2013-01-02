@@ -25,6 +25,15 @@ class Test_Explicit_ODE:
     pass
     
     @testattr(stddist = True)
+    def test_elapsed_step_time(self):
+        rhs = lambda t,y: y
+        
+        prob = Explicit_Problem(rhs, 0.0)
+        solv = Explicit_ODE(prob)
+        
+        assert solv.get_elapsed_step_time() == -1.0
+    
+    @testattr(stddist = True)
     def test_re_init(self):
         
         rhs = lambda t,y: y

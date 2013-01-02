@@ -105,6 +105,9 @@ cdef class ODE:
         #Specify storing of sensitivity to 0
         problem._sensitivity_result = 0
         
+        #Initialize timer
+        self.elapsed_step_time = -1.0
+        
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
         
@@ -340,3 +343,15 @@ cdef class ODE:
             print '  Event info, ', i[1]
         print 'Number of events: ', len(self.event_data)
     
+    cpdef get_elapsed_step_time(self):
+        """
+        Returns the elapsed time of a step. I.e. how long a step took.
+        Note that this is only possible if running in continuous_output
+        mode and should only be used to get a general idea of how long
+        a step really took. 
+        
+        Returns::
+        
+            Elapsed time (note -1.0 indicates that it was not used)
+        """
+        return self.elapsed_step_time

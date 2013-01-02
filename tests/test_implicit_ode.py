@@ -24,6 +24,15 @@ from assimulo.exception import *
 class Test_Implicit_ODE:
     
     @testattr(stddist = True)
+    def test_elapsed_step_time(self):
+        res = lambda t,y,yd: y
+        
+        prob = Implicit_Problem(res, 0.0, 0.0)
+        solv = Implicit_ODE(prob)
+        
+        assert solv.get_elapsed_step_time() == -1.0
+    
+    @testattr(stddist = True)
     def test_re_init(self):
         
         res = lambda t,y,yd: y

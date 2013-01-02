@@ -12,6 +12,7 @@ cdef class ODE:
     cdef public double t, t0
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
+    cdef double elapsed_step_time
     
     #cdef public list t,y,yd,p,sw_cur
     cdef public list t_sol, y_sol, yd_sol, p_sol, sw
@@ -27,3 +28,4 @@ cdef class ODE:
     cpdef finalize(self)
     cpdef initialize(self)
     cdef _reset_solution_variables(self)
+    cpdef get_elapsed_step_time(self)
