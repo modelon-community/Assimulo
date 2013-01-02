@@ -25,6 +25,7 @@ import numpy as N
 cimport numpy as N
 
 from exception import *
+from time import clock
 import warnings
 
 realtype = N.float
@@ -145,6 +146,7 @@ cdef class Implicit_ODE(ODE):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
         """
+        cdef double clock_start
         cdef double t_log, tevent
         cdef int flag, output_index
         cdef dict opts
@@ -185,9 +187,15 @@ cdef class Implicit_ODE(ODE):
                 tevent = tfinal
             
             if ONE_STEP == 1:
+                #Start clock
+                clock_start = clock()
+                
                 #Run in One step mode
                 [flag, t, y, yd]        = self.step(self.t, self.y, self.yd, tevent, opts)
                 self.t, self.y, self.yd = t, y.copy(), yd.copy()
+                
+                #Store the elapsed time
+                self.elapsed_step_time = clock()-clock_start
                 
                 #Store data depending on situation
                 if INTERPOLATE_OUTPUT == 1:
