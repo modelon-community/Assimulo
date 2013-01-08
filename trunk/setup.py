@@ -186,7 +186,7 @@ def pre_processing():
         if f == "LICENSE_ODEPACK":
             SH.copy2(join("thirdparty","hindmarsh",f),join(curdir,"build","assimulo","lib"))
     for f in fileThirdPartyOdassl:
-        if not O.path.isdir(join("thirdparty","hindmarsh",f)):
+        if not O.path.isdir(join("thirdparty","odassl",f)):
             SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
         if f == "LICENSE_ODASSL":
             SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
@@ -523,7 +523,8 @@ setup(name=NAME,
       ext_modules = ext_list,
       package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
-                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK']},
+                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
+                                 'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL']},
       script_args=copy_args)
 
 if change_dir:
