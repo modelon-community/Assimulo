@@ -62,7 +62,7 @@ def run_example(index, with_plots=True, with_test=False):
     print(my_pend.name+"  Residuals after the integration run\n")
     print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
-        assert(sl.norm(final_residual) < 1.5e-3)
+        assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
     return dae_pend
