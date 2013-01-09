@@ -3,6 +3,25 @@
 Changelog
 ==========
 
+--- Assimulo-2.3 ---
+    * Changed license to LGPL from GPL (ticket:261)
+    * Fixed re_init problem with scalars (ticket:248)
+    * Added a timer for measuring elapsed time of a step (ticket:260)
+    * Added options to CVode to get order, weights and errors (ticket:258, ticket:259)
+    * Fixed problem with wrong dimensions when getting sensitivities in CVode (ticket:255)
+    * Added parameters when using Jac*Vec in CVode (ticket:250)
+    * Added automatically creation of res function for explicit problems (ticket:195)
+    * Removed catching of exceptions in Explicit Euler (ticket:252)
+
+--- Assimulo-2.2 ---
+    * Added the solver LSODAR from ODEPACK (ticket:219)
+    * Added number of state events to the statistics (ticket:224)
+    * Fixed bug when storing result points together with events (ticket:222)
+    * Bug fixes.
+    
+--- Assimulo-2.1.1 ---
+    * Fixed problem with binary distribution on Windows (ticket:213)
+
 --- Assimulo-2.1 ---
     * Added support for passing in parameters when using Jacobians.
       (ticket:210)
