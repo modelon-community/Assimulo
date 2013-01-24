@@ -2,15 +2,15 @@
  * Copyright (C) 2010 Modelon AB / Copyright (c) 2002, The Regents of the University of California.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, version 3 of the License.
- *
+
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
+ * GNU Lesser General Public License for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * This file is a modification of the file kinsol_direct.c , revision 1.5,
@@ -163,6 +163,7 @@ int KINPinvSetRegParam(void *kinmem, realtype reg_p)
 
   return(KINPINV_SUCCESS);
 }
+
 
 /*
  * -----------------------------------------------------------------
@@ -321,6 +322,7 @@ char *KINPinvGetReturnFlagName(int flag)
   return(name);
 }
 
+
 /* 
  * =================================================================
  * DQ JACOBIAN APPROXIMATIONS
@@ -401,6 +403,14 @@ int kinPinvDQJac(int N,
 
     retval = func(u, ftemp, user_data);
     nfeDQ++;
+    if(retval > 0) {
+        /* try to recover by stepping in the opposite direction */
+        inc = -inc;
+        u_data[j] = ujsaved + inc;
+    
+        retval = func(u, ftemp, user_data);
+        nfeDQ++;
+    }
     if (retval != 0) break; 
 
     u_data[j] = ujsaved;

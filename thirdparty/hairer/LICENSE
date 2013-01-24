@@ -1,5 +1,6 @@
 (Regarding radau_decsol.f, rodas_decsol.f, dopri5.f and also
-           dopri5.pyd, radau5.pyd, rodas.pyd)
+           dopri5.pyd, radau5.pyd, rodas.pyd, radar5.pyd,
+           radar5.f90)
 
 Copyright (c) 2004, Ernst Hairer
 

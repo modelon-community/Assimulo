@@ -1,22 +1,22 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack"]
+           "glimda","odepack","radar5"]
 
 #Import all the solvers from the different modules
 from euler import ExplicitEuler, ImplicitEuler
@@ -26,6 +26,8 @@ from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
 from rosenbrock import RodasODE
 from odassl import ODASSLODE
 from odepack import LSODAR
+from radar5 import Radar5ODE
+
 
 try:
     from glimda import GLIMDA

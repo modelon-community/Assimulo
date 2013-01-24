@@ -8,7 +8,7 @@ Current version:
 
     Available on PyPI, http://pypi.python.org/pypi/Assimulo
    
-See :doc:`installation` for instructions on setting up Assimulo. Christoph Gohlke has also created one-click windows installers for Assimulo which are available `here <http://www.lfd.uci.edu/~gohlke/pythonlibs/#assimulo>`_ .
+See :doc:`installation` for instructions on setting up Assimulo.
 
 
 To retrieve the latest (develop) version using a subversion software use::
@@ -23,6 +23,10 @@ To retrieve the latest (develop) version using a subversion software use::
 
 Old versions:
     
+    - `Assimulo-2.2.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/428/releases/Assimulo-2.2.win32-py2.7.exe>`_
+    - `Assimulo-2.2.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/428/releases/Assimulo-2.2.win32-py2.7.msi>`_
+    - `Assimulo-2.2.zip <https://trac.jmodelica.org/assimulo/export/428/releases/Assimulo-2.2.zip>`_
+    - `Assimulo-2.2.tar.gz <https://trac.jmodelica.org/assimulo/export/428/releases/Assimulo-2.2.tar.gz>`_
     - `Assimulo-2.1.1.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.win32-py2.7.exe>`_
     - `Assimulo-2.1.1.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.win32-py2.7.msi>`_
     - `Assimulo-2.1.1.zip <https://trac.jmodelica.org/assimulo/export/357/releases/Assimulo-2.1.1.zip>`_

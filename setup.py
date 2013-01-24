@@ -1,18 +1,18 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #from distutils.core import setup, Extension
@@ -119,6 +119,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","voigtmann"))
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     create_dir(join("build","assimulo","thirdparty","odassl"))
+    #create_dir(join("build","assimulo","thirdparty","dasp3"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -131,6 +132,7 @@ def pre_processing():
     fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
+    #fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -145,6 +147,7 @@ def pre_processing():
     desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
     desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
+    #desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -183,10 +186,13 @@ def pre_processing():
         if f == "LICENSE_ODEPACK":
             SH.copy2(join("thirdparty","hindmarsh",f),join(curdir,"build","assimulo","lib"))
     for f in fileThirdPartyOdassl:
-        if not O.path.isdir(join("thirdparty","hindmarsh",f)):
+        if not O.path.isdir(join("thirdparty","odassl",f)):
             SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
         if f == "LICENSE_ODASSL":
             SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
+    #for f in fileThirdPartyDasp3:
+    #    if not O.path.isdir(join("thirdparty","dasp3",f)):
+    #        SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -365,6 +371,16 @@ def check_fortran_extensions():
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+
+    config.add_extension('assimulo.lib.radar5',
+                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
+								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
     #ODEPACK
     config.add_extension('assimulo.lib.odepack',
@@ -382,6 +398,16 @@ def check_fortran_extensions():
                          sources=[odassl_dir+file for file in odassl_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
+    #DASP3
+    #if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+    #    dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
+    #    dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
+    #                   'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+    #    config.add_extension('assimulo.lib.dasp3dp',
+    #                          sources=[dasp3_dir+file for file in dasp3_files],
+    #                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+    #else:
+    #    L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
     #GLIMDA
     #ADD liblapack and libblas
@@ -411,6 +437,7 @@ def check_fortran_extensions():
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
+
     return config.todict()["ext_modules"]
 
 """
@@ -439,7 +466,7 @@ NAME = "Assimulo"
 AUTHOR = "C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
 VERSION = "trunk"
-LICENSE = "GPL"
+LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
 DESCRIPTION = "A package for solving ordinary differential equations and differential algebraic equations."
@@ -496,7 +523,8 @@ setup(name=NAME,
       ext_modules = ext_list,
       package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
-                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK']},
+                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
+                                 'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL']},
       script_args=copy_args)
 
 if change_dir:

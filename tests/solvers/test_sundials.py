@@ -1,18 +1,18 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import nose
@@ -33,7 +33,44 @@ class Test_CVode:
         
         self.problem = Explicit_Problem(f,y0)
         self.simulator = CVode(self.problem)
+        self.simulator.verbosity = 0
         
+    @testattr(stddist = True)
+    def test_get_error_weights(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_error_weights)
+        
+        self.simulator.simulate(1.0)
+        
+        weights = self.simulator.get_error_weights()
+        assert weights[0] < 1e6
+    
+    @testattr(stddist = True)
+    def test_get_local_errors(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_local_errors)
+    
+        self.simulator.simulate(1.0)
+        
+        err = self.simulator.get_local_errors()
+        assert err[0] < 1e-5
+    
+    @testattr(stddist = True)
+    def test_get_last_order(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_last_order)
+        
+        self.simulator.simulate(1.0)
+        
+        qlast = self.simulator.get_last_order()
+        assert qlast == 4
+        
+    @testattr(stddist = True)
+    def test_get_current_order(self):
+        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+        
+        self.simulator.simulate(1.0)
+        
+        qcur = self.simulator.get_current_order()
+        assert qcur == 4
+    
     @testattr(stddist = True)
     def test_init(self):
         """

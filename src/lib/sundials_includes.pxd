@@ -4,15 +4,15 @@
 # Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 """
@@ -72,6 +72,73 @@ cdef extern from "nvector/nvector_serial.h":
     void N_VDestroy_Serial(N_Vector v)
     void N_VPrint_Serial(N_Vector v)
 
+#Struct for dealing with the complete CVode memory struct
+cdef extern from "cvodes/cvodes_impl.h":
+    cdef struct CVodeMemRec:
+        N_Vector cv_zn[13]
+        N_Vector cv_ewt
+        #N_Vector cv_y
+        N_Vector cv_acor
+        
+        int cv_q
+        int cv_qprime
+        int cv_next_q
+        int cv_qwait
+        int cv_L
+        int cv_nhnil
+        int cv_mnewt
+        int cv_qu
+        int cv_qmax_alloc
+        int cv_indx_acor
+        
+        realtype cv_hin
+        realtype cv_h
+        realtype cv_hprime
+        realtype cv_next_h
+        realtype cv_eta
+        realtype cv_hscale
+        realtype cv_tn
+        realtype cv_tretlast
+        realtype cv_tstop
+        
+        realtype cv_tau[13+1]
+        realtype cv_tq[5+1]
+        realtype cv_l[13]
+        
+        realtype cv_rl1
+        realtype cv_gamma
+        realtype cv_gammap
+        realtype cv_gamrat
+        
+        realtype cv_crate
+        realtype cv_acnrm
+        realtype cv_nlscoef
+        realtype cv_etaqm1
+        realtype cv_etaq
+        realtype cv_etaqp1
+        
+        realtype cv_h0u
+        realtype cv_hu
+        realtype cv_saved_tq5
+        realtype cv_tolsf
+        
+        long int cv_nst
+        long int cv_nfe
+        long int cv_ncfn
+        long int cv_nni
+        long int cv_netf
+        long int cv_nsetups
+        long int cv_nstlp
+
+        void *cv_lmem
+
+        booleantype cv_forceSetup
+        booleantype cv_tstopset
+        booleantype cv_jcur
+        booleantype cv_setupNonNull
+
+    ctypedef CVodeMemRec* CVodeMem
+
 #Struct for handling the Jacobian data
 cdef extern from "sundials/sundials_direct.h":
     cdef struct _DlsMat:
@@ -87,6 +154,22 @@ cdef extern from "sundials/sundials_direct.h":
         realtype **cols
     ctypedef _DlsMat* DlsMat
     cdef realtype* DENSE_COL(DlsMat A, int j)
+
+cdef extern from "cvodes/cvodes_direct_impl.h":
+    cdef struct CVDlsMemRec:
+        long int d_n
+        DlsMat d_M
+        DlsMat d_savedJ
+        
+        int *d_pivots
+        long int *d_lpivots
+        long int d_nstlj
+        long int d_nje
+        long int d_nfeDQ
+        long int d_last_flag
+        
+
+    ctypedef CVDlsMemRec* CVDlsMem
 
 cdef extern from "cvodes/cvodes.h":
     void* CVodeCreate(int lmm, int iter)
@@ -162,6 +245,7 @@ cdef extern from "cvodes/cvodes.h":
     
     #Statistics
     int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele)               #Estimated local errors
+    int CVodeGetErrWeights(void *cvode_mem, N_Vector eweight)               #Estimated local errors
     int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals)
     int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS)
     int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails)
