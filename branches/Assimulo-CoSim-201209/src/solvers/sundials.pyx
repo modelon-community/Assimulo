@@ -1,18 +1,18 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N 
@@ -1374,6 +1374,68 @@ cdef class CVode(Explicit_ODE):
             #Free Memory
             Sun.CVodeFree(&self.cvode_mem)
     
+    cpdef get_local_errors(self):
+        """
+        Returns the vector of estimated local errors at the current step.
+        """
+        cdef int flag
+        cdef N_Vector ele=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        
+        flag = Sun.CVodeGetEstLocalErrors(self.cvode_mem, ele)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        ele_py = nv2arr(ele)
+        
+        #Deallocate N_Vector
+        N_VDestroy_Serial(ele)
+        
+        return ele_py
+        
+    cpdef get_last_order(self):
+        """
+        Returns the order used on the last successful step.
+        """
+        cdef int flag
+        cdef int qlast
+        
+        flag = Sun.CVodeGetLastOrder(self.cvode_mem, &qlast)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        return qlast
+        
+    cpdef get_current_order(self):
+        """
+        Returns the order to be used on the next step.
+        """
+        cdef int flag
+        cdef int qcur
+        
+        flag = Sun.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        return qcur
+        
+    cpdef get_error_weights(self):
+        """
+        Returns the solution error weights at the current step.
+        """
+        cdef int flag
+        cdef N_Vector eweight=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        
+        flag = Sun.CVodeGetErrWeights(self.cvode_mem, eweight)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+            
+        eweight_py = nv2arr(eweight)
+        
+        #Deallocate N_Vector
+        N_VDestroy_Serial(eweight)
+        
+        return eweight_py
+    
     cdef set_problem_data(self):
         
         #Sets the residual or rhs
@@ -1530,7 +1592,8 @@ cdef class CVode(Explicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
+        #cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
+        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef int flag
         cdef N.ndarray res
         
@@ -1558,6 +1621,284 @@ cdef class CVode(Explicit_ODE):
             N_VDestroy_Serial(dkyS)
             
             return res
+    
+    def doStep(self, tmid, tf,initialize=False):
+        cdef double tret = 0.0
+        cdef list tr = [], yr = []
+        cdef N_Vector yout
+        
+        #if y0 != None:
+        #    yout = arr2nv(y0)
+        #else:
+        #    yout = self.yTempOut
+        
+        #Initialize? 
+        if initialize:
+            self.initialize() 
+            #self.initialize_cvode() 
+            self.initialize_options()
+            
+        yout = self.yTemp
+            
+        #Reset statistics
+        for k in self.statistics.keys():
+            self.statistics[k] = 0
+        
+        #Set stop time
+        flag = Sun.CVodeSetStopTime(self.cvode_mem, tf)
+        if flag < 0:
+            raise CVodeError(flag, t)
+        
+        while tret <= tmid:
+                    
+            flag = Sun.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
+            if flag < 0:
+                raise CVodeError(flag, tret)
+                
+            #Store results
+            tr.append(tret)
+            yr.append(nv2arr(yout))
+                
+            if flag == CV_ROOT_RETURN: #Found a root
+                flag = ID_EVENT #Convert to Assimulo flags
+                self.store_statistics(CV_ROOT_RETURN)
+                break
+            if flag == CV_TSTOP_RETURN: #Reached tf
+                flag = ID_COMPLETE
+                self.store_statistics(CV_TSTOP_RETURN)
+                break
+        else:
+            self.store_statistics(CV_TSTOP_RETURN)
+                
+        #Deallocate
+        #N_VDestroy_Serial(yout)
+        self.yTemp = yout
+        #self.problem.handle_result(self,t,y)
+        
+        return tr, N.array(yr)
+        
+    def dump_solver_state(self):
+        """
+        EXPERIMENTAL!
+        """
+        cdef Sun.CVodeMem cvode_memory = <Sun.CVodeMem>self.cvode_mem
+        cdef Sun.CVDlsMem cvode_dls_memory = <Sun.CVDlsMem>(<Sun.CVodeMem>self.cvode_mem).cv_lmem
+        
+        state = CVodeMemoryState()
+        state.cv_lmem = CVodeDlsMemoryState()
+        
+        #Copy trivial attributes (Ex ints and doubles)
+        state.cv_q       = cvode_memory.cv_q
+        state.cv_qprime  = cvode_memory.cv_qprime
+        state.cv_next_q  = cvode_memory.cv_next_q
+        state.cv_qwait   = cvode_memory.cv_qwait
+        state.cv_L       = cvode_memory.cv_L
+        state.cv_nhnil   = cvode_memory.cv_nhnil
+        state.cv_mnewt   = cvode_memory.cv_mnewt
+        state.cv_qu      = cvode_memory.cv_qu
+        state.cv_qmax_alloc = cvode_memory.cv_qmax_alloc
+        state.cv_indx_acor = cvode_memory.cv_indx_acor
+        
+        #Copy Long ints
+        state.cv_nst     = cvode_memory.cv_nst
+        state.cv_nfe     = cvode_memory.cv_nfe
+        state.cv_ncfn    = cvode_memory.cv_ncfn
+        state.cv_nni     = cvode_memory.cv_nni
+        state.cv_netf    = cvode_memory.cv_netf
+        state.cv_nsetups = cvode_memory.cv_nsetups
+        state.cv_nstlp   = cvode_memory.cv_nstlp
+        
+        #Copy Doubles
+        state.cv_hin       = cvode_memory.cv_hin
+        state.cv_h         = cvode_memory.cv_h
+        state.cv_hprime    = cvode_memory.cv_hprime
+        state.cv_next_h    = cvode_memory.cv_next_h
+        state.cv_eta       = cvode_memory.cv_eta
+        state.cv_hscale    = cvode_memory.cv_hscale
+        state.cv_tn        = cvode_memory.cv_tn
+        state.cv_tretlast  = cvode_memory.cv_tretlast
+        state.cv_tstop     = cvode_memory.cv_tstop
+        state.cv_rl1       = cvode_memory.cv_rl1
+        state.cv_gamma     = cvode_memory.cv_gamma
+        state.cv_gammap    = cvode_memory.cv_gammap
+        state.cv_gamrat    = cvode_memory.cv_gamrat
+        state.cv_crate     = cvode_memory.cv_crate
+        state.cv_acnrm     = cvode_memory.cv_acnrm
+        state.cv_nlscoef   = cvode_memory.cv_nlscoef
+        state.cv_etaqm1    = cvode_memory.cv_etaqm1
+        state.cv_etaq      = cvode_memory.cv_etaq
+        state.cv_etaqp1    = cvode_memory.cv_etaqp1
+        state.cv_h0u       = cvode_memory.cv_h0u
+        state.cv_hu        = cvode_memory.cv_hu
+        state.cv_saved_tq5 = cvode_memory.cv_saved_tq5
+        state.cv_tolsf     = cvode_memory.cv_tolsf
+        
+        state.cv_tau = N.zeros(14)
+        for i in range(14):
+            state.cv_tau[i] = cvode_memory.cv_tau[i]
+        state.cv_tq = N.zeros(6)
+        for i in range(6):
+            state.cv_tq[i] = cvode_memory.cv_tq[i]
+        state.cv_l = N.zeros(13)
+        for i in range(13):
+            state.cv_l[i] = cvode_memory.cv_l[i]
+        
+        #Copy Booleantype
+        state.cv_forceSetup    = cvode_memory.cv_forceSetup
+        state.cv_tstopset      = cvode_memory.cv_tstopset
+        state.cv_jcur          = cvode_memory.cv_jcur
+        state.cv_setupNonNull  = cvode_memory.cv_setupNonNull
+        
+        #Copy N_Vectors
+        state.cv_ewt     = nv2arr(cvode_memory.cv_ewt)
+        state.cv_acor    = nv2arr(cvode_memory.cv_acor)
+        state.cv_zn      = [nv2arr(cvode_memory.cv_zn[i]) for i in range(cvode_memory.cv_qmax_alloc+1)]
+        
+        
+        #JACOBIAN
+        state.cv_lmem.d_nstlj     = cvode_dls_memory.d_nstlj
+        state.cv_lmem.d_nje       = cvode_dls_memory.d_nje
+        state.cv_lmem.d_nfeDQ     = cvode_dls_memory.d_nfeDQ
+        state.cv_lmem.d_last_flag = cvode_dls_memory.d_last_flag
+        state.cv_lmem.d_n         = cvode_dls_memory.d_n
+        
+        state.cv_lmem.d_lpivots = N.zeros(cvode_dls_memory.d_n,N.long)
+        for i in range(cvode_dls_memory.d_n):
+            state.cv_lmem.d_lpivots[i] = cvode_dls_memory.d_lpivots[i]
+        
+        #state.cv_lmem.d_M = N.zeros(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N)
+        #for i in range(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N):
+        #    state.cv_lmem.d_M[i] = cvode_dls_memory.d_M.data[i]
+        
+        state.cv_lmem.d_M = N.zeros(cvode_dls_memory.d_M.ldata)
+        for i in range(cvode_dls_memory.d_M.ldata):
+            state.cv_lmem.d_M[i] = cvode_dls_memory.d_M.data[i]
+            
+        #state.cv_lmem.d_savedJ = N.zeros(cvode_dls_memory.d_savedJ.ldim*cvode_dls_memory.d_savedJ.N)
+        #for i in range(cvode_dls_memory.d_savedJ.ldim*cvode_dls_memory.d_savedJ.N):
+        #    state.cv_lmem.d_savedJ[i] = cvode_dls_memory.d_savedJ.data[i]
+        
+        state.cv_lmem.d_savedJ = N.zeros(cvode_dls_memory.d_savedJ.ldata)
+        for i in range(cvode_dls_memory.d_savedJ.ldata):
+            state.cv_lmem.d_savedJ[i] = cvode_dls_memory.d_savedJ.data[i]
+        
+        
+        #d_pivots?
+        
+        return state
+        
+    def apply_solver_state(self, state):
+        """
+        EXPERIMENTAL!
+        """
+        cdef Sun.CVodeMem cvode_memory = <Sun.CVodeMem>self.cvode_mem
+        cdef Sun.CVDlsMem cvode_dls_memory = <Sun.CVDlsMem>(<Sun.CVodeMem>self.cvode_mem).cv_lmem
+            
+        cvode_memory.cv_q          =     state.cv_q         
+        cvode_memory.cv_qprime     =     state.cv_qprime    
+        cvode_memory.cv_next_q     =     state.cv_next_q    
+        cvode_memory.cv_qwait      =     state.cv_qwait     
+        cvode_memory.cv_L          =     state.cv_L         
+        cvode_memory.cv_nhnil      =     state.cv_nhnil     
+        cvode_memory.cv_mnewt      =     state.cv_mnewt     
+        cvode_memory.cv_qu         =     state.cv_qu        
+        cvode_memory.cv_qmax_alloc =     state.cv_qmax_alloc
+        cvode_memory.cv_indx_acor  =     state.cv_indx_acor 
+        
+        
+        cvode_memory.cv_nst      =      state.cv_nst    
+        cvode_memory.cv_nfe      =      state.cv_nfe    
+        cvode_memory.cv_ncfn     =      state.cv_ncfn   
+        cvode_memory.cv_nni      =      state.cv_nni    
+        cvode_memory.cv_netf     =      state.cv_netf   
+        cvode_memory.cv_nsetups  =      state.cv_nsetups
+        cvode_memory.cv_nstlp    =      state.cv_nstlp  
+        
+        #Copy Doubles
+        cvode_memory.cv_hin       =      state.cv_hin      
+        cvode_memory.cv_h         =      state.cv_h        
+        cvode_memory.cv_hprime    =      state.cv_hprime   
+        cvode_memory.cv_next_h    =      state.cv_next_h   
+        cvode_memory.cv_eta       =      state.cv_eta      
+        cvode_memory.cv_hscale    =      state.cv_hscale   
+        cvode_memory.cv_tn        =      state.cv_tn       
+        cvode_memory.cv_tretlast  =      state.cv_tretlast 
+        cvode_memory.cv_tstop     =      state.cv_tstop    
+        cvode_memory.cv_rl1       =      state.cv_rl1      
+        cvode_memory.cv_gamma     =      state.cv_gamma    
+        cvode_memory.cv_gammap    =      state.cv_gammap   
+        cvode_memory.cv_gamrat    =      state.cv_gamrat   
+        cvode_memory.cv_crate     =      state.cv_crate    
+        cvode_memory.cv_acnrm     =      state.cv_acnrm    
+        cvode_memory.cv_nlscoef   =      state.cv_nlscoef  
+        cvode_memory.cv_etaqm1    =      state.cv_etaqm1   
+        cvode_memory.cv_etaq      =      state.cv_etaq     
+        cvode_memory.cv_etaqp1    =      state.cv_etaqp1   
+        cvode_memory.cv_h0u       =      state.cv_h0u      
+        cvode_memory.cv_hu        =      state.cv_hu       
+        cvode_memory.cv_saved_tq5 =      state.cv_saved_tq5
+        cvode_memory.cv_tolsf     =      state.cv_tolsf 
+        
+        for i in range(14):
+            cvode_memory.cv_tau[i] = state.cv_tau[i]
+        
+        for i in range(6):
+            cvode_memory.cv_tq[i] = state.cv_tq[i]
+
+        for i in range(13):
+            cvode_memory.cv_l[i] = state.cv_l[i]
+        
+        #Copy Booleantype
+        cvode_memory.cv_forceSetup    =     state.cv_forceSetup   
+        cvode_memory.cv_tstopset      =     state.cv_tstopset     
+        cvode_memory.cv_jcur          =     state.cv_jcur         
+        cvode_memory.cv_setupNonNull  =     state.cv_setupNonNull 
+        
+        #Copy N_Vectors
+        for i in range((<N_VectorContent_Serial>cvode_memory.cv_ewt.content).length):
+            (<N_VectorContent_Serial>cvode_memory.cv_ewt.content).data[i] = state.cv_ewt[i]
+            
+        for i in range((<N_VectorContent_Serial>cvode_memory.cv_acor.content).length):
+            (<N_VectorContent_Serial>cvode_memory.cv_acor.content).data[i] = state.cv_acor[i]
+        
+        for j in range(cvode_memory.cv_qmax_alloc+1):
+            for i in range((<N_VectorContent_Serial>cvode_memory.cv_zn[j].content).length):
+                (<N_VectorContent_Serial>cvode_memory.cv_zn[j].content).data[i] = state.cv_zn[j][i]
+        
+        
+        #JACOBIAN
+        cvode_dls_memory.d_nstlj      =    state.cv_lmem.d_nstlj    
+        cvode_dls_memory.d_nje        =    state.cv_lmem.d_nje      
+        cvode_dls_memory.d_nfeDQ      =    state.cv_lmem.d_nfeDQ    
+        cvode_dls_memory.d_last_flag  =    state.cv_lmem.d_last_flag
+        cvode_dls_memory.d_n          =    state.cv_lmem.d_n        
+        
+        
+        
+        #JACOBIAN
+        cvode_dls_memory.d_nstlj      =      state.cv_lmem.d_nstlj    
+        cvode_dls_memory.d_nje        =      state.cv_lmem.d_nje      
+        cvode_dls_memory.d_nfeDQ      =      state.cv_lmem.d_nfeDQ    
+        cvode_dls_memory.d_last_flag  =      state.cv_lmem.d_last_flag
+        cvode_dls_memory.d_n          =      state.cv_lmem.d_n        
+        
+        for i in range(cvode_dls_memory.d_n):
+            cvode_dls_memory.d_lpivots[i] = state.cv_lmem.d_lpivots[i]
+        
+        #for i in range(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N):
+        #    cvode_dls_memory.d_M.data[i] = state.cv_lmem.d_M[i]
+        
+        for i in range(cvode_dls_memory.d_M.ldata):
+            cvode_dls_memory.d_M.data[i] = state.cv_lmem.d_M[i]
+         
+        #for i in range(cvode_dls_memory.d_savedJ.ldim*cvode_dls_memory.d_savedJ.N):
+        #    cvode_dls_memory.d_savedJ.data[i] = state.cv_lmem.d_savedJ[i]
+        
+        for i in range(cvode_dls_memory.d_savedJ.ldata):
+            cvode_dls_memory.d_savedJ.data[i] = state.cv_lmem.d_savedJ[i]
+        
+    
+    
     
     cpdef initialize(self):
         

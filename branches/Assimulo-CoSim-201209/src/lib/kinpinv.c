@@ -2,15 +2,15 @@
  * Copyright (C) 2010 Modelon AB / Copyright (c) 2002, The Regents of the University of California.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, version 3 of the License.
- *
+
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
+ * GNU Lesser General Public License for more details.
+
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * This file is a modification of the file kinsol_dense.c , revision 1.5,
@@ -105,12 +105,15 @@ static void kinPinvFree(KINMem kin_mem);
 #define last_flag      (kinpinv_mem->d_last_flag)
 #define JTJ            (kinpinv_mem->d_JTJ)
 #define regularized    (kinpinv_mem->d_regularized)
+
 #define redojac        (kinpinv_mem->d_redojac)
 #define beta           (kinpinv_mem->d_beta)
 #define reg_param      (kinpinv_mem->d_reg_param)
 
 #define ihfun    (kin_mem->kin_ihfun)
 #define ih_data  (kin_mem->kin_ih_data)
+#define ehfun    (kin_mem->kin_ehfun)
+#define eh_data  (kin_mem->kin_eh_data)
 
 /* 
  * =================================================================
@@ -145,6 +148,7 @@ int KINPinv(void *kinmem, int N)
 {
   KINMem kin_mem;
   KINPinvMem kinpinv_mem;
+  int i;
   /* Check if kinmem is different from NULL */
   if (kinmem == NULL) {
     KINProcessError(NULL, KINPINV_MEM_NULL, "KINPINV", "KINPinv", MSGD_KINMEM_NULL);
@@ -220,7 +224,7 @@ int KINPinv(void *kinmem, int N)
 
   beta = NULL;
   beta = NewRealArray(N);
-  if (pivots == NULL) {
+  if (beta == NULL) {
     KINProcessError(kin_mem, KINPINV_MEM_FAIL, "KINPINV", "KINPinv", MSGD_MEM_FAIL);
     DestroyMat(J);
     DestroyMat(JTJ);
@@ -236,10 +240,11 @@ int KINPinv(void *kinmem, int N)
   lmem = kinpinv_mem;
   /* Set reg_param 'not set' */
   reg_param = 0;
-  redojac=0 ;
-  regularized = FALSE ;
+  redojac=1 ;
+  regularized = FALSE;
   nje   = 0;
   nfeDQ = 0;
+  
   return(KINPINV_SUCCESS);
 }
 
@@ -349,6 +354,7 @@ static int kinPinvSetup(KINMem kin_mem)
   SetToZero(J);
   retval = djac(n, uu, fval, J, J_data, vtemp1, vtemp2);
   if (retval != 0) {
+    ehfun(KIN_LSETUP_FAIL,"KINPINV", "kinPinvSetup", "Jacobian evaluation function failed", eh_data);
     last_flag = -1;
     return(-1);
   }
@@ -357,7 +363,6 @@ static int kinPinvSetup(KINMem kin_mem)
   ier = DenseGETRF(J, pivots);
 
   /* If the LU factorization failed, perform regularization */
-  regularized = FALSE;
   if (ier > 0) {
     /* Calculate value of jacobian */
     SetToZero(J);
@@ -367,6 +372,7 @@ static int kinPinvSetup(KINMem kin_mem)
     nje++;
     retval = djac(n, uu, fval, J, J_data, vtemp1, vtemp2);
     if (retval != 0) {
+      ehfun(KIN_LSETUP_FAIL, "KINPINV", "kinPinvSetup", "Jacobian evaluation function failed", eh_data);
       last_flag = -1;
       return(-1);
     }
@@ -402,6 +408,9 @@ static int kinPinvSetup(KINMem kin_mem)
     /* LU-factorize the regularized matrix*/
     ier = DenseGETRF(JTJ,pivots);
     regularized = TRUE;
+  }
+  else {
+      regularized = FALSE;
   }
 
   redojac = FALSE;
@@ -455,11 +464,8 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
 
     DenseGETRS(JTJ, pivots, xd);
 
-    regularized = FALSE;
-    /* Calculate a fresh jacobian */
-    redojac = TRUE;
-
-    
+    /* Calculate a fresh jacobian - not really needed */
+    redojac = TRUE;    
   } else {
     
     /* Copy the right-hand side into x */
@@ -487,7 +493,6 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
   N_VProd(b, fscale, b);
   N_VProd(b, fscale, b);
   sfdotJp = N_VDotProd(fval, b);
-  
   
   last_flag = KINPINV_SUCCESS;
   

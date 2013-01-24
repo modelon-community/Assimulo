@@ -1,18 +1,18 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from  __future__  import division
@@ -62,7 +62,7 @@ def run_example(index, with_plots=True, with_test=False):
     print(my_pend.name+"  Residuals after the integration run\n")
     print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
-        assert(sl.norm(final_residual) < 1.5e-3)
+        assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
     return dae_pend

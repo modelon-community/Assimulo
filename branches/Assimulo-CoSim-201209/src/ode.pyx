@@ -1,18 +1,18 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2011 Modelon AB
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, version 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
@@ -23,7 +23,7 @@ import pylab as P
 import itertools
 
 from exception import *
-from problem import Explicit_Problem, Implicit_Problem
+from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -44,7 +44,7 @@ cdef class ODE:
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
-                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0}
+                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False}
                              
         #Type of the problem
         #0 = Explicit
@@ -96,12 +96,17 @@ cdef class ODE:
             self.problem_info["jac_fcn"] = True
         if hasattr(problem, "jacv"):
             self.problem_info["jacv_fcn"] = True
+        if hasattr(problem, "jaclag"):
+            self.problem_info["jaclag_fcn"] = True
             
         #Reset solution variables
         self._reset_solution_variables()
         
         #Specify storing of sensitivity to 0
         problem._sensitivity_result = 0
+        
+        #Initialize timer
+        self.elapsed_step_time = -1.0
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
@@ -233,7 +238,7 @@ cdef class ODE:
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
         
         #Return the results
-        if isinstance(self.problem, Explicit_Problem):
+        if isinstance(self.problem, Explicit_Problem) or isinstance(self.problem, Delay_Explicit_Problem) or isinstance(self.problem, SingPerturbed_Problem):
             return self.t_sol, N.array(self.y_sol)
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
@@ -338,3 +343,15 @@ cdef class ODE:
             print '  Event info, ', i[1]
         print 'Number of events: ', len(self.event_data)
     
+    cpdef get_elapsed_step_time(self):
+        """
+        Returns the elapsed time of a step. I.e. how long a step took.
+        Note that this is only possible if running in continuous_output
+        mode and should only be used to get a general idea of how long
+        a step really took. 
+        
+        Returns::
+        
+            Elapsed time (note -1.0 indicates that it was not used)
+        """
+        return self.elapsed_step_time
