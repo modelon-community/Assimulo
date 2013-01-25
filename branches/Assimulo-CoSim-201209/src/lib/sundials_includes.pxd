@@ -162,7 +162,7 @@ cdef extern from "cvodes/cvodes_direct_impl.h":
         DlsMat d_savedJ
         
         int *d_pivots
-        long int *d_lpivots
+        #long int *d_lpivots
         long int d_nstlj
         long int d_nje
         long int d_nfeDQ

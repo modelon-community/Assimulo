@@ -41,6 +41,11 @@ include "constants.pxi" #Includes the constants (textual include)
 include "../lib/sundials_constants.pxi" #Sundials related constants
 include "../lib/sundials_callbacks.pxi"
 
+class CVodeMemoryState(object):
+    pass
+
+class CVodeDlsMemoryState(object):
+    pass
 
 cdef class IDA(Implicit_ODE):
     """
@@ -1762,9 +1767,9 @@ cdef class CVode(Explicit_ODE):
         state.cv_lmem.d_last_flag = cvode_dls_memory.d_last_flag
         state.cv_lmem.d_n         = cvode_dls_memory.d_n
         
-        state.cv_lmem.d_lpivots = N.zeros(cvode_dls_memory.d_n,N.long)
-        for i in range(cvode_dls_memory.d_n):
-            state.cv_lmem.d_lpivots[i] = cvode_dls_memory.d_lpivots[i]
+        #state.cv_lmem.d_lpivots = N.zeros(cvode_dls_memory.d_n,N.long)
+        #for i in range(cvode_dls_memory.d_n):
+        #    state.cv_lmem.d_lpivots[i] = cvode_dls_memory.d_lpivots[i]
         
         #state.cv_lmem.d_M = N.zeros(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N)
         #for i in range(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N):
@@ -1882,8 +1887,8 @@ cdef class CVode(Explicit_ODE):
         cvode_dls_memory.d_last_flag  =      state.cv_lmem.d_last_flag
         cvode_dls_memory.d_n          =      state.cv_lmem.d_n        
         
-        for i in range(cvode_dls_memory.d_n):
-            cvode_dls_memory.d_lpivots[i] = state.cv_lmem.d_lpivots[i]
+        #for i in range(cvode_dls_memory.d_n):
+        #    cvode_dls_memory.d_lpivots[i] = state.cv_lmem.d_lpivots[i]
         
         #for i in range(cvode_dls_memory.d_M.ldim*cvode_dls_memory.d_M.N):
         #    cvode_dls_memory.d_M.data[i] = state.cv_lmem.d_M[i]
