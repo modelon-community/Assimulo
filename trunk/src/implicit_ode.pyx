@@ -276,6 +276,9 @@ cdef class Implicit_ODE(ODE):
                     self.problem.handle_result(self, self.t, self.y)
                 else:
                     self.problem.handle_result(self, self.t, self.y, self.yd)
+                    
+            if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
+                break
         
     def plot(self, mask=None, der=False, **kwargs):
         """
