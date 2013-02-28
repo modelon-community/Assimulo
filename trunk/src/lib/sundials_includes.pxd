@@ -190,6 +190,15 @@ cdef extern from "cvodes/cvodes_spils.h":
     ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
 				    N_Vector y, N_Vector fy,
 				    void *user_data, N_Vector tmp)
+    ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
+				  booleantype jok, booleantype *jcurPtr,
+				  realtype gamma, void *user_data,
+				  N_Vector tmp1, N_Vector tmp2,
+				  N_Vector tmp3)
+    ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
+				  N_Vector r, N_Vector z,
+				  realtype gamma, realtype delta,
+				  int lr, void *user_data, N_Vector tmp)
     int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
     int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
     int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
