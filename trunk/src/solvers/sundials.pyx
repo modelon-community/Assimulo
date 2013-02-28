@@ -2581,7 +2581,7 @@ class CVodeError(Exception):
             CV_LSOLVE_FAIL       : 'The linear solvers solve function failed in an unrecoverable manner.',
             CV_RHSFUNC_FAIL      : 'The user-provided rhs function failed in an unrecoverable manner.',
             CV_FIRST_RHSFUNC_ERR : 'The right-hand side function failed at the first call.',
-            CV_REPTD_RHSFUNC_ERR : 'The right-hand side function had repetead recoverable errors.',
+            CV_REPTD_RHSFUNC_ERR : 'The right-hand side function had repeated recoverable errors.',
             CV_UNREC_RHSFUNC_ERR : 'The right-hand side function had a recoverable error, but no recovery is possible.',
             CV_RTFUNC_FAIL       : 'The rootfinding function failed in an unrecoverable manner.',
             CV_MEM_FAIL          : 'A memory allocation failed.',
