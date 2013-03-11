@@ -1299,7 +1299,7 @@ cdef class CVode(Explicit_ODE):
     cdef N_Vector *ySO
     cdef object f
     #cdef public dict statistics
-    cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
+    cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens,pt_prec_solve
     cdef public N.ndarray yS0
     
     def __init__(self, problem):
@@ -1463,7 +1463,11 @@ cdef class CVode(Explicit_ODE):
         
         if self.problem_info["jacv_fcn"] is True: #Sets the jacobian times vector
             self.pt_jacv = self.problem.jacv
-            self.pData.JACV = <void*>self.pt_jacv#<void*>self.problem.jacv  
+            self.pData.JACV = <void*>self.pt_jacv#<void*>self.problem.jacv 
+        
+        if self.problem_info["prec_solve"] is True: #Sets the preconditioner solve function
+            self.pt_prec_solve = self.problem.prec_solve
+            self.pData.PREC_SOLVE = <void*>self.pt_prec_solve   
             
         if self.problem_info["sens_fcn"] is True: #Sets the sensitivity function
             self.pt_sens = self.problem.sens
@@ -1859,6 +1863,11 @@ cdef class CVode(Explicit_ODE):
             flag = Sun.CVSpgmr(self.cvode_mem, self.options["precond"], self.options["maxkrylov"])
             if flag < 0:
                 raise CVodeError(flag)
+                
+            if self.pData.PREC_SOLVE != NULL:
+                flag = Sun.CVSpilsSetPreconditioner(self.cvode_mem, NULL, cv_prec_solve)
+                if flag < 0:
+                    raise CVodeError(flag)
                 
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
