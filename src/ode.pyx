@@ -40,7 +40,7 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"continuous_output":False,"verbosity":NORMAL}
+        self.options = {"continuous_output":False,"verbosity":NORMAL,"backward":False}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
@@ -160,7 +160,7 @@ cdef class ODE:
         except ValueError:
             raise AssimuloException('Final time must be an integer or float.')
             
-        if self.t > tfinal:
+        if (self.t > tfinal) and not self.options["backward"]:
             raise AssimuloException('Final time must be greater than start time.')
         
         if not isinstance(ncp, int):
@@ -299,6 +299,25 @@ cdef class ODE:
         return self.options["continuous_output"]
     
     continuous_output = property(_get_continuous_output,_set_continuous_output)
+    
+    def _set_backward(self, backward):
+        self.options["backward"] = bool(backward)
+        
+    def _get_backward(self):
+        """
+        Specifies if the simulation is done in reverse time. (NOTE:
+        experimental!)
+        
+            Parameters::
+            
+                backward
+                
+                    - Default False
+                    - Boolean
+        """
+        return self.options["backward"]
+        
+    backward = property(_get_backward,_set_backward)
     
     cpdef log_message(self, message,int level):
         if level >= self.options["verbosity"]:
