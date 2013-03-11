@@ -188,7 +188,7 @@ cdef int cv_prec_solve(realtype t, N_Vector yy, N_Vector fyy,
     cdef N.ndarray fy  = nv2arr(fyy)
     cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
     cdef int i
-    
+
     try:
         zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta)
     except:
