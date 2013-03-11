@@ -152,3 +152,11 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_euler_vanderpol(self):
         euler_vanderpol.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_cvode_basic_backward(self):
+        cvode_basic_backward.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_ida_basic_backward(self):
+        ida_basic_backward.run_example(with_plots=False)
