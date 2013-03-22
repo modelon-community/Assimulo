@@ -127,6 +127,8 @@ cdef class Explicit_ODE(ODE):
         cdef double t_log, tevent
         cdef int flag, output_index
         cdef dict opts
+        cdef double eps = N.finfo(float).eps*100 #Machine Epsilon
+        cdef backward = 1 if self.backward else 0
         
         y0 = self.y
         t_logg = t0
@@ -148,7 +150,7 @@ cdef class Explicit_ODE(ODE):
         opts["output_index"] = 0
         output_index = 0
 
-        while (flag == ID_COMPLETE and tevent == tfinal) is False:
+        while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
 
             #Time event function is specified.
             if TIME_EVENT == 1:
