@@ -53,6 +53,7 @@ else:
     
 static_link_gcc = ["-static-libgcc"]
 static_link_gfortran = ["-static-libgfortran"]
+static = False
 
 copy_args=S.argv[1:]
 
@@ -87,8 +88,6 @@ for x in S.argv[1:]:
         else:
             static = False
         copy_args.remove(x)
-    else:
-        static = False
     if not x.find('--log'):
         level = x[6:]
         try:
