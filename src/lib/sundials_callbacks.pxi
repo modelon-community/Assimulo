@@ -158,7 +158,6 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
             
-            
 cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
 				  bint jok, bint *jcurPtr,
 				  realtype gamma, void *problem_data,
@@ -170,8 +169,15 @@ cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
     cdef ProblemData pData = <ProblemData>problem_data
     cdef N.ndarray y   = nv2arr(yy)
     cdef N.ndarray fy  = nv2arr(fyy)
+    cdef object ret
     
-    raise NotImplementedError
+    try:
+        ret = (<object>pData.PREC_SETUP)(t,y,fy,jok,gamma,pData.PREC_DATA)
+    except:
+        return CV_REC_ERR #Recoverable Error (See Sundials description)
+    
+    *jcurPtr[0] = 1 if ret[0] else 0
+    pData.PREC_DATA = ret[1]
     
     return CVSPILS_SUCCESS
 
@@ -432,6 +438,7 @@ cdef class ProblemData:
         int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
         int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
         int verbose        #Defines the verbosity
+        object PREC_DATA   #Arbitrary data from the preconditioner
 
 #=================
 # Module functions

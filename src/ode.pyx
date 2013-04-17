@@ -44,7 +44,7 @@ cdef class ODE:
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
-                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False}
+                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False}
                              
         #Type of the problem
         #0 = Explicit
@@ -100,6 +100,8 @@ cdef class ODE:
             self.problem_info["jaclag_fcn"] = True
         if hasattr(problem, "prec_solve"):
             self.problem_info["prec_solve"] = True
+        if hasattr(problem, "prec_setup"):
+            self.problem_info["prec_setup"] = True
             
         #Reset solution variables
         self._reset_solution_variables()
