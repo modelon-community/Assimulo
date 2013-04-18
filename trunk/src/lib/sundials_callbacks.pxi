@@ -196,7 +196,7 @@ cdef int cv_prec_solve(realtype t, N_Vector yy, N_Vector fyy,
     cdef int i
 
     try:
-        zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta)
+        zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta,pData.PREC_DATA)
     except:
         return CV_REC_ERR #Recoverable Error (See Sundials description)
                 
