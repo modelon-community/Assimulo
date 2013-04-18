@@ -176,7 +176,7 @@ cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
     except:
         return CV_REC_ERR #Recoverable Error (See Sundials description)
     
-    *jcurPtr[0] = 1 if ret[0] else 0
+    jcurPtr[0] = 1 if ret[0] else 0
     pData.PREC_DATA = ret[1]
     
     return CVSPILS_SUCCESS
