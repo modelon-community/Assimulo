@@ -26,7 +26,7 @@ import traceback
  
 from assimulo.exception import * 
 
-from assimulo.explicit_ode cimport Explicit_ODE
+from assimulo.explicit_ode cimport Explicit_ODE 
 from assimulo.implicit_ode cimport Implicit_ODE
 
 cimport sundials_includes as Sun
