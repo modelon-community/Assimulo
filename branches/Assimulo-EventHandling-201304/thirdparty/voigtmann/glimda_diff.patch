@@ -1,0 +1,583 @@
+--- C:/Development/Assimulo/trunk/thirdparty/voigtmann/glimda_complete.f	Tue Mar  6 11:26:33 2012
++++ C:/Development/Assimulo/trunk/thirdparty/voigtmann/glimda_complete _original.f	Mon Mar  5 15:58:51 2012
+@@ -101,7 +101,7 @@
+      $                  dqxevl, t0    , tend  , xin   , qprime, h0    ,
+      $                  atolX , rtolX , tolvec, num_A , num_D , num_B ,
+      $                  ode   , ADcnst, icount, iopt  , ropt  , ipar  ,
+-     $                  rpar  , ierr  , solout)
++     $                  rpar  , ierr  )
+ 
+ C#define DEBUG
+ C
+@@ -112,7 +112,7 @@
+       integer   m       , n       , icount(6), iopt(9)  , ipar(*),ierr
+       real*8    t0      , tend    , xin(m)   , qprime(n), h0     , 
+      $          atolX(m), rtolX(m), ropt(11) , rpar(*)
+-      external  fevl    , qevl    , dfyevl   , dfxevl   , dqxevl ,solout
++      external  fevl    , qevl    , dfyevl   , dfxevl   , dqxevl
+ C      
+ C     options of the integrator (see iniopt for details)
+ C
+@@ -168,15 +168,12 @@
+       real*8       dlamch, dnrm2
+       character*2  ifmt
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     ---------------------------------------------------------------------
+-C      PRTLEV defined?
+-C      if (PRTLEV.ge.2) then
+-C         print*,' ',('-',k=1,69)
+-C         write(*,*) ' 0     initialise the simulator'
+-C      endif
++      print*,' ',('-',k=1,69)
++      write(*,*) ' 0     initialise the simulator'
+ C     ---------------------------------------------------------------------
+-C#endif
++#endif
+ 
+       call iniopt(t0    , tend  , iopt  , ropt  , MD    , atolX ,
+      $            rtolX , tolvec, m     , PRTLEV, NEWTIT, MAXORD,
+@@ -298,13 +295,11 @@
+       call dcopy(m,xin,1,X_vals,1)
+       X_use = 1
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     ---------------------------------------------------------------------
+-      if (PRTLEV.ge.2) then
+-         write(*,*) ' 1     start time integration'
+-      endif
++      write(*,*) ' 1     start time integration'
+ C     ---------------------------------------------------------------------
+-C#endif
++#endif
+ 
+       do while (.true.)
+ 
+@@ -320,30 +315,26 @@
+ C        check for last timestep
+          if (abs((t+h-tend)/(tend-t0)).le.eps) LAST = .true.
+          
+-C#ifdef DEBUG
+-         if (PRTLEV.ge.2) then
+-            print*,' ',('-',k=1,69)
++#ifdef DEBUG
++         print*,' ',('-',k=1,69)
+ C     .  ------------------------------------------------------------------
+-            write(*,*) ' 2     take a step from t to t+h'
++         write(*,*) ' 2     take a step from t to t+h'
+ C     .  ------------------------------------------------------------------
+-            write(*,'(8x,''step no. '','//ifmt(nsteps)//
++         write(*,'(8x,''step no. '','//ifmt(nsteps)//
+      $        ','',  order p = '',I1,'',  retry ='',I2'//
+      $        ','',  last = '',L1)') nsteps, p, retry, last
+-            write(*,'(8x,1P,''t ='',E15.8,'',     t+h ='',E15.8)')
++         write(*,'(8x,1P,''t ='',E15.8,'',     t+h ='',E15.8)')
+      $        t, t+h
+-            write(*,'(8x,1P,''h ='',E15.8,'',   to go ='',E15.8)')
++         write(*,'(8x,1P,''h ='',E15.8,'',   to go ='',E15.8)')
+      $        h, tend-(t+h)
+-         endif
+-C#endif
++#endif
+ 
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 2.1   change the order (if appropriate)'
+-         endif
++         write(*,*) ' 2.1   change the order (if appropriate)'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C     .  the order is allowed to change provided that
+ C     .    (i)   the last step was accepted (change.eq..true.)
+@@ -401,28 +392,24 @@
+ 
+          endif  
+ 
+-C#ifdef DEBUG
+-         if (PRTLEV.ge.2) then
+-            if (goup.or.godown) then
+-               write(*,*) '       ... changed the order: up =',
++#ifdef DEBUG
++         if (goup.or.godown) then
++            write(*,*) '       ... changed the order: up =',
+      $           goup,', down =',godown,', new order p = ',p 
+-            else
+-               write(*,*) '       ... no order change' 
+-            endif
++         else
++            write(*,*) '       ... no order change' 
+          endif
+-C#endif
++#endif
+          goup   = .false.
+          godown = .false.
+          change = .false.
+ 
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C        ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 2.2   solve for the stages (sequentially)'
+-         endif
++         write(*,*) ' 2.2   solve for the stages (sequentially)'
+ C        ------------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C     .  evaluate Jacobian at least once per step
+ C
+@@ -436,27 +423,23 @@
+ C
+          do k=1,p
+ 
+-C#ifdef DEBUG
+-            if (PRTLEV.ge.2) then
+- 2006          format(1x,a,I1,a)
++#ifdef DEBUG
++ 2006       format(1x,a,I1,a)
+ C     .     ---------------------------------------------------------------
+-               write(*,2006) ' 2.',k+2,'   solving for stage no. '//
++            write(*,2006) ' 2.',k+2,'   solving for stage no. '//
+      $           char(k+ICHAR('0'))
+-            endif
+ C     .     ---------------------------------------------------------------
+-C#endif
++#endif
+ C     
+ C     .     save the diagonal element
+ C     
+             lam = A(k,k)
+             
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .     ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,2006) ' 2.',k+2,'.1 computing omega'
+-            endif
++            write(*,2006) ' 2.',k+2,'.1 computing omega'
+ C     .     ---------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C           this part of the residual is independent of the current stage X_k
+ C             omega = h*Qp(:,1:k-1)*m.A(k,1:k-1)' + qn_in*m.U(k,:)'
+@@ -464,13 +447,11 @@
+             call dgemv('n',n,p,1d0,qn_in,n,U(k,1),MD,0d0,omega,1)
+             call dgemv('n',n,k-1,h,Qp,n,A(k,1),MD,1d0,omega,1)
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C           ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,2006) ' 2.',k+2,'.2 predict stage value'
+-            endif
++            write(*,2006) ' 2.',k+2,'.2 predict stage value'
+ C           ---------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C           predict a value for X_k (interpolation of X_use+k-1 past stages:
+ C           X_use old (accepted) stages are saved in X_vals, k-1 more are 
+@@ -491,13 +472,11 @@
+             
+  3000       continue
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C           ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,2006) ' 2.',k+2,'.3 Newton iteration'
+-            endif
++            write(*,2006) ' 2.',k+2,'.3 Newton iteration'
+ C           ---------------------------------------------------------------
+-C#endif
++#endif
+             conv   = 0
+             nresx  = 0d0
+             theta  = 0d0
+@@ -545,12 +524,9 @@
+ C     .        check norm of the residual
+ C
+                if ((resold.gt.0d0).and.(nrmres.ge.resold)) then
+-C#ifdef DEBUG
+-                  if (PRTLEV.ge.2) then
+-                     print *, '=> residual is growing '
+-     $                     //'(',nrmres,resold,')'
+-                  endif
+-C#endif
++#ifdef DEBUG
++                  print *, '=> residual is growing (',nrmres,resold,')'
++#endif
+                   conv = 0
+                   ierr = 0
+                   jacnew = .true.
+@@ -559,12 +535,10 @@
+ 
+                tolfok =   chktol(res,m,scaacX,TOLF)
+ 
+-C#ifdef DEBUG
+-               if (PRTLEV.ge.2) then
+-                  write(*,'(8x,1P,''|res| ='',E15.8,'',   |resold|='//
+-     $              ',''E15.8)') nrmres, resold
+-               endif
+-C#endif
++#ifdef DEBUG
++               write(*,'(8x,1P,''|res| ='',E15.8,'',   |resold|='','//
++     $              'E15.8)') nrmres, resold
++#endif
+ 
+                resold = nrmres
+ 
+@@ -572,11 +546,9 @@
+ C              evaluate and decompose the jacobian: Jac = AD+h*lam*B
+ C
+                if (caljac) then
+-C#ifdef DEBUG
+-                  if (PRTLEV.ge.2) then
+-                     write(*,'(8x,a)') 'compute jacobian'
+-                  endif
+-C#endif
++#ifdef DEBUG
++                  write(*,'(8x,a)') 'compute jacobian'
++#endif
+                   call get_j(m     , n     , Qp(1,k),X(1,k), t+c(k)*h,
+      $                       h     , lam   , num_A , num_D , num_B   ,
+      $                       dfyevl, dqxevl, dfxevl, fevl  , qevl    ,
+@@ -641,24 +613,20 @@
+ C
+                call convrt(psi,l,res,m,scaacX,nresx,nresx1,theta,theta1)
+                if (psi.ge.1d0) then
+-C#ifdef DEBUG
+-                  if (PRTLEV.ge.2) then
+-                     print*,'   psi = ',psi,' > 1'
+-                  endif
+-C#endif
++#ifdef DEBUG
++                  print*,'   psi = ',psi,' > 1'
++#endif
+                   conv = 0
+                   ierr = 0
+                   goto 4000
+                endif 
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+  5             format(8x,a,i2,L2,L2,1x,a,E10.3,1x,a,E10.3,1x,
+      $              a,E10.3)
+-               if (PRTLEV.ge.2) then
+-                  write(*,5) 'it=',l,tolfok,tolxok,
++               write(*,5) 'it=',l,tolfok,tolxok,
+      $              'nresx=',nresx,'nresx1=',nresx1,'psi=',psi
+-               endif
+-C#endif
++#endif
+ C     
+ C     .        check for convergence 
+ C     
+@@ -678,13 +646,11 @@
+ 
+ 
+             if (conv.eq.0) then
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .        ------------------------------------------------------------
+-               if (PRTLEV.ge.2) then
+-                  write(*,2006) ' 2.',k+2,'.4 no convergence'
+-               endif
++               write(*,2006) ' 2.',k+2,'.4 no convergence'
+ C     .        ------------------------------------------------------------
+-C#endif
++#endif
+                nnocon = nnocon + 1
+ 
+                if (.not.jacnew.and.psi.le.1d0) then
+@@ -708,11 +674,9 @@
+ C
+ C     .           no convergence after order change ... retry with old order
+ C
+-C#ifdef DEBUG
+-                  if (PRTLEV.ge.2) then
+-                     print*,'       ... use old order p =',p_acc
+-                  endif
+-C#endif
++#ifdef DEBUG
++                  print*,'       ... use old order p =',p_acc
++#endif
+                   h = hnw_ac
+                   p = p_acc
+                   call getmet(p,MD,A,U,B,V,c,c1beta,delta,P3METH,
+@@ -730,11 +694,9 @@
+ C                 ... reduce stepsize h and order p
+ C
+                   hnew = CUTFAC * h
+-C#ifdef DEBUG
+-                  if (PRTLEV.ge.2) then
+-                     print*,'       ... reduce h: hnew =',hnew
+-                  endif
+-C#endif
++#ifdef DEBUG
++                  print*,'       ... reduce h: hnew =',hnew
++#endif
+                   if (varord.and.(p.gt.MINORD)) godown = .true.
+ C
+ C     .           scale and modify
+@@ -749,13 +711,11 @@
+ 
+             else
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .        ------------------------------------------------------------
+-               if (PRTLEV.ge.2) then
+-                  write(*,2006) ' 2.',k+2,'.4 convergence'
+-               endif
++               write(*,2006) ' 2.',k+2,'.4 convergence'
+ C     .        ------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C     .        stage number k converged ... compute next stage
+ C
+@@ -769,34 +729,28 @@
+ C     .  -----------------------------
+ 
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 3.1   all stages converged ... compute qn_out'
+-         endif
++         write(*,*) ' 3.1   all stages converged ... compute qn_out'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+ 
+ C        compute output  qn_out = h*Qp*B' + qn_in * V'
+          call dgemm('n','t',n,p,p,1d0,qn_in,n,V,MD,0d0,qn_out,n)
+          call dgemm('n','t',n,p,p,h  ,Qp   ,n,B,MD,1d0,qn_out,n)      
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 3.2   compute scaled derivatives'
+-         endif
++         write(*,*) ' 3.2   compute scaled derivatives'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+          call scdrvs(h,Qp,n,p,qn_in,delta,MD,qp_acc,scdrv0,scdrv1)
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 3.3   estimate local error'
+-         endif
++         write(*,*) ' 3.3   estimate local error'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+ C        error estimate
+          do k=1,m
+             scalX(k)  = atolX(k)+rtolX(k)*abs(X(k,p))
+@@ -812,13 +766,11 @@
+ Cccccccc test a parameter for a modified error constant cccccccccc
+ Cc         err  = 1d0 * abs(c1beta(1)) * dnrm2(n,errvec,1)
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 3.4   predict new stepsize'
+-         endif
++         write(*,*) ' 3.4   predict new stepsize'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+ C        predict new stepsize
+          fac  = 0.85d0 * err**(-1d0/real(p+1))
+ C        do not increase by more than INCFAC
+@@ -828,12 +780,10 @@
+ C        do not use stepsize larger than HMAX
+          hnew = min(fac*h,HMAX)
+ 
+-C#ifdef DEBUG
+-         if (PRTLEV.ge.2) then
+-            write(*,'(8x,''err ='',1P,E15.8,'',   hnew ='',E15.8)')
++#ifdef DEBUG
++         write(*,'(8x,''err ='',1P,E15.8,'',   hnew ='',E15.8)')
+      $        err, hnew
+-         endif
+-C#endif
++#endif
+ C
+ C     .  check for end of integration interval
+ C
+@@ -845,23 +795,19 @@
+             
+          endif
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .  ------------------------------------------------------------------
+-         if (PRTLEV.ge.2) then
+-            write(*,*) ' 3.5   accept / refuse ?'
+-         endif
++         write(*,*) ' 3.5   accept / refuse ?'
+ C     .  ------------------------------------------------------------------
+-C#endif
++#endif
+ 
+          if (err*DELACL.gt.1) then
+             
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .     ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,'(8x,a,$)') '... refuse'
+-            endif
++            write(*,'(8x,a,$)') '... refuse'
+ C     .     ---------------------------------------------------------------
+-C#endif
++#endif
+             LAST = .false.
+             nrefus = nrefus + 1
+ 
+@@ -869,11 +815,9 @@
+ C
+ C     .        refuse after changing the order ... try again with old order
+ C     
+-C#ifdef DEBUG
+-               if (PRTLEV.ge.2) then
+-                  print*,'... switch back to old order'
+-               endif
+-C#endif
++#ifdef DEBUG
++               print*,'... switch back to old order'
++#endif
+                h = hnw_ac
+                p = p_acc
+                call getmet(p,MD,A,U,B,V,c,c1beta,delta,P3METH,ierr)
+@@ -885,11 +829,9 @@
+                call sclmod(qn_in,n,p,h,h_acc,scdrv0,scdrv1,c1beta)
+ 
+             else
+-C#ifdef DEBUG
+-               if (PRTLEV.ge.2) then
+-                  print*,'... carry on with same order and hnew = ',hnew
+-               endif
+-C#endif
++#ifdef DEBUG
++               print*,'... carry on with same order and hnew = ',hnew
++#endif
+ C$$$  if(retry.eq.5) hnew = max(CUTFAC * hnew, HMIN)
+                call dcopy(n,sd0_ac,1        ,scdrv0,1)
+                call dcopy(n,sd1_ac,1        ,scdrv1,1)
+@@ -903,13 +845,11 @@
+ 
+          else 
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .     ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,'(8x,a)') '... accept'
+-            endif
++            write(*,'(8x,a)') '... accept'
+ C     .     ---------------------------------------------------------------
+-C#endif
++#endif
+ C
+ C     .     update X_vals used for stage prediction (interpolation)
+ C
+@@ -932,18 +872,16 @@
+             call dcopy(n  ,scalQ  ,1,scaacQ,1)
+             call dcopy(m  ,scalX  ,1,scaacX,1)
+ 
+-C            if (PRTLEV.ge.3) then
++            if (PRTLEV.ge.3) then
+ C     .        write file output
+-            call solout(PRTLEV,t,h,p,X(1,p),m,Qp(1,p),n)
+-C            endif
++               call filout(PRTLEV,t,h,p,X(1,p),m)
++            endif
+ 
+-C#ifdef DEBUG
++#ifdef DEBUG
+ C     .     ---------------------------------------------------------------
+-            if (PRTLEV.ge.2) then
+-               write(*,*) ' 3.6   all done?'
+-            endif
++            write(*,*) ' 3.6   all done?'
+ C     .     ---------------------------------------------------------------
+-C#endif
++#endif
+             if (t.ge.tend-eps) goto 9999
+ 
+             call dcopy(n*p,qn_out ,1,qn_in,1) 
+@@ -1005,14 +943,12 @@
+  9999 continue
+       
+ 
+-C#ifdef DEBUG
+-      if (PRTLEV.ge.2) then
++#ifdef DEBUG
+ C     ---------------------------------------------------------------------
+-         write(*,*) ' 4. produce some statistical output'
++      write(*,*) ' 4. produce some statistical output'
+ C     ---------------------------------------------------------------------
+-         print*,' ',('-',k=1,69)
+-      endif
+-C#endif
++      print*,' ',('-',k=1,69)
++#endif
+ 
+  71   format(3x,a,I6,a,I6,a,I6,a,I6)
+  73   format(7x,a,1P,E12.5,'  (min=',E12.5,', max=',E12.5,' )')
+@@ -3110,21 +3046,21 @@
+ C
+ C  SOURCE
+ C
+-C      subroutine filout(f_sol,tph,h,p,Y,m)
+-C      implicit none
+-C      integer          f_sol, p, m, i
+-C      real*8           tph, h, Y(m)
+-C 1    format(d14.8)
+-C 2    format(d14.8,'  ',$)
+-C      write(f_sol,2) tph
+-C      write(f_sol,2) h
+-C      write(f_sol,2) real(p)
+-C      do i=1,m-1
+-C         write(f_sol,2) Y(i)
+-C      end do
+-C      write(f_sol,1) Y(m)
+-C      end
+-C
++      subroutine filout(f_sol,tph,h,p,Y,m)
++      implicit none
++      integer          f_sol, p, m, i
++      real*8           tph, h, Y(m)
++ 1    format(d14.8)
++ 2    format(d14.8,'  ',$)
++      write(f_sol,2) tph
++      write(f_sol,2) h
++      write(f_sol,2) real(p)
++      do i=1,m-1
++         write(f_sol,2) Y(i)
++      end do
++      write(f_sol,1) Y(m)
++      end
++
+ C**************************************************************************
+ C     ****f* src/scdrvs
+ C
