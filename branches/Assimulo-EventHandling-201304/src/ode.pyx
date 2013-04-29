@@ -42,7 +42,7 @@ cdef class ODE:
         self.statistics = {} #Initialize the statistics dictionary
         self.options = {"continuous_output":False,"verbosity":NORMAL,"backward":False}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"one_step_mode":False, "step_events":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
+        self.supports = {"state_events":False,"interpolated_output":False,"complete_step":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False}
                              
@@ -111,6 +111,7 @@ cdef class ODE:
         
         #Initialize timer
         self.elapsed_step_time = -1.0
+        self.clock_start = -1.0
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
@@ -177,11 +178,11 @@ cdef class ODE:
             self.log_message("The current solver does not support state events (root functions). Disabling and continues.", WHISPER)
             self.problem_info["state_events"] = False
         
-        if self.problem_info["step_events"] and self.supports["one_step_mode"] is False:
+        if self.problem_info["step_events"] and self.supports["complete_step"] is False:
             self.log_message("The current solver does not support step events (completed steps). Disabling step events and continues.", WHISPER)
             self.problem_info["step_events"] = False
         
-        if self.supports["one_step_mode"] is False and self.options["continuous_output"]:
+        if self.supports["complete_step"] is False and self.options["continuous_output"]:
             self.log_message("The current solver does not support continuous output. Setting continuous_output to False and continues.", WHISPER)
             self.options["continuous_output"] = False
         
@@ -203,9 +204,9 @@ cdef class ODE:
         
         #Determine if we are using one step mode or normal mode
         if self.problem_info['step_events'] or self.options['continuous_output']:
-            ONE_STEP = 1
+            COMPLETE_STEP = 1
         else:
-            ONE_STEP = 0
+            COMPLETE_STEP = 0
         
         #Determine if the output should be interpolated or not
         if output_list == None:
@@ -215,7 +216,6 @@ cdef class ODE:
 
         #Time and Step events
         TIME_EVENT = 1 if self.problem_info['time_events'] is True else 0
-        STEP_EVENT = 1 if self.problem_info["step_events"] is True else 0
 
         #Simulation starting, call initialize
         self.problem.initialize(self)
@@ -225,7 +225,7 @@ cdef class ODE:
         time_start = time.clock()
         
         #Start the simulation
-        self._simulate(t0, tfinal, output_list, ONE_STEP, INTERPOLATE_OUTPUT, TIME_EVENT, STEP_EVENT)
+        self._simulate(t0, tfinal, output_list, COMPLETE_STEP, INTERPOLATE_OUTPUT, TIME_EVENT)
         
         #End of simulation, stop the clock
         time_stop = time.clock()

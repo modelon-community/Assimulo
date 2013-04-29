@@ -1351,7 +1351,7 @@ cdef class CVode(Explicit_ODE):
         self.statistics["nstateevents"] = 0 #Number of state events
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
@@ -1711,9 +1711,9 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(flag, t)
         
         #Run in normal mode?
-        normal_mode = 1 if opts["output_list"] != None else 0
+        #normal_mode = 1 if opts["output_list"] != None else 0
         
-        if normal_mode == 0: 
+        if opts["complete_step"] or opts["output_list"] == None: 
             #Integration loop
             while True:
                     
@@ -1721,10 +1721,14 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag, tret)
                 
-                #Store results
-                tr.append(tret)
-                yr.append(nv2arr(yout))
-                
+                if opts["complete_step"]:
+                    flag_initialize = self.complete_step(tret, nv2arr(yout), opts)
+                    if flag_initialize: flag == CV_ROOT_RETURN #If a step event has occured the integration has to be reinitialized
+                else:
+                    #Store results
+                    tr.append(tret)
+                    yr.append(nv2arr(yout))
+                    
                 if flag == CV_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
                     self.store_statistics(CV_ROOT_RETURN)
