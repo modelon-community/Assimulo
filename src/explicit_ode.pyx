@@ -95,8 +95,8 @@ cdef class Explicit_ODE(ODE):
         if sw0 != None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
-                 int TIME_EVENT, int STEP_EVENT):
+    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int COMPLETE_STEP, int INTERPOLATE_OUTPUT,
+                 int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
         
@@ -123,7 +123,6 @@ cdef class Explicit_ODE(ODE):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
         """
-        cdef double clock_start
         cdef double t_log, tevent
         cdef int flag, output_index
         cdef dict opts
@@ -148,63 +147,31 @@ cdef class Explicit_ODE(ODE):
         opts["initialize"] = flag_initialize
         opts["output_list"] = output_list
         opts["output_index"] = 0
+        opts["complete_step"] = 1 if COMPLETE_STEP else 0
         output_index = 0
 
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
 
-            #Time event function is specified.
+            #Time event function is specified
             if TIME_EVENT == 1:
                 tret = self.problem.time_events(self.t, self.y, self.sw)
                 tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
             
-            if ONE_STEP == 1:
-                #Start clock
-                clock_start = clock()
-                
-                #Run in one step mode
-                [flag, t, y]         = self.step(self.t, self.y, tevent, opts)
-                self.t, self.y = t, y.copy()
-                
-                #Store the elapsed time
-                self.elapsed_step_time = clock()-clock_start
-                
-                #Store data depending on situation
-                if INTERPOLATE_OUTPUT == 1:
-                    try:
-                        while output_list[output_index] <= t:
-                            self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
-                        
-                            #Last logging point
-                            t_logg = output_list[output_index]
-                            
-                            output_index = output_index+1
-                    except IndexError:
-                        pass
-                else:
-                    self.problem.handle_result(self,t,y)
-                    
-                    #Last logging point
-                    t_logg = self.t
-                    
-                if STEP_EVENT == 1: #If the option completed step is set.
-                    flag_initialize = self.problem.step_events(self)#completed_step(self)
-                else:
-                    flag_initialize = False
-            else:
-                #Run in Normal mode
-                flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
+            #Initialize the clock, enabling storing elapsed time for each step
+            if COMPLETE_STEP:
+                self.clock_start = clock()
+            
+            flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
+            
+            #Store data if not done after each step
+            if COMPLETE_STEP == False:
                 self.t, self.y = tlist[-1], ylist[-1].copy()
-                
-                #Store data
                 map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
-                
-                #Last logging point
-                t_logg = self.t
-                
-                #Initialize flag to false
-                flag_initialize = False
+            
+            #Initialize flag to false
+            flag_initialize = False
             
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
@@ -235,12 +202,40 @@ cdef class Explicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and t_logg == self.t: 
+            if flag_initialize and (output_list == None or output_list[opts["output_index"]] == self.t):
                 self.problem.handle_result(self, self.t, self.y)
                 
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
+        
+    def complete_step(self, t, y, opts):
+        self.t, self.y = t, y.copy()
+        
+        #Store the elapsed time for a single step
+        self.elapsed_step_time = clock() - self.clock_start
+        self.clock_start = clock()
+        
+        #Store data depending on situation
+        if opts["output_list"] != None:
+            output_list = opts["output_list"]
+            output_index = opts["output_index"]
+            try:
+                while output_list[output_index] <= t:
+                    self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))      
+                    output_index = output_index + 1
+            except IndexError:
+                pass
+            opts["output_index"] = output_index
+        else:
+            self.problem.handle_result(self,t,y)
+        
+        #Callback to FMU
+        if self.problem_info["step_events"]: 
+            flag_initialize = self.problem.step_events(self) #completed step returned to FMU
+        else:
+            flag_initialize = False
             
+        return flag_initialize
     
     def plot(self, mask=None, **kwargs):
         """

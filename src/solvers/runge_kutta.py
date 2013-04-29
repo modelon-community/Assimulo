@@ -417,7 +417,9 @@ class RungeKutta34(Explicit_ODE):
         self.f = problem.rhs_internal
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = False
         
         #Internal values
         # - Statistic values
@@ -540,7 +542,7 @@ class RungeKutta34(Explicit_ODE):
         initialize = opts["initialize"]
         
         if initialize:
-            self.solver_iterator = self._iter(t,y,tf)
+            self.solver_iterator = self._iter(t,y,tf,opts)
 
         return self.solver_iterator.next()
     
@@ -548,31 +550,66 @@ class RungeKutta34(Explicit_ODE):
         """
         Integrates (t,y) values until t > tf
         """
-        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf)))
+        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf,opts)))
         
         return flags[-1], tlist, ylist
     
-    def _iter(self,t,y,tf):
+    def _iter(self,t,y,tf,opts):
         maxsteps = self.options["maxsteps"]
         h = self.options["inith"]
         h = min(h, N.abs(tf-t))
+        self.f(self.Y1, t, y)
+        flag = ID_PY_OK
         
         for i in range(maxsteps):
-            if t+h < tf:
+            if t+h < tf and flag == ID_PY_OK:
                 t, y, error = self._step(t, y, h)
                 self.statistics["nsteps"] += 1
-                yield ID_PY_OK, t,y
+                if opts["complete_step"]:
+                    initialize_flag = self.complete_step(t, y, opts)
+                    if initialize_flag: flag = ID_PY_EVENT
+                    yield flag, t,y
+                elif opts["output_list"] == None:
+                    yield flag, t, y
+                else:
+                    output_list = opts["output_list"]
+                    output_index = opts["output_index"]
+                    try:
+                        while output_list[output_index] <= t:
+                            yield flag, output_list[output_index], self.interpolate(output_list[output_index])
+                            output_index = output_index + 1
+                    except IndexError:
+                        pass
+                    opts["output_index"] = output_index
                 h=self.adjust_stepsize(h,error)
                 h=min(h, N.abs(tf-t))
             else:
                 break
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
-            
-        t, y, error = self._step(t, y, h)
-        self.statistics["nsteps"] += 1
-        yield ID_PY_COMPLETE, t, y
-
+        
+        #If no event has been detected, do the last step.
+        if flag == ID_PY_OK:
+            t, y, error = self._step(t, y, h)
+            self.statistics["nsteps"] += 1
+            if opts["complete_step"]:
+                initialize_flag = self.complete_step(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                else:               flag = ID_PY_COMPLETE
+                yield flag, t,y
+            elif opts["output_list"] == None:
+                yield ID_PY_COMPLETE, t,y
+            else:
+                output_list = opts["output_list"]
+                output_index = opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        yield ID_PY_COMPLETE, output_list[output_index], self.interpolate(output_list[output_index])
+                        output_index = output_index + 1
+                except IndexError:
+                    pass
+                    opts["output_index"] = output_index
+    
     def adjust_stepsize(self, h, error):
         """
         Adjusts the stepsize.
@@ -593,8 +630,7 @@ class RungeKutta34(Explicit_ODE):
         
         scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
-        
-        f(self.Y1, t, y)
+            
         f(self.Y2, t + h/2., y + h*self.Y1/2.)
         f(self.Y3, t + h/2., y + h*self.Y2/2.)
         f(self.Z3, t + h, y - h*self.Y1 + 2.0*h*self.Y2)
@@ -602,7 +638,23 @@ class RungeKutta34(Explicit_ODE):
         
         error = N.linalg.norm(h/6*(2*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
         
-        return t+h, y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4), error
+        t_next = t + h
+        y_next = y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4)
+        
+        f_low = self.Y1
+        f(self.Y1, t_next, y_next)
+        #Hermitian interpolation for the solution in [t, t_next]
+        def interpolate(time):
+            f_high = self.Y1
+            y_brack = (y_next - y) / h
+            coff1 = y
+            coff2 = f_low
+            coff3 = (y_brack - f_low) / h
+            coff4 = (f_high - 2*y_brack + f_low) / h
+            return coff1 + coff2*(time - t) + coff3*(time - t)**2 + coff4*(time - t)**2*(time - t_next)
+        self.interpolate = interpolate
+        
+        return t_next, y_next, error
     
     def print_statistics(self, verbose):
         """
@@ -612,7 +664,7 @@ class RungeKutta34(Explicit_ODE):
         self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
         self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
         self.log_message('\nSolver options:\n',                                              verbose)
-        self.log_message(' Solver             : RungeKutta4',                                verbose)
+        self.log_message(' Solver             : RungeKutta34',                               verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)
         self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
         self.log_message(' Absolute tolerance : ' + str(self.options["atol"]) + '\n', verbose)

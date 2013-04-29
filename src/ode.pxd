@@ -30,6 +30,7 @@ cdef class ODE:
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
     cdef double elapsed_step_time
+    cdef double clock_start
     
     #cdef public list t,y,yd,p,sw_cur
     cdef public list t_sol, y_sol, yd_sol, p_sol, sw
