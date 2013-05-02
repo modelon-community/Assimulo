@@ -306,6 +306,11 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
+        #Solver support
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = False
+        
         #Internal
         self._leny = len(self.y) #Dimension of the problem
         
@@ -321,26 +326,32 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         """
         This method is called after every successful step taken by Rodas
         """
-        if self._opts["output_list"] == None:
-            self._tlist.append(t)
-            self._ylist.append(y.copy())
+        def interpolate(time):
+            yval = N.empty(self._leny)
+            for i in range(self._leny):
+                yval[i] = rodas.contro(i+1, time, cont)
+                
+            return yval
+        self.interpolate = interpolate
+        
+        if self._opts["complete_step"]:
+            self.complete_step(t, y, self._opts)
         else:
-            output_list = self._opts["output_list"]
-            output_index = self._opts["output_index"]
-            try:
-                while output_list[output_index] <= t:
-                    self._tlist.append(output_list[output_index])
-                    
-                    yval = N.empty(self._leny)
-                    for i in range(self._leny):
-                        yval[i] = rodas.contro(i+1,output_list[output_index], cont)
+            if self._opts["output_list"] == None:
+                self._tlist.append(t)
+                self._ylist.append(y.copy())
+            else:
+                output_list = self._opts["output_list"]
+                output_index = self._opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        self._tlist.append(output_list[output_index])
+                        self._ylist.append(interpolate(output_list[output_index]))
                         
-                    self._ylist.append(yval)
-
-                    output_index = output_index+1
-            except IndexError:
-                pass
-            self._opts["output_index"] = output_index
+                        output_index += 1
+                except IndexError:
+                    pass
+                self._opts["output_index"] = output_index
         
         return irtrn
     

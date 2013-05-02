@@ -70,6 +70,11 @@ class Dopri5(Explicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
+        #Solver support
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = False
+        
         #Internal
         self._leny = len(self.y) #Dimension of the problem
         
@@ -85,26 +90,34 @@ class Dopri5(Explicit_ODE):
         """
         This method is called after every successful step taken by Radau5
         """
-        if self._opts["output_list"] == None:
-            self._tlist.append(t)
-            self._ylist.append(y.copy())
-        else:
-            output_list = self._opts["output_list"]
-            output_index = self._opts["output_index"]
-            try:
-                while output_list[output_index] <= t:
-                    self._tlist.append(output_list[output_index])
+        def interpolate(time):
+            yval = N.empty(self._leny)
+            for i in range(self._leny):
+                yval[i] = dopri5.contd5(i+1, time, cont, lrc)
                     
-                    yval = N.empty(self._leny)
-                    for i in range(self._leny):
-                        yval[i] = dopri5.contd5(i+1,output_list[output_index], cont, lrc)
-                        
-                    self._ylist.append(yval)
+            return yval
+        self.interpolate = interpolate
+        
+        if self._opts["complete_step"]:
+            self.complete_step(t, y, self._opts)
+        else:
+            if self._opts["output_list"] == None:
+                self._tlist.append(t)
+                self._ylist.append(y.copy())
+            else:
+                output_list = self._opts["output_list"]
+                output_index = self._opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        self._tlist.append(output_list[output_index])
+                        self._ylist.append(interpolate(output_list[output_index]))
 
-                    output_index = output_index+1
-            except IndexError:
-                pass
-            self._opts["output_index"] = output_index
+                        output_index += 1
+                except IndexError:
+                    pass
+                self._opts["output_index"] = output_index
+                
+        return irtrn
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
@@ -123,6 +136,10 @@ class Dopri5(Explicit_ODE):
         #Setting iwork options
         IWORK[0] = self.maxsteps
         IWORK[4] = self.problem_info["dim"] 
+        
+        #Check for initialization
+        if opts["initialize"]:
+            self.initialize()
         
         #Store the opts
         self._opts = opts
