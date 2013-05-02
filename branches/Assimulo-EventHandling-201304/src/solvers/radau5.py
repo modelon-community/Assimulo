@@ -82,11 +82,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
-        #Solver support
-        self.supports["complete_step"] = True
-        self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
-        
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
         
@@ -98,40 +93,30 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._tlist = []
         self._ylist = []
         
-    #dummy interpolation function
-    def interpolate(time):
-        return 5
-        
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        def interpolate(time):
-            yval = N.empty(self._leny)
-            for i in range(self._leny):
-                yval[i] = radau5.contr5(i+1, time, cont)
-                
-            return yval
-        self.interpolate = interpolate
-        
-        if self._opts["complete_step"]:
-            self.complete_step(t, y, self._opts)
+        if self._opts["output_list"] == None:
+            self._tlist.append(t)
+            self._ylist.append(y.copy())
         else:
-            if self._opts["output_list"] == None:
-                self._tlist.append(t)
-                self._ylist.append(y.copy())
-            else:
-                output_list = self._opts["output_list"]
-                output_index = self._opts["output_index"]
-                try:
-                    while output_list[output_index] <= t:
-                        self._tlist.append(output_list[output_index])
-                        self._ylist.append(interpolate(output_list[output_index]))
+            output_list = self._opts["output_list"]
+            output_index = self._opts["output_index"]
+            try:
+                while output_list[output_index] <= t:
+                    self._tlist.append(output_list[output_index])
+                    
+                    yval = N.empty(self._leny)
+                    for i in range(self._leny):
+                        yval[i] = radau5.contr5(i+1,output_list[output_index], cont)
+                        
+                    self._ylist.append(yval)
 
-                        output_index = output_index+1
-                except IndexError:
-                    pass
-                self._opts["output_index"] = output_index
+                    output_index = output_index+1
+            except IndexError:
+                pass
+            self._opts["output_index"] = output_index
         
         return irtrn
             
@@ -164,10 +149,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Dummy methods
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
-        
-        #Check for initialization
-        if opts["initialize"]:
-            self.initialize()
         
         #Store the opts
         self._opts = opts
