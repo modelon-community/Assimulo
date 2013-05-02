@@ -55,6 +55,10 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef int _needjac
     cdef int _curjac
     cdef int _steps_since_last_jac
+    cdef N.ndarray _yold
+    cdef N.ndarray _ynew
+    cdef double _told
+    cdef double _h
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -76,12 +80,16 @@ cdef class ImplicitEuler(Explicit_ODE):
         
         #Internal temporary result vector
         self.yd1 = N.array([0.0]*len(self.y0))
+        self._yold = N.array([0.0]*len(self.y0))
+        self._ynew = N.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = False
         
         self._leny = len(self.y) #Dimension of the problem
         self._eps  = N.finfo('double').eps
@@ -136,17 +144,56 @@ cdef class ImplicitEuler(Explicit_ODE):
         tr = []
         yr = []
         
-        while t+h < tf:
+        flag = ID_PY_OK
+        while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
-            tr.append(t)
-            yr.append(y)
-            h=min(h, abs(tf-t))
+            if opts["complete_step"]:
+                initialize_flag = self.complete_step(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                
+            elif opts["output_list"] == None:
+                tr.append(t)
+                yr.append(y)
+            
+            else:
+                output_list = opts["output_list"]
+                output_index = opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        tr.append(output_list[output_index])
+                        yr.append(self.interpolate(output_list[output_index]))
+                        output_index = output_index + 1
+                except IndexError:
+                    pass
+                opts["output_index"] = output_index
+
+            h = min(h, abs(tf-t))
         else:
-            t, y = self._step(t, y, h)
-            tr.append(t)
-            yr.append(y)
+            if flag == ID_PY_OK:
+                t, y = self._step(t, y, h)
+                if opts["complete_step"]:
+                    initialize_flag = self.complete_step(t, y, opts)
+                    if initialize_flag: flag = ID_PY_EVENT
+                    else:               flag = ID_PY_COMPLETE
+                    #return flag, t,y
+                elif opts["output_list"] == None:
+                    tr.append(t)
+                    yr.append(y)
+                    flag = ID_PY_COMPLETE
+                else:
+                    output_list = opts["output_list"]
+                    output_index = opts["output_index"]
+                    try:
+                        while output_list[output_index] <= t:
+                            tr.append(output_list[output_index])
+                            yr.append(self.interpolate(output_list[output_index]))
+                            output_index = output_index + 1
+                    except IndexError:
+                        pass
+                    flag = ID_PY_COMPLETE
+                    opts["output_index"] = output_index
         
-        return ID_COMPLETE, tr, yr
+        return flag, tr, yr
     
     def _set_newt(self, newt):
         """
@@ -166,7 +213,7 @@ cdef class ImplicitEuler(Explicit_ODE):
             self.options["newt"] = int(newt)
         except (ValueError, TypeError):
             raise AssimuloException('The newt must be an integer or float.')
-		
+        
     def _get_newt(self):
         """
         Maximal number of Newton iterations.
@@ -182,7 +229,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                                 newt = 10
         """
         return self.options["newt"]
-		
+        
     newt = property(_get_newt,_set_newt)
     
     def _set_atol(self,atol):
@@ -351,7 +398,16 @@ cdef class ImplicitEuler(Explicit_ODE):
         self._curjac = False #The Jacobian is no longer current
         self._old_jac = jac #Store the old jacobian
         
+        #Internal values only used for defining the interpolation function.
+        self._yold = yn
+        self._ynew = ynew
+        self._told = t
+        self._h = h
+        
         return tn1, ynew
+        
+    def interpolate(self, time):
+        return self._yold + (time - self._told) / self._h * (self._ynew - self._yold)
         
     def _set_h(self,h):
         try:
@@ -417,6 +473,10 @@ cdef class ExplicitEuler(Explicit_ODE):
     """
     cdef N.ndarray yd1
     cdef object f
+    cdef N.ndarray _yold
+    cdef N.ndarray _ynew
+    cdef double _told
+    cdef double _h
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -426,12 +486,16 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         #Internal temporary result vector
         self.yd1 = N.array([0.0]*len(self.y0))
+        self._yold = N.array([0.0]*len(self.y0))
+        self._ynew = N.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = False
     
     cpdef step(self,double t,N.ndarray y,double tf,dict opts):
         cdef double h
@@ -455,24 +519,72 @@ cdef class ExplicitEuler(Explicit_ODE):
         tr = []
         yr = []
         
-        while t+h < tf:
+        flag = ID_PY_OK
+        while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
-            tr.append(t)
-            yr.append(y)
-            h=min(h, abs(tf-t))
+            if opts["complete_step"]:
+                initialize_flag = self.complete_step(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                
+            elif opts["output_list"] == None:
+                tr.append(t)
+                yr.append(y)
+            
+            else:
+                output_list = opts["output_list"]
+                output_index = opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        tr.append(output_list[output_index])
+                        yr.append(self.interpolate(output_list[output_index]))
+                        output_index = output_index + 1
+                except IndexError:
+                    pass
+                opts["output_index"] = output_index
+
+            h = min(h, abs(tf-t))
         else:
-            t, y = self._step(t, y, h)
-            tr.append(t)
-            yr.append(y)
+            if flag == ID_PY_OK:
+                t, y = self._step(t, y, h)
+                if opts["complete_step"]:
+                    initialize_flag = self.complete_step(t, y, opts)
+                    if initialize_flag: flag = ID_PY_EVENT
+                    else:               flag = ID_PY_COMPLETE
+                    #return flag, t,y
+                elif opts["output_list"] == None:
+                    tr.append(t)
+                    yr.append(y)
+                    flag = ID_PY_COMPLETE
+                else:
+                    output_list = opts["output_list"]
+                    output_index = opts["output_index"]
+                    try:
+                        while output_list[output_index] <= t:
+                            tr.append(output_list[output_index])
+                            yr.append(self.interpolate(output_list[output_index]))
+                            output_index = output_index + 1
+                    except IndexError:
+                        pass
+                    flag = ID_PY_COMPLETE
+                    opts["output_index"] = output_index
         
-        return ID_COMPLETE, tr, yr
+        return flag, tr, yr
     
     cdef tuple _step(self,double t,N.ndarray y,double h):
         """
         This calculates the next step in the integration.
         """
         #self.f(self.yd1,t,y) #The output is stored in yd
-        return t + h, y + h*self.problem.rhs(t,y)
+        
+        #Internal values only used for defining the interpolation function.
+        self._yold = y.copy()
+        self._ynew = y + h*self.problem.rhs(t,y)
+        self._told = t
+        self._h = h
+        return t + h, self._ynew
+        
+    def interpolate(self, time):
+        return self._yold + (time - self._told) / self._h * (self._ynew - self._yold)
         
     def _set_h(self,h):
         try:
