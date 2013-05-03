@@ -81,11 +81,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nstateevents"]= 0 #Number of state events
         
         #Solver support
         self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
+        self.supports["state_events"] = True
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
@@ -94,9 +95,19 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
-        
-        self._tlist = []
-        self._ylist = []
+            
+    def set_problem_data(self):
+        if self.problem_info["state_events"]:
+            def event_func(t, y):
+                return self.problem.state_events(t, y, self.sw)
+            def f(t, y):
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self.event_info = [0] * self.problem_info["dimRoot"]
+            self.g_low = self.event_func(self.t, self.y)
+        else:
+            self.f = self.problem.rhs
     
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
@@ -110,6 +121,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             return yval
         self.interpolate = interpolate
         
+        if self.problem_info["state_events"]:
+            flag, t, y, self.g_low = self.event_check(told, t, self.event_func, self.g_low)
+            #Convert to Fortram indicator.
+            if flag == ID_PY_EVENT: irtrn = -1
+            
         if self._opts["complete_step"]:
             self.complete_step(t, y, self._opts)
         else:
@@ -163,12 +179,15 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Check for initialization
         if opts["initialize"]:
-            self.initialize()
+            self.set_problem_data()
+            self._tlist = []
+            self._ylist = []
+            
         
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag =  radau5.radau5(self.problem.rhs, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+        t, y, h, iwork, flag =  radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
@@ -189,17 +208,22 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         return flag, self._tlist, self._ylist
     
+    def state_event_info(self):
+        return self.event_info
+    
     def print_statistics(self, verbose=NORMAL):
         """
         Prints the run-time statistics for the problem.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Steps                          : '+ str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of Function Evaluations           : '+ str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
