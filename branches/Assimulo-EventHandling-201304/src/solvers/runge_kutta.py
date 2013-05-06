@@ -430,23 +430,38 @@ class RungeKutta34(Explicit_ODE):
         self.Y4 = N.array([0.0]*len(self.y0))
         self.Z3 = N.array([0.0]*len(self.y0))
         
-        #RHS-Function
-        self.f = problem.rhs_internal
-        
         #Solver support
         self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
+        self.supports["state_events"] = True
         
         #Internal values
         # - Statistic values
         self.statistics["nsteps"] = 0 #Number of steps
         self.statistics["nfcn"] = 0 #Number of function evaluations
+        self.statistics["nstateevents"]= 0 #Number of state events
     
     def initialize(self):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
+            
+    def set_problem_data(self): 
+        if self.problem_info["state_events"]: 
+            def event_func(t, y): 
+                return self.problem.state_events(t, y, self.sw) 
+            def f(dy ,t, y): 
+                try:
+                    dy[:] = self.problem.rhs(t, y, self.sw)
+                except:
+                    return False
+                return True
+            self.f = f
+            self.event_func = event_func
+            self.event_info = [0] * self.problem_info["dimRoot"] 
+            self.g_low = self.event_func(self.t, self.y) 
+        else: 
+            self.f = self.problem.rhs_internal
     
     def _set_initial_step(self, initstep):
         try:
@@ -572,6 +587,8 @@ class RungeKutta34(Explicit_ODE):
         return flags[-1], tlist, ylist
     
     def _iter(self,t,y,tf,opts):
+        if opts["initialize"]:
+            self.set_problem_data()
         maxsteps = self.options["maxsteps"]
         h = self.options["inith"]
         h = min(h, N.abs(tf-t))
@@ -582,6 +599,9 @@ class RungeKutta34(Explicit_ODE):
             if t+h < tf and flag == ID_PY_OK:
                 t, y, error = self._step(t, y, h)
                 self.statistics["nsteps"] += 1
+                if self.problem_info["state_events"]: 
+                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low) 
+                
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
@@ -609,19 +629,22 @@ class RungeKutta34(Explicit_ODE):
         if flag == ID_PY_OK:
             t, y, error = self._step(t, y, h)
             self.statistics["nsteps"] += 1
+            if self.problem_info["state_events"]: 
+                flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                if flag == ID_PY_OK: flag = ID_PY_COMPLETE
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
                 else:               flag = ID_PY_COMPLETE
                 yield flag, t,y
             elif opts["output_list"] == None:
-                yield ID_PY_COMPLETE, t,y
+                yield flag, t,y
             else:
                 output_list = opts["output_list"]
                 output_index = opts["output_index"]
                 try:
                     while output_list[output_index] <= t:
-                        yield ID_PY_COMPLETE, output_list[output_index], self.interpolate(output_list[output_index])
+                        yield flag, output_list[output_index], self.interpolate(output_list[output_index])
                         output_index = output_index + 1
                 except IndexError:
                     pass
@@ -653,8 +676,7 @@ class RungeKutta34(Explicit_ODE):
         f(self.Z3, t + h, y - h*self.Y1 + 2.0*h*self.Y2)
         f(self.Y4, t + h, y + h*self.Y3)
         
-        error = N.linalg.norm(h/6*(2*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
-        
+        error = N.linalg.norm(h/6.0*(2.0*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
         t_next = t + h
         y_next = y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4)
         
@@ -667,11 +689,14 @@ class RungeKutta34(Explicit_ODE):
             coff1 = y
             coff2 = f_low
             coff3 = (y_brack - f_low) / h
-            coff4 = (f_high - 2*y_brack + f_low) / h
+            coff4 = (f_high - 2.0*y_brack + f_low) / h
             return coff1 + coff2*(time - t) + coff3*(time - t)**2 + coff4*(time - t)**2*(time - t_next)
         self.interpolate = interpolate
         
         return t_next, y_next, error
+        
+    def state_event_info(self): 
+        return self.event_info 
     
     def print_statistics(self, verbose):
         """
@@ -680,6 +705,9 @@ class RungeKutta34(Explicit_ODE):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
         self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
         self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
+        if self.problem_info["state_events"]: 
+            self.log_message(' Number of state events         : '+ str(self.statistics["nstateevents"]),   verbose)
+        
         self.log_message('\nSolver options:\n',                                              verbose)
         self.log_message(' Solver             : RungeKutta34',                               verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)
