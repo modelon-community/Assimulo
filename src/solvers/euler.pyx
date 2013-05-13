@@ -167,7 +167,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
             
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
@@ -195,7 +195,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
                 if self.problem_info["state_events"]:
-                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
                     if flag == ID_PY_OK: flag = ID_PY_COMPLETE
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
@@ -575,7 +575,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
             
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
@@ -603,7 +603,7 @@ cdef class ExplicitEuler(Explicit_ODE):
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
                 if self.problem_info["state_events"]:
-                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
                     if flag == ID_PY_OK: flag = ID_PY_COMPLETE
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)

@@ -305,11 +305,12 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nstateevents"]= 0 #Number of state events
         
         #Solver support
         self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
+        self.supports["state_events"] = True
         
         #Internal
         self._leny = len(self.y) #Dimension of the problem
@@ -319,8 +320,18 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         for k in self.statistics.keys():
             self.statistics[k] = 0
             
-        self._tlist = []
-        self._ylist = []
+    def set_problem_data(self):
+        if self.problem_info["state_events"]:
+            def event_func(t, y):
+                return self.problem.state_events(t, y, self.sw)
+            def f(t, y):
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self._event_info = [0] * self.problem_info["dimRoot"]
+            self.g_low = self.event_func(self.t, self.y)
+        else:
+            self.f = self.problem.rhs
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
@@ -333,6 +344,11 @@ class RodasODE(Rodas_Common, Explicit_ODE):
                 
             return yval
         self.interpolate = interpolate
+        
+        if self.problem_info["state_events"]:
+            flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
+            #Convert to Fortram indicator.
+            if flag == ID_PY_EVENT: irtrn = -1
         
         if self._opts["complete_step"]:
             self.complete_step(t, y, self._opts)
@@ -383,10 +399,16 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
         dfx_dummy = lambda t:x
         
+        #Check for initialization
+        if opts["initialize"]:
+            self.set_problem_data()
+            self._tlist = []
+            self._ylist = []
+        
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag = rodas.rodas(self.problem.rhs, IFCN, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+        t, y, h, iwork, flag = rodas.rodas(self.f, IFCN, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITOL, jac_dummy, IJAC, MLJAC, MUJAC, dfx_dummy, IDFX, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
                     
         #Checking return
@@ -407,6 +429,12 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
         return flag, self._tlist, self._ylist
         
+    def state_event_info(self):
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
+        
     def print_statistics(self, verbose=NORMAL):
         """
         Prints the run-time statistics for the problem.
@@ -418,6 +446,8 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Rodas ',          verbose)

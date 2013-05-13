@@ -122,7 +122,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.interpolate = interpolate
         
         if self.problem_info["state_events"]:
-            flag, t, y, self.g_low = self.event_check(told, t, self.event_func, self.g_low)
+            flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
             #Convert to Fortram indicator.
             if flag == ID_PY_EVENT: irtrn = -1
             
