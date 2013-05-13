@@ -237,14 +237,14 @@ cdef class Explicit_ODE(ODE):
             
         return flag_initialize
         
-    def event_check(self, t_low, t_high, g, g_low):
+    def event_check(self, t_low, t_high, y_high, g, g_low):
         '''Checks if an event occurs in [t_low, t_high], if that is the case event 
         localization is started. Event localization finds the earliest small interval 
         that contains a change in domain. The right endpoint of this interval is then 
         returned as the time to restart the integration at.
         '''
         
-        g_high = g(t_high, self.interpolate(t_high))
+        g_high = g(t_high, y_high)
         n_g = self.problem_info["dimRoot"]
         TOL = max(t_low, t_high) * 1e-13
         #Check for events in [t_low, t_high].
@@ -252,7 +252,7 @@ cdef class Explicit_ODE(ODE):
             if (g_low[i] > 0) != (g_high[i] > 0):
                 break
         else:
-            return (ID_PY_OK, t_high, self.interpolate(t_high), g_high)
+            return (ID_PY_OK, t_high, y_high, g_high)
         
         side = 0
         sideprev = -1
@@ -307,12 +307,12 @@ cdef class Explicit_ODE(ODE):
                 (t_low, g_low) = (t_mid, g_mid[0:n_g])
                 side = 2
         
+        event_info = N.array([0] * n_g)
         for i in xrange(n_g):
             if (g_low[i] > 0) != (g_high[i] > 0):
-                self.event_info[i] = 1 if g_high[i] > 0 else -1
-            else:
-                self.event_info[i] = 0
-        
+                event_info[i] = 1 if g_high[i] > 0 else -1
+                
+        self.set_event_info(event_info)
         self.statistics["nstateevents"] += 1
         return (ID_PY_EVENT, t_high, self.interpolate(t_high), g_high)
     
