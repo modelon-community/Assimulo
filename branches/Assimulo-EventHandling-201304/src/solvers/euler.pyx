@@ -50,6 +50,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef N.ndarray yd1
     cdef N.ndarray _old_jac
     cdef object f
+    cdef object event_func
     cdef int _leny
     cdef double _eps
     cdef int _needjac
@@ -57,6 +58,8 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef int _steps_since_last_jac
     cdef N.ndarray _yold
     cdef N.ndarray _ynew
+    cdef N.ndarray _event_info
+    cdef N.ndarray g_low
     cdef double _told
     cdef double _h
     
@@ -83,19 +86,33 @@ cdef class ImplicitEuler(Explicit_ODE):
         self._yold = N.array([0.0]*len(self.y0))
         self._ynew = N.array([0.0]*len(self.y0))
         
-        #RHS-Function
-        self.f = problem.rhs_internal
-        
         #Solver support
         self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
+        self.supports["state_events"] = True
+        
+        # - Statistic values
+        self.statistics["nstateevents"] = 0 #Number of state events
         
         self._leny = len(self.y) #Dimension of the problem
         self._eps  = N.finfo('double').eps
         self._needjac = True #Do we need a new jacobian?
         self._curjac = False #Is the current jacobian up to date?
         self._steps_since_last_jac = 0 #Keep track on how long ago we updated the jacobian
+    
+    def set_problem_data(self): 
+        if self.problem_info["state_events"]: 
+            def event_func(t, y): 
+                return self.problem.state_events(t, y, self.sw) 
+            def f(t, y): 
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
+            self.g_low = self.event_func(self.t, self.y)
+        else: 
+            self.f = self.problem.rhs
+    
     
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
@@ -141,12 +158,17 @@ cdef class ImplicitEuler(Explicit_ODE):
         h = self.options["h"]
         h = min(h, abs(tf-t))
         
-        tr = []
-        yr = []
+        if opts["initialize"]:
+            self.set_problem_data()
+            tr = []
+            yr = []
         
         flag = ID_PY_OK
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
+            if self.problem_info["state_events"]: 
+                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+            
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
@@ -171,10 +193,13 @@ cdef class ImplicitEuler(Explicit_ODE):
         else:
             if flag == ID_PY_OK:
                 t, y = self._step(t, y, h)
+                flag = ID_PY_COMPLETE
+                if self.problem_info["state_events"]:
+                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    if flag == ID_PY_OK: flag = ID_PY_COMPLETE
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
-                    else:               flag = ID_PY_COMPLETE
                     #return flag, t,y
                 elif opts["output_list"] == None:
                     tr.append(t)
@@ -433,6 +458,12 @@ cdef class ImplicitEuler(Explicit_ODE):
         return self.options["h"]
         
     h=property(_get_h,_set_h)
+    
+    def state_event_info(self):
+        return self._event_info
+    
+    def set_event_info(self, event_info):
+        self._event_info = event_info
         
     def print_statistics(self, verbose=NORMAL):
         """
@@ -445,6 +476,9 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["njacfcn"]),  verbose)
         self.log_message(' Number of Newton Iterations              : %s'%(self.statistics["newt"]), verbose)
         self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nniterfail"]),       verbose)
+        if self.problem_info["state_events"]: 
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+            
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ImplicitEuler',                     verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
@@ -473,8 +507,11 @@ cdef class ExplicitEuler(Explicit_ODE):
     """
     cdef N.ndarray yd1
     cdef object f
+    cdef object event_func
     cdef N.ndarray _yold
     cdef N.ndarray _ynew
+    cdef N.ndarray _event_info
+    cdef N.ndarray g_low
     cdef double _told
     cdef double _h
     
@@ -489,13 +526,26 @@ cdef class ExplicitEuler(Explicit_ODE):
         self._yold = N.array([0.0]*len(self.y0))
         self._ynew = N.array([0.0]*len(self.y0))
         
-        #RHS-Function
-        self.f = problem.rhs_internal
-        
         #Solver support
         self.supports["complete_step"] = True
         self.supports["interpolated_output"] = True
-        self.supports["state_events"] = False
+        self.supports["state_events"] = True
+        
+        # - Statistic values
+        self.statistics["nstateevents"] = 0 #Number of state events
+    
+    def set_problem_data(self): 
+        if self.problem_info["state_events"]: 
+            def event_func(t, y): 
+                return self.problem.state_events(t, y, self.sw) 
+            def f(t, y): 
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
+            self.g_low = self.event_func(self.t, self.y)
+        else: 
+            self.f = self.problem.rhs
     
     cpdef step(self,double t,N.ndarray y,double tf,dict opts):
         cdef double h
@@ -516,12 +566,17 @@ cdef class ExplicitEuler(Explicit_ODE):
         h = self.options["h"]
         h = min(h, abs(tf-t))
         
-        tr = []
-        yr = []
+        if opts["initialize"]:
+            self.set_problem_data()
+            tr = []
+            yr = []
         
         flag = ID_PY_OK
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
+            if self.problem_info["state_events"]: 
+                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+            
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
@@ -546,15 +601,16 @@ cdef class ExplicitEuler(Explicit_ODE):
         else:
             if flag == ID_PY_OK:
                 t, y = self._step(t, y, h)
+                flag = ID_PY_COMPLETE
+                if self.problem_info["state_events"]:
+                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                    if flag == ID_PY_OK: flag = ID_PY_COMPLETE
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
-                    else:               flag = ID_PY_COMPLETE
-                    #return flag, t,y
                 elif opts["output_list"] == None:
                     tr.append(t)
                     yr.append(y)
-                    flag = ID_PY_COMPLETE
                 else:
                     output_list = opts["output_list"]
                     output_index = opts["output_index"]
@@ -565,7 +621,6 @@ cdef class ExplicitEuler(Explicit_ODE):
                             output_index = output_index + 1
                     except IndexError:
                         pass
-                    flag = ID_PY_COMPLETE
                     opts["output_index"] = output_index
         
         return flag, tr, yr
@@ -578,7 +633,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         #Internal values only used for defining the interpolation function.
         self._yold = y.copy()
-        self._ynew = y + h*self.problem.rhs(t,y)
+        self._ynew = y + h*self.f(t,y)
         self._told = t
         self._h = h
         return t + h, self._ynew
@@ -610,13 +665,22 @@ cdef class ExplicitEuler(Explicit_ODE):
         return self.options["h"]
         
     h=property(_get_h,_set_h)
+    
+    def state_event_info(self):
+        return self._event_info
+    
+    def set_event_info(self, event_info):
+        self._event_info = event_info
         
     def print_statistics(self, verbose=NORMAL):
         """
         Should print the statistics.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        self.log_message(' Step-length          : %s '%(self.options["h"]), verbose)
+        self.log_message(' Step-length           : %s '%(self.options["h"]), verbose)
+        if self.problem_info["state_events"]: 
+            self.log_message(' Number of state events: '+ str(self.statistics["nstateevents"]),   verbose)
+            
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ExplicitEuler',                     verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
