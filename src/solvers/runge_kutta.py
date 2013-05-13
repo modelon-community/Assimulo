@@ -458,7 +458,7 @@ class RungeKutta34(Explicit_ODE):
                 return True
             self.f = f
             self.event_func = event_func
-            self.event_info = [0] * self.problem_info["dimRoot"] 
+            self._event_info = [0] * self.problem_info["dimRoot"] 
             self.g_low = self.event_func(self.t, self.y) 
         else: 
             self.f = self.problem.rhs_internal
@@ -696,7 +696,10 @@ class RungeKutta34(Explicit_ODE):
         return t_next, y_next, error
         
     def state_event_info(self): 
-        return self.event_info 
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     def print_statistics(self, verbose):
         """

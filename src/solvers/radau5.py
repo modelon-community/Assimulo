@@ -104,7 +104,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 return self.problem.rhs(t, y, self.sw)
             self.f = f
             self.event_func = event_func
-            self.event_info = [0] * self.problem_info["dimRoot"]
+            self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_low = self.event_func(self.t, self.y)
         else:
             self.f = self.problem.rhs
@@ -209,7 +209,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         return flag, self._tlist, self._ylist
     
     def state_event_info(self):
-        return self.event_info
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     def print_statistics(self, verbose=NORMAL):
         """
