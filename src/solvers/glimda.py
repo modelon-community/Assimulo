@@ -114,9 +114,12 @@ class GLIMDA(Implicit_ODE):
         p = order
         y = y
         """
-        self._tlist.append(tph)
-        self._ylist.append(y.copy())
-        self._ydlist.append(yd.copy())
+        if self._opts["complete_step"]:
+            self.complete_step(tph, y, yd, self._opts)
+        else:   
+            self._tlist.append(tph)
+            self._ylist.append(y.copy())
+            self._ydlist.append(yd.copy())
     
     def integrate(self, t, y, yd, tf, opts):
         #F = f(y,x,t) #f(q'(x,t),x,t)=0
@@ -222,7 +225,7 @@ class GLIMDA(Implicit_ODE):
             raise GLIMDA_Exception('The newt must be an integer or float.')
         if self.options["newt"] < 0:
             raise GLIMDA_Exception("Maximum number of Newton iterations must be positive.")
-		
+        
     def _get_newt(self):
         """
         Maximum number of Newton iterations.
@@ -238,7 +241,7 @@ class GLIMDA(Implicit_ODE):
                                 newt = 10
         """
         return self.options["newt"]
-		
+        
     newt = property(_get_newt,_set_newt)
     
     def _set_maxord(self, maxord):
@@ -248,7 +251,7 @@ class GLIMDA(Implicit_ODE):
             raise GLIMDA_Exception('The maxord must be an integer or float.')
         if self.options["maxord"] < 1 or self.options["maxord"] > 3:
             raise GLIMDA_Exception('The maximum order must be between 1 and 3.')
-		
+        
     def _get_maxord(self):
         """
         Maximum order to be used (1-3).
@@ -264,7 +267,7 @@ class GLIMDA(Implicit_ODE):
                                 maxord = 2
         """
         return self.options["maxord"]
-		
+        
     maxord = property(_get_maxord,_set_maxord)
     
     def _set_minord(self, minord):
@@ -274,7 +277,7 @@ class GLIMDA(Implicit_ODE):
             raise GLIMDA_Exception('The minord must be an integer or float.')
         if self.options["minord"] < 1 or self.options["minord"] > 3:
             raise GLIMDA_Exception('The minimum order must be between 1 and 3.')
-		
+        
     def _get_minord(self):
         """
         Minimum order to be used (1-3).
@@ -290,7 +293,7 @@ class GLIMDA(Implicit_ODE):
                                 maxord = 2
         """
         return self.options["minord"]
-		
+        
     minord = property(_get_minord,_set_minord)
     
     def _get_maxsteps(self):
@@ -407,7 +410,7 @@ class GLIMDA(Implicit_ODE):
             raise GLIMDA_Exception('The order must be an integer or float.')
         if self.options["order"] < 0 or self.options["order"] > 3:
             raise GLIMDA_Exception('The order must be between 0 and 3.')
-		
+        
     def _get_order(self):
         """
         Determines if GLIMDA should use a variable order method (0) or 
@@ -424,7 +427,7 @@ class GLIMDA(Implicit_ODE):
                                 order = 2
         """
         return self.options["order"]
-		
+        
     order = property(_get_order,_set_order)
     
     def _set_max_h(self,max_h):

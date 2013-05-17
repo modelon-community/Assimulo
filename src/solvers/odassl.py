@@ -217,6 +217,11 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["convfail"]         = 0 #Number of LU decompositions
         
+        #Solver support
+        self.supports["complete_step"] = True
+        self.supports["interpolated_output"] = False
+        self.supports["state_events"] = False
+        
         #Internal
         self._leny = len(self.y) #Dimension of the problem
         
@@ -237,7 +242,7 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         jac_dummy = lambda t,x,xp: x
         info = np.zeros((15,),np.int) 
         info[1] = 1  # Tolerances are vectors  
-        info[2] = normal_mode = 0 if opts["output_list"] != None else 1  # intermediate output mode
+        info[2] = normal_mode = 1 if opts["output_list"] == None or opts["complete_step"] else 0  # intermediate output mode
         info[6] = 1 if self.options["maxh"] > 0.0 else 0       
         rwork[1] = self.options["maxh"]            
         info[7] = 1 if self.options["inith"] > 0.0 else 0
@@ -269,33 +274,47 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
             return self.problem.res(t,y,yd)
         callback_residual = py_residual
         #----
-
-        if normal_mode == 1: # intermediate output mode
+        if opts["complete_step"]:
             idid = 1
             while idid==1:
                 t,y,yprime,tf,info,idid,rwork,iwork = \
                    odassl.odassl(callback_residual,neq,ny,t,y,yprime,
-                         tf,info,rtol,atol,rwork,iwork,jac_dummy)
-                tlist.append(t)
-                ylist.append(y.copy())
-                ydlist.append(yprime.copy())
-                if idid==2:
+                        tf,info,rtol,atol,rwork,iwork,jac_dummy)
+                
+                self.complete_step(t, y, yprime, opts)
+                if idid==2 or idid==3:
                     flag=ID_PY_COMPLETE
                 elif idid < 0:
                     raise ODASSL_Exception("ODASSL failed with flag IDID {IDID}".format(IDID=idid))
-        else:   # mode with output_list          
-            output_list  = opts["output_list"]
-            for tout in output_list: 
-                t,y,yprime,tout,info,idid,rwork,iwork = \
-                  odassl.odassl(callback_residual,neq,ny,t,y,yprime, \
-                         tout,info,rtol,atol,rwork,iwork,jac_dummy)
-                tlist.append(t)
-                ylist.append(y.copy())
-                ydlist.append(yprime.copy())
-                if idid > 0 and t >= tf:
-                    flag=ID_PY_COMPLETE
-                elif idid < 0:
-                    raise ODASSL_Exception("ODASSL failed with flag IDID {IDID}".format(IDID=idid))                                      
+        else:   
+            if normal_mode == 1: # intermediate output mode
+                idid = 1
+                while idid==1:
+                    t,y,yprime,tf,info,idid,rwork,iwork = \
+                       odassl.odassl(callback_residual,neq,ny,t,y,yprime,
+                             tf,info,rtol,atol,rwork,iwork,jac_dummy)
+                    
+                    tlist.append(t)
+                    ylist.append(y.copy())
+                    ydlist.append(yprime.copy())
+                    if idid==2 or idid==3:
+                        flag=ID_PY_COMPLETE
+                    elif idid < 0:
+                        raise ODASSL_Exception("ODASSL failed with flag IDID {IDID}".format(IDID=idid))
+                    
+            else:   # mode with output_list          
+                output_list  = opts["output_list"]
+                for tout in output_list: 
+                    t,y,yprime,tout,info,idid,rwork,iwork = \
+                      odassl.odassl(callback_residual,neq,ny,t,y,yprime, \
+                             tout,info,rtol,atol,rwork,iwork,jac_dummy)
+                    tlist.append(t)
+                    ylist.append(y.copy())
+                    ydlist.append(yprime.copy())
+                    if idid > 0 and t >= tf:
+                        flag=ID_PY_COMPLETE
+                    elif idid < 0:
+                        raise ODASSL_Exception("ODASSL failed with flag IDID {IDID}".format(IDID=idid))                                      
  
         
         
