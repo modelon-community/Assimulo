@@ -1299,9 +1299,12 @@ cdef class CVode(Explicit_ODE):
     cdef N_Vector yTemp, ydTemp
     cdef N_Vector *ySO
     cdef object f
+    cdef object event_func
     #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens,pt_prec_solve,pt_prec_setup
     cdef public N.ndarray yS0
+    cdef N.ndarray _event_info
+    cdef N.ndarray g_low
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -1329,6 +1332,7 @@ cdef class CVode(Explicit_ODE):
         self.options["dqtype"] = "CENTERED"
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
+        self.options["assimulo_events"] = False #Sundials rootfinding is used for event location as default
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -1524,7 +1528,10 @@ cdef class CVode(Explicit_ODE):
                 
             #Specify the root function to the solver
             if self.problem_info["state_events"]:
-                flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
+                if self.options["assimulo_events"]:
+                    flag = Sun.CVodeRootInit(self.cvode_mem, 0, cv_root)
+                else:
+                    flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
                     
@@ -1557,6 +1564,13 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag, self.t)
             
+    def set_assimulo_root_data(self):
+        def event_func(t, y):
+            return self.problem.state_events(t, y, self.sw)
+        self.event_func = event_func
+        self.g_low = self.event_func(self.t, self.y)
+        self._event_info = N.array([0] * self.problem_info["dimRoot"])
+        
     
     cpdef N.ndarray interpolate(self,double t,int k = 0):
         """
@@ -1698,21 +1712,17 @@ cdef class CVode(Explicit_ODE):
         
         yout = arr2nv(y)
         
-        #Get options
-        initialize   = opts["initialize"]
-        
         #Initialize? 
-        if initialize:
+        if opts["initialize"]:
             self.initialize_cvode() 
             self.initialize_options()
+            if self.options["assimulo_events"]:
+                self.set_assimulo_root_data()
         
         #Set stop time
         flag = Sun.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
             raise CVodeError(flag, t)
-        
-        #Run in normal mode?
-        #normal_mode = 1 if opts["output_list"] != None else 0
         
         if opts["complete_step"] or opts["output_list"] == None: 
             #Integration loop
@@ -1722,13 +1732,21 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag, tret)
                 
+                t = tret
+                y = nv2arr(yout)
+                if self.options["assimulo_events"] and self.problem_info["state_events"]:
+                    if opts["complete_step"]: told = self.t
+                    else:                     told = tr[-1]
+                    event_flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
+                    if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
+                
                 if opts["complete_step"]:
-                    flag_initialize = self.complete_step(tret, nv2arr(yout), opts)
+                    flag_initialize = self.complete_step(t, y, opts)
                     if flag_initialize: flag == CV_ROOT_RETURN #If a step event has occured the integration has to be reinitialized
                 else:
                     #Store results
-                    tr.append(tret)
-                    yr.append(nv2arr(yout))
+                    tr.append(t)
+                    yr.append(y)
                     
                 if flag == CV_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
@@ -1780,6 +1798,10 @@ cdef class CVode(Explicit_ODE):
         """
         Returns the event info.
         """
+        
+        if self.options["assimulo_events"]:
+            return self._event_info
+        
         cdef int* c_info
         cdef flag
         
@@ -1803,6 +1825,9 @@ cdef class CVode(Explicit_ODE):
         free(c_info)
         
         return event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     cpdef initialize_sensitivity_options(self):
         cdef int flag
@@ -2494,6 +2519,35 @@ cdef class CVode(Explicit_ODE):
     
     pbar = property(_get_pbar, _set_pbar)
     
+    def _set_assimulo_events(self, event_opt):
+        try:
+            self.options["assimulo_events"] = bool(event_opt)
+        except:
+            raise Exception("Unkown input to assimulo_events, must be a boolean.")
+        
+    def _get_assimulo_events(self):
+        """
+        A Boolean flag which indicates if Assimulos event finding algorithm
+        or CVode's is used to localize events. If false CVode's rootfinding
+        algorithm is used, if true Assimulos event_check is used.
+        
+            Parameters::
+            
+                assimulo_events    
+                                - Default 'False'.
+                
+                                - Should be a boolean.
+                                
+                                    Example:
+                                        assimulo_events = True
+                                        
+        See SUNDIALS CVode documentation 2.4 'Rootfinding' 
+        for more details.
+        """
+        return self.options["assimulo_events"]
+        
+    assimulo_events = property(_get_assimulo_events, _set_assimulo_events)
+    
     cdef void store_statistics(self, int return_flag):
         """
         Retrieves and stores the statistics.
@@ -2520,7 +2574,7 @@ cdef class CVode(Explicit_ODE):
         flag = Sun.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
                                                                             #Number of nonlinear conv failures
         
-        if return_flag == CV_ROOT_RETURN:
+        if return_flag == CV_ROOT_RETURN and not self.options["assimulo_events"]:
             self.statistics["nstateevents"] += 1
         self.statistics["nsteps"]    += nsteps
         self.statistics["nfevals"]   += nfevals
