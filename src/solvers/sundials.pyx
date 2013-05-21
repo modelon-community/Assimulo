@@ -827,8 +827,8 @@ cdef class IDA(Implicit_ODE):
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise Exception("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<0.0).any():
-            raise Exception("atol must be positive.")
+        if (self.options["atol"]<=0.0).any():
+            raise Exception("The absolute tolerance must be positive.")
     
     def _get_atol(self):
         """
@@ -2005,8 +2005,8 @@ cdef class CVode(Explicit_ODE):
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise Exception("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<0.0).any():
-            raise Exception("atol must be positive.")
+        if (self.options["atol"]<=0.0).any():
+            raise Exception("The absolute tolerance must be positive.")
     
     def _get_atol(self):
         """
