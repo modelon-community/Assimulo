@@ -62,6 +62,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef N.ndarray g_low
     cdef double _told
     cdef double _h
+    cdef double _inith
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -88,7 +89,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         
         #Solver support
         self.supports["complete_step"] = True
-        self.supports["interpolated_output"] = True
+        self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
         
         # - Statistic values
@@ -99,6 +100,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         self._needjac = True #Do we need a new jacobian?
         self._curjac = False #Is the current jacobian up to date?
         self._steps_since_last_jac = 0 #Keep track on how long ago we updated the jacobian
+        self._inith = 0 #Used for taking an initial step of correct length after an event.
     
     def set_problem_data(self): 
         if self.problem_info["state_events"]: 
@@ -164,6 +166,26 @@ cdef class ImplicitEuler(Explicit_ODE):
             yr = []
         
         flag = ID_PY_OK
+        if self._inith != 0:
+            t, y = self._step(t,y,self._inith)
+            if self.problem_info["state_events"]: 
+                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+            
+            if opts["complete_step"]:
+                initialize_flag = self.complete_step(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                
+            else:
+                tr.append(t)
+                yr.append(y)
+            
+            #If an event was detected calculate the length of the initial step to take after restarting.
+            if flag == ID_PY_EVENT:
+                self._inith = self._inith - (t - self._told)
+            else:
+                self._inith = 0
+            h = min(h, abs(tf-t))
+        
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
@@ -172,52 +194,32 @@ cdef class ImplicitEuler(Explicit_ODE):
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
-                
-            elif opts["output_list"] == None:
+            else:
                 tr.append(t)
                 yr.append(y)
-            
-            else:
-                output_list = opts["output_list"]
-                output_index = opts["output_index"]
-                try:
-                    while output_list[output_index] <= t:
-                        tr.append(output_list[output_index])
-                        yr.append(self.interpolate(output_list[output_index]))
-                        output_index = output_index + 1
-                except IndexError:
-                    pass
-                opts["output_index"] = output_index
 
             h = min(h, abs(tf-t))
         else:
+            #If no event was detected take the final step to tf.
             if flag == ID_PY_OK:
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
                 if self.problem_info["state_events"]:
                     flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
                     if flag == ID_PY_OK: flag = ID_PY_COMPLETE
+                
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
-                    #return flag, t,y
-                elif opts["output_list"] == None:
+                else:
                     tr.append(t)
                     yr.append(y)
                     flag = ID_PY_COMPLETE
-                else:
-                    output_list = opts["output_list"]
-                    output_index = opts["output_index"]
-                    try:
-                        while output_list[output_index] <= t:
-                            tr.append(output_list[output_index])
-                            yr.append(self.interpolate(output_list[output_index]))
-                            output_index = output_index + 1
-                    except IndexError:
-                        pass
-                    flag = ID_PY_COMPLETE
-                    opts["output_index"] = output_index
         
+        #If an event was detected calculate the length of the initial step if not already done.
+        if flag == ID_PY_EVENT and self._inith == 0:
+            self._inith = h - (t - self._told)
+                
         return flag, tr, yr
     
     def _set_newt(self, newt):
@@ -514,6 +516,7 @@ cdef class ExplicitEuler(Explicit_ODE):
     cdef N.ndarray g_low
     cdef double _told
     cdef double _h
+    cdef double _inith
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -525,10 +528,11 @@ cdef class ExplicitEuler(Explicit_ODE):
         self.yd1 = N.array([0.0]*len(self.y0))
         self._yold = N.array([0.0]*len(self.y0))
         self._ynew = N.array([0.0]*len(self.y0))
+        self._inith = 0 #Used for taking an initial step of correct length after an event.
         
         #Solver support
         self.supports["complete_step"] = True
-        self.supports["interpolated_output"] = True
+        self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
         
         # - Statistic values
@@ -572,6 +576,26 @@ cdef class ExplicitEuler(Explicit_ODE):
             yr = []
         
         flag = ID_PY_OK
+        if self._inith != 0:
+            t, y = self._step(t,y,self._inith)
+            if self.problem_info["state_events"]: 
+                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+            
+            if opts["complete_step"]:
+                initialize_flag = self.complete_step(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                
+            else:
+                tr.append(t)
+                yr.append(y)
+            
+            #If an event was detected calculate the length of the initial step to take after restarting.
+            if flag == ID_PY_EVENT:
+                self._inith = self._inith - (t - self._told)
+            else:
+                self._inith = 0
+            h = min(h, abs(tf-t))
+        
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
@@ -580,25 +604,13 @@ cdef class ExplicitEuler(Explicit_ODE):
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
-                
-            elif opts["output_list"] == None:
+            else:
                 tr.append(t)
                 yr.append(y)
             
-            else:
-                output_list = opts["output_list"]
-                output_index = opts["output_index"]
-                try:
-                    while output_list[output_index] <= t:
-                        tr.append(output_list[output_index])
-                        yr.append(self.interpolate(output_list[output_index]))
-                        output_index = output_index + 1
-                except IndexError:
-                    pass
-                opts["output_index"] = output_index
-
             h = min(h, abs(tf-t))
         else:
+            #If no event was detected take the final step to tf.
             if flag == ID_PY_OK:
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
@@ -608,21 +620,14 @@ cdef class ExplicitEuler(Explicit_ODE):
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
-                elif opts["output_list"] == None:
+                else:
                     tr.append(t)
                     yr.append(y)
-                else:
-                    output_list = opts["output_list"]
-                    output_index = opts["output_index"]
-                    try:
-                        while output_list[output_index] <= t:
-                            tr.append(output_list[output_index])
-                            yr.append(self.interpolate(output_list[output_index]))
-                            output_index = output_index + 1
-                    except IndexError:
-                        pass
-                    opts["output_index"] = output_index
-        
+            
+            #If an event was detected calculate the length of the initial step if not already done.
+            if flag == ID_PY_EVENT and self._inith == 0:
+                self._inith = h - (t - self._told)
+            
         return flag, tr, yr
     
     cdef tuple _step(self,double t,N.ndarray y,double h):
