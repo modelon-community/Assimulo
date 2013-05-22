@@ -130,7 +130,6 @@ cdef class Explicit_ODE(ODE):
         cdef backward = 1 if self.backward else 0
         
         y0 = self.y
-        t_logg = t0
 
         #Log the first point
         self.problem.handle_result(self,t0,y0)
@@ -268,8 +267,9 @@ cdef class Explicit_ODE(ODE):
             
             #Decide which event function to iterate with.
             maxfrac = 0
+            imax = 0 #Avoid compilation problem
             for i in xrange(n_g):
-                if ((g_low[i] < 0) != (g_high[i] < 0)):
+                if ((g_low[i] > 0) != (g_high[i] > 0)):
                     gfrac = abs(g_high[i]/(g_low[i] - g_high[i]))
                     if gfrac >= maxfrac:
                         maxfrac = gfrac
@@ -314,6 +314,8 @@ cdef class Explicit_ODE(ODE):
                 
         self.set_event_info(event_info)
         self.statistics["nstateevents"] += 1
+        print 'Event vid: {}'.format(t_high)
+        print(self.statistics["nstateevents"])
         return (ID_PY_EVENT, t_high, self.interpolate(t_high), g_high)
     
     def plot(self, mask=None, **kwargs):

@@ -64,14 +64,19 @@ cdef class Implicit_ODE(ODE):
         else:
             if isinstance(self.problem, cExplicit_Problem): #The problem is an explicit, get the yd0 values from the right-hand-side
                 self.problem_info["type"] = 0 #Change to explicit problem
-                self.yd0 = problem.rhs(self.t0, self.y0)
+                if self.problem_info["state_events"]:
+                    self.yd0 = problem.rhs(self.t0, self.y0, self.sw0)
+                else:
+                    self.yd0 = problem.rhs(self.t0, self.y0)
             else:
                 raise Implicit_ODE_Exception('yd0 must be specified in the problem.')
         
         #Check the dimension of the state event function
         if self.problem_info["state_events"]:
-            self.problem_info["dimRoot"] = len(problem.state_events(self.t0,self.y0, self.yd0, self.sw0))
-        
+            if self.problem_info["type"] == 1:
+                self.problem_info["dimRoot"] = len(problem.state_events(self.t0,self.y0, self.yd0, self.sw0))
+            else:
+                self.problem_info["dimRoot"] = len(problem.state_events(self.t0,self.y0, self.sw0))
         self.t  = self.t0
         self.y  = self.y0.copy()
         self.yd = self.yd0.copy()
@@ -182,7 +187,10 @@ cdef class Implicit_ODE(ODE):
 
             #Time event function is specified
             if  TIME_EVENT == 1:
-                tret = self.problem.time_events(self.t, self.y, self.yd, self.sw)
+                if type == 0:
+                    tret = self.problem.time_events(self.t, self.y, self.sw)
+                else:
+                    tret = self.problem.time_events(self.t, self.y, self.yd, self.sw)
                 tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
@@ -276,6 +284,88 @@ cdef class Implicit_ODE(ODE):
             flag_initialize = False 
              
         return flag_initialize
+        
+    def event_check(self, t_low, t_high, y_high, yd_high, g, g_low):
+        '''Checks if an event occurs in [t_low, t_high], if that is the case event 
+        localization is started. Event localization finds the earliest small interval 
+        that contains a change in domain. The right endpoint of this interval is then 
+        returned as the time to restart the integration at.
+        '''
+        
+        g_high = g(t_high, y_high, yd_high)
+        n_g = self.problem_info["dimRoot"]
+        TOL = max(t_low, t_high) * 1e-13
+        #Check for events in [t_low, t_high].
+        for i in xrange(n_g):
+            if (g_low[i] > 0) != (g_high[i] > 0):
+                break
+        else:
+            return (ID_PY_OK, t_high, y_high, yd_high, g_high)
+        
+        side = 0
+        sideprev = -1
+        
+        while abs(t_high - t_low) > TOL:
+            #Adjust alpha if the same side is choosen more than once in a row.
+            if (sideprev == side):
+                if side == 2: alpha = 2 * alpha
+                else:         alpha = 1/2 * alpha
+            #Otherwise alpha = 1 and the secant rule is used.
+            else:
+                alpha = 1
+            
+            #Decide which event function to iterate with.
+            maxfrac = 0
+            imax = 0 #Avoid compilation problem
+            for i in xrange(n_g):
+                if ((g_low[i] > 0) != (g_high[i] > 0)):
+                    gfrac = abs(g_high[i]/(g_low[i] - g_high[i]))
+                    if gfrac >= maxfrac:
+                        maxfrac = gfrac
+                        imax = i
+            
+            #Hack for solving the slow converging case when g is zero for a large part of [t_low, t_high].
+            if g_high[imax] == 0 or g_low[imax] == 0:
+                t_mid = (t_low + t_high)/2
+            else:
+                t_mid = t_high - (t_high - t_low)*g_high[imax]/(g_high[imax] - alpha*g_low[imax])
+        
+            #Check if t_mid is to close to current brackets and adjust if so is the case.
+            if (abs(t_mid - t_low) < TOL/2):
+                fracint = abs(t_low - t_high)/TOL
+                if fracint > 5: fracsub = 1.0 / 10.0
+                else:           fracsub = 1.0 / (2.0 * fracint)
+                t_mid = t_low + fracsub*(t_high - t_low)
+        
+            if (abs(t_mid - t_high) < TOL/2):
+                fracint = abs(t_low - t_high)/TOL
+                if fracint > 5: fracsub = 1.0 / 10.0
+                else:           fracsub = 1.0 / (2.0 * fracint)
+                t_mid = t_high - fracsub*(t_high - t_low)
+            
+            #Calculate g at t_mid and check for events in [t_low, t_mid].
+            g_mid = g(t_mid, self.interpolate(t_mid), self.interpolate(t_mid, 1))
+            sideprev = side
+            for i in xrange(n_g):
+                if (g_low[i] > 0) != (g_mid[i] > 0):
+                    (t_high, g_high) = (t_mid, g_mid[0:n_g])
+                    side = 1
+                    break
+            #If there are no events in [t_low, t_mid] there must be some event in [t_mid, t_high].
+            else:
+                (t_low, g_low) = (t_mid, g_mid[0:n_g])
+                side = 2
+        
+        event_info = N.array([0] * n_g)
+        for i in xrange(n_g):
+            if (g_low[i] > 0) != (g_high[i] > 0):
+                event_info[i] = 1 if g_high[i] > 0 else -1
+                
+        self.set_event_info(event_info)
+        self.statistics["nstateevents"] += 1
+        print 'Event vid: {}'.format(t_high)
+        print(self.statistics["nstateevents"])
+        return (ID_PY_EVENT, t_high, self.interpolate(t_high), self.interpolate(t_high, 1), g_high)
         
     def plot(self, mask=None, der=False, **kwargs):
         """
