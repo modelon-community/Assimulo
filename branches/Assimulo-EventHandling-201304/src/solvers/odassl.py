@@ -281,7 +281,10 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
                    odassl.odassl(callback_residual,neq,ny,t,y,yprime,
                         tf,info,rtol,atol,rwork,iwork,jac_dummy)
                 
-                self.complete_step(t, y, yprime, opts)
+                initialize_flag = self.complete_step(t, y, yprime, opts)
+                if initialize_flag:
+                    flag = ID_PY_EVENT
+                    break
                 if idid==2 or idid==3:
                     flag=ID_PY_COMPLETE
                 elif idid < 0:

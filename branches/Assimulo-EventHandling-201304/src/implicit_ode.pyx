@@ -202,7 +202,7 @@ cdef class Implicit_ODE(ODE):
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
 
             #Store data if not done after in complete_step
-            if COMPLETE_STEP == False:
+            if COMPLETE_STEP is False:
                 self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
                 if type == 0:
                     map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
@@ -251,6 +251,10 @@ cdef class Implicit_ODE(ODE):
                 break
                 
     def complete_step(self, t, y, yd, opts):
+        '''Is called after each successful step in case the complete step
+        option is active. Here possible interpolation is done and the result 
+        handeled. Furthermore possible step events are checked.
+        '''
         self.t, self.y, self.yd = t, y.copy(), yd.copy()
                 
         #Store the elapsed time for a single step 

@@ -128,7 +128,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if flag == ID_PY_EVENT: irtrn = -1
             
         if self._opts["complete_step"]:
-            self.complete_step(t, y, self._opts)
+            initialize_flag = self.complete_step(t, y, self._opts)
+            if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
                 self._tlist.append(t)
@@ -880,7 +881,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             if flag == ID_PY_EVENT: irtrn = -1
         
         if self._opts["complete_step"]:
-            self.complete_step(t, y, yd, self._opts)
+            initialize_flag = self.complete_step(t, y, yd, self._opts)
+            if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
                 self._tlist.append(t)
