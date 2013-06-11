@@ -70,6 +70,7 @@ class Dopri5(Explicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]     = 0 #Root evaluations
         
         #Solver support
         self.supports["complete_step"] = True
@@ -196,6 +197,7 @@ class Dopri5(Explicit_ODE):
         self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
             self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
@@ -466,6 +468,7 @@ class RungeKutta34(Explicit_ODE):
         self.statistics["nsteps"] = 0 #Number of steps
         self.statistics["nfcn"] = 0 #Number of function evaluations
         self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]    = 0 #Root evaluations
     
     def initialize(self):
         #Reset statistics
@@ -626,7 +629,7 @@ class RungeKutta34(Explicit_ODE):
                 t, y, error = self._step(t, y, h)
                 self.statistics["nsteps"] += 1
                 if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low) 
+                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low) 
                 
                 if opts["complete_step"]:
                     initialize_flag = self.complete_step(t, y, opts)
@@ -656,7 +659,7 @@ class RungeKutta34(Explicit_ODE):
             t, y, error = self._step(t, y, h)
             self.statistics["nsteps"] += 1
             if self.problem_info["state_events"]: 
-                flag, t, y, self.g_low = self.event_check(t-h , t, self.event_func, self.g_low)
+                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
                 if flag == ID_PY_OK: flag = ID_PY_COMPLETE
             if opts["complete_step"]:
                 initialize_flag = self.complete_step(t, y, opts)
@@ -706,17 +709,14 @@ class RungeKutta34(Explicit_ODE):
         t_next = t + h
         y_next = y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4)
         
-        f_low = self.Y1
+        f_low = self.Y1.copy()
         f(self.Y1, t_next, y_next)
         #Hermitian interpolation for the solution in [t, t_next]
         def interpolate(time):
+            thetha = (time - t) / (t_next - t)
             f_high = self.Y1
-            y_brack = (y_next - y) / h
-            coff1 = y
-            coff2 = f_low
-            coff3 = (y_brack - f_low) / h
-            coff4 = (f_high - 2.0*y_brack + f_low) / h
-            return coff1 + coff2*(time - t) + coff3*(time - t)**2 + coff4*(time - t)**2*(time - t_next)
+            return (1 - thetha) * y + thetha * y_next + thetha * (thetha - 1) * \
+                    ((1 - 2*thetha) * (y_next - y) + (thetha - 1) * h * f_low + thetha * h * f_high)
         self.interpolate = interpolate
         
         return t_next, y_next, error
@@ -734,7 +734,8 @@ class RungeKutta34(Explicit_ODE):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
         self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
         self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
-        if self.problem_info["state_events"]: 
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
             self.log_message(' Number of state events         : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                              verbose)
