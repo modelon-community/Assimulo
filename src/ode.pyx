@@ -196,7 +196,7 @@ cdef class ODE:
             ncp = 0
             ncp_list = None
         elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["complete_step"]:
-            self.options["continous_output"] = True
+            self.options["continuous_output"] = True
             
         #Determine the output list
         if ncp != 0:
