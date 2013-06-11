@@ -293,6 +293,7 @@ cdef class Implicit_ODE(ODE):
         '''
         
         g_high = g(t_high, y_high, yd_high)
+        self.statistics["ngevals"] += 1
         n_g = self.problem_info["dimRoot"]
         TOL = max(t_low, t_high) * 1e-13
         #Check for events in [t_low, t_high].
@@ -345,6 +346,7 @@ cdef class Implicit_ODE(ODE):
             
             #Calculate g at t_mid and check for events in [t_low, t_mid].
             g_mid = g(t_mid, self.interpolate(t_mid), self.interpolate(t_mid, 1))
+            self.statistics["ngevals"] += 1
             sideprev = side
             for i in xrange(n_g):
                 if (g_low[i] > 0) != (g_mid[i] > 0):
@@ -363,8 +365,6 @@ cdef class Implicit_ODE(ODE):
                 
         self.set_event_info(event_info)
         self.statistics["nstateevents"] += 1
-        print 'Event vid: {}'.format(t_high)
-        print(self.statistics["nstateevents"])
         return (ID_PY_EVENT, t_high, self.interpolate(t_high), self.interpolate(t_high, 1), g_high)
         
     def plot(self, mask=None, der=False, **kwargs):
