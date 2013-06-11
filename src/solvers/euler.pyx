@@ -81,6 +81,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.statistics["njac"] = 0 #Number of jacobian evaluations
         self.statistics["njacfcn"] = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["nniterfail"] = 0 #Number of nonlinear failures
+        self.statistics["ngevals"]    = 0 #Root evaluations
         
         #Internal temporary result vector
         self.yd1 = N.array([0.0]*len(self.y0))
@@ -179,7 +180,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                 tr.append(t)
                 yr.append(y)
             
-            #If an event was detected calculate the length of the initial step to take after restarting.
+            #If an event was detected, calculate the length of the initial step to take after restarting.
             if flag == ID_PY_EVENT:
                 self._inith = self._inith - (t - self._told)
             else:
@@ -478,7 +479,8 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["njacfcn"]),  verbose)
         self.log_message(' Number of Newton Iterations              : %s'%(self.statistics["newt"]), verbose)
         self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nniterfail"]),       verbose)
-        if self.problem_info["state_events"]: 
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
             self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
             
         self.log_message('\nSolver options:\n',                                    verbose)
@@ -537,6 +539,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         # - Statistic values
         self.statistics["nstateevents"] = 0 #Number of state events
+        self.statistics["ngevals"]      = 0 #Root evaluations
     
     def set_problem_data(self): 
         if self.problem_info["state_events"]: 
@@ -681,10 +684,11 @@ cdef class ExplicitEuler(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        self.log_message(' Step-length           : %s '%(self.options["h"]), verbose)
-        if self.problem_info["state_events"]: 
-            self.log_message(' Number of state events: '+ str(self.statistics["nstateevents"]),   verbose)
+        self.log_message('Final Run Statistics          : %s \n' % self.problem.name,        verbose)
+        self.log_message(' Step-length                  : %s '%(self.options["h"]), verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations   : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of state events       : '+ str(self.statistics["nstateevents"]),   verbose)
             
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ExplicitEuler',                     verbose)
