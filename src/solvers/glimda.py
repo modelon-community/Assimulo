@@ -72,6 +72,11 @@ class GLIMDA(Implicit_ODE):
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nconvfail"]   = 0 #Number of convergance failures
         
+        #Solver support 
+        self.supports["complete_step"] = True 
+        self.supports["interpolated_output"] = False
+        self.supports["state_events"] = False 
+        
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(implicit)'
         
