@@ -123,7 +123,7 @@ cdef class Explicit_ODE(ODE):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
         """
-        cdef double t_log, tevent
+        cdef double tevent
         cdef int flag, output_index
         cdef dict opts
         cdef double eps = N.finfo(float).eps*100 #Machine Epsilon
@@ -165,7 +165,7 @@ cdef class Explicit_ODE(ODE):
             flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
             
             #Store data if not done after each step
-            if COMPLETE_STEP == False:
+            if COMPLETE_STEP is False:
                 self.t, self.y = tlist[-1], ylist[-1].copy()
                 map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
             
@@ -208,6 +208,10 @@ cdef class Explicit_ODE(ODE):
                 break
         
     def complete_step(self, t, y, opts):
+        '''Is called after each successful step in case the complete step
+        option is active. Here possible interpolation is done and the result 
+        handeled. Furthermore possible step events are checked.
+        '''
         self.t, self.y = t, y.copy()
         
         #Store the elapsed time for a single step
@@ -226,7 +230,7 @@ cdef class Explicit_ODE(ODE):
                 pass
             opts["output_index"] = output_index
         else:
-            self.problem.handle_result(self,t,y)
+            self.problem.handle_result(self,t,y.copy())
         
         #Callback to FMU
         if self.problem_info["step_events"]: 

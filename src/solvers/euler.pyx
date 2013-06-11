@@ -333,8 +333,8 @@ cdef class ImplicitEuler(Explicit_ODE):
             jac = self.problem.jac(t,y)
         else:           #Calculate a numeric jacobian
             delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
-            Fdelt = N.array([self.problem.rhs(t,y+e) for e in delt]) #Add the disturbance (row by row) 
-            grad = ((Fdelt-self.problem.rhs(t,y)).T/delt.diagonal()).T
+            Fdelt = N.array([self.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 
+            grad = ((Fdelt-self.f(t,y)).T/delt.diagonal()).T
             jac = N.array(grad).T
             
             self.statistics["njacfcn"] += 1+self._leny #Add the number of function evaluations
@@ -366,7 +366,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         cdef double tn1 = t+h
         cdef N.ndarray yn = y.copy() #Old y
         #cdef N.ndarray yn1 = y.copy() #First newton guess
-        cdef N.ndarray yn1 = y+h*self.problem.rhs(t,y) #First newton guess
+        cdef N.ndarray yn1 = y+h*self.f(t,y) #First newton guess
         cdef N.ndarray I = N.eye(self._leny)
         self.statistics["nfcn"] += 1
         
@@ -386,7 +386,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                 #jac = self._jacobian(tn1, yn1)
                 
                 #ynew = yn1 - N.dot(LIN.inv(h*jac-I),(yn-yn1+h*self.problem.rhs(tn1,yn1)))
-                ynew = yn1 - LIN.solve(h*jac-I, yn-yn1+h*self.problem.rhs(tn1,yn1) )
+                ynew = yn1 - LIN.solve(h*jac-I, yn-yn1+h*self.f(tn1,yn1) )
                 self.statistics["nfcn"] += 1
                 
                 #print tn1, self.WRMS(ynew-yn1, 1.0/(self.rtol*N.abs(yn1)+self.atol))
@@ -428,7 +428,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         
         #Internal values only used for defining the interpolation function.
         self._yold = yn
-        self._ynew = ynew
+        self._ynew = ynew.copy()
         self._told = t
         self._h = h
         
