@@ -191,6 +191,13 @@ cdef class ODE:
             ncp = 0
             ncp_list = None
             
+        if (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["complete_step"] is False:
+            self.log_message("The current solver does not support interpolated output together with state events. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
+            ncp = 0
+            ncp_list = None
+        elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["complete_step"]:
+            self.options["continous_output"] = True
+            
         #Determine the output list
         if ncp != 0:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
