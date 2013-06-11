@@ -456,7 +456,7 @@ cdef class IDA(Implicit_ODE):
                 y = nv2arr(yout)
                 yd = nv2arr(ydout)
                 if self.options["assimulo_events"] and self.problem_info["state_events"]: 
-                    if opts["complete_step"] or not tr: told = self.t 
+                    if opts["complete_step"] or not tr: told = self.t
                     else:                               told = tr[-1]
                     event_flag, t, y, yd, self.g_low = self.event_check(told, t, y, yd, self.event_func, self.g_low) 
                     if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
@@ -1797,8 +1797,8 @@ cdef class CVode(Explicit_ODE):
                 t = tret
                 y = nv2arr(yout)
                 if self.options["assimulo_events"] and self.problem_info["state_events"]:
-                    if opts["complete_step"]: told = self.t
-                    else:                     told = tr[-1]
+                    if opts["complete_step"] or not tr: told = self.t
+                    else:                               told = tr[-1]
                     event_flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
                     if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
                 
