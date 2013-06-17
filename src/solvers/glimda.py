@@ -73,7 +73,7 @@ class GLIMDA(Implicit_ODE):
         self.statistics["nconvfail"]   = 0 #Number of convergance failures
         
         #Solver support 
-        self.supports["complete_step"] = True 
+        self.supports["report_continuously"] = True 
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = False 
         
@@ -119,8 +119,8 @@ class GLIMDA(Implicit_ODE):
         p = order
         y = y
         """
-        if self._opts["complete_step"]:
-            self.complete_step(tph, y, yd, self._opts)
+        if self._opts["report_continuously"]:
+            self.report_solution(tph, y, yd, self._opts)
         else:   
             self._tlist.append(tph)
             self._ylist.append(y.copy())

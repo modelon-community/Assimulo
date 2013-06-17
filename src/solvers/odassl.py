@@ -218,7 +218,7 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         self.statistics["convfail"]         = 0 #Number of LU decompositions
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = False
         
@@ -242,7 +242,7 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
         jac_dummy = lambda t,x,xp: x
         info = np.zeros((15,),np.int) 
         info[1] = 1  # Tolerances are vectors  
-        info[2] = normal_mode = 1 if opts["output_list"] == None or opts["complete_step"] else 0  # intermediate output mode
+        info[2] = normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
         info[6] = 1 if self.options["maxh"] > 0.0 else 0       
         rwork[1] = self.options["maxh"]            
         info[7] = 1 if self.options["inith"] > 0.0 else 0
@@ -274,14 +274,14 @@ class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
             return self.problem.res(t,y,yd)
         callback_residual = py_residual
         #----
-        if opts["complete_step"]:
+        if opts["report_continuously"]:
             idid = 1
             while idid==1:
                 t,y,yprime,tf,info,idid,rwork,iwork = \
                    odassl.odassl(callback_residual,neq,ny,t,y,yprime,
                         tf,info,rtol,atol,rwork,iwork,jac_dummy)
                 
-                initialize_flag = self.complete_step(t, y, yprime, opts)
+                initialize_flag = self.report_solution(t, y, yprime, opts)
                 if initialize_flag:
                     flag = ID_PY_EVENT
                     break

@@ -85,7 +85,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["ngevals"]     = 0 #Root evaluations
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
         
@@ -106,29 +106,30 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_low = self.event_func(self.t, self.y)
+            self.g_old = self.event_func(self.t, self.y)
         else:
             self.f = self.problem.rhs
+    
+    def interpolate(self, time):
+        y = N.empty(self._leny)
+        for i in range(self._leny):
+            y[i] = radau5.contr5(i+1, time, self.cont)
+        
+        return y
     
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        def interpolate(time):
-            yval = N.empty(self._leny)
-            for i in range(self._leny):
-                yval[i] = radau5.contr5(i+1, time, cont)
-                
-            return yval
-        self.interpolate = interpolate
+        self.cont = cont #Saved to be used by the interpolation function.
         
         if self.problem_info["state_events"]:
-            flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
+            flag, t, y = self.event_locator(told, t, y)
             #Convert to Fortram indicator.
             if flag == ID_PY_EVENT: irtrn = -1
             
-        if self._opts["complete_step"]:
-            initialize_flag = self.complete_step(t, y, self._opts)
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
@@ -824,7 +825,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics["ngevals"]     = 0 #Root evaluations
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
         
@@ -851,37 +852,38 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             self._f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_low = self.event_func(self.t, self.y, self.yd)
+            self.g_old = self.event_func(self.t, self.y, self.yd)
         else:
             def f(t, y):
                 leny = self._leny
                 res = self.problem.res(t, y[:leny], y[leny:2*leny])
                 return N.append(y[leny:2*leny],res)
             self._f = f
+    
+    def interpolate(self, time, k=0):
+        y = N.empty(self._leny*2)
+        for i in range(self._leny*2):
+            y[i] = radau5.contr5(i+1, time, self.cont)
+        if k == 0:
+            return y[:self._leny]
+        elif k == 1:
+            return y[self._leny:2*self._leny]
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        def interpolate(time, k=0):
-            yval = N.empty(self._leny*2)
-            for i in range(self._leny*2):
-                yval[i] = radau5.contr5(i+1, time, cont)
-            if k == 0:
-                return yval[:self._leny]
-            elif k == 1:
-                return yval[self._leny:2*self._leny]
-        self.interpolate = interpolate
+        self.cont = cont #Saved to be used by the interpolation function.
         
         yd = y[self._leny:2*self._leny].copy()
         y = y[:self._leny].copy()
         if self.problem_info["state_events"]:
-            flag, t, y, yd, self.g_low = self.event_check(told, t, y, yd, self.event_func, self.g_low)
+            flag, t, y, yd = self.event_locator(told, t, y, yd)
             #Convert to Fortram indicator.
             if flag == ID_PY_EVENT: irtrn = -1
         
-        if self._opts["complete_step"]:
-            initialize_flag = self.complete_step(t, y, yd, self._opts)
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, yd, self._opts)
             if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
