@@ -40,9 +40,9 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"continuous_output":False,"verbosity":NORMAL,"backward":False}
+        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"complete_step":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
+        self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False}
                              
@@ -178,25 +178,25 @@ cdef class ODE:
             self.log_message("The current solver does not support state events (root functions). Disabling and continues.", WHISPER)
             self.problem_info["state_events"] = False
         
-        if self.problem_info["step_events"] and self.supports["complete_step"] is False:
-            self.log_message("The current solver does not support step events (completed steps). Disabling step events and continues.", WHISPER)
+        if self.problem_info["step_events"] and self.supports["report_continuously"] is False:
+            self.log_message("The current solver does not support step events (report continuously). Disabling step events and continues.", WHISPER)
             self.problem_info["step_events"] = False
         
-        if self.supports["complete_step"] is False and self.options["continuous_output"]:
-            self.log_message("The current solver does not support continuous output. Setting continuous_output to False and continues.", WHISPER)
-            self.options["continuous_output"] = False
+        if self.supports["report_continuously"] is False and self.options["report_continuously"]:
+            self.log_message("The current solver does not support to report continuously. Setting report_continuously to False and continues.", WHISPER)
+            self.options["report_continuously"] = False
         
-        if (ncp != 0 or ncp_list != None) and (self.options["continuous_output"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
+        if (ncp != 0 or ncp_list != None) and (self.options["report_continuously"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
             self.log_message("The current solver does not support interpolated output. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
             
-        if (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["complete_step"] is False:
+        if (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["report_continuously"] is False:
             self.log_message("The current solver does not support interpolated output together with state events. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
-        elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["complete_step"]:
-            self.options["continuous_output"] = True
+        elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["report_continuously"]:
+            self.options["report_continuously"] = True
             
         #Determine the output list
         if ncp != 0:
@@ -210,10 +210,10 @@ cdef class ODE:
             output_index = 0
         
         #Determine if we are using one step mode or normal mode
-        if self.problem_info['step_events'] or self.options['continuous_output']:
-            COMPLETE_STEP = 1
+        if self.problem_info['step_events'] or self.options['report_continuously']:
+            REPORT_CONTINUOUSLY = 1
         else:
-            COMPLETE_STEP = 0
+            REPORT_CONTINUOUSLY = 0
         
         #Determine if the output should be interpolated or not
         if output_list == None:
@@ -232,7 +232,7 @@ cdef class ODE:
         time_start = time.clock()
         
         #Start the simulation
-        self._simulate(t0, tfinal, output_list, COMPLETE_STEP, INTERPOLATE_OUTPUT, TIME_EVENT)
+        self._simulate(t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT)
         
         #End of simulation, stop the clock
         time_stop = time.clock()
@@ -289,25 +289,26 @@ cdef class ODE:
     
     verbosity = property(_get_verbosity,_set_verbosity)
     
-    def _set_continuous_output(self, cont_output):
-        self.options["continuous_output"] = bool(cont_output)
+    def _set_report_continuously(self, report_continuously):
+        self.options["report_continuously"] = bool(report_continuously)
     
-    def _get_continuous_output(self):
+    def _get_report_continuously(self):
         """
-        This options specifies if the solver should use a one step approach. 
+        This options specifies if the solver should report the solution 
+        continuously after steps.
         
             Parameters::
             
-                cont_output
+                report_continuously
                   
                         - Default False
                     
                         - Should be a boolean.
 
         """
-        return self.options["continuous_output"]
+        return self.options["report_continuously"]
     
-    continuous_output = property(_get_continuous_output,_set_continuous_output)
+    report_continuously = property(_get_report_continuously,_set_report_continuously)
     
     def _set_backward(self, backward):
         self.options["backward"] = bool(backward)
@@ -376,7 +377,7 @@ cdef class ODE:
     cpdef get_elapsed_step_time(self):
         """
         Returns the elapsed time of a step. I.e. how long a step took.
-        Note that this is only possible if running in continuous_output
+        Note that this is only possible if running in report_continuously
         mode and should only be used to get a general idea of how long
         a step really took. 
         

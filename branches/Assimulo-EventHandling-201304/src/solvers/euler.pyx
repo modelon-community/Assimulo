@@ -50,7 +50,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef N.ndarray yd1
     cdef N.ndarray _old_jac
     cdef object f
-    cdef object event_func
+    cdef public object event_func
     cdef int _leny
     cdef double _eps
     cdef int _needjac
@@ -59,7 +59,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef N.ndarray _yold
     cdef N.ndarray _ynew
     cdef N.ndarray _event_info
-    cdef N.ndarray g_low
+    cdef public N.ndarray g_old
     cdef double _told
     cdef double _h
     cdef double _inith
@@ -89,7 +89,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         self._ynew = N.array([0.0]*len(self.y0))
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
         
@@ -112,7 +112,7 @@ cdef class ImplicitEuler(Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
-            self.g_low = self.event_func(self.t, self.y)
+            self.g_old = self.event_func(self.t, self.y)
         else: 
             self.f = self.problem.rhs
     
@@ -170,10 +170,10 @@ cdef class ImplicitEuler(Explicit_ODE):
         if self._inith != 0:
             t, y = self._step(t,y,self._inith)
             if self.problem_info["state_events"]: 
-                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                flag, t, y = self.event_locator(t-h , t, y)
             
-            if opts["complete_step"]:
-                initialize_flag = self.complete_step(t, y, opts)
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
                 
             else:
@@ -190,10 +190,10 @@ cdef class ImplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                    flag, t, y = self.event_locator(t-h , t, y)
             
-            if opts["complete_step"]:
-                initialize_flag = self.complete_step(t, y, opts)
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
             else:
                 tr.append(t)
@@ -206,11 +206,11 @@ cdef class ImplicitEuler(Explicit_ODE):
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
                 if self.problem_info["state_events"]:
-                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                    flag, t, y = self.event_locator(t-h , t, y)
                     if flag == ID_PY_OK: flag = ID_PY_COMPLETE
                 
-                if opts["complete_step"]:
-                    initialize_flag = self.complete_step(t, y, opts)
+                if opts["report_continuously"]:
+                    initialize_flag = self.report_solution(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
                 else:
                     tr.append(t)
@@ -511,11 +511,11 @@ cdef class ExplicitEuler(Explicit_ODE):
     """
     cdef N.ndarray yd1
     cdef object f
-    cdef object event_func
+    cdef public object event_func
     cdef N.ndarray _yold
     cdef N.ndarray _ynew
     cdef N.ndarray _event_info
-    cdef N.ndarray g_low
+    cdef public N.ndarray g_old
     cdef double _told
     cdef double _h
     cdef double _inith
@@ -533,7 +533,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         self._inith = 0 #Used for taking an initial step of correct length after an event.
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
         
@@ -550,7 +550,7 @@ cdef class ExplicitEuler(Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
-            self.g_low = self.event_func(self.t, self.y)
+            self.g_old = self.event_func(self.t, self.y)
         else: 
             self.f = self.problem.rhs
     
@@ -582,10 +582,10 @@ cdef class ExplicitEuler(Explicit_ODE):
         if self._inith != 0:
             t, y = self._step(t,y,self._inith)
             if self.problem_info["state_events"]: 
-                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                flag, t, y = self.event_locator(t-h , t, y)
             
-            if opts["complete_step"]:
-                initialize_flag = self.complete_step(t, y, opts)
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
                 
             else:
@@ -602,10 +602,10 @@ cdef class ExplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                    flag, t, y = self.event_locator(t-h , t, y)
             
-            if opts["complete_step"]:
-                initialize_flag = self.complete_step(t, y, opts)
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
             else:
                 tr.append(t)
@@ -618,10 +618,10 @@ cdef class ExplicitEuler(Explicit_ODE):
                 t, y = self._step(t, y, h)
                 flag = ID_PY_COMPLETE
                 if self.problem_info["state_events"]:
-                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                    flag, t, y = self.event_locator(t-h , t, y)
                     if flag == ID_PY_OK: flag = ID_PY_COMPLETE
-                if opts["complete_step"]:
-                    initialize_flag = self.complete_step(t, y, opts)
+                if opts["report_continuously"]:
+                    initialize_flag = self.report_solution(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
                 else:
                     tr.append(t)

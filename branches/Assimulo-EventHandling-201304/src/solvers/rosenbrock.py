@@ -309,7 +309,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.statistics["ngevals"]     = 0 #Root evaluations
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
         
@@ -330,29 +330,30 @@ class RodasODE(Rodas_Common, Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_low = self.event_func(self.t, self.y)
+            self.g_old = self.event_func(self.t, self.y)
         else:
             self.f = self.problem.rhs
+    
+    def interpolate(self, time):
+        y = N.empty(self._leny)
+        for i in range(self._leny):
+            y[i] = rodas.contro(i+1, time, self.cont)
+        
+        return y
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Rodas
         """
-        def interpolate(time):
-            yval = N.empty(self._leny)
-            for i in range(self._leny):
-                yval[i] = rodas.contro(i+1, time, cont)
-                
-            return yval
-        self.interpolate = interpolate
+        self.cont = cont #Saved to be used by the interpolation function.
         
         if self.problem_info["state_events"]:
-            flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
+            flag, t, y = self.event_locator(told, t, y)
             #Convert to Fortram indicator.
             if flag == ID_PY_EVENT: irtrn = -1
         
-        if self._opts["complete_step"]:
-            initialize_flag = self.complete_step(t, y, self._opts)
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
@@ -364,7 +365,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
                 try:
                     while output_list[output_index] <= t:
                         self._tlist.append(output_list[output_index])
-                        self._ylist.append(interpolate(output_list[output_index]))
+                        self._ylist.append(self.interpolate(output_list[output_index]))
                         
                         output_index += 1
                 except IndexError:

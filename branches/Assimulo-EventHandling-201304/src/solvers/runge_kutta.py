@@ -73,7 +73,7 @@ class Dopri5(Explicit_ODE):
         self.statistics["ngevals"]     = 0 #Root evaluations
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
         
@@ -94,29 +94,32 @@ class Dopri5(Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_low = self.event_func(self.t, self.y)
+            self.g_old = self.event_func(self.t, self.y)
         else:
             self.f = self.problem.rhs
+    
+    def interpolate(self, time):
+        y = N.empty(self._leny)
+        for i in range(self._leny):
+            y[i] = dopri5.contd5(i+1, time, self.cont, self.lrc)
+                    
+        return y
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        def interpolate(time):
-            yval = N.empty(self._leny)
-            for i in range(self._leny):
-                yval[i] = dopri5.contd5(i+1, time, cont, lrc)
-                    
-            return yval
-        self.interpolate = interpolate
+        #Saved to be used by the interpolation function.
+        self.cont = cont
+        self.lrc = lrc
         
         if self.problem_info["state_events"]:
-            flag, t, y, self.g_low = self.event_check(told, t, y, self.event_func, self.g_low)
+            flag, t, y = self.event_locator(told, t, y)
             #Convert to Fortram indicator.
             if flag == ID_PY_EVENT: irtrn = -1
         
-        if self._opts["complete_step"]:
-            initialize_flag = self.complete_step(t, y, self._opts)
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] == None:
@@ -460,7 +463,7 @@ class RungeKutta34(Explicit_ODE):
         self.Z3 = N.array([0.0]*len(self.y0))
         
         #Solver support
-        self.supports["complete_step"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
         
@@ -489,7 +492,7 @@ class RungeKutta34(Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"] 
-            self.g_low = self.event_func(self.t, self.y) 
+            self.g_old = self.event_func(self.t, self.y) 
         else: 
             self.f = self.problem.rhs_internal
     
@@ -630,10 +633,10 @@ class RungeKutta34(Explicit_ODE):
                 t, y, error = self._step(t, y, h)
                 self.statistics["nsteps"] += 1
                 if self.problem_info["state_events"]: 
-                    flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low) 
+                    flag, t, y = self.event_locator(t-h , t, y) 
                 
-                if opts["complete_step"]:
-                    initialize_flag = self.complete_step(t, y, opts)
+                if opts["report_continuously"]:
+                    initialize_flag = self.report_solution(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
                     yield flag, t,y
                 elif opts["output_list"] == None:
@@ -660,10 +663,10 @@ class RungeKutta34(Explicit_ODE):
             t, y, error = self._step(t, y, h)
             self.statistics["nsteps"] += 1
             if self.problem_info["state_events"]: 
-                flag, t, y, self.g_low = self.event_check(t-h , t, y, self.event_func, self.g_low)
+                flag, t, y = self.event_locator(t-h , t, y)
                 if flag == ID_PY_OK: flag = ID_PY_COMPLETE
-            if opts["complete_step"]:
-                initialize_flag = self.complete_step(t, y, opts)
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
                 else:               flag = ID_PY_COMPLETE
                 yield flag, t,y
@@ -716,8 +719,9 @@ class RungeKutta34(Explicit_ODE):
         def interpolate(time):
             thetha = (time - t) / (t_next - t)
             f_high = self.Y1
-            return (1 - thetha) * y + thetha * y_next + thetha * (thetha - 1) * \
-                    ((1 - 2*thetha) * (y_next - y) + (thetha - 1) * h * f_low + thetha * h * f_high)
+            return (1 - thetha) * y + thetha * y_next + thetha * \
+                   (thetha - 1) * ((1 - 2*thetha) * (y_next - y) + \
+                   (thetha - 1) * h * f_low + thetha * h * f_high)
         self.interpolate = interpolate
         
         return t_next, y_next, error

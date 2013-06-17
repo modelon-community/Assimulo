@@ -123,7 +123,7 @@ cdef class Implicit_ODE(ODE):
         if sw0 != None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int COMPLETE_STEP, int INTERPOLATE_OUTPUT,
+    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
@@ -179,7 +179,7 @@ cdef class Implicit_ODE(ODE):
         opts["initialize"] = flag_initialize
         opts["output_list"] = output_list
         opts["output_index"] = 0
-        opts["complete_step"] = 1 if COMPLETE_STEP else 0
+        opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
         output_index = 0
         
 
@@ -196,13 +196,13 @@ cdef class Implicit_ODE(ODE):
                 tevent = tfinal
             
             #Initialize the clock, enabling storing elapsed time for each step 
-            if COMPLETE_STEP: 
+            if REPORT_CONTINUOUSLY: 
                 self.clock_start = clock()
                 
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
 
-            #Store data if not done after in complete_step
-            if COMPLETE_STEP is False:
+            #Store data if not done in report_solution
+            if REPORT_CONTINUOUSLY is False:
                 self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
                 if type == 0:
                     map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
@@ -250,8 +250,8 @@ cdef class Implicit_ODE(ODE):
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
                 
-    def complete_step(self, t, y, yd, opts):
-        '''Is called after each successful step in case the complete step
+    def report_solution(self, t, y, yd, opts):
+        '''Is called after each successful step in case the report continuously
         option is active. Here possible interpolation is done and the result 
         handeled. Furthermore possible step events are checked.
         '''
@@ -268,9 +268,12 @@ cdef class Implicit_ODE(ODE):
             try: 
                 while output_list[output_index] <= t: 
                     if self.problem_info["type"] == 0:
-                        self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
+                        self.problem.handle_result(self, output_list[output_index], 
+                                        self.interpolate(output_list[output_index]))
                     else:
-                        self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]),self.interpolate(output_list[output_index],1))      
+                        self.problem.handle_result(self, output_list[output_index], 
+                                        self.interpolate(output_list[output_index]),
+                                        self.interpolate(output_list[output_index],1))      
                     output_index = output_index + 1
             except IndexError:
                 pass 
@@ -289,14 +292,15 @@ cdef class Implicit_ODE(ODE):
              
         return flag_initialize
         
-    def event_check(self, t_low, t_high, y_high, yd_high, g, g_low):
+    def event_locator(self, t_low, t_high, y_high, yd_high):
         '''Checks if an event occurs in [t_low, t_high], if that is the case event 
         localization is started. Event localization finds the earliest small interval 
         that contains a change in domain. The right endpoint of this interval is then 
         returned as the time to restart the integration at.
         '''
         
-        g_high = g(t_high, y_high, yd_high)
+        g_high = self.event_func(t_high, y_high, yd_high)
+        g_low = self.g_old
         self.statistics["ngevals"] += 1
         n_g = self.problem_info["dimRoot"]
         TOL = max(t_low, t_high) * 1e-13
@@ -305,7 +309,8 @@ cdef class Implicit_ODE(ODE):
             if (g_low[i] > 0) != (g_high[i] > 0):
                 break
         else:
-            return (ID_PY_OK, t_high, y_high, yd_high, g_high)
+            self.g_old = g_high
+            return (ID_PY_OK, t_high, y_high, yd_high)
         
         side = 0
         sideprev = -1
@@ -313,8 +318,10 @@ cdef class Implicit_ODE(ODE):
         while abs(t_high - t_low) > TOL:
             #Adjust alpha if the same side is choosen more than once in a row.
             if (sideprev == side):
-                if side == 2: alpha = 2 * alpha
-                else:         alpha = 1/2 * alpha
+                if side == 2:
+                    alpha = alpha * 2.0
+                else:
+                    alpha = alpha / 2.0
             #Otherwise alpha = 1 and the secant rule is used.
             else:
                 alpha = 1
@@ -333,23 +340,28 @@ cdef class Implicit_ODE(ODE):
             if g_high[imax] == 0 or g_low[imax] == 0:
                 t_mid = (t_low + t_high)/2
             else:
-                t_mid = t_high - (t_high - t_low)*g_high[imax]/(g_high[imax] - alpha*g_low[imax])
+                t_mid = t_high - (t_high - t_low)*g_high[imax]/ \
+                                 (g_high[imax] - alpha*g_low[imax])
         
-            #Check if t_mid is to close to current brackets and adjust if so is the case.
+            #Check if t_mid is to close to current brackets and adjust inwards if so is the case.
             if (abs(t_mid - t_low) < TOL/2):
                 fracint = abs(t_low - t_high)/TOL
-                if fracint > 5: fracsub = 1.0 / 10.0
-                else:           fracsub = 1.0 / (2.0 * fracint)
-                t_mid = t_low + fracsub*(t_high - t_low)
+                if fracint > 5:
+                    delta = (t_high - t_low) / 10.0
+                else:
+                    delta = (t_high - t_low) / (2.0 * fracint)
+                t_mid = t_low + delta
         
             if (abs(t_mid - t_high) < TOL/2):
                 fracint = abs(t_low - t_high)/TOL
-                if fracint > 5: fracsub = 1.0 / 10.0
-                else:           fracsub = 1.0 / (2.0 * fracint)
-                t_mid = t_high - fracsub*(t_high - t_low)
+                if fracint > 5:
+                    delta = (t_high - t_low) / 10.0
+                else:
+                    delta = (t_high - t_low) / (2.0 * fracint)
+                t_mid = t_high - delta
             
             #Calculate g at t_mid and check for events in [t_low, t_mid].
-            g_mid = g(t_mid, self.interpolate(t_mid), self.interpolate(t_mid, 1))
+            g_mid = self.event_func(t_mid, self.interpolate(t_mid), self.interpolate(t_mid, 1))
             self.statistics["ngevals"] += 1
             sideprev = side
             for i in xrange(n_g):
@@ -369,7 +381,8 @@ cdef class Implicit_ODE(ODE):
                 
         self.set_event_info(event_info)
         self.statistics["nstateevents"] += 1
-        return (ID_PY_EVENT, t_high, self.interpolate(t_high), self.interpolate(t_high, 1), g_high)
+        self.g_old = g_high
+        return (ID_PY_EVENT, t_high, self.interpolate(t_high), self.interpolate(t_high, 1))
         
     def plot(self, mask=None, der=False, **kwargs):
         """
