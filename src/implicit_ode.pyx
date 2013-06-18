@@ -215,6 +215,10 @@ cdef class Implicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
                 
+                if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
+                    self.problem.handle_result(self, self.t, self.y, self.yd)
+                
+                
                 #Get and store event information
                 event_info = [[],flag == ID_COMPLETE]
                 if flag == ID_EVENT:
@@ -241,7 +245,7 @@ cdef class Implicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and (output_list == None or output_list[opts["output_index"]] == self.t):
+            if flag_initialize and (output_list == None or self.store_event_points):
                 if type == 0:
                     self.problem.handle_result(self, self.t, self.y)
                 else:

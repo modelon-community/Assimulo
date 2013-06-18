@@ -175,6 +175,9 @@ cdef class Explicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
                 
+                if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
+                    self.problem.handle_result(self, self.t, self.y)
+                
                 #Get and store event information
                 event_info = [[],flag == ID_COMPLETE]
                 if flag == ID_EVENT:
@@ -201,7 +204,7 @@ cdef class Explicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and (output_list == None or output_list[opts["output_index"]] == self.t):
+            if flag_initialize and (output_list == None or self.store_event_points):#output_list[opts["output_index"]] == self.t):
                 self.problem.handle_result(self, self.t, self.y)
                 
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
@@ -230,11 +233,13 @@ cdef class Explicit_ODE(ODE):
             except IndexError:
                 pass
             opts["output_index"] = output_index
+            
+
         else:
             self.problem.handle_result(self,t,y.copy())
         
         #Callback to FMU
-        if self.problem_info["step_events"]: 
+        if self.problem_info["step_events"]:
             flag_initialize = self.problem.step_events(self) #completed step returned to FMU
         else:
             flag_initialize = False
