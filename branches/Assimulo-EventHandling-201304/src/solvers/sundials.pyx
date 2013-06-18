@@ -465,7 +465,9 @@ cdef class IDA(Implicit_ODE):
                 
                 if opts["report_continuously"]: 
                     flag_initialize = self.report_solution(t, y, yd, opts) 
-                    if flag_initialize: flag == CV_ROOT_RETURN #If a step event has occured the integration has to be reinitialized 
+                    if flag_initialize:
+                        #If a step event has occured the integration has to be reinitialized
+                        flag = CV_ROOT_RETURN 
                 else: 
                     #Store results
                     tr.append(t)
@@ -1809,7 +1811,9 @@ cdef class CVode(Explicit_ODE):
                 
                 if opts["report_continuously"]:
                     flag_initialize = self.report_solution(t, y, opts)
-                    if flag_initialize: flag == CV_ROOT_RETURN #If a step event has occured the integration has to be reinitialized
+                    if flag_initialize:
+                        #If a step event has occured the integration has to be reinitialized
+                        flag = CV_ROOT_RETURN
                 else:
                     #Store results
                     tr.append(t)

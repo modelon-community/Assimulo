@@ -40,7 +40,7 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False}
+        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
@@ -309,6 +309,27 @@ cdef class ODE:
         return self.options["report_continuously"]
     
     report_continuously = property(_get_report_continuously,_set_report_continuously)
+    
+    def _set_store_event_points(self, report_continuously):
+        self.options["store_event_points"] = bool(store_event_points)
+    
+    def _get_store_event_points(self):
+        """
+        This options specifies if the solver should save additional points
+        at the events, t_e^-, t_e^+.
+        
+            Parameters::
+            
+                store_event_points
+                  
+                        - Default True
+                    
+                        - Should be a boolean.
+
+        """
+        return self.options["store_event_points"]
+    
+    store_event_points = property(_get_store_event_points,_set_store_event_points)
     
     def _set_backward(self, backward):
         self.options["backward"] = bool(backward)

@@ -141,7 +141,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 try:
                     while output_list[output_index] <= t:
                         self._tlist.append(output_list[output_index])
-                        self._ylist.append(interpolate(output_list[output_index]))
+                        self._ylist.append(self.interpolate(output_list[output_index]))
                         
                         output_index += 1
                 except IndexError:
@@ -896,8 +896,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 try:
                     while output_list[output_index] <= t:
                         self._tlist.append(output_list[output_index])
-                        self._ylist.append(interpolate(output_list[output_index]))
-                        self._ydlist.append(interpolate(output_list[output_index], 1))
+                        self._ylist.append(self.interpolate(output_list[output_index]))
+                        self._ydlist.append(self.interpolate(output_list[output_index], 1))
     
                         output_index += 1
                 except IndexError:

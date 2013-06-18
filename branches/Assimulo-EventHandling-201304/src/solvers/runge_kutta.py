@@ -131,7 +131,7 @@ class Dopri5(Explicit_ODE):
                 try:
                     while output_list[output_index] <= t:
                         self._tlist.append(output_list[output_index])
-                        self._ylist.append(interpolate(output_list[output_index]))
+                        self._ylist.append(self.interpolate(output_list[output_index]))
 
                         output_index += 1
                 except IndexError:
