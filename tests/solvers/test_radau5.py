@@ -122,7 +122,7 @@ class Test_Explicit_Radau5:
         """
         This tests the functionality of the collocation polynomial (communication points)
         """
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
@@ -131,7 +131,7 @@ class Test_Explicit_Radau5:
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
         
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
@@ -161,13 +161,13 @@ class Test_Explicit_Radau5:
         """
         Test a simulation with ncp.
         """
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
         
         self.sim.reset()
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
@@ -360,7 +360,7 @@ class Test_Explicit_Fortran_Radau5:
         """
         This tests the functionality of the collocation polynomial (communication points)
         """
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
@@ -369,7 +369,7 @@ class Test_Explicit_Fortran_Radau5:
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
         
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
@@ -399,13 +399,13 @@ class Test_Explicit_Fortran_Radau5:
         """
         Test a simulation with ncp.
         """
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
         
         self.sim.reset()
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
@@ -504,6 +504,28 @@ class Test_Explicit_Fortran_Radau5:
         assert steps3==steps2
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
+        
+    @testattr(stddist = True)
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        f = lambda t,x,sw: N.array([1.0])
+        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.sw = [False] #Override the switches to point to another instance
+        
+        mod = Explicit_Problem(f,[0.0])
+        mod.sw0 = [True]
+
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = Radau5ODE(mod)
+        assert sim.sw[0] == True
+        sim.simulate(3)
+        assert sim.sw[0] == False
+
 
 class Test_Implicit_Fortran_Radau5:
     """
@@ -628,7 +650,7 @@ class Test_Implicit_Fortran_Radau5:
         
         self.sim.reset()
         
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
@@ -644,13 +666,13 @@ class Test_Implicit_Fortran_Radau5:
         """
         Test a simulation with ncp.
         """
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
         
         self.sim.reset()
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
@@ -663,6 +685,29 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
         assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        
+        
+    @testattr(stddist = True)
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        res = lambda t,x,xd,sw: N.array([1.0 - xd])
+        state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.sw = [False] #Override the switches to point to another instance
+        
+        mod = Implicit_Problem(res,[0.0], [1.0])
+        mod.sw0 = [True]
+
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = Radau5DAE(mod)
+        assert sim.sw[0] == True
+        sim.simulate(3)
+        assert sim.sw[0] == False
+
 
 class Test_Implicit_Radau5:
     """
@@ -770,7 +815,7 @@ class Test_Implicit_Radau5:
         
         self.sim.reset()
         
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
@@ -786,13 +831,13 @@ class Test_Implicit_Radau5:
         """
         Test a simulation with ncp.
         """
-        self.sim.continuous_output = True
+        self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
         
         self.sim.reset()
-        self.sim.continuous_output = False
+        self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
