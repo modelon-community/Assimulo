@@ -136,7 +136,7 @@ def run_example(with_plots=True):
     iter_sim = IDA(iter_mod) #Create the solver
     
     iter_sim.verbosity = 0
-    iter_sim.continuous_output = True
+    iter_sim.report_continuously = True
 
     #Simulate
     t, y, yd = iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
