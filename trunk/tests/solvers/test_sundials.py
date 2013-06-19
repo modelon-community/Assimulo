@@ -268,7 +268,7 @@ class Test_CVode:
         prob.handle_result = handle_result
         
         sim = CVode(prob)
-        sim.continuous_output = True
+        sim.report_continuously = True
         sim.simulate(10.)
     
     @testattr(stddist = True)    
@@ -539,7 +539,7 @@ class Test_IDA:
         
         sim = IDA(prob)
 
-        sim.continuous_output = True
+        sim.report_continuously = True
         
         sim.simulate(10.)
     

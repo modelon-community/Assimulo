@@ -69,6 +69,13 @@ class Dopri5(Explicit_ODE):
         self.statistics["nfcn"]        = 0 #Number of function evaluations
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]     = 0 #Root evaluations
+        
+        #Solver support
+        self.supports["report_continuously"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = True
         
         #Internal
         self._leny = len(self.y) #Dimension of the problem
@@ -77,34 +84,61 @@ class Dopri5(Explicit_ODE):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
-            
-        self._tlist = []
-        self._ylist = []
+    
+    def set_problem_data(self):
+        if self.problem_info["state_events"]:
+            def event_func(t, y):
+                return self.problem.state_events(t, y, self.sw)
+            def f(t, y):
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self._event_info = [0] * self.problem_info["dimRoot"]
+            self.g_old = self.event_func(self.t, self.y)
+        else:
+            self.f = self.problem.rhs
+    
+    def interpolate(self, time):
+        y = N.empty(self._leny)
+        for i in range(self._leny):
+            y[i] = dopri5.contd5(i+1, time, self.cont, self.lrc)
+                    
+        return y
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        if self._opts["output_list"] == None:
-            self._tlist.append(t)
-            self._ylist.append(y.copy())
+        #Saved to be used by the interpolation function.
+        self.cont = cont
+        self.lrc = lrc
+        
+        if self.problem_info["state_events"]:
+            flag, t, y = self.event_locator(told, t, y)
+            #Convert to Fortram indicator.
+            if flag == ID_PY_EVENT: irtrn = -1
+        
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, self._opts)
+            if initialize_flag: irtrn = -1
         else:
-            output_list = self._opts["output_list"]
-            output_index = self._opts["output_index"]
-            try:
-                while output_list[output_index] <= t:
-                    self._tlist.append(output_list[output_index])
-                    
-                    yval = N.empty(self._leny)
-                    for i in range(self._leny):
-                        yval[i] = dopri5.contd5(i+1,output_list[output_index], cont, lrc)
-                        
-                    self._ylist.append(yval)
+            if self._opts["output_list"] == None:
+                self._tlist.append(t)
+                self._ylist.append(y.copy())
+            else:
+                output_list = self._opts["output_list"]
+                output_index = self._opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        self._tlist.append(output_list[output_index])
+                        self._ylist.append(self.interpolate(output_list[output_index]))
 
-                    output_index = output_index+1
-            except IndexError:
-                pass
-            self._opts["output_index"] = output_index
+                        output_index += 1
+                except IndexError:
+                    pass
+                self._opts["output_index"] = output_index
+                
+        return irtrn
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
@@ -124,10 +158,16 @@ class Dopri5(Explicit_ODE):
         IWORK[0] = self.maxsteps
         IWORK[4] = self.problem_info["dim"] 
         
+        #Check for initialization
+        if opts["initialize"]:
+            self.set_problem_data()
+            self._tlist = []
+            self._ylist = []
+        
         #Store the opts
         self._opts = opts
         
-        t, y, iwork, flag = dopri5.dopri5(self.problem.rhs, t, y.copy(), tf, self.rtol*N.ones(self.problem_info["dim"]), self.atol, ITOL, self._solout, IOUT, WORK, IWORK)
+        t, y, iwork, flag = dopri5.dopri5(self.f, t, y.copy(), tf, self.rtol*N.ones(self.problem_info["dim"]), self.atol, ITOL, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
         if flag == 1:
@@ -145,6 +185,12 @@ class Dopri5(Explicit_ODE):
         
         return flag, self._tlist, self._ylist
         
+    def state_event_info(self):
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
+        
     def print_statistics(self, verbose=NORMAL):
         """
         Prints the run-time statistics for the problem.
@@ -154,6 +200,9 @@ class Dopri5(Explicit_ODE):
         self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
         self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Dopri5 ',          verbose)
@@ -413,21 +462,39 @@ class RungeKutta34(Explicit_ODE):
         self.Y4 = N.array([0.0]*len(self.y0))
         self.Z3 = N.array([0.0]*len(self.y0))
         
-        #RHS-Function
-        self.f = problem.rhs_internal
-        
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["report_continuously"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = True
         
         #Internal values
         # - Statistic values
         self.statistics["nsteps"] = 0 #Number of steps
         self.statistics["nfcn"] = 0 #Number of function evaluations
+        self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]    = 0 #Root evaluations
     
     def initialize(self):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
+            
+    def set_problem_data(self): 
+        if self.problem_info["state_events"]: 
+            def event_func(t, y): 
+                return self.problem.state_events(t, y, self.sw) 
+            def f(dy ,t, y): 
+                try:
+                    dy[:] = self.problem.rhs(t, y, self.sw)
+                except:
+                    return False
+                return True
+            self.f = f
+            self.event_func = event_func
+            self._event_info = [0] * self.problem_info["dimRoot"] 
+            self.g_old = self.event_func(self.t, self.y) 
+        else: 
+            self.f = self.problem.rhs_internal
     
     def _set_initial_step(self, initstep):
         try:
@@ -540,7 +607,7 @@ class RungeKutta34(Explicit_ODE):
         initialize = opts["initialize"]
         
         if initialize:
-            self.solver_iterator = self._iter(t,y,tf)
+            self.solver_iterator = self._iter(t,y,tf,opts)
 
         return self.solver_iterator.next()
     
@@ -548,31 +615,74 @@ class RungeKutta34(Explicit_ODE):
         """
         Integrates (t,y) values until t > tf
         """
-        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf)))
+        [flags, tlist, ylist] = zip(*list(self._iter(t, y, tf,opts)))
         
         return flags[-1], tlist, ylist
     
-    def _iter(self,t,y,tf):
+    def _iter(self,t,y,tf,opts):
+        if opts["initialize"]:
+            self.set_problem_data()
         maxsteps = self.options["maxsteps"]
         h = self.options["inith"]
         h = min(h, N.abs(tf-t))
+        self.f(self.Y1, t, y)
+        flag = ID_PY_OK
         
         for i in range(maxsteps):
-            if t+h < tf:
+            if t+h < tf and flag == ID_PY_OK:
                 t, y, error = self._step(t, y, h)
                 self.statistics["nsteps"] += 1
-                yield ID_PY_OK, t,y
+                if self.problem_info["state_events"]: 
+                    flag, t, y = self.event_locator(t-h , t, y) 
+                
+                if opts["report_continuously"]:
+                    initialize_flag = self.report_solution(t, y, opts)
+                    if initialize_flag: flag = ID_PY_EVENT
+                    yield flag, t,y
+                elif opts["output_list"] == None:
+                    yield flag, t, y
+                else:
+                    output_list = opts["output_list"]
+                    output_index = opts["output_index"]
+                    try:
+                        while output_list[output_index] <= t:
+                            yield flag, output_list[output_index], self.interpolate(output_list[output_index])
+                            output_index = output_index + 1
+                    except IndexError:
+                        pass
+                    opts["output_index"] = output_index
                 h=self.adjust_stepsize(h,error)
                 h=min(h, N.abs(tf-t))
             else:
                 break
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
-            
-        t, y, error = self._step(t, y, h)
-        self.statistics["nsteps"] += 1
-        yield ID_PY_COMPLETE, t, y
-
+        
+        #If no event has been detected, do the last step.
+        if flag == ID_PY_OK:
+            t, y, error = self._step(t, y, h)
+            self.statistics["nsteps"] += 1
+            if self.problem_info["state_events"]: 
+                flag, t, y = self.event_locator(t-h , t, y)
+                if flag == ID_PY_OK: flag = ID_PY_COMPLETE
+            if opts["report_continuously"]:
+                initialize_flag = self.report_solution(t, y, opts)
+                if initialize_flag: flag = ID_PY_EVENT
+                else:               flag = ID_PY_COMPLETE
+                yield flag, t,y
+            elif opts["output_list"] == None:
+                yield flag, t,y
+            else:
+                output_list = opts["output_list"]
+                output_index = opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        yield flag, output_list[output_index], self.interpolate(output_list[output_index])
+                        output_index = output_index + 1
+                except IndexError:
+                    pass
+                    opts["output_index"] = output_index
+    
     def adjust_stepsize(self, h, error):
         """
         Adjusts the stepsize.
@@ -593,16 +703,34 @@ class RungeKutta34(Explicit_ODE):
         
         scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
-        
-        f(self.Y1, t, y)
+            
         f(self.Y2, t + h/2., y + h*self.Y1/2.)
         f(self.Y3, t + h/2., y + h*self.Y2/2.)
         f(self.Z3, t + h, y - h*self.Y1 + 2.0*h*self.Y2)
         f(self.Y4, t + h, y + h*self.Y3)
         
-        error = N.linalg.norm(h/6*(2*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
+        error = N.linalg.norm(h/6.0*(2.0*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
+        t_next = t + h
+        y_next = y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4)
         
-        return t+h, y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4), error
+        f_low = self.Y1.copy()
+        f(self.Y1, t_next, y_next)
+        #Hermitian interpolation for the solution in [t, t_next]
+        def interpolate(time):
+            thetha = (time - t) / (t_next - t)
+            f_high = self.Y1
+            return (1 - thetha) * y + thetha * y_next + thetha * \
+                   (thetha - 1) * ((1 - 2*thetha) * (y_next - y) + \
+                   (thetha - 1) * h * f_low + thetha * h * f_high)
+        self.interpolate = interpolate
+        
+        return t_next, y_next, error
+        
+    def state_event_info(self): 
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     def print_statistics(self, verbose):
         """
@@ -611,8 +739,12 @@ class RungeKutta34(Explicit_ODE):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
         self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
         self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of state events         : '+ str(self.statistics["nstateevents"]),   verbose)
+        
         self.log_message('\nSolver options:\n',                                              verbose)
-        self.log_message(' Solver             : RungeKutta4',                                verbose)
+        self.log_message(' Solver             : RungeKutta34',                               verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)
         self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
         self.log_message(' Absolute tolerance : ' + str(self.options["atol"]) + '\n', verbose)

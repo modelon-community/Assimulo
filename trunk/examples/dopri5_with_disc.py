@@ -18,7 +18,7 @@
 import numpy as N
 import pylab as P
 import nose
-from assimulo.solvers import CVode
+from assimulo.solvers import Dopri5
 from assimulo.problem import Explicit_Problem
 
 """
@@ -129,7 +129,7 @@ def run_example(with_plots=True):
     #Create an instance of the problem
     iter_mod = Extended_Problem() #Create the problem
 
-    iter_sim = CVode(iter_mod) #Create the solver
+    iter_sim = Dopri5(iter_mod) #Create the solver
     
     iter_sim.verbosity = 0
     iter_sim.report_continuously = True
