@@ -59,12 +59,20 @@ class Test_Examples:
         euler_basic.run_example(with_plots=False)
         
     @testattr(stddist = True)
+    def test_euler_with_disc(self):
+        euler_with_disc.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
     def test_rungekutta4_basic(self):
         rungekutta4_basic.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_rungekutta34_basic(self):
         rungekutta34_basic.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_rungekutta34_with_disc(self):
+        rungekutta34_with_disc.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_ida_with_disc(self):
@@ -87,12 +95,20 @@ class Test_Examples:
         radau5ode_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
+    def test_radau5ode_with_disc(self):
+        radau5ode_with_disc.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
     def test_radau5dae_vanderpol(self):
         radau5dae_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_dopri5_basic(self):
         dopri5_basic.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_dopri5_with_disc(self):
+        dopri5_with_disc.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_rodasode_vanderpol(self):

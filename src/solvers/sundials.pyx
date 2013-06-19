@@ -62,9 +62,12 @@ cdef class IDA(Implicit_ODE):
     cdef N_Vector *ySO
     cdef N_Vector *ydSO
     cdef object f
+    cdef public object event_func
     #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
     cdef public N.ndarray yS0
+    #cdef N.ndarray _event_info
+    cdef public N.ndarray g_old
     
     def __init__(self, problem):
         Implicit_ODE.__init__(self, problem) #Calls the base class
@@ -93,6 +96,7 @@ cdef class IDA(Implicit_ODE):
         self.options["dqtype"] = "CENTERED"
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
+        self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default 
         
         #Statistics
         self.statistics["nfevals"]    = 0 #Function evaluations
@@ -112,7 +116,7 @@ cdef class IDA(Implicit_ODE):
         self.statistics["nstateevents"] = 0 #Number of state events
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
@@ -187,6 +191,10 @@ cdef class IDA(Implicit_ODE):
         """
         Returns the event info.
         """
+        
+        if self.options["external_event_detection"]: 
+            return self._event_info 
+        
         cdef int* c_info 
         cdef flag
         
@@ -210,11 +218,14 @@ cdef class IDA(Implicit_ODE):
         free(c_info)
         
         return event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     cpdef initialize(self):
         
         #Initialize storing of sensitivyt result in handle_result
-        if self.problem_info['step_events'] or self.options['continuous_output']:
+        if self.problem_info['step_events'] or self.options['report_continuously']:
             self.problem._sensitivity_result = 1
         
         #Reset statistics
@@ -265,7 +276,10 @@ cdef class IDA(Implicit_ODE):
             
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
-                flag = Sun.IDARootInit(self.ida_mem, self.pData.dimRoot, ida_root)
+                if self.options["external_event_detection"]:
+                    flag = Sun.IDARootInit(self.ida_mem, 0, ida_root)
+                else:
+                    flag = Sun.IDARootInit(self.ida_mem, self.pData.dimRoot, ida_root)
                 if flag < 0:
                     raise IDAError(flag,self.t)
             
@@ -306,6 +320,17 @@ cdef class IDA(Implicit_ODE):
         flag = Sun.IDASetUserData(self.ida_mem, <void*>self.pData)
         if flag < 0:
             raise IDAError(flag, self.t)
+            
+    def initialize_event_detection(self):
+        if self.problem_info["type"] == 1:
+            def event_func(t, y, yd): 
+                return self.problem.state_events(t, y, yd, self.sw)
+        else:
+            def event_func(t, y, yd): 
+                return self.problem.state_events(t, y, self.sw)
+        self.event_func = event_func
+        self.g_old = self.event_func(self.t, self.y, self.yd)
+        self._event_info = N.array([0] * self.problem_info["dimRoot"])
     
     cdef initialize_sensitivity_options(self):
         """
@@ -406,23 +431,19 @@ cdef class IDA(Implicit_ODE):
         yout = arr2nv(y)
         ydout = arr2nv(yd)
         
-        #Get options
-        initialize   = opts["initialize"]
-        
         #Initialize? 
-        if initialize:
+        if opts["initialize"]:
             self.initialize_ida()
             self.initialize_options()
+            if self.options["external_event_detection"]:
+                self.initialize_event_detection()
         
         #Set stop time
         flag = Sun.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
             raise IDAError(flag, t)
         
-        #Run in normal mode?
-        normal_mode = 1 if opts["output_list"] != None else 0
-        
-        if normal_mode == 0: 
+        if opts["report_continuously"] or opts["output_list"] == None:
             #Integration loop
             while True:
                 
@@ -430,11 +451,28 @@ cdef class IDA(Implicit_ODE):
                 flag = Sun.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
                 if flag < 0:
                     raise IDAError(flag, tret)
+                    
+                t = tret 
+                y = nv2arr(yout)
+                yd = nv2arr(ydout)
+                if self.options["external_event_detection"] and self.problem_info["state_events"]: 
+                    if opts["report_continuously"] or not tr: 
+                        told = self.t
+                    else:
+                        told = tr[-1]
+                    event_flag, t, y, yd = self.event_locator(told, t, y, yd)
+                    if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
                 
-                #Store results
-                tr.append(tret)
-                yr.append(nv2arr(yout))
-                ydr.append(nv2arr(ydout))
+                if opts["report_continuously"]: 
+                    flag_initialize = self.report_solution(t, y, yd, opts) 
+                    if flag_initialize:
+                        #If a step event has occured the integration has to be reinitialized
+                        flag = CV_ROOT_RETURN 
+                else: 
+                    #Store results
+                    tr.append(t)
+                    yr.append(y)
+                    ydr.append(yd)
                 
                 if flag == IDA_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
@@ -1198,6 +1236,36 @@ cdef class IDA(Implicit_ODE):
     
     pbar = property(_get_pbar, _set_pbar)
     
+    def _set_external_event_detection(self, event_opt): 
+        try: 
+            self.options["external_event_detection"] = bool(event_opt) 
+        except: 
+            raise Exception("Unkown input to external_event_detection, must be a boolean.") 
+             
+    def _get_external_event_detection(self): 
+        """ 
+        A Boolean flag which indicates if Assimulos event finding algorithm 
+        or CVode's is used to localize events. If false CVode's rootfinding 
+        algorithm is used, if true Assimulos event_locator is used. 
+         
+            Parameters:: 
+             
+                external_event_detection     
+                                - Default 'False'. 
+                 
+                                - Should be a boolean. 
+                                 
+                                    Example: 
+                                        external_event_detection = True 
+                                         
+        See SUNDIALS IDA documentation 2.3 'Rootfinding'  
+        for more details. 
+        """ 
+        return self.options["external_event_detection"] 
+             
+    external_event_detection = property(_get_external_event_detection, 
+                                        _set_external_event_detection)
+    
     cdef void store_statistics(self, return_flag):
         """
         Retrieves and stores the statistics.
@@ -1216,7 +1284,7 @@ cdef class IDA(Implicit_ODE):
         flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
         flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
         
-        if return_flag == IDA_ROOT_RETURN:
+        if return_flag == IDA_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
         
         self.statistics["nsteps"] += nsteps
@@ -1298,9 +1366,12 @@ cdef class CVode(Explicit_ODE):
     cdef N_Vector yTemp, ydTemp
     cdef N_Vector *ySO
     cdef object f
+    cdef public object event_func
     #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens,pt_prec_solve,pt_prec_setup
     cdef public N.ndarray yS0
+    #cdef N.ndarray _event_info
+    cdef public N.ndarray g_old
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -1328,6 +1399,7 @@ cdef class CVode(Explicit_ODE):
         self.options["dqtype"] = "CENTERED"
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
+        self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -1351,7 +1423,7 @@ cdef class CVode(Explicit_ODE):
         self.statistics["nstateevents"] = 0 #Number of state events
         
         #Solver support
-        self.supports["one_step_mode"] = True
+        self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
@@ -1523,7 +1595,10 @@ cdef class CVode(Explicit_ODE):
                 
             #Specify the root function to the solver
             if self.problem_info["state_events"]:
-                flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
+                if self.options["external_event_detection"]:
+                    flag = Sun.CVodeRootInit(self.cvode_mem, 0, cv_root)
+                else:
+                    flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
                     
@@ -1556,6 +1631,13 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag, self.t)
             
+    def initialize_event_detection(self):
+        def event_func(t, y):
+            return self.problem.state_events(t, y, self.sw)
+        self.event_func = event_func
+        self.g_old = self.event_func(self.t, self.y)
+        self._event_info = N.array([0] * self.problem_info["dimRoot"])
+        
     
     cpdef N.ndarray interpolate(self,double t,int k = 0):
         """
@@ -1634,7 +1716,7 @@ cdef class CVode(Explicit_ODE):
     cpdef initialize(self):
         
         #Initialize storing of sensitivyt result in handle_result
-        if self.problem_info['step_events'] or self.options['continuous_output']:
+        if self.problem_info['step_events'] or self.options['report_continuously']:
             self.problem._sensitivity_result = 1
         
         #Reset statistics
@@ -1697,23 +1779,19 @@ cdef class CVode(Explicit_ODE):
         
         yout = arr2nv(y)
         
-        #Get options
-        initialize   = opts["initialize"]
-        
         #Initialize? 
-        if initialize:
+        if opts["initialize"]:
             self.initialize_cvode() 
             self.initialize_options()
+            if self.options["external_event_detection"]:
+                self.initialize_event_detection()
         
         #Set stop time
         flag = Sun.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
             raise CVodeError(flag, t)
         
-        #Run in normal mode?
-        normal_mode = 1 if opts["output_list"] != None else 0
-        
-        if normal_mode == 0: 
+        if opts["report_continuously"] or opts["output_list"] == None: 
             #Integration loop
             while True:
                     
@@ -1721,10 +1799,26 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag, tret)
                 
-                #Store results
-                tr.append(tret)
-                yr.append(nv2arr(yout))
+                t = tret
+                y = nv2arr(yout)
+                if self.options["external_event_detection"] and self.problem_info["state_events"]:
+                    if opts["report_continuously"] or not tr:
+                        told = self.t
+                    else:
+                        told = tr[-1]
+                    event_flag, t, y = self.event_locator(told, t, y)
+                    if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
                 
+                if opts["report_continuously"]:
+                    flag_initialize = self.report_solution(t, y, opts)
+                    if flag_initialize:
+                        #If a step event has occured the integration has to be reinitialized
+                        flag = CV_ROOT_RETURN
+                else:
+                    #Store results
+                    tr.append(t)
+                    yr.append(y)
+                    
                 if flag == CV_ROOT_RETURN: #Found a root
                     flag = ID_EVENT #Convert to Assimulo flags
                     self.store_statistics(CV_ROOT_RETURN)
@@ -1775,6 +1869,10 @@ cdef class CVode(Explicit_ODE):
         """
         Returns the event info.
         """
+        
+        if self.options["external_event_detection"]:
+            return self._event_info
+        
         cdef int* c_info
         cdef flag
         
@@ -1798,6 +1896,9 @@ cdef class CVode(Explicit_ODE):
         free(c_info)
         
         return event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     cpdef initialize_sensitivity_options(self):
         cdef int flag
@@ -2489,6 +2590,36 @@ cdef class CVode(Explicit_ODE):
     
     pbar = property(_get_pbar, _set_pbar)
     
+    def _set_external_event_detection(self, event_opt):
+        try:
+            self.options["external_event_detection"] = bool(event_opt)
+        except:
+            raise Exception("Unkown input to external_event_detection, must be a boolean.")
+        
+    def _get_external_event_detection(self):
+        """
+        A Boolean flag which indicates if Assimulos event finding algorithm
+        or CVode's is used to localize events. If false CVode's rootfinding
+        algorithm is used, if true Assimulos event_locator is used.
+        
+            Parameters::
+            
+                external_event_detection
+                                - Default 'False'.
+                
+                                - Should be a boolean.
+                                
+                                    Example:
+                                        external_event_detection = True
+                                        
+        See SUNDIALS CVode documentation 2.4 'Rootfinding' 
+        for more details.
+        """
+        return self.options["external_event_detection"]
+        
+    external_event_detection = property(_get_external_event_detection,
+                                        _set_external_event_detection)
+    
     cdef void store_statistics(self, int return_flag):
         """
         Retrieves and stores the statistics.
@@ -2515,7 +2646,7 @@ cdef class CVode(Explicit_ODE):
         flag = Sun.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
                                                                             #Number of nonlinear conv failures
         
-        if return_flag == CV_ROOT_RETURN:
+        if return_flag == CV_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
         self.statistics["nsteps"]    += nsteps
         self.statistics["nfevals"]   += nfevals

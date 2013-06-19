@@ -33,7 +33,7 @@ class Test_ODE:
         This tests the functionality of the method __init__.
         """
         assert self.simulator.verbosity == NORMAL
-        assert self.simulator.continuous_output == False
+        assert self.simulator.report_continuously == False
     
     @testattr(stddist = True)
     def test_verbosity(self):
@@ -52,12 +52,12 @@ class Test_ODE:
         assert self.simulator.options["verbosity"] == 4
         
     @testattr(stddist = True)    
-    def test_continuous_output(self):
+    def test_report_continuously(self):
         """
-        This tests the functionality of the property continuous_output.
+        This tests the functionality of the property report_continuously.
         """
-        assert self.simulator.continuous_output == False #Test the default value
+        assert self.simulator.report_continuously == False #Test the default value
         
-        self.simulator.continuous_output = True
-        assert self.simulator.continuous_output == True
-        assert self.simulator.options["continuous_output"] == True
+        self.simulator.report_continuously = True
+        assert self.simulator.report_continuously == True
+        assert self.simulator.options["report_continuously"] == True

@@ -95,8 +95,8 @@ cdef class Explicit_ODE(ODE):
         if sw0 != None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int ONE_STEP, int INTERPOLATE_OUTPUT,
-                 int TIME_EVENT, int STEP_EVENT):
+    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
+                 int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
         
@@ -123,15 +123,13 @@ cdef class Explicit_ODE(ODE):
                         __call__(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
         """
-        cdef double clock_start
-        cdef double t_log, tevent
+        cdef double tevent
         cdef int flag, output_index
         cdef dict opts
         cdef double eps = N.finfo(float).eps*100 #Machine Epsilon
         cdef backward = 1 if self.backward else 0
         
         y0 = self.y
-        t_logg = t0
 
         #Log the first point
         self.problem.handle_result(self,t0,y0)
@@ -148,66 +146,37 @@ cdef class Explicit_ODE(ODE):
         opts["initialize"] = flag_initialize
         opts["output_list"] = output_list
         opts["output_index"] = 0
+        opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
         output_index = 0
 
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
 
-            #Time event function is specified.
+            #Time event function is specified
             if TIME_EVENT == 1:
                 tret = self.problem.time_events(self.t, self.y, self.sw)
                 tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
             
-            if ONE_STEP == 1:
-                #Start clock
-                clock_start = clock()
-                
-                #Run in one step mode
-                [flag, t, y]         = self.step(self.t, self.y, tevent, opts)
-                self.t, self.y = t, y.copy()
-                
-                #Store the elapsed time
-                self.elapsed_step_time = clock()-clock_start
-                
-                #Store data depending on situation
-                if INTERPOLATE_OUTPUT == 1:
-                    try:
-                        while output_list[output_index] <= t:
-                            self.problem.handle_result(self, output_list[output_index], self.interpolate(output_list[output_index]))
-                        
-                            #Last logging point
-                            t_logg = output_list[output_index]
-                            
-                            output_index = output_index+1
-                    except IndexError:
-                        pass
-                else:
-                    self.problem.handle_result(self,t,y)
-                    
-                    #Last logging point
-                    t_logg = self.t
-                    
-                if STEP_EVENT == 1: #If the option completed step is set.
-                    flag_initialize = self.problem.step_events(self)#completed_step(self)
-                else:
-                    flag_initialize = False
-            else:
-                #Run in Normal mode
-                flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
+            #Initialize the clock, enabling storing elapsed time for each step
+            if REPORT_CONTINUOUSLY:
+                self.clock_start = clock()
+            
+            flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
+            
+            #Store data if not done after each step
+            if REPORT_CONTINUOUSLY is False:
                 self.t, self.y = tlist[-1], ylist[-1].copy()
-                
-                #Store data
                 map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
-                
-                #Last logging point
-                t_logg = self.t
-                
-                #Initialize flag to false
-                flag_initialize = False
+            
+            #Initialize flag to false
+            flag_initialize = False
             
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
+                
+                if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
+                    self.problem.handle_result(self, self.t, self.y)
                 
                 #Get and store event information
                 event_info = [[],flag == ID_COMPLETE]
@@ -235,12 +204,139 @@ cdef class Explicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and t_logg == self.t: 
+            if flag_initialize and (output_list == None or self.store_event_points):#output_list[opts["output_index"]] == self.t):
                 self.problem.handle_result(self, self.t, self.y)
                 
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
+        
+    def report_solution(self, t, y, opts):
+        '''Is called after each successful step in case the complete step
+        option is active. Here possible interpolation is done and the result 
+        handeled. Furthermore possible step events are checked.
+        '''
+        self.t, self.y = t, y.copy()
+        
+        #Store the elapsed time for a single step
+        self.elapsed_step_time = clock() - self.clock_start
+        self.clock_start = clock()
+        
+        #Store data depending on situation
+        if opts["output_list"] != None:
+            output_list = opts["output_list"]
+            output_index = opts["output_index"]
+            try:
+                while output_list[output_index] <= t:
+                    self.problem.handle_result(self, output_list[output_index], 
+                                    self.interpolate(output_list[output_index]))
+                    output_index = output_index + 1
+            except IndexError:
+                pass
+            opts["output_index"] = output_index
             
+
+        else:
+            self.problem.handle_result(self,t,y.copy())
+        
+        #Callback to FMU
+        if self.problem_info["step_events"]:
+            flag_initialize = self.problem.step_events(self) #completed step returned to FMU
+        else:
+            flag_initialize = False
+            
+        return flag_initialize
+        
+    def event_locator(self, t_low, t_high, y_high):
+        '''Checks if an event occurs in [t_low, t_high], if that is the case event 
+        localization is started. Event localization finds the earliest small interval 
+        that contains a change in domain. The right endpoint of this interval is then 
+        returned as the time to restart the integration at.
+        '''
+        
+        g_high = self.event_func(t_high, y_high)
+        g_low = self.g_old
+        self.statistics["ngevals"] += 1
+        n_g = self.problem_info["dimRoot"]
+        TOL = max(t_low, t_high) * 1e-13
+        #Check for events in [t_low, t_high].
+        for i in xrange(n_g):
+            if (g_low[i] > 0) != (g_high[i] > 0):
+                break
+        else:
+            self.g_old = g_high
+            return (ID_PY_OK, t_high, y_high)
+        
+        side = 0
+        sideprev = -1
+        
+        while abs(t_high - t_low) > TOL:
+            #Adjust alpha if the same side is choosen more than once in a row.
+            if (sideprev == side):
+                if side == 2:
+                    alpha = alpha * 2.0
+                else:
+                    alpha = alpha / 2.0
+            #Otherwise alpha = 1 and the secant rule is used.
+            else:
+                alpha = 1
+            
+            #Decide which event function to iterate with.
+            maxfrac = 0
+            imax = 0 #Avoid compilation problem
+            for i in xrange(n_g):
+                if ((g_low[i] > 0) != (g_high[i] > 0)):
+                    gfrac = abs(g_high[i]/(g_low[i] - g_high[i]))
+                    if gfrac >= maxfrac:
+                        maxfrac = gfrac
+                        imax = i
+            
+            #Hack for solving the slow converging case when g is zero for a large part of [t_low, t_high].
+            if g_high[imax] == 0 or g_low[imax] == 0:
+                t_mid = (t_low + t_high)/2
+            else:
+                t_mid = t_high - (t_high - t_low)*g_high[imax]/ \
+                                 (g_high[imax] - alpha*g_low[imax])
+        
+            #Check if t_mid is to close to current brackets and adjust inwards if so is the case.
+            if (abs(t_mid - t_low) < TOL/2):
+                fracint = abs(t_low - t_high)/TOL
+                if fracint > 5:
+                    delta = (t_high - t_low) / 10.0
+                else:
+                    delta = (t_high - t_low) / (2.0 * fracint)
+                t_mid = t_low + delta
+        
+            if (abs(t_mid - t_high) < TOL/2):
+                fracint = abs(t_low - t_high)/TOL
+                if fracint > 5:
+                    delta = (t_high - t_low) / 10.0
+                else:
+                    delta = (t_high - t_low) / (2.0 * fracint)
+                t_mid = t_high - delta
+            
+            #Calculate g at t_mid and check for events in [t_low, t_mid].
+            g_mid = self.event_func(t_mid, self.interpolate(t_mid))
+            self.statistics["ngevals"] += 1
+            sideprev = side
+            for i in xrange(n_g):
+                if (g_low[i] > 0) != (g_mid[i] > 0):
+                    (t_high, g_high) = (t_mid, g_mid[0:n_g])
+                    side = 1
+                    break
+            #If there are no events in [t_low, t_mid] there must be some event in [t_mid, t_high].
+            else:
+                (t_low, g_low) = (t_mid, g_mid[0:n_g])
+                side = 2
+        
+        event_info = N.array([0] * n_g)
+        for i in xrange(n_g):
+            if (g_low[i] > 0) != (g_high[i] > 0):
+                event_info[i] = 1 if g_high[i] > 0 else -1
+                
+        self.set_event_info(event_info)
+        self.statistics["nstateevents"] += 1
+        self.g_old = g_high
+        return (ID_PY_EVENT, t_high, self.interpolate(t_high))
     
     def plot(self, mask=None, **kwargs):
         """

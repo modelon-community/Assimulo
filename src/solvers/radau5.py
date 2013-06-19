@@ -81,42 +81,73 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]     = 0 #Root evaluations
+        
+        #Solver support
+        self.supports["report_continuously"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = True
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
+        self._event_info = None
         
     def initialize(self):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
             
-        self._tlist = []
-        self._ylist = []
+    def set_problem_data(self):
+        if self.problem_info["state_events"]:
+            def event_func(t, y):
+                return self.problem.state_events(t, y, self.sw)
+            def f(t, y):
+                return self.problem.rhs(t, y, self.sw)
+            self.f = f
+            self.event_func = event_func
+            self._event_info = [0] * self.problem_info["dimRoot"]
+            self.g_old = self.event_func(self.t, self.y)
+        else:
+            self.f = self.problem.rhs
+    
+    def interpolate(self, time):
+        y = N.empty(self._leny)
+        for i in range(self._leny):
+            y[i] = radau5.contr5(i+1, time, self.cont)
         
+        return y
+    
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        if self._opts["output_list"] == None:
-            self._tlist.append(t)
-            self._ylist.append(y.copy())
+        self.cont = cont #Saved to be used by the interpolation function.
+        
+        if self.problem_info["state_events"]:
+            flag, t, y = self.event_locator(told, t, y)
+            #Convert to Fortram indicator.
+            if flag == ID_PY_EVENT: irtrn = -1
+            
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, self._opts)
+            if initialize_flag: irtrn = -1
         else:
-            output_list = self._opts["output_list"]
-            output_index = self._opts["output_index"]
-            try:
-                while output_list[output_index] <= t:
-                    self._tlist.append(output_list[output_index])
-                    
-                    yval = N.empty(self._leny)
-                    for i in range(self._leny):
-                        yval[i] = radau5.contr5(i+1,output_list[output_index], cont)
+            if self._opts["output_list"] == None:
+                self._tlist.append(t)
+                self._ylist.append(y.copy())
+            else:
+                output_list = self._opts["output_list"]
+                output_index = self._opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        self._tlist.append(output_list[output_index])
+                        self._ylist.append(self.interpolate(output_list[output_index]))
                         
-                    self._ylist.append(yval)
-
-                    output_index = output_index+1
-            except IndexError:
-                pass
-            self._opts["output_index"] = output_index
+                        output_index += 1
+                except IndexError:
+                    pass
+                self._opts["output_index"] = output_index
         
         return irtrn
             
@@ -150,10 +181,17 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
         
+        #Check for initialization
+        if opts["initialize"]:
+            self.set_problem_data()
+            self._tlist = []
+            self._ylist = []
+            
+        
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag =  radau5.radau5(self.problem.rhs, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+        t, y, h, iwork, flag =  radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
@@ -174,17 +212,26 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         return flag, self._tlist, self._ylist
     
+    def state_event_info(self):
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
+    
     def print_statistics(self, verbose=NORMAL):
         """
         Prints the run-time statistics for the problem.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Steps                          : '+ str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of Function Evaluations           : '+ str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
@@ -775,52 +822,91 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nlu"]         = 0 #Number of LU decompositions
         self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nstateevents"]= 0 #Number of state events
+        self.statistics["ngevals"]     = 0 #Root evaluations
+        
+        #Solver support
+        self.supports["report_continuously"] = True
+        self.supports["interpolated_output"] = True
+        self.supports["state_events"] = True
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(implicit)'
+        self._event_info = None
         
     def initialize(self):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
-            
-        self._tlist  = []
-        self._ylist  = []
-        self._ydlist = []
+        
+    def set_problem_data(self):
+        if self.problem_info["state_events"]:
+            if self.problem_info["type"] == 1:
+                def event_func(t, y, yd):
+                    return self.problem.state_events(t, y, yd, self.sw)
+            else:
+                def event_func(t, y, yd):
+                    return self.problem.state_events(t, y, self.sw)
+            def f(t, y):
+                leny = self._leny
+                res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
+                return N.append(y[leny:2*leny],res)
+            self._f = f
+            self.event_func = event_func
+            self._event_info = [0] * self.problem_info["dimRoot"]
+            self.g_old = self.event_func(self.t, self.y, self.yd)
+        else:
+            def f(t, y):
+                leny = self._leny
+                res = self.problem.res(t, y[:leny], y[leny:2*leny])
+                return N.append(y[leny:2*leny],res)
+            self._f = f
+    
+    def interpolate(self, time, k=0):
+        y = N.empty(self._leny*2)
+        for i in range(self._leny*2):
+            y[i] = radau5.contr5(i+1, time, self.cont)
+        if k == 0:
+            return y[:self._leny]
+        elif k == 1:
+            return y[self._leny:2*self._leny]
         
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        if self._opts["output_list"] == None:
-            self._tlist.append(t)
-            self._ylist.append(y[:self._leny].copy())
-            self._ydlist.append(y[self._leny:2*self._leny].copy())
-        else:
-            output_list = self._opts["output_list"]
-            output_index = self._opts["output_index"]
-            try:
-                while output_list[output_index] <= t:
-                    self._tlist.append(output_list[output_index])
-                    
-                    yval = N.empty(self._leny*2)
-                    for i in range(self._leny*2):
-                        yval[i] = radau5.contr5(i+1,output_list[output_index], cont)
-                        
-                    self._ylist.append(yval[:self._leny])
-                    self._ydlist.append(yval[self._leny:2*self._leny])
-
-                    output_index = output_index+1
-            except IndexError:
-                pass
-            self._opts["output_index"] = output_index
+        self.cont = cont #Saved to be used by the interpolation function.
         
-        return irtrn
+        yd = y[self._leny:2*self._leny].copy()
+        y = y[:self._leny].copy()
+        if self.problem_info["state_events"]:
+            flag, t, y, yd = self.event_locator(told, t, y, yd)
+            #Convert to Fortram indicator.
+            if flag == ID_PY_EVENT: irtrn = -1
+        
+        if self._opts["report_continuously"]:
+            initialize_flag = self.report_solution(t, y, yd, self._opts)
+            if initialize_flag: irtrn = -1
+        else:
+            if self._opts["output_list"] == None:
+                self._tlist.append(t)
+                self._ylist.append(y)
+                self._ydlist.append(yd)
+            else:
+                output_list = self._opts["output_list"]
+                output_index = self._opts["output_index"]
+                try:
+                    while output_list[output_index] <= t:
+                        self._tlist.append(output_list[output_index])
+                        self._ylist.append(self.interpolate(output_list[output_index]))
+                        self._ydlist.append(self.interpolate(output_list[output_index], 1))
+    
+                        output_index += 1
+                except IndexError:
+                    pass
+                self._opts["output_index"] = output_index
             
-    def _mod_f(self, t, y):
-        leny = self._leny
-        res = self.problem.res(t, y[:leny], y[leny:2*leny])
-        return N.append(y[leny:2*leny],res)
+        return irtrn
         
     def _mas_f(self, am):
         #return N.array([[1]*self._leny+[0]*self._leny])
@@ -864,6 +950,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
         
+        #Check for initialization
+        if opts["initialize"]:
+            self.set_problem_data()  
+            self._tlist  = []
+            self._ylist  = []
+            self._ydlist = []
+        
         #Store the opts
         self._opts = opts
         
@@ -875,7 +968,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = N.append(self.atol, self.atol)
         
-        t, y, h, iwork, flag =  radau5.radau5(self._mod_f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+        t, y, h, iwork, flag =  radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
@@ -895,6 +988,12 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics["nlu"]         += iwork[18]
         
         return flag, self._tlist, self._ylist, self._ydlist
+        
+    def state_event_info(self):
+        return self._event_info
+        
+    def set_event_info(self, event_info):
+        self._event_info = event_info
     
     def print_statistics(self, verbose=NORMAL):
         """
@@ -907,6 +1006,10 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        if self.problem_info["state_events"]:
+            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
