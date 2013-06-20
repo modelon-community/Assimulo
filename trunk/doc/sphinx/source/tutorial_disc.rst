@@ -1,11 +1,11 @@
 
-Discontinuous problems (CVode)
+Discontinuous problems
 ===============================
 
 State depending discontinuities
 -------------------------------
 
-Discontinuities (or discontinuities in higher derivatives) can have a negative effect on the performance of ODE and DAE solvers, when no care is taken to stop the integration at discontinuities and to re-initialize the simulation. This part of the tutorial will show how to use the solver CVode together with a problem with discontinuities.
+Discontinuities (or discontinuities in higher derivatives) can have a negative effect on the performance of ODE and DAE solvers, when no care is taken to stop the integration at discontinuities and to re-initialize the simulation. This part of the tutorial will show how to use solvers together with a problem with discontinuities.
 
 For detecting discontinuities a method called ``state_events`` (can also be called event function or root function) needs to be specified by the user. This method describes a vector valued function :math:`q` 
 
@@ -33,7 +33,7 @@ to a user specified method ``handle_event``, ::
     def handle_event(solver, event_info):
         ...
         
-``solver`` is the current solver object (CVode) and ``event_info`` contains information about the occurred event: which of the equations in state events have crossed zero and also in which "way" (1 or -1). 
+``solver`` is the current solver object and ``event_info`` contains information about the occurred event: which of the equations in state events have crossed zero and also in which "way" (1 or -1). 
 
 ``event_info`` is a tuple. Its first component is a list, which informs about state events::
 
@@ -42,6 +42,7 @@ to a user specified method ``handle_event``, ::
 A value +1 indicates that the ``state_event`` function crossed zero from negative to positive and a value -1 indictes that the 
 function became negative in the respective component.
 
+Assimulos own event locator method not only allows zero crossing but also domain changes, where the state event method is checked for becoming or ceasing to be positive. For localizing the events in this method Illinois algorithm is used. CVode and IDA can use Assimulos method through the option ”external_event_detection”. The solvers supporting problems with discontinuities are: CVode, Radau5ODE, Dopri5, RodasODE, RungeKutta34, Explicit Euler, Implicit Euler, IDA and Radau5DAE.
 
 
 Example
