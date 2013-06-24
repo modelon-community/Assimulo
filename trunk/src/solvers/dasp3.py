@@ -25,8 +25,10 @@ from assimulo.ode import *
 
 from assimulo.explicit_ode import Explicit_ODE
 
-from assimulo.lib import dasp3dp
-
+try:
+    from assimulo.lib import dasp3dp
+except ImportError:
+    pass
 
 class DASP3ODE(Explicit_ODE):
     """
