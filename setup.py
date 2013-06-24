@@ -118,7 +118,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","voigtmann"))
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     create_dir(join("build","assimulo","thirdparty","odassl"))
-    #create_dir(join("build","assimulo","thirdparty","dasp3"))
+    create_dir(join("build","assimulo","thirdparty","dasp3"))
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -131,7 +131,7 @@ def pre_processing():
     fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
-    #fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
+    fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -146,7 +146,7 @@ def pre_processing():
     desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
     desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
-    #desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
+    desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
 
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -189,9 +189,11 @@ def pre_processing():
             SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
         if f == "LICENSE_ODASSL":
             SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
-    #for f in fileThirdPartyDasp3:
-    #    if not O.path.isdir(join("thirdparty","dasp3",f)):
-    #        SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
+    for f in fileThirdPartyDasp3:
+        if not O.path.isdir(join("thirdparty","dasp3",f)):
+            SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
+        if f == "LICENSE_DASP3":
+            SH.copy2(join("thirdparty","dasp3",f),join(curdir,"build","assimulo","lib"))    
             
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -398,15 +400,15 @@ def check_fortran_extensions():
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
     
     #DASP3
-    #if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
-    #    dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
-    #    dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
-    #                   'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-    #    config.add_extension('assimulo.lib.dasp3dp',
-    #                          sources=[dasp3_dir+file for file in dasp3_files],
-    #                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
-    #else:
-    #    L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
+    if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+        dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
+        dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
+                       'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+        config.add_extension('assimulo.lib.dasp3dp',
+                              sources=[dasp3_dir+file for file in dasp3_files],
+                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+    else:
+        L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
     #GLIMDA
     #ADD liblapack and libblas
@@ -523,7 +525,8 @@ setup(name=NAME,
       package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
-                                 'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL']},
+                                 'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
+                                 'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3']},
       script_args=copy_args)
 
 if change_dir:
