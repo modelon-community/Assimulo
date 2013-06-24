@@ -23,6 +23,10 @@ from assimulo.examples import *
 class Test_Examples:
     
     @testattr(stddist = True)
+    def test_dasp3_basic(self):
+        dasp3_basic.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
     def test_cvode_gyro(self):
         cvode_gyro.run_example(with_plots=False)
     
