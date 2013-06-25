@@ -68,9 +68,15 @@ class LSODAR(Explicit_ODE):
         self.statistics["ng"]          = 0 #Number of root evaluations
         
         self._leny = len(self.y) #Dimension of the problem
+        self._nordsieck_array = []
+        self._nordsieck_order = 0
+        self._nordsieck_time  = 0.0
+        self._nordsieck_h  = 0.0
         
         # Solver support
         self.supports["state_events"] = True
+        self.supports["report_continuously"] = True
+        self.supports["interpolated_output"] = True
         
     def initialize(self):
         #Reset statistics
@@ -79,6 +85,25 @@ class LSODAR(Explicit_ODE):
             
         #self._tlist = []
         #self._ylist = []
+        
+    def interpolate(self, t):
+        """
+        Interpolate the solution at time t using the nordsieck history
+        array as,
+        
+        .. math::
+        
+             interp = \sum_{j=0}^q (t - tn)^(j) * h^(-j) * zn[j] ,
+        
+        where q is the current order, and zn[j] is the j-th column of 
+        the Nordsieck history array.
+        """
+        interp = N.array([0.0]*self.problem_info["dim"])
+        
+        for i in range(self._nordsieck_order):
+            interp = interp + (t-self._nordsieck_time)**i*self._nordsieck_h**(-i)*self._nordsieck_array[i*self.problem_info["dim"]:(i+1)*self.problem_info["dim"]]
+            
+        return interp
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 2 #Both atol and rtol are vectors
@@ -112,19 +137,37 @@ class LSODAR(Explicit_ODE):
         tlist = []
         ylist = []
         
+        #Nordsieck start index
+        nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
+        
         #Run in normal mode?
         normal_mode = 1 if opts["output_list"] != None else 0
         
-        if normal_mode == 0: 
+        #if normal_mode == 0:
+        if opts["report_continuously"] or opts["output_list"] == None:
             while (ISTATE == 2 or ISTATE == 1) and t < tf:
             
-                y, t, ISTATE, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                         ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
-                tlist.append(t)
-                ylist.append(y.copy())
+                
+                self._nordsieck_array = RWORK[nordsieck_start_index:nordsieck_start_index+(IWORK[14]+1)*self.problem_info["dim"]]
+                self._nordsieck_order = IWORK[14]
+                self._nordsieck_time  = RWORK[12]
+                self._nordsieck_h = RWORK[11]
+                
                 self._event_info = roots
+                
+                if opts["report_continuously"]:
+                    flag_initialize = self.report_solution(t, y, opts)
+                    if flag_initialize:
+                        #If a step event has occured the integration has to be reinitialized
+                        ISTATE = 3
+                else:
+                    #Store results
+                    tlist.append(t)
+                    ylist.append(y.copy())
             
                 #Checking return
                 if ISTATE == 2:
@@ -144,7 +187,7 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
