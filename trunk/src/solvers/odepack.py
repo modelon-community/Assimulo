@@ -66,6 +66,7 @@ class LSODAR(Explicit_ODE):
         self.statistics["nfcn"]        = 0 #Number of function evaluations
         self.statistics["njac"]        = 0 #Number of jacobian evaluations
         self.statistics["ng"]          = 0 #Number of root evaluations
+        self.statistics["nevents"]     = 0 #Number of events
         
         self._leny = len(self.y) #Dimension of the problem
         self._nordsieck_array = []
@@ -213,6 +214,8 @@ class LSODAR(Explicit_ODE):
         self.statistics["nsteps"]        += IWORK[10]
         self.statistics["nfcn"]          += IWORK[11]
         self.statistics["njac"]          += IWORK[12]
+        if flag == ID_PY_EVENT:
+            self.statistics["nevents"] += 1
         
         return flag, tlist, ylist
     
@@ -234,6 +237,7 @@ class LSODAR(Explicit_ODE):
         self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ng"]),       verbose)
+        self.log_message(' Number of State-Events                   : '+ str(self.statistics["nevents"]), verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : LSODAR ',         verbose)
