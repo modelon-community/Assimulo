@@ -172,7 +172,7 @@ def pre_processing():
     for f in fileThirdPartyHairer:
         if not O.path.isdir(join("thirdparty","hairer",f)):
             SH.copy2(join("thirdparty","hairer",f),desThirdPartyHairer)
-        if f == "LICENSE":
+        if f == "LICENSE_HAIRER":
             SH.copy2(join("thirdparty","hairer",f),join(curdir,"build","assimulo","lib"))
     for f in fileThirdPartyVoigtmann:
         if not O.path.isdir(join("thirdparty","voigtmann",f)):
@@ -522,7 +522,7 @@ setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE','lib'+O.sep+'LICENSE',
+      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE_HAIRER','lib'+O.sep+'LICENSE_HAIRER',
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
                                  'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
