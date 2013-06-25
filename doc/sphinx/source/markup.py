@@ -20,22 +20,29 @@ def mark_solvers():
 
     solvers = [(sundials.CVode, "ODE"), (sundials.IDA, "DAE"), (radau5.Radau5ODE, "ODE"), (radau5.Radau5DAE, "DAE"),
                (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE"),
-               (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE"), (odepack.LSODAR, "ODE"),(glimda.GLIMDA, "DAE")]
+               (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE"), (odepack.LSODAR, "ODE"),(glimda.GLIMDA, "DAE"),
+               (euler.ImplicitEuler, "ODE"), (dasp3.DASP3ODE, "ODE_SING")]
     
     
     rhs = lambda t,y: [1.0]
     res = lambda t,y,yd: [1.0]
+    dydt = lambda t,y,z: [1.0]
+    dzdt = lambda t,y,z: [1.0]
     
     exp_mod = Explicit_Problem(rhs, 0.0)
     imp_mod = Implicit_Problem(res, 0.0, 0.0)
+    sing_mod = SingPerturbed_Problem(dydt, dzdt, 0.0, 0.0)
     
     for solver in solvers:
         if solver[1] == "ODE":
             method = solver[0](exp_mod)
             str_ret = "t, y = "
-        else:
+        elif solver[1] == "DAE":
             str_ret = "t, y, yd = "
             method = solver[0](imp_mod)
+        elif solver[1] == "ODE_SING":
+            str_ret = "t, y = "
+            method = solver[0](sing_mod)
             
         options = method.get_options()
         supports = method.supports
@@ -52,7 +59,7 @@ def mark_solvers():
         file.write(solver[0].__doc__.replace("\n    ", "\n")) #REMOVES EXTRA INDENTATION
         file.write('\nSupport\n----------------\n\n')
         file.write('- State events (root funtions) : '+str(supports["state_events"])+'\n')
-        file.write('- Step events (completed step) : '+str(supports["step_events"])+'\n')
+        file.write('- Step events (completed step) : '+str(supports["report_continuously"])+'\n')
         file.write('- Time events : '+'True\n')
         file.write('\nUsage\n--------------\n\n')
         file.write('Import the solver together with the correct problem:: \n\n')
@@ -66,18 +73,31 @@ def mark_solvers():
             file.write('        return N.array([yd]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0 = [1.0]\n')
             file.write('    t0 = 1.0\n\n')
-        else:
+        elif solver[1] == "DAE":
             file.write('    def res('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
             file.write('        res = yd[0]-1.0\n')
             file.write('        return N.array([res]) #Note that the return must be numpy array, NOT a scalar.\n\n')
             file.write('    y0  = [1.0]\n')
             file.write('    yd0 = [1.0]\n')
             file.write('    t0  = 1.0\n\n')
+        elif solver[1] == "ODE_SING":
+            file.write('    def rhs_slow(t,y,z): #Note that y and z are 1-D numpy arrays.\n')
+            file.write('        return N.array([1.0]) #Note that the return must be numpy array, NOT a scalar.\n\n')
+            file.write('    def rhs_fast(t,y,z): #Note that y and z are 1-D numpy arrays.\n')
+            file.write('        return N.array([1.0]) #Note that the return must be numpy array, NOT a scalar.\n\n')
+            file.write('    yy0 = [1.0]\n')
+            file.write('    zz0 = [1.0]\n')
+            file.write('    t0 = 1.0\n\n')
+    
         file.write('Create a problem instance::\n\n')
         if solver[1] == "ODE":
-            file.write('    mod = '+problem_name+'(f, y0, t0)\n\n')
+            file.write('    mod = '+problem_name+'(rhs, y0, t0)\n\n')
+        elif solver[1] == "DAE":
+            file.write('    mod = '+problem_name+'(res, y0, yd0, t0)\n\n')
+        elif solver[1] == "ODE_SING":
+            file.write('    mod = '+problem_name+'(rhs_slow, rhs_fast, yy0, zz0, t0)\n\n')
         else:
-            file.write('    mod = '+problem_name+'(f, y0, yd0, t0)\n\n')
+            print "Unknown solver type"
         file.write('.. note::\n\n')
         file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
         file.write('.. warning::\n\n')

@@ -7,7 +7,7 @@ Installation
 Dependencies:
     
 - `Python-2.6 / 2.7 <http://www.python.org/>`_
-- `Numpy <http://www.scipy.org/Download/>`_
+- `Numpy <http://www.scipy.org/Download/>`_ (>1.6.1 for the solver DASP3)
 - `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_
 
