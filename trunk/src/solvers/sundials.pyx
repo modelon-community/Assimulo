@@ -1421,6 +1421,8 @@ cdef class CVode(Explicit_ODE):
         self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
         self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
         self.statistics["nstateevents"] = 0 #Number of state events
+        self.statistics["npevals"]    = 0
+        self.statistics["npsolves"]   = 0
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -2627,6 +2629,7 @@ cdef class CVode(Explicit_ODE):
         cdef long int nsteps = 0, njevals = 0, ngevals = 0, netfails = 0, nniters = 0, nncfails = 0
         cdef long int nSniters = 0, nSncfails = 0, nfevalsLS = 0, njvevals = 0, nfevals = 0
         cdef long int nfSevals = 0,nfevalsS = 0,nSetfails = 0,nlinsetupsS = 0, nlinsetups = 0
+        cdef long int npevals = 0, npsolves = 0
         cdef int qlast = 0, qcur = 0
         cdef realtype hinused = 0.0, hlast = 0.0, hcur = 0.0, tcur = 0.0
 
@@ -2636,6 +2639,10 @@ cdef class CVode(Explicit_ODE):
         else:
             flag = Sun.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
             flag = Sun.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
+        if self.pData.PREC_SOLVE != NULL:
+            flag = Sun.CVSpilsGetNumPrecSolves(self.cvode_mem, &npsolves)
+        if self.pData.PREC_SETUP != NULL:
+            flag = Sun.CVSpilsGetNumPrecEvals(self.cvode_mem, &npevals)
             
         flag = Sun.CVodeGetNumGEvals(self.cvode_mem, &ngevals) #Number of root evals
         
@@ -2657,6 +2664,8 @@ cdef class CVode(Explicit_ODE):
         self.statistics["njvevals"]  += njvevals
         self.statistics["njevals"]   += njevals
         self.statistics["ngevals"]   += ngevals
+        self.statistics["npevals"]   += npevals
+        self.statistics["npsolves"]  += npsolves
         
         #If sensitivity    
         if self.pData.dimSens > 0:
@@ -2683,6 +2692,10 @@ cdef class CVode(Explicit_ODE):
         else:     
             self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
             self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
+        if self.pData.PREC_SOLVE != NULL:
+            self.log_message(' Number of Preconditioner Solves          :'+str(self.statistics["npsolves"]), verbose)
+        if self.pData.PREC_SETUP != NULL:
+            self.log_message(' Number of Preconditioner Setups          :'+str(self.statistics["npevals"]), verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
         if self.options["iter"] == "FixedPoint":
