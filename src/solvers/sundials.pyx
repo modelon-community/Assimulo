@@ -2693,9 +2693,9 @@ cdef class CVode(Explicit_ODE):
             self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
             self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
         if self.pData.PREC_SOLVE != NULL:
-            self.log_message(' Number of Preconditioner Solves          :'+str(self.statistics["npsolves"]), verbose)
+            self.log_message(' Number of Preconditioner Solves          : '+str(self.statistics["npsolves"]), verbose)
         if self.pData.PREC_SETUP != NULL:
-            self.log_message(' Number of Preconditioner Setups          :'+str(self.statistics["npevals"]), verbose)
+            self.log_message(' Number of Preconditioner Setups          : '+str(self.statistics["npevals"]), verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
         if self.options["iter"] == "FixedPoint":
