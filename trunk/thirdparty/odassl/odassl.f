@@ -1200,8 +1200,8 @@ C
 590   CONTINUE                                                                  
       RWORK(LTN)=TN                                                             
       RWORK(LH)=H
-      open(20,file='test.txt',status='unknown')
-      write(20,*) t                                                                 
+C      open(20,file='test.txt',status='unknown')
+C      write(20,*) t                                                                 
       RETURN                                                                    
 C                                                                               
 C-----------------------------------------------------------------------        
