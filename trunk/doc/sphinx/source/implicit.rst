@@ -31,3 +31,10 @@ GLIMDA
    :members:
    :inherited-members:
    :show-inheritance:
+
+ODASSL
+
+.. autoclass:: assimulo.solvers.odassl.ODASSL
+   :members:
+   :inherited-members:
+   :show-inheritance:

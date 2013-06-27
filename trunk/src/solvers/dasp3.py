@@ -32,18 +32,26 @@ except ImportError:
 
 class DASP3ODE(Explicit_ODE):
     """
-    DASP3 Solver  by Gustaf Söderlind  1980-10-22
+    DASP3 Solver by Gustaf Söderlind (1980-10-22). Originally published
+    in,::
+    
+        DASP3 - A Program for the Numerical Integration of Partitioned: 
+        Stiff Ode:s and Differential-Algebraic Systems.
+        
+        By, Gustaf Söderlind, Department of Numerical Analysis, and 
+        Computing Science, The Royal Institute of Technology, 1980. 
+        Stockholm, Sweden.
 
-    THIS SUBROUTINE IS USED FOR THE NUMERICAL INTEGRATION OF
-    THE PARTITIONED SYSTEM OF ORDINARY DIFFERENTIAL EQUATIONS
+    DASP3 solves system on the form,
+    
+    .. math::
       
-      DY/DT = F(T,Y,Z)        (N EQUATIONS)
-      
-      EPS*DZ/DT = G(T,Y,Z)        (M EQUATIONS)
-      
-      IT IS ASSUMED THAT THE FIRST SYSTEM IS NON-STIFF AND THAT
-      THE STIFFNESS OF THE SECOND SYSTEM IS DUE TO THE PARAMETER
-      EPS, A DIAGONAL "MATRIX" WITH SMALL (nonzero) ENTRIES. 
+      \frac{dy}{dt} = f(t,y,z)        (N equations)
+      \eps\frac{dz}{dt} = G(t,y,z)    (M equations)       
+    
+    If is assumed that the first system is non-stiff and that
+    the stiffness of the second system is due to the parameter
+    epsilon, possibly a diagonal matrix.
     """
     
     def __init__(self, problem):
