@@ -2692,9 +2692,9 @@ cdef class CVode(Explicit_ODE):
         else:     
             self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
             self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
-        if self.pData.PREC_SOLVE != NULL:
+        if self.pData.PREC_SOLVE != NULL and self.options["linear_solver"] == "SPGMR":
             self.log_message(' Number of Preconditioner Solves          : '+str(self.statistics["npsolves"]), verbose)
-        if self.pData.PREC_SETUP != NULL:
+        if self.pData.PREC_SETUP != NULL and self.options["linear_solver"] == "SPGMR":
             self.log_message(' Number of Preconditioner Setups          : '+str(self.statistics["npevals"]), verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
