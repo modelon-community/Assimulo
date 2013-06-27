@@ -458,6 +458,8 @@ cdef class Implicit_ODE(ODE):
             P.show()
         else:
             self.log_message("No result for plotting found.",NORMAL)
+            
+            
 cdef class OverdeterminedDAE(Implicit_ODE):
     def check_instance(self):
         if not isinstance(self.problem, Overdetermined_Problem):

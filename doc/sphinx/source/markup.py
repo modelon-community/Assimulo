@@ -21,7 +21,7 @@ def mark_solvers():
     solvers = [(sundials.CVode, "ODE"), (sundials.IDA, "DAE"), (radau5.Radau5ODE, "ODE"), (radau5.Radau5DAE, "DAE"),
                (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE"),
                (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE"), (odepack.LSODAR, "ODE"),(glimda.GLIMDA, "DAE"),
-               (euler.ImplicitEuler, "ODE"), (dasp3.DASP3ODE, "ODE_SING")]
+               (euler.ImplicitEuler, "ODE"), (dasp3.DASP3ODE, "ODE_SING"), (odassl.ODASSL,"DAE_OVER")]
     
     
     rhs = lambda t,y: [1.0]
@@ -32,6 +32,7 @@ def mark_solvers():
     exp_mod = Explicit_Problem(rhs, 0.0)
     imp_mod = Implicit_Problem(res, 0.0, 0.0)
     sing_mod = SingPerturbed_Problem(dydt, dzdt, 0.0, 0.0)
+    over_mod = Overdetermined_Problem(res,0.0,0.0)
     
     for solver in solvers:
         if solver[1] == "ODE":
@@ -43,6 +44,9 @@ def mark_solvers():
         elif solver[1] == "ODE_SING":
             str_ret = "t, y = "
             method = solver[0](sing_mod)
+        elif solver[1] == "DAE_OVER":
+            str_ret = "t, y, yd = "
+            method = solver[0](over_mod)
             
         options = method.get_options()
         supports = method.supports
@@ -88,6 +92,13 @@ def mark_solvers():
             file.write('    yy0 = [1.0]\n')
             file.write('    zz0 = [1.0]\n')
             file.write('    t0 = 1.0\n\n')
+        elif solver[1] == "DAE_OVER":
+            file.write('    def res('+str_ret[:-3]+'): #Note that y and yd are 1-D numpy arrays.\n')
+            file.write('        res = [yd[0]-1.0, y[0]-1.0] \n')
+            file.write('        return N.array([res]) #Note that the return must be numpy array, NOT a scalar.\n\n')
+            file.write('    y0  = [1.0]\n')
+            file.write('    yd0 = [1.0]\n')
+            file.write('    t0  = 1.0\n\n')
     
         file.write('Create a problem instance::\n\n')
         if solver[1] == "ODE":
@@ -96,6 +107,8 @@ def mark_solvers():
             file.write('    mod = '+problem_name+'(res, y0, yd0, t0)\n\n')
         elif solver[1] == "ODE_SING":
             file.write('    mod = '+problem_name+'(rhs_slow, rhs_fast, yy0, zz0, t0)\n\n')
+        elif solver[1] == "DAE_OVER":
+            file.write('    mod = '+problem_name+'(res, y0, yd0, t0)\n\n')
         else:
             print "Unknown solver type"
         file.write('.. note::\n\n')
