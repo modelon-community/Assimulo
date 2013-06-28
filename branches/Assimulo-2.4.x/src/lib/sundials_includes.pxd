@@ -203,6 +203,8 @@ cdef extern from "cvodes/cvodes_spils.h":
     int CVSpilsSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve)
     int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
     int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
+    int CVSpilsGetNumPrecEvals(void *cvode_mem, long int *npevals)
+    int CVSpilsGetNumPrecSolves(void *cvode_mem, long int *npsolves)
     
 
 cdef extern from "idas/idas.h":

@@ -231,7 +231,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
         if self.problem_info["state_events"]:
             self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
@@ -1008,7 +1008,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
         if self.problem_info["state_events"]:
             self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
 
         
         self.log_message('\nSolver options:\n',                                      verbose)
