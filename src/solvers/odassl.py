@@ -168,23 +168,25 @@ class ODASSL_Common(object):
     usejac = property(_get_usejac,_set_usejac)
 
 
-class ODASSLODE(ODASSL_Common, OverdeterminedDAE):
+class ODASSL(ODASSL_Common, OverdeterminedDAE):
     """
     Modified version of DASSL for solving overdetermined systems              
     of (singularily) implicit ODEs. The main difference to DASSL         
-    is in the corrector iteration part.                                         
-                                                                               
-    DASSL-Author:  PETZOLD, LINDA                                            
-             APPLIED MATHEMATICS DIVISION 8331                                 
-             SANDIA NATIONAL LABORATORIES                                      
-             LIVERMORE, CA.    94550
-    Based on DASSL Version  900103
-                                                        
-    ODASSL ad-ons : FUEHRER, CLAUS                                         
-             DEUTSCHE FORSCHUNGSANSTALT                          
-             FUER LUFT- UND RAUMFAHRT (DLR)                                  
-             INST. DYNAMIC DER FLUGSYSTEME                                     
-             D-8031 WESSLING  (F.R.G)        
+    is in the corrector iteration part. ::
+    
+        ODASSL ad-ons : FUEHRER, CLAUS
+        DEUTSCHE FORSCHUNGSANSTALT
+        FUER LUFT- UND RAUMFAHRT (DLR)
+        INST. DYNAMIC DER FLUGSYSTEME 
+        D-8031 WESSLING  (F.R.G) 
+    
+    Based on DASSL version dated to 900103 by::
+    
+        DASSL-Author:  PETZOLD, LINDA                                            
+        APPLIED MATHEMATICS DIVISION 8331                                 
+        SANDIA NATIONAL LABORATORIES                                      
+        LIVERMORE, CA.    94550
+
     """
     
     def __init__(self, problem):

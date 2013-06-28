@@ -202,7 +202,7 @@ class Dopri5(Explicit_ODE):
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
         if self.problem_info["state_events"]:
             self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of state events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Dopri5 ',          verbose)
@@ -741,7 +741,7 @@ class RungeKutta34(Explicit_ODE):
         self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
         if self.problem_info["state_events"]:
             self.log_message(' Number of Root Evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of state events         : '+ str(self.statistics["nstateevents"]),   verbose)
+            self.log_message(' Number of State-Events         : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                              verbose)
         self.log_message(' Solver             : RungeKutta34',                               verbose)
