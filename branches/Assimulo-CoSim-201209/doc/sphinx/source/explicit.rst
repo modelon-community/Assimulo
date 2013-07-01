@@ -29,6 +29,14 @@ Explicit Euler
    :members:
    :inherited-members:
    :show-inheritance:
+   
+Implicit Euler
+--------------
+
+.. autoclass:: assimulo.solvers.euler.ImplicitEuler
+   :members:
+   :inherited-members:
+   :show-inheritance:
 
    
 Runge-Kutta
@@ -76,6 +84,14 @@ LSODAR
 ---------------------
 
 .. autoclass:: assimulo.solvers.odepack.LSODAR
+   :members:
+   :inherited-members:
+   :show-inheritance:
+   
+DASP3ODE
+---------------------
+
+.. autoclass:: assimulo.solvers.dasp3.DASP3ODE
    :members:
    :inherited-members:
    :show-inheritance:

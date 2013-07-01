@@ -93,7 +93,7 @@ class Test_Explicit_Euler:
         """
         This tests the functionality of using one step mode.
         """
-        self.simulator.continuous_output = True
+        self.simulator.report_continuously = True
         
         self.simulator.h = 0.1
         self.simulator.simulate(1)
@@ -114,6 +114,27 @@ class Test_Explicit_Euler:
         
         nose.tools.assert_raises(NotImplementedError, sim.simulate, 1.0)
 
+    @testattr(stddist = True)
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        f = lambda t,x,sw: N.array([1.0])
+        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.sw = [False] #Override the switches to point to another instance
+        
+        mod = Explicit_Problem(f,[0.0])
+        mod.sw0 = [True]
+
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = ExplicitEuler(mod)
+        assert sim.sw[0] == True
+        sim.simulate(3)
+        assert sim.sw[0] == False
+    
 class Test_Implicit_Euler:
     
     def setUp(self):
@@ -195,7 +216,7 @@ class Test_Implicit_Euler:
         """
         This tests the functionality of using one step mode.
         """
-        self.simulator.continuous_output = True
+        self.simulator.report_continuously = True
         
         self.simulator.h = 0.1
         self.simulator.simulate(1)
@@ -217,3 +238,24 @@ class Test_Implicit_Euler:
         
         abs_err = N.abs(y[:,0]-y_correct(N.array(t)))
         assert N.max(abs_err) < 0.1
+        
+    @testattr(stddist = True)
+    def test_switches(self):
+        """
+        This tests that the switches are actually turned when override.
+        """
+        f = lambda t,x,sw: N.array([1.0])
+        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        def handle_event(solver, event_info):
+            solver.sw = [False] #Override the switches to point to another instance
+        
+        mod = Explicit_Problem(f,[0.0])
+        mod.sw0 = [True]
+
+        mod.state_events = state_events
+        mod.handle_event = handle_event
+        
+        sim = ImplicitEuler(mod)
+        assert sim.sw[0] == True
+        sim.simulate(3)
+        assert sim.sw[0] == False
