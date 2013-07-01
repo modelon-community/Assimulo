@@ -519,7 +519,7 @@ python module odepack ! in
             integer :: itask
             integer,intent(in,out) :: istate
             integer :: iopt
-            double precision dimension(lrw) :: rwork
+            double precision dimension(lrw), intent(in,out) :: rwork
             integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
             integer dimension(liw),intent(in,out) :: iwork
             integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)

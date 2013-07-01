@@ -84,6 +84,8 @@ DEF SPGMR_SUCCESS         = 0 #Success, Converged
 DEF SPGMR_ATIMES_FAIL_REC = 5 #The Jacobian-vector function failed recoverably
 DEF SPGMR_PSOLVE_FAIL_UNREC = -3 #The preconditioner solve function failed unrecoverably
 
+DEF CVSPILS_SUCCESS = 0 #Success
+
 # Sensitivity constants
 DEF CV_SRHSFUNC_FAIL      = -41   #The sensitivity right-hand side function failed unrecoverable
 DEF CV_FIRST_SRHSFUNC_ERR = -42   #The sensitivity right-hand side function failed at first call

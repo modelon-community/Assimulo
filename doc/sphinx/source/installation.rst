@@ -7,7 +7,7 @@ Installation
 Dependencies:
     
 - `Python-2.6 / 2.7 <http://www.python.org/>`_
-- `Numpy <http://www.scipy.org/Download/>`_
+- `Numpy <http://www.scipy.org/Download/>`_ (>1.6.1 for the solver DASP3)
 - `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_
 
@@ -101,7 +101,7 @@ Troubleshooting
 
 Ubuntu 64bits
 ---------------
-There have been some problems installing Assimulo on Ubuntu 64bits machines when Sundials have been installed with the default options. The problem generates the following error printout::
+There have been some problems installing Assimulo on Ubuntu 64bits machines when Sundials has been installed with the default options. The problem generates the following error printout::
 
     /usr/bin/ld: /home/chria/sundialscode/lib/libsundials_cvodes.a(cvodes.o): relocation R_X86_64_32
     against `.rodata.str1.1' can not be used when making a shared object; recompile with -fPIC
@@ -109,4 +109,4 @@ There have been some problems installing Assimulo on Ubuntu 64bits machines when
     > collect2: ld returned 1 exit status
     > error: command 'gcc' failed with exit status 1
     
-To solve this problem, Sundials have to be installed with the CFLAGS="-fPIC".
+To solve this problem, Sundials has to be installed with the CFLAGS="-fPIC".

@@ -140,7 +140,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
             return SPGMR_ATIMES_FAIL_REC
         except:
             traceback.print_exc()
-            return SPGMR_PSOLVE_FAIL_UNREC
+            return SPGMR_PSOLVE_FAIL_UNREC 
     else:
         try:
             if pData.sw != NULL:
@@ -157,6 +157,53 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
         except:
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
+            
+cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
+				  bint jok, bint *jcurPtr,
+				  realtype gamma, void *problem_data,
+				  N_Vector tmp1, N_Vector tmp2,
+				  N_Vector tmp3):
+    """
+    For information see CVODES documentation 4.6.9
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y   = nv2arr(yy)
+    cdef N.ndarray fy  = nv2arr(fyy)
+    cdef object ret
+    
+    try:
+        ret = (<object>pData.PREC_SETUP)(t,y,fy,jok,gamma,pData.PREC_DATA)
+    except:
+        return CV_REC_ERR #Recoverable Error (See Sundials description)
+    
+    jcurPtr[0] = 1 if ret[0] else 0
+    pData.PREC_DATA = ret[1]
+    
+    return CVSPILS_SUCCESS
+
+cdef int cv_prec_solve(realtype t, N_Vector yy, N_Vector fyy,
+				  N_Vector rr, N_Vector z,
+				  realtype gamma, realtype delta,
+				  int lr, void *problem_data, N_Vector tmp):
+    """
+    For information see CVODES documentation 4.6.8
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y   = nv2arr(yy)
+    cdef N.ndarray r   = nv2arr(rr)
+    cdef N.ndarray fy  = nv2arr(fyy)
+    cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
+    cdef int i
+
+    try:
+        zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta,pData.PREC_DATA)
+    except:
+        return CV_REC_ERR #Recoverable Error (See Sundials description)
+                
+    for i in range(pData.dim):
+        zptr[i] = zres[i]
+    
+    return CVSPILS_SUCCESS
 
 """
 cdef int cv_prec(realtype t, N Vector yv, N Vector fyv, 
@@ -377,6 +424,8 @@ cdef class ProblemData:
         void *JAC          #Should store the jacobian
         void *JACV         #Should store the jacobian times a vector
         void *SENS         #Should store the sensitivity function
+        void *PREC_SOLVE   #Should store the preconditioner solve function
+        void *PREC_SETUP   #Should store the preconditioner setup function
         void *y            #Temporary storage for the states
         void *yd           #Temporary storage for the derivatives
         void *sw           #Storage for the switches
@@ -389,7 +438,8 @@ cdef class ProblemData:
         int memSizeRoot    #dimRoot*sizeof(realtype) used when copying memory
         int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
         int verbose        #Defines the verbosity
-        
+        object PREC_DATA   #Arbitrary data from the preconditioner
+
 #=================
 # Module functions
 #=================

@@ -58,7 +58,7 @@ def run_example(with_plots=True):
     imp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
     imp_sim.algvar = [1.0,1.0,0.0]
     imp_sim.suppress_alg = False #Suppres the algebraic variables on the error test
-    imp_sim.continuous_output = True #Store data continuous during the simulation
+    imp_sim.report_continuously = True #Store data continuous during the simulation
     imp_sim.pbar = p0
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
 

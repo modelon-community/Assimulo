@@ -23,6 +23,14 @@ from assimulo.examples import *
 class Test_Examples:
     
     @testattr(stddist = True)
+    def test_cvode_with_preconditioning(self):
+        cvode_with_preconditioning.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
+    def test_dasp3_basic(self):
+        dasp3_basic.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
     def test_cvode_gyro(self):
         cvode_gyro.run_example(with_plots=False)
     
@@ -59,12 +67,20 @@ class Test_Examples:
         euler_basic.run_example(with_plots=False)
         
     @testattr(stddist = True)
+    def test_euler_with_disc(self):
+        euler_with_disc.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
     def test_rungekutta4_basic(self):
         rungekutta4_basic.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_rungekutta34_basic(self):
         rungekutta34_basic.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_rungekutta34_with_disc(self):
+        rungekutta34_with_disc.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_ida_with_disc(self):
@@ -87,12 +103,20 @@ class Test_Examples:
         radau5ode_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
+    def test_radau5ode_with_disc(self):
+        radau5ode_with_disc.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
     def test_radau5dae_vanderpol(self):
         radau5dae_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_dopri5_basic(self):
         dopri5_basic.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_dopri5_with_disc(self):
+        dopri5_with_disc.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_rodasode_vanderpol(self):
@@ -152,3 +176,11 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_euler_vanderpol(self):
         euler_vanderpol.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_cvode_basic_backward(self):
+        cvode_basic_backward.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_ida_basic_backward(self):
+        ida_basic_backward.run_example(with_plots=False)

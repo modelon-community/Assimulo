@@ -164,9 +164,12 @@ cdef class cExplicit_Problem(cProblem):
             return ID_FAIL
         return ID_OK
         
-    cpdef N.ndarray res(self, t, y, yd):
-        return yd-self.rhs(t,y)        
-            
+    cpdef N.ndarray res(self, t, y, yd, sw=None):
+        if sw == None:
+            return yd-self.rhs(t,y)
+        else:
+            return yd-self.rhs(t, y, sw)
+        
 cdef class cDelay_Explicit_Problem(cExplicit_Problem):
     def __init__(self, object rhs=None, y0=None, phi = None, arglag = None, lagcompmap = None, jaclag = None, nlags = None, njacl = None, double t0=0.0, p0=None, sw0=None):
         cExplicit_Problem.__init__(self, rhs, y0, t0, p0, sw0)
@@ -185,7 +188,7 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
 
 cdef class cSingPerturbed_Problem(cExplicit_Problem):
     
-    def __init__(self, rhs1=None, rhs2=None, eps=None, yy0=None, zz0=None, double t0=0.0):
+    def __init__(self, rhs1=None, rhs2=None, yy0=None, zz0=None, double t0=0.0, eps=None, ):
         if rhs1 != None:
             self.rhs1 = rhs1
         if rhs2 != None:
@@ -193,15 +196,20 @@ cdef class cSingPerturbed_Problem(cExplicit_Problem):
         if eps != None:
             self.eps = eps
         if yy0 != None:
-            self.yy0 = yy0    
+            self.yy0 = set_type_shape_array(yy0)
         if zz0 != None:
-            self.zz0 = zz0
+            self.zz0 = set_type_shape_array(zz0)
         # preparing things so that the problem also describes a 
-        # classical explicit problem without exposing teh structure
-        # of a singularly perturped problem    
-        y0=N.hstack((yy0,zz0))
-        self.n = len(yy0)
-        self.m = len(zz0)
+        # classical explicit problem without exposing the structure
+        # of a singularly perturbed problem
+        if yy0 != None and zz0 != None:
+            y0 = N.hstack((self.yy0,self.zz0))
+        elif yy0 != None:
+            y0 = self.yy0
+        elif zz0 != None:
+            y0 = self.zz0
+        self.n = len(self.yy0) if yy0 != None else 0
+        self.m = len(self.zz0) if zz0 != None else 0
         cExplicit_Problem.__init__(self, y0=y0, t0=t0)   
         
     def rhs(self,t,y):

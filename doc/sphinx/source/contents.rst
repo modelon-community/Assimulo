@@ -22,6 +22,7 @@ Contents
    code
    changelog
    tutorial
+   museum
 
 
 .. toctree::

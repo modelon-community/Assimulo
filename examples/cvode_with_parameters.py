@@ -63,7 +63,7 @@ def run_example(with_plots=True):
     exp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
     exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
-    exp_sim.continuous_output = True
+    exp_sim.report_continuously = True
 
     #Simulate
     t, y = exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
