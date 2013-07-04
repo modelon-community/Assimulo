@@ -4,12 +4,8 @@
   <h1>Welcome</h1>
     
 
- 
-     
-    <p>
-    Assimulo is a Cython/Python based simulation package for solving explicit ordinary differential equations (ODEs) and implicit ordinary differential equations (DAEs). The idea with Assimulo is to create a basis for simulating differential equations and to be easily extended with other solvers. Currently Assimulo wraps the C-based <a target="_parent" href="https://computation.llnl.gov/casc/sundials/main.html">Sundials</a> solvers, IDA and CVode and the FORTRAN-based solvers Radau5, Rodas and Dopri5 by <a href="http://www.unige.ch/~hairer/software.html">Hairer</a>, LSODAR from <a href="http://computation.llnl.gov/casc/odepack/odepack_home.html">ODEPACK</a>. There is also support for Explicit/Implicit Euler, RungeKutta of order 4 and adaptive RungeKutta of order 4. The package is created around a core for explicit and implicit problems respectively from where the solvers is connected. To be extendable, Assimulo is also appended with a problem class.
-    </p>
-	
+    <p>Assimulo is a simulation package for solving ordinary differential equations. It is written in the high-level programming language Python and combines a variety of different solvers written in FORTRAN, C and even Python via a common high-level interface. The primary aim of Assimulo is not to develop new integration algorithms. The aim is to provide a high-level interface for a wide variety of solvers, both new and old, solvers of industrial standards as well as experimental solvers. The aim is to allow comparison of solvers for a given problem without the need to define the problem in a number of different programming languages to accommodate the different solvers.</p>
+
 	<p>
 	Assimulo was created from a collaboration between the <a target="_parent" href="http://www.maths.lth.se/na/">Department of Numerical Analysis</a> and the <a target="_parent" href="http://www.control.lth.se/">Department of Automatic Control</a> at Lund University together with the company <a target="_parent" href="http://www.modelon.se/">Modelon AB</a>. The main contributors have been <em>Christian Andersson</em>, <em>Claus Führer</em>, <em>Johan Åkesson</em> and <em>Magnus Gäfvert</em>.
 	</p>
@@ -23,32 +19,17 @@
   <table class="contentstable" align="center" style="margin-left: 30px"><tr>
     <td width="50%" valign="top">
         <ul>
-            <li><b>Explicit ODEs:</b>
+            <li><b>Multistep methods:</b>
                 <ul>
                     <li><a class="biglink" href="{{ pathto("ODE_CVode") }}">CVode</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_ExplicitEuler") }}">Explicit Euler</a>
+                    <li><a class="biglink" href="{{ pathto("DAE_IDA") }}">IDA</a>
                     </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_ImplicitEuler") }}">Implicit Euler</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta4") }}">Runge-Kutta4</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
-                    </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
-                    </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
-                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_OVER_ODASSL") }}">ODASSL</a>
                     </li>
                     <li><a class="biglink" href="{{ pathto("ODE_LSODAR") }}">LSODAR</a>
                     </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_SING_DASP3ODE") }}">DASP3ODE</a>
+                    <li><a class="biglink" href="{{ pathto("DAE_GLIMDA") }}">GLIMDA</a>
                     </li>
                 </ul>
             </li>
@@ -56,15 +37,25 @@
     </td>
     <td width="50%" valign="top">
         <ul>
-            <li><b>Implicit ODEs:</b>
+            <li><b>One-step methods:</b>
                 <ul>
-                    <li><a class="biglink" href="{{ pathto("DAE_IDA") }}">IDA</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_ExplicitEuler") }}">Explicit Euler</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_ImplicitEuler") }}">Implicit Euler</a>
                     </li>
                     <li><a class="biglink" href="{{ pathto("DAE_Radau5DAE") }}">Radau5DAE</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("DAE_GLIMDA") }}">GLIMDA</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta4") }}">Runge-Kutta4</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("DAE_OVER_ODASSL") }}">ODASSL</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_SING_DASP3ODE") }}">DASP3ODE</a>
                     </li>
                 </ul>
             </li>
