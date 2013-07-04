@@ -19,32 +19,17 @@
   <table class="contentstable" align="center" style="margin-left: 30px"><tr>
     <td width="50%" valign="top">
         <ul>
-            <li><b>Explicit ODEs:</b>
+            <li><b>Multistep methods:</b>
                 <ul>
                     <li><a class="biglink" href="{{ pathto("ODE_CVode") }}">CVode</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_ExplicitEuler") }}">Explicit Euler</a>
+                    <li><a class="biglink" href="{{ pathto("DAE_IDA") }}">IDA</a>
                     </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_ImplicitEuler") }}">Implicit Euler</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta4") }}">Runge-Kutta4</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
-                    </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
-                    </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
-                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_OVER_ODASSL") }}">ODASSL</a>
                     </li>
                     <li><a class="biglink" href="{{ pathto("ODE_LSODAR") }}">LSODAR</a>
                     </li>
-                    </li>
-                    <li><a class="biglink" href="{{ pathto("ODE_SING_DASP3ODE") }}">DASP3ODE</a>
+                    <li><a class="biglink" href="{{ pathto("DAE_GLIMDA") }}">GLIMDA</a>
                     </li>
                 </ul>
             </li>
@@ -52,15 +37,25 @@
     </td>
     <td width="50%" valign="top">
         <ul>
-            <li><b>Implicit ODEs:</b>
+            <li><b>One-step methods:</b>
                 <ul>
-                    <li><a class="biglink" href="{{ pathto("DAE_IDA") }}">IDA</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_ExplicitEuler") }}">Explicit Euler</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_ImplicitEuler") }}">Implicit Euler</a>
                     </li>
                     <li><a class="biglink" href="{{ pathto("DAE_Radau5DAE") }}">Radau5DAE</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("DAE_GLIMDA") }}">GLIMDA</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta4") }}">Runge-Kutta4</a>
                     </li>
-                    <li><a class="biglink" href="{{ pathto("DAE_OVER_ODASSL") }}">ODASSL</a>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_SING_DASP3ODE") }}">DASP3ODE</a>
                     </li>
                 </ul>
             </li>
