@@ -384,6 +384,55 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
         return IDA_SUCCESS
     except:
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
+
+cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv, N_Vector Jv, realtype cj,
+				    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the Assimulo.Problem.jacv to the Sundials
+    Jacobian times vector function.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y  = nv2arr(yy)
+    cdef N.ndarray yd = nv2arr(yp)
+    cdef N.ndarray v  = nv2arr(vv)
+    cdef N.ndarray res = nv2arr(rr)
+    cdef int i
+    
+    cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
+    
+    if pData.dimSens>0: #Sensitivity activated
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,sw=<list>pData.sw,p=p)
+            else:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,p=p)
+        
+            for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC 
+    else:
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,sw=<list>pData.sw)
+            else:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj)
+            
+            for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC
     
 
 # Error handling callback functions

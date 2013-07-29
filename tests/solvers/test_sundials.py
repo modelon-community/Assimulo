@@ -63,14 +63,17 @@ class Test_CVode:
         assert qlast == 4
         
     @testattr(stddist = True)
-    def test_get_current_order(self):
-        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+    def test_get_current_order(self):  
         
+        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+
         self.simulator.simulate(1.0)
         
         qcur = self.simulator.get_current_order()
         assert qcur == 4
-    
+
+
+        
     @testattr(stddist = True)
     def test_init(self):
         """
