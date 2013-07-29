@@ -313,6 +313,15 @@ cdef extern from "idas/idas_dense.h":
                    N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
                    N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
+    
+cdef extern from "idas/idas_dense.h":
+    int IDASpgmr(void *ida_mem, int max1)
+    ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
+    int IDASpilsSetJacTimesVecFn(void *ida_mem, IDASpilsJacTimesVecFn ida_jacv)
+    
+cdef extern from "idas/idas_spils.h":
+    int IDASpilsGetNumJtimesEvals(void *ida_mem, long int *njvevals) #Number of jac*vector
+    int IDASpilsGetNumResEvals(void *ida_mem, long int *nfevalsLS) #Number of rhs due to jac*vector
 
 #=========================
 # END SUNDIALS DEFINITIONS

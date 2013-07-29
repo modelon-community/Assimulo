@@ -84,11 +84,12 @@ cdef class IDA(Implicit_ODE):
         self.options["tout1"] = 0.0001       #Direction of initial calculation
         self.options["suppress_alg"] = False #Turn on or off the local error test on algebraic variables
         self.options["suppress_sens"] = False #Turn on or off the local error test on the sensitivity variables
+        self.options["linear_solver"] = "DENSE"
         self.options["maxsteps"] = 10000     #Maximum number of steps
         self.options["maxh"] = 0.0           #Maximum step-size
         self.options["maxord"] = 5           #Maximum order of method
         self.options["maxcorS"] = 3          #Maximum number of nonlinear iteration for sensitivity variables
-        self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
+        self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["inith"] = 0.0          #Initial step-size
         self.options["algvar"] = N.array([1.0]*self.problem_info["dim"])
@@ -114,6 +115,8 @@ cdef class IDA(Implicit_ODE):
         self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
         self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
         self.statistics["nstateevents"] = 0 #Number of state events
+        self.statistics["njvevals"]   = 0 #Number of J*v evals
+        self.statistics["njvefevalsLS"]  = 0 #Number of res evals during J*v evals
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -152,7 +155,7 @@ cdef class IDA(Implicit_ODE):
             self.pData.memSizeRoot = self.pData.dimRoot*sizeof(realtype) 
     
         if self.problem_info["jac_fcn"] is True: #Sets the jacobian 
-            self.pt_jac = self.problem.jac
+            self.pt_jac = self.problem.jac 
             self.pData.JAC = <void*>self.pt_jac#<void*>self.problem.jac
             self.pData.memSizeJac = self.pData.dim*self.pData.dim*sizeof(realtype)
         
@@ -273,7 +276,23 @@ cdef class IDA(Implicit_ODE):
             flag = Sun.IDADense(self.ida_mem, self.pData.dim)
             if flag < 0:
                 raise IDAError(flag, self.t)
-            
+                
+                    #Choose a linear solver if and only if NEWTON is choosen
+            if self.options["linear_solver"] == 'DENSE':
+                #Specify the use of the internal dense linear algebra functions.
+                flag = Sun.IDADense(self.ida_mem, self.pData.dim)
+                if flag < 0:
+                    raise IDAError(flag, self.t)
+                        
+            elif self.options["linear_solver"] == 'SPGMR':
+                #Specify the use of SPGMR linear solver.
+                flag = Sun.IDASpgmr(self.ida_mem, 0) #0 == Default krylov iterations
+                if flag < 0: 
+                    raise IDAError(flag, self.t)
+                
+            else:
+                raise IDAError(100,self.t) #Unknown error message
+                
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 if self.options["external_event_detection"]:
@@ -305,16 +324,30 @@ cdef class IDA(Implicit_ODE):
                 if flag < 0:
                     raise IDAError(flag, self.t)
         
-        #Specify the jacobian to the solver
-        if self.pData.JAC != NULL and self.options["usejac"]:
-            
-            flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
-            if flag < 0:
-                raise IDAError(flag,t0)
+        if self.options["linear_solver"] == 'DENSE':
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL and self.options["usejac"]:
+                
+                flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
+                if flag < 0:
+                    raise IDAError(flag,self.t)
+            else:
+                flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, NULL)
+                if flag < 0:
+                    raise IDAError(flag,self.t)
+                    
+        elif self.options["linear_solver"] == 'SPGMR':
+            #Specify the jacobian times vector function
+            if self.pData.JACV != NULL and self.options["usejac"]:
+                flag = Sun.IDASpilsSetJacTimesVecFn(self.ida_mem, ida_jacv);
+                if flag < 0:
+                    raise IDAError(flag, self.t)
+            else:
+                flag = Sun.IDASpilsSetJacTimesVecFn(self.ida_mem, NULL);
+                if flag < 0:
+                    raise IDAError(flag, self.t)
         else:
-            flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, NULL)
-            if flag < 0:
-                raise IDAError(flag,t0)
+            raise IDAError(100, self.t)
         
         #Set the user data
         flag = Sun.IDASetUserData(self.ida_mem, <void*>self.pData)
@@ -1034,6 +1067,25 @@ cdef class IDA(Implicit_ODE):
         
     maxh=property(_get_max_h,_set_max_h)
     
+    def _set_linear_solver(self, lsolver):
+        if lsolver.upper() == "DENSE" or lsolver.upper() == "SPGMR":
+            self.options["linear_solver"] = lsolver.upper()
+        else:
+            raise Exception('The linear solver must be either "DENSE" or "SPGMR".')
+        
+    def _get_linear_solver(self):
+        """
+        Specifies the linear solver to be used.
+        
+            Parameters::
+            
+                linearsolver
+                        - Default 'DENSE'. Can also be 'SPGMR'.
+        """
+        return self.options["linear_solver"]
+    
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
+    
     def _set_algvar(self,algvar):
         self.options["algvar"] = N.array(algvar,dtype=N.float) if len(N.array(algvar,dtype=N.float).shape)>0 else N.array([algvar],dtype=N.float)
         
@@ -1274,6 +1326,7 @@ cdef class IDA(Implicit_ODE):
         cdef long int nniters = 0, nncfails = 0, ngevals = 0
         cdef long int nSniters = 0, nSncfails = 0, njevals = 0, nrevalsLS = 0
         cdef long int nfSevals = 0, nfevalsS = 0, nSetfails = 0, nlinsetupsS = 0
+        cdef long int njvevals = 0, nfevalsLS = 0
         cdef int klast, kcur
         cdef realtype hinused, hlast, hcur, tcur
         
@@ -1281,8 +1334,15 @@ cdef class IDA(Implicit_ODE):
                                          &klast, &kcur, &hinused, &hlast, &hcur, &tcur)
         flag = Sun.IDAGetNonlinSolvStats(self.ida_mem, &nniters, &nncfails)
         flag = Sun.IDAGetNumGEvals(self.ida_mem, &ngevals)
-        flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
-        flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+        #flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
+        #flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+        
+        if self.options["linear_solver"] == "SPGMR":
+            flag = Sun.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
+            flag = Sun.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
+        else:
+            flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
+            flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
         
         if return_flag == IDA_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
@@ -1295,6 +1355,8 @@ cdef class IDA(Implicit_ODE):
         self.statistics["ngevals"] += ngevals
         self.statistics["njevals"] += njevals
         self.statistics["nfevalsLS"] += nrevalsLS
+        self.statistics["njvevals"] += njvevals
+        self.statistics["njvefevalsLS"] += nfevalsLS
         
         #If sensitivity    
         if self.pData.dimSens > 0:
@@ -1315,8 +1377,15 @@ cdef class IDA(Implicit_ODE):
         
         self.log_message(' Number of Steps                          : '+ str(self.statistics["nsteps"]),         verbose)               
         self.log_message(' Number of Function Evaluations           : '+ str(self.statistics["nfevals"]),        verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),        verbose)
-        self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),      verbose)
+        if self.options["linear_solver"] == "SPGMR":
+            self.log_message(' Number of Jacobian*Vector Evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
+            self.log_message(' Number of F-Evals During Jac*Vec-Evals   : ' + str(self.statistics["njvefevalsLS"]), verbose)
+        else:     
+            self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
+            self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
+            
+        #self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),        verbose)
+        #self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),      verbose)
         self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
         self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
         self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)

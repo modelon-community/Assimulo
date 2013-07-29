@@ -53,6 +53,10 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_cvode_with_jac_spgmr(self):
         cvode_with_jac_spgmr.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
+    def test_ida_with_jac_spgmr(self):
+        ida_with_jac_spgmr.run_example(with_plots=False)
     
     @testattr(stddist = True)
     def test_cvode_with_parameters(self):
