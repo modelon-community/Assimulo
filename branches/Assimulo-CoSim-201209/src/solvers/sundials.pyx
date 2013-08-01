@@ -1572,6 +1572,8 @@ cdef class CVode(Explicit_ODE):
         
         self.yTemp = arr2nv(self.y)
         
+        #print "Initialize: ", self.t, self.y
+        
         if self.pData.dimSens > 0:
             #Create the initial matrices
             self.ySO  = N_VCloneVectorArray_Serial(self.pData.dimSens, self.yTemp)
@@ -1725,15 +1727,10 @@ cdef class CVode(Explicit_ODE):
         cdef list tr = [], yr = []
         cdef N_Vector yout
         
-        #if y0 != None:
-        #    yout = arr2nv(y0)
-        #else:
-        #    yout = self.yTempOut
-        
+
         #Initialize? 
         if initialize:
             self.initialize() 
-            #self.initialize_cvode() 
             self.initialize_options()
             
         yout = self.yTemp
@@ -1771,6 +1768,10 @@ cdef class CVode(Explicit_ODE):
         #Deallocate
         #N_VDestroy_Serial(yout)
         self.yTemp = yout
+        #print "Finialized do step: ", tr[-1], yr[-1]
+        #self.y = nv2arr(self.yTemp)
+        self.t = tr[-1]
+        self.y = yr[-1]
         #self.problem.handle_result(self,t,y)
         
         return tr, N.array(yr)
@@ -1882,6 +1883,9 @@ cdef class CVode(Explicit_ODE):
         
         
         #d_pivots?
+        
+        state.t = self.t
+        state.y = self.y.copy()
         
         return state
         
@@ -1995,7 +1999,8 @@ cdef class CVode(Explicit_ODE):
         for i in range(cvode_dls_memory.d_savedJ.ldata):
             cvode_dls_memory.d_savedJ.data[i] = state.cv_lmem.d_savedJ[i]
         
-    
+        self.t = state.t
+        self.y = state.y.copy()
     
     
     cpdef initialize(self):
