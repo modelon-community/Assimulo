@@ -1454,6 +1454,7 @@ cdef class CVode(Explicit_ODE):
         self.options["atol"] = N.array([1.0e-6]*self.problem_info["dim"])        #The absolute tolerance
         self.options["rtol"] = 1.0e-6        #The relative tolerance
         self.options["maxh"] = 0.0           #Maximum step-size
+        self.options["minh"] = 0.0           #Minimal step-size
         self.options["inith"] = 0.0          #Initial step-size
         self.options["maxord"] = 5        #Maximum order allowed
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
@@ -2078,6 +2079,11 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag)
             
+        #Minimum step
+        flag = Sun.CVodeSetMinStep(self.cvode_mem, self.options["minh"])
+        if flag < 0:
+            raise CVodeError(flag)
+            
         #Maximum Number of steps
         flag = Sun.CVodeSetMaxNumSteps(self.cvode_mem, self.options["maxsteps"])
         if flag < 0:
@@ -2397,6 +2403,31 @@ cdef class CVode(Explicit_ODE):
         return self.options["maxh"]
         
     maxh=property(_get_max_h,_set_max_h)
+    
+    def _set_min_h(self,min_h):
+        try:
+            self.options["minh"] = float(min_h)
+        except:
+            raise Exception("Minimal stepsize must be a (scalar) float.")
+    
+    def _get_min_h(self):
+        """
+        Defines the minimal step-size that is to be used by the solver.
+        
+            Parameters::
+            
+                minh    
+                        - Default '0'.
+                          
+                        - Should be a float.
+                        
+                            Example:
+                                minh = 0.01
+                                
+        """
+        return self.options["minh"]
+        
+    minh=property(_get_min_h,_set_min_h)
     
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
