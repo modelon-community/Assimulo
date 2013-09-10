@@ -100,6 +100,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetMaxOrd(void *cvode_mem, int maxord)
     int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps)
     int CVodeSetMaxStep(void   *cvode_mem, realtype hmax)
+    int CVodeSetMinStep(void   *cvode_mem, realtype hmin)
     int CVodeSetInitStep(void  *cvode_mem, realtype hin)
     int CVodeSStolerances(void *cvode_mem, realtype reltol, realtype abstol)
     int CVodeSVtolerances(void *cvode_mem, realtype reltol, N_Vector abstol)
