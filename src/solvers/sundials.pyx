@@ -1845,7 +1845,7 @@ cdef class CVode(Explicit_ODE):
     cpdef integrate(self,double t,N.ndarray[ndim=1, dtype=realtype] y,double tf,dict opts):
         cdef int flag, output_index, normal_mode
         cdef N_Vector yout
-        cdef double tret = 0.0, tout
+        cdef double tret = self.t, tout
         cdef list tr = [], yr = []
         cdef N.ndarray output_list
         
