@@ -29,7 +29,8 @@ cdef class ODE:
     cdef public double t, t0
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
-    cdef double elapsed_step_time
+    cdef double elapsed_step_time, time_integration_start
+    cdef int time_limit_activated
     cdef double clock_start
     cdef public object _event_info
     

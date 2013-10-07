@@ -125,6 +125,19 @@ class Test_CVode:
         
         assert nevent == 5
     
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        f = lambda t,y: -y
+        
+        exp_mod = Explicit_Problem(f,1.0)
+        exp_sim = CVode(exp_mod)
+        
+        exp_sim.maxh = 1e-8
+        exp_sim.time_limit = 1 #One second
+        exp_sim.report_continuously = True
+        
+        nose.tools.assert_raises(TimeLimitExceeded, exp_sim.simulate, 1)
+    
     @testattr(stddist = True)    
     def test_discr_method(self):
         """
@@ -482,6 +495,19 @@ class Test_IDA:
         
         self.problem = Implicit_Problem(f,y0,yd0)
         self.simulator = IDA(self.problem)
+    
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        f = lambda t,y,yd: yd-y
+        
+        exp_mod = Implicit_Problem(f,1.0,1.0)
+        exp_sim = IDA(exp_mod)
+        
+        exp_sim.maxh = 1e-8
+        exp_sim.time_limit = 1 #One second
+        exp_sim.report_continuously = True
+        
+        nose.tools.assert_raises(TimeLimitExceeded, exp_sim.simulate, 1)
     
     @testattr(stddist = True)
     def test_simulate_explicit(self):

@@ -21,6 +21,9 @@ class AssimuloException(Exception):
 
 class TerminateSimulation(AssimuloException):
     pass
+    
+class TimeLimitExceeded(AssimuloException):
+    pass
 
 class DiscardValue(AssimuloException):
     pass

@@ -40,7 +40,7 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True}
+        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
@@ -289,6 +289,27 @@ cdef class ODE:
         return self.options["verbosity"]
     
     verbosity = property(_get_verbosity,_set_verbosity)
+    
+    def _set_time_limit(self, time_limit):
+        if time_limit < 0:
+            raise AssimuloException("The time limit must be positive or zero.")
+        self.options["time_limit"] = time_limit
+        
+    def _get_time_limit(self):
+        """
+        This option can be used to limit the time of an integration. I.e
+        to set an upper bound on the time allowed for the integration
+        to be completed. The time limit is specified in seconds. For the
+        limit to be checked, the option report_continuously must be True.
+        
+            Parameters::
+            
+                time_limit
+                            - Default 0, i.e. NO limit.
+        """
+        return self.options["time_limit"]
+    
+    time_limit = property(_get_time_limit, _set_time_limit)
     
     def _set_report_continuously(self, report_continuously):
         self.options["report_continuously"] = bool(report_continuously)
