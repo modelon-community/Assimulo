@@ -24,7 +24,7 @@ import numpy as N
 cimport numpy as N
 
 from exception import *
-from time import clock
+from time import clock, time
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -148,7 +148,10 @@ cdef class Explicit_ODE(ODE):
         opts["output_index"] = 0
         opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
         output_index = 0
-
+        
+        self.time_limit_activated = 1 if self.time_limit > 0 else 0
+        self.time_integration_start = time()
+        
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
 
             #Time event function is specified
@@ -221,6 +224,11 @@ cdef class Explicit_ODE(ODE):
         self.elapsed_step_time = clock() - self.clock_start
         self.clock_start = clock()
         
+        #Check elapsed timed
+        if self.time_limit_activated:
+            if self.time_limit-(time()-self.time_integration_start) < 0.0:
+                raise TimeLimitExceeded("The time limit was exceeded at integration time %f."%self.t)
+        
         #Store data depending on situation
         if opts["output_list"] != None:
             output_list = opts["output_list"]
@@ -233,14 +241,13 @@ cdef class Explicit_ODE(ODE):
             except IndexError:
                 pass
             opts["output_index"] = output_index
-            
 
         else:
             self.problem.handle_result(self,t,y.copy())
         
-        #Callback to FMU
+        #Callback to the problem
         if self.problem_info["step_events"]:
-            flag_initialize = self.problem.step_events(self) #completed step returned to FMU
+            flag_initialize = self.problem.step_events(self) #completed step returned to the problem
         else:
             flag_initialize = False
             
