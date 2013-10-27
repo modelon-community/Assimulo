@@ -416,6 +416,12 @@ cdef class ODE:
             print 'Time, t = %e'%i[0]
             print '  Event info, ', i[1]
         print 'Number of events: ', len(self.event_data)
+        
+    def print_statistics(self, verbose=NORMAL):
+        """
+        This method should print the statistics of the solver.
+        """
+        pass
     
     cpdef get_elapsed_step_time(self):
         """
