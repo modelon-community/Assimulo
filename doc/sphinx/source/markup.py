@@ -151,7 +151,7 @@ def mark_solvers():
                 file.write('- :class:`'+solver_name+'.make_consistent <assimulo.solvers.'+module_name+'.'+solver_name+'.make_consistent>` Directs IDA to try to calculate consistent initial conditions.\n')
             
         file.write('\nSimulate the problem:\n\n')
-        file.write('    :class:`'+str_ret+solver_name+'.simulate(tfinal, ncp) <assimulo.solvers.'+module_name+'.'+solver_name+'.simulate>` \n\n')
+        file.write('    :class:`'+str_ret+solver_name+'.simulate(tfinal, ncp, ncp_list) <assimulo.solvers.'+module_name+'.'+solver_name+'.simulate>` \n\n')
         
         #file.write('Plot the solution.\n\n')
         #file.write('    :class:`'+solver_name+'.plot() <assimulo.solvers.'+module_name+'.'+solver_name+'.plot>`\n\n')
