@@ -97,7 +97,17 @@ for x in S.argv[1:]:
             num_level = 30
         L.basicConfig(level=num_level)
         copy_args.remove(x)
-        
+
+def check_platform():
+    platform = None
+    if sys.platform == 'win32':
+        platform = "win"
+    elif sys.platform == 'darwin':
+        platform = "mac"
+    else:
+        platform = "linux"
+    return platform
+
 def pre_processing():
     join = O.path.join
     
@@ -363,15 +373,15 @@ def check_fortran_extensions():
 
     config.add_extension('assimulo.lib.dopri5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                         ,extra_link_args=extra_link_flags)#include_dirs=[N.get_include()])
+                         ,extra_link_args=extra_link_flags[:])#include_dirs=[N.get_include()])
     
     config.add_extension('assimulo.lib.rodas',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
 
     config.add_extension('assimulo.lib.radar5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
@@ -381,7 +391,7 @@ def check_fortran_extensions():
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
     #ODEPACK
     config.add_extension('assimulo.lib.odepack',
@@ -389,7 +399,7 @@ def check_fortran_extensions():
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     #ODASSL
     odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
@@ -397,7 +407,7 @@ def check_fortran_extensions():
                   'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
     config.add_extension('assimulo.lib.odassl',
                          sources=[odassl_dir+file for file in odassl_files],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     #DASP3
     if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
@@ -406,7 +416,7 @@ def check_fortran_extensions():
                        'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
         config.add_extension('assimulo.lib.dasp3dp',
                               sources=[dasp3_dir+file for file in dasp3_files],
-                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
     else:
         L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
@@ -420,7 +430,7 @@ def check_fortran_extensions():
     else: #Try to see if Lapack exists in PATH
         name = ctypes.util.find_library("lapack")
         if name != None:
-            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
             lapack = True
     if BLASdir != "":
         blas = True
@@ -428,13 +438,13 @@ def check_fortran_extensions():
     else: #Try to see if Blas exists in PATH
         name = ctypes.util.find_library("blas")
         if name != None:
-            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
             blas = True
     
     if lapack and blas:
         config.add_extension('assimulo.lib.glimda',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
