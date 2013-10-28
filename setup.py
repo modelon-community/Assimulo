@@ -20,6 +20,7 @@ import numpy as N
 import logging as L
 import sys as S
 import os as O
+import os
 import shutil as SH
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
@@ -438,7 +439,7 @@ def check_fortran_extensions():
     else: #Try to see if Lapack exists in PATH
         name = ctypes.util.find_library("lapack")
         if name != None:
-            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
             lapack = True
     if BLASdir != "":
         blas = True
@@ -446,7 +447,7 @@ def check_fortran_extensions():
     else: #Try to see if Blas exists in PATH
         name = ctypes.util.find_library("blas")
         if name != None:
-            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
             blas = True
     
     if lapack and blas:
