@@ -100,9 +100,9 @@ for x in S.argv[1:]:
 
 def check_platform():
     platform = None
-    if sys.platform == 'win32':
+    if S.platform == 'win32':
         platform = "win"
-    elif sys.platform == 'darwin':
+    elif S.platform == 'darwin':
         platform = "mac"
     else:
         platform = "linux"
@@ -240,6 +240,8 @@ def check_extensions():
             i.extra_link_args = ["-g"]
         else:
             i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+        if check_platform() == "mac":
+            i.extra_compile_args += ["-Wno-error=return-type"]
             
     #If Sundials
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -251,6 +253,8 @@ def check_extensions():
             ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
         else:
             ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+        if check_platform() == "mac":
+            ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -284,6 +288,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if check_platform() == "mac":
+                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
                 
         else:
             #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
@@ -301,6 +307,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if check_platform() == "mac":
+                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
     
     for i in ext_list:
         i.extra_link_args += extra_link_flags
