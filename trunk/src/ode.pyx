@@ -146,6 +146,10 @@ cdef class ODE:
                           at its internal steps.
                           
                         - Should be an integer.
+                        
+                ncp_list
+                        - Defailt None. A list of time points where the solution
+                          should be returned. Note, requires that ncp == 0.
                           
                     Example:
                     
