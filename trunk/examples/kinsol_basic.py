@@ -15,25 +15,33 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack","radar5","dasp3","odassl"]
+import numpy as N
+import pylab as P
+import nose
+from assimulo.solvers import KINSOL
+from assimulo.problem import Algebraic_Problem
 
-#Import all the solvers from the different modules
-from euler import ExplicitEuler, ImplicitEuler
-from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
-from sundials import IDA, CVode
-from kinsol import KINSOL
-from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
-from rosenbrock import RodasODE
-from odassl import ODASSL
-from odepack import LSODAR
-from radar5 import Radar5ODE
-try:
-    from dasp3 import DASP3ODE
-except ImportError:
-    pass
+def run_example(with_plots=True):
+    
+    #Define the res
+    def res(y):
+        return 1-y
+    
+    #Define an Assimulo problem
+    alg_mod = Algebraic_Problem(res, y0=0)
+    alg_mod.name = 'Simple KINSOL Example'
+    
+    #Define the KINSOL solver
+    alg_solver = KINSOL(alg_mod)
+    
+    #Sets the parameters
+    
+    #Solve
+    y = alg_solver.solve()
+    
+    #Basic test
+    nose.tools.assert_almost_equal(y, 1.0, 5)
 
-try:
-    from glimda import GLIMDA
-except ImportError:
-    print "Could not find GLIMDA"
+if __name__=='__main__':
+    run_example()
+
