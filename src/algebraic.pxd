@@ -15,25 +15,24 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack","radar5","dasp3","odassl"]
+import numpy as N
+cimport numpy as N
 
-#Import all the solvers from the different modules
-from euler import ExplicitEuler, ImplicitEuler
-from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
-from sundials import IDA, CVode
-from kinsol import KINSOL
-from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
-from rosenbrock import RodasODE
-from odassl import ODASSL
-from odepack import LSODAR
-from radar5 import Radar5ODE
-try:
-    from dasp3 import DASP3ODE
-except ImportError:
-    pass
+cdef class Algebraic:
+    cdef public object problem
+    cdef public dict options, solver_options, problem_info
+    cdef public dict statistics
+    
+    cdef public N.ndarray y
+    cdef public N.ndarray y0
 
-try:
-    from glimda import GLIMDA
-except ImportError:
-    print "Could not find GLIMDA"
+    cdef _reset_solution_variables(self)
+    
+    cdef double elapsed_step_time
+    cdef double clock_start
+    
+    cpdef log_message(self, message, int level)
+    cpdef solve(self, object y=*)
+    
+    cpdef finalize(self)
+    cpdef initialize(self)

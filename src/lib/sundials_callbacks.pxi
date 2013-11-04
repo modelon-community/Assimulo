@@ -435,6 +435,94 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
             return SPGMR_PSOLVE_FAIL_UNREC
     
 
+cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the assimulo.Problem.jac to the Sundials
+    Jacobian function.
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef realtype* col_i=DENSE_COL(Jacobian,0)
+    cdef N.ndarray x = nv2arr(xv)
+    cdef int i,j
+    
+    try:
+        jac=(<object>pData.JAC)(x)
+
+        for i in range(Neq):
+            col_i = DENSE_COL(Jacobian, i)
+            for j in range(Neq):
+                col_i[j] = jac[j,i]
+
+        return KINDLS_SUCCESS
+    except:
+        return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+
+cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
+    """
+    Residual fct called by KINSOL
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef N.ndarray x = nv2arr(xv)
+    cdef realtype* resptr = (<N_VectorContent_Serial>fval.content).data
+    cdef int i
+
+    try:
+        res = (<object>pData.RES)(x)
+
+        for i in range(pData.dim):
+            resptr[i] = res[i]
+
+        return KIN_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
+        
+cdef void kin_err(int err_code, char *module, char *function, char *msg, void *eh_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+    
+    if err_code > 0: #Warning
+        category = 1
+    elif err_code < 0: #Error
+        category = -1
+    else:
+        category = 0
+    
+    print "Error occured in <function: %s>."%function
+    print "<message: %s>"%msg
+    #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+
+
+cdef void kin_info(char *module, char *function, char *msg, void *eh_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+    
+    print "KinsolInfo"
+    print "<calling_function:%s>"%function
+    print "<message: %s>"%msg
+    """
+    # Get the number of iterations
+    KINGetNumNonlinSolvIters(kin_mem, &nniters)
+    
+    
+    /* Only output an iteration under certain conditions:
+     *  1. nle_solver_log > 2
+     *  2. The calling function is either KINSolInit or KINSol
+     *  3. The message string starts with "nni"
+     *
+     *  This approach gives one printout per iteration
+    
+    
+    if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
+        print "<iteration_index:%d>"%nniters
+        print "ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n);
+        print "<scaled_residual_norm:%E>", kin_mem->kin_fnorm);
+        print "residuals", 
+            realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
+            f[i]*residual_scaling_factors[i]
+    """
+
 # Error handling callback functions
 # =================================
 
@@ -489,6 +577,13 @@ cdef class ProblemData:
         int verbose        #Defines the verbosity
         object PREC_DATA   #Arbitrary data from the preconditioner
 
+cdef class ProblemDataEquationSolver:
+    cdef:
+        void *RES          # Residual
+        void *JAC
+        int dim            # Dimension of the problem
+        void *KIN_MEM      # Kinsol memory
+
 #=================
 # Module functions
 #=================
@@ -501,6 +596,13 @@ cdef inline N_Vector arr2nv(x):
     cdef N_Vector v=N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
+    
+cdef inline void arr2nv_inplace(x, N_Vector out):
+    x=N.array(x)
+    cdef long int n = len(x)
+    cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
+    cdef void* data_ptr=PyArray_DATA(ndx)
+    memcpy((<N_VectorContent_Serial>out.content).data, data_ptr, n*sizeof(realtype))
     
 cdef inline N.ndarray nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length

@@ -234,7 +234,23 @@ def check_extensions():
     
     for i in ext_list:
         i.include_dirs = [N.get_include()]
+            
+    #If Sundials
+    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        #CVode and IDA
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
+        ext_list[-1].library_dirs = [libdirs]
+        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
+        #Kinsol
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"kinsol.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
+        ext_list[-1].library_dirs = [libdirs]
+        ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+
+        
+    for i in ext_list:
         #Debug
         if debug_flag:
             i.extra_compile_args = ["-g","-fno-strict-aliasing"]
@@ -243,19 +259,7 @@ def check_extensions():
             i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
         if check_platform() == "mac":
             i.extra_compile_args += ["-Wno-error=return-type"]
-            
-    #If Sundials
-    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
-        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
-        ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
-        if debug_flag:
-            ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-        else:
-            ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-        if check_platform() == "mac":
-            ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
+
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):

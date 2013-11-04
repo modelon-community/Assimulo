@@ -23,6 +23,15 @@ from assimulo.examples import *
 class Test_Examples:
     
     @testattr(stddist = True)
+    def test_kinsol_basic(self):
+        kinsol_basic.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
+    def test_kinsol_with_jac(self):
+        kinsol_with_jac.run_example(with_plots=False)
+    
+    
+    @testattr(stddist = True)
     def test_cvode_with_preconditioning(self):
         cvode_with_preconditioning.run_example(with_plots=False)
     

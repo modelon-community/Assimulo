@@ -19,6 +19,12 @@
 class AssimuloException(Exception):
     pass 
 
+class Algebraic_Exception(AssimuloException):
+    pass
+    
+class AssimuloRecoverableError(AssimuloException):
+    pass
+
 class TerminateSimulation(AssimuloException):
     pass
     

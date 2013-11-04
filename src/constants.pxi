@@ -18,6 +18,10 @@
 This file contains the constants used in Assimulo.
 """
 
+#LARGE VALUES
+MIN_VALUE = 1e-100
+MAX_VALUE = 1e100
+
 #Return flags
 """
 DEF ID_OK       = 0
