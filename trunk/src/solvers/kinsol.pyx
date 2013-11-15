@@ -55,7 +55,8 @@ cdef class KINSOL(Algebraic):
     cdef N_Vector y_temp, y_scale, f_scale
     cdef public double _eps
     
-    cdef object pt_fcn, pt_jac
+    cdef object pt_fcn, pt_jac, pt_jacv
+    cdef object _added_linear_solver
     
     def __init__(self, problem):
         Algebraic.__init__(self, problem) #Calls the base class
@@ -63,6 +64,7 @@ cdef class KINSOL(Algebraic):
         self.pData = ProblemDataEquationSolver()
         
         self._eps = N.finfo('double').eps
+        self._added_linear_solver = False
         
         #Populate the ProblemData
         self.set_problem_data()
@@ -83,6 +85,7 @@ cdef class KINSOL(Algebraic):
         self.options["max_newton_step"] = 0.0 #Specifies the max allowed newton step
         self.options["no_min_epsilon"] = False #Specifies wheter the scaled linear residual is bounded from below
         self.options["max_beta_fails"] = 10
+        self.options["max_krylov"] = 0
         
         #Statistics
         self.statistics["nfevals"]    = 0 #Function evaluations
@@ -91,6 +94,8 @@ cdef class KINSOL(Algebraic):
         self.statistics["nfevalsLS"]  = 0 #Function evaluations due to Jac
         self.statistics["nbacktr"]    = 0 #The function KINGetNumBacktrackOps returns the number of backtrack operations (step length adjustments) performed by the line search algorithm.
         self.statistics["nbcfails"]   = 0 #The function KINGetNumBetaCondFails returns the number of β-condition failures.
+        self.statistics["nliters"]    = 0
+        self.statistics["nlcfails"]   = 0
         
         #Initialize Kinsol
         self.initialize_kinsol()
@@ -125,7 +130,7 @@ cdef class KINSOL(Algebraic):
             self.options["y_scale"] = N.array([value]) if isinstance(value, float) or isinstance(value, int) else N.array(value)
             
         arr2nv_inplace(self.options["y_scale"], self.y_scale)
-        
+    
     def update_residual_scaling(self, value="Automatic"):
         """
         Updates the residual scaling.
@@ -146,7 +151,11 @@ cdef class KINSOL(Algebraic):
 
         if self.problem_info["jac_fcn"] is True: #Sets the jacobian
             self.pt_jac = self.problem.jac
-            self.pData.JAC = <void*>self.pt_jac#<void*>self.problem.jac
+            self.pData.JAC = <void*>self.pt_jac
+        
+        if self.problem_info["jacv_fcn"] is True: #Sets the jacobian*vector function
+            self.pt_jacv = self.problem.jacv
+            self.pData.JACV = <void*>self.pt_jacv
             
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
@@ -178,6 +187,16 @@ cdef class KINSOL(Algebraic):
             if flag < 0:
                 raise KINSOLError(flag)
             
+        else: #The solver needs not to be reinitialized
+            pass
+            
+        #Set the user data
+        flag = SUNDIALS.KINSetUserData(self.kinsol_mem, <void*>self.pData)
+        if flag < 0:
+            raise KINSOLError(flag)
+            
+    cpdef add_linear_solver(self):
+        if self.options["linear_solver"] == "DENSE":
             flag = SUNDIALS.KINDense(self.kinsol_mem, self.problem_info["dim"])
             if flag < 0:
                 raise KINSOLError(flag)
@@ -186,14 +205,17 @@ cdef class KINSOL(Algebraic):
                 flag = SUNDIALS.KINDlsSetDenseJacFn(self.kinsol_mem, kin_jac);
                 if flag < 0:
                     raise KINSOLError(flag)
+        elif self.options["linear_solver"] == "SPGMR":
+            flag = SUNDIALS.KINSpgmr(self.kinsol_mem, self.options["max_krylov"])
+            if flag < 0:
+                raise KINSOLError(flag)
             
-        else: #The solver needs not to be reinitialized
-            pass
-            
-        #Set the user data
-        flag = SUNDIALS.KINSetUserData(self.kinsol_mem, <void*>self.pData)
-        if flag < 0:
-            raise KINSOLError(flag)
+            if self.problem_info["jacv_fcn"]:    
+                flag = SUNDIALS.KINSpilsSetJacTimesVecFn(self.kinsol_mem, kin_jacv)
+                if flag < 0:
+                    raise KINSOLError(flag)
+        else:
+            raise KINSOLError(-100)
             
     cpdef update_options(self):
         """
@@ -281,6 +303,9 @@ cdef class KINSOL(Algebraic):
         else:
             arr2nv_inplace(self.y, self.y_temp)
             
+        if not self._added_linear_solver:
+            self.add_linear_solver()
+            
         #Update the solver options
         self.update_options()
         
@@ -309,6 +334,7 @@ cdef class KINSOL(Algebraic):
     def store_statistics(self):
         cdef int flag
         cdef long int nfevalsLS, njevals, nbacktr, nbcfails, nniters
+        cdef long int nliters, nlcfails, npevals, npsolves
         cdef long int nfevals
         
         flag = SUNDIALS.KINGetNumFuncEvals(self.kinsol_mem, &nfevals)
@@ -330,17 +356,52 @@ cdef class KINSOL(Algebraic):
         if flag < 0:
             raise KINSOLError(flag)
         self.statistics["nbcfails"] = nbcfails
-            
-        flag = SUNDIALS.KINDlsGetNumJacEvals(self.kinsol_mem, &njevals) #The function KINDlsGetNumJacEvals returns the number of calls to the dense Jacobian approximation function.
-        if flag < 0:
-            raise KINSOLError(flag)
-        self.statistics["njevals"] = njevals
-            
-        flag = SUNDIALS.KINDlsGetNumFuncEvals(self.kinsol_mem, &nfevalsLS) #The function KINDlsGetNumFuncEvals returns the number of calls to the user system function used to compute the difference quotient approximation to the dense or banded Jacobian.
-        if flag < 0:
-            raise KINSOLError(flag)
-        self.statistics["nfevalsLS"] = nfevalsLS
         
+        if self.options["linear_solver"] == "SPGMR":
+            
+            flag = SUNDIALS.KINSpilsGetNumLinIters(self.kinsol_mem, &nliters)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["nliters"] = nliters
+            
+            flag = SUNDIALS.KINSpilsGetNumConvFails(self.kinsol_mem, &nlcfails)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["nlcfails"] = nlcfails
+            
+            flag = SUNDIALS.KINSpilsGetNumPrecEvals(self.kinsol_mem, &npevals)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["npevals"] = npevals
+            
+            flag = SUNDIALS.KINSpilsGetNumPrecSolves(self.kinsol_mem, &npsolves)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["npsolves"] = npsolves
+                
+            flag = SUNDIALS.KINSpilsGetNumJtimesEvals(self.kinsol_mem, &njevals)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["njevals"] = njevals
+            
+            flag = SUNDIALS.KINSpilsGetNumFuncEvals(self.kinsol_mem, &nfevalsLS)
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["nfevalsLS"] = nfevalsLS
+            
+        elif self.options["linear_solver"] == "DENSE":
+        
+            flag = SUNDIALS.KINDlsGetNumJacEvals(self.kinsol_mem, &njevals) #The function KINDlsGetNumJacEvals returns the number of calls to the dense Jacobian approximation function.
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["njevals"] = njevals
+                
+            flag = SUNDIALS.KINDlsGetNumFuncEvals(self.kinsol_mem, &nfevalsLS) #The function KINDlsGetNumFuncEvals returns the number of calls to the user system function used to compute the difference quotient approximation to the dense or banded Jacobian.
+            if flag < 0:
+                raise KINSOLError(flag)
+            self.statistics["nfevalsLS"] = nfevalsLS
+        
+            
     def print_statistics(self, verbose=NORMAL):
         """
         Should print the statistics.
@@ -349,14 +410,22 @@ cdef class KINSOL(Algebraic):
                      
         self.log_message(' Number of Function Evaluations              : '+ str(self.statistics["nfevals"]),   verbose)
         self.log_message(' Number of Nonlinear Iterations              : '+ str(self.statistics["nniters"]),   verbose)
-        self.log_message(' Number of Jacobian Evaluations              : '+ str(self.statistics["njevals"]),   verbose)
-        self.log_message(' Number of F-Eval During Jac-Eval            : '+ str(self.statistics["nfevalsLS"]), verbose)
         self.log_message(' Number of Backtrack Operations (Linesearch) : '+ str(self.statistics["nbacktr"]),   verbose) #The function KINGetNumBacktrackOps returns the number of backtrack operations (step length adjustments) performed by the line search algorithm.
-        self.log_message(' Number of Beta-condition failures           : '+ str(self.statistics["nbcfails"]),  verbose) #The function KINGetNumBetaCondFails returns the number of β-condition failures.
+        self.log_message(' Number of Beta-condition Failures           : '+ str(self.statistics["nbcfails"]),  verbose) #The function KINGetNumBetaCondFails returns the number of β-condition failures.
+        
+        if self.options["linear_solver"] == "SPGMR":
+            self.log_message(' Number of Jacobian*Vector Evaluations       : '+ str(self.statistics["njevals"]),   verbose)
+            self.log_message(' Number of F-Eval During Jac*Vec-Eval        : '+ str(self.statistics["nfevalsLS"]), verbose)
+            self.log_message(' Number of Linear Iterations                 : '+ str(self.statistics["nliters"]), verbose)
+            self.log_message(' Number of Linear Convergence Failures       : '+ str(self.statistics["nlcfails"]), verbose)
+        elif self.options["linear_solver"] == "DENSE":
+            self.log_message(' Number of Jacobian Evaluations              : '+ str(self.statistics["njevals"]),   verbose)
+            self.log_message(' Number of F-Eval During Jac-Eval            : '+ str(self.statistics["nfevalsLS"]), verbose)
         
     
         self.log_message('\nSolver options:\n',                                     verbose)
         self.log_message(' Solver                  : Kinsol',                       verbose)
+        self.log_message(' Linear Solver           : ' + str(self.options["linear_solver"]),                       verbose)
         self.log_message(' Function Tolerances     : ' + str(self.options["ftol"]),  verbose)
         self.log_message(' Step Tolerances         : ' + str(self.options["stol"]),  verbose)
         self.log_message(' Variable Scaling        : ' + str(self.options["y_scale"]),  verbose)
@@ -456,6 +525,53 @@ cdef class KINSOL(Algebraic):
         return self.options["max_beta_fails"]
         
     max_beta_fails = property(_get_max_beta_fails_method,_set_max_beta_fails_method)
+    
+    def _set_linear_solver(self, lsolver):
+        if lsolver.upper() == "DENSE" or lsolver.upper() == "SPGMR":
+            self.options["linear_solver"] = lsolver.upper()
+        else:
+            raise Exception('The linear solver must be either "DENSE" or "SPGMR".')
+        
+    def _get_linear_solver(self):
+        """
+        Specifies the linear solver to be used.
+        
+            Parameters::
+            
+                linearsolver
+                        - Default 'DENSE'. Can also be 'SPGMR'.
+        """
+        return self.options["linear_solver"]
+    
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
+    
+    def _set_max_krylov(self, max_krylov):
+        try:
+            self.options["max_krylov"] = int(max_krylov)
+        except:
+            raise Exception("Maximum number of krylov dimension should be an integer.")
+        if self.options["max_krylov"] < 0:
+            raise Exception("Maximum number of krylov dimension should be an positive integer.")
+            
+    def _get_max_krylov(self):
+        """
+        Specifies the maximum number of dimensions for the krylov subspace to be used.
+        
+            Parameters::
+            
+                    maxkrylov
+                            - A positive integer.
+                            - Default 0
+            
+            Returns::
+            
+                The current value of maxkrylov.
+                
+        See SUNDIALS documentation 'CVSpgmr'
+        """
+        return self.options["max_krylov"]
+    
+    max_dim_krylov_subspace = property(_get_max_krylov, _set_max_krylov)
     
     
 class KINSOLError(Exception):

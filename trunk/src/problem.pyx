@@ -528,12 +528,14 @@ class SingPerturbed_Problem(cSingPerturbed_Problem):
 cdef class cAlgebraic_Problem:
     name = '---'
     
-    def __init__(self, object res, y0, y0_min = None, y0_max=None, y0_nominal=None, object jac=None):
+    def __init__(self, object res, y0, y0_min = None, y0_max=None, y0_nominal=None, object jac=None, object jacv=None):
         
         if res != None:
             self.res = res
         if jac != None:
             self.jac = jac
+        if jacv != None:
+            self.jacv = jacv
         
         if not y0 is None:
             self.y0 = set_type_shape_array(y0)
