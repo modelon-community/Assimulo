@@ -399,6 +399,25 @@ cdef extern from "kinsol/kinsol_direct.h":
 
 cdef extern from "kinsol/kinsol_dense.h":
     int KINDense(void *kinmem, int dim)
+    
+cdef extern from "kinsol/kinsol_spgmr.h":
+    int KINSpgmr(void *kinmem, int maxl)
+
+cdef extern from "kinsol/kinsol_spils.h":
+    ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
+                void *problem_data)
+    ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
+    ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
+    int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
+    int KINSpilsGetNumLinIters(void *kinmem, long int *nliters)
+    int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails)
+    int KINSpilsGetNumPrecEvals(void *kinmem, long int *npevals)
+    int KINSpilsGetNumPrecSolves(void *kinmem, long int *npsolves)
+    int KINSpilsGetNumJtimesEvals(void *kinmem, long int *njevals)
+    int KINSpilsGetNumFuncEvals(void *kinmem, long int *nfevalsLS)
+    int KINSpilsSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve)
 
 #=========================
 # END SUNDIALS DEFINITIONS

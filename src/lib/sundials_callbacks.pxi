@@ -457,7 +457,29 @@ cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian,
         return KINDLS_SUCCESS
     except:
         return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        
+cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
+            void *problem_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef N.ndarray x  = nv2arr(vx)
+    cdef N.ndarray v  = nv2arr(vv)
+    cdef int i
+    
+    cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
 
+    try:
+        jacv = (<object>pData.JACV)(x,v)
+        
+        for i in range(pData.dim):
+            jacvptr[i] = jacv[i]
+        
+        return SPGMR_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return SPGMR_ATIMES_FAIL_REC
+    except:
+        traceback.print_exc()
+        return SPGMR_PSOLVE_FAIL_UNREC 
+    
 cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
     """
     Residual fct called by KINSOL
@@ -479,7 +501,39 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
     except:
         traceback.print_exc()
         return KIN_SYSFUNC_FAIL
+
+cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
+         N_Vector fscaleN, N_Vector v, void *problem_data, N_Vector tmp):
+    """
+    Preconditioning solve function
+    
+        Pz = r
         
+        v on input == r
+        v on output == z
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    
+    cdef N.ndarray fscale  = nv2arr(fscaleN)
+    cdef N.ndarray uscale  = nv2arr(uscaleN)
+    
+    
+    return KIN_SUCCESS
+    
+cdef int kin_prec_setup(N_Vector u, N_Vector uscaleN, N_Vector fval, 
+         N_Vector fscaleN, void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    Preconditioning setup function
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    
+    cdef N.ndarray fscale  = nv2arr(fscaleN)
+    cdef N.ndarray uscale  = nv2arr(uscaleN)
+    
+    
+    return KIN_SUCCESS
+    
+
 cdef void kin_err(int err_code, char *module, char *function, char *msg, void *eh_data):
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
     
@@ -580,7 +634,8 @@ cdef class ProblemData:
 cdef class ProblemDataEquationSolver:
     cdef:
         void *RES          # Residual
-        void *JAC
+        void *JAC          # Jacobian
+        void *JACV
         int dim            # Dimension of the problem
         void *KIN_MEM      # Kinsol memory
 
