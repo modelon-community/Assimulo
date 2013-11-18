@@ -23,6 +23,10 @@ from assimulo.examples import *
 class Test_Examples:
     
     @testattr(stddist = True)
+    def test_radau5dae_time_events(self):
+        radau5dae_time_events.run_example(with_plots=False)
+        
+    @testattr(stddist = True)
     def test_kinsol_basic(self):
         kinsol_basic.run_example(with_plots=False)
     

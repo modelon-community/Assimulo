@@ -23,4 +23,4 @@ __all__ = ["cvode_gyro", "cvode_basic", "cvode_with_disc", "cvode_with_initial_s
            "rodasode_vanderpol", "glimda_vanderpol", "lsodar_vanderpol", "lsodar_with_disc", 
            "mech_system_pendulum", "euler_vanderpol", "cvode_with_parameters_modified",
            "cvode_basic_backward","ida_basic_backward","dasp3_basic", "cvode_with_preconditioning",
-           "kinsol_basic","kinsol_with_jac"]
+           "kinsol_basic","kinsol_with_jac", "radau5dae_time_events"]
