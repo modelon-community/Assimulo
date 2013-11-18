@@ -148,7 +148,6 @@ int KINPinv(void *kinmem, int N)
 {
   KINMem kin_mem;
   KINPinvMem kinpinv_mem;
-  int i;
   /* Check if kinmem is different from NULL */
   if (kinmem == NULL) {
     KINProcessError(NULL, KINPINV_MEM_NULL, "KINPINV", "KINPinv", MSGD_KINMEM_NULL);
