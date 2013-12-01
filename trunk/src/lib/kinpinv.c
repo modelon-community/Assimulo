@@ -359,7 +359,7 @@ static int kinPinvSetup(KINMem kin_mem)
   }
 
   /* Try to do a LU factorization of J */
-  ier = DenseGETRF(J, pivots);
+  ier = DenseGETRF(J, (long int*)pivots);
 
   /* If the LU factorization failed, perform regularization */
   if (ier > 0) {
@@ -405,7 +405,7 @@ static int kinPinvSetup(KINMem kin_mem)
     regMatrix(JTJ_c,jac,reg_param,n);
     
     /* LU-factorize the regularized matrix*/
-    ier = DenseGETRF(JTJ,pivots);
+    ier = DenseGETRF(JTJ,(long int*)pivots);
     regularized = TRUE;
   }
   else {
@@ -461,7 +461,7 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
     /*N_VScale(ONE,x,b);*/
     
 
-    DenseGETRS(JTJ, pivots, xd);
+    DenseGETRS(JTJ, (long int*)pivots, xd);
 
     /* Calculate a fresh jacobian - not really needed */
     redojac = TRUE;    
@@ -473,7 +473,7 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
     xd = N_VGetArrayPointer(x);
     
     /* Back-solve and get solution in x */
-    DenseGETRS(J, pivots, xd);
+    DenseGETRS(J, (long int*)pivots, xd);
 
   }
 
