@@ -55,7 +55,7 @@ cdef class Algebraic:
             self.problem_info["jac_fcn"] = True
         if hasattr(problem, "jacv"):
             self.problem_info["jacv_fcn"] = True
-        if hasattr(problem, "jaclag"):
+        if hasattr(problem, "prec_solve"):
             self.problem_info["prec_solve"] = True
         if hasattr(problem, "prec_setup"):
             self.problem_info["prec_setup"] = True
