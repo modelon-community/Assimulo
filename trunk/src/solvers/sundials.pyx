@@ -29,7 +29,7 @@ from assimulo.exception import *
 from assimulo.explicit_ode cimport Explicit_ODE 
 from assimulo.implicit_ode cimport Implicit_ODE
 
-cimport sundials_includes as Sun
+cimport sundials_includes as SUNDIALS
 
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
@@ -188,7 +188,7 @@ cdef class IDA(Implicit_ODE):
         
         if self.ida_mem != NULL: 
             #Free Memory
-            Sun.IDAFree(&self.ida_mem)
+            SUNDIALS.IDAFree(&self.ida_mem)
     
     cpdef state_event_info(self):
         """
@@ -207,7 +207,7 @@ cdef class IDA(Implicit_ODE):
             c_info[k] = 0
         
         # Fetch data on which root functions that became zero and store in class
-        flag = Sun.IDAGetRootInfo(self.ida_mem, c_info)
+        flag = SUNDIALS.IDAGetRootInfo(self.ida_mem, c_info)
         if flag < 0:
             raise IDAError(flag)
         
@@ -263,30 +263,30 @@ cdef class IDA(Implicit_ODE):
 
         if self.ida_mem == NULL: #The solver is not initialized
         
-            self.ida_mem = Sun.IDACreate() #Create solver
+            self.ida_mem = SUNDIALS.IDACreate() #Create solver
             if self.ida_mem == NULL:
                 raise IDAError(IDA_MEM_FAIL)
             
             #Specify the residual and the initial conditions to the solver
-            flag = Sun.IDAInit(self.ida_mem, ida_res, self.t, self.yTemp, self.ydTemp)
+            flag = SUNDIALS.IDAInit(self.ida_mem, ida_res, self.t, self.yTemp, self.ydTemp)
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
             #Specify the use of the internal dense linear algebra functions.
-            flag = Sun.IDADense(self.ida_mem, self.pData.dim)
+            flag = SUNDIALS.IDADense(self.ida_mem, self.pData.dim)
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
                     #Choose a linear solver if and only if NEWTON is choosen
             if self.options["linear_solver"] == 'DENSE':
                 #Specify the use of the internal dense linear algebra functions.
-                flag = Sun.IDADense(self.ida_mem, self.pData.dim)
+                flag = SUNDIALS.IDADense(self.ida_mem, self.pData.dim)
                 if flag < 0:
                     raise IDAError(flag, self.t)
                         
             elif self.options["linear_solver"] == 'SPGMR':
                 #Specify the use of SPGMR linear solver.
-                flag = Sun.IDASpgmr(self.ida_mem, 0) #0 == Default krylov iterations
+                flag = SUNDIALS.IDASpgmr(self.ida_mem, 0) #0 == Default krylov iterations
                 if flag < 0: 
                     raise IDAError(flag, self.t)
                 
@@ -296,31 +296,31 @@ cdef class IDA(Implicit_ODE):
             #Specify the root function to the solver
             if self.pData.ROOT != NULL:
                 if self.options["external_event_detection"]:
-                    flag = Sun.IDARootInit(self.ida_mem, 0, ida_root)
+                    flag = SUNDIALS.IDARootInit(self.ida_mem, 0, ida_root)
                 else:
-                    flag = Sun.IDARootInit(self.ida_mem, self.pData.dimRoot, ida_root)
+                    flag = SUNDIALS.IDARootInit(self.ida_mem, self.pData.dimRoot, ida_root)
                 if flag < 0:
                     raise IDAError(flag,self.t)
             
             #Specify the error handling
-            flag = Sun.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
+            flag = SUNDIALS.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
             if self.pData.dimSens > 0:
-                flag = Sun.IDASensInit(self.ida_mem, self.pData.dimSens, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, NULL, self.ySO, self.ydSO)
+                flag = SUNDIALS.IDASensInit(self.ida_mem, self.pData.dimSens, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, NULL, self.ySO, self.ydSO)
                 if flag < 0:
                     raise IDAError(flag, self.t)
             
         else: #The solver needs to be reinitialized
             
             #Reinitialize
-            flag = Sun.IDAReInit(self.ida_mem, self.t, self.yTemp, self.ydTemp)
+            flag = SUNDIALS.IDAReInit(self.ida_mem, self.t, self.yTemp, self.ydTemp)
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
             if self.pData.dimSens > 0:
-                flag = Sun.IDASensReInit(self.ida_mem, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, self.ySO, self.ydSO)
+                flag = SUNDIALS.IDASensReInit(self.ida_mem, IDA_STAGGERED if self.options["sensmethod"] == "STAGGERED" else IDA_SIMULTANEOUS, self.ySO, self.ydSO)
                 if flag < 0:
                     raise IDAError(flag, self.t)
         
@@ -328,29 +328,29 @@ cdef class IDA(Implicit_ODE):
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
                 
-                flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
+                flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
                 if flag < 0:
                     raise IDAError(flag,self.t)
             else:
-                flag = Sun.IDADlsSetDenseJacFn(self.ida_mem, NULL)
+                flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, NULL)
                 if flag < 0:
                     raise IDAError(flag,self.t)
                     
         elif self.options["linear_solver"] == 'SPGMR':
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                flag = Sun.IDASpilsSetJacTimesVecFn(self.ida_mem, ida_jacv);
+                flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, ida_jacv);
                 if flag < 0:
                     raise IDAError(flag, self.t)
             else:
-                flag = Sun.IDASpilsSetJacTimesVecFn(self.ida_mem, NULL);
+                flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, NULL);
                 if flag < 0:
                     raise IDAError(flag, self.t)
         else:
             raise IDAError(100, self.t)
         
         #Set the user data
-        flag = Sun.IDASetUserData(self.ida_mem, <void*>self.pData)
+        flag = SUNDIALS.IDASetUserData(self.ida_mem, <void*>self.pData)
         if flag < 0:
             raise IDAError(flag, self.t)
             
@@ -379,33 +379,33 @@ cdef class IDA(Implicit_ODE):
             self.pData.pbar[i] = self.options["pbar"][i]
         
         #Specify problem parameter information for sensitivity calculations
-        flag = Sun.IDASetSensParams(self.ida_mem, self.pData.p, self.pData.pbar, NULL)
+        flag = SUNDIALS.IDASetSensParams(self.ida_mem, self.pData.p, self.pData.pbar, NULL)
         if flag < 0:
             raise IDAError(flag, self.t)
         
         #Specify the difference quotient strategy
-        flag = Sun.IDASetSensDQMethod(self.ida_mem, IDA_CENTERED if self.options["dqtype"]=="CENTERED" else IDA_FORWARD, self.options["dqrhomax"])
+        flag = SUNDIALS.IDASetSensDQMethod(self.ida_mem, IDA_CENTERED if self.options["dqtype"]=="CENTERED" else IDA_FORWARD, self.options["dqrhomax"])
         if flag<0:
             raise IDAError(flag, self.t)
         
         #Specify the error control strategy
-        flag = Sun.IDASetSensErrCon(self.ida_mem, self.options["suppress_sens"]==False)
+        flag = SUNDIALS.IDASetSensErrCon(self.ida_mem, self.options["suppress_sens"]==False)
         if flag < 0:
             raise IDAError(flag, self.t)
         
         #Specify the maximum number of nonlinear solver iterations
-        flag = Sun.IDASetSensMaxNonlinIters(self.ida_mem, self.options["maxcorS"])
+        flag = SUNDIALS.IDASetSensMaxNonlinIters(self.ida_mem, self.options["maxcorS"])
         if flag < 0:
             raise IDAError(flag, self.t)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
-        flag = Sun.IDASensEEtolerances(self.ida_mem)
+        flag = SUNDIALS.IDASensEEtolerances(self.ida_mem)
         if flag < 0:
             raise IDAError(flag, self.t)
         
         #Should the sensitivities be calculated this time around?
         if self.options["usesens"] == False:
-            flag = Sun.IDASensToggleOff(self.ida_mem)
+            flag = SUNDIALS.IDASensToggleOff(self.ida_mem)
             if flag < 0:
                 raise IDAError(flag, self.t)
     
@@ -417,37 +417,37 @@ cdef class IDA(Implicit_ODE):
         cdef flag
         
         #Maximum order
-        flag = Sun.IDASetMaxOrd(self.ida_mem, self.options["maxord"])
+        flag = SUNDIALS.IDASetMaxOrd(self.ida_mem, self.options["maxord"])
         if flag < 0:
             raise IDAError(flag)
             
         #Initial step
-        flag = Sun.IDASetInitStep(self.ida_mem, self.options["inith"])
+        flag = SUNDIALS.IDASetInitStep(self.ida_mem, self.options["inith"])
         if flag < 0:
             raise IDAError(flag)
             
         #Maximum step
-        flag = Sun.IDASetMaxStep(self.ida_mem, self.options["maxh"])
+        flag = SUNDIALS.IDASetMaxStep(self.ida_mem, self.options["maxh"])
         if flag < 0:
             raise IDAError(flag)
             
         #Maximum Number of steps
-        flag = Sun.IDASetMaxNumSteps(self.ida_mem, self.options["maxsteps"])
+        flag = SUNDIALS.IDASetMaxNumSteps(self.ida_mem, self.options["maxsteps"])
         if flag < 0:
             raise IDAError(flag)
         
         #Set the algebraic components and the differential
-        flag = Sun.IDASetId(self.ida_mem, arr2nv(self.options["algvar"]))
+        flag = SUNDIALS.IDASetId(self.ida_mem, arr2nv(self.options["algvar"]))
         if flag < 0:
             raise IDAError(flag)
         
         #Suppress algebraic components on the error test
-        flag = Sun.IDASetSuppressAlg(self.ida_mem, self.options["suppress_alg"])
+        flag = SUNDIALS.IDASetSuppressAlg(self.ida_mem, self.options["suppress_alg"])
         if flag < 0:
             raise IDAError(flag)
             
         #Set the tolerances
-        flag = Sun.IDASVtolerances(self.ida_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], arr2nv(self.options["atol"]))
         if flag < 0:
             raise IDAError(flag)
             
@@ -472,7 +472,7 @@ cdef class IDA(Implicit_ODE):
                 self.initialize_event_detection()
         
         #Set stop time
-        flag = Sun.IDASetStopTime(self.ida_mem, tf)
+        flag = SUNDIALS.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
             raise IDAError(flag, t)
         
@@ -481,7 +481,7 @@ cdef class IDA(Implicit_ODE):
             while True:
                 
                 #Integration loop
-                flag = Sun.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
+                flag = SUNDIALS.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
                 if flag < 0:
                     raise IDAError(flag, tret)
                     
@@ -522,7 +522,7 @@ cdef class IDA(Implicit_ODE):
             
             for tout in output_list:
                 #Integration loop
-                flag = Sun.IDASolve(self.ida_mem,tout,&tret,yout,ydout,IDA_NORMAL)
+                flag = SUNDIALS.IDASolve(self.ida_mem,tout,&tret,yout,ydout,IDA_NORMAL)
                 if flag < 0:
                     raise IDAError(flag, tret)
                 
@@ -576,12 +576,12 @@ cdef class IDA(Implicit_ODE):
             self.initialize_options()
         
         #Set stop time
-        flag = Sun.IDASetStopTime(self.ida_mem, tf)
+        flag = SUNDIALS.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
             raise IDAError(flag, t)
         
         #Integration loop
-        flag = Sun.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
+        flag = SUNDIALS.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
         if flag < 0:
             raise IDAError(flag, tret)
             
@@ -646,11 +646,11 @@ cdef class IDA(Implicit_ODE):
             raise Exception("IDA must be initialized.")
         
         #Set the options lsoff and calculate initial conditions
-        flag = Sun.IDASetLineSearchOffIC(self.ida_mem, self.options["lsoff"])
-        flag = Sun.IDACalcIC(self.ida_mem, icopt, direction)
+        flag = SUNDIALS.IDASetLineSearchOffIC(self.ida_mem, self.options["lsoff"])
+        flag = SUNDIALS.IDACalcIC(self.ida_mem, icopt, direction)
         
         if flag == IDA_SUCCESS: #Gets the calculated values
-            flag = Sun.IDAGetConsistentIC(self.ida_mem, self.yTemp, self.ydTemp)
+            flag = SUNDIALS.IDAGetConsistentIC(self.ida_mem, self.yTemp, self.ydTemp)
         
         #Set the calculated values to the current ones
         self.y  = nv2arr(self.yTemp)
@@ -664,10 +664,10 @@ cdef class IDA(Implicit_ODE):
         cdef N_Vector ele=N_VNew_Serial(self.pData.dim)
         cdef N_Vector eweight=N_VNew_Serial(self.pData.dim)
         
-        flag = Sun.IDAGetErrWeights(self.ida_mem, eweight)
+        flag = SUNDIALS.IDAGetErrWeights(self.ida_mem, eweight)
         if flag < 0:
             raise IDAError(flag)
-        flag = Sun.IDAGetEstLocalErrors(self.ida_mem, ele)
+        flag = SUNDIALS.IDAGetEstLocalErrors(self.ida_mem, ele)
         if flag < 0:
             raise IDAError(flag)
         
@@ -691,7 +691,7 @@ cdef class IDA(Implicit_ODE):
         cdef N.ndarray res
         cdef N_Vector dky=N_VNew_Serial(self.pData.dim)
         
-        flag = Sun.IDAGetDky(self.ida_mem, t, k, dky)
+        flag = SUNDIALS.IDAGetDky(self.ida_mem, t, k, dky)
         
         if flag < 0:
             raise IDAError(flag, t)
@@ -733,7 +733,7 @@ cdef class IDA(Implicit_ODE):
             matrix = []
             
             for x in xrange(self.pData.dimSens):
-                flag = Sun.IDAGetSensDky1(self.ida_mem, t, k, x, dkyS)
+                flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, x, dkyS)
                 
                 if flag<0:
                     raise IDAError(flag, t)
@@ -744,7 +744,7 @@ cdef class IDA(Implicit_ODE):
             
             return np.array(matrix)
         else:
-            flag = Sun.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
+            flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
             
             if flag <0:
                 raise IDAError(flag, t)
@@ -1330,19 +1330,19 @@ cdef class IDA(Implicit_ODE):
         cdef int klast, kcur
         cdef realtype hinused, hlast, hcur, tcur
         
-        flag = Sun.IDAGetIntegratorStats(self.ida_mem, &nsteps, &nrevals, &nlinsetups, &netfails,
+        flag = SUNDIALS.IDAGetIntegratorStats(self.ida_mem, &nsteps, &nrevals, &nlinsetups, &netfails,
                                          &klast, &kcur, &hinused, &hlast, &hcur, &tcur)
-        flag = Sun.IDAGetNonlinSolvStats(self.ida_mem, &nniters, &nncfails)
-        flag = Sun.IDAGetNumGEvals(self.ida_mem, &ngevals)
-        #flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
-        #flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+        flag = SUNDIALS.IDAGetNonlinSolvStats(self.ida_mem, &nniters, &nncfails)
+        flag = SUNDIALS.IDAGetNumGEvals(self.ida_mem, &ngevals)
+        #flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
+        #flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
         
         if self.options["linear_solver"] == "SPGMR":
-            flag = Sun.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
-            flag = Sun.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
+            flag = SUNDIALS.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
+            flag = SUNDIALS.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
         else:
-            flag = Sun.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
-            flag = Sun.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+            flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
+            flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
         
         if return_flag == IDA_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
@@ -1360,8 +1360,8 @@ cdef class IDA(Implicit_ODE):
         
         #If sensitivity    
         if self.pData.dimSens > 0:
-            flag = Sun.IDAGetSensStats(self.ida_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
-            flag = Sun.IDAGetSensNonlinSolvStats(self.ida_mem, &nSniters, &nSncfails)
+            flag = SUNDIALS.IDAGetSensStats(self.ida_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
+            flag = SUNDIALS.IDAGetSensNonlinSolvStats(self.ida_mem, &nSniters, &nSncfails)
             
             self.statistics["nfSevals"]   += nfSevals
             self.statistics["nfevalsS"]   += nfevalsS
@@ -1516,7 +1516,7 @@ cdef class CVode(Explicit_ODE):
         
         if self.cvode_mem != NULL:
             #Free Memory
-            Sun.CVodeFree(&self.cvode_mem)
+            SUNDIALS.CVodeFree(&self.cvode_mem)
     
     cpdef get_local_errors(self):
         """
@@ -1525,7 +1525,7 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef N_Vector ele=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
-        flag = Sun.CVodeGetEstLocalErrors(self.cvode_mem, ele)
+        flag = SUNDIALS.CVodeGetEstLocalErrors(self.cvode_mem, ele)
         if flag < 0:
             raise CVodeError(flag, self.t)
             
@@ -1543,7 +1543,7 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef int qlast
         
-        flag = Sun.CVodeGetLastOrder(self.cvode_mem, &qlast)
+        flag = SUNDIALS.CVodeGetLastOrder(self.cvode_mem, &qlast)
         if flag < 0:
             raise CVodeError(flag, self.t)
             
@@ -1556,7 +1556,7 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef int qcur
         
-        flag = Sun.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
+        flag = SUNDIALS.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
         if flag < 0:
             raise CVodeError(flag, self.t)
             
@@ -1569,7 +1569,7 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef N_Vector eweight=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
-        flag = Sun.CVodeGetErrWeights(self.cvode_mem, eweight)
+        flag = SUNDIALS.CVodeGetErrWeights(self.cvode_mem, eweight)
         if flag < 0:
             raise CVodeError(flag, self.t)
             
@@ -1656,50 +1656,50 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL: #The solver is not initialized
             
             #Create the solver
-            self.cvode_mem= Sun.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, CV_NEWTON if self.options["iter"] == "Newton" else CV_FUNCTIONAL)
+            self.cvode_mem= SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, CV_NEWTON if self.options["iter"] == "Newton" else CV_FUNCTIONAL)
             if self.cvode_mem == NULL:
                 raise CVodeError(CV_MEM_FAIL)
             
             #Specify the residual and the initial conditions to the solver
-            flag = Sun.CVodeInit(self.cvode_mem, cv_rhs, self.t, self.yTemp)
+            flag = SUNDIALS.CVodeInit(self.cvode_mem, cv_rhs, self.t, self.yTemp)
             if flag < 0:
                 raise CVodeError(flag, self.t)
                 
             #Specify the root function to the solver
             if self.problem_info["state_events"]:
                 if self.options["external_event_detection"]:
-                    flag = Sun.CVodeRootInit(self.cvode_mem, 0, cv_root)
+                    flag = SUNDIALS.CVodeRootInit(self.cvode_mem, 0, cv_root)
                 else:
-                    flag = Sun.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
+                    flag = SUNDIALS.CVodeRootInit(self.cvode_mem, self.pData.dimRoot, cv_root)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
                     
             #Specify the error handling
-            flag = Sun.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
+            flag = SUNDIALS.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
             if flag < 0:
                 raise CVodeError(flag, self.t)
                 
             #Sensitivity
             if self.pData.dimSens > 0:
-                flag = Sun.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
+                flag = SUNDIALS.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
             
         else: #The solver needs to be reinitialized
             #Reinitialize
-            flag = Sun.CVodeReInit(self.cvode_mem, self.t, self.yTemp)
+            flag = SUNDIALS.CVodeReInit(self.cvode_mem, self.t, self.yTemp)
             if flag < 0:
                 raise CVodeError(flag, self.t)
             
             #Sensitivity
             if self.pData.dimSens > 0:
-                flag = Sun.CVodeSensReInit(self.cvode_mem, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, self.ySO)
+                flag = SUNDIALS.CVodeSensReInit(self.cvode_mem, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, self.ySO)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
             
             
         #Set the user data
-        flag = Sun.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
+        flag = SUNDIALS.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
         if flag < 0:
             raise CVodeError(flag, self.t)
             
@@ -1721,7 +1721,7 @@ cdef class CVode(Explicit_ODE):
         cdef N.ndarray res
         cdef N_Vector dky=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
-        flag = Sun.CVodeGetDky(self.cvode_mem, t, k, dky)
+        flag = SUNDIALS.CVodeGetDky(self.cvode_mem, t, k, dky)
         
         if flag < 0:
             raise CVodeError(flag, t)
@@ -1765,7 +1765,7 @@ cdef class CVode(Explicit_ODE):
             matrix = []
             
             for x in range(self.pData.dimSens):
-                flag = Sun.CVodeGetSensDky1(self.cvode_mem, t, k, x, dkyS)
+                flag = SUNDIALS.CVodeGetSensDky1(self.cvode_mem, t, k, x, dkyS)
                 if flag<0:
                     raise CVodeError(flag, t)
                 
@@ -1775,7 +1775,7 @@ cdef class CVode(Explicit_ODE):
             
             return N.array(matrix)
         else:
-            flag = Sun.CVodeGetSensDky1(self.cvode_mem, t, k, i, dkyS)
+            flag = SUNDIALS.CVodeGetSensDky1(self.cvode_mem, t, k, i, dkyS)
             if flag <0:
                 raise CVodeError(flag, t)
             
@@ -1816,12 +1816,12 @@ cdef class CVode(Explicit_ODE):
             self.initialize_options()
         
         #Set stop time
-        flag = Sun.CVodeSetStopTime(self.cvode_mem, tf)
+        flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
             raise CVodeError(flag, t)
         
         #Integration loop
-        flag = Sun.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
+        flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
         if flag < 0:
             raise CVodeError(flag, tret)
             
@@ -1859,7 +1859,7 @@ cdef class CVode(Explicit_ODE):
                 self.initialize_event_detection()
         
         #Set stop time
-        flag = Sun.CVodeSetStopTime(self.cvode_mem, tf)
+        flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
             raise CVodeError(flag, t)
         
@@ -1867,7 +1867,7 @@ cdef class CVode(Explicit_ODE):
             #Integration loop
             while True:
                     
-                flag = Sun.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
+                flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
                 if flag < 0:
                     raise CVodeError(flag, tret)
                 
@@ -1904,7 +1904,7 @@ cdef class CVode(Explicit_ODE):
             output_list  = opts["output_list"][output_index:]
 
             for tout in output_list:
-                flag = Sun.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
+                flag = SUNDIALS.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
                 if flag < 0:
                     raise CVodeError(flag, tret)
                 
@@ -1954,7 +1954,7 @@ cdef class CVode(Explicit_ODE):
             c_info[k] = 0
         
         # Fetch data on which root functions that became zero and store in class
-        flag = Sun.CVodeGetRootInfo(self.cvode_mem, c_info)
+        flag = SUNDIALS.CVodeGetRootInfo(self.cvode_mem, c_info)
         if flag < 0:
             raise CVodeError(flag)
         
@@ -1983,33 +1983,33 @@ cdef class CVode(Explicit_ODE):
             self.pData.pbar[i] = self.options["pbar"][i]
         
         #Problem parameter information
-        flag = Sun.CVodeSetSensParams(self.cvode_mem, self.pData.p, self.pData.pbar, NULL)
+        flag = SUNDIALS.CVodeSetSensParams(self.cvode_mem, self.pData.p, self.pData.pbar, NULL)
         if flag < 0:
             raise CVodeError(flag, self.t)
         
         #Difference quotient strategy
-        flag = Sun.CVodeSetSensDQMethod(self.cvode_mem, CV_CENTERED if self.options["dqtype"]=="CENTERED" else CV_FORWARD, self.options["dqrhomax"])
+        flag = SUNDIALS.CVodeSetSensDQMethod(self.cvode_mem, CV_CENTERED if self.options["dqtype"]=="CENTERED" else CV_FORWARD, self.options["dqrhomax"])
         if flag < 0:
             raise CVodeError(flag, self.t)
         
         #Maximum number of nonlinear iterations
-        flag = Sun.CVodeSetSensMaxNonlinIters(self.cvode_mem, self.options["maxcorS"])
+        flag = SUNDIALS.CVodeSetSensMaxNonlinIters(self.cvode_mem, self.options["maxcorS"])
         if flag < 0:
             raise CVodeError(flag, self.t)
         
         #Specify the error control strategy
-        flag = Sun.CVodeSetSensErrCon(self.cvode_mem, self.options["suppress_sens"]==False)
+        flag = SUNDIALS.CVodeSetSensErrCon(self.cvode_mem, self.options["suppress_sens"]==False)
         if flag < 0:
             raise CVodeError(flag, self.t)
         
         #Estimate the sensitivity
-        flag = Sun.CVodeSensEEtolerances(self.cvode_mem)
+        flag = SUNDIALS.CVodeSensEEtolerances(self.cvode_mem)
         if flag < 0:
             raise CVodeError(flag, self.t)
         
         #Should the sensitivities be calculated this time around?
         if self.options["usesens"] == False:
-            flag = Sun.CVodeSensToggleOff(self.cvode_mem)
+            flag = SUNDIALS.CVodeSensToggleOff(self.cvode_mem)
             if flag < 0:
                 raise CVodeError(flag, self.t)
     
@@ -2022,75 +2022,75 @@ cdef class CVode(Explicit_ODE):
         #Choose a linear solver if and only if NEWTON is choosen
         if self.options["linear_solver"] == 'DENSE' and self.options["iter"] == "Newton":
             #Specify the use of the internal dense linear algebra functions.
-            flag = Sun.CVDense(self.cvode_mem, self.pData.dim)
+            flag = SUNDIALS.CVDense(self.cvode_mem, self.pData.dim)
             if flag < 0:
                 raise CVodeError(flag)
                 
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                flag = Sun.CVDlsSetDenseJacFn(self.cvode_mem, cv_jac)
+                flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, cv_jac)
                 if flag < 0:
                     raise CVodeError(flag)
             else:
-                flag = Sun.CVDlsSetDenseJacFn(self.cvode_mem, NULL)
+                flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, NULL)
                 if flag < 0:
                     raise CVodeError(flag)
                     
         elif self.options["linear_solver"] == 'SPGMR' and self.options["iter"] == "Newton":
             #Specify the use of CVSPGMR linear solver.
-            flag = Sun.CVSpgmr(self.cvode_mem, self.options["precond"], self.options["maxkrylov"])
+            flag = SUNDIALS.CVSpgmr(self.cvode_mem, self.options["precond"], self.options["maxkrylov"])
             if flag < 0:
                 raise CVodeError(flag)
                 
             if self.pData.PREC_SOLVE != NULL:
                 if self.pData.PREC_SETUP != NULL: 
-                    flag = Sun.CVSpilsSetPreconditioner(self.cvode_mem, cv_prec_setup, cv_prec_solve)
+                    flag = SUNDIALS.CVSpilsSetPreconditioner(self.cvode_mem, cv_prec_setup, cv_prec_solve)
                     if flag < 0:
                         raise CVodeError(flag)
                 else:
-                    flag = Sun.CVSpilsSetPreconditioner(self.cvode_mem, NULL, cv_prec_solve)
+                    flag = SUNDIALS.CVSpilsSetPreconditioner(self.cvode_mem, NULL, cv_prec_solve)
                     if flag < 0: 
                         raise CVodeError(flag)
                   
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                flag = Sun.CVSpilsSetJacTimesVecFn(self.cvode_mem, cv_jacv)
+                flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, cv_jacv)
                 if flag < 0:
                     raise CVodeError(flag)
             else:
-                flag = Sun.CVSpilsSetJacTimesVecFn(self.cvode_mem, NULL)
+                flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, NULL)
                 if flag < 0:
                     raise CVodeError(flag)
         else: #Functional Iteration choosen.
             pass #raise CVodeError(100,t0) #Unknown error message
 
         #Maximum order
-        flag = Sun.CVodeSetMaxOrd(self.cvode_mem, int(self.options["maxord"]))
+        flag = SUNDIALS.CVodeSetMaxOrd(self.cvode_mem, int(self.options["maxord"]))
         if flag < 0:
             raise CVodeError(flag)
             
         #Initial step
-        flag = Sun.CVodeSetInitStep(self.cvode_mem, self.options["inith"])
+        flag = SUNDIALS.CVodeSetInitStep(self.cvode_mem, self.options["inith"])
         if flag < 0:
             raise CVodeError(flag)
         
         #Maximum step
-        flag = Sun.CVodeSetMaxStep(self.cvode_mem, self.options["maxh"])
+        flag = SUNDIALS.CVodeSetMaxStep(self.cvode_mem, self.options["maxh"])
         if flag < 0:
             raise CVodeError(flag)
             
         #Minimum step
-        flag = Sun.CVodeSetMinStep(self.cvode_mem, self.options["minh"])
+        flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.options["minh"])
         if flag < 0:
             raise CVodeError(flag)
             
         #Maximum Number of steps
-        flag = Sun.CVodeSetMaxNumSteps(self.cvode_mem, self.options["maxsteps"])
+        flag = SUNDIALS.CVodeSetMaxNumSteps(self.cvode_mem, self.options["maxsteps"])
         if flag < 0:
             raise CVodeError(flag)
         
         #Tolerances
-        flag = Sun.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], arr2nv(self.options["atol"]))
         if flag < 0:
             raise CVodeError(flag)
             
@@ -2112,7 +2112,7 @@ cdef class CVode(Explicit_ODE):
             raise Exception('Discretization method must be either Adams or BDF')
             
         #Free Memory as we need another CVode memory object
-        Sun.CVodeFree(&self.cvode_mem)
+        SUNDIALS.CVodeFree(&self.cvode_mem)
             
     def _get_discr_method(self):
         """
@@ -2151,7 +2151,7 @@ cdef class CVode(Explicit_ODE):
             raise Exception('Iteration method must be either FixedPoint or Newton')
             
         #Free Memory as we need another CVode memory object
-        Sun.CVodeFree(&self.cvode_mem)
+        SUNDIALS.CVodeFree(&self.cvode_mem)
     
     def _get_iter_method(self):
         """
@@ -2734,23 +2734,23 @@ cdef class CVode(Explicit_ODE):
         cdef realtype hinused = 0.0, hlast = 0.0, hcur = 0.0, tcur = 0.0
 
         if self.options["linear_solver"] == "SPGMR":
-            flag = Sun.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
-            flag = Sun.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
+            flag = SUNDIALS.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
+            flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
         else:
-            flag = Sun.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
-            flag = Sun.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
+            flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
+            flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
         if self.pData.PREC_SOLVE != NULL:
-            flag = Sun.CVSpilsGetNumPrecSolves(self.cvode_mem, &npsolves)
+            flag = SUNDIALS.CVSpilsGetNumPrecSolves(self.cvode_mem, &npsolves)
         if self.pData.PREC_SETUP != NULL:
-            flag = Sun.CVSpilsGetNumPrecEvals(self.cvode_mem, &npevals)
+            flag = SUNDIALS.CVSpilsGetNumPrecEvals(self.cvode_mem, &npevals)
             
-        flag = Sun.CVodeGetNumGEvals(self.cvode_mem, &ngevals) #Number of root evals
+        flag = SUNDIALS.CVodeGetNumGEvals(self.cvode_mem, &ngevals) #Number of root evals
         
         #Get all integrator statistics
-        flag = Sun.CVodeGetIntegratorStats(self.cvode_mem, &nsteps, &nfevals, &nlinsetups, &netfails, &qlast,
+        flag = SUNDIALS.CVodeGetIntegratorStats(self.cvode_mem, &nsteps, &nfevals, &nlinsetups, &netfails, &qlast,
                                        &qcur, &hinused, &hlast, &hcur, &tcur)
         
-        flag = Sun.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
+        flag = SUNDIALS.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
                                                                             #Number of nonlinear conv failures
         
         if return_flag == CV_ROOT_RETURN and not self.options["external_event_detection"]:
@@ -2769,8 +2769,8 @@ cdef class CVode(Explicit_ODE):
         
         #If sensitivity    
         if self.pData.dimSens > 0:
-            flag = Sun.CVodeGetSensStats(self.cvode_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
-            flag = Sun.CVodeGetSensNonlinSolvStats(self.cvode_mem, &nSniters, &nSncfails)
+            flag = SUNDIALS.CVodeGetSensStats(self.cvode_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
+            flag = SUNDIALS.CVodeGetSensNonlinSolvStats(self.cvode_mem, &nSniters, &nSncfails)
             
             self.statistics["nfSevals"]   += nfSevals
             self.statistics["nfevalsS"]   += nfevalsS
