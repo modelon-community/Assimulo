@@ -516,11 +516,23 @@ cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval,
     
     cdef N.ndarray fscale  = nv2arr(fscaleN)
     cdef N.ndarray uscale  = nv2arr(uscaleN)
+    cdef N.ndarray r       = nv2arr(v)
+    cdef realtype* zptr=(<N_VectorContent_Serial>v.content).data
     
+    try:
+        zres = (<object>pData.PREC_SOLVE)(r)
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
+                
+    for i in range(pData.dim):
+        zptr[i] = zres[i]
     
     return KIN_SUCCESS
     
-cdef int kin_prec_setup(N_Vector u, N_Vector uscaleN, N_Vector fval, 
+cdef int kin_prec_setup(N_Vector uN, N_Vector uscaleN, N_Vector fvalN, 
          N_Vector fscaleN, void *problem_data, N_Vector tmp1, N_Vector tmp2):
     """
     Preconditioning setup function
@@ -529,7 +541,16 @@ cdef int kin_prec_setup(N_Vector u, N_Vector uscaleN, N_Vector fval,
     
     cdef N.ndarray fscale  = nv2arr(fscaleN)
     cdef N.ndarray uscale  = nv2arr(uscaleN)
+    cdef N.ndarray u       = nv2arr(uN)
+    cdef N.ndarray fval    = nv2arr(fvalN)
     
+    try:
+        (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
     
     return KIN_SUCCESS
     
@@ -551,10 +572,18 @@ cdef void kin_err(int err_code, char *module, char *function, char *msg, void *e
 
 cdef void kin_info(char *module, char *function, char *msg, void *eh_data):
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+    cdef int flag
+    cdef realtype fnorm
     
-    print "KinsolInfo"
-    print "<calling_function:%s>"%function
-    print "<message: %s>"%msg
+    if str(function) == "KINSol" and "fnorm" in str(msg):
+        #fnorm = float(msg.split("fnorm = ")[-1].strip())
+        flag = SUNDIALS.KINGetFuncNorm(pData.KIN_MEM, &fnorm)
+        pData.nl_fnorm.append(fnorm)
+        
+    pData.log.append([module, function, msg])
+    
+    #print "KinsolInfo <calling_function:%s>"%function
+    #print "<message: %s>"%msg
     """
     # Get the number of iterations
     KINGetNumNonlinSolvIters(kin_mem, &nniters)
@@ -636,8 +665,13 @@ cdef class ProblemDataEquationSolver:
         void *RES          # Residual
         void *JAC          # Jacobian
         void *JACV
+        void *PREC_SOLVE
+        void *PREC_SETUP
         int dim            # Dimension of the problem
         void *KIN_MEM      # Kinsol memory
+        list nl_fnorm      # The norm of the residual at each nonlinear iteration (if the verbosity is set high enough)
+        list l_fnorm
+        list log
 
 #=================
 # Module functions

@@ -55,7 +55,7 @@ cdef class KINSOL(Algebraic):
     cdef N_Vector y_temp, y_scale, f_scale
     cdef public double _eps
     
-    cdef object pt_fcn, pt_jac, pt_jacv
+    cdef object pt_fcn, pt_jac, pt_jacv, pt_prec_setup, pt_prec_solve
     cdef object _added_linear_solver
     
     def __init__(self, problem):
@@ -148,7 +148,10 @@ cdef class KINSOL(Algebraic):
         self.pt_fcn = self.problem.res
         self.pData.RES = <void*>self.pt_fcn
         self.pData.dim = self.problem_info["dim"]
-
+        self.pData.nl_fnorm = []
+        self.pData.l_fnorm = []
+        self.pData.log = []
+        
         if self.problem_info["jac_fcn"] is True: #Sets the jacobian
             self.pt_jac = self.problem.jac
             self.pData.JAC = <void*>self.pt_jac
@@ -156,6 +159,14 @@ cdef class KINSOL(Algebraic):
         if self.problem_info["jacv_fcn"] is True: #Sets the jacobian*vector function
             self.pt_jacv = self.problem.jacv
             self.pData.JACV = <void*>self.pt_jacv
+            
+        if self.problem_info["prec_solve"] is True: #Sets the preconditioner solve function
+            self.pt_prec_solve = self.problem.prec_solve
+            self.pData.PREC_SOLVE = <void*>self.pt_prec_solve
+            
+        if self.problem_info["prec_setup"] is True: #Sets the preconditioner setup function
+            self.pt_prec_setup = self.problem.prec_setup
+            self.pData.PREC_SETUP = <void*>self.pt_prec_setup
             
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
@@ -214,6 +225,22 @@ cdef class KINSOL(Algebraic):
                 flag = SUNDIALS.KINSpilsSetJacTimesVecFn(self.kinsol_mem, kin_jacv)
                 if flag < 0:
                     raise KINSOLError(flag)
+            
+            if self.problem_info["prec_setup"] or self.problem_info["prec_solve"]:
+                if not self.problem_info["prec_setup"]:
+                    flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL,kin_prec_solve)
+                    if flag < 0:
+                        raise KINSOLError(flag)
+                elif not self.problem_info["prec_solve"]:
+                    flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, kin_prec_setup, NULL)
+                    if flag < 0:
+                        raise KINSOLError(flag)
+                else:  
+                    flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, kin_prec_setup, kin_prec_solve)
+                    if flag < 0:
+                        raise KINSOLError(flag)
+                
+                    
         else:
             raise KINSOLError(-100)
             
@@ -545,6 +572,27 @@ cdef class KINSOL(Algebraic):
     
     linear_solver = property(_get_linear_solver, _set_linear_solver)
     
+    def _set_globalization_strategy(self, lsolver):
+        if lsolver.upper() == "LINSEARCH":
+            self.options["strategy"] = KIN_LINSEARCH
+        elif lsolver.upper() == "NONE":
+            self.options["strategy"] = KIN_NONE
+        else:
+            raise Exception('The linear solver must be either "LINSEARCH" or "NONE".')
+        
+    def _get_globalization_strategy(self):
+        """
+        Specifies the globalization strategy to be used.
+        
+            Parameters::
+            
+                linearsolver
+                        - Default 'LINSEARCH'. Can also be 'NONE'.
+        """
+        return self.options["strategy"]
+    
+    globalization_strategy = property(_get_globalization_strategy, _set_globalization_strategy)
+    
     def _set_max_krylov(self, max_krylov):
         try:
             self.options["max_krylov"] = int(max_krylov)
@@ -573,6 +621,14 @@ cdef class KINSOL(Algebraic):
     
     max_dim_krylov_subspace = property(_get_max_krylov, _set_max_krylov)
     
+    def get_residual_norm_nonlinear_iterations(self): 
+        return self.pData.nl_fnorm
+        
+    def get_residual_norm_linear_iterations(self):
+        return self.pData.l_fnorm
+        
+    def get_log(self):
+        return self.pData.log
     
 class KINSOLError(Exception):
     """  

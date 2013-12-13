@@ -34,6 +34,9 @@ class Test_Examples:
     def test_kinsol_with_jac(self):
         kinsol_with_jac.run_example(with_plots=False)
     
+    @testattr(stddist = True)
+    def test_kinsol_ors(self):
+        kinsol_ors.run_example(with_plots=False)
     
     @testattr(stddist = True)
     def test_cvode_with_preconditioning(self):
