@@ -248,6 +248,9 @@ def check_extensions():
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
         ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+    else:
+        L.warning("Could not find Sundials, check the provided path (--sundials-home) to see that it actually points to Sundials.")
+        L.warning("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
 
         
     for i in ext_list:
