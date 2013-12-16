@@ -336,7 +336,7 @@ cdef class ODE:
     
     report_continuously = property(_get_report_continuously,_set_report_continuously)
     
-    def _set_store_event_points(self, report_continuously):
+    def _set_store_event_points(self, store_event_points):
         self.options["store_event_points"] = bool(store_event_points)
     
     def _get_store_event_points(self):
