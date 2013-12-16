@@ -218,7 +218,7 @@ cdef class Implicit_ODE(ODE):
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
                 
                 if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
-                    self.problem.handle_result(self, self.t, self.y, self.yd)
+                    self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
                 
                 
                 #Get and store event information
@@ -249,9 +249,9 @@ cdef class Implicit_ODE(ODE):
             #Logg after the event handling if there was a communication point there.
             if flag_initialize and (output_list == None or self.store_event_points):
                 if type == 0:
-                    self.problem.handle_result(self, self.t, self.y)
+                    self.problem.handle_result(self, self.t, self.y.copy())
                 else:
-                    self.problem.handle_result(self, self.t, self.y, self.yd)
+                    self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
                     
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
