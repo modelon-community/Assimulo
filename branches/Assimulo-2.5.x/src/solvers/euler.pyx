@@ -590,7 +590,7 @@ cdef class ExplicitEuler(Explicit_ODE):
                 
             else:
                 tr.append(t)
-                yr.append(y)
+                yr.append(y.copy())
             
             #If an event was detected calculate the length of the initial step to take after restarting.
             if flag == ID_PY_EVENT:
@@ -609,7 +609,7 @@ cdef class ExplicitEuler(Explicit_ODE):
                 if initialize_flag: flag = ID_PY_EVENT
             else:
                 tr.append(t)
-                yr.append(y)
+                yr.append(y.copy())
             
             h = min(h, abs(tf-t))
         else:
@@ -625,11 +625,12 @@ cdef class ExplicitEuler(Explicit_ODE):
                     if initialize_flag: flag = ID_PY_EVENT
                 else:
                     tr.append(t)
-                    yr.append(y)
+                    yr.append(y.copy())
             
             #If an event was detected calculate the length of the initial step if not already done.
             if flag == ID_PY_EVENT and self._inith == 0:
                 self._inith = h - (t - self._told)
+                self._inith = self._inith if abs(self._inith) > 1e-15 else 0.0
             
         return flag, tr, yr
     
