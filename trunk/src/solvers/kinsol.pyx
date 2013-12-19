@@ -325,7 +325,7 @@ cdef class KINSOL(Algebraic):
         """
         Solves the system.
         """
-        if y0:
+        if y0 is not None:
             arr2nv_inplace(y0, self.y_temp)
         else:
             arr2nv_inplace(self.y, self.y_temp)
