@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from  __future__  import division
 #import nose
 import assimulo.problem as ap
 import assimulo.special_systems as ass
@@ -59,8 +58,10 @@ def run_example(index, with_plots=True, with_test=False):
     dae_pend.suppress_alg=True  
     t,y,yd=dae_pend.simulate(10.,100)   
     final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
+    
     print(my_pend.name+"  Residuals after the integration run\n")
-    print final_residual, 'Norm:  ', sl.norm(final_residual) 
+    print(final_residual, 'Norm:  ', sl.norm(final_residual))
+    
     if with_test:
         assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:

@@ -25,7 +25,7 @@ from assimulo.implicit_ode import Implicit_ODE
 try:
     from assimulo.lib.glimda import glimda
 except ImportError:
-    print "Could not find GLIMDA"
+    print("Could not find GLIMDA")
 
 class GLIMDA(Implicit_ODE):
     """
