@@ -46,7 +46,6 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(0) #Simulate 5 seconds (t0=5 -> tf=0)
     
     #Basic test
-    print y
     nose.tools.assert_almost_equal(y[-1], 4.00000000, 3)
     
     #Plot

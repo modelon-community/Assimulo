@@ -105,8 +105,8 @@ def run_example(with_plots=True):
     #Solve Preconditionined system
     y_prec = alg_solver_prec.solve()
     
-    print "Error                 , in y: ", LIN.norm(y-N.ones(len(y)))
-    print "Error (preconditioned), in y: ", LIN.norm(y_prec-N.ones(len(y_prec)))
+    print("Error                 , in y: ", LIN.norm(y-N.ones(len(y))))
+    print("Error (preconditioned), in y: ", LIN.norm(y_prec-N.ones(len(y_prec))))
     
     if with_plots:
 

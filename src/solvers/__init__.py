@@ -19,21 +19,21 @@ __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
            "glimda","odepack","radar5","dasp3","odassl"]
 
 #Import all the solvers from the different modules
-from euler import ExplicitEuler, ImplicitEuler
-from radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
-from sundials import IDA, CVode
-from kinsol import KINSOL
-from runge_kutta import RungeKutta34, RungeKutta4, Dopri5
-from rosenbrock import RodasODE
-from odassl import ODASSL
-from odepack import LSODAR
-from radar5 import Radar5ODE
+from .euler import ExplicitEuler, ImplicitEuler
+from .radau5 import Radau5ODE, Radau5DAE, _Radau5ODE, _Radau5DAE 
+from .sundials import IDA, CVode
+from .kinsol import KINSOL
+from .runge_kutta import RungeKutta34, RungeKutta4, Dopri5
+from .rosenbrock import RodasODE
+from .odassl import ODASSL
+from .odepack import LSODAR
+from .radar5 import Radar5ODE
 try:
-    from dasp3 import DASP3ODE
+    from .dasp3 import DASP3ODE
 except ImportError:
     pass
 
 try:
-    from glimda import GLIMDA
+    from .glimda import GLIMDA
 except ImportError:
-    print "Could not find GLIMDA"
+    print("Could not find GLIMDA")

@@ -25,7 +25,7 @@ from assimulo.explicit_ode import Explicit_ODE
 try:
     from assimulo.lib.odepack import dlsodar
 except ImportError:
-    print "Could not find ODEPACK"
+    print("Could not find ODEPACK")
 
 class LSODAR(Explicit_ODE):
     """

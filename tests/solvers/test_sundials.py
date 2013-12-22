@@ -399,11 +399,8 @@ class Test_CVode:
         """
         This tests the precondition option.
         """
-        print self.simulator.options
-        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         self.simulator.precond = 'prec_none'
-        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         
         nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, -1.0)

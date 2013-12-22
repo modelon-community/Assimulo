@@ -19,7 +19,6 @@
 Created on Tue Feb 21 14:03:12 2012
 @author: tony
 """
-from  __future__  import division
 from  scipy       import *
 from matplotlib.pyplot import *
 
@@ -80,73 +79,9 @@ if __name__ == '__main__':
     s.inith = H
     s.maxsteps = 1000
     t,y = s.simulate(tf)
-    print s.statistics
     
     y1 = array(deepcopy(s.y_sol)).reshape(-1)
     t1 = copy(s.t_sol)
     
     past1 = deepcopy(s.past)
     
-    #del s
-    #reload(radar5)
-    #from assimulo.solvers import radar5
-
-    
-    
-    #s = radar5.Radar5ODE(p)
-    #s.rtol = RTOL
-    #s.atol = ATOL
-    #s.mxst = mxst
-    #s.inith = H
-    #s.maxsteps = 1000
-    #t,y = s.simulate(tf)
-    #print s.statistics
-    
-    #y2 = array(deepcopy(s.y_sol)).reshape(-1)
-    #t2 = copy(s.t_sol)
-    
-    #past2 = deepcopy(s.past)
-    
-    #s2 = radar5.Radar5ODE(p)
-    #s2.rtol = RTOL
-    #s2.atol = ATOL
-    #s2.mxst = mxst
-    #s2.inith = H
-    #s2.maxsteps = 1000
-    #t,y = s2.simulate(tf)
-    
-    #y3 = array(deepcopy(s2.y_sol)).reshape(-1)
-    #t3 = copy(s2.t_sol)
-    #print s2.statistics
-    
-    #p2 = Simple()
-    #p2.grid = array([1.0, 0.0])
-    #p2.ngrid = len(p.grid)-1
-    #p2.y0 = 0    # sin(pi*0) = 0, so consistent with history function
-    
-    #s3 = radar5.Radar5ODE(p2)
-    #s3.rtol = RTOL
-    #s3.atol = ATOL
-    #s3.mxst = mxst
-    #s3.inith = H
-    #s3.maxsteps = 1000
-    #t,y = s3.simulate(tf)
-    
-    #y4 = array(deepcopy(s3.y_sol)).reshape(-1)
-    #t4 = copy(s3.t_sol)
-    #print s3.statistics
-    
-    #print len(y1)
-    #print len(y2)
-    #print len(y3)
-    #print len(y4)
-    
-    #plot(t,y)
-    #show()
-
-    #s.reset()
-    #t,y = s.simulate(tf)
-    #y2 = array(s.y_sol).copy().reshape(-1)
-    #t2 = copy(s.t_sol)
-    #plot(t, y1-y2)
-    #t,y = s.simulate(tf, 1000)
