@@ -269,7 +269,7 @@ class Test_CVode:
         t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
-        nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
+        nose.tools.assert_almost_equal(float(y100[-2]), float(sim.interpolate(9.9,0)),5)
     
     @testattr(stddist = True)
     def test_handle_result(self):
@@ -345,7 +345,10 @@ class Test_CVode:
         
         #Need someway of suppressing error messages from deep down in the Cython wrapper
         #See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
-        from cStringIO import StringIO
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from io import StringIO
         import sys
         stderr = sys.stderr
         sys.stderr = StringIO()
@@ -521,7 +524,7 @@ class Test_IDA:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
     
     @testattr(stddist = True)    
     def test_init(self):

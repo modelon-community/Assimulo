@@ -41,6 +41,7 @@ LAPACKdir = ""
 BLASname = 'blas'
 BLASname_t = ""
 debug_flag = False
+python3_flag = False
 
 if S.platform == 'win32':
     incdirs = ''
@@ -78,6 +79,10 @@ for x in S.argv[1:]:
         debug_flag = x[8:]
         if x[8:].upper() == "TRUE":
             debug_flag = True
+        copy_args.remove(x)
+    if not x.find('--python3'):
+        if x[10:].upper() == "TRUE":
+            python3_flag = True
         copy_args.remove(x)
     if not x.find('--lapack-home'):
         LAPACKdir = x[14:]
@@ -319,6 +324,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
     
     for i in ext_list:
+        if python3_flag:
+            i.cython_directives = {"language_level": 3}
         i.extra_link_args += extra_link_flags
     
     return ext_list

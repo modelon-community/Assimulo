@@ -48,7 +48,7 @@ def run_example(with_plots=True):
     
     #Simulate
     t, y = exp_sim.simulate(2.) #Simulate 2 seconds
-    
+    print(y)
     #Plot
     if with_plots:
         P.plot(t,y[:,0], marker='o')

@@ -41,7 +41,7 @@ class Test_Dopri5:
         values = self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
     @testattr(stddist = True)
     
     @testattr(stddist = True)
@@ -267,7 +267,7 @@ class Test_RungeKutta4:
         values = self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
     
     @testattr(stddist = True)    
     def test_step(self):
@@ -277,4 +277,4 @@ class Test_RungeKutta4:
         self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
