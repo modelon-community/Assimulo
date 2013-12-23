@@ -44,7 +44,7 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(0) #Simulate 5 seconds (t0=5 -> tf=0)
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1], 4.00000000, 3)
+    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
     
     #Plot
     if with_plots:

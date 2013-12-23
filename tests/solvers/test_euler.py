@@ -86,7 +86,7 @@ class Test_Explicit_Euler:
         values = self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
     
     @testattr(stddist = True)
     def test_step(self):
@@ -99,7 +99,7 @@ class Test_Explicit_Euler:
         self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
         
     @testattr(stddist = True)
     def test_exception(self):
@@ -209,7 +209,7 @@ class Test_Implicit_Euler:
         values = self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
     
     @testattr(stddist = True)
     def test_step(self):
@@ -222,7 +222,7 @@ class Test_Implicit_Euler:
         self.simulator.simulate(1)
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
     
     @testattr(stddist = True)
     def test_stiff_problem(self):

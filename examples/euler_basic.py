@@ -47,7 +47,7 @@ def run_example(with_plots=True):
         P.show()
         
     #Basic test
-    nose.tools.assert_almost_equal(y2[-1], 0.02628193)
+    nose.tools.assert_almost_equal(float(y2[-1]), 0.02628193)
 
 if __name__=='__main__':
     run_example()

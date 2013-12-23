@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 try:
-    from lib.sundials_kinsol_core_wSLU import KINSOL_wrap, KINError
+    from .lib.sundials_kinsol_core_wSLU import KINSOL_wrap, KINError
 except:
-    from lib.sundials_kinsol_core import KINSOL_wrap, KINError
+    from .lib.sundials_kinsol_core import KINSOL_wrap, KINError
 
 from scipy.linalg import pinv2
 from scipy.optimize import fminbound

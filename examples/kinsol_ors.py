@@ -37,7 +37,7 @@ def run_example(with_plots=True):
     0 = Ax-b
     """    
     #Read the original matrix
-    A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx.gz"))
+    A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
 
     #Scale the original matrix
     A = SPARSE.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
