@@ -41,7 +41,7 @@ LAPACKdir = ""
 BLASname = 'blas'
 BLASname_t = ""
 debug_flag = False
-python3_flag = False
+python3_flag = True if S.hexversion > 0x03000000 else False
 
 if S.platform == 'win32':
     incdirs = ''
@@ -79,10 +79,6 @@ for x in S.argv[1:]:
         debug_flag = x[8:]
         if x[8:].upper() == "TRUE":
             debug_flag = True
-        copy_args.remove(x)
-    if not x.find('--python3'):
-        if x[10:].upper() == "TRUE":
-            python3_flag = True
         copy_args.remove(x)
     if not x.find('--lapack-home'):
         LAPACKdir = x[14:]
@@ -560,7 +556,7 @@ setup(name=NAME,
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
                                  'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
                                  'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3',
-                                 'examples'+O.sep+'kinsol_ors_matrix.mtx.gz','examples'+O.sep+'kinsol_ors_matrix.mtx.gz']},
+                                 'examples'+O.sep+'kinsol_ors_matrix.mtx','examples'+O.sep+'kinsol_ors_matrix.mtx']},
       script_args=copy_args)
 
 if change_dir:
