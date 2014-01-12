@@ -47,6 +47,7 @@ def run_example(with_plots=True):
     
     #Basic test
     nose.tools.assert_almost_equal(y2[-1], 0.00347746, 5)
+    nose.tools.assert_almost_equal(exp_sim.get_last_step(), 0.0222169642893, 3)
     
     #Plot
     if with_plots:
