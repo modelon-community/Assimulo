@@ -126,6 +126,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeGetLastOrder(void * cvode_mem,int *qlast)
     int CVodeGetLastStep(void * cvode_mem, realtype *hlast)
     int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent)
+    int CVodeGetActualInitStep(void * cvode_mem, realtype *hinused)
     int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) #Number of steps
     int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) #Number of function evals
     int CVDlsGetNumJacEvals(void *cvode_mem, long int *njevals) #Number of jac evals
