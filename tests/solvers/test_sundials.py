@@ -43,6 +43,22 @@ class Test_CVode:
         
         weights = self.simulator.get_error_weights()
         assert weights[0] < 1e6
+        
+    @testattr(stddist = True)
+    def test_get_used_initial_step(self):
+        self.simulator.simulate(1.0)
+        
+        step = self.simulator.get_used_initial_step()
+        nose.tools.assert_almost_equal(step, 0.001, 3)
+        
+        self.simulator.reset()
+        
+        self.simulator.inith = 1e-8
+        self.simulator.simulate(1.0)
+        
+        step = self.simulator.get_used_initial_step()
+        assert N.abs(step-1e-8) < 1e-2
+        
     
     @testattr(stddist = True)
     def test_get_local_errors(self):

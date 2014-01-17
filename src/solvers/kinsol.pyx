@@ -243,6 +243,8 @@ cdef class KINSOL(Algebraic):
                     
         else:
             raise KINSOLError(-100)
+        
+        self._added_linear_solver = True
             
     cpdef update_options(self):
         """
@@ -325,7 +327,7 @@ cdef class KINSOL(Algebraic):
         """
         Solves the system.
         """
-        if y0:
+        if y0 is not None:
             arr2nv_inplace(y0, self.y_temp)
         else:
             arr2nv_inplace(self.y, self.y_temp)
@@ -453,6 +455,7 @@ cdef class KINSOL(Algebraic):
         self.log_message('\nSolver options:\n',                                     verbose)
         self.log_message(' Solver                  : Kinsol',                       verbose)
         self.log_message(' Linear Solver           : ' + str(self.options["linear_solver"]),                       verbose)
+        self.log_message(' Globalization Strategy  : ' + ("LINESEARCH" if self.options["strategy"]==1 else "NONE"),                       verbose)
         self.log_message(' Function Tolerances     : ' + str(self.options["ftol"]),  verbose)
         self.log_message(' Step Tolerances         : ' + str(self.options["stol"]),  verbose)
         self.log_message(' Variable Scaling        : ' + str(self.options["y_scale"]),  verbose)
@@ -573,12 +576,12 @@ cdef class KINSOL(Algebraic):
     linear_solver = property(_get_linear_solver, _set_linear_solver)
     
     def _set_globalization_strategy(self, lsolver):
-        if lsolver.upper() == "LINSEARCH":
+        if lsolver.upper() == "LINESEARCH":
             self.options["strategy"] = KIN_LINSEARCH
         elif lsolver.upper() == "NONE":
             self.options["strategy"] = KIN_NONE
         else:
-            raise Exception('The linear solver must be either "LINSEARCH" or "NONE".')
+            raise Exception('The linear solver must be either "LINESEARCH" or "NONE".')
         
     def _get_globalization_strategy(self):
         """

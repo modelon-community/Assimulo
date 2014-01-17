@@ -1549,6 +1549,32 @@ cdef class CVode(Explicit_ODE):
             
         return qlast
         
+    def get_last_step(self):
+        """
+        Returns the last used step-size.
+        """
+        cdef int flag
+        cdef realtype step
+        
+        flag = SUNDIALS.CVodeGetLastStep(self.cvode_mem, &step)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+        
+        return step
+        
+    def get_used_initial_step(self):
+        """
+        Returns the actual used initial step-size.
+        """
+        cdef int flag
+        cdef realtype step
+        
+        flag = SUNDIALS.CVodeGetActualInitStep(self.cvode_mem, &step)
+        if flag < 0:
+            raise CVodeError(flag, self.t)
+        
+        return step
+        
     cpdef get_current_order(self):
         """
         Returns the order to be used on the next step.
