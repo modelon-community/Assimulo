@@ -1019,8 +1019,20 @@ python module odepack ! in
             common /dlss01/ con0,conmin,ccmxj,psmall,rbig,seth,iplost,iesp,istatc,iys,iba,ibian,ibjan,ibjgp,ipian,ipjan,ipjgp,ipigp,ipr,ipc,ipic,ipisp,iprsp,ipa,lenyh,lenyhm,lenwk,lreq,lrat,lrest,lwmin,moss,msbj,nslj,ngp,nlu,nnz,nsp,nzl,nzu
             common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
         end subroutine dlsodis
+        subroutine dsrcar(rsav, isav, job)
+            ! Save/restore LSODAR COMMON blocks
+            integer, intent(inout), dimension(55):: isav
+            integer, intent(in):: job
+            double precision, intent(inout), dimension(245):: rsav
+        end subroutine dsrcar 
+        subroutine dcfode(meth, elco, tesco)
+            ! set method and test coefficients for odepack routines
+            integer, intent(in):: meth
+            double precision, intent(out),dimension(13,12):: elco
+            double precision, intent(out),dimension(3,12)::tesco 
+        end subroutine dcfode   
     end interface 
 end python module odepack
 
-! This file was auto-generated with f2py (version:2).
+! This file was auto-generated with f2py (version:2) and edited.
 ! See http://cens.ioc.ee/projects/f2py2e/

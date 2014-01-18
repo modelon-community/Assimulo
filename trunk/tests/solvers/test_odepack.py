@@ -17,6 +17,7 @@
 
 import nose
 from assimulo import testattr
+from assimulo.lib.odepack import dsrcar, dcfode
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import *
@@ -76,6 +77,40 @@ class Test_LSODAR:
         self.sim.simulate(1.) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+    @testattr(stddist = True)
+    def test_setcoefficients(self):
+        elco,tesco=dcfode(11)
+        nose.tools.assert_almost_equal(elco[0][-1],0.27426554003159903,4)
+        nose.tools.assert_almost_equal(tesco[0][-1],3.5240645150490761e-07,9)    
+    @testattr(stddist = True)
+    def test_readcommon(self):
+        """
+        This tests the LSODAR's subroutine dsrcar  (read functionality).
+        """
+        self.sim.simulate(1.) #Simulate 2 seconds
+        r=N.ones((245,),'d')
+        i=N.ones((55,),'i')
+        dsrcar(r,i,1)
+        print r
+        print i
+        nose.tools.assert_almost_equal(r[217], 2.22044605e-16, 20)
+        nose.tools.assert_equal(i[36], 3)
+        
+    @testattr(stddist = True)
+    def test_writereadcommon(self):
+        """
+        This tests the LSODAR's subroutine dsrcar  (write and read functionality).
+        """
+        r=N.ones((245,),'d')
+        i=N.ones((55,),'i')
+        dsrcar(r,i,2)
+        r[0]=100.
+        i[0]=10
+        dsrcar(r,i,1)
+        print r
+        print i
+        nose.tools.assert_almost_equal(r[0], 1., 4)
+        nose.tools.assert_equal(i[0], 1)        
         
     @testattr(stddist = True)
     def test_simulation_with_jac(self):
