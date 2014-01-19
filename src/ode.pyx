@@ -341,8 +341,8 @@ cdef class ODE:
     
     def _get_store_event_points(self):
         """
-        This options specifies if the solver should save additional points
-        at the events, t_e^-, t_e^+.
+        This options specifies if the solver shold save additional points
+        at the events, :math:`t_e^-, t_e^+`.
         
             Parameters::
             
@@ -350,7 +350,7 @@ cdef class ODE:
                   
                         - Default True
                     
-                        - Should be a boolean.
+                        - Should be a Boolean.
 
         """
         return self.options["store_event_points"]
