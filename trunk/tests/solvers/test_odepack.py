@@ -16,9 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import nose
+import numpy.testing
 from assimulo import testattr
 from assimulo.lib.odepack import dsrcar, dcfode
-from assimulo.solvers import LSODAR
+from assimulo.solvers import LSODAR, odepack
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import *
 
@@ -110,7 +111,34 @@ class Test_LSODAR:
         print r
         print i
         nose.tools.assert_almost_equal(r[0], 1., 4)
-        nose.tools.assert_equal(i[0], 1)        
+        nose.tools.assert_equal(i[0], 1)  
+    def test_rkstarter(self):
+        """
+        This test checks the correctness of the Nordsieck array generated 
+        from a RK starter
+        """
+        A=N.array([[0.,1.],[-4.,0.]])
+        def f(t,x,sw0):
+            return N.dot(A,N.array(x))
+        H = 1.e-8
+        # Compute the exact solution at h=0,H/4,H/2,3H/4,H
+        T=N.array([0.,H/4.,H/2.,3./4.*H,H])
+        y0=N.array([1.,0.])
+        from scipy.linalg import expm
+        exact=N.array([N.dot(expm(A*t),y0) for t in T])
+        #polynomial interpolation
+        from scipy import polyfit
+        coeff = polyfit(T,exact,4)
+        d1coeff=N.array([4,3,2,1]).reshape(-1,1)*coeff[:-1,:]
+        d2coeff=N.array([3,2,1]).reshape(-1,1)*d1coeff[:-1,:]
+        d3coeff=N.array([2,1]).reshape(-1,1)*d2coeff[:-1,:]
+        d4coeff=N.array([1]).reshape(-1,1)*d3coeff[:-1,:]
+        h=H/4.
+        nordsieck_at_0=N.array([coeff[-1,:],h*d1coeff[-1,:],h**2*d2coeff[-1,:],
+                                     h**3*d3coeff[-1,:],h**4*d4coeff[-1,:]])
+        rkNordsieck=odepack.RKStarterNordsieck(f,H)
+        computed=rkNordsieck(0,y0)       
+        numpy.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)                    
         
     @testattr(stddist = True)
     def test_simulation_with_jac(self):
