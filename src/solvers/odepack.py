@@ -347,3 +347,97 @@ class LSODAR(Explicit_ODE):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+class RKStarterNordsieck(object):
+    """
+    A family of Runge-Kutta starters producing a 
+    Nordsieck array to (re-)start a Nordsieck based multistep
+    method with a given order.
+    
+    See: Mohammadi (2013): https://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=4196026&fileOId=4196027
+    """
+    def __init__(self,  rhs, H, eval_at=0.,number_of_steps=4):
+        """
+        Initiates the Runge-Kutta Starter.
+        
+            Parameters::
+                            
+                rhs     
+                            - The problem's rhs function
+                             
+                H
+                            - starter step size
+                            
+                eval_at
+                            - Where to evaluate the Nordiseck vector
+                              evaluation point is (eval_at)*H
+                              Possible choices 
+                              eval_at=0.
+                              eval_at=1.
+             
+                number_of_steps
+                            - the number of steps :math:`(k)` to start the multistep method with
+                              This will determine the initial order of the method, which is
+                              :math:`k` for BDF methods and :math:`k+1` for Adams Moulton Methods   .
+        """
+        self.f = rhs
+        self.H = H
+        if number_of_steps != 4:
+            raise RKStarter_Exception('Step number different from 4 not yet implemented')
+        else:
+            self.number_of_steps = number_of_steps
+            
+        self.number_of_steps = number_of_steps 
+        self.eval_at = float(eval_at)
+        if self.eval_at == 0.:
+            self.gamma = \
+              N.array([[1.,0.,0.,0.,0.],
+                       [0.,1.,-5./6.,4./9.,-1./9.],         
+                       [0.,0.,0.,0.,0.],
+                       [0.,0.,1./2.,-4./9.,1./9.],
+                       [0.,0.,7./3.,-19./9.,7./9.],
+                       [0.,0.,-3.,10./3.,-4./3.],
+                       [0.,0.,1.,-11./9.,5./9.]])
+        elif self.eval_at == 1.:
+            self.gamma = \
+                N.array([[1., 0. ,0., 0., 0.], 
+                         [8./9., 1./27.,1./18.,0.,-1./9.],
+                         [0.   , 0.,0.,0.,0.],
+                         [4./9., -10./27.,-7./18.,0.,1./9.],
+                         [40./9.,  20./27.,1./9.,1.,7./9.],
+                         [3./3.,-1./3.,-2.,-4./3.],
+                         [8./9.,5./9.,1.,5./9.]])
+        else:
+            raise RKStarter_Exception("Parameter eval_at should be 0. or 1.")                 
+    def rk_like4(self, t0, y0, sw0): 
+        """
+        rk_like computes Runge-Kutta stages
+        Note, the currently implementation is **only** correct for
+        autonomous systems.
+        """
+        f = lambda y: self.f(t0, y, sw0)
+        h = self.H/4.
+        k1 = h*f(y0)
+        k2 = h*f(y0 + k1)
+        k3 = h*f(y0 + 2. * k2)
+        k4 = h*f(y0 + 3./4. * k1 + 9./4. * k3)
+        k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
+        k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
+        return N.array([y0,k1,k2,k3,k4,k5,k6])
+    def nordsieck(self,k):
+        """
+        Nordsieck array computed at initial point
+        """
+        nord=N.dot(k.T,self.gamma)
+        return nord  
+    def __call__(self, t0 , y0, sw0=[]):
+        """
+        Evaluates the Runge-Kutta starting values
+        
+            Parameters::
+            
+                y0   
+                    - starting value
+        """
+        k = self.rk_like4(t0, y0, sw0)
+        t = t0+self.eval_at*self.H
+        return t, self.nordsieck(k).T
