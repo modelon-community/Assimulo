@@ -229,7 +229,7 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y, t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy, t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
