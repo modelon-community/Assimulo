@@ -59,6 +59,7 @@ class LSODAR(Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = False
         self.options["maxsteps"] = 100000
+        self.options["rkstarter"] = False
 
         
         # - Statistic values
@@ -347,6 +348,26 @@ class LSODAR(Explicit_ODE):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    def _get_rkstarter(self):
+        """
+        This defines how LSODAR is started. 
+        (classically or with a fourth order Runge-Kutta starter)
+        
+            Parameters::
+            
+                rkstarter
+                            - Default False  starts LSODAR in the classical multistep way
+                            
+                            - Should be a Boolean
+        """
+        return self.options["rkstarter"]
+    
+    def _set_rkstarter(self, rkstarter):
+        if not isinstance(rkstarter,bool):
+            raise ODEPACK_Exception("Must be a Boolean.")
+        self.options["rkstarter"] = max_rkstarter
+    
+    rkstarter = property(_get_rkstarter, _set_rkstarter)
 class RKStarterNordsieck(object):
     """
     A family of Runge-Kutta starters producing a 
