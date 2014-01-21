@@ -128,11 +128,13 @@ class LSODAR(Explicit_ODE):
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
             RWORK[nordsieck_start_index,nordieck_start_index+len(nordsieck)] = \
                                        nordsieck
+            # IWORK[...] =                           
             # c) compute method coefficients and update the common blocks
             mf = 11
-            alo.dlsa01.mused = alo.dls001.meth = mf // 10
+            alo.dlsa01.mused = alo.dls001.meth = meth = mf // 10
             alo.dls001.miter = mf % 10
-            elco,tesco=dcfode(mf)  # where to pout these
+            elco,tesco=dcfode(meth)  # where to pout these
+            # ....
         return RWORK, IWORK
                                      
     
@@ -478,8 +480,10 @@ class RKStarterNordsieck(object):
         """
         Nordsieck array computed at initial point
         """
-        nord=N.dot(k.T,self.gamma)
-        return nord  
+        nord=N.dot(self.gamma.T,k)
+        scale=N.array([1.,1.,1./2.,1./6,1./24.]).reshape(-1,1)
+        print nord.shape
+        return scale*nord  
     def __call__(self, t0 , y0, sw0=[]):
         """
         Evaluates the Runge-Kutta starting values
@@ -491,4 +495,4 @@ class RKStarterNordsieck(object):
         """
         k = self.rk_like4(t0, y0, sw0)
         t = t0+self.eval_at*self.H
-        return t, self.nordsieck(k).T
+        return t, self.nordsieck(k)
