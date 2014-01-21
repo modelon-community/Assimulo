@@ -81,8 +81,8 @@ class Test_LSODAR:
     @testattr(stddist = True)
     def test_setcoefficients(self):
         elco,tesco=dcfode(1)
-        nose.tools.assert_almost_equal(elco[0,2],5./12.,4) # AM-2
-        #nose.tools.assert_almost_equal(tesco[0][-1],3.5240645150490761e-07,9)    
+        nose.tools.assert_almost_equal(elco[0,2],5./12.,9) # AM-2
+        nose.tools.assert_almost_equal(tesco[0,2],2.,9) # AM-2 error coeff  
     @testattr(stddist = True)
     def test_readcommon(self):
         """

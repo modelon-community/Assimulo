@@ -60,8 +60,7 @@ class LSODAR(Explicit_ODE):
         self.options["usejac"]   = False
         self.options["maxsteps"] = 100000
         self.options["rkstarter"] = False
-
-        
+                
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
@@ -81,12 +80,21 @@ class LSODAR(Explicit_ODE):
         self.supports["interpolated_output"] = True
         
     def initialize(self):
+        """
+        Initializes the overall simulation process
+        (called before _simulate) 
+        """ 
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
             
         #self._tlist = []
         #self._ylist = []
+        
+        #starts simulation with classical multistep starting procedure
+        # Runge-Kutta starter will be started if desired (see options) 
+        # only after an event occured.
+        self._rkstarter_active = False
         
     def interpolate(self, t):
         """
@@ -117,7 +125,7 @@ class LSODAR(Explicit_ODE):
                                3*self.problem_info["dimRoot"]))
         # Integer work array
         IWORK = N.array([0]*(20 + self.problem_info["dim"]))
-        if self.rkstarter:
+        if self.rkstarter and self.rkstarter_active:
             # invoke rkstarter
             # a) get previous stepsize if any
             hu = dls001.hu[0]
@@ -221,7 +229,7 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y, t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
@@ -241,14 +249,15 @@ class LSODAR(Explicit_ODE):
                     raise ODEPACK_Exception("LSODAR failed with flag %d"%ISTATE)
         
             opts["output_index"] = output_index
+        # deciding on restarting options
+        self._rkstarter_active = True if ISTATE == 3 and self.rkstarter else False
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]
         self.statistics["nsteps"]        += IWORK[10]
         self.statistics["nfcn"]          += IWORK[11]
         self.statistics["njac"]          += IWORK[12]
-        if flag == ID_PY_EVENT:
-            self.statistics["nevents"] += 1
+        self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         
         return flag, tlist, ylist
     
