@@ -95,9 +95,9 @@ class LSODAR(Explicit_ODE):
         
         .. math::
         
-             interp = \sum_{j=0}^q (t - tn)^(j) * h^(-j) * zn[j] ,
+             \mathrm{interp} = \sum_{j=0}^q (t - t_n)^j \cdot h^{-j} \cdot z_n[j] ,
         
-        where q is the current order, and zn[j] is the j-th column of 
+        where q is the current order, and :math:`z_n[j]` is the j-th column of 
         the Nordsieck history array.
         """
         interp = N.array([0.0]*self.problem_info["dim"])
