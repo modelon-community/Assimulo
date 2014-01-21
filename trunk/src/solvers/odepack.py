@@ -23,9 +23,9 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
-    from assimulo.lib.odepack import dlsodar
+    from assimulo.lib.odepack import dlsodar, dcfode
 except ImportError:
-    print "Could not find ODEPACK"
+    print "Could not find ODEPACK functions"
 
 class LSODAR(Explicit_ODE):
     """
@@ -106,14 +106,44 @@ class LSODAR(Explicit_ODE):
             interp = interp + (t-self._nordsieck_time)**i*self._nordsieck_h**(-i)*self._nordsieck_array[i*self.problem_info["dim"]:(i+1)*self.problem_info["dim"]]
             
         return interp
+        
+    def integrate_start(self, t, y):
+        """
+        Helper program for the initialization of LSODAR
+        """
+        # Real work array
+        RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+                               max(16,self.problem_info["dim"]+9) + 
+                               3*self.problem_info["dimRoot"]))
+        # Integer work array
+        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        if self.rkstarter:
+            # invoke rkstarter
+            # a) get previous stepsize if any
+            hu = dls001.hu[0]
+            H = hu if hu != 0. else 1.e-4  # this needs some reflections 
+            # b) compute the nordsieck array and put it into RWORK
+            rkNordsieck = odepack.RKStarterNordsieck(self.problem.rhs,H)
+            t,nordsieck = rkNordsieck(t,y,self,sw)       
+            nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
+            RWORK[nordsieck_start_index,nordieck_start_index+len(nordsieck)] = \
+                                       nordsieck
+            # c) compute method coefficients and update the common blocks
+            mf = 11
+            alo.dlsa01.mused = alo.dls001.meth = mf // 10
+            alo.dls001.miter = mf % 10
+            elco,tesco=dcfode(mf)  # where to pout these
+        return RWORK, IWORK
+                                     
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 2 #Both atol and rtol are vectors
         ITASK = 5 #For computation of yout
         ISTATE = 1 #Start of integration
         IOPT = 1 #No optional inputs are used
-        RWORK = N.array([0.0]*(22 + self.problem_info["dim"]*max(16,self.problem_info["dim"]+9) + 3*self.problem_info["dimRoot"]))#Real work array
-        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        # provide work arrays and set common blocks (if needed)
+        RWORK, IWORK = self.integrate_start( t, y)
+        
         JT = 1 if self.usejac else 2#Jacobian type indicator
         JROOT = N.array([0]*self.problem_info["dimRoot"])
         
