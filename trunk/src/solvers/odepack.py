@@ -139,10 +139,11 @@ class LSODAR(Explicit_ODE):
             # IWORK[...] =                           
             # c) compute method coefficients and update the common blocks
             mf = 11
-            alo.dlsa01.mused = alo.dls001.meth = meth = mf // 10
-            alo.dls001.miter = mf % 10
-            elco,tesco=dcfode(meth)  # where to pout these
-            # ....
+            nq = 4
+            alo.dlsa001.mused = alo.dls001.meth = meth = mf // 10
+            alo.dlsa001.miter = mf % 10
+            elco,tesco =dcfode(meth)  # where to pout these
+            alo.dlsa001.el0 =  elco[0,nq-1] 
         return RWORK, IWORK
                                      
     
