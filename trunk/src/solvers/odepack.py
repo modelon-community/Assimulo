@@ -125,7 +125,7 @@ class LSODAR(Explicit_ODE):
                                3*self.problem_info["dimRoot"]))
         # Integer work array
         IWORK = N.array([0]*(20 + self.problem_info["dim"]))
-        if self.rkstarter and self.rkstarter_active:
+        if self.rkstarter and self._rkstarter_active:
             # invoke rkstarter
             # a) get previous stepsize if any
             hu = dls001.hu[0]
@@ -141,31 +141,31 @@ class LSODAR(Explicit_ODE):
             mf = 11
             nq = 4
             #alo.dlsa001.mused = alo.dls001.meth = meth = mf // 10
-            alo.dls001.miter = mf % 10
+            dls001.miter = mf % 10
             elco,tesco =dcfode(meth)  # where to pout these
-            alo.dls001.el0 =  elco[0,nq-1] 
-	    alo.dls001.maxord= 12      #max order 
-	    alo.dls001.nq= 4           #Next step order 
-	    alo.dls001.nqu=4           #Method order last used
-	    alo.dls001.iowns[3]= 1     #meth
-	    alo.dls001.iowns[4]= nq*self.problem_info["dim"]	#nqnyh
-	    alo.dls001.rowns[0]= 0.5/(nq+2)                     #conit   
-	    alo.dls001.rowns[2:15]= elco[0:nq-1,nq-1]
-	    alo.dls001.rowns[15:171]= elco[0:13,0:12].reshape(1,-1)
-	    alo.dls001.rowns[173:209]=tesco[0:3,0:12].reshape(1,-1)
+            dls001.el0 =  elco[0,nq-1] 
+            dls001.maxord= 12      #max order 
+            dls001.nq= 4           #Next step order 
+            dls001.nqu=4           #Method order last used
+            dls001.iowns[3]= 1     #meth
+            dls001.iowns[4]= nq*self.problem_info["dim"]    #nqnyh
+            dls001.rowns[0]= 0.5/(nq+2)                     #conit   
+            dls001.rowns[2:15]= elco[0:nq-1,nq-1]
+            dls001.rowns[15:171]= elco[0:12,0:11].reshape(1,-1)
+            dls001.rowns[173:209]=tesco[0:3,0:11].reshape(1,-1)
             # IWORK[...] =  
-	    IWORK[13]=alo.dls001.nqu
-	    IWORK[14]=alo.dls001.nq
-	    IWORK[18]=alo.dls001.meth
-	    IWORK[7]=alo.dlsa001.mxordn    #max allowed order for Adams methods
-	    IWORK[8]=alo.dlsa001.mxords    #max allowed order for BDF
-	    IWORK[19]=1         #the current method indicator
-	    #RWORK[...]
-	    RWORK[12]=alo.dls001.tn
-	    RWORK[10]=H         #step-size used successfully
-	    RWORK[11]=H         #step-size to be attempted for the next step 
-	    RWORK[6]=alo.dls001.hmin
-	    RWORK[5]=alo.dls001.hmxi
+            IWORK[13]=dls001.nqu
+            IWORK[14]=dls001.nq
+            IWORK[18]=dls001.meth
+            IWORK[7]=dlsa001.mxordn    #max allowed order for Adams methods
+            IWORK[8]=dlsa001.mxords    #max allowed order for BDF
+            IWORK[19]=1         #the current method indicator
+            #RWORK[...]
+            RWORK[12]=dls001.tn
+            WORK[10]=H         #step-size used successfully
+            RWORK[11]=H         #step-size to be attempted for the next step 
+            RWORK[6]=dls001.hmin
+            RWORK[5]=dls001.hmxi
         return RWORK, IWORK
                                      
     
@@ -429,7 +429,7 @@ class LSODAR(Explicit_ODE):
     def _set_rkstarter(self, rkstarter):
         if not isinstance(rkstarter,bool):
             raise ODEPACK_Exception("Must be a Boolean.")
-        self.options["rkstarter"] = max_rkstarter
+        self.options["rkstarter"] = rkstarter
     
     rkstarter = property(_get_rkstarter, _set_rkstarter)
 class RKStarterNordsieck(object):
