@@ -299,7 +299,6 @@ python module odepack ! in
             integer :: nhnil
             integer :: nslast
             integer :: nyh
-            integer dimension(6) :: iowns
             integer :: icf
             integer :: ierpj
             integer :: iersl
@@ -325,7 +324,17 @@ python module odepack ! in
             integer :: nfe
             integer :: nje
             integer :: nqu
-            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            integer :: init,mxstep,mxhnil,nhnil,nslast,nyh
+            !common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            common /dls001/ conit, crate, el(13), elco(13,12), hold, &
+                            rmax, tesco(3,12),ccmax, el0, h, hmin,   &
+                            hmxi, hu, rc, tn, uround,                &
+                            init,mxstep,mxhnil,nhnil,nslast,nyh,     &    !iownd(6), 
+                            ialth, ipup, lmax, meo, nqnyh, nslp,     &    !iowns(6)
+                            icf, ierpj, iersl, jcur, jstart, kflag,  &
+                            l,lyh, lewt, lacor, lsavf, lwm, liwm,    &
+                            meth, miter,maxord, maxcor, msbp, mxncf, &
+                            n, nq, nst, nfe, nje, nqu
         end subroutine dlsode
         subroutine dlsodes(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,mf) ! in :odepack:opkdmain.f
             use dlsodes__user__routines
