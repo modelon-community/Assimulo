@@ -23,7 +23,7 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
-    from assimulo.lib.odepack import dlsodar, dcfode, dls001
+    from assimulo.lib.odepack import dlsodar, dcfode, dls001,dlsa01
 except ImportError:
     print "Could not find ODEPACK functions"
 
@@ -94,7 +94,7 @@ class LSODAR(Explicit_ODE):
         #starts simulation with classical multistep starting procedure
         # Runge-Kutta starter will be started if desired (see options) 
         # only after an event occured.
-        self._rkstarter_active = False
+        self._rkstarter_active = True
         
     def interpolate(self, t):
         """
@@ -128,41 +128,39 @@ class LSODAR(Explicit_ODE):
         if self.rkstarter and self._rkstarter_active:
             # invoke rkstarter
             # a) get previous stepsize if any
-            hu = dls001.hu[0]
+            hu = dls001.hu
             H = hu if hu != 0. else 1.e-4  # this needs some reflections 
             # b) compute the nordsieck array and put it into RWORK
-            rkNordsieck = odepack.RKStarterNordsieck(self.problem.rhs,H)
-            t,nordsieck = rkNordsieck(t,y,self,sw)       
+            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
+            t,nordsieck = rkNordsieck(t,y,self.sw,)       
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
-            RWORK[nordsieck_start_index,nordieck_start_index+len(nordsieck)] = \
-                                       nordsieck
+            RWORK[nordsieck_start_index:nordsieck_start_index+len(nordsieck.flatten())] = \
+                                       nordsieck.flatten()
                         
             # c) compute method coefficients and update the common blocks
             mf = 11
             nq = 4
             #alo.dlsa001.mused = alo.dls001.meth = meth = mf // 10
-            dls001.miter = mf % 10
+            dls001.miter = meth=mf % 10
             elco,tesco =dcfode(meth)  # where to pout these
             dls001.el0 =  elco[0,nq-1] 
             dls001.maxord= 12      #max order 
             dls001.nq= 4           #Next step order 
             dls001.nqu=4           #Method order last used
-            dls001.iowns[3]= 1     #meth
-            dls001.iowns[4]= nq*self.problem_info["dim"]    #nqnyh
-            dls001.rowns[0]= 0.5/(nq+2)                     #conit   
-            dls001.rowns[2:15]= elco[0:nq-1,nq-1]
-            dls001.rowns[15:171]= elco[0:12,0:11].reshape(1,-1)
-            dls001.rowns[173:209]=tesco[0:3,0:11].reshape(1,-1)
+            dls001.meo= meth      #meth
+            dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
+            dls001.conit= 0.5/(nq+2)                     #conit   
+            dls001.el[0:13]= elco[:,nq-1]
             # IWORK[...] =  
             IWORK[13]=dls001.nqu
             IWORK[14]=dls001.nq
             IWORK[18]=dls001.meth
-            IWORK[7]=dlsa001.mxordn    #max allowed order for Adams methods
-            IWORK[8]=dlsa001.mxords    #max allowed order for BDF
+            IWORK[7]=dlsa01.mxordn    #max allowed order for Adams methods
+            IWORK[8]=dlsa01.mxords    #max allowed order for BDF
             IWORK[19]=1         #the current method indicator
             #RWORK[...]
             RWORK[12]=dls001.tn
-            WORK[10]=H         #step-size used successfully
+            RWORK[10]=H         #step-size used successfully
             RWORK[11]=H         #step-size to be attempted for the next step 
             RWORK[6]=dls001.hmin
             RWORK[5]=dls001.hmxi
@@ -252,7 +250,7 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy, t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
