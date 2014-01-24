@@ -94,7 +94,8 @@ class LSODAR(Explicit_ODE):
         #starts simulation with classical multistep starting procedure
         # Runge-Kutta starter will be started if desired (see options) 
         # only after an event occured.
-        self._rkstarter_active = True
+        print 'FM initial'
+        self._rkstarter_active = False
         
     def interpolate(self, t):
         """
@@ -125,12 +126,14 @@ class LSODAR(Explicit_ODE):
                                3*self.problem_info["dimRoot"]))
         # Integer work array
         IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
         if self.rkstarter and self._rkstarter_active:
+            print ' we are here at {}'.format(t)
             # invoke rkstarter
             # a) get previous stepsize if any
             hu = dls001.hu
             H = hu if hu != 0. else 1.e-4  # this needs some reflections 
-            # b) compute the nordsieck array and put it into RWORK
+            # b) compute the Nordsieck array and put it into RWORK
             rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
             t,nordsieck = rkNordsieck(t,y,self.sw,)       
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
@@ -140,8 +143,9 @@ class LSODAR(Explicit_ODE):
             # c) compute method coefficients and update the common blocks
             mf = 11
             nq = 4
-            #alo.dlsa001.mused = alo.dls001.meth = meth = mf // 10
-            dls001.miter = meth=mf % 10
+            dls001.meth = meth = mf // 10
+            print 'meth is {} , dls001.meth is {}'.format(meth,dls001.meth)
+            dls001.miter =mf % 10
             elco,tesco =dcfode(meth)  # where to pout these
             dls001.el0 =  elco[0,nq-1] 
             dls001.maxord= 12      #max order 
@@ -241,6 +245,7 @@ class LSODAR(Explicit_ODE):
                     raise ODEPACK_Exception("LSODAR failed with flag %d"%ISTATE)
             
         else:
+            
             #Change the ITASK
             ITASK = 4 #For computation of yout
             
@@ -250,7 +255,7 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy, t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
@@ -272,6 +277,7 @@ class LSODAR(Explicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter else False
+        print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]
