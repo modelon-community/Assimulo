@@ -17,13 +17,13 @@
 
 import numpy as N
 
-from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
+from assimulo.exception import *
 from assimulo.ode import *
 
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
-    from assimulo.lib.odepack import dlsodar, dcfode, dls001,dlsa01
+    from assimulo.lib.odepack import dlsodar, dcfode, set_lsod_common, get_lsod_common
 except ImportError:
     print "Could not find ODEPACK functions"
 
@@ -120,56 +120,10 @@ class LSODAR(Explicit_ODE):
         """
         Helper program for the initialization of LSODAR
         """
-        # Real work array
-        RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
-                               max(16,self.problem_info["dim"]+9) + 
-                               3*self.problem_info["dimRoot"]))
-        # Integer work array
-        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
-        print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
-        if self.rkstarter and self._rkstarter_active:
-            print ' we are here at {}'.format(t)
-            # invoke rkstarter
-            # a) get previous stepsize if any
-            hu = dls001.hu
-            H = hu if hu != 0. else 1.e-4  # this needs some reflections 
-            # b) compute the Nordsieck array and put it into RWORK
-            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
-            t,nordsieck = rkNordsieck(t,y,self.sw,)       
-            nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
-            RWORK[nordsieck_start_index:nordsieck_start_index+len(nordsieck.flatten())] = \
-                                       nordsieck.flatten()
-                        
-            # c) compute method coefficients and update the common blocks
-            mf = 11
-            nq = 4
-            dls001.meth = meth = mf // 10
-            print 'meth is {} , dls001.meth is {}'.format(meth,dls001.meth)
-            dls001.miter =mf % 10
-            elco,tesco =dcfode(meth)  # where to pout these
-            dls001.el0 =  elco[0,nq-1] 
-            dls001.maxord= 12      #max order 
-            dls001.nq= 4           #Next step order 
-            dls001.nqu=4           #Method order last used
-            dls001.meo= meth      #meth
-            dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
-            dls001.conit= 0.5/(nq+2)                     #conit   
-            dls001.el[0:13]= elco[:,nq-1]
-            # IWORK[...] =  
-            IWORK[13]=dls001.nqu
-            IWORK[14]=dls001.nq
-            IWORK[18]=dls001.meth
-            IWORK[7]=dlsa01.mxordn    #max allowed order for Adams methods
-            IWORK[8]=dlsa01.mxords    #max allowed order for BDF
-            IWORK[19]=1         #the current method indicator
-            #RWORK[...]
-            RWORK[12]=dls001.tn
-            RWORK[10]=H         #step-size used successfully
-            RWORK[11]=H         #step-size to be attempted for the next step 
-            RWORK[6]=dls001.hmin
-            RWORK[5]=dls001.hmxi
-        return RWORK, IWORK
-                                     
+        # Real work array  
+        class common_like(object):
+            def __call__(self):
+                 return self.__dict__
     
         
         RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
