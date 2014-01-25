@@ -414,6 +414,7 @@ def check_fortran_extensions():
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
