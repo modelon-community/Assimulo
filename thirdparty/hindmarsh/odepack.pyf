@@ -1041,6 +1041,37 @@ python module odepack ! in
             double precision, intent(out),dimension(3,12)::tesco 
         end subroutine dcfode   
     end interface 
+        interface  ! in :odepack_aux
+        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,el0,conit,el) ! in :odepack_aux:odepack_aux.f90
+            integer intent(in) :: meth
+            integer intent(in) :: nq
+            integer intent(in) :: nqu
+            integer intent(in) :: miter
+            integer intent(in) :: maxord
+            integer intent(in) :: meo
+            integer intent(in) :: nqnyh
+            double precision intent(in) :: el0
+            double precision intent(in) :: conit
+            double precision dimension(13),intent(in) :: el
+        end subroutine set_lsod_common
+        subroutine get_lsod_common(hu_,nqu_,nq_,nyh_, nqnyh_) ! in :odepack_aux:odepack_aux.f90
+            double precision intent(out) :: hu_
+            integer intent(out) :: nqu_
+            integer intent(out) :: nq_
+            integer intent(out) :: nyh_
+            integer intent(out) :: nqnyh_
+         end subroutine get_lsod_common
+    end interface
+    interface ! in odpkda1
+       subroutine dintdy (t, k, yh, nyh, dky, iflag) ! in: odpkda1.f
+            double precision, intent(in) :: t
+            integer, intent(in) :: k
+            double precision, depend(nyh), intent(in) :: yh(nyh,*)
+            integer, intent(in) :: nyh
+            double precision, intent(out), depend(nyh) :: dky(nyh)
+            integer, intent(out) :: iflag
+       end subroutine dintdy
+    end interface
 end python module odepack
 
 ! This file was auto-generated with f2py (version:2) and edited.

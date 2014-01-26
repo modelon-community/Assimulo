@@ -23,7 +23,8 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
-    from assimulo.lib.odepack import dlsodar, dcfode, set_lsod_common, get_lsod_common
+    from assimulo.lib.odepack import dlsodar, dcfode, dintdy
+    from assimulo.lib.odepack import set_lsod_common, get_lsod_common
 except ImportError:
     print "Could not find ODEPACK functions"
 
@@ -99,22 +100,16 @@ class LSODAR(Explicit_ODE):
         
     def interpolate(self, t):
         """
-        Interpolate the solution at time t using the nordsieck history
-        array as,
-        
-        .. math::
-        
-             \mathrm{interp} = \sum_{j=0}^q (t - t_n)^j \cdot h^{-j} \cdot z_n[j] ,
-        
-        where q is the current order, and :math:`z_n[j]` is the j-th column of 
-        the Nordsieck history array.
+        Helper method to interpolate the solution at time t using the Nordsieck history
+        array. Wrapper to ODEPACK's subroutine DINTDY.
         """
-        interp = N.array([0.0]*self.problem_info["dim"])
-        
-        for i in range(self._nordsieck_order):
-            interp = interp + (t-self._nordsieck_time)**i*self._nordsieck_h**(-i)*self._nordsieck_array[i*self.problem_info["dim"]:(i+1)*self.problem_info["dim"]]
-            
-        return interp
+        #print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
+        dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
+        if iflag!= 0 and iflag!=-2:
+            raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
+        elif iflag==-2:
+            dky=self.y.copy()
+        return dky
         
     def integrate_start(self, t, y):
         """
@@ -183,9 +178,9 @@ class LSODAR(Explicit_ODE):
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 2 #Both atol and rtol are vectors
-        ITASK = 5 #For computation of yout
+        ITASK = 5 #For one step mode and hitting exactly tcrit, normally tf
         ISTATE = 1 #Start of integration
-        IOPT = 1 #No optional inputs are used
+        IOPT = 1 #optional inputs are used
         # provide work arrays and set common blocks (if needed)
         RWORK, IWORK = self.integrate_start( t, y)
         
@@ -219,21 +214,20 @@ class LSODAR(Explicit_ODE):
         
         #Run in normal mode?
         normal_mode = 1 if opts["output_list"] != None else 0
-        
         #if normal_mode == 0:
         if opts["report_continuously"] or opts["output_list"] == None:
             while (ISTATE == 2 or ISTATE == 1) and t < tf:
             
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, 
+                        self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                         ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
-                
-                self._nordsieck_array = RWORK[nordsieck_start_index:nordsieck_start_index+(IWORK[14]+1)*self.problem_info["dim"]]
-                self._nordsieck_order = IWORK[14]
-                self._nordsieck_time  = RWORK[12]
-                self._nordsieck_h = RWORK[11]
-                
+                hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
+                #print 't= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu)
+                self._nordsieck_array = \
+                     RWORK[nordsieck_start_index:nordsieck_start_index+(nq+1)*nyh].reshape((nyh,-1),order='F') 
+                self._nyh = nyh              
                 self._event_info = roots
                 
                 if opts["report_continuously"]:
@@ -265,7 +259,8 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, 
+                    self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 

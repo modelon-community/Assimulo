@@ -58,7 +58,7 @@ el_1    = el
 conit_1 = conit
 return
 end subroutine set_lsod_common
-subroutine get_lsod_common(hu_,nqu_,nq_)
+subroutine get_lsod_common(hu_,nqu_,nq_, nyh_, nqnyh_)
 ! helper subroutine to read the LSOD* common blocks DLS001, 
 ! This is needed to avoid the direct access of the common block in Python
 !   get_lsod_common()
@@ -66,7 +66,7 @@ subroutine get_lsod_common(hu_,nqu_,nq_)
 implicit none
 
 double precision, intent(out):: hu_
-integer, intent(out) :: nq_, nqu_
+integer, intent(out) :: nq_, nqu_, nyh_, nqnyh_
 
 integer ::                  init,mxstep,mxhnil,nhnil,nslast,nyh,     &     
                             ialth, ipup, lmax, meo, nqnyh, nslp,     &    
@@ -91,5 +91,7 @@ common /dls001/ conit, crate, el(13), elco(13,12), hold,             &    ! rown
 hu_=hu
 nq_=nq
 nqu_=nqu
+nyh_=nyh
+nqnyh_=nqnyh
 return 
 end subroutine get_lsod_common
