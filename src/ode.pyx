@@ -148,12 +148,12 @@ cdef class ODE:
                         - Should be an integer.
                         
                 ncp_list
-                        - Defailt None. A list of time points where the solution
+                        - Default None. A list of time points where the solution
                           should be returned. Note, requires that ncp == 0.
                           
                     Example:
                     
-                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                        simulate(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
                  
         """
