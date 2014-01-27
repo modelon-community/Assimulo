@@ -120,20 +120,20 @@ class LSODAR(Explicit_ODE):
             def __call__(self):
                  return self.__dict__
     
-        
         RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
                                max(16,self.problem_info["dim"]+9) + 
                                3*self.problem_info["dimRoot"]))
         # Integer work array
         IWORK = N.array([0]*(20 + self.problem_info["dim"]))
         print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
+        ISTATE=1
         if self.rkstarter and self._rkstarter_active:
+            ISTATE=1   #  should be 2  (but then something goes wrong probably with RWORK)
             dls001=common_like()
             print ' we are here at {}'.format(t)
             # invoke rkstarter
             # a) get previous stepsize if any
-            hu, nq, nqu = get_lsod_common()
-            print nq, nqu
+            hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
             H = hu if hu != 0. else 1.e-4  # this needs some reflections 
             # b) compute the Nordsieck array and put it into RWORK
             rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
@@ -173,16 +173,16 @@ class LSODAR(Explicit_ODE):
             
             # set common block
             set_lsod_common(**dls001())
-        return RWORK, IWORK
+        return ISTATE, RWORK, IWORK
                                      
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 2 #Both atol and rtol are vectors
         ITASK = 5 #For one step mode and hitting exactly tcrit, normally tf
-        ISTATE = 1 #Start of integration
         IOPT = 1 #optional inputs are used
+        
         # provide work arrays and set common blocks (if needed)
-        RWORK, IWORK = self.integrate_start( t, y)
+        ISTATE, RWORK, IWORK = self.integrate_start( t, y)
         
         JT = 1 if self.usejac else 2#Jacobian type indicator
         JROOT = N.array([0]*self.problem_info["dimRoot"])
@@ -290,7 +290,6 @@ class LSODAR(Explicit_ODE):
         self.statistics["nfcn"]          += IWORK[11]
         self.statistics["njac"]          += IWORK[12]
         self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
-        
         return flag, tlist, ylist
     
     def state_event_info(self):
