@@ -95,7 +95,6 @@ class LSODAR(Explicit_ODE):
         #starts simulation with classical multistep starting procedure
         # Runge-Kutta starter will be started if desired (see options) 
         # only after an event occured.
-        print 'FM initial'
         self._rkstarter_active = False
         
     def interpolate(self, t):
@@ -121,7 +120,7 @@ class LSODAR(Explicit_ODE):
                  return self.__dict__
     
         
-        print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
+        #print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
         if not(self.rkstarter and self._rkstarter_active):
             # first call or classical restart after a discontinuity
             ISTATE=1
@@ -134,9 +133,8 @@ class LSODAR(Explicit_ODE):
             # RK restart
             RWORK=self._RWORK.copy()
             IWORK=self._IWORK.copy()
-            ISTATE=2   #  should be 2  (but then something goes wrong probably with RWORK)
+            ISTATE=2   #  should be 2  
             dls001=common_like()
-            print ' we are here at {}'.format(t)
             # invoke rkstarter
             # a) get previous stepsize if any
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
@@ -146,14 +144,13 @@ class LSODAR(Explicit_ODE):
             t,nordsieck = rkNordsieck(t,y,self.sw,)
             nordsieck=nordsieck.T
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
-            RWORK[nordsieck_start_index:nordsieck_start_index+len(nordsieck.flatten())] = \
+            RWORK[nordsieck_start_index:nordsieck_start_index+nordsieck.size] = \
                                        nordsieck.flatten(order='F')
                         
             # c) compute method coefficients and update the common blocks
             mf = 11
             nq = 4
             dls001.meth = meth = mf // 10
-            print 'meth is {} , dls001.meth is {}'.format(meth,dls001.meth)
             dls001.miter =mf % 10
             elco,tesco =dcfode(meth)  # 
             dls001.el0 =  elco[0,nq-1] 
@@ -181,7 +178,9 @@ class LSODAR(Explicit_ODE):
             
             # set common block
             set_lsod_common(**dls001())
-            print self.y
+            
+            # d) Reset statistics
+            IWORK[9:13]=[0]*4
         return ISTATE, RWORK, IWORK
                                      
     
@@ -291,7 +290,7 @@ class LSODAR(Explicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter else False
-        print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
+        #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]
@@ -300,6 +299,7 @@ class LSODAR(Explicit_ODE):
         self.statistics["njac"]          += IWORK[12]
         self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
+        print self.statistics["nfcn"]
         if self.rkstarter:
             self._RWORK=RWORK
             self._IWORK=IWORK        
@@ -318,20 +318,21 @@ class LSODAR(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ng"]),       verbose)
-        self.log_message(' Number of State-Events                   : '+ str(self.statistics["nevents"]), verbose)
-        
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : LSODAR ',         verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message(' Classical Starter       : ' + str(not self.options["rkstarter"]),  verbose)
+        self.log_message(' Absolute tolerances     : {}'.format(self.options["atol"]),  verbose)
+        self.log_message(' Relative tolerances     : {}'.format(self.options["rtol"]),  verbose)
+        self.log_message(' Classical starter       : {}'.format(not self.options["rkstarter"]),  verbose)
         self.log_message('',                                                         verbose)
+
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        
+        self.log_message(' Number of steps                          : {}'.format(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : {}'.format(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian evaluations           : {}'.format(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of event function evaluations     : {}'.format(self.statistics["ng"]),       verbose)
+        self.log_message(' Number of detected state events          : {}'.format(self.statistics["nevents"]), verbose)
+        
     
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
@@ -537,7 +538,6 @@ class RKStarterNordsieck(object):
         """
         nord=N.dot(self.gamma.T,k)
         scale=N.array([1.,1.,1./2.,1./6,1./24.]).reshape(-1,1)
-        print nord.shape
         return scale*nord  
     def __call__(self, t0 , y0, sw0=[]):
         """
