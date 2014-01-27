@@ -120,15 +120,21 @@ class LSODAR(Explicit_ODE):
             def __call__(self):
                  return self.__dict__
     
-        RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+        
+        print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
+        if not(self.rkstarter and self._rkstarter_active):
+            # first call or classical restart after a discontinuity
+            ISTATE=1
+            RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
                                max(16,self.problem_info["dim"]+9) + 
                                3*self.problem_info["dimRoot"]))
-        # Integer work array
-        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
-        print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
-        ISTATE=1
-        if self.rkstarter and self._rkstarter_active:
-            ISTATE=1   #  should be 2  (but then something goes wrong probably with RWORK)
+            # Integer work array
+            IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        else: #self.rkstarter and self._rkstarter_active
+            # RK restart
+            RWORK=self._RWORK.copy()
+            IWORK=self._IWORK.copy()
+            ISTATE=2   #  should be 2  (but then something goes wrong probably with RWORK)
             dls001=common_like()
             print ' we are here at {}'.format(t)
             # invoke rkstarter
@@ -137,10 +143,11 @@ class LSODAR(Explicit_ODE):
             H = hu if hu != 0. else 1.e-4  # this needs some reflections 
             # b) compute the Nordsieck array and put it into RWORK
             rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
-            t,nordsieck = rkNordsieck(t,y,self.sw,)       
+            t,nordsieck = rkNordsieck(t,y,self.sw,)
+            nordsieck=nordsieck.T
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
             RWORK[nordsieck_start_index:nordsieck_start_index+len(nordsieck.flatten())] = \
-                                       nordsieck.flatten()
+                                       nordsieck.flatten(order='F')
                         
             # c) compute method coefficients and update the common blocks
             mf = 11
@@ -165,7 +172,8 @@ class LSODAR(Explicit_ODE):
             #IWORK[8]=dlsa01.mxords    #max allowed order for BDF
             IWORK[19]=1         #the current method indicator
             #RWORK[...]
-            #RWORK[12]=dls001.tn
+            dls001.tn=t
+            RWORK[12]=t
             RWORK[10]=H         #step-size used successfully
             RWORK[11]=H         #step-size to be attempted for the next step 
             #RWORK[6]=dls001.hmin
@@ -173,6 +181,7 @@ class LSODAR(Explicit_ODE):
             
             # set common block
             set_lsod_common(**dls001())
+            print self.y
         return ISTATE, RWORK, IWORK
                                      
     
@@ -290,6 +299,11 @@ class LSODAR(Explicit_ODE):
         self.statistics["nfcn"]          += IWORK[11]
         self.statistics["njac"]          += IWORK[12]
         self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
+        # save RWORK, IWORK for restarting feature
+        if self.rkstarter:
+            self._RWORK=RWORK
+            self._IWORK=IWORK        
+       
         return flag, tlist, ylist
     
     def state_event_info(self):

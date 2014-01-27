@@ -13,7 +13,7 @@
 ! along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,el0,conit,el)
+subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,tn, el0,conit,el)
 ! helper subroutine to fill the LSOD* common blocks DLS001, 
 ! This is needed to avoid the direct access of the common block in Python
 !   set_1lsod_1common(**args)
@@ -21,7 +21,7 @@ subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,el0,conit,el)
 implicit none
 
 integer, intent(in) :: meth,nq,nqu,miter,maxord,meo,nqnyh
-double precision, intent(in):: el0,conit,el(13)
+double precision, intent(in):: tn, el0,conit,el(13)
 
 ! variables in common block dls001
 ! those set from the parameter list got a "_1"-postfix
@@ -35,11 +35,11 @@ integer ::                  init,mxstep,mxhnil,nhnil,nslast,nyh_1,     &
 double precision :: conit_1, crate, el_1, elco, hold,             &    ! rowns(209)
                             rmax, tesco,                       &
                             ccmax, el0_1, h, hmin,                     &
-                            hmxi, hu, rc, tn, uround 
+                            hmxi, hu, rc, tn_, uround 
 common /dls001/ conit_1, crate, el_1(13), elco(13,12), hold,             &    ! rowns(209)
                             rmax, tesco(3,12),                       &
                             ccmax, el0_1, h, hmin,                     &
-                            hmxi, hu, rc, tn, uround,                &
+                            hmxi, hu, rc, tn_, uround,                &
                             init,mxstep,mxhnil,nhnil,nslast,nyh_1,     &    !iownd(6), 
                             ialth, ipup, lmax, meo_1, nqnyh_1, nslp,     &    !iowns(6)
                             icf, ierpj, iersl, jcur, jstart, kflag,  &
@@ -56,6 +56,7 @@ nqnyh_1 = nqnyh
 el0_1   = el0
 el_1    = el
 conit_1 = conit
+tn_=tn
 return
 end subroutine set_lsod_common
 subroutine get_lsod_common(hu_,nqu_,nq_, nyh_, nqnyh_)
