@@ -61,6 +61,8 @@ class LSODAR(Explicit_ODE):
         self.options["usejac"]   = False
         self.options["maxsteps"] = 100000
         self.options["rkstarter"] = False
+        self.options["maxordn"] = 12
+        self.options["maxords"] =  5
                 
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
@@ -149,7 +151,8 @@ class LSODAR(Explicit_ODE):
                                        nordsieck.flatten(order='F')
                         
             # c) compute method coefficients and update the common blocks
-            mf = 11
+            dls001.init=1
+            mf = 10
             nq = 4
             dls001.meth = meth = mf // 10
             dls001.miter =mf % 10
@@ -157,13 +160,13 @@ class LSODAR(Explicit_ODE):
             dls001.el0 =  elco[0,nq-1] 
             dls001.maxord= 12      #max order 
             dls001.nq= 4           #Next step order 
-            dls001.nqu=4           #Method order last used
+            #dls001.nqu=4           #Method order last used  (check if this is needed)
             dls001.meo= meth      #meth
             dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
             dls001.conit= 0.5/(nq+2)                     #conit   
             dls001.el= elco[:,nq-1]
             # IWORK[...] =  
-            IWORK[13]=dls001.nqu
+            #IWORK[13]=dls001.nqu
             IWORK[14]=dls001.nq
             IWORK[18]=dls001.meth
             #IWORK[7]=dlsa01.mxordn    #max allowed order for Adams methods
@@ -210,6 +213,10 @@ class LSODAR(Explicit_ODE):
         
         #Setting iwork options
         IWORK[5] = self.maxsteps
+        
+        #Setting maxord to IWORK
+        IWORK[7] = self.maxordn
+        IWORK[8] = self.maxords
 
         
         #Dummy methods
@@ -332,6 +339,9 @@ class LSODAR(Explicit_ODE):
         self.log_message(' Absolute tolerances     : {}'.format(self.options["atol"]),  verbose)
         self.log_message(' Relative tolerances     : {}'.format(self.options["rtol"]),  verbose)
         self.log_message(' Classical starter       : {}'.format(not self.options["rkstarter"]),  verbose)
+        if self.maxordn < 12 or self.maxords < 5:
+            self.log_message(' Maximal Order Adams     : {}'.format(self.options["maxordn"]),  verbose)
+            self.log_message(' Maximal Order BDF       : {}'.format(self.options["maxords"]),  verbose)
         self.log_message('',                                                         verbose)
 
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
@@ -445,6 +455,52 @@ class LSODAR(Explicit_ODE):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    def _get_maxordn(self):
+        """
+        The maximum order used by the Adams-Moulton method (nonstiff case)
+        
+            Parameters::
+            
+                maxordn
+                            - Default 12
+                            
+                            - Should be a positive integer
+        """
+        return self.options["maxordn"]
+    
+    def _set_maxordn(self, maxordn):
+        try:
+            maxordn = int(maxordn)
+        except (TypeError, ValueError):
+            raise ODEPACK_Exception("Maximum order must be a positive integer.")
+        if maxordn > 12:
+            raise ODEPACK_Exception("Maximum order should not exceed 12.")    
+        self.options["maxordn"] = maxordn
+    
+    maxordn = property(_get_maxordn, _set_maxordn)
+    def _get_maxords(self):
+        """
+        The maximum order used by the BDF method (stiff case)
+        
+            Parameters::
+            
+                maxords
+                            - Default 5
+                            
+                            - Should be a positive integer
+        """
+        return self.options["maxords"]
+    
+    def _set_maxords(self, maxords):
+        try:
+            maxords = int(maxords)
+        except (TypeError, ValueError):
+            raise ODEPACK_Exception("Maximum order must be a positive integer.")
+        if maxords > 5:
+            raise ODEPACK_Exception("Maximum order should not exceed 5.")    
+        self.options["maxords"] = maxords
+    
+    maxords = property(_get_maxords, _set_maxords)
     def _get_rkstarter(self):
         """
         This defines how LSODAR is started. 
