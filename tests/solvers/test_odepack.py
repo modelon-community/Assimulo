@@ -141,6 +141,17 @@ class Test_LSODAR:
         numpy.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)                    
         
     @testattr(stddist = True)
+    def test_interpol(self):
+        # a with interpolation and report_continuously
+        self.sim.report_continuously=True
+        t_sol,y_sol=self.sim.simulate(1.,ncp_list=[0.5])
+        self.sim.reset()
+        t_sol1,y_sol1=self.sim.simulate(0.5)
+        ind05=N.nonzero(N.array(t_sol)==0.5)[0][0]
+        print y_sol[ind05],y_sol1[-1]
+        nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
+        
+        
     def test_simulation_with_jac(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
