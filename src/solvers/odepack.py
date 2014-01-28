@@ -135,6 +135,7 @@ class LSODAR(Explicit_ODE):
             IWORK=self._IWORK.copy()
             ISTATE=2   #  should be 2  
             dls001=common_like()
+            dlsr01=common_like()
             # invoke rkstarter
             # a) get previous stepsize if any
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
@@ -176,11 +177,20 @@ class LSODAR(Explicit_ODE):
             #RWORK[6]=dls001.hmin
             #RWORK[5]=dls001.hmxi
             
-            # set common block
-            set_lsod_common(**dls001())
             
             # d) Reset statistics
             IWORK[9:13]=[0]*4
+            dls001.nst=0
+            dls001.nfe=0
+            dls001.nje=0
+            dlsr01.nge=0
+            # set common block
+            commonblocks={}
+            commonblocks.update(dls001())
+            commonblocks.update(dlsr01())
+            set_lsod_common(**commonblocks)
+            
+ 
         return ISTATE, RWORK, IWORK
                                      
     
@@ -299,7 +309,6 @@ class LSODAR(Explicit_ODE):
         self.statistics["njac"]          += IWORK[12]
         self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
-        print self.statistics["nfcn"]
         if self.rkstarter:
             self._RWORK=RWORK
             self._IWORK=IWORK        

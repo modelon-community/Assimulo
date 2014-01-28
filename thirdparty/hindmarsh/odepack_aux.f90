@@ -13,17 +13,17 @@
 ! along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,tn, el0,conit,el)
+subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,tn, el0,conit,el, nge)
 ! helper subroutine to fill the LSOD* common blocks DLS001, 
 ! This is needed to avoid the direct access of the common block in Python
 !   set_1lsod_1common(**args)
 
 implicit none
 
-integer, intent(in) :: meth,nq,nqu,miter,maxord,meo,nqnyh
+integer, intent(in) :: meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje, nge
 double precision, intent(in):: tn, el0,conit,el(13)
 
-! variables in common block dls001
+! variables in the common blocks 
 ! those set from the parameter list got a "_1"-postfix
 
 integer ::                  init,mxstep,mxhnil,nhnil,nslast,nyh_1,     &     
@@ -31,11 +31,13 @@ integer ::                  init,mxstep,mxhnil,nhnil,nslast,nyh_1,     &
                             icf, ierpj, iersl, jcur, jstart, kflag,  &
                             l,lyh, lewt, lacor, lsavf, lwm, liwm,    &
                             meth_1, miter_1,maxord_1, maxcor, msbp, mxncf, &
-                            n, nq_1, nst, nfe, nje, nqu_1
+                            n, nq_1, nst_1, nfe_1, nje_1, nqu_1,   &
+                            i_rootcommon, ngc, nge_1
 double precision :: conit_1, crate, el_1, elco, hold,             &    ! rowns(209)
                             rmax, tesco,                       &
                             ccmax, el0_1, h, hmin,                     &
-                            hmxi, hu, rc, tn_, uround 
+                            hmxi, hu, rc, tn_, uround ,                &
+                            r_rootcommon
 common /dls001/ conit_1, crate, el_1(13), elco(13,12), hold,             &    ! rowns(209)
                             rmax, tesco(3,12),                       &
                             ccmax, el0_1, h, hmin,                     &
@@ -45,7 +47,9 @@ common /dls001/ conit_1, crate, el_1(13), elco(13,12), hold,             &    ! 
                             icf, ierpj, iersl, jcur, jstart, kflag,  &
                             l,lyh, lewt, lacor, lsavf, lwm, liwm,    &
                             meth_1,miter_1, maxord_1, maxcor, msbp, mxncf, &
-                            n, nq_1, nst, nfe, nje, nqu_1
+                            n, nq_1, nst_1, nfe_1, nje_1, nqu_1
+common /dlsr01/ r_rootcommon(5), i_rootcommon(7), ngc, nge_1  ! root function counters
+
 meth_1  = meth
 nq_1    = nq
 nqu_1  = nqu
@@ -57,6 +61,10 @@ el0_1   = el0
 el_1    = el
 conit_1 = conit
 tn_=tn
+nst_1=nst
+nfe_1=nfe
+nje_1=nje
+nge_1=nge
 return
 end subroutine set_lsod_common
 subroutine get_lsod_common(hu_,nqu_,nq_, nyh_, nqnyh_)
