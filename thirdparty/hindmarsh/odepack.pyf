@@ -1042,22 +1042,23 @@ python module odepack ! in
         end subroutine dcfode   
     end interface 
         interface  ! in :odepack_aux
-        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,tn, el0,conit,el, nge) ! in :odepack_aux:odepack_aux.f90
-            integer intent(in) :: meth
-            integer intent(in) :: nq
-            integer intent(in) :: nqu
-            integer intent(in) :: miter
-            integer intent(in) :: maxord
-            integer intent(in) :: meo
-            integer intent(in) :: nqnyh
-            integer intent(in) :: nst
-            integer intent(in) :: nfe
-            integer intent(in) :: nje
-            integer intent(in) :: nge
-            double precision intent(in) :: tn
-            double precision intent(in) :: el0
-            double precision intent(in) :: conit
-            double precision dimension(13),intent(in) :: el
+        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, el0,conit,el, nge) ! in :odepack_aux:odepack_aux.f90
+            integer intent(in), optional :: meth
+            integer intent(in), optional :: nq
+            integer intent(in), optional :: nqu
+            integer intent(in), optional :: miter
+            integer intent(in), optional :: maxord
+            integer intent(in), optional :: meo
+            integer intent(in), optional :: nqnyh
+            integer intent(in), optional :: nst
+            integer intent(in), optional :: nfe
+            integer intent(in), optional :: nje
+            integer intent(in), optional :: nge
+            integer intent(in), optional :: init 
+            double precision intent(in), optional :: tn
+            double precision intent(in), optional :: el0
+            double precision intent(in), optional :: conit
+            double precision dimension(13),intent(in), optional :: el
         end subroutine set_lsod_common
         subroutine get_lsod_common(hu_,nqu_,nq_,nyh_, nqnyh_) ! in :odepack_aux:odepack_aux.f90
             double precision intent(out) :: hu_
