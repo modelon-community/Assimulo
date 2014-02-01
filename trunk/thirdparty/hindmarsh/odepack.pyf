@@ -1042,7 +1042,7 @@ python module odepack ! in
         end subroutine dcfode   
     end interface 
         interface  ! in :odepack_aux
-        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, el0,conit,el, nge) ! in :odepack_aux:odepack_aux.f90
+        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, el0,conit,el, nge, hu, h) ! in :odepack_aux:odepack_aux.f90
             integer intent(in), optional :: meth
             integer intent(in), optional :: nq
             integer intent(in), optional :: nqu
@@ -1058,6 +1058,7 @@ python module odepack ! in
             double precision intent(in), optional :: tn
             double precision intent(in), optional :: el0
             double precision intent(in), optional :: conit
+            double precision intent(in), optional ::h, hu
             double precision dimension(13),intent(in), optional :: el
         end subroutine set_lsod_common
         subroutine get_lsod_common(hu_,nqu_,nq_,nyh_, nqnyh_) ! in :odepack_aux:odepack_aux.f90

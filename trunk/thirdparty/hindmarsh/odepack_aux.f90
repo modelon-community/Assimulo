@@ -13,7 +13,7 @@
 ! along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, el0,conit,el, nge)
+subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, el0,conit,el, nge, h, hu)
 ! helper subroutine to fill the LSOD* common blocks DLS001, 
 ! This is needed to avoid the direct access of the common block in Python
 !   set_1lsod_1common(**args)
@@ -21,7 +21,7 @@ subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,t
 implicit none
 
 integer, intent(in), optional :: meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init, nge
-double precision, intent(in):: tn, el0,conit,el(13)
+double precision, intent(in):: tn, el0,conit,el(13), h, hu
 
 ! variables in the common blocks 
 ! those set from the parameter list got a "_1"-postfix
@@ -35,13 +35,13 @@ integer ::                  init_1,mxstep,mxhnil,nhnil,nslast,nyh_1,     &
                             i_rootcommon, ngc, nge_1
 double precision :: conit_1, crate, el_1, elco, hold,             &    ! rowns(209)
                             rmax, tesco,                       &
-                            ccmax, el0_1, h, hmin,                     &
-                            hmxi, hu, rc, tn_, uround ,                &
+                            ccmax, el0_1, h_1, hmin,                     &
+                            hmxi, hu_1, rc, tn_, uround ,                &
                             r_rootcommon
 common /dls001/ conit_1, crate, el_1(13), elco(13,12), hold,             &    ! rowns(209)
                             rmax, tesco(3,12),                       &
-                            ccmax, el0_1, h, hmin,                     &
-                            hmxi, hu, rc, tn_, uround,                &
+                            ccmax, el0_1, h_1, hmin,                     &
+                            hmxi, hu_1, rc, tn_, uround,                &
                             init_1,mxstep,mxhnil,nhnil,nslast,nyh_1,     &    !iownd(6), 
                             ialth, ipup, lmax, meo_1, nqnyh_1, nslp,     &    !iowns(6)
                             icf, ierpj, iersl, jcur, jstart, kflag,  &
@@ -55,6 +55,9 @@ nq_1    = nq
 if (present(nqu)) then
    nqu_1  = nqu
 end if   
+h_1=h
+hu_1=hu
+hold=hu
 miter_1 = miter
 maxord_1 = maxord
 meo_1    = meo

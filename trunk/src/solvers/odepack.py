@@ -143,8 +143,8 @@ class LSODAR(Explicit_ODE):
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
             H = hu if hu != 0. else 1.e-4  # this needs some reflections 
             # b) compute the Nordsieck array and put it into RWORK
-            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H)
-            t,nordsieck = rkNordsieck(t,y,self.sw,)
+            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H*4)
+            t,nordsieck = rkNordsieck(t,y,self.sw)
             nordsieck=nordsieck.T
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
             RWORK[nordsieck_start_index:nordsieck_start_index+nordsieck.size] = \
@@ -165,6 +165,8 @@ class LSODAR(Explicit_ODE):
             dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
             dls001.conit= 0.5/(nq+2)                     #conit   
             dls001.el= elco[:,nq-1]
+            dls001.hu=hu  # this sets also hold
+            dls001.h=hu 
             # IWORK[...] =  
             #IWORK[13]=dls001.nqu
             IWORK[14]=dls001.nq
@@ -210,6 +212,7 @@ class LSODAR(Explicit_ODE):
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
+        RWORK[5] = 1.e-2  # test
         
         #Setting iwork options
         IWORK[5] = self.maxsteps
