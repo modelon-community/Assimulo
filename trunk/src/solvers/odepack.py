@@ -185,8 +185,8 @@ class LSODAR(Explicit_ODE):
             
             # d) Reset statistics
             IWORK[9:13]=[0]*4
-            dls001.nst=0
-            dls001.nfe=0
+            dls001.nst=1
+            dls001.nfe=6   # from the starter
             dls001.nje=0
             dlsr01.nge=0
             # set common block
