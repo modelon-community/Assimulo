@@ -201,7 +201,7 @@ class LSODAR(Explicit_ODE):
                                      
     
     def integrate(self, t, y, tf, opts):
-        ITOL  = 2 #Both atol and rtol are vectors
+        ITOL  = 2 #Only  atol is a  vector
         ITASK = 5 #For one step mode and hitting exactly tcrit, normally tf
         IOPT = 1 #optional inputs are used
         
