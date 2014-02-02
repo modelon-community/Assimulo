@@ -63,6 +63,7 @@ class LSODAR(Explicit_ODE):
         self.options["rkstarter"] = False
         self.options["maxordn"] = 12
         self.options["maxords"] =  5
+        self.options["hmax"] = 0.
                 
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
@@ -212,7 +213,7 @@ class LSODAR(Explicit_ODE):
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
-        RWORK[5] = 1.e-2  # test
+        RWORK[5] = self.options["hmax"]
         
         #Setting iwork options
         IWORK[5] = self.maxsteps
@@ -343,8 +344,10 @@ class LSODAR(Explicit_ODE):
         self.log_message(' Relative tolerances     : {}'.format(self.options["rtol"]),  verbose)
         self.log_message(' Classical starter       : {}'.format(not self.options["rkstarter"]),  verbose)
         if self.maxordn < 12 or self.maxords < 5:
-            self.log_message(' Maximal Order Adams     : {}'.format(self.options["maxordn"]),  verbose)
-            self.log_message(' Maximal Order BDF       : {}'.format(self.options["maxords"]),  verbose)
+            self.log_message(' Maximal order Adams     : {}'.format(self.maxordn),  verbose)
+            self.log_message(' Maximal order BDF       : {}'.format(self.maxords),  verbose)
+        if self.hmax > 0. :
+            self.log_message(' Maximal stepsize hmax   : {}'.format(self.hmax),  verbose)
         self.log_message('',                                                         verbose)
 
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
@@ -458,6 +461,23 @@ class LSODAR(Explicit_ODE):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    def _get_hmax(self):
+        """
+        The absolute value of the maximal stepsize for all methods
+        
+        Parameters::
+        
+               hmax
+                          - Default:  0.  (no maximal step size)
+                          
+                          - Should be a positive float
+        """
+        return self.options["hmax"]
+    def _set_hmax(self,hmax):
+        if not (isinstance(hmax,float) and hmax >= 0.):
+           raise ODEPACK_Exception("Maximal step size hmax should be a positive float")
+        self.options["hmax"]=hmax
+    hmax = property(_get_hmax, _set_hmax)
     def _get_maxordn(self):
         """
         The maximum order used by the Adams-Moulton method (nonstiff case)
