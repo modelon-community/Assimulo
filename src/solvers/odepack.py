@@ -105,7 +105,7 @@ class LSODAR(Explicit_ODE):
         Helper method to interpolate the solution at time t using the Nordsieck history
         array. Wrapper to ODEPACK's subroutine DINTDY.
         """
-        #print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
+        print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
         dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
         if iflag!= 0 and iflag!=-2:
             raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
@@ -157,17 +157,16 @@ class LSODAR(Explicit_ODE):
             nq = 4
             dls001.meth = meth = mf // 10
             dls001.miter =mf % 10
-            elco,tesco =dcfode(meth)  # 
-            dls001.el0 =  elco[0,nq-1] 
+            elco,tesco =dcfode(meth)  #  
             dls001.maxord= 12      #max order 
             dls001.nq= 4           #Next step order 
             #dls001.nqu=4           #Method order last used  (check if this is needed)
             dls001.meo= meth      #meth
             dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
             dls001.conit= 0.5/(nq+2)                     #conit   
-            dls001.el= elco[:,nq-1]
-            dls001.hu=hu  # this sets also hold
-            dls001.h=hu 
+            dls001.el= elco[:,nq-1]  # el0 is set internally
+            dls001.hu=H  # this sets also hold and h internally
+            dls001.jstart=1
             # IWORK[...] =  
             #IWORK[13]=dls001.nqu
             IWORK[14]=dls001.nq
