@@ -339,6 +339,8 @@ cdef class KINSOL(Algebraic):
         self.update_options()
         
         flag = SUNDIALS.KINSol(self.kinsol_mem, self.y_temp, self.options["strategy"], self.y_scale, self.f_scale)
+        self.y = nv2arr(self.y_temp)
+        
         if flag < 0:
             raise KINSOLError(flag)
         if flag == KIN_STEP_LT_STPTOL:
