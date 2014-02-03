@@ -140,6 +140,33 @@ class ODASSL_Common(object):
         
     maxh=property(_get_max_h,_set_max_h)
     
+    def _set_maxord(self,maxord):
+        try:
+            self.options["maxord"] = int(maxord)
+        except (ValueError,TypeError):
+            raise ODASSL_Exception('Maximal order must be an integer.')
+        if 0 < self.maxord < 6 :
+            raise ODASSL_Exception('Maximal order must be a positive integer less than 6.')
+        
+    def _get_maxord(self):
+        """
+        Defines the maximal order that is to be used by the solver.
+        
+          Parameters::
+            
+                maxord    
+                        - Default: maxord=0 or None  ignores this option
+                          
+                        - Should be a float.
+                        
+                            Example:
+                                maxord = 4
+                                
+        """
+        return self.options["maxord"]
+        
+    maxord=property(_get_maxord,_set_maxord)
+    
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
     
