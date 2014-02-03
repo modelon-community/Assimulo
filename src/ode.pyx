@@ -200,8 +200,10 @@ cdef class ODE:
             self.log_message("The current solver does not support interpolated output together with state events. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
-        elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["report_continuously"]:
-            self.options["report_continuously"] = True
+        elif (ncp != 0 or ncp_list != None) and self.problem_info["step_events"] and self.supports["report_continuously"]:
+            if not self.report_continuously:
+                 self.log_message("The problem contains step events: report_continuously is set to True", WHISPER)
+            self.report_continuously = True
             
         #Determine the output list
         if ncp != 0:
@@ -259,6 +261,9 @@ cdef class ODE:
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
         
+    def _simulate(self,t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT):
+         pass
+         
     cpdef initialize(self):
         pass
     
