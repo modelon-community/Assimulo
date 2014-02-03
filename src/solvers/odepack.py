@@ -324,6 +324,14 @@ class LSODAR(Explicit_ODE):
             self._IWORK=IWORK        
        
         return flag, tlist, ylist
+        
+    def get_algorithm_data(self):
+        """
+        Returns the order and step size used in the last successful step.
+        """
+        hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
+            
+        return hu, nqu
     
     def state_event_info(self):
         """
