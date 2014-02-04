@@ -55,7 +55,6 @@ class Extended_Problem(Explicit_Problem):
         This is our function that keeps track of our events. When the sign
         of any of the events has changed, we have an event.
         """
-        print sw
         event_0 = y[0] if sw[0] else 5 # hits the ground 
         event_1 = y[1] if sw[1] else 5 # velocity changes sign at topmost point
         
@@ -75,16 +74,17 @@ class Extended_Problem(Explicit_Problem):
              solver.y[1] = - 0.88*solver.y[1]
         else:
              solver.sw[0] = True
-             solver.sw[1] = False     
+             solver.sw[1] = False
+             
+    def initialize(self, solver):
+        solver.h_sol=[]
+        solver.nq_sol=[]
+        
     def handle_result(self, solver, t, y):
         Explicit_Problem.handle_result(self, solver, t, y)
         # Extra output for algorithm analysis
         if solver.report_continuously:
-           h, nq = solver.get_algorithm_data()
-           if not hasattr(solver,'h_sol'):
-              solver.h_sol=[]
-           if not hasattr(solver,'nq_sol'):
-              solver.nq_sol=[]    
+           h, nq = solver.get_algorithm_data()   
            solver.h_sol.extend([h])
            solver.nq_sol.extend([nq])
  
