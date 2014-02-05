@@ -22,15 +22,15 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    """
+    r"""
     This example shows how to use Assimulo and CVode for simulating sensitivities
     for initial conditions.
 
     .. math::
     
-       \\dot y_1 &= -(k_{01}+k_{21}+k_{31}) y_1 + k_{12} y_2 + k_{13} y_3 + b_1\\\\
-       \\dot y_2 &= k_{21} y_1 - (k_{02}+k_{12}) y_2 \\\\
-       \\dot y_3 &= k_{31} y_1 - k_{13} y_3
+       \dot y_1 &= -(k_{01}+k_{21}+k_{31}) y_1 + k_{12} y_2 + k_{13} y_3 + b_1\\
+       \dot y_2 &= k_{21} y_1 - (k_{02}+k_{12}) y_2 \\
+       \dot y_3 &= k_{31} y_1 - k_{13} y_3
      
     with the parameter dependent inital conditions 
     :math:`y_1(0) = 0, y_2(0) = 0, y_3(0) = 0` . The initial values are taken as parameters :math:`p_1,p_2,p_3`

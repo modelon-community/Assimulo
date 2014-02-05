@@ -22,23 +22,25 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    """
+    r"""
     This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
+    Its purpose is to demonstrate the use of parameters in the differential equation.
 
     This simple example problem for CVode, due to Robertson, 
-    is from chemical kinetics, and consists of the following three 
-    equations::
+    is from chemical kinetics, and consists of the system::
     
-       dy1/dt = -p1*y1 + p2*y2*y3
-       dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
-       dy3/dt = p3*(y2)^2
+    .. math:: 
+    
+       \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3
+       \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2
+       \dot y_3 &= p_3  y_ 2^2
     
     """
     
     def f(t, y, p):
         
-        yd_0 = -p[0]*y[0]+p[1]*y[1]*y[2]
-        yd_1 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2
+        yd_0 = -p[0]*y[0]+p[1]*y[1]*y[2] \\
+        yd_1 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2 \\
         yd_2 = p[2]*y[1]**2
         
         return N.array([yd_0,yd_1,yd_2])
@@ -48,6 +50,7 @@ def run_example(with_plots=True):
     
     #Create an Assimulo explicit problem
     exp_mod = Explicit_Problem(f,y0)
+    exp_mod.name='Chemical Kinetics Problem'
     
     #Sets the options to the problem
     exp_mod.p0 = [0.040, 1.0e4, 3.0e7]  #Initial conditions for parameters
@@ -56,7 +59,7 @@ def run_example(with_plots=True):
     #Create an Assimulo explicit solver (CVode)
     exp_sim = CVode(exp_mod)
     
-    #Sets the paramters
+    #Sets the solver paramters
     exp_sim.iter = 'Newton'
     exp_sim.discr = 'BDF'
     exp_sim.rtol = 1.e-4
@@ -79,6 +82,9 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t, y)
+        P.title('Robertson Chemical Kinetics Example')
+        P.xlabel('Time')
+        P.ylabel('State')
         P.show()  
 
 if __name__=='__main__':

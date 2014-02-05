@@ -22,9 +22,9 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    """
+    r"""
     Demonstration of the use of CVode by solving the
-    linear test equation :math:`\\dot y = - y`
+    linear test equation :math:`\dot y = - y`
     """
 
     

@@ -23,6 +23,17 @@ from assimulo.problem import Explicit_Problem
 
 
 def run_example(with_plots=True):
+    r"""
+    Example for demonstrating the use of a user supplied Jacobian
+    
+    ODE:
+    
+    .. math::
+       
+       \dot y_1 &= y_2 \\
+       \dot y_2 &= -9.82
+       
+    """
     global t,y
     
     #Defines the rhs
@@ -32,7 +43,7 @@ def run_example(with_plots=True):
         #print y, yd_0, yd_1
         return N.array([yd_0,yd_1])
     
-    #Defines the jacobian
+    #Defines the Jacobian
     def jac(t,y):
         j = N.array([[0,1.],[0,0]])
         return j
@@ -42,7 +53,7 @@ def run_example(with_plots=True):
 
     exp_mod = Explicit_Problem(f,y0)
     
-    exp_mod.jac = jac #Sets the jacobian
+    exp_mod.jac = jac #Sets the Jacobian
     exp_mod.name = 'Example using Jacobian'
 
     
@@ -64,6 +75,8 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
+        P.xlabel('Time')
+        P.ylabel('State')
         P.show()
 
 

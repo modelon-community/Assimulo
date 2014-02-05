@@ -15,7 +15,7 @@ def mark_examples():
         file.write('.. program-output::   python '+os.path.join(os.getcwd(),'execute_example.py')+' '+os.path.join(os.getcwd(), examples.__path__[0]+os.sep+ex+'.py')+' \n\n')
         file.write('.. image:: '+os.sep+os.path.join(os.getcwd(),ex+'.png')+'\n\n')
         file.write('.. note::\n\n')
-        file.write('    Press [source] (to the top right) to view the example code.\n\n')
+        file.write('    Press [source] (to the right) to view the example.\n\n')
         file.close()
         
 def mark_solvers():
