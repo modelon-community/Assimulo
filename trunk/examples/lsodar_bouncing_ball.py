@@ -20,10 +20,11 @@ import pylab as P
 import nose
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
+import sys
+import os
 
 """
 The bouncing ball example for LSODAR
-
 
 """
 
@@ -89,6 +90,11 @@ class Extended_Problem(Explicit_Problem):
            solver.nq_sol.extend([nq])
  
 def run_example(with_plots=True):
+    """
+    aha
+
+    .. program-output:: python -V
+    """
     #Create an instance of the problem
     mod = Extended_Problem() #Create the problem
 
@@ -96,13 +102,15 @@ def run_example(with_plots=True):
     sim.atol=1.e-8
     sim.report_continuously = True
     
-    sim.verbosity = 0
+    sim.verbosity = 30
     #sim.continuous_output = True
     
     #Simulate
     t, y = sim.simulate(10.0) #Simulate 10 seconds 
     
     #Plot
+    font = {'size'   : 10}
+    P.rc('font', **font)
     if with_plots:
         P.subplot(221)
         P.plot(t,y)
@@ -114,7 +122,6 @@ def run_example(with_plots=True):
         P.plot(sim.t_sol,sim.nq_sol)
         P.title('LSODAR order plot')
         P.show()
-        
 if __name__=="__main__":
     run_example()
     
