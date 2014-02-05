@@ -68,7 +68,7 @@ class LSODAR(Explicit_ODE):
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         self.statistics["ng"]          = 0 #Number of root evaluations
         self.statistics["nevents"]     = 0 #Number of events
         

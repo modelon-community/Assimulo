@@ -1375,31 +1375,31 @@ cdef class IDA(Implicit_ODE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+ str(self.statistics["nsteps"]),         verbose)               
-        self.log_message(' Number of Function Evaluations           : '+ str(self.statistics["nfevals"]),        verbose)
+        self.log_message(' Number of steps                          : '+ str(self.statistics["nsteps"]),         verbose)               
+        self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfevals"]),        verbose)
         if self.options["linear_solver"] == "SPGMR":
-            self.log_message(' Number of Jacobian*Vector Evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
-            self.log_message(' Number of F-Evals During Jac*Vec-Evals   : ' + str(self.statistics["njvefevalsLS"]), verbose)
+            self.log_message(' Number of Jacobian*vector evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
+            self.log_message(' Number of F-evals during Jac*vec-evals   : ' + str(self.statistics["njvefevalsLS"]), verbose)
         else:     
-            self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
-            self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
+            self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),    verbose)
+            self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
             
-        #self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),        verbose)
-        #self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),      verbose)
-        self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
-        self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
-        self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
+        #self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),        verbose)
+        #self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),      verbose)
+        self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["netfails"]),       verbose)
+        self.log_message(' Number of Newton iterations              : '+ str(self.statistics["nniters"]),        verbose)
+        self.log_message(' Number of Newton convergence failures    : '+ str(self.statistics["nncfails"]),       verbose)
         if self.pData.dimRoot > 0:
             self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
         
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
             self.log_message('\nSensitivity Statistics:\n', verbose)
-            self.log_message(' Number of Sensitivity Calculations             : ' + str(self.statistics["nfSevals"]), verbose)
-            self.log_message(' Number of F-Evals Due to Finite Approximation  : ' + str(self.statistics["nfevalsS"]), verbose)
-            self.log_message(' Number of Local Error Test Failures            : ' + str(self.statistics["nSetfails"]),verbose)
-            self.log_message(' Number of Newton Iterations                    : ' + str(self.statistics["nSniters"]), verbose)
-            self.log_message(' Number of Newton Convergance Failures          : ' + str(self.statistics["nSncfails"]),verbose)
+            self.log_message(' Number of sensitivity calculations             : ' + str(self.statistics["nfSevals"]), verbose)
+            self.log_message(' Number of F-evals due to finite diff. approx.  : ' + str(self.statistics["nfevalsS"]), verbose)
+            self.log_message(' Number of local error test failures            : ' + str(self.statistics["nSetfails"]),verbose)
+            self.log_message(' Number of Newton iterations                    : ' + str(self.statistics["nSniters"]), verbose)
+            self.log_message(' Number of Newton convergence failures          : ' + str(self.statistics["nSncfails"]),verbose)
             
             self.log_message('\nSensitivity options:\n' , verbose)
             self.log_message(' Method                   : ' + str(self.options["sensmethod"]), verbose)
@@ -2810,26 +2810,26 @@ cdef class CVode(Explicit_ODE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfevals"]),         verbose)
+        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfevals"]),         verbose)
         if self.options["linear_solver"] == "SPGMR":
             self.log_message(' Number of Jacobian*Vector Evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
             self.log_message(' Number of F-Evals During Jac*Vec-Evals   : ' + str(self.statistics["nfevalsLS"]), verbose)
         else:     
-            self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njevals"]),    verbose)
-            self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
+            self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),    verbose)
+            self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
         if self.pData.PREC_SOLVE != NULL and self.options["linear_solver"] == "SPGMR":
             self.log_message(' Number of Preconditioner Solves          : '+str(self.statistics["npsolves"]), verbose)
         if self.pData.PREC_SETUP != NULL and self.options["linear_solver"] == "SPGMR":
             self.log_message(' Number of Preconditioner Setups          : '+str(self.statistics["npevals"]), verbose)
-        self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["netfails"]),       verbose)
+        self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["netfails"]),       verbose)
         if self.options["iter"] == "FixedPoint":
             self.log_message(' Number of Functional Iterations          : '+ str(self.statistics["nniters"]),        verbose)
             self.log_message(' Number of Functional Convergence Failures: '+ str(self.statistics["nncfails"]),       verbose)
         else:
-            self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniters"]),        verbose)
-            self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nncfails"]),       verbose)
+            self.log_message(' Number of Newton iterations              : '+ str(self.statistics["nniters"]),        verbose)
+            self.log_message(' Number of Newton convergence failures    : '+ str(self.statistics["nncfails"]),       verbose)
         if self.pData.dimRoot > 0:
             self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
         
@@ -2839,7 +2839,7 @@ cdef class CVode(Explicit_ODE):
             self.log_message(' Number of Sensitivity Calculations             : ' + str(self.statistics["nfSevals"]), verbose)
             self.log_message(' Number of F-Evals Due to Finite Approximation  : ' + str(self.statistics["nfevalsS"]), verbose)
             self.log_message(' Number of Local Error Test Failures            : ' + str(self.statistics["nSetfails"]),verbose)
-            self.log_message(' Number of Newton Iterations                    : ' + str(self.statistics["nSniters"]), verbose)
+            self.log_message(' Number of Newton iterations                    : ' + str(self.statistics["nSniters"]), verbose)
             self.log_message(' Number of Newton Convergance Failures          : ' + str(self.statistics["nSncfails"]),verbose)
             
             self.log_message('\nSensitivity options:\n' , verbose)

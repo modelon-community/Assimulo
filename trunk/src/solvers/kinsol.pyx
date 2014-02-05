@@ -439,7 +439,7 @@ cdef class KINSOL(Algebraic):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
                      
-        self.log_message(' Number of Function Evaluations              : '+ str(self.statistics["nfevals"]),   verbose)
+        self.log_message(' Number of function evaluations              : '+ str(self.statistics["nfevals"]),   verbose)
         self.log_message(' Number of Nonlinear Iterations              : '+ str(self.statistics["nniters"]),   verbose)
         self.log_message(' Number of Backtrack Operations (Linesearch) : '+ str(self.statistics["nbacktr"]),   verbose) #The function KINGetNumBacktrackOps returns the number of backtrack operations (step length adjustments) performed by the line search algorithm.
         self.log_message(' Number of Beta-condition Failures           : '+ str(self.statistics["nbcfails"]),  verbose) #The function KINGetNumBetaCondFails returns the number of β-condition failures.
@@ -450,8 +450,8 @@ cdef class KINSOL(Algebraic):
             self.log_message(' Number of Linear Iterations                 : '+ str(self.statistics["nliters"]), verbose)
             self.log_message(' Number of Linear Convergence Failures       : '+ str(self.statistics["nlcfails"]), verbose)
         elif self.options["linear_solver"] == "DENSE":
-            self.log_message(' Number of Jacobian Evaluations              : '+ str(self.statistics["njevals"]),   verbose)
-            self.log_message(' Number of F-Eval During Jac-Eval            : '+ str(self.statistics["nfevalsLS"]), verbose)
+            self.log_message(' Number of Jacobian evaluations              : '+ str(self.statistics["njevals"]),   verbose)
+            self.log_message(' Number of F-eval during Jac-eval            : '+ str(self.statistics["nfevalsLS"]), verbose)
         
     
         self.log_message('\nSolver options:\n',                                     verbose)
