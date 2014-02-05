@@ -31,16 +31,16 @@ def run_example(with_plots=True):
     
     .. math:: 
     
-       \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3
-       \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2
+       \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3 \\
+       \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2 \\
        \dot y_3 &= p_3  y_ 2^2
     
     """
     
     def f(t, y, p):
         
-        yd_0 = -p[0]*y[0]+p[1]*y[1]*y[2] \\
-        yd_1 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2 \\
+        yd_0 = -p[0]*y[0]+p[1]*y[1]*y[2] 
+        yd_1 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2 
         yd_2 = p[2]*y[1]**2
         
         return N.array([yd_0,yd_1,yd_2])
