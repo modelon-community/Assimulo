@@ -91,9 +91,34 @@ class Extended_Problem(Explicit_Problem):
  
 def run_example(with_plots=True):
     """
-    aha
+    Bouncing ball example to demonstrate LSODAR's 
+    discontinuity handling.
 
-    .. program-output:: python -V
+    Also a way to use :program:`problem.initialize` and :program:`problem.handle_result`
+    in order to provide extra information is demonstrated.
+
+    The governing differential equation is
+
+    .. math::
+
+       \\dot y_1 &= y_2\\\\
+       \\dot y_2 &= -9.81
+
+    and the switching functions are
+
+    .. math::
+
+       \\mathrm{event}_0 &= y_1 \\;\\;\\;\\text{ if } \\;\\;\\;\\mathrm{sw}_0 = 1\\\\
+       \\mathrm{event}_1 &= y_2 \\;\\;\\;\\text{ if }\\;\\;\\; \\mathrm{sw}_1 = 1
+
+    otherwise the events are deactivated by setting the respective value to something different from 0.
+
+
+    The event handling sets 
+
+    :math:`y_1 = - 0.88 y_1` and :math:`\\mathrm{sw}_1 = 1` if the first event triggers 
+    and :math:`\\mathrm{sw}_1 = 0`   if the second event triggers.
+
     """
     #Create an instance of the problem
     mod = Extended_Problem() #Create the problem
@@ -109,8 +134,6 @@ def run_example(with_plots=True):
     t, y = sim.simulate(10.0) #Simulate 10 seconds 
     
     #Plot
-    font = {'size'   : 10}
-    P.rc('font', **font)
     if with_plots:
         P.subplot(221)
         P.plot(t,y)

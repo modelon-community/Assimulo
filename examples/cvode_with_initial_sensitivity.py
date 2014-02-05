@@ -23,17 +23,19 @@ from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
     """
-    This example show how to use Assimulo and CVode for simulating sensitivities
-    for initial conditions.::
+    This example shows how to use Assimulo and CVode for simulating sensitivities
+    for initial conditions.
+
+    .. math::
     
-        dy1/dt = -(k01+k21+k31)*y1 + k12*y2 + k13*y3 + b1
-        dy2/dt = k21*y1 - (k02+k12)*y2
-        dy3/dt = k31*y1 - k13*y3
+       \\dot y_1 &= -(k_{01}+k_{21}+k_{31}) y_1 + k_{12} y_2 + k_{13} y_3 + b_1\\\\
+       \\dot y_2 &= k_{21} y_1 - (k_{02}+k_{12}) y_2 \\\\
+       \\dot y_3 &= k_{31} y_1 - k_{13} y_3
      
-        y1(0) = p1, y2(0) = p2, y3(0) = p3
-        p1=p2=p3 = 0 
-    
-    See http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
+    with the parameter dependent inital conditions 
+    :math:`y_1(0) = 0, y_2(0) = 0, y_3(0) = 0` . The initial values are taken as parameters :math:`p_1,p_2,p_3`
+    for the computation of the sensitivity matrix, 
+    see http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
     """
     def f(t, y, p):
         y1,y2,y3 = y
@@ -86,26 +88,35 @@ def run_example(with_plots=True):
 
     #Plot
     if with_plots:
+        title_text=r"Sensitivity w.r.t.  ${}$"
+        legend_text=r"$\mathrm{{d}}{}/\mathrm{{d}}{}$"
         P.figure(1)
         P.subplot(221)
         P.plot(t, N.array(exp_sim.p_sol[0])[:,0],
                t, N.array(exp_sim.p_sol[0])[:,1],
                t, N.array(exp_sim.p_sol[0])[:,2])
-        P.title("Parameter p1")
-        P.legend(("p1/dy1","p1/dy2","p1/dy3"))
+        P.title(title_text.format('p_1'))
+        P.legend((legend_text.format('y_1','p_1'),
+                  legend_text.format('y_1','p_2'),
+                  legend_text.format('y_1','p_3')))
         P.subplot(222)
         P.plot(t, N.array(exp_sim.p_sol[1])[:,0],
                t, N.array(exp_sim.p_sol[1])[:,1],
                t, N.array(exp_sim.p_sol[1])[:,2])
-        P.title("Parameter p2")
-        P.legend(("p2/dy1","p2/dy2","p2/dy3"))
+        P.title(title_text.format('p_2'))
+        P.legend((legend_text.format('y_2','p_1'),
+                  legend_text.format('y_2','p_2'),
+                  legend_text.format('y_2','p_3')))
         P.subplot(223)
         P.plot(t, N.array(exp_sim.p_sol[2])[:,0],
                t, N.array(exp_sim.p_sol[2])[:,1],
                t, N.array(exp_sim.p_sol[2])[:,2])
-        P.title("Parameter p3")
-        P.legend(("p3/dy1","p3/dy2","p3/dy3"))
+        P.title(title_text.format('p_3'))
+        P.legend((legend_text.format('y_3','p_1'),
+                  legend_text.format('y_3','p_2'),
+                  legend_text.format('y_3','p_3')))
         P.subplot(224)
+        P.title("Solution of the ODE")
         P.plot(t, y)
         P.show()
 

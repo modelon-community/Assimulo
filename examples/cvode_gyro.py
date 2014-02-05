@@ -22,7 +22,11 @@ from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
 
 def run_example(with_plots=True):
-    
+    """
+    Simulations for the Gyro (Heavy Top) example in Celledoni/Safstrom: 
+        Journal of Physics A, Vol 39, 5463-5478, 2006
+    """
+
     def curl(v):
         return array([[0,v[2],-v[1]],[-v[2],0,v[0]],[v[1],-v[0],0]])
 
@@ -63,6 +67,7 @@ def run_example(with_plots=True):
     
     #Create an Assimulo explicit problem
     gyro_mod = Explicit_Problem(f,y0)
+    gyro_mod.name="Gyroscope Exaple"
     
     #Create an Assimulo explicit solver (CVode)
     gyro_sim=CVode(gyro_mod)
@@ -83,7 +88,10 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y)
+        P.plot(t,y/10000.)
+        P.xlabel('Time')
+        P.ylabel('States, scaled by 10000')
+        P.title('Gyroscope Example')
         P.show()
 
 if __name__=='__main__':
