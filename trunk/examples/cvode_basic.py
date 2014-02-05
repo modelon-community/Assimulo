@@ -22,6 +22,11 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    """
+    Demonstration of the use of CVode by solving the
+    linear test equation :math:`\\dot y = - y`
+    """
+
     
     #Define the rhs
     def f(t,y):
@@ -53,6 +58,9 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t1, y1, color="b")
         P.plot(t2, y2, color="b")
+        P.title("Solution of $y' = - y$")
+        P.ylabel('y')
+        P.xlabel('Time')
         P.show()
 
 if __name__=='__main__':
