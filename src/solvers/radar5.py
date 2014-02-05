@@ -81,7 +81,7 @@ class Radar5ODE(Explicit_ODE):
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["nlu"]         = 0 #Number of LU decompositions
@@ -349,10 +349,10 @@ class Radar5ODE(Explicit_ODE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
