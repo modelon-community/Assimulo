@@ -26,6 +26,33 @@ except ImportError:
 from assimulo.problem import SingPerturbed_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example to demonstrate the use of DASP3 for a
+    singularly perturbed problem:
+    
+    Slow part of the problem:
+    
+    .. math::
+       
+       \dot y_1 &= -(0.6 z + 0.8 y_3) y_1 + 10 y_2 \\
+       \dot y_2 &= -10 y_2 + 1.6 z_1 y_3 \\
+       \dot y_3 &= -1.33 \varepsilon ^2 y_3 ( y_1 + 2 z)
+       
+    with :math:`\varepsilon = \frac{1}{3} 10^{-3}`.
+    
+    Fast part of the problem:
+    
+    .. math::
+    
+       \dot z = 1.6 z y_3 - 6 z y_1 - 45 (\varepsilon z)^2 + 0.8 y_3 y_1
+       
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+     
+    """
     
     #Define the slow rhs
     def dydt(t,y,z):
@@ -62,13 +89,18 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(10) #Simulate 10 seconds
 
     #Basic test
-    nose.tools.assert_almost_equal(y[-1,0], 10.87313065, 3)
+    nose.tools.assert_almost_equal(y[-1,0], 10.86709450052331, 3)
     
     #Plot
     if with_plots:
         P.semilogy(t, y, color="b")
         P.grid()
+        P.title(r'DASP3 Example: Singularly perturbed ODE $\varepsilon = \frac{1}{3} 10^{-3}$')
+        P.xlabel('Time')
+        P.ylabel('y')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

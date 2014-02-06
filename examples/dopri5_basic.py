@@ -22,7 +22,17 @@ from assimulo.solvers import Dopri5
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-        
+    r"""
+    Example to demonstrate the use of the Runge-Kutta solver DOPRI5
+    for the linear test equation :math:`\dot y = - y`
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+    
+    """    
     #Defines the rhs
     def f(t,y):
         ydot = -y[0]
@@ -43,7 +53,12 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
+        P.title(r'The solution of $\dot y = - y$')
+        P.xlabel('Time')
+        P.ylabel('State')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()
