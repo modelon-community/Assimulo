@@ -25,6 +25,13 @@ def run_example(with_plots=True):
     r"""
     Demonstration of the use of CVode by solving the
     linear test equation :math:`\dot y = - y`
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
     """
 
     
@@ -62,6 +69,7 @@ def run_example(with_plots=True):
         P.ylabel('y')
         P.xlabel('Time')
         P.show()
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

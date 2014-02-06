@@ -26,14 +26,22 @@ def run_example(with_plots=True):
     This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
     Its purpose is to demonstrate the use of parameters in the differential equation.
 
-    This simple example problem for CVode, due to Robertson, 
-    is from chemical kinetics, and consists of the system::
+    This simple example problem for CVode, due to Robertson
+    see http://www.dm.uniba.it/~testset/problems/rober.php, 
+    is from chemical kinetics, and consists of the system:
     
     .. math:: 
     
        \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3 \\
        \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2 \\
        \dot y_3 &= p_3  y_ 2^2
+       
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
     
     """
     
@@ -86,6 +94,8 @@ def run_example(with_plots=True):
         P.xlabel('Time')
         P.ylabel('State')
         P.show()  
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

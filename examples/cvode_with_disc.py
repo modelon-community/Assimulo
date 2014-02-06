@@ -128,19 +128,25 @@ def run_example(with_plots=True):
     """
     Example of the use of CVode for a differential equation
     with a iscontinuity (state event) and the need for an event iteration.
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
     """
     global t, y
     #Create an instance of the problem
-    iter_mod = Extended_Problem() #Create the problem
+    exp_mod = Extended_Problem() #Create the problem
 
-    iter_sim = CVode(iter_mod) #Create the solver
+    exp_sim = CVode(exp_mod) #Create the solver
     
-    iter_sim.verbosity = 0
-    iter_sim.report_continuously = True
+    exp_sim.verbosity = 0
+    exp_sim.report_continuously = True
     
     #Simulate
-    t, y = iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
-    iter_sim.print_event_data()
+    t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+    exp_sim.print_event_data()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)
@@ -154,7 +160,8 @@ def run_example(with_plots=True):
         P.ylabel('States')
         P.xlabel('Time')
         P.show()
-    return iter_sim
+        
+    return exp_mod, exp_sim
     
 if __name__=="__main__":
     run_example()

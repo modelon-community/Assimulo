@@ -33,6 +33,11 @@ def run_example(with_plots=True):
        dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
        dy3/dt = p3*(y2)^2
     
+    
+        on return:
+    
+    exp_mod    problem instance
+    exp_sim    solver instance
     """
     
     def f(t, y, p):
@@ -80,6 +85,8 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t, y)
         P.show()  
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()
