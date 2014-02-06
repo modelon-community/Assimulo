@@ -24,6 +24,13 @@ from assimulo.problem import Explicit_Problem
 def run_example(with_plots=True):
     """
     The same as example :doc:`EXAMPLE_cvode_basic`  but now integrated backwards in time.
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
     """
     #Define the rhs
     def f(t,y):
@@ -59,6 +66,8 @@ def run_example(with_plots=True):
         P.ylabel('y')
         P.xlabel('Time')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

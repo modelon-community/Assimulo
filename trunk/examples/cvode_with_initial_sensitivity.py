@@ -36,6 +36,13 @@ def run_example(with_plots=True):
     :math:`y_1(0) = 0, y_2(0) = 0, y_3(0) = 0` . The initial values are taken as parameters :math:`p_1,p_2,p_3`
     for the computation of the sensitivity matrix, 
     see http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+    
     """
     def f(t, y, p):
         y1,y2,y3 = y
@@ -119,6 +126,8 @@ def run_example(with_plots=True):
         P.title("Solution of the ODE")
         P.plot(t, y)
         P.show()
+        
+        return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

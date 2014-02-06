@@ -35,6 +35,13 @@ def run_example(with_plots=True):
        \dot y_1 &= y_2 \\
        \dot y_2 &= -9.82
        
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
     """
     
     #Defines the rhs
@@ -80,6 +87,8 @@ def run_example(with_plots=True):
         P.xlabel('Time')
         P.ylabel('State')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()
