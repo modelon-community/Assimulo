@@ -164,7 +164,7 @@ class DASP3ODE(Explicit_ODE):
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : DASP3 ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
     
