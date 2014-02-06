@@ -139,7 +139,7 @@ def run_example(with_plots=True):
     #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
 
-    exp_sim = Dopri5(iter_mod) #Create the solver
+    exp_sim = Dopri5(exp_mod) #Create the solver
     
     exp_sim.verbosity = 0
     exp_sim.report_continuously = True
