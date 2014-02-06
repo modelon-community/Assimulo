@@ -22,6 +22,17 @@ from assimulo.solvers import ExplicitEuler
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Demonstration of the use of the use of the explicit euler method by solving the
+    linear test equation :math:`\dot y = - y`
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    """
         
     #Defines the rhs
     def f(t,y):
@@ -43,11 +54,15 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t1, y1, color="b")
-        P.plot(t2, y2, color="b")
+        P.plot(t2, y2, color="r")
+        P.title("Solution of $y' = - y$")
+        P.ylabel('y')
+        P.xlabel('Time')
         P.show()
         
     #Basic test
     nose.tools.assert_almost_equal(y2[-1], 0.02628193)
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()
