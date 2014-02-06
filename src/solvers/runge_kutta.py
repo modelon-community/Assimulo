@@ -206,7 +206,7 @@ class Dopri5(Explicit_ODE):
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Dopri5 ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
         
@@ -747,7 +747,7 @@ class RungeKutta34(Explicit_ODE):
         self.log_message(' Solver             : RungeKutta34',                               verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)
         self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
-        self.log_message(' Absolute tolerance : ' + str(self.options["atol"]) + '\n', verbose)
+        self.log_message(' Absolute tolerance : ' + str(self._compact_atol()) + '\n', verbose)
     
     
 class RungeKutta4(Explicit_ODE):

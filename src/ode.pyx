@@ -444,3 +444,13 @@ cdef class ODE:
             Elapsed time (note -1.0 indicates that it was not used)
         """
         return self.elapsed_step_time
+        
+    def _compact_atol(self):
+        """
+        Reduces atol to a scalar if it is an ndarray and  all entries are the same.
+        Used for print solver options in a more compact way
+        """
+        if isinstance(self.atol,N.ndarray) and (self.atol==self.atol[0]).all():
+                return self.atol[0]
+        else:
+                return self.atol

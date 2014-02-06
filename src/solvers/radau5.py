@@ -235,7 +235,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
         
@@ -1013,7 +1013,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
 
