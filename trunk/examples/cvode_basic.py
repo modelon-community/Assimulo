@@ -32,6 +32,10 @@ def run_example(with_plots=True):
     
        - :dfn:`exp_sim`    solver instance
        
+    .. index::
+          continuation calls
+          DOPRI5
+          Runge-Kutta method
     """
 
     
@@ -64,7 +68,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t1, y1, color="b")
-        P.plot(t2, y2, color="b")
+        P.plot(t2, y2, color="r")
         P.title("Solution of $y' = - y$")
         P.ylabel('y')
         P.xlabel('Time')
