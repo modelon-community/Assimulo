@@ -473,7 +473,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         Should print the statistics.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        self.log_message(' Number of steps (Step-length: %s) : %s'%(self.h,self.statistics["nsteps"]),          verbose)  
+        self.log_message(' Number of steps                          : %s'%self.statistics["nsteps"],          verbose)  
         self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
         self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["njacfcn"]),  verbose)
@@ -485,7 +485,8 @@ cdef class ImplicitEuler(Explicit_ODE):
             
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ImplicitEuler',                     verbose)
-        self.log_message(' Solver type       : Fixed step\n',                      verbose)
+        self.log_message(' Solver type       : fixed step size',                      verbose)
+        self.log_message(' Step size         : {}\n'.format(self.h), verbose)
 
 cdef class ExplicitEuler(Explicit_ODE):
     """
@@ -525,6 +526,8 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         #Solver options
         self.options["h"] = 0.01
+
+        
         
         #Internal temporary result vector
         self.yd1 = N.array([0.0]*len(self.y0))
@@ -685,12 +688,12 @@ cdef class ExplicitEuler(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics          : %s \n' % self.problem.name,        verbose)
-        self.log_message(' Step-length                  : %s '%(self.options["h"]), verbose)
+        self.log_message('Final Run Statistics                    : %s \n' % self.problem.name,        verbose)
         if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations   : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events       : '+ str(self.statistics["nstateevents"]),   verbose)
+           self.log_message(' Number of event function evaluations   : '+ str(self.statistics["ngevals"]),        verbose)
+           self.log_message(' Number of state events                 : '+ str(self.statistics["nstateevents"]),   verbose)
             
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ExplicitEuler',                     verbose)
-        self.log_message(' Solver type       : Fixed step\n',                      verbose)
+        self.log_message(' Solver type       : fixed step size',                 verbose)
+        self.log_message(' Step size         : {}\n'.format(self.h), verbose)
