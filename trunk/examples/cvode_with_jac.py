@@ -41,7 +41,6 @@ def run_example(with_plots=True):
        - :dfn:`exp_sim`    solver instance
        
     """
-    global t,y
     
     #Defines the rhs
     def f(t,y):

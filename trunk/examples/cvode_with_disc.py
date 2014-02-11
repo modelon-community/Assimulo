@@ -135,7 +135,6 @@ def run_example(with_plots=True):
     
        - :dfn:`exp_sim`    solver instance
     """
-    global t, y
     #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
 
