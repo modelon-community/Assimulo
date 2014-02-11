@@ -82,14 +82,14 @@ def run_example(with_plots=True):
     exp_sim = DASP3ODE(exp_mod) #Create a CVode solver
     
     #Sets the parameters
-    exp_sim.rtol = 1e-3 #Default 1e-6
-    exp_sim.atol = 1e-3 #Default 1e-6
+    exp_sim.rtol = 1e-5 #Default 1e-6
+    exp_sim.atol = 1e-5 #Default 1e-6
 
     #Simulate
     t, y = exp_sim.simulate(10) #Simulate 10 seconds
 
     #Basic test
-    nose.tools.assert_almost_equal(y[-1,0], 10.86709450052331, 3)
+    nose.tools.assert_almost_equal(y[-1,0], 10.860063849896818, 3)
     
     #Plot
     if with_plots:
