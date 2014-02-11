@@ -26,6 +26,11 @@ import nose
 import os
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
+import warnings
+import scipy.sparse
+
+
+warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
