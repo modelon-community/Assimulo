@@ -22,7 +22,18 @@ from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
 
 def run_example(with_plots=True):
+    """
+    Simulations for the Gyro (Heavy Top) example in Celledoni/Safstrom: 
+        Journal of Physics A, Vol 39, 5463-5478, 2006
+        
+    on return:
     
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+    
+    """
+
     def curl(v):
         return array([[0,v[2],-v[1]],[-v[2],0,v[0]],[v[1],-v[0],0]])
 
@@ -62,20 +73,21 @@ def run_example(with_plots=True):
     y0=hstack([[1000.*10,5000.*10,6000*10],eye(3).reshape((9,))])
     
     #Create an Assimulo explicit problem
-    gyro_mod = Explicit_Problem(f,y0)
+    exp_mod = Explicit_Problem(f,y0)
+    exp_mod.name="Gyroscope Exaple"
     
     #Create an Assimulo explicit solver (CVode)
-    gyro_sim=CVode(gyro_mod)
+    exp_sim=CVode(exp_mod)
     
     #Sets the parameters
-    gyro_sim.discr='BDF'
-    gyro_sim.iter='Newton'
-    gyro_sim.maxord=2 #Sets the maxorder
-    gyro_sim.atol=1.e-10
-    gyro_sim.rtol=1.e-10
+    exp_sim.discr='BDF'
+    exp_sim.iter='Newton'
+    exp_sim.maxord=2 #Sets the maxorder
+    exp_sim.atol=1.e-10
+    exp_sim.rtol=1.e-10
     
     #Simulate
-    t, y = gyro_sim.simulate(0.1)
+    t, y = exp_sim.simulate(0.1)
     
     #Basic tests
     nose.tools.assert_almost_equal(y[-1][0],692.800241862)
@@ -83,8 +95,14 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y)
+        P.plot(t,y/10000.)
+        P.xlabel('Time')
+        P.ylabel('States, scaled by 10000')
+        P.title('Gyroscope Example')
         P.show()
+        
+    return exp_mod, exp_sim    
+
 
 if __name__=='__main__':
     run_example()

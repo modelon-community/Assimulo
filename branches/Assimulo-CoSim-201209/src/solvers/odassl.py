@@ -140,6 +140,33 @@ class ODASSL_Common(object):
         
     maxh=property(_get_max_h,_set_max_h)
     
+    def _set_maxord(self,maxord):
+        try:
+            self.options["maxord"] = int(maxord)
+        except (ValueError,TypeError):
+            raise ODASSL_Exception('Maximal order must be an integer.')
+        if 0 < self.maxord < 6 :
+            raise ODASSL_Exception('Maximal order must be a positive integer less than 6.')
+        
+    def _get_maxord(self):
+        """
+        Defines the maximal order that is to be used by the solver.
+        
+          Parameters::
+            
+                maxord    
+                        - Default: maxord=0 or None  ignores this option
+                          
+                        - Should be a float.
+                        
+                            Example:
+                                maxord = 4
+                                
+        """
+        return self.options["maxord"]
+        
+    maxord=property(_get_maxord,_set_maxord)
+    
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
     
@@ -214,7 +241,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         #self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["errfail"]     = 0 #Number of step rejections
         self.statistics["convfail"]         = 0 #Number of LU decompositions
@@ -338,15 +365,15 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]), verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]), verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]), verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]), verbose)
+        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]), verbose)               
+        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]), verbose)
+        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]), verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]), verbose)
         self.log_message(' Number of Convergence Test Failures      : '+ str(self.statistics["convfail"]), verbose)
         
         self.log_message('\nSolver options:\n', verbose)
         self.log_message(' Solver                  : ODASSL ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
 

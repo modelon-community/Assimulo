@@ -61,3 +61,14 @@ class Test_ODE:
         self.simulator.report_continuously = True
         assert self.simulator.report_continuously == True
         assert self.simulator.options["report_continuously"] == True
+    def test_step_events_report_continuously(self):
+        """
+        This test tests if report_continuously is set correctly, when step_events are present.
+        """
+        self.simulator.supports["report_continuously"] = True
+        self.simulator.supports["interpolated_output"] = True
+        self.simulator.problem_info["step_events"] = True
+        self.simulator.problem=self.problem
+        self.simulator(10.,ncp=10) # output points and step events should set report_continuously to True 
+        assert self.simulator.report_continuously == True
+        

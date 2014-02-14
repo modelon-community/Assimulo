@@ -22,7 +22,6 @@ from assimulo.solvers import GLIMDA,IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
-    global imp_sim
     
     #Define the residual
     def f(t,y,yd):

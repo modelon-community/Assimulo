@@ -20,6 +20,7 @@ import numpy as N
 import logging as L
 import sys as S
 import os as O
+import os
 import shutil as SH
 from numpy.distutils.misc_util import Configuration
 from numpy.distutils.core import setup
@@ -97,7 +98,17 @@ for x in S.argv[1:]:
             num_level = 30
         L.basicConfig(level=num_level)
         copy_args.remove(x)
-        
+
+def check_platform():
+    platform = None
+    if S.platform == 'win32':
+        platform = "win"
+    elif S.platform == 'darwin':
+        platform = "mac"
+    else:
+        platform = "linux"
+    return platform
+
 def pre_processing():
     join = O.path.join
     
@@ -223,24 +234,35 @@ def check_extensions():
     
     for i in ext_list:
         i.include_dirs = [N.get_include()]
+            
+    #If Sundials
+    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        #CVode and IDA
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
+        ext_list[-1].library_dirs = [libdirs]
+        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
+        #Kinsol
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"kinsol.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
+        ext_list[-1].library_dirs = [libdirs]
+        ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+    else:
+        L.warning("Could not find Sundials, check the provided path (--sundials-home) to see that it actually points to Sundials.")
+        L.warning("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
+
+        
+    for i in ext_list:
         #Debug
         if debug_flag:
             i.extra_compile_args = ["-g","-fno-strict-aliasing"]
             i.extra_link_args = ["-g"]
         else:
             i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            
-    #If Sundials
-    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
-        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
-        ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
-        if debug_flag:
-            ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-        else:
-            ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+        if check_platform() == "mac":
+            i.extra_compile_args += ["-Wno-error=return-type"]
+
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -274,6 +296,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if check_platform() == "mac":
+                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
                 
         else:
             #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
@@ -291,6 +315,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if check_platform() == "mac":
+                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
     
     for i in ext_list:
         i.extra_link_args += extra_link_flags
@@ -363,15 +389,15 @@ def check_fortran_extensions():
 
     config.add_extension('assimulo.lib.dopri5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                         ,extra_link_args=extra_link_flags)#include_dirs=[N.get_include()])
+                         ,extra_link_args=extra_link_flags[:])#include_dirs=[N.get_include()])
     
     config.add_extension('assimulo.lib.rodas',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
 
     config.add_extension('assimulo.lib.radar5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
@@ -381,15 +407,16 @@ def check_fortran_extensions():
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
     #ODEPACK
     config.add_extension('assimulo.lib.odepack',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     #ODASSL
     odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
@@ -397,7 +424,7 @@ def check_fortran_extensions():
                   'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
     config.add_extension('assimulo.lib.odassl',
                          sources=[odassl_dir+file for file in odassl_files],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
     #DASP3
     if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
@@ -406,7 +433,7 @@ def check_fortran_extensions():
                        'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
         config.add_extension('assimulo.lib.dasp3dp',
                               sources=[dasp3_dir+file for file in dasp3_files],
-                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags,extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
     else:
         L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
@@ -420,7 +447,7 @@ def check_fortran_extensions():
     else: #Try to see if Lapack exists in PATH
         name = ctypes.util.find_library("lapack")
         if name != None:
-            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
             lapack = True
     if BLASdir != "":
         blas = True
@@ -428,13 +455,13 @@ def check_fortran_extensions():
     else: #Try to see if Blas exists in PATH
         name = ctypes.util.find_library("blas")
         if name != None:
-            extra_link_flags += ["-l"+name.replace("lib","").split(".")[0]]
+            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
             blas = True
     
     if lapack and blas:
         config.add_extension('assimulo.lib.glimda',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags)
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
@@ -526,7 +553,8 @@ setup(name=NAME,
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
                                  'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
-                                 'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3']},
+                                 'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3',
+                                 'examples'+O.sep+'kinsol_ors_matrix.mtx','examples'+O.sep+'kinsol_ors_matrix.mtx']},
       script_args=copy_args)
 
 if change_dir:

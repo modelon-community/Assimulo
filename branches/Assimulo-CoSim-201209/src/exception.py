@@ -19,7 +19,16 @@
 class AssimuloException(Exception):
     pass 
 
+class Algebraic_Exception(AssimuloException):
+    pass
+    
+class AssimuloRecoverableError(AssimuloException):
+    pass
+
 class TerminateSimulation(AssimuloException):
+    pass
+    
+class TimeLimitExceeded(AssimuloException):
     pass
 
 class DiscardValue(AssimuloException):
@@ -47,4 +56,6 @@ class ODEPACK_Exception(AssimuloException):
     pass
 
 class DASP3_Exception(AssimuloException):
+    pass
+class RKStarter_Exception(AssimuloException):
     pass

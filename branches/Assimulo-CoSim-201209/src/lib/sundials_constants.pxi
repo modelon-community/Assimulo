@@ -176,7 +176,45 @@ DEF IDASPILS_PMEM_NULL     = -5
 DEF IDASPILS_NO_ADJ        = -101
 DEF IDASPILS_LMEMB_NULL    = -102
 
+###
+# KINSOL
+###
+DEF KIN_SUCCESS             =0
+DEF KIN_INITIAL_GUESS_OK    =1
+DEF KIN_STEP_LT_STPTOL      =2
+DEF KIN_REC_ERR             =5
+DEF KIN_WARNING             =99
+DEF KIN_MEM_NULL            =-1
+DEF KIN_ILL_INPUT           =-2
+DEF KIN_NO_MALLOC           =-3
+DEF KIN_MEM_FAIL            =-4
+DEF KIN_LINESEARCH_NONCONV  =-5
+DEF KIN_MAXITER_REACHED     =-6
+DEF KIN_MXNEWT_5X_EXCEEDED  =-7
+DEF KIN_LINESEARCH_BCFAIL   =-8
+DEF KIN_LINSOLV_NO_RECOVERY =-9
+DEF KIN_LINIT_FAIL          =-10
+DEF KIN_LSETUP_FAIL         =-11
+DEF KIN_LSOLVE_FAIL         =-12
+DEF KIN_SYSFUNC_FAIL        =-13
+DEF KIN_FIRST_SYSFUNC_ERR   =-14
+DEF KIN_REPTD_SYSFUNC_ERR   =-15
 
+DEF KIN_NONE       =0
+DEF KIN_LINESEARCH =1
+
+# -----------------------------------------------------------------
+# KINDirect constants
+# -----------------------------------------------------------------
+
+DEF KINDLS_SUCCESS           =0
+
+DEF KINDLS_MEM_NULL         =-1
+DEF KINDLS_LMEM_NULL        =-2
+DEF KINDLS_ILL_INPUT        =-3
+DEF KINDLS_MEM_FAIL         =-4
+DEF KINDLS_JACFUNC_UNRECVR  =-5
+DEF KINDLS_JACFUNC_RECVR    =-6
 
 
 DEF CV_RHS_IND        = 0   # Index to user data rhs handling

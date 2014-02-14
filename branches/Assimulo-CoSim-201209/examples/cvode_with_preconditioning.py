@@ -26,7 +26,22 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 
-def run_example(with_plots=True):    
+def run_example(with_plots=True): 
+    r"""
+    Example to demonstrate the use of a preconditioner
+    
+    .. math::
+        
+        \dot y_1 & = 2 t \sin y_1  + t \sin y_2 \\
+        \dot y_2 & = 3 t \sin y_1  + 2 t \sin y_2
+        
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    """              
 
     #Define the rhs
     def rhs(t, y):
@@ -97,8 +112,11 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t,y)
         P.grid()
+        P.ylabel('States')
+        P.xlabel('Time')
         P.show()
 
-
+    return exp_mod, exp_sim
+    
 if __name__=='__main__':
     run_example()

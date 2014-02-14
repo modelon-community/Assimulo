@@ -40,7 +40,7 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True}
+        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
@@ -146,10 +146,14 @@ cdef class ODE:
                           at its internal steps.
                           
                         - Should be an integer.
+                        
+                ncp_list
+                        - Default None. A list of time points where the solution
+                          should be returned. Note, requires that ncp == 0.
                           
                     Example:
                     
-                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
+                        simulate(10.0, 100), 10.0 is the final time and 100 is the number
                                              communication points.
                  
         """
@@ -196,8 +200,10 @@ cdef class ODE:
             self.log_message("The current solver does not support interpolated output together with state events. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
-        elif (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["report_continuously"]:
-            self.options["report_continuously"] = True
+        elif (ncp != 0 or ncp_list != None) and self.problem_info["step_events"] and self.supports["report_continuously"]:
+            if not self.report_continuously:
+                 self.log_message("The problem contains step events: report_continuously is set to True", WHISPER)
+            self.report_continuously = True
             
         #Determine the output list
         if ncp != 0:
@@ -255,6 +261,9 @@ cdef class ODE:
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
         
+    def _simulate(self,t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT):
+         pass
+         
     cpdef initialize(self):
         pass
     
@@ -290,6 +299,27 @@ cdef class ODE:
     
     verbosity = property(_get_verbosity,_set_verbosity)
     
+    def _set_time_limit(self, time_limit):
+        if time_limit < 0:
+            raise AssimuloException("The time limit must be positive or zero.")
+        self.options["time_limit"] = time_limit
+        
+    def _get_time_limit(self):
+        """
+        This option can be used to limit the time of an integration. I.e
+        to set an upper bound on the time allowed for the integration
+        to be completed. The time limit is specified in seconds. For the
+        limit to be checked, the option report_continuously must be True.
+        
+            Parameters::
+            
+                time_limit
+                            - Default 0, i.e. NO limit.
+        """
+        return self.options["time_limit"]
+    
+    time_limit = property(_get_time_limit, _set_time_limit)
+    
     def _set_report_continuously(self, report_continuously):
         self.options["report_continuously"] = bool(report_continuously)
     
@@ -311,13 +341,13 @@ cdef class ODE:
     
     report_continuously = property(_get_report_continuously,_set_report_continuously)
     
-    def _set_store_event_points(self, report_continuously):
+    def _set_store_event_points(self, store_event_points):
         self.options["store_event_points"] = bool(store_event_points)
     
     def _get_store_event_points(self):
         """
         This options specifies if the solver should save additional points
-        at the events, t_e^-, t_e^+.
+        at the events, :math:`t_e^-, t_e^+`.
         
             Parameters::
             
@@ -325,7 +355,7 @@ cdef class ODE:
                   
                         - Default True
                     
-                        - Should be a boolean.
+                        - Should be a Boolean.
 
         """
         return self.options["store_event_points"]
@@ -395,6 +425,12 @@ cdef class ODE:
             print 'Time, t = %e'%i[0]
             print '  Event info, ', i[1]
         print 'Number of events: ', len(self.event_data)
+        
+    def print_statistics(self, verbose=NORMAL):
+        """
+        This method should print the statistics of the solver.
+        """
+        pass
     
     cpdef get_elapsed_step_time(self):
         """
@@ -408,3 +444,13 @@ cdef class ODE:
             Elapsed time (note -1.0 indicates that it was not used)
         """
         return self.elapsed_step_time
+        
+    def _compact_atol(self):
+        """
+        Reduces atol to a scalar if it is an ndarray and  all entries are the same.
+        Used for print solver options in a more compact way
+        """
+        if isinstance(self.atol,N.ndarray) and (self.atol==self.atol[0]).all():
+                return self.atol[0]
+        else:
+                return self.atol

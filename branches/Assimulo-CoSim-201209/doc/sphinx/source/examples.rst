@@ -9,6 +9,10 @@ Assimulo comes with a range of different examples which can be a very useful sou
     from assimulo.examples import *
     
     cvode_with_jac.run_example()
+
+.. note::
+
+    A recommended first starting point is the :doc:`tutorial`.
     
 Below is a full list of the available examples,
 
@@ -18,6 +22,4 @@ Below is a full list of the available examples,
    
    EXAMPLE_*
 
-.. note::
 
-    A recommended first starting point would be the :doc:`tutorial`.
