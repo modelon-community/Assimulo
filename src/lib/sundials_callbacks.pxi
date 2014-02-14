@@ -384,7 +384,227 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
         return IDA_SUCCESS
     except:
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
+
+cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv, N_Vector Jv, realtype cj,
+				    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the Assimulo.Problem.jacv to the Sundials
+    Jacobian times vector function.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y  = nv2arr(yy)
+    cdef N.ndarray yd = nv2arr(yp)
+    cdef N.ndarray v  = nv2arr(vv)
+    cdef N.ndarray res = nv2arr(rr)
+    cdef int i
     
+    cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
+    
+    if pData.dimSens>0: #Sensitivity activated
+        p = realtype2arr(pData.p,pData.dimSens)
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,sw=<list>pData.sw,p=p)
+            else:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,p=p)
+        
+            for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC 
+    else:
+        try:
+            if pData.sw != NULL:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj,sw=<list>pData.sw)
+            else:
+                jacv = (<object>pData.JACV)(t,y,yd,res,v,cj)
+            
+            for i in range(pData.dim):
+                jacvptr[i] = jacv[i]
+            
+            return SPGMR_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return SPGMR_ATIMES_FAIL_REC
+        except:
+            traceback.print_exc()
+            return SPGMR_PSOLVE_FAIL_UNREC
+    
+
+cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    This method is used to connect the assimulo.Problem.jac to the Sundials
+    Jacobian function.
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef realtype* col_i=DENSE_COL(Jacobian,0)
+    cdef N.ndarray x = nv2arr(xv)
+    cdef int i,j
+    
+    try:
+        jac=(<object>pData.JAC)(x)
+
+        for i in range(Neq):
+            col_i = DENSE_COL(Jacobian, i)
+            for j in range(Neq):
+                col_i[j] = jac[j,i]
+
+        return KINDLS_SUCCESS
+    except:
+        return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        
+cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
+            void *problem_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef N.ndarray x  = nv2arr(vx)
+    cdef N.ndarray v  = nv2arr(vv)
+    cdef int i
+    
+    cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
+
+    try:
+        jacv = (<object>pData.JACV)(x,v)
+        
+        for i in range(pData.dim):
+            jacvptr[i] = jacv[i]
+        
+        return SPGMR_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return SPGMR_ATIMES_FAIL_REC
+    except:
+        traceback.print_exc()
+        return SPGMR_PSOLVE_FAIL_UNREC 
+    
+cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
+    """
+    Residual fct called by KINSOL
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    cdef N.ndarray x = nv2arr(xv)
+    cdef realtype* resptr = (<N_VectorContent_Serial>fval.content).data
+    cdef int i
+
+    try:
+        res = (<object>pData.RES)(x)
+
+        for i in range(pData.dim):
+            resptr[i] = res[i]
+
+        return KIN_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
+
+cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
+         N_Vector fscaleN, N_Vector v, void *problem_data, N_Vector tmp):
+    """
+    Preconditioning solve function
+    
+        Pz = r
+        
+        v on input == r
+        v on output == z
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    
+    cdef N.ndarray fscale  = nv2arr(fscaleN)
+    cdef N.ndarray uscale  = nv2arr(uscaleN)
+    cdef N.ndarray r       = nv2arr(v)
+    cdef realtype* zptr=(<N_VectorContent_Serial>v.content).data
+    
+    try:
+        zres = (<object>pData.PREC_SOLVE)(r)
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
+                
+    for i in range(pData.dim):
+        zptr[i] = zres[i]
+    
+    return KIN_SUCCESS
+    
+cdef int kin_prec_setup(N_Vector uN, N_Vector uscaleN, N_Vector fvalN, 
+         N_Vector fscaleN, void *problem_data, N_Vector tmp1, N_Vector tmp2):
+    """
+    Preconditioning setup function
+    """
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+    
+    cdef N.ndarray fscale  = nv2arr(fscaleN)
+    cdef N.ndarray uscale  = nv2arr(uscaleN)
+    cdef N.ndarray u       = nv2arr(uN)
+    cdef N.ndarray fval    = nv2arr(fvalN)
+    
+    try:
+        (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return KIN_REC_ERR
+    except:
+        traceback.print_exc()
+        return KIN_SYSFUNC_FAIL
+    
+    return KIN_SUCCESS
+    
+
+cdef void kin_err(int err_code, char *module, char *function, char *msg, void *eh_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+    
+    if err_code > 0: #Warning
+        category = 1
+    elif err_code < 0: #Error
+        category = -1
+    else:
+        category = 0
+    
+    print "Error occured in <function: %s>."%function
+    print "<message: %s>"%msg
+    #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+
+
+cdef void kin_info(char *module, char *function, char *msg, void *eh_data):
+    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+    cdef int flag
+    cdef realtype fnorm
+    
+    if str(function) == "KINSol" and "fnorm" in str(msg):
+        #fnorm = float(msg.split("fnorm = ")[-1].strip())
+        flag = SUNDIALS.KINGetFuncNorm(pData.KIN_MEM, &fnorm)
+        pData.nl_fnorm.append(fnorm)
+        
+    pData.log.append([module, function, msg])
+    
+    #print "KinsolInfo <calling_function:%s>"%function
+    #print "<message: %s>"%msg
+    """
+    # Get the number of iterations
+    KINGetNumNonlinSolvIters(kin_mem, &nniters)
+    
+    
+    /* Only output an iteration under certain conditions:
+     *  1. nle_solver_log > 2
+     *  2. The calling function is either KINSolInit or KINSol
+     *  3. The message string starts with "nni"
+     *
+     *  This approach gives one printout per iteration
+    
+    
+    if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
+        print "<iteration_index:%d>"%nniters
+        print "ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n);
+        print "<scaled_residual_norm:%E>", kin_mem->kin_fnorm);
+        print "residuals", 
+            realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
+            f[i]*residual_scaling_factors[i]
+    """
 
 # Error handling callback functions
 # =================================
@@ -440,6 +660,19 @@ cdef class ProblemData:
         int verbose        #Defines the verbosity
         object PREC_DATA   #Arbitrary data from the preconditioner
 
+cdef class ProblemDataEquationSolver:
+    cdef:
+        void *RES          # Residual
+        void *JAC          # Jacobian
+        void *JACV
+        void *PREC_SOLVE
+        void *PREC_SETUP
+        int dim            # Dimension of the problem
+        void *KIN_MEM      # Kinsol memory
+        list nl_fnorm      # The norm of the residual at each nonlinear iteration (if the verbosity is set high enough)
+        list l_fnorm
+        list log
+
 #=================
 # Module functions
 #=================
@@ -452,6 +685,13 @@ cdef inline N_Vector arr2nv(x):
     cdef N_Vector v=N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
+    
+cdef inline void arr2nv_inplace(x, N_Vector out):
+    x=N.array(x)
+    cdef long int n = len(x)
+    cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
+    cdef void* data_ptr=PyArray_DATA(ndx)
+    memcpy((<N_VectorContent_Serial>out.content).data, data_ptr, n*sizeof(realtype))
     
 cdef inline N.ndarray nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length

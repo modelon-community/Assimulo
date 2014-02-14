@@ -11,3 +11,6 @@ include assimulo/lib/*.pxd
 include assimulo/lib/*.pyx
 include assimulo/lib/*.pxi
 include assimulo/lib/*.h
+include assimulo/lib/*.c
+include assimulo/thirdparty/dasp3/*
+include assimulo/examples/*

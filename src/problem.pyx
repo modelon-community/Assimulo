@@ -523,3 +523,65 @@ class SingPerturbed_Problem(cSingPerturbed_Problem):
                 Defines the starting time
     """
     pass
+
+
+cdef class cAlgebraic_Problem:
+    name = '---'
+    
+    def __init__(self, object res, y0, y0_min = None, y0_max=None, 
+                    y0_nominal=None, object jac=None, object jacv=None, 
+                    object prec_solve=None, object prec_setup=None):
+        
+        if res != None:
+            self.res = res
+        if jac != None:
+            self.jac = jac
+        if jacv != None:
+            self.jacv = jacv
+        if prec_solve != None:
+            self.prec_solve = prec_solve
+        if prec_setup != None:
+            self.prec_setup = prec_setup
+        
+        if not y0 is None:
+            self.y0 = set_type_shape_array(y0)
+        
+        if not y0_min is None:
+            self.y0_min = set_type_shape_array(y0_min)
+        else:
+            self.y0_min = set_type_shape_array([MIN_VALUE]*len(self.y0))
+            
+        if not y0_max is None:
+            self.y0_max = set_type_shape_array(y0_max)
+        else:
+            self.y0_max = set_type_shape_array([MAX_VALUE]*len(self.y0))
+            
+        if not y0_nominal is None:
+            self.y0_nominal = set_type_shape_array(y0_nominal)
+        else:
+            self.y0_nominal = set_type_shape_array([1.0]*len(self.y0))
+    
+    cpdef initialize(self, solver):
+        """
+        Method for specializing initiation.
+        """
+        solver.log_message("No initialization defined for the problem.", LOUD)
+    
+    cpdef finalize(self,object solver):
+        """
+        Method for specifying the finalization options when the simulation have
+        finished.
+        """
+        solver.log_message("No finalization defined for the problem.", LOUD)
+
+class Algebraic_Problem(cAlgebraic_Problem):
+    """
+        Problem class for solving systems of algebraic equations.
+        
+        .. math::
+           :nowrap:
+           
+           0 = F(y)
+           
+    """
+    pass

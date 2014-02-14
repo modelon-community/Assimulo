@@ -299,7 +299,6 @@ python module odepack ! in
             integer :: nhnil
             integer :: nslast
             integer :: nyh
-            integer dimension(6) :: iowns
             integer :: icf
             integer :: ierpj
             integer :: iersl
@@ -325,7 +324,17 @@ python module odepack ! in
             integer :: nfe
             integer :: nje
             integer :: nqu
-            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            integer :: init,mxstep,mxhnil,nhnil,nslast,nyh
+            !common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            common /dls001/ conit, crate, el(13), elco(13,12), hold, &
+                            rmax, tesco(3,12),ccmax, el0, h, hmin,   &
+                            hmxi, hu, rc, tn, uround,                &
+                            init,mxstep,mxhnil,nhnil,nslast,nyh,     &    !iownd(6), 
+                            ialth, ipup, lmax, meo, nqnyh, nslp,     &    !iowns(6)
+                            icf, ierpj, iersl, jcur, jstart, kflag,  &
+                            l,lyh, lewt, lacor, lsavf, lwm, liwm,    &
+                            meth, miter,maxord, maxcor, msbp, mxncf, &
+                            n, nq, nst, nfe, nje, nqu
         end subroutine dlsode
         subroutine dlsodes(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,mf) ! in :odepack:opkdmain.f
             use dlsodes__user__routines
@@ -1019,8 +1028,58 @@ python module odepack ! in
             common /dlss01/ con0,conmin,ccmxj,psmall,rbig,seth,iplost,iesp,istatc,iys,iba,ibian,ibjan,ibjgp,ipian,ipjan,ipjgp,ipigp,ipr,ipc,ipic,ipisp,iprsp,ipa,lenyh,lenyhm,lenwk,lreq,lrat,lrest,lwmin,moss,msbj,nslj,ngp,nlu,nnz,nsp,nzl,nzu
             common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
         end subroutine dlsodis
+        subroutine dsrcar(rsav, isav, job)
+            ! Save/restore LSODAR COMMON blocks
+            integer, intent(inout), dimension(55):: isav
+            integer, intent(in):: job
+            double precision, intent(inout), dimension(245):: rsav
+        end subroutine dsrcar 
+        subroutine dcfode(meth, elco, tesco)
+            ! set method and test coefficients for odepack routines
+            integer, intent(in):: meth
+            double precision, intent(out),dimension(13,12):: elco
+            double precision, intent(out),dimension(3,12)::tesco 
+        end subroutine dcfode   
     end interface 
+        interface  ! in :odepack_aux
+        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, conit,el, nge, hu, jstart) ! in :odepack_aux:odepack_aux.f90
+            integer intent(in), optional :: meth
+            integer intent(in), optional :: nq
+            integer intent(in), optional :: nqu
+            integer intent(in), optional :: miter
+            integer intent(in), optional :: maxord
+            integer intent(in), optional :: meo
+            integer intent(in), optional :: nqnyh
+            integer intent(in), optional :: nst
+            integer intent(in), optional :: nfe
+            integer intent(in), optional :: nje
+            integer intent(in), optional :: nge
+            integer intent(in), optional :: init 
+            integer intent(in), optional :: jstart
+            double precision intent(in), optional :: tn
+            double precision intent(in), optional :: conit
+            double precision intent(in), optional :: hu
+            double precision dimension(13),intent(in), optional :: el
+        end subroutine set_lsod_common
+        subroutine get_lsod_common(hu_,nqu_,nq_,nyh_, nqnyh_) ! in :odepack_aux:odepack_aux.f90
+            double precision intent(out) :: hu_
+            integer intent(out) :: nqu_
+            integer intent(out) :: nq_
+            integer intent(out) :: nyh_
+            integer intent(out) :: nqnyh_
+         end subroutine get_lsod_common
+    end interface
+    interface ! in odpkda1
+       subroutine dintdy (t, k, yh, nyh, dky, iflag) ! in: odpkda1.f
+            double precision, intent(in) :: t
+            integer, intent(in) :: k
+            double precision, depend(nyh), intent(in) :: yh(nyh,*)
+            integer, intent(in) :: nyh
+            double precision, intent(out), depend(nyh) :: dky(nyh)
+            integer, intent(out) :: iflag
+       end subroutine dintdy
+    end interface
 end python module odepack
 
-! This file was auto-generated with f2py (version:2).
+! This file was auto-generated with f2py (version:2) and edited.
 ! See http://cens.ioc.ee/projects/f2py2e/

@@ -183,6 +183,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetMaxOrd(void *cvode_mem, int maxord)
     int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps)
     int CVodeSetMaxStep(void   *cvode_mem, realtype hmax)
+    int CVodeSetMinStep(void   *cvode_mem, realtype hmin)
     int CVodeSetInitStep(void  *cvode_mem, realtype hin)
     int CVodeSStolerances(void *cvode_mem, realtype reltol, realtype abstol)
     int CVodeSVtolerances(void *cvode_mem, realtype reltol, N_Vector abstol)
@@ -208,6 +209,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeGetLastOrder(void * cvode_mem,int *qlast)
     int CVodeGetLastStep(void * cvode_mem, realtype *hlast)
     int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent)
+    int CVodeGetActualInitStep(void * cvode_mem, realtype *hinused)
     int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) #Number of steps
     int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) #Number of function evals
     int CVDlsGetNumJacEvals(void *cvode_mem, long int *njevals) #Number of jac evals
@@ -396,6 +398,110 @@ cdef extern from "idas/idas_dense.h":
                    N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
                    N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
     int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
+    
+cdef extern from "idas/idas_dense.h":
+    int IDASpgmr(void *ida_mem, int max1)
+    ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
+    int IDASpilsSetJacTimesVecFn(void *ida_mem, IDASpilsJacTimesVecFn ida_jacv)
+    
+cdef extern from "idas/idas_spils.h":
+    int IDASpilsGetNumJtimesEvals(void *ida_mem, long int *njvevals) #Number of jac*vector
+    int IDASpilsGetNumResEvals(void *ida_mem, long int *nfevalsLS) #Number of rhs due to jac*vector
+
+
+####################
+# KINSOL
+####################
+
+
+# KINSOL functions and routines
+cdef extern from "kinsol/kinsol.h":
+    # user defined functions
+    ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data )
+    ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
+    ctypedef void (*KINInfoHandlerFn)(char *module, char *function, char *msg, void *user_data)
+    # initialization routines
+    void *KINCreate()
+    int KINInit(void *kinmem, KINSysFn func, N_Vector tmpl)
+
+    # optional input spec. functions,
+    # for specificationsdocumentation cf. kinsol.h line 218-449
+    int KINSetErrHandlerFn(void *kinmem, KINErrHandlerFn ehfun, void *eh_data)
+    int KINSetInfoHandlerFn(void *kinmem, KINInfoHandlerFn ihfun, void *ih_data)
+    int KINSetUserData(void *kinmem, void *user_data)
+    int KINSetPrintLevel(void *kinmemm, int printfl)
+    int KINSetNumMaxIters(void *kinmem, long int mxiter)
+    int KINSetNoInitSetup(void *kinmem, booleantype noInitSetup)
+    int KINSetNoResMon(void *kinmem, booleantype noNNIResMon)
+    int KINSetMaxSetupCalls(void *kinmem, long int msbset)
+    int KINSetMaxSubSetupCalls(void *kinmem, long int msbsetsub)
+    int KINSetEtaForm(void *kinmem, int etachoice)
+    int KINSetEtaConstValue(void *kinmem, realtype eta)
+    int KINSetEtaParams(void *kinmem, realtype egamma, realtype ealpha)
+    int KINSetResMonParams(void *kinmem, realtype omegamin, realtype omegamax)
+    int KINSetResMonConstValue(void *kinmem, realtype omegaconst)
+    int KINSetNoMinEps(void *kinmem, booleantype noMinEps)
+    int KINSetMaxNewtonStep(void *kinmem, realtype mxnewtstep)
+    int KINSetMaxBetaFails(void *kinmem, long int mxnbcf)
+    int KINSetRelErrFunc(void *kinmem, realtype relfunc)
+    int KINSetFuncNormTol(void *kinmem, realtype fnormtol)
+    int KINSetScaledStepTol(void *kinmem, realtype scsteptol)
+    int KINSetConstraints(void *kinmem, N_Vector constraints)
+    int KINSetSysFunc(void *kinmem, KINSysFn func)
+
+    # solver routine
+    int KINSol(void *kinmem, N_Vector uu, int strategy, N_Vector u_scale, N_Vector f_scale)
+
+    # optional output routines.
+    # Documentation see kinsol.h line 670-735
+    int KINGetWorkSpace(void *kinmem, long int *lenrw, long int *leniw)
+    int KINGetNumNonlinSolvIters(void *kinmem, long int *nniters)
+    int KINGetNumFuncEvals(void *kinmem, long int *nfevals)
+    int KINGetNumBetaCondFails(void *kinmem, long int *nbcfails) 
+    int KINGetNumBacktrackOps(void *kinmem, long int *nbacktr)
+    int KINGetFuncNorm(void *kinmem, realtype *fnorm)
+    int KINGetStepLength(void *kinmem, realtype *steplength)
+    char *KINGetReturnFlagName(int flag)
+
+    # fuction used to deallocate memory used by KINSOL
+    void KINFree(void **kinmem)
+
+# functions used for supplying jacobian, and receiving info from linear solver
+cdef extern from "kinsol/kinsol_direct.h":
+    # user functions
+    ctypedef int (*KINDlsDenseJacFn)(int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+    
+    # function used to link user functions to KINSOL
+    int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
+
+    # optional output fcts for linear direct solver
+    int KINDlsGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
+    int KINDlsGetNumJacEvals(void *kinmem, long int *njevalsB)
+    int KINDlsGetNumFuncEvals(void *kinmem, long int *nfevalsB)
+    int KINDlsGetLastFlag(void *kinmem, int *flag)
+    char *KINDlsGetReturnFlagName(int flag)
+
+cdef extern from "kinsol/kinsol_dense.h":
+    int KINDense(void *kinmem, int dim)
+    
+cdef extern from "kinsol/kinsol_spgmr.h":
+    int KINSpgmr(void *kinmem, int maxl)
+
+cdef extern from "kinsol/kinsol_spils.h":
+    ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
+                void *problem_data)
+    ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
+    ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
+    int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
+    int KINSpilsGetNumLinIters(void *kinmem, long int *nliters)
+    int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails)
+    int KINSpilsGetNumPrecEvals(void *kinmem, long int *npevals)
+    int KINSpilsGetNumPrecSolves(void *kinmem, long int *npsolves)
+    int KINSpilsGetNumJtimesEvals(void *kinmem, long int *njevals)
+    int KINSpilsGetNumFuncEvals(void *kinmem, long int *nfevalsLS)
+    int KINSpilsSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve)
 
 #=========================
 # END SUNDIALS DEFINITIONS

@@ -22,7 +22,16 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    """
+    The same as example :doc:`EXAMPLE_cvode_basic`  but now integrated backwards in time.
     
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    """
     #Define the rhs
     def f(t,y):
         ydot = -y[0]
@@ -44,15 +53,21 @@ def run_example(with_plots=True):
 
     #Simulate
     t, y = exp_sim.simulate(0) #Simulate 5 seconds (t0=5 -> tf=0)
+
+    print 'y(5) = {}, y(0) ={}'.format(y[0][0],y[-1][0])
     
     #Basic test
-    print y
     nose.tools.assert_almost_equal(y[-1], 4.00000000, 3)
     
     #Plot
     if with_plots:
         P.plot(t, y, color="b")
+        P.title("Solution of $y' = - y$")
+        P.ylabel('y')
+        P.xlabel('Time')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

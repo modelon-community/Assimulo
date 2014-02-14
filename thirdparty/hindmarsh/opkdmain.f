@@ -6520,6 +6520,8 @@ C
      1   LG0, LG1, LGX, IOWNR3(2), IRFND, ITASKC, NGC, NGE
 C
       DATA MORD(1),MORD(2)/12,5/, MXSTP0/500/, MXHNL0/10/
+      open (unit=22,file="steps.dat",action="write",status="unknown")
+C     open (unit=22,file="/dev/null",action="write",status="unknown")
 C-----------------------------------------------------------------------
 C Block A.
 C This code block is executed on every call.
@@ -6993,6 +6995,8 @@ C-----------------------------------------------------------------------
       IWORK(20) = METH
       IWORK(10) = NGE
       TLAST = T
+      If (ISTATE .EQ. 3) write(22,*) 'TLAST=========================',T
+      write(22,*)'T = ',T,' H= ',HU, ' NQU = ', NQU
       RETURN
 C-----------------------------------------------------------------------
 C Block H.

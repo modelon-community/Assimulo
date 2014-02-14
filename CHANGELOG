@@ -1,5 +1,14 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.4 ---
+    * Added support for simulating backward in time (ticket:267)
+    * Added support event detection for Radau, Dopri, Explicit/Implicit
+      Euler, Rodas, CVode (ticket:272)
+    * Added the solver ODASSL.
+    * Added the solver DASP3 (ticket:257)
+    * Added basic Implicit Euler method (ticket:249)
+    * Various bug fixes.
+
 --- Assimulo-2.3 ---
     * Changed license to LGPL from GPL (ticket:261)
     * Fixed re_init problem with scalars (ticket:248)

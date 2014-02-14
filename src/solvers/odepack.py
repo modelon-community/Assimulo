@@ -23,9 +23,10 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
-    from assimulo.lib.odepack import dlsodar
+    from assimulo.lib.odepack import dlsodar, dcfode, dintdy
+    from assimulo.lib.odepack import set_lsod_common, get_lsod_common
 except ImportError:
-    print "Could not find ODEPACK"
+    print "Could not find ODEPACK functions"
 
 class LSODAR(Explicit_ODE):
     """
@@ -41,7 +42,7 @@ class LSODAR(Explicit_ODE):
         
         LSODAR is part of ODEPACK, http://www.netlib.org/odepack/opkd-sum
     """
-    
+
     def __init__(self, problem):
         """
         Initiates the solver.
@@ -59,12 +60,15 @@ class LSODAR(Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = False
         self.options["maxsteps"] = 100000
-
-        
+        self.options["rkstarter"] = False
+        self.options["maxordn"] = 12
+        self.options["maxords"] =  5
+        self.options["hmax"] = 0.
+                
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of jacobian evaluations
+        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         self.statistics["ng"]          = 0 #Number of root evaluations
         self.statistics["nevents"]     = 0 #Number of events
         
@@ -80,6 +84,10 @@ class LSODAR(Explicit_ODE):
         self.supports["interpolated_output"] = True
         
     def initialize(self):
+        """
+        Initializes the overall simulation process
+        (called before _simulate) 
+        """ 
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
@@ -87,40 +95,131 @@ class LSODAR(Explicit_ODE):
         #self._tlist = []
         #self._ylist = []
         
+        #starts simulation with classical multistep starting procedure
+        # Runge-Kutta starter will be started if desired (see options) 
+        # only after an event occured.
+        self._rkstarter_active = False
+        
     def interpolate(self, t):
         """
-        Interpolate the solution at time t using the nordsieck history
-        array as,
-        
-        .. math::
-        
-             interp = \sum_{j=0}^q (t - tn)^(j) * h^(-j) * zn[j] ,
-        
-        where q is the current order, and zn[j] is the j-th column of 
-        the Nordsieck history array.
+        Helper method to interpolate the solution at time t using the Nordsieck history
+        array. Wrapper to ODEPACK's subroutine DINTDY.
         """
-        interp = N.array([0.0]*self.problem_info["dim"])
+        print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
+        dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
+        if iflag!= 0 and iflag!=-2:
+            raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
+        elif iflag==-2:
+            dky=self.y.copy()
+        return dky
         
-        for i in range(self._nordsieck_order):
-            interp = interp + (t-self._nordsieck_time)**i*self._nordsieck_h**(-i)*self._nordsieck_array[i*self.problem_info["dim"]:(i+1)*self.problem_info["dim"]]
+    def integrate_start(self, t, y):
+        """
+        Helper program for the initialization of LSODAR
+        """
+        # Real work array  
+        class common_like(object):
+            def __call__(self):
+                 return self.__dict__
+    
+        
+        #print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
+        if not(self.rkstarter and self._rkstarter_active):
+            # first call or classical restart after a discontinuity
+            ISTATE=1
+            RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+                               max(16,self.problem_info["dim"]+9) + 
+                               3*self.problem_info["dimRoot"]))
+            # Integer work array
+            IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        else: #self.rkstarter and self._rkstarter_active
+            # RK restart
+            RWORK=self._RWORK.copy()
+            IWORK=self._IWORK.copy()
+            ISTATE=2   #  should be 2  
+            dls001=common_like()
+            dlsr01=common_like()
+            # invoke rkstarter
+            # a) get previous stepsize if any
+            hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
+            H = hu if hu != 0. else 1.e-4  # this needs some reflections 
+            # b) compute the Nordsieck array and put it into RWORK
+            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H*4)
+            t,nordsieck = rkNordsieck(t,y,self.sw)
+            nordsieck=nordsieck.T
+            nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
+            RWORK[nordsieck_start_index:nordsieck_start_index+nordsieck.size] = \
+                                       nordsieck.flatten(order='F')
+                        
+            # c) compute method coefficients and update the common blocks
+            dls001.init=1
+            mf = 10
+            nq = 4
+            dls001.meth = meth = mf // 10
+            dls001.miter =mf % 10
+            elco,tesco =dcfode(meth)  #  
+            dls001.maxord= 12      #max order 
+            dls001.nq= 4           #Next step order 
+            #dls001.nqu=4           #Method order last used  (check if this is needed)
+            dls001.meo= meth      #meth
+            dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
+            dls001.conit= 0.5/(nq+2)                     #conit   
+            dls001.el= elco[:,nq-1]  # el0 is set internally
+            dls001.hu=H  # this sets also hold and h internally
+            dls001.jstart=1
+            # IWORK[...] =  
+            #IWORK[13]=dls001.nqu
+            IWORK[14]=dls001.nq
+            IWORK[18]=dls001.meth
+            #IWORK[7]=dlsa01.mxordn    #max allowed order for Adams methods
+            #IWORK[8]=dlsa01.mxords    #max allowed order for BDF
+            IWORK[19]=1         #the current method indicator
+            #RWORK[...]
+            dls001.tn=t
+            RWORK[12]=t
+            RWORK[10]=H         #step-size used successfully
+            RWORK[11]=H         #step-size to be attempted for the next step 
+            #RWORK[6]=dls001.hmin
+            #RWORK[5]=dls001.hmxi
             
-        return interp
+            
+            # d) Reset statistics
+            IWORK[9:13]=[0]*4
+            dls001.nst=1
+            dls001.nfe=6   # from the starter
+            dls001.nje=0
+            dlsr01.nge=0
+            # set common block
+            commonblocks={}
+            commonblocks.update(dls001())
+            commonblocks.update(dlsr01())
+            set_lsod_common(**commonblocks)
+            
+ 
+        return ISTATE, RWORK, IWORK
+                                     
     
     def integrate(self, t, y, tf, opts):
-        ITOL  = 2 #Both atol and rtol are vectors
-        ITASK = 5 #For computation of yout
-        ISTATE = 1 #Start of integration
-        IOPT = 1 #No optional inputs are used
-        RWORK = N.array([0.0]*(22 + self.problem_info["dim"]*max(16,self.problem_info["dim"]+9) + 3*self.problem_info["dimRoot"]))#Real work array
-        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        ITOL  = 2 #Only  atol is a  vector
+        ITASK = 5 #For one step mode and hitting exactly tcrit, normally tf
+        IOPT = 1 #optional inputs are used
+        
+        # provide work arrays and set common blocks (if needed)
+        ISTATE, RWORK, IWORK = self.integrate_start( t, y)
+        
         JT = 1 if self.usejac else 2#Jacobian type indicator
         JROOT = N.array([0]*self.problem_info["dimRoot"])
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
+        RWORK[5] = self.options["hmax"]
         
         #Setting iwork options
         IWORK[5] = self.maxsteps
+        
+        #Setting maxord to IWORK
+        IWORK[7] = self.maxordn
+        IWORK[8] = self.maxords
 
         
         #Dummy methods
@@ -143,21 +242,20 @@ class LSODAR(Explicit_ODE):
         
         #Run in normal mode?
         normal_mode = 1 if opts["output_list"] != None else 0
-        
         #if normal_mode == 0:
         if opts["report_continuously"] or opts["output_list"] == None:
             while (ISTATE == 2 or ISTATE == 1) and t < tf:
             
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, 
+                        self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                         ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
-                
-                self._nordsieck_array = RWORK[nordsieck_start_index:nordsieck_start_index+(IWORK[14]+1)*self.problem_info["dim"]]
-                self._nordsieck_order = IWORK[14]
-                self._nordsieck_time  = RWORK[12]
-                self._nordsieck_h = RWORK[11]
-                
+                hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
+                #print 't= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu)
+                self._nordsieck_array = \
+                     RWORK[nordsieck_start_index:nordsieck_start_index+(nq+1)*nyh].reshape((nyh,-1),order='F') 
+                self._nyh = nyh              
                 self._event_info = roots
                 
                 if opts["report_continuously"]:
@@ -179,6 +277,7 @@ class LSODAR(Explicit_ODE):
                     raise ODEPACK_Exception("LSODAR failed with flag %d"%ISTATE)
             
         else:
+            
             #Change the ITASK
             ITASK = 4 #For computation of yout
             
@@ -188,7 +287,8 @@ class LSODAR(Explicit_ODE):
             for tout in output_list:
                 output_index += 1
 
-                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, 
+                    self.rtol*N.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
@@ -208,16 +308,30 @@ class LSODAR(Explicit_ODE):
                     raise ODEPACK_Exception("LSODAR failed with flag %d"%ISTATE)
         
             opts["output_index"] = output_index
+        # deciding on restarting options
+        self._rkstarter_active = True if ISTATE == 3 and self.rkstarter else False
+        #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]
         self.statistics["nsteps"]        += IWORK[10]
         self.statistics["nfcn"]          += IWORK[11]
         self.statistics["njac"]          += IWORK[12]
-        if flag == ID_PY_EVENT:
-            self.statistics["nevents"] += 1
-        
+        self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
+        # save RWORK, IWORK for restarting feature
+        if self.rkstarter:
+            self._RWORK=RWORK
+            self._IWORK=IWORK        
+       
         return flag, tlist, ylist
+        
+    def get_algorithm_data(self):
+        """
+        Returns the order and step size used in the last successful step.
+        """
+        hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
+            
+        return hu, nqu
     
     def state_event_info(self):
         """
@@ -231,19 +345,26 @@ class LSODAR(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ng"]),       verbose)
-        self.log_message(' Number of State-Events                   : '+ str(self.statistics["nevents"]), verbose)
-        
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : LSODAR ',         verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
+        self.log_message(' Absolute tolerances     : {}'.format(self.options["atol"]),  verbose)
+        self.log_message(' Relative tolerances     : {}'.format(self.options["rtol"]),  verbose)
+        self.log_message(' Classical starter       : {}'.format(not self.options["rkstarter"]),  verbose)
+        if self.maxordn < 12 or self.maxords < 5:
+            self.log_message(' Maximal order Adams     : {}'.format(self.maxordn),  verbose)
+            self.log_message(' Maximal order BDF       : {}'.format(self.maxords),  verbose)
+        if self.hmax > 0. :
+            self.log_message(' Maximal stepsize hmax   : {}'.format(self.hmax),  verbose)
         self.log_message('',                                                         verbose)
+
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        
+        self.log_message(' Number of steps                          : {}'.format(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : {}'.format(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian evaluations           : {}'.format(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of event function evaluations     : {}'.format(self.statistics["ng"]),       verbose)
+        self.log_message(' Number of detected state events          : {}'.format(self.statistics["nevents"]), verbose)
+        
     
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
@@ -347,3 +468,181 @@ class LSODAR(Explicit_ODE):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    def _get_hmax(self):
+        """
+        The absolute value of the maximal stepsize for all methods
+        
+        Parameters::
+        
+               hmax
+                          - Default:  0.  (no maximal step size)
+                          
+                          - Should be a positive float
+        """
+        return self.options["hmax"]
+    def _set_hmax(self,hmax):
+        if not (isinstance(hmax,float) and hmax >= 0.):
+           raise ODEPACK_Exception("Maximal step size hmax should be a positive float")
+        self.options["hmax"]=hmax
+    hmax = property(_get_hmax, _set_hmax)
+    def _get_maxordn(self):
+        """
+        The maximum order used by the Adams-Moulton method (nonstiff case)
+        
+            Parameters::
+            
+                maxordn
+                            - Default 12
+                            
+                            - Should be a positive integer
+        """
+        return self.options["maxordn"]
+    
+    def _set_maxordn(self, maxordn):
+        try:
+            maxordn = int(maxordn)
+        except (TypeError, ValueError):
+            raise ODEPACK_Exception("Maximum order must be a positive integer.")
+        if maxordn > 12:
+            raise ODEPACK_Exception("Maximum order should not exceed 12.")    
+        self.options["maxordn"] = maxordn
+    
+    maxordn = property(_get_maxordn, _set_maxordn)
+    def _get_maxords(self):
+        """
+        The maximum order used by the BDF method (stiff case)
+        
+            Parameters::
+            
+                maxords
+                            - Default 5
+                            
+                            - Should be a positive integer
+        """
+        return self.options["maxords"]
+    
+    def _set_maxords(self, maxords):
+        try:
+            maxords = int(maxords)
+        except (TypeError, ValueError):
+            raise ODEPACK_Exception("Maximum order must be a positive integer.")
+        if maxords > 5:
+            raise ODEPACK_Exception("Maximum order should not exceed 5.")    
+        self.options["maxords"] = maxords
+    
+    maxords = property(_get_maxords, _set_maxords)
+    def _get_rkstarter(self):
+        """
+        This defines how LSODAR is started. 
+        (classically or with a fourth order Runge-Kutta starter)
+        
+            Parameters::
+            
+                rkstarter
+                            - Default False  starts LSODAR in the classical multistep way
+                            
+                            - Should be a Boolean
+        """
+        return self.options["rkstarter"]
+    
+    def _set_rkstarter(self, rkstarter):
+        if not isinstance(rkstarter,bool):
+            raise ODEPACK_Exception("Must be a Boolean.")
+        self.options["rkstarter"] = rkstarter
+    
+    rkstarter = property(_get_rkstarter, _set_rkstarter)
+class RKStarterNordsieck(object):
+    """
+    A family of Runge-Kutta starters producing a 
+    Nordsieck array to (re-)start a Nordsieck based multistep
+    method with a given order.
+    
+    See: Mohammadi (2013): https://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=4196026&fileOId=4196027
+    """
+    def __init__(self,  rhs, H, eval_at=0.,number_of_steps=4):
+        """
+        Initiates the Runge-Kutta Starter.
+        
+            Parameters::
+                            
+                rhs     
+                            - The problem's rhs function
+                             
+                H
+                            - starter step size
+                            
+                eval_at
+                            - Where to evaluate the Nordiseck vector
+                              evaluation point is (eval_at)*H
+                              Possible choices 
+                              eval_at=0.
+                              eval_at=1.
+             
+                number_of_steps
+                            - the number of steps :math:`(k)` to start the multistep method with
+                              This will determine the initial order of the method, which is
+                              :math:`k` for BDF methods and :math:`k+1` for Adams Moulton Methods   .
+        """
+        self.f = rhs
+        self.H = H
+        if number_of_steps != 4:
+            raise RKStarter_Exception('Step number different from 4 not yet implemented')
+        else:
+            self.number_of_steps = number_of_steps
+            
+        self.number_of_steps = number_of_steps 
+        self.eval_at = float(eval_at)
+        if self.eval_at == 0.:
+            self.gamma = \
+              N.array([[1.,0.,0.,0.,0.],
+                       [0.,1.,-5./6.,4./9.,-1./9.],         
+                       [0.,0.,0.,0.,0.],
+                       [0.,0.,1./2.,-4./9.,1./9.],
+                       [0.,0.,7./3.,-19./9.,7./9.],
+                       [0.,0.,-3.,10./3.,-4./3.],
+                       [0.,0.,1.,-11./9.,5./9.]])
+        elif self.eval_at == 1.:
+            self.gamma = \
+                N.array([[1., 0. ,0., 0., 0.], 
+                         [8./9., 1./27.,1./18.,0.,-1./9.],
+                         [0.   , 0.,0.,0.,0.],
+                         [4./9., -10./27.,-7./18.,0.,1./9.],
+                         [40./9.,  20./27.,1./9.,1.,7./9.],
+                         [3./3.,-1./3.,-2.,-4./3.],
+                         [8./9.,5./9.,1.,5./9.]])
+        else:
+            raise RKStarter_Exception("Parameter eval_at should be 0. or 1.")                 
+    def rk_like4(self, t0, y0, sw0): 
+        """
+        rk_like computes Runge-Kutta stages
+        Note, the currently implementation is **only** correct for
+        autonomous systems.
+        """
+        f = lambda y: self.f(t0, y, sw0)
+        h = self.H/4.
+        k1 = h*f(y0)
+        k2 = h*f(y0 + k1)
+        k3 = h*f(y0 + 2. * k2)
+        k4 = h*f(y0 + 3./4. * k1 + 9./4. * k3)
+        k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
+        k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
+        return N.array([y0,k1,k2,k3,k4,k5,k6])
+    def nordsieck(self,k):
+        """
+        Nordsieck array computed at initial point
+        """
+        nord=N.dot(self.gamma.T,k)
+        scale=N.array([1.,1.,1./2.,1./6,1./24.]).reshape(-1,1)
+        return scale*nord  
+    def __call__(self, t0 , y0, sw0=[]):
+        """
+        Evaluates the Runge-Kutta starting values
+        
+            Parameters::
+            
+                y0   
+                    - starting value
+        """
+        k = self.rk_like4(t0, y0, sw0)
+        t = t0+self.eval_at*self.H
+        return t, self.nordsieck(k)

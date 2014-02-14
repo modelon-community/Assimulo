@@ -43,6 +43,22 @@ class Test_CVode:
         
         weights = self.simulator.get_error_weights()
         assert weights[0] < 1e6
+        
+    @testattr(stddist = True)
+    def test_get_used_initial_step(self):
+        self.simulator.simulate(1.0)
+        
+        step = self.simulator.get_used_initial_step()
+        nose.tools.assert_almost_equal(step, 0.001, 3)
+        
+        self.simulator.reset()
+        
+        self.simulator.inith = 1e-8
+        self.simulator.simulate(1.0)
+        
+        step = self.simulator.get_used_initial_step()
+        assert N.abs(step-1e-8) < 1e-2
+        
     
     @testattr(stddist = True)
     def test_get_local_errors(self):
@@ -63,14 +79,17 @@ class Test_CVode:
         assert qlast == 4
         
     @testattr(stddist = True)
-    def test_get_current_order(self):
-        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+    def test_get_current_order(self):  
         
+        nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
+
         self.simulator.simulate(1.0)
         
         qcur = self.simulator.get_current_order()
         assert qcur == 4
-    
+
+
+        
     @testattr(stddist = True)
     def test_init(self):
         """
@@ -121,6 +140,19 @@ class Test_CVode:
         exp_sim(5.,100)
         
         assert nevent == 5
+    
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        f = lambda t,y: -y
+        
+        exp_mod = Explicit_Problem(f,1.0)
+        exp_sim = CVode(exp_mod)
+        
+        exp_sim.maxh = 1e-8
+        exp_sim.time_limit = 1 #One second
+        exp_sim.report_continuously = True
+        
+        nose.tools.assert_raises(TimeLimitExceeded, exp_sim.simulate, 1)
     
     @testattr(stddist = True)    
     def test_discr_method(self):
@@ -479,6 +511,19 @@ class Test_IDA:
         
         self.problem = Implicit_Problem(f,y0,yd0)
         self.simulator = IDA(self.problem)
+    
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        f = lambda t,y,yd: yd-y
+        
+        exp_mod = Implicit_Problem(f,1.0,1.0)
+        exp_sim = IDA(exp_mod)
+        
+        exp_sim.maxh = 1e-8
+        exp_sim.time_limit = 1 #One second
+        exp_sim.report_continuously = True
+        
+        nose.tools.assert_raises(TimeLimitExceeded, exp_sim.simulate, 1)
     
     @testattr(stddist = True)
     def test_simulate_explicit(self):
