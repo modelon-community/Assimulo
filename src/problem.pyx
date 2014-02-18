@@ -24,19 +24,22 @@ include "constants.pxi" #Includes the constants (textual include)
 
     
 cdef class cProblem:
-    def __init__(self,  y0 = None, double t0 = 0.0, p0 = None, sw0 = None):
+    
+    name = "---"
+    
+    def __init__(self,  y0 = None, double t0 = 0.0, p0 = None, sw0 = None, name = None):
         
         if not y0  is None:
             self.y0  = set_type_shape_array(y0)
         if not p0  is None:
             self.p0 = set_type_shape_array(p0) 
         if not sw0 is None:
-            self.sw0 = set_type_shape_array(sw0, bool) 
+            self.sw0 = set_type_shape_array(sw0, bool)
+        if name:
+            self.name = name
         self.t0  = t0
         
     cdef public int _sensitivity_result
-    
-    name = '---'
     
     cpdef initialize(self, solver):
         """
@@ -75,8 +78,8 @@ cdef class cProblem:
 cdef class cImplicit_Problem(cProblem):
     
     def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
-                                                          p0=None, sw0=None):
-        cProblem.__init__(self, y0, t0, p0, sw0)
+                                                          p0=None, sw0=None, name = None):
+        cProblem.__init__(self, y0, t0, p0, sw0, name)
         if res != None:
             self.res = res
         if yd0!=None:
@@ -109,8 +112,8 @@ cdef class cImplicit_Problem(cProblem):
 cdef class cOverdetermined_Problem(cProblem):
     
     def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
-                                                          p0=None, sw0=None):
-        cProblem.__init__(self, y0, t0, p0, sw0)
+                                                          p0=None, sw0=None, name=None):
+        cProblem.__init__(self, y0, t0, p0, sw0, name)
         if res != None:
             self.res = res
         if yd0!=None:
@@ -137,9 +140,9 @@ cdef class cOverdetermined_Problem(cProblem):
     
 cdef class cExplicit_Problem(cProblem):
     
-    def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None):
+    def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None, name = None):
         
-        cProblem.__init__(self, y0, t0, p0, sw0)        
+        cProblem.__init__(self, y0, t0, p0, sw0, name)        
         if rhs != None:
             self.rhs = rhs
     def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
@@ -188,7 +191,7 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
 
 cdef class cSingPerturbed_Problem(cExplicit_Problem):
     
-    def __init__(self, rhs1=None, rhs2=None, yy0=None, zz0=None, double t0=0.0, eps=None, ):
+    def __init__(self, rhs1=None, rhs2=None, yy0=None, zz0=None, double t0=0.0, eps=None, name = None):
         if rhs1 != None:
             self.rhs1 = rhs1
         if rhs2 != None:
@@ -210,7 +213,7 @@ cdef class cSingPerturbed_Problem(cExplicit_Problem):
             y0 = self.zz0
         self.n = len(self.yy0) if yy0 != None else 0
         self.m = len(self.zz0) if zz0 != None else 0
-        cExplicit_Problem.__init__(self, y0=y0, t0=t0)   
+        cExplicit_Problem.__init__(self, y0=y0, t0=t0, name=name)   
         
     def rhs(self,t,y):
         yy=y[:self.n]
@@ -526,11 +529,12 @@ class SingPerturbed_Problem(cSingPerturbed_Problem):
 
 
 cdef class cAlgebraic_Problem:
-    name = '---'
+    
+    name = "---"
     
     def __init__(self, object res, y0, y0_min = None, y0_max=None, 
                     y0_nominal=None, object jac=None, object jacv=None, 
-                    object prec_solve=None, object prec_setup=None):
+                    object prec_solve=None, object prec_setup=None, name = None):
         
         if res != None:
             self.res = res
@@ -560,6 +564,9 @@ cdef class cAlgebraic_Problem:
             self.y0_nominal = set_type_shape_array(y0_nominal)
         else:
             self.y0_nominal = set_type_shape_array([1.0]*len(self.y0))
+            
+        if name:
+            self.name = name
     
     cpdef initialize(self, solver):
         """
