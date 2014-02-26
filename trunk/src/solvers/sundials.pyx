@@ -227,7 +227,7 @@ cdef class IDA(Implicit_ODE):
     
     cpdef initialize(self):
         
-        #Initialize storing of sensitivyt result in handle_result
+        #Initialize storing of sensitivity result in handle_result
         if self.problem_info['step_events'] or self.options['report_continuously']:
             self.problem._sensitivity_result = 1
         
@@ -1415,7 +1415,7 @@ cdef class IDA(Implicit_ODE):
         self.log_message('',                                                          verbose)
 
 cdef class CVode(Explicit_ODE):
-    """
+    r"""
     This class provides a connection to the Sundials 
     (https://computation.llnl.gov/casc/sundials/main.html) solver CVode.
     
