@@ -175,6 +175,7 @@ cdef class IDA(Implicit_ODE):
             self.pData.dimSens = 0
         
         self.pData.verbose = 2
+        self.pData.create_work_arrays()  
     
     def __dealloc__(self):
         
@@ -1656,6 +1657,7 @@ cdef class CVode(Explicit_ODE):
             self.pData.dimSens = 0
             
         self.pData.verbose = 2
+        self.pData.create_work_arrays()
     
     cdef initialize_cvode(self):
         cdef int flag #Used for return
