@@ -24,9 +24,11 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     cdef ProblemData pData = <ProblemData>problem_data
     #cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    cdef N.ndarray y = nv2arr(yv)
+    cdef N.ndarray y = pData.work_y
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef int i
+    
+    nv2arr_inplace(yv, y)
     
     if pData.dimSens>0: #Sensitivity activated
         p = realtype2arr(pData.p,pData.dimSens)
@@ -238,8 +240,11 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     cdef ProblemData pData = <ProblemData>problem_data
     #cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    cdef N.ndarray y = nv2arr(yv)
+    #cdef N.ndarray y = nv2arr(yv)
+    cdef N.ndarray y = pData.work_y
     cdef int i
+    
+    nv2arr_inplace(yv, y)
     
     try:
         if pData.sw != NULL:
@@ -659,6 +664,13 @@ cdef class ProblemData:
         int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
         int verbose        #Defines the verbosity
         object PREC_DATA   #Arbitrary data from the preconditioner
+        N.ndarray work_y
+        N.ndarray work_yd
+        
+    cdef create_work_arrays(self):
+        self.work_y = N.empty(self.dim)
+        self.work_yd = N.empty(self.dim)
+        
 
 cdef class ProblemDataEquationSolver:
     cdef:
@@ -699,6 +711,11 @@ cdef inline N.ndarray nv2arr(N_Vector v):
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
     memcpy(x.data, v_data, n*sizeof(realtype))
     return x
+    
+cdef inline void nv2arr_inplace(N_Vector v, N.ndarray o):
+    cdef long int n = (<N_VectorContent_Serial>v.content).length
+    cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
+    memcpy(o.data, v_data, n*sizeof(realtype))
 
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
