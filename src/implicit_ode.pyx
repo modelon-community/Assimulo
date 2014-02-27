@@ -219,21 +219,22 @@ cdef class Implicit_ODE(ODE):
                 
                 if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
                     self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
-                
-                
+                                
                 #Get and store event information
                 event_info = [[],flag == ID_COMPLETE]
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
-                
+
                 #Log the information
-                self.log_event(self.t, event_info, NORMAL)
-                self.log_message("A discontinuity occured at t = %e."%self.t,LOUD)
-                self.log_message("Current Switches: " + str(self.sw), LOUD)
-                self.log_message('Event info: ' + str(event_info), LOUD) 
+                if LOUD >= self.options["verbosity"]:
+                    self.log_event(self.t, event_info, LOUD)
+                    if SCREAM >= self.options["verbosity"]:
+                        self.log_message("A discontinuity occured at t = %e."%self.t,SCREAM)
+                        self.log_message("Current switches: " + str(self.sw), SCREAM)
+                        self.log_message('Event info: ' + str(event_info), SCREAM) 
                 
-                #Print statistics
-                self.print_statistics(LOUD)
+                    #Print statistics
+                    self.print_statistics(LOUD)
 
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver

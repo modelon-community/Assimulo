@@ -187,13 +187,15 @@ cdef class Explicit_ODE(ODE):
                     event_info[0] = self.state_event_info()
                 
                 #Log the information
-                self.log_event(self.t, event_info, NORMAL)
-                self.log_message("A discontinuity occured at t = %e."%self.t,LOUD)
-                self.log_message("Current switches: " + str(self.sw), LOUD)
-                self.log_message('Event info: ' + str(event_info), LOUD) 
+                if LOUD >= self.options["verbosity"]:
+                    self.log_event(self.t, event_info, LOUD)
+                    if SCREAM >= self.options["verbosity"]:
+                        self.log_message("A discontinuity occured at t = %e."%self.t,SCREAM)
+                        self.log_message("Current switches: " + str(self.sw), SCREAM)
+                        self.log_message('Event info: ' + str(event_info), SCREAM) 
                 
-                #Print statistics
-                self.print_statistics(LOUD)
+                    #Print statistics
+                    self.print_statistics(LOUD)
                 
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
@@ -241,7 +243,6 @@ cdef class Explicit_ODE(ODE):
             except IndexError:
                 pass
             opts["output_index"] = output_index
-
         else:
             self.problem.handle_result(self,t,y.copy())
         
