@@ -4168,8 +4168,6 @@ C-----------------------------------------------------------------------
  450  JCUR = 0
       IF (M .EQ. 0) DSM = DEL/TESCO(2,NQ)
       IF (M .GT. 0) DSM = DMNORM (N, ACOR, EWT)/TESCO(2,NQ)
-      if (DSM .GT. 1.) write(22,*) 'Stepsize rejection at t=',told,
-     1                               'h=',h, 'NQ=',NQ
       IF (DSM .GT. 1.0D0) GO TO 500
 C-----------------------------------------------------------------------
 C After a successful step, update the YH array.
