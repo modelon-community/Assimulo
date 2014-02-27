@@ -198,7 +198,7 @@ cdef class Implicit_ODE(ODE):
                 tevent = tfinal
             
             #Initialize the clock, enabling storing elapsed time for each step 
-            if REPORT_CONTINUOUSLY: 
+            if REPORT_CONTINUOUSLY and self.options["clock_step"]: 
                 self.clock_start = clock()
                 
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
@@ -265,8 +265,9 @@ cdef class Implicit_ODE(ODE):
         self.t, self.y, self.yd = t, y.copy(), yd.copy()
                 
         #Store the elapsed time for a single step 
-        self.elapsed_step_time = clock() - self.clock_start 
-        self.clock_start = clock() 
+        if self.options["clock_step"]:
+            self.elapsed_step_time = clock() - self.clock_start 
+            self.clock_start = clock() 
         
         #Check elapsed timed
         if self.time_limit_activated:

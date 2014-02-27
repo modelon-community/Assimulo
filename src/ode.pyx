@@ -40,12 +40,11 @@ cdef class ODE:
         problem.
         """
         self.statistics = {} #Initialize the statistics dictionary
-        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0}
+        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0, "clock_step":False}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False}
-                             
         #Type of the problem
         #0 = Explicit
         #1 = Implicit
@@ -361,6 +360,19 @@ cdef class ODE:
         return self.options["store_event_points"]
     
     store_event_points = property(_get_store_event_points,_set_store_event_points)
+    
+    def _set_clock_step(self, clock_step):
+        self.options["clock_step"] = clock_step
+    
+    def _get_clock_step(self):
+        """
+        Specifies if the elapsed time of an integrator step should be
+        timed or not. Not that this is only possible if running in 
+        report continuously mode.
+        """
+        return self.options["clock_step"]
+        
+    clock_step = property(_get_clock_step, _set_clock_step)
     
     def _set_backward(self, backward):
         self.options["backward"] = bool(backward)
