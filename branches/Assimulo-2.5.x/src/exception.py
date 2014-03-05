@@ -57,3 +57,5 @@ class ODEPACK_Exception(AssimuloException):
 
 class DASP3_Exception(AssimuloException):
     pass
+class RKStarter_Exception(AssimuloException):
+    pass

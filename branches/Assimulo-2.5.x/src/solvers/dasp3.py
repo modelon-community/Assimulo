@@ -46,8 +46,8 @@ class DASP3ODE(Explicit_ODE):
     
     .. math::
       
-      \frac{dy}{dt} = f(t,y,z)        (N equations)
-      \eps\frac{dz}{dt} = G(t,y,z)    (M equations)       
+      \\frac{\mathrm{d}y}{\mathrm{d}t} &=  f(t,y,z) \;\;\;  \\text{(N equations)} \\\\
+      \\varepsilon\\frac{\mathrm{d}z}{\mathrm{d}t} &= G(t,y,z)\;\;\;  \\text{(M equations)}       
     
     If is assumed that the first system is non-stiff and that
     the stiffness of the second system is due to the parameter
@@ -156,15 +156,15 @@ class DASP3ODE(Explicit_ODE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
         self.log_message(' Number of Slow Function Evaluations (Y)  : '+str(self.statistics["nyder"]),         verbose)
         self.log_message(' Number of Fast Function Evaluations (Z)  : '+ str(self.statistics["nzder"]),    verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : DASP3 ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
     

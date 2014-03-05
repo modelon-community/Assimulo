@@ -31,6 +31,15 @@ class Test_Implicit_ODE:
         solv = Implicit_ODE(prob)
         
         assert solv.get_elapsed_step_time() == -1.0
+        
+    @testattr(stddist = True)
+    def test_problem_name_attribute(self):
+        res = lambda t,y,yd: y
+        
+        prob = Implicit_Problem(res, 0.0, 0.0)
+        assert prob.name == "---"
+        prob = Implicit_Problem(res, 0.0, 0.0, name="Test")
+        assert prob.name == "Test"
     
     @testattr(stddist = True)
     def test_re_init(self):

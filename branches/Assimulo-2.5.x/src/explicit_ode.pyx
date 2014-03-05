@@ -162,7 +162,7 @@ cdef class Explicit_ODE(ODE):
                 tevent = tfinal
             
             #Initialize the clock, enabling storing elapsed time for each step
-            if REPORT_CONTINUOUSLY:
+            if REPORT_CONTINUOUSLY and self.options["clock_step"]:
                 self.clock_start = clock()
             
             flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
@@ -176,7 +176,7 @@ cdef class Explicit_ODE(ODE):
             flag_initialize = False
             
             #Event handling
-            if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal) or (flag == ID_COMPLETE and TIME_EVENT and tret==tevent): #Event have been detected
+            if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal) or (flag == ID_COMPLETE and TIME_EVENT and tret==tevent): #Event has been detected
                 
                 if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
                     self.problem.handle_result(self, self.t, self.y.copy())
@@ -187,13 +187,15 @@ cdef class Explicit_ODE(ODE):
                     event_info[0] = self.state_event_info()
                 
                 #Log the information
-                self.log_event(self.t, event_info, NORMAL)
-                self.log_message("A discontinuity occured at t = %e."%self.t,LOUD)
-                self.log_message("Current Switches: " + str(self.sw), LOUD)
-                self.log_message('Event info: ' + str(event_info), LOUD) 
+                if LOUD >= self.options["verbosity"]:
+                    self.log_event(self.t, event_info, LOUD)
+                    if SCREAM >= self.options["verbosity"]:
+                        self.log_message("A discontinuity occured at t = %e."%self.t,SCREAM)
+                        self.log_message("Current switches: " + str(self.sw), SCREAM)
+                        self.log_message('Event info: ' + str(event_info), SCREAM) 
                 
-                #Print statistics
-                self.print_statistics(LOUD)
+                    #Print statistics
+                    self.print_statistics(LOUD)
                 
                 try:
                     self.problem.handle_event(self, event_info) #self corresponds to the solver
@@ -221,8 +223,9 @@ cdef class Explicit_ODE(ODE):
         self.t, self.y = t, y.copy()
         
         #Store the elapsed time for a single step
-        self.elapsed_step_time = clock() - self.clock_start
-        self.clock_start = clock()
+        if self.options["clock_step"]:
+            self.elapsed_step_time = clock() - self.clock_start
+            self.clock_start = clock()
         
         #Check elapsed timed
         if self.time_limit_activated:
@@ -241,7 +244,6 @@ cdef class Explicit_ODE(ODE):
             except IndexError:
                 pass
             opts["output_index"] = output_index
-
         else:
             self.problem.handle_result(self,t,y.copy())
         

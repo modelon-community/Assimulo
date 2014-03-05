@@ -125,7 +125,6 @@ class Extended_Problem(Explicit_Problem):
 
 
 def run_example(with_plots=True):
-    global t, y
     #Create an instance of the problem
     iter_mod = Extended_Problem() #Create the problem
 
