@@ -23,6 +23,26 @@ from assimulo.problem import Explicit_Problem
 
 
 def run_example(with_plots=True):
+    r"""
+    An example for CVode with scaled preconditioned GMRES method
+    as a special linear solver.
+    Note, how the operation Jacobian times vector is provided.
+    
+    ODE:
+    
+    .. math::
+       
+       \dot y_1 &= y_2 \\
+       \dot y_2 &= -9.82
+       
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    """
     
     #Defines the rhs
     def f(t,y):
@@ -31,7 +51,7 @@ def run_example(with_plots=True):
 
         return N.array([yd_0,yd_1])
     
-    #Defines the jacobian*vector product
+    #Defines the Jacobian*vector product
     def jacv(t,y,fy,v):
         j = N.array([[0,1.],[0,0]])
         return N.dot(j,v)
@@ -41,7 +61,7 @@ def run_example(with_plots=True):
     #Defines an Assimulo explicit problem
     exp_mod = Explicit_Problem(f,y0)
     
-    exp_mod.jacv = jacv #Sets the jacobian
+    exp_mod.jacv = jacv #Sets the Jacobian
     exp_mod.name = 'Example using the Jacobian Vector product'
     
     exp_sim = CVode(exp_mod) #Create a CVode solver
@@ -64,7 +84,11 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
+        P.xlabel('Time')
+        P.ylabel('State')
         P.show()
+        
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

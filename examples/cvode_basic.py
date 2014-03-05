@@ -22,6 +22,22 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Demonstration of the use of CVode by solving the
+    linear test equation :math:`\dot y = - y`
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    .. index::
+          continuation calls
+          DOPRI5
+          Runge-Kutta method
+    """
+
     
     #Define the rhs
     def f(t,y):
@@ -52,8 +68,12 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t1, y1, color="b")
-        P.plot(t2, y2, color="b")
+        P.plot(t2, y2, color="r")
+        P.title("Solution of $y' = - y$")
+        P.ylabel('y')
+        P.xlabel('Time')
         P.show()
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

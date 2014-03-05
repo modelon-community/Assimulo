@@ -414,6 +414,7 @@ def check_fortran_extensions():
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
@@ -553,7 +554,7 @@ setup(name=NAME,
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
                                  'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
                                  'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3',
-                                 'examples'+O.sep+'kinsol_ors_matrix.mtx.gz','examples'+O.sep+'kinsol_ors_matrix.mtx.gz']},
+                                 'examples'+O.sep+'kinsol_ors_matrix.mtx','examples'+O.sep+'kinsol_ors_matrix.mtx']},
       script_args=copy_args)
 
 if change_dir:

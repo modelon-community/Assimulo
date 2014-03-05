@@ -22,6 +22,24 @@ from assimulo.solvers import ImplicitEuler
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example for the use of the impliit Euler method to solve
+    Van der Pol's equation
+    
+    .. math::
+       
+        \dot y_1 &= y_2 \\
+        \dot y_2 &= \mu ((1.-y_1^2) y_2-y_1)
+
+    with :math:`\mu=\frac{1}{5} 10^3`.
+
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+
+    """
     eps = 5.e-3
     my = 1./eps
     
@@ -32,7 +50,7 @@ def run_example(with_plots=True):
         
         return N.array([yd_0,yd_1])
     
-    #Define the jacobian (If no jacobian, one is approximated)
+    #Define the Jacobian 
     def jac(t,y):
         jd_00 = 0.0
         jd_01 = 1.0
@@ -45,7 +63,7 @@ def run_example(with_plots=True):
     
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f,y0)
-    exp_mod.name = 'Van der Pol (explicit)'
+    exp_mod.name = "Van der Pol's equation (explicit)"
     exp_mod.jac = jac
     
     #Define an explicit solver
@@ -61,11 +79,16 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y[:,0], marker='o')
+        P.title("Solution of Van der Pol's equation")
+        P.ylabel("State: $y_1$")
+        P.xlabel("Time")
         P.show()
 
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.8601438) < 1e-1 #For test purpose
+    
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
     run_example()

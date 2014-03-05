@@ -197,16 +197,16 @@ class Dopri5(Explicit_ODE):
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
+        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
         if self.problem_info["state_events"]:
-            self.log_message(' Number of Root Evaluations               : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
             self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Dopri5 ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
         
@@ -737,17 +737,17 @@ class RungeKutta34(Explicit_ODE):
         Should print the statistics.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
-        self.log_message(' Number of Steps                : %s '%(self.statistics["nsteps"]),             verbose)
-        self.log_message(' Number of Function Evaluations : %s '%(self.statistics["nfcn"]),               verbose)
+        self.log_message(' Number of steps                : %s '%(self.statistics["nsteps"]),             verbose)
+        self.log_message(' Number of function evaluations : %s '%(self.statistics["nfcn"]),               verbose)
         if self.problem_info["state_events"]:
-            self.log_message(' Number of Root Evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
+            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
             self.log_message(' Number of State-Events         : '+ str(self.statistics["nstateevents"]),   verbose)
         
         self.log_message('\nSolver options:\n',                                              verbose)
         self.log_message(' Solver             : RungeKutta34',                               verbose)
         self.log_message(' Solver type        : Adaptive',                                   verbose)
         self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
-        self.log_message(' Absolute tolerance : ' + str(self.options["atol"]) + '\n', verbose)
+        self.log_message(' Absolute tolerance : ' + str(self._compact_atol()) + '\n', verbose)
     
     
 class RungeKutta4(Explicit_ODE):

@@ -23,6 +23,15 @@ from assimulo.exception import *
 
 class Test_KINSOL:
     
+    @testattr(stddist = True)
+    def test_problem_name_attribute(self):
+        res = lambda y: y
+        model  = Algebraic_Problem(res, 1)
+        assert model.name == "---"
+        model  = Algebraic_Problem(res, 1, name="Test")
+        assert model.name == "Test"
+        
+    @testattr(stddist = True)
     def test_properties_simple(self):
         res = lambda y: y
         model  = Algebraic_Problem(res, 1)

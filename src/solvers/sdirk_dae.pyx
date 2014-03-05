@@ -20,7 +20,7 @@ import numpy as N
 from assimulo.exception import *
 from assimulo.ode import *
 
-from assimulo.explicit_ode import Explicit_ODE
+from assimulo.explicit_ode import Implicit_ODE
 
 try:
     from assimulo.lib.odepack import dlsodar, dcfode, dintdy
@@ -28,19 +28,19 @@ try:
 except ImportError:
     print "Could not find ODEPACK functions"
 
-class LSODAR(Explicit_ODE):
+class SDIRK_DAE(Implicit_ODE):
     """
-        LOSDAR is a multistep method for solving explicit ordinary 
-        differential equations on the form,
+        SDIRK_DAE is a special implicit Runge-Kutta methodstep for solving implicit ordinary 
+        differential equations of index index on the form,
         
         .. math::
     
-            \dot{y} = f(t,y), \quad y(t_0) = y_0.
+            F(t, y, \dot{y}) = 0, \quad y(t_0) = y_0.
             
-        LSODAR automatically switches between using an ADAMS method
-        or an BDF method and is also able to monitor events.
         
-        LSODAR is part of ODEPACK, http://www.netlib.org/odepack/opkd-sum
+        
+        The core integrator SDIRK_DAE is the original code by Anne Kvaernoe, 
+        http://www.math.ntnu.no/~anne/
     """
 
     def __init__(self, problem):
@@ -53,35 +53,25 @@ class LSODAR(Explicit_ODE):
                             - The problem to be solved. Should be an instance
                               of the 'Implicit_Problem' class.
         """
-        Explicit_ODE.__init__(self, problem) #Calls the base class
+        Implicit_ODE.__init__(self, problem) #Calls the base class
         
         #Default values
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = False
-        self.options["maxsteps"] = 100000
-        self.options["rkstarter"] = 1
-        self.options["maxordn"] = 12
-        self.options["maxords"] =  5
         self.options["hmax"] = 0.
                 
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
         self.statistics["nfcn"]        = 0 #Number of function evaluations
         self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["ng"]          = 0 #Number of root evaluations
-        self.statistics["nevents"]     = 0 #Number of events
         
         self._leny = len(self.y) #Dimension of the problem
-        self._nordsieck_array = []
-        self._nordsieck_order = 0
-        self._nordsieck_time  = 0.0
-        self._nordsieck_h  = 0.0
         
         # Solver support
-        self.supports["state_events"] = True
+        self.supports["state_events"] = False
         self.supports["report_continuously"] = True
-        self.supports["interpolated_output"] = True
+        self.supports["interpolated_output"] = False
         
     def initialize(self):
         """
@@ -95,109 +85,17 @@ class LSODAR(Explicit_ODE):
         #self._tlist = []
         #self._ylist = []
         
-        #starts simulation with classical multistep starting procedure
-        # Runge-Kutta starter will be started if desired (see options) 
-        # only after an event occured.
-        self._rkstarter_active = False
-        
-    def interpolate(self, t):
-        """
-        Helper method to interpolate the solution at time t using the Nordsieck history
-        array. Wrapper to ODEPACK's subroutine DINTDY.
-        """
-        print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
-        dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
-        if iflag!= 0 and iflag!=-2:
-            raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
-        elif iflag==-2:
-            dky=self.y.copy()
-        return dky
         
     def integrate_start(self, t, y):
-        """
-        Helper program for the initialization of LSODAR
-        """
-        # Real work array  
-        class common_like(object):
-            def __call__(self):
-                 return self.__dict__
-    
         
-        #print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
-        if not(self.rkstarter>1 and self._rkstarter_active):
-            # first call or classical restart after a discontinuity
-            ISTATE=1
-            RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+        # first call or classical restart after a discontinuity
+        ISTATE=1
+        RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
                                max(16,self.problem_info["dim"]+9) + 
                                3*self.problem_info["dimRoot"]))
-            # Integer work array
-            IWORK = N.array([0]*(20 + self.problem_info["dim"]))
-        else: #self.rkstarter and self._rkstarter_active
-            # RK restart
-            RWORK=self._RWORK.copy()
-            IWORK=self._IWORK.copy()
-            ISTATE=2   #  should be 2  
-            dls001=common_like()
-            dlsr01=common_like()
-            # invoke rkstarter
-            # a) get previous stepsize if any
-            hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
-            #H = hu if hu != 0. else 1.e-4  # this needs some reflections 
-            H = 1e-1 #if hu != 0. else 1.e-4
-            # b) compute the Nordsieck array and put it into RWORK
-            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H*self.rkstarter,number_of_steps=self.rkstarter)
-            t,nordsieck = rkNordsieck(t,y,self.sw)
-            nordsieck=nordsieck.T
-            nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
-            RWORK[nordsieck_start_index:nordsieck_start_index+nordsieck.size] = \
-                                       nordsieck.flatten(order='F')
-                        
-            # c) compute method coefficients and update the common blocks
-            dls001.init = 1
-            #dls001.jstart = -1.0    #take the next step with a new value of H,n,meth,..
-            mf = 20
-            nq = self.rkstarter
-            dls001.meth = meth = mf // 10
-            dls001.miter =mf % 10
-            elco,tesco =dcfode(meth)  #  
-            dls001.maxord= 5      #max order 
-            dls001.nq= self.rkstarter          #Next step order 
-            dls001.nqu=self.rkstarter           #Method order last used  (check if this is needed)
-            dls001.meo= meth      #meth
-            dls001.nqnyh= nq*self.problem_info["dim"]    #nqnyh
-            dls001.conit= 0.5/(nq+2)                     #conit   
-            dls001.el= elco[:,nq-1]  # el0 is set internally
-            dls001.hu=H  # this sets also hold and h internally
-            dls001.jstart=1
-            
-            # IWORK[...] =  
-            #IWORK[13]=dls001.nqu
-            IWORK[14]=dls001.nq
-            #IWORK[18]=dls001.meth
-            #IWORK[7]=dlsa01.mxordn    #max allowed order for Adams methods
-            #IWORK[8]=dlsa01.mxords    #max allowed order for BDF
-            IWORK[19]=meth         #the current method indicator
-            #RWORK[...]
-            dls001.tn=t
-            RWORK[12]=t
-            RWORK[10]=hu         #step-size used successfully
-            RWORK[11]=H         #step-size to be attempted for the next step 
-            #RWORK[6]=dls001.hmin
-            #RWORK[5]=dls001.hmxi
-            
-            number_of_fevals=N.array([1,2,4,6,11])
-            # d) Reset statistics
-            IWORK[9:13]=[0]*4
-            dls001.nst=1
-            dls001.nfe=number_of_fevals[self.rkstarter]   # from the starter
-            dls001.nje=0
-            dlsr01.nge=0
-            # set common block
-            commonblocks={}
-            commonblocks.update(dls001())
-            commonblocks.update(dlsr01())
-            set_lsod_common(**commonblocks)
-            
+        # Integer work array
+        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+
  
         return ISTATE, RWORK, IWORK
                                      
