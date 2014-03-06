@@ -57,8 +57,7 @@ def run_example(with_plots=True):
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
     
     #Create an Assimulo explicit problem
-    exp_mod = Explicit_Problem(f,y0)
-    exp_mod.name='Chemical Kinetics Problem'
+    exp_mod = Explicit_Problem(f,y0, name='Robertson Chemical Kinetics Example')
     
     #Sets the options to the problem
     exp_mod.p0 = [0.040, 1.0e4, 3.0e7]  #Initial conditions for parameters
@@ -90,7 +89,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t, y)
-        P.title('Robertson Chemical Kinetics Example')
+        P.title(exp_mod.name)
         P.xlabel('Time')
         P.ylabel('State')
         P.show()  
