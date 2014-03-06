@@ -84,8 +84,7 @@ def run_example(with_plots=True):
     y0 = [1.0, 2.0]
 
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(rhs, y0)
-    exp_mod.name = "Using a preconditioner in Assimulo ..."
+    exp_mod = Explicit_Problem(rhs, y0, name = "Example of using a preconditioner in SUNDIALS")
 
     #Set the preconditioner setup and solve function for the problem
     exp_mod.prec_setup = prec_setup
@@ -114,6 +113,7 @@ def run_example(with_plots=True):
         P.grid()
         P.ylabel('States')
         P.xlabel('Time')
+        P.title(exp_mod.name)
         P.show()
 
     return exp_mod, exp_sim

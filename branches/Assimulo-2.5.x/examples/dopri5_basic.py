@@ -39,8 +39,8 @@ def run_example(with_plots=True):
         return N.array([ydot])
 
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, 4.0)
-    exp_mod.name = 'Simple Explicit Example'
+    exp_mod = Explicit_Problem(f, 4.0,
+              name = 'DOPRI5 Example: $\dot y = - y$')
     
     exp_sim = Dopri5(exp_mod) #Create a Dopri5 solver
 
@@ -53,7 +53,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
-        P.title(r'The solution of $\dot y = - y$')
+        P.title(exp_mod.name)
         P.xlabel('Time')
         P.ylabel('State')
         P.show()

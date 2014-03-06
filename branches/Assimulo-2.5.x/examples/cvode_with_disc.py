@@ -54,7 +54,7 @@ class Extended_Problem(Explicit_Problem):
         return N.array([yd_0,yd_1,yd_2])
 
     #Sets a name to our function
-    name = 'Function with consistency problem'
+    name = 'ODE with discontinuities and a function with consistency problem'
     
     #The event function
     def state_events(self,t,y,sw):
@@ -155,7 +155,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
-        P.title("Solution of a differential equation with discontinuities")
+        P.title(exp_mod.name)
         P.ylabel('States')
         P.xlabel('Time')
         P.show()

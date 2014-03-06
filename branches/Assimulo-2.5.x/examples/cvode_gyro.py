@@ -73,8 +73,7 @@ def run_example(with_plots=True):
     y0=hstack([[1000.*10,5000.*10,6000*10],eye(3).reshape((9,))])
     
     #Create an Assimulo explicit problem
-    exp_mod = Explicit_Problem(f,y0)
-    exp_mod.name="Gyroscope Exaple"
+    exp_mod = Explicit_Problem(f,y0, name="Gyroscope Example")
     
     #Create an Assimulo explicit solver (CVode)
     exp_sim=CVode(exp_mod)
@@ -97,8 +96,8 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t,y/10000.)
         P.xlabel('Time')
-        P.ylabel('States, scaled by 10000')
-        P.title('Gyroscope Example')
+        P.ylabel('States, scaled by $10^4$')
+        P.title(exp_mod.name)
         P.show()
         
     return exp_mod, exp_sim    

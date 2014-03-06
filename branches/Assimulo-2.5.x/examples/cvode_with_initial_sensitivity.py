@@ -66,7 +66,7 @@ def run_example(with_plots=True):
     yS0 = N.array([[1,0,0],[0,1,0],[0,0,1.]])
     
     #Create an Assimulo explicit problem
-    exp_mod = Explicit_Problem(f, y0, p0=p0)
+    exp_mod = Explicit_Problem(f, y0, p0=p0,name='Example: Computing Sensitivities')
     
     #Sets the options to the problem
     exp_mod.yS0 = yS0
@@ -123,8 +123,9 @@ def run_example(with_plots=True):
                   legend_text.format('y_3','p_2'),
                   legend_text.format('y_3','p_3')))
         P.subplot(224)
-        P.title("Solution of the ODE")
+        P.title('ODE Solution')
         P.plot(t, y)
+        P.suptitle(exp_mod.name)
         P.show()
         
         return exp_mod, exp_sim

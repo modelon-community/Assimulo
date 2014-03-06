@@ -75,8 +75,10 @@ def run_example(with_plots=True):
     eps = N.array([.33333333e-3])
     
     #Define an Assimulo problem
-    exp_mod = SingPerturbed_Problem(dydt, dzdt, yy0=y0, zz0=z0,eps=eps)
-    exp_mod.name = 'Simple DASP3 Example'
+    exp_mod = SingPerturbed_Problem(dydt, dzdt, 
+              yy0=y0, zz0=z0,eps=eps,
+              name = 'DASP3 Example: Singularly perturbed ODE')
+   
     
     #Define an explicit solver
     exp_sim = DASP3ODE(exp_mod) #Create a CVode solver
@@ -95,7 +97,7 @@ def run_example(with_plots=True):
     if with_plots:
         P.semilogy(t, y, color="b")
         P.grid()
-        P.title(r'DASP3 Example: Singularly perturbed ODE $\varepsilon = \frac{1}{3} 10^{-3}$')
+        P.title(exp_mod.name+r' $\varepsilon = \frac{1}{3} 10^{-3}$')
         P.xlabel('Time')
         P.ylabel('y')
         P.show()
