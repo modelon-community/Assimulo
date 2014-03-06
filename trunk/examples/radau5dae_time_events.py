@@ -21,35 +21,36 @@ import nose
 from assimulo.solvers import Radau5DAE
 from assimulo.problem import Implicit_Problem
 
-def run_example(with_plots=True):
-    
-    class VanDerPolProblem(Implicit_Problem):
-        def __init__(self, **kargs):
-            Implicit_Problem.__init__(self, **kargs)
-            self.name = 'Van der Pol (implicit)'
-            self.my = 1.0/1e-6
-            
-        #Define the residual
-        def res(self, t,y,yd):
-            yd_0 = y[1]
-            yd_1 = self.my*((1.-y[0]**2)*y[1]-y[0])
-            
-            res_0 = yd[0]-yd_0
-            res_1 = yd[1]-yd_1
-            return N.array([res_0,res_1])
+
+class VanDerPolProblem(Implicit_Problem):
+    def __init__(self, **kargs):
+        Implicit_Problem.__init__(self, **kargs)
+        self.name = 'Van der Pol (implicit) with time events'
+        self.my = 1.0/1e-6
         
-        def time_events(self, t,y,yd,sw):
-            events = [1.0, 2.0, 2.5, 3.0]
-            for ev in events:
-                if t < ev:
-                    tnext = ev
-                    break
-                else:
-                    tnext = None
-            return tnext
-            
-        def handle_event(self, solver, event_info):
-            self.my *= 1e-1
+    #Define the residual
+    def res(self, t,y,yd):
+        yd_0 = y[1]
+        yd_1 = self.my*((1.-y[0]**2)*y[1]-y[0])
+        
+        res_0 = yd[0]-yd_0
+        res_1 = yd[1]-yd_1
+        return N.array([res_0,res_1])
+    
+    def time_events(self, t,y,yd,sw):
+        events = [1.0, 2.0, 2.5, 3.0]
+        for ev in events:
+            if t < ev:
+                tnext = ev
+                break
+            else:
+                tnext = None
+        return tnext
+        
+    def handle_event(self, solver, event_info):
+        self.my *= 1e-1
+
+def run_example(with_plots=True):
     
     y0 = [2.0,-0.6] #Initial conditions
     yd0 = [-.6,-200000.]
@@ -66,12 +67,15 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y[:,0], marker='o')
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.title(imp_mod.name)
         P.show()
     
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.14330840983) < 1e-3 #For test purpose
-
+    return imp_mod, imp_sim
 if __name__=='__main__':
     run_example()
 
