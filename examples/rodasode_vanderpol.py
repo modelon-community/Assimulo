@@ -22,6 +22,24 @@ from assimulo.solvers import RodasODE
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example for the use of RODAS to solve
+    Van der Pol's equation
+    
+    .. math::
+       
+        \dot y_1 &= y_2 \\
+        \dot y_2 &= \mu ((1.-y_1^2) y_2-y_1)
+
+    with :math:`\mu=1 10^6`.
+
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+
+    """
     
     #Define the rhs
     def f(t,y):
@@ -42,8 +60,7 @@ def run_example(with_plots=True):
     y0 = [2.0,-0.6] #Initial conditions
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f,y0)
-    exp_mod.name = 'Van der Pol (explicit)'
+    exp_mod = Explicit_Problem(f,y0, name = 'Van der Pol (explicit)')
     exp_mod.jac = jac
     
     #Define an explicit solver
@@ -61,11 +78,17 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y[:,0], marker='o')
+        P.title(exp_mod.name)
+        P.ylabel("State: $y_1$")
+        P.xlabel("Time")
         P.show()
+
     
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    return exp_mod, exp_sim
+
 
 if __name__=='__main__':
     run_example()
