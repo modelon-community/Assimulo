@@ -22,6 +22,24 @@ from assimulo.solvers import GLIMDA,IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example for the use of GLIMBDA to solve
+    Van der Pol's equation implicit form
+    
+    .. math::
+       
+        \dot y_1 - y_2 &= 0 \\
+        \dot y_2 - \mu ((1.-y_1^2) y_2-y_1) &=0
+
+    with :math:`\mu=\frac{1}{5} 10^3`.
+
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
+
+    """
     
     #Define the residual
     def f(t,y,yd):
@@ -39,8 +57,8 @@ def run_example(with_plots=True):
     yd0 = [-.6,-200000.]
     
     #Define an Assimulo problem
-    imp_mod = Implicit_Problem(f,y0,yd0)
-    imp_mod.name = 'Van der Pol (implicit)'
+    imp_mod = Implicit_Problem(f,y0,yd0,
+              name = 'Glimbda Example: Van der Pol (implicit)')
     
     #Define an explicit solver
     imp_sim = GLIMDA(imp_mod) #Create a GLIMDA solver
@@ -57,13 +75,20 @@ def run_example(with_plots=True):
     if with_plots:
         P.subplot(211)
         P.plot(t,y[:,0])#, marker='o')
+        P.ylabel(r'State: $y$')
+        P.xlabel('Time')
         P.subplot(212)
-        P.plot(t,yd[:,0])#, marker='o')
+        P.plot(t,yd[:,0]*1.e-5)#, marker='o')
+        P.ylabel(r'State: $\frac{\mathrm{d} y}{\mathrm{d} t}$ scaled by $10^{-5}$')
+        P.xlabel('Time')
+        P.suptitle(imp_mod.name)
         P.show()
     
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    
+    return imp_mod, imp_sim
 
 if __name__=='__main__':
     run_example()
