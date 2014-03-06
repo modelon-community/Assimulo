@@ -57,7 +57,7 @@ class Extended_Problem(Implicit_Problem):
         return N.array([res_0,res_1,res_2])
 
     #Sets a name to our function
-    name = 'Function with consistency problem'
+    name = 'ODE with discontinuities and a function with consistency problem'
     
     #The event function
     def state_events(self,t,y,yd,sw):
@@ -129,28 +129,42 @@ class Extended_Problem(Implicit_Problem):
 
 
 def run_example(with_plots=True):
+    r"""
+    Example of the use of IDA for an implicit differential equation
+    with a discontinuity (state event) and the need for an event iteration.
+    
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+
+       - :dfn:`imp_sim`    solver instance
+    """
     
     #Create an instance of the problem
-    iter_mod = Extended_Problem() #Create the problem
+    imp_mod = Extended_Problem() #Create the problem
 
-    iter_sim = IDA(iter_mod) #Create the solver
+    imp_sim = IDA(imp_mod) #Create the solver
     
-    iter_sim.verbosity = 0
-    iter_sim.report_continuously = True
+    imp_sim.verbosity = 0
+    imp_sim.report_continuously = True
 
     #Simulate
-    t, y, yd = iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+    t, y, yd = imp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)
     nose.tools.assert_almost_equal(y[-1][1],3.0)
     nose.tools.assert_almost_equal(y[-1][2],2.0)
     
-    #Plot
+     #Plot
     if with_plots:
         P.plot(t,y)
+        P.title(imp_mod.name)
+        P.ylabel('States')
+        P.xlabel('Time')
         P.show()
-    
+        
+    return imp_mod, imp_sim
 if __name__=="__main__":
     run_example()
     

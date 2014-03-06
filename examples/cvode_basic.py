@@ -32,10 +32,6 @@ def run_example(with_plots=True):
     
        - :dfn:`exp_sim`    solver instance
        
-    .. index::
-          continuation calls
-          DOPRI5
-          Runge-Kutta method
     """
 
     
@@ -45,8 +41,7 @@ def run_example(with_plots=True):
         return N.array([ydot])
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, y0=4)
-    exp_mod.name = 'Simple CVode Example'
+    exp_mod = Explicit_Problem(f, y0=4, name = r'CVode Test Example: $\dot y = - y$')
     
     #Define an explicit solver
     exp_sim = CVode(exp_mod) #Create a CVode solver
@@ -69,7 +64,7 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t1, y1, color="b")
         P.plot(t2, y2, color="r")
-        P.title("Solution of $y' = - y$")
+        P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')
         P.show()

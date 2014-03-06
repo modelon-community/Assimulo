@@ -38,8 +38,7 @@ def run_example(with_plots=True):
         return N.array([ydot])
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f,t0=5, y0=0.02695)
-    exp_mod.name = 'Simple CVode Example (backward)'
+    exp_mod = Explicit_Problem(f,t0=5, y0=0.02695, name = r'CVode Test Example (reverse time): $\dot y = - y$ ')
     
     #Define an explicit solver
     exp_sim = CVode(exp_mod) #Create a CVode solver
@@ -62,7 +61,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t, y, color="b")
-        P.title("Solution of $y' = - y$")
+        P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')
         P.show()

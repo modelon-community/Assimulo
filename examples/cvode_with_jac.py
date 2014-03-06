@@ -57,11 +57,10 @@ def run_example(with_plots=True):
     #Defines an Assimulo explicit problem
     y0 = [1.0,0.0] #Initial conditions
 
-    exp_mod = Explicit_Problem(f,y0)
+    exp_mod = Explicit_Problem(f,y0, name = 'Example using analytic Jacobian')
     
     exp_mod.jac = jac #Sets the Jacobian
-    exp_mod.name = 'Example using Jacobian'
-
+   
     
     exp_sim = CVode(exp_mod) #Create a CVode solver
     
@@ -83,6 +82,7 @@ def run_example(with_plots=True):
         P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
         P.xlabel('Time')
         P.ylabel('State')
+        P.title(exp_mod.name)
         P.show()
         
     return exp_mod, exp_sim

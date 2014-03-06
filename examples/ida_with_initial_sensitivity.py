@@ -34,6 +34,13 @@ def run_example(with_plots=True):
         p1=p2=p3 = 0 
     
     See http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
+    
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
+    
     """
     
     def f(t, y, yd,p):
@@ -60,7 +67,7 @@ def run_example(with_plots=True):
     yS0 = N.array([[1,0,0],[0,1,0],[0,0,1.]])
     
     #Create an Assimulo implicit problem
-    imp_mod = Implicit_Problem(f,y0,yd0,p0=p0)
+    imp_mod = Implicit_Problem(f,y0,yd0,p0=p0,name='Example: Computing Sensitivities')
     
     #Sets the options to the problem
     imp_mod.yS0=yS0
@@ -107,8 +114,11 @@ def run_example(with_plots=True):
         P.title("Parameter p3")
         P.legend(("p3/dy1","p3/dy2","p3/dy3"))
         P.subplot(224)
-        P.plot(t,y)
+        P.title('ODE Solution')
+        P.plot(t, y)
+        P.suptitle(imp_mod.name)
         P.show()
-
+        
+        return imp_mod, imp_sim
 if __name__=='__main__':
     run_example()

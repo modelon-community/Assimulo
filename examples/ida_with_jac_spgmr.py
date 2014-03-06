@@ -23,6 +23,26 @@ from assimulo.problem import Implicit_Problem
 
 
 def run_example(with_plots=True):
+    r"""
+    An example for IDA with scaled preconditioned GMRES method
+    as a special linear solver.
+    Note, how the operation Jacobian times vector is provided.
+    
+    ODE:
+    
+    .. math::
+       
+       \dot y_1 - y_2 &= 0\\
+       \dot y_2 -9.82 &= 0
+       
+    
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
+       
+    """
     
     #Defines the residual
     def res(t,y,yd):
@@ -31,7 +51,7 @@ def run_example(with_plots=True):
 
         return N.array([res_0,res_1])
     
-    #Defines the jacobian*vector product
+    #Defines the Jacobian*vector product
     def jacv(t,y,yd,res,v,c):
         jy = N.array([[0,-1.],[0,0]])
         jyd = N.array([[1,0.],[0,1]])
@@ -43,12 +63,11 @@ def run_example(with_plots=True):
     yd0 = [0.0, -9.82]
     
     #Defines an Assimulo implicit problem
-    imp_mod = Implicit_Problem(res,y0,yd0)
+    imp_mod = Implicit_Problem(res,y0,yd0,name = 'Example using the Jacobian Vector product')
     
     imp_mod.jacv = jacv #Sets the jacobian
-    imp_mod.name = 'Example using the Jacobian Vector product'
     
-    imp_sim = IDA(imp_mod) #Create a IDA solver
+    imp_sim = IDA(imp_mod) #Create an IDA solver instance
     
     #Set the parameters
     imp_sim.atol = 1e-5 #Default 1e-6
@@ -66,7 +85,10 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.title(imp_mod.name)
         P.show()
-
+    return imp_mod,imp_sim 
 if __name__=='__main__':
     run_example()

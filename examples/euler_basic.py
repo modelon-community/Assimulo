@@ -40,8 +40,8 @@ def run_example(with_plots=True):
         return N.array([ydot])
 
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, 4.0)
-    exp_mod.name = 'Simple Explicit Example'
+    exp_mod = Explicit_Problem(f, 4.0,
+              name = 'ExplicitEuler Example: $\dot y = - y$')
     
     #Explicit Euler
     exp_sim = ExplicitEuler(exp_mod) #Create a explicit Euler solver
@@ -55,7 +55,7 @@ def run_example(with_plots=True):
     if with_plots:
         P.plot(t1, y1, color="b")
         P.plot(t2, y2, color="r")
-        P.title("Solution of $y' = - y$")
+        P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')
         P.show()

@@ -23,7 +23,7 @@ from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
     r"""
-    Example for the use of the impliit Euler method to solve
+    Example for the use of the implicit Euler method to solve
     Van der Pol's equation
     
     .. math::
@@ -62,8 +62,8 @@ def run_example(with_plots=True):
     y0 = [2.0,-0.6] #Initial conditions
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f,y0)
-    exp_mod.name = "Van der Pol's equation (explicit)"
+    exp_mod = Explicit_Problem(f,y0, 
+                          name = "ImplicitEuler: Van der Pol's equation (as explicit problem) ")
     exp_mod.jac = jac
     
     #Define an explicit solver
@@ -79,7 +79,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y[:,0], marker='o')
-        P.title("Solution of Van der Pol's equation")
+        P.title(exp_mod.name)
         P.ylabel("State: $y_1$")
         P.xlabel("Time")
         P.show()
