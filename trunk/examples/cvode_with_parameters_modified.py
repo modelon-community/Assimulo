@@ -28,16 +28,18 @@ def run_example(with_plots=True):
     This simple example problem for CVode, due to Robertson, 
     is from chemical kinetics, and consists of the following three 
     equations::
+
+    .. math:: 
     
-       dy1/dt = -p1*y1 + p2*y2*y3
-       dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
-       dy3/dt = p3*(y2)^2
+       \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3 \\
+       \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2 \\
+       \dot y_3 &= p_3  y_ 2^2
     
+    on return:
     
-        on return:
+       - :dfn:`exp_mod`    problem instance
     
-    exp_mod    problem instance
-    exp_sim    solver instance
+       - :dfn:`exp_sim`    solver instance
     """
     
     def f(t, y, p):
@@ -53,7 +55,7 @@ def run_example(with_plots=True):
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
     
     #Create an Assimulo explicit problem
-    exp_mod = Explicit_Problem(f,y0)
+    exp_mod = Explicit_Problem(f,y0, name='Sundials test example: Chemical kinetics')
     
     #Sets the options to the problem
     exp_mod.p0 = [0.040, 1.0e4]  #Initial conditions for parameters
@@ -84,6 +86,9 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t, y)
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.title(exp_mod.name)
         P.show()  
         
     return exp_mod, exp_sim
