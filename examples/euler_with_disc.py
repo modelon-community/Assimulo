@@ -126,16 +126,15 @@ class Extended_Problem(Explicit_Problem):
 
 def run_example(with_plots=True):
     r"""
-    Example of the use of ExplicitEuler for a differential equation
+    Example of the use of Euler's method for a differential equation
     with a discontinuity (state event) and the need for an event iteration.
     
     on return:
     
        - :dfn:`exp_mod`    problem instance
-
+    
        - :dfn:`exp_sim`    solver instance
     """
-    #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
 
     exp_sim = ExplicitEuler(exp_mod) #Create the solver
@@ -151,15 +150,16 @@ def run_example(with_plots=True):
     nose.tools.assert_almost_equal(y[-1][1],3.0)
     nose.tools.assert_almost_equal(y[-1][2],2.0)
     
-    #Plot
+   #Plot
     if with_plots:
         P.plot(t,y)
-        P.title(exp_mod.name)
+        P.title("Solution of a differential equation with discontinuities")
         P.ylabel('States')
         P.xlabel('Time')
         P.show()
         
     return exp_mod, exp_sim
+        
     
 if __name__=="__main__":
     run_example()
