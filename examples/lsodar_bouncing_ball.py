@@ -121,30 +121,37 @@ def run_example(with_plots=True):
 
     """
     #Create an instance of the problem
-    mod = Extended_Problem() #Create the problem
+    exp_mod = Extended_Problem() #Create the problem
 
-    sim = LSODAR(mod) #Create the solver
-    sim.atol=1.e-8
-    sim.report_continuously = True
+    exp_sim = LSODAR(exp_mod) #Create the solver
+    exp_sim.atol=1.e-8
+    exp_sim.report_continuously = True
     
-    sim.verbosity = 30
-    #sim.continuous_output = True
+    exp_sim.verbosity = 30
+
     
     #Simulate
-    t, y = sim.simulate(10.0) #Simulate 10 seconds 
+    t, y = exp_sim.simulate(10.0) #Simulate 10 seconds 
     
     #Plot
     if with_plots:
         P.subplot(221)
         P.plot(t,y)
         P.title('LSODAR Bouncing ball (one step mode)')
-        P.subplot(222)
-        P.plot(sim.t_sol,sim.h_sol)
-        P.title('LSODAR step size plot')
+        P.ylabel('States: $y$ and $\dot y$')
         P.subplot(223)
-        P.plot(sim.t_sol,sim.nq_sol)
+        P.plot(exp_sim.t_sol,exp_sim.h_sol)
+        P.title('LSODAR step size plot')
+        P.xlabel('Time')
+        P.ylabel('Sepsize')
+        P.subplot(224)
+        P.plot(exp_sim.t_sol,exp_sim.nq_sol)
         P.title('LSODAR order plot')
+        P.xlabel('Time')
+        P.ylabel('Order')
+        P.suptitle(exp_mod.name)
         P.show()
+    return exp_mod, exp_sim    
 if __name__=="__main__":
     run_example()
     

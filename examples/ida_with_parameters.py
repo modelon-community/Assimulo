@@ -22,16 +22,26 @@ from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
-    """
-    This is the same example from the Sundials package (idasRoberts_FSA_dns.c)
+    r"""
+    This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
+    Its purpose is to demonstrate the use of parameters in the differential equation.
 
-    This simple example problem for IDA, due to Robertson, 
-    is from chemical kinetics, and consists of the following three 
-    equations::
+    This simple example problem for IDA, due to Robertson
+    see http://www.dm.uniba.it/~testset/problems/rober.php, 
+    is from chemical kinetics, and consists of the system:
     
-       dy1/dt = -p1*y1 + p2*y2*y3
-       dy2/dt = p1*y1 - p2*y2*y3 - p3*y2**2
-       0   = y1 + y2 + y3 - 1
+    .. math:: 
+    
+       \dot y_1 -( -p_1 y_1 + p_2 y_2 y_3)&=0 \\
+       \dot y_2 -(p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2)&=0  \\
+       \dot y_3 -( p_3  y_ 2^2)&=0 
+       
+    
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
     
     """
 
@@ -78,8 +88,13 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y)
-        P.show()    
+        P.plot(t, y)
+        P.title(imp_mod.name)
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.show()  
+        
+    return imp_mod, imp_sim  
 
 if __name__=='__main__':
     run_example()
