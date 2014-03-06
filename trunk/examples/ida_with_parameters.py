@@ -77,7 +77,7 @@ def run_example(with_plots=True):
     
     #Simulate
     t, y, yd = imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
-    print imp_sim.p_sol[0][-1] , imp_sim.p_sol[1][-1], imp_sim.p_sol[0][-1]
+
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
     nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
