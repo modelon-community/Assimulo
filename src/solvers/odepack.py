@@ -348,6 +348,14 @@ class LSODAR(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
+        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        
+        self.log_message(' Number of steps                          : {}'.format(self.statistics["nsteps"]),          verbose)               
+        self.log_message(' Number of function evaluations           : {}'.format(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of Jacobian evaluations           : {}'.format(self.statistics["njac"]),    verbose)
+        self.log_message(' Number of event function evaluations     : {}'.format(self.statistics["ng"]),       verbose)
+        self.log_message(' Number of detected state events          : {}'.format(self.statistics["nevents"]), verbose)
+        
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : LSODAR ',         verbose)
         self.log_message(' Absolute tolerances     : {}'.format(self.options["atol"]),  verbose)
@@ -362,15 +370,6 @@ class LSODAR(Explicit_ODE):
         if self.hmax > 0. :
             self.log_message(' Maximal stepsize hmax   : {}'.format(self.hmax),  verbose)
         self.log_message('',                                                         verbose)
-
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : {}'.format(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : {}'.format(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : {}'.format(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of event function evaluations     : {}'.format(self.statistics["ng"]),       verbose)
-        self.log_message(' Number of detected state events          : {}'.format(self.statistics["nevents"]), verbose)
-        
     
     def _set_usejac(self, jac):
         self.options["usejac"] = bool(jac)
