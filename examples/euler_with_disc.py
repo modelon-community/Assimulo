@@ -54,7 +54,7 @@ class Extended_Problem(Explicit_Problem):
         return N.array([yd_0,yd_1,yd_2])
 
     #Sets a name to our function
-    name = 'Function with consistency problem'
+    name = 'ODE with discontinuities and a function with consistency problem'
     
     #The event function
     def state_events(self,t,y,sw):
@@ -125,16 +125,26 @@ class Extended_Problem(Explicit_Problem):
 
 
 def run_example(with_plots=True):
-    #Create an instance of the problem
-    iter_mod = Extended_Problem() #Create the problem
-
-    iter_sim = ExplicitEuler(iter_mod) #Create the solver
+    r"""
+    Example of the use of ExplicitEuler for a differential equation
+    with a discontinuity (state event) and the need for an event iteration.
     
-    iter_sim.verbosity = 0
-    iter_sim.report_continuously = True
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+
+       - :dfn:`exp_sim`    solver instance
+    """
+    #Create an instance of the problem
+    exp_mod = Extended_Problem() #Create the problem
+
+    exp_sim = ExplicitEuler(exp_mod) #Create the solver
+    
+    exp_sim.verbosity = 0
+    exp_sim.report_continuously = True
     
     #Simulate
-    t, y = iter_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+    t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)
@@ -144,7 +154,12 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t,y)
+        P.title(exp_mod.name)
+        P.ylabel('States')
+        P.xlabel('Time')
         P.show()
+        
+    return exp_mod, exp_sim
     
 if __name__=="__main__":
     run_example()

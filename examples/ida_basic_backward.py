@@ -22,6 +22,17 @@ from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Demonstration of the use of the use of ID by solving the
+    linear test equation in implicit form :math:`\dot y + y=0`
+    
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
+       
+    """
     
     #Define the rhs
     def f(t,y,yd):
@@ -29,8 +40,8 @@ def run_example(with_plots=True):
         return N.array([res])
     
     #Define an Assimulo problem
-    imp_mod = Implicit_Problem(f,t0=5, y0=0.02695, yd0=-0.02695)
-    imp_mod.name = 'Simple IDA Example (backward)'
+    imp_mod = Implicit_Problem(f,t0=5, y0=0.02695, yd0=-0.02695,
+              name = 'IDA Example: $\dot y + y = 0$ (reverse time)')
     
     #Define an explicit solver
     imp_sim = IDA(imp_mod) #Create a IDA solver
@@ -50,7 +61,12 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t, y, color="b")
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.title(imp_mod.name)
         P.show()
+    
+    return imp_mod, imp_sim
 
 if __name__=='__main__':
     run_example()
