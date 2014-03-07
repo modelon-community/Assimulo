@@ -22,7 +22,11 @@ To retrieve the latest (develop) version using a subversion software use::
 
 
 Old versions:
-
+    
+    - `Assimulo-2.4.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/614/releases/Assimulo-2.4.win32-py2.7.exe>`_
+    - `Assimulo-2.4.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/614/releases/Assimulo-2.4.win32-py2.7.msi>`_
+    - `Assimulo-2.4.zip <https://trac.jmodelica.org/assimulo/export/614/releases/Assimulo-2.4.zip>`_
+    - `Assimulo-2.4.tar.gz <https://trac.jmodelica.org/assimulo/export/614/releases/Assimulo-2.4.tar.gz>`_
     - `Assimulo-2.3.win32-py2.7.exe <https://trac.jmodelica.org/assimulo/export/486/releases/Assimulo-2.3.win32-py2.7.exe>`_
     - `Assimulo-2.3.win32-py2.7.msi <https://trac.jmodelica.org/assimulo/export/486/releases/Assimulo-2.3.win32-py2.7.msi>`_
     - `Assimulo-2.3.zip <https://trac.jmodelica.org/assimulo/export/486/releases/Assimulo-2.3.zip>`_
