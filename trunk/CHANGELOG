@@ -1,5 +1,16 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.5 ---
+    * Added support for retrieving the last step in CVode (ticket:298)
+    * Added support for retrieving the actual step in CVode (ticket:298)
+    * Updated the documentation on the examples (ticket:316, ticket:315)
+    * Added the name to the problem constructor (ticket:321)
+    * Added option for timing a step (ticket:325)
+    * Added an option to specify an upper bound on the integration time
+      (ticket:289)
+    * Added an option for a user specified J*v in the IDA case (ticket:284)
+    * Various bug fixes.
+
 --- Assimulo-2.4 ---
     * Added support for simulating backward in time (ticket:267)
     * Added support event detection for Radau, Dopri, Explicit/Implicit
