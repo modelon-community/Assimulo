@@ -286,6 +286,8 @@ class LSODAR(Explicit_ODE):
             
             output_index = opts["output_index"]
             output_list  = opts["output_list"][output_index:]
+            
+            flag = ID_PY_COMPLETE
 
             for tout in output_list:
                 output_index += 1
@@ -309,7 +311,7 @@ class LSODAR(Explicit_ODE):
                     break
                 elif ISTATE < 0:
                     raise ODEPACK_Exception("LSODAR failed with flag %d"%ISTATE)
-        
+            
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter > 1 else False

@@ -171,6 +171,24 @@ class Test_LSODAR:
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
         
     @testattr(stddist = True)    
+    def test_simulation_ncp_list(self):
+        """
+        Test a simulation with ncp.
+        """
+        self.sim.simulate(1.,ncp_list=[0.5]) #Simulate 2 seconds
+
+        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        
+    @testattr(stddist = True)    
+    def test_simulation_ncp_list_2(self):
+        """
+        Test a simulation with ncp.
+        """
+        self.sim.simulate(1.,ncp_list=[0.5,4]) #Simulate 2 seconds
+
+        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        
+    @testattr(stddist = True)    
     def test_simulation_ncp_with_jac(self):
         """
         Test a simulation with ncp.

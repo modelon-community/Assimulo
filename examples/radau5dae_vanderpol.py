@@ -22,6 +22,24 @@ from assimulo.solvers import Radau5DAE
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example for the use of Radau5DAE to solve
+    Van der Pol's equation
+    
+    .. math::
+       
+        \dot y_1 &= y_2 \\
+        \dot y_2 &= \mu ((1.-y_1^2) y_2-y_1)
+
+    with :math:`\mu= 10^6`.
+
+    on return:
+    
+       - :dfn:`imp_mod`    problem instance
+    
+       - :dfn:`imp_sim`    solver instance
+
+    """
     
     #Define the residual
     def f(t,y,yd):
@@ -55,13 +73,22 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y[:,0], marker='o')
+        P.subplot(211)
+        P.plot(t,y[:,0])#, marker='o')
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.subplot(212)
+        P.plot(t,yd[:,0]*1.e-5)#, marker='o')
+        P.xlabel('Time')
+        P.ylabel('State derivatives scaled with $10^{-5}$')
+        P.suptitle(imp_mod.name)
         P.show()
     
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    return imp_mod, imp_sim
 
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()
 

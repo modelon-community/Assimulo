@@ -209,7 +209,9 @@ cdef class ODE:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list != None:
-            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.array(ncp_list, dtype=realtype, ndmin=1)>t0]
+            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.array(ncp_list, dtype=realtype, ndmin=1)>t0][N.array(ncp_list, dtype=realtype, ndmin=1)<tfinal]
+            if output_list[-1] < tfinal: #Add the last point if necessary!
+                output_list = N.append(output_list, tfinal)
             output_index = 0
         else:
             output_list = None
@@ -400,6 +402,12 @@ cdef class ODE:
     cpdef log_event(self,double time,object event_info, int level):
         if level >= self.options["verbosity"]:
             self.event_data.append([time,event_info])
+            
+    cpdef clear_logs(self):
+        """
+        Clears the currently stored log messages.
+        """
+        self.event_data = []
             
     cpdef get_options(self):
         """
