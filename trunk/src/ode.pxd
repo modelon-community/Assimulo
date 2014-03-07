@@ -39,6 +39,7 @@ cdef class ODE:
         
     cpdef log_message(self, message, int level)
     cpdef log_event(self, double time, object event_info, int level)
+    cpdef clear_logs(self)
     cpdef simulate(self, double tfinal, int ncp=*, object ncp_list=*)
     cpdef get_options(self)
     cpdef get_supports(self)

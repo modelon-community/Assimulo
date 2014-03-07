@@ -122,6 +122,9 @@ cdef class Implicit_ODE(ODE):
         
         if sw0 != None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
+            
+        #Clear logs
+        self.clear_logs()
 
     cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):

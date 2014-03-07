@@ -403,6 +403,12 @@ cdef class ODE:
         if level >= self.options["verbosity"]:
             self.event_data.append([time,event_info])
             
+    cpdef clear_logs(self):
+        """
+        Clears the currently stored log messages.
+        """
+        self.event_data = []
+            
     cpdef get_options(self):
         """
         Returns the current solver options.

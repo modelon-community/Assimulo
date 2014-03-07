@@ -140,6 +140,53 @@ class Test_CVode:
         exp_sim(5.,100)
         
         assert nevent == 5
+        
+    @testattr(stddist = True)
+    def test_clear_event_log(self):
+        f = lambda t,y: [1.0]
+        global tnext
+        global nevent
+        tnext = 0.0
+        nevent = 0
+        def time_events(t,y,sw):
+            global tnext,nevent
+            events = [1.0, 2.0, 2.5, 3.0]
+            for ev in events:
+                if t < ev:
+                    tnext = ev
+                    break
+                else:
+                    tnext = None
+            nevent += 1
+            return tnext
+            
+        def handle_event(solver, event_info):
+            solver.y+= 1.0
+            global tnext
+            nose.tools.assert_almost_equal(solver.t, tnext)
+            assert event_info[0] == []
+            assert event_info[1] == True
+    
+        exp_mod = Explicit_Problem(f,0.0)
+        exp_mod.time_events = time_events
+        exp_mod.handle_event = handle_event
+        
+        #CVode
+        exp_sim = CVode(exp_mod)
+        exp_sim.verbosity = 10
+        exp_sim(5.,100)
+        
+        print exp_sim.event_data, len(exp_sim.event_data)
+        assert len(exp_sim.event_data) == 4
+        
+        tnext = 0.0
+        nevent = 0
+        
+        exp_sim.reset()
+        assert len(exp_sim.event_data) == 0
+        
+        exp_sim(5.,100)
+        assert len(exp_sim.event_data) == 4
     
     @testattr(stddist = True)
     def test_time_limit(self):
@@ -697,6 +744,47 @@ class Test_IDA:
         sim.simulate(2.0)
         
         nose.tools.assert_almost_equal(sim.t_sol[-1], 2.0000000, 5)
+    
+    @testattr(stddist = True)
+    def test_clear_event_log(self):
+        """
+        This tests the functionality of the time event function.
+        """
+        f = lambda t,x,xd,sw: xd-x
+        
+        def time_events(t, y, yd, sw):
+            if sw[0]:
+                return 1.0
+            if sw[1]:
+                return 3.0
+            return None
+        
+        def handle_event(solver, event_info):
+            
+            if event_info[1]:
+                solver.y  = N.array([1.0])
+                solver.yd = N.array([1.0])
+                
+                if not solver.sw[0]:
+                    solver.sw[1] = False
+                
+                if solver.sw[0]:
+                    solver.sw[0] = False
+        
+        mod = Implicit_Problem(f,[1.0],[1.0], sw0=[True, True])
+        mod.time_events = time_events
+        mod.handle_event = handle_event
+        
+        sim = IDA(mod)
+        sim.verbosity = 10
+        assert len(sim.event_data) == 0
+        sim.simulate(5.0)
+        assert len(sim.event_data) > 0
+        
+        sim.reset()
+        assert len(sim.event_data) == 0
+        sim.simulate(5.0)
+        assert len(sim.event_data) > 0
         
     @testattr(stddist = True)    
     def test_usejac(self):
