@@ -91,4 +91,4 @@ def run_example(with_plots=True):
         P.show()
     return imp_mod,imp_sim 
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()

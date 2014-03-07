@@ -22,15 +22,14 @@ from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
-    r"""
-    Demonstration of the use of the use of ID by solving the
-    linear test equation in implicit form :math:`\dot y + y=0`
+    """
+    The same as example :doc:`EXAMPLE_cvode_basic`  but now integrated backwards in time.
     
     on return:
     
-       - :dfn:`imp_mod`    problem instance
+       - :dfn:`exp_mod`    problem instance
     
-       - :dfn:`imp_sim`    solver instance
+       - :dfn:`exp_sim`    solver instance
        
     """
     
@@ -69,4 +68,4 @@ def run_example(with_plots=True):
     return imp_mod, imp_sim
 
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()

@@ -35,12 +35,19 @@ warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
 file_path = os.path.dirname(os.path.realpath(__file__))
 
 def run_example(with_plots=True):
-    """
-    This example is the "Problem 4" taken from the book by Saad:
+    r"""
+    Example to demonstrate the use of the Sundials solver Kinsol with
+    a user provided Jacobian and a preconditioner. The example is the 
+    'Problem 4' taken from the book by Saad:
     Iterative Methods for Sparse Linear Systems.
     
-    0 = Ax-b
-    """    
+    on return:
+    
+       - :dfn:`alg_mod`    problem instance
+    
+       - :dfn:`alg_solver`    solver instance
+    
+    """
     #Read the original matrix
     A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
 
@@ -83,11 +90,9 @@ def run_example(with_plots=True):
     y0 = S.rand(A.shape[0])
     
     #Define an Assimulo problem
-    alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv)
-    alg_mod_prec = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, prec_solve=prec_solve, prec_setup=prec_setup)
-    alg_mod.name = 'ORS Example'
-    alg_mod_prec.name = 'ORS Example (Preconditioned)'
-    
+    alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, name = 'ORS Example')
+    alg_mod_prec = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, prec_solve=prec_solve, prec_setup=prec_setup, name = 'ORS Example (Preconditioned)')
+
     #Define the KINSOL solver
     alg_solver = KINSOL(alg_mod)
     alg_solver_prec = KINSOL(alg_mod_prec)
@@ -135,7 +140,9 @@ def run_example(with_plots=True):
     #Basic test
     for j in range(len(y)):
         nose.tools.assert_almost_equal(y[j], 1.0, 4)
+        
+    return [alg_mod, alg_mod_prec], [alg_solver, alg_solver_prec]
 
 if __name__=='__main__':
-    run_example()
+    mod, solv = run_example()
 

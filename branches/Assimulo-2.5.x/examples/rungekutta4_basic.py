@@ -22,6 +22,18 @@ from assimulo.solvers import RungeKutta4
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Demonstration of the use of the use of Runge-Kutta 4 by solving the
+    linear test equation :math:`\dot y = - y`
+    
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+       
+    """
+
         
     #Defines the rhs
     def f(t,y):
@@ -29,8 +41,8 @@ def run_example(with_plots=True):
         return N.array([ydot])
 
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, 4.0)
-    exp_mod.name = 'Simple Explicit Example'
+    exp_mod = Explicit_Problem(f, 4.0,
+              name = 'RK4 Example: $\dot y = - y$')
     
     exp_sim = RungeKutta4(exp_mod) #Create a RungeKutta4 solver
     
@@ -42,8 +54,13 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y)
+        P.plot(t, y)
+        P.title(exp_mod.name)
+        P.ylabel('y')
+        P.xlabel('Time')
         P.show()
     
+    return exp_mod, exp_sim    
+    
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()

@@ -22,7 +22,24 @@ from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example for the use of the implicit Euler method to solve
+    Van der Pol's equation
     
+    .. math::
+       
+        \dot y_1 &= y_2 \\
+        \dot y_2 &= \mu ((1.-y_1^2) y_2-y_1)
+
+    with :math:`\mu= 10^6`.
+
+    on return:
+    
+       - :dfn:`exp_mod`    problem instance
+    
+       - :dfn:`exp_sim`    solver instance
+
+    """    
     #Define the rhs
     def f(t,y):
         eps = 1.e-6
@@ -51,13 +68,17 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        P.plot(t,y[:,0], marker='o')
+        P.plot(t,y[:,0])#, marker='o')
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.title(exp_mod.name)
         P.show()
 
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    return exp_mod, exp_sim
 
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()
 
