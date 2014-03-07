@@ -163,7 +163,7 @@ def run_example(with_plots=True):
     nose.tools.assert_almost_equal(y[-1][2],2.0)
     
 if __name__=="__main__":
-    run_example()
+    mod,sim = run_example()
     
 
     

@@ -65,12 +65,14 @@ def run_example(index, with_plots=True, with_test=False):
         assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
-    return dae_pend
+    return my_pend, dae_pend
         
 if __name__=='__main__':
     index_values=['ind1','ind2','ind3','ggl2','ovstab2','ovstab1']
+    sim={}
+    mod={}
     for ind in index_values:
-        dae_pend=run_example(index=ind)
+        mod[ind], sim[ind]=run_example(index=ind)
     
     
                               
