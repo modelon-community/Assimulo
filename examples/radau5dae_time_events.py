@@ -77,5 +77,5 @@ def run_example(with_plots=True):
     assert N.abs(x1[-1]-1.14330840983) < 1e-3 #For test purpose
     return imp_mod, imp_sim
 if __name__=='__main__':
-    run_example()
+    mod,sim = run_example()
 
