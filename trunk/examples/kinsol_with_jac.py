@@ -22,7 +22,17 @@ from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 
 def run_example(with_plots=True):
+    r"""
+    Example to demonstrate the use of the Sundials solver Kinsol with
+    a user provided Jacobian.
     
+    on return:
+    
+       - :dfn:`alg_mod`    problem instance
+    
+       - :dfn:`alg_solver`    solver instance
+    
+    """
     #Define the res
     def res(y):
         r1 = 2*y[0]+3*y[1]-6
@@ -33,8 +43,7 @@ def run_example(with_plots=True):
         return N.array([[2.,3.],[4.,9.]])
     
     #Define an Assimulo problem
-    alg_mod = Algebraic_Problem(res, y0=[0,0], jac=jac)
-    alg_mod.name = 'KINSOL example with Jac'
+    alg_mod = Algebraic_Problem(res, y0=[0,0], jac=jac, name='KINSOL example with Jac')
     
     #Define the KINSOL solver
     alg_solver = KINSOL(alg_mod)
@@ -47,7 +56,9 @@ def run_example(with_plots=True):
     #Basic test
     nose.tools.assert_almost_equal(y[0], 1.5, 5)
     nose.tools.assert_almost_equal(y[1], 1.0, 5)
-
+    
+    return alg_mod, alg_solver
+    
 if __name__=='__main__':
-    run_example()
+    mod, solv = run_example()
 
