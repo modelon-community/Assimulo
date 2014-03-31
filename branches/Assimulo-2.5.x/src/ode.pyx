@@ -209,7 +209,7 @@ cdef class ODE:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list != None:
-            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.array(ncp_list, dtype=realtype, ndmin=1)>t0][N.array(ncp_list, dtype=realtype, ndmin=1)<tfinal]
+            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)>t0,N.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
             if output_list[-1] < tfinal: #Add the last point if necessary!
                 output_list = N.append(output_list, tfinal)
             output_index = 0
