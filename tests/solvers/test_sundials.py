@@ -335,6 +335,18 @@ class Test_CVode:
         nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
     
     @testattr(stddist = True)
+    def test_ncp_list(self):
+        f = lambda t,y:N.array(-y)
+        y0 = [4.0]
+        
+        prob = Explicit_Problem(f,y0)
+        sim = CVode(prob)
+        
+        t, y = sim.simulate(7, ncp_list=N.arange(0, 7, 0.1)) #Simulate 5 seconds
+        
+        nose.tools.assert_almost_equal(y[-1], 0.00364832, 4)
+        
+    @testattr(stddist = True)
     def test_handle_result(self):
         """
         This function tests the handle result.
