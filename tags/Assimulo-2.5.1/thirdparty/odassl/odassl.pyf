@@ -1,0 +1,54 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module odassl__user__routines 
+    interface odassl_user_interface 
+        subroutine res(t, neq, ny, y, yprime, delta, ires, rpar, ipar)
+            double precision intent(in) :: t  
+            integer intent(in,hide), depend(delta) :: neq=len(delta)  
+            integer intent(in,hide), depend(y)     :: ny=len(y)
+            double precision dimension(ny),  intent(in) :: y
+            double precision dimension(ny),  intent(in) :: yprime 
+            double precision dimension(neq),  intent(out):: delta  
+            double precision dimension(1), intent(hide) :: rpar  
+            integer          dimension(1), intent(hide) :: ipar 
+            integer intent(hide)::ires
+        end subroutine res    
+        subroutine jac(t, neq, ny, y, yprime, delta, ires, rpar, ipar)  
+            integer intent(in) ::ny, neq                                                   
+            double precision dimension(ny), intent(in), depend(ny) :: y, yprime 
+            double precision dimension(neq), intent(out), depend(neq) ::delta  
+            double precision :: t 
+            double precision dimension(1), intent(hide) :: rpar  
+            integer          dimension(1), intent(hide) :: ipar 
+            integer intent(hide):: ires          
+        end subroutine jac    
+    end interface odassl_user_interface
+end python module odassl__user__routines
+
+python module odassl 
+    interface  odassl
+        subroutine odassl(res,neq,ny,t,y,yprime,tout,info,rtol,atol,idid,rwork,lrw,iwork,liw,rpar,ipar,jac) 
+            use odassl__user__routines
+            external res
+            external jac
+            double precision, intent(in,out) :: t
+            double precision dimension(ny), depend(ny), intent(in,out) :: y
+            double precision dimension(ny), depend(ny), intent(in,out):: yprime
+            double precision, intent(in,out) :: tout
+            integer, intent(in), check(neq>=ny), depend(ny):: neq
+            integer  :: ny
+            integer dimension(15), intent(in, out) :: info
+            double precision dimension(ny), depend(ny), intent(in) :: rtol
+            double precision dimension(ny), depend(ny), intent(in) :: atol
+            integer intent(out):: idid
+            integer intent(in):: lrw
+            integer intent(in):: liw
+            double precision dimension(lrw), intent(in,out):: rwork
+            integer          dimension(liw), intent(in,out) :: iwork
+            double precision dimension(1), intent(hide) :: rpar
+            integer          dimension(1), intent(hide) :: ipar
+        end subroutine odassl
+    end interface 
+end python module odassl
+

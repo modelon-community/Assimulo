@@ -1,0 +1,4 @@
+sphinx-build -b html source build/html
+sphinx-build -b latex source build/latex
+
+Automatic markup of examples in Assimulo requires that the example is included in the init file. i.e. in examples/__init__.py
