@@ -1,5 +1,8 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.5.1 ---
+    * Fixed bug with ncp list (ticket:327)
+
 --- Assimulo-2.5 ---
     * Added support for retrieving the last step in CVode (ticket:298)
     * Added support for retrieving the actual step in CVode (ticket:298)
