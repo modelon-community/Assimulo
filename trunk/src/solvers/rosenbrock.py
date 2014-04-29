@@ -415,6 +415,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.statistics["nfcns"]        += iwork[13]
         self.statistics["njacs"]        += iwork[14]
         #self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nfcnjacs"]    += (iwork[14]*self.problem_info["dim"] if not self.usejac else 0)
         self.statistics["nerrfails"]     += iwork[17]
         self.statistics["nlus"]         += iwork[18]
         
