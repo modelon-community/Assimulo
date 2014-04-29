@@ -159,7 +159,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         if self._inith != 0:
             t, y = self._step(t,y,self._inith)
             if self.problem_info["state_events"]: 
-                flag, t, y = self.event_locator(t-h , t, y)
+                flag, t, y = self.event_locator(t-self._inith , t, y)
             
             if opts["report_continuously"]:
                 initialize_flag = self.report_solution(t, y, opts)
@@ -562,7 +562,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         if self._inith != 0:
             t, y = self._step(t,y,self._inith)
             if self.problem_info["state_events"]: 
-                flag, t, y = self.event_locator(t-h , t, y)
+                flag, t, y = self.event_locator(t-self._inith , t, y)
             
             if opts["report_continuously"]:
                 initialize_flag = self.report_solution(t, y, opts)
