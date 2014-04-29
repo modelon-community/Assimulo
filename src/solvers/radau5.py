@@ -73,17 +73,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
         
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
-        self.statistics["nstateevents"]= 0 #Number of state events
-        self.statistics["ngevals"]     = 0 #Root evaluations
-        
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
@@ -95,8 +84,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
+        #for k in self.statistics.keys():
+        #    self.statistics[k] = 0
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -204,11 +194,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
+        self.statistics["nfcns"]        += iwork[13]
+        self.statistics["njacs"]        += iwork[14]
+        #self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nerrfails"]     += iwork[17]
+        self.statistics["nlus"]         += iwork[18]
         
         return flag, self._tlist, self._ylist
     
@@ -222,16 +212,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+ str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
@@ -285,16 +266,6 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
         
-        # - Statistic values
-        self.statistics["nsteps"] = 0 #Number of steps
-        self.statistics["nfcn"] = 0 #Number of function evaluations
-        self.statistics["njac"] = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"] = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["nniter"] = 0 #Number of nonlinear iterations
-        self.statistics["nniterfail"] = 0 #Number of nonlinear failures
-        self.statistics["errfail"] = 0 #Number of step rejections
-        self.statistics["nlu"] = 0 #Number of LU decompositions
-        
         #Internal values
         self._curjac = False #Current jacobian?
         self._itfail = False #Iteration failed?
@@ -328,8 +299,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
     
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
     
     def step_generator(self, t, y, tf, opts):
         
@@ -342,7 +312,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             self.fnewt = max(10.*self._eps/self.rtol,min(0.03,self.rtol**0.5))
 
         self.f(self._f0,t,y)
-        self.statistics["nfcn"] +=1
+        self.statistics["nfcns"] +=1
         self._tc = t
         self._yc = y
         
@@ -415,7 +385,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             
             if self._err > 1.0: #Step was rejected.
                 self._rejected = True
-                self.statistics["errfail"] += 1
+                self.statistics["nerrfails"] += 1
                 ho = self.h
                 self.h = self.adjust_stepsize(self._err)
                 
@@ -435,7 +405,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 tn = t+self.h #Preform the step
                 yn = y+self._Z[2*self._leny:3*self._leny]
                 self.f(self._f0,tn,yn)
-                self.statistics["nfcn"] += 1
+                self.statistics["nfcns"] += 1
                 
                 self._oldoldh = self._oldh #Store the old(old) step-size for use in the test below.
                 self._oldh = self.h #Store the old step-size
@@ -491,7 +461,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self.f(self.Y2,t+self.C[1]*self.h, y+Z2)
         self.f(self.Y3,t+self.C[2]*self.h, y+Z3)
         
-        self.statistics["nfcn"] += 3
+        self.statistics["nfcns"] += 3
         
         return N.hstack((N.hstack((self.Y1,self.Y2)),self.Y3))
     
@@ -531,7 +501,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 self._jac = self.jacobian(t,y)
             
             if self._needLU:
-                self.statistics["nlu"] += 1
+                self.statistics["nlus"] += 1
                 self._a = self._alpha/self.h
                 self._b = self._beta/self.h
                 self._g = self._gamma/self.h
@@ -550,7 +520,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         
             for i in xrange(self.newt):
                 self._curiter += 1 #The current iteration
-                self.statistics["nniter"] += 1 #Adding one iteration
+                self.statistics["nniters"] += 1 #Adding one iteration
                 
                 #Solve the system
                 Z = N.dot(self.T2,self._radau_F(Z.real,t,y))
@@ -605,7 +575,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             else: #Iteration failed
                 self.log_message('Iteration failed at time %e with step-size %e'%(t,self.h),SCREAM)
                 
-                self.statistics["nniterfail"] += 1
+                self.statistics["nnfails"] += 1
                 self._rejected = True #The step is rejected
                 
                 if self._theta >= 0.99:
@@ -663,7 +633,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         err = max(err/N.sqrt(self._leny),1.e-10)
 
         if (self._rejected or self._first) and err >= 1.: #If the step was rejected, use the more expensive error estimation
-            self.statistics["nfcn"] += 1
+            self.statistics["nfcns"] += 1
             err_new = N.array([0.0]*self._leny)
             self.f(err_new,self._tc,self._yc+err_v)
             err_v =  N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,err_new+temp)))
@@ -689,9 +659,9 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             grad = ((Fdelt-self.problem.rhs(t,y)).T/delt.diagonal()).T
             cjac = N.array(grad).T
 
-            self.statistics["njacfcn"] += 1+self._leny #Add the number of function evaluations
+            self.statistics["nfcnjacs"] += 1+self._leny #Add the number of function evaluations
         
-        self.statistics["njac"] += 1 #add the number of jacobian evaluation
+        self.statistics["njacs"] += 1 #add the number of jacobian evaluation
         return cjac
     
     def interpolate(self, t, k=0):
@@ -814,17 +784,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
         
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
-        self.statistics["nstateevents"]= 0 #Number of state events
-        self.statistics["ngevals"]     = 0 #Root evaluations
-        
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
@@ -836,8 +795,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
+        #for k in self.statistics.keys():
+        #    self.statistics[k] = 0
         
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -981,11 +941,11 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
+        self.statistics["nfcns"]        += iwork[13]
+        self.statistics["njacs"]        += iwork[14]
+        #self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nerrfails"]     += iwork[17]
+        self.statistics["nlus"]         += iwork[18]
         
         return flag, self._tlist, self._ylist, self._ydlist
         
@@ -999,17 +959,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
-
+        Implicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
@@ -1065,16 +1015,6 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["index"]    = N.array([1]*self._leny+[2]*self._leny)
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
-        
-        # - Statistic values
-        self.statistics["nsteps"] = 0 #Number of steps
-        self.statistics["nfcn"] = 0 #Number of function evaluations
-        self.statistics["njac"] = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"] = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["nniter"] = 0 #Number of nonlinear iterations
-        self.statistics["nniterfail"] = 0 #Number of nonlinear failures
-        self.statistics["errfail"] = 0 #Number of step rejections
-        self.statistics["nlu"] = 0 #Number of LU decompositions
         
         #Internal values
         self._curjac = False #Current jacobian?
@@ -1150,8 +1090,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
     
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
     
     def step_generator(self, t, y, yd, tf, opts):
         
@@ -1164,7 +1103,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             self.fnewt = max(10.*self._eps/self.rtol,min(0.03,self.rtol**0.5))
             
         self._f0 = self._ode_f(t,N.append(y,yd))
-        self.statistics["nfcn"] +=1
+        self.statistics["nfcns"] +=1
         self._tc = t
         self._yc = y
         self._ydc = yd
@@ -1245,7 +1184,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         sol2 = self._ode_f(t+self.C[1]*self.h, q+Z2)
         sol3 = self._ode_f(t+self.C[2]*self.h, q+Z3)
         
-        self.statistics["nfcn"] += 3
+        self.statistics["nfcns"] += 3
         
         return N.hstack((N.hstack((sol1,sol2)),sol3))
     
@@ -1262,7 +1201,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             
             if self._err > 1.0: #Step was rejected.
                 self._rejected = True
-                self.statistics["errfail"] += 1
+                self.statistics["nerrfails"] += 1
                 ho = self.h
                 self.h = self.adjust_stepsize(self._err)
                 
@@ -1284,7 +1223,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 yn = y+self._Z[2*self._2leny:3*self._2leny][:self._leny]
                 ydn = yd+self._Z[2*self._2leny:3*self._2leny][self._leny:]
                 self._f0 = self._ode_f(t,N.append(yn,ydn))
-                self.statistics["nfcn"] += 1
+                self.statistics["nfcns"] += 1
                 
                 self._oldoldh = self._oldh #Store the old(old) step-size for use in the test below.
                 self._oldh = self.h #Store the old step-size
@@ -1334,7 +1273,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 self._jac = self.jacobian(t,y,yd)
             
             if self._needLU:
-                self.statistics["nlu"] += 1
+                self.statistics["nlus"] += 1
                 self._a = self._alpha/self.h
                 self._b = self._beta/self.h
                 self._g = self._gamma/self.h
@@ -1353,7 +1292,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
 
             for i in xrange(self.newt):
                 self._curiter += 1 #The current iteration
-                self.statistics["nniter"] += 1 #Adding one iteration
+                self.statistics["nniters"] += 1 #Adding one iteration
 
                 #Solve the system
                 Z = N.dot(self.T2,self._radau_F(Z.real,t,y,yd))
@@ -1411,7 +1350,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 break
             else: #Iteration failed
                 self.log_message("Iteration failed at time %e with step-size %e"%(t,self.h),SCREAM)
-                self.statistics["nniterfail"] += 1
+                self.statistics["nnfails"] += 1
                 self._rejected = True #The step is rejected
                 
                 if self._theta >= 0.99:
@@ -1439,7 +1378,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         err = max(err/N.sqrt(self._2leny),1.e-10)
 
         if (self._rejected or self._first) and err >= 1.: #If the step was rejected, use the more expensive error estimation
-            self.statistics["nfcn"] += 1
+            self.statistics["nfcns"] += 1
             err_v = self._ode_f(self._tc,N.append(self._yc,self._ydc)+err_v)
             err_v = N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,err_v+temp)))
             err = N.linalg.norm(err_v/scal)
@@ -1485,9 +1424,9 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             Fdelt = N.array([self._ode_f(t,q+e) for e in delt]) #Add the disturbance (row by row) 
             grad = ((Fdelt-self._ode_f(t,q)).T/delt.diagonal()).T
             cjac = N.array(grad).T
-            self.statistics["njacfcn"] += 1+self._2leny #Add the number of function evaluations
+            self.statistics["nfcnjacs"] += 1+self._2leny #Add the number of function evaluations
 
-        self.statistics["njac"] += 1 #add the number of jacobian evaluation
+        self.statistics["njacs"] += 1 #add the number of jacobian evaluation
         return cjac
     
     def adjust_stepsize(self, err, predict=False):

@@ -181,7 +181,7 @@ class Test_Explicit_Radau5:
         
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["njacfcn"] == 0
+        assert self.sim.statistics["nfcnjacs"] == 0
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
 
@@ -193,7 +193,7 @@ class Test_Explicit_Radau5:
         self.sim.thet = -1
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njac"]
+        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -212,7 +212,7 @@ class Test_Explicit_Radau5:
         self.sim.newt = 10
         self.sim.simulate(1.0)
         
-        assert self.sim.statistics["nniterfail"] == 1
+        assert self.sim.statistics["nnfails"] == 1
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -419,7 +419,7 @@ class Test_Explicit_Fortran_Radau5:
         
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["njacfcn"] == 0
+        assert self.sim.statistics["nfcnjacs"] == 0
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
 
@@ -431,7 +431,7 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.thet = -1
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njac"]
+        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -637,7 +637,7 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njac"]
+        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
         
     @testattr(stddist = True)    
     def test_simulation(self):
@@ -802,7 +802,7 @@ class Test_Implicit_Radau5:
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njac"]
+        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
         
     @testattr(stddist = True)    
     def test_simulation(self):

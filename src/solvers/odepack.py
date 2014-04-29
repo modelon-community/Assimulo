@@ -64,13 +64,6 @@ class LSODAR(Explicit_ODE):
         self.options["maxordn"] = 12
         self.options["maxords"] =  5
         self.options["hmax"] = 0.
-                
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["ng"]          = 0 #Number of root evaluations
-        self.statistics["nevents"]     = 0 #Number of events
         
         self._leny = len(self.y) #Dimension of the problem
         self._nordsieck_array = []
@@ -89,8 +82,7 @@ class LSODAR(Explicit_ODE):
         (called before _simulate) 
         """ 
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
             
         #self._tlist = []
         #self._ylist = []
@@ -105,7 +97,7 @@ class LSODAR(Explicit_ODE):
         Helper method to interpolate the solution at time t using the Nordsieck history
         array. Wrapper to ODEPACK's subroutine DINTDY.
         """
-        print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
+        #print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
         dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
         if iflag!= 0 and iflag!=-2:
             raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
@@ -318,11 +310,11 @@ class LSODAR(Explicit_ODE):
         #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
         
         #Retrieving statistics
-        self.statistics["ng"]            += IWORK[9]
+        self.statistics["nstatefcns"]            += IWORK[9]
         self.statistics["nsteps"]        += IWORK[10]
-        self.statistics["nfcn"]          += IWORK[11]
-        self.statistics["njac"]          += IWORK[12]
-        self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
+        self.statistics["nfcns"]          += IWORK[11]
+        self.statistics["njacs"]          += IWORK[12]
+        self.statistics["nstateevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
         if self.rkstarter>1:
             self._RWORK=RWORK
@@ -350,14 +342,8 @@ class LSODAR(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : {}'.format(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : {}'.format(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : {}'.format(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of event function evaluations     : {}'.format(self.statistics["ng"]),       verbose)
-        self.log_message(' Number of detected state events          : {}'.format(self.statistics["nevents"]), verbose)
-        
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
+
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : LSODAR ',         verbose)
         self.log_message(' Absolute tolerances     : {}'.format(self.options["atol"]),  verbose)

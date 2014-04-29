@@ -24,6 +24,7 @@ import itertools
 
 from exception import *
 from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
+from support import Statistics
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -39,7 +40,7 @@ cdef class ODE:
         Defines general starting attributes for a simulation
         problem.
         """
-        self.statistics = {} #Initialize the statistics dictionary
+        self.statistics = Statistics() #Initialize the statistics dictionary
         self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0, "clock_step":False}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
@@ -112,6 +113,29 @@ cdef class ODE:
         #Initialize timer
         self.elapsed_step_time = -1.0
         self.clock_start = -1.0
+        
+        #Add common statistics
+        self.statistics.add_key("nsteps", "Number of steps")
+        self.statistics.add_key("nfcns", "Number of function evaluations")
+        self.statistics.add_key("njacs", "Number of Jacobian evaluations")
+        self.statistics.add_key("njacvecs", "Number of Jacobian*vector evaluations")
+        self.statistics.add_key("nfcnjacs", "Number of function eval. due to Jacobian eval.")
+        self.statistics.add_key("nerrfails", "Number of error test failures")
+        self.statistics.add_key("nlus", "Number of LU decompositions")
+        self.statistics.add_key("nniters", "Number of nonlinear iterations")
+        self.statistics.add_key("nnfails", "Number of nonlinear convergence failures")
+        self.statistics.add_key("nstatefcns", "Number of state function evaluations")
+        self.statistics.add_key("nstateevents", "Number of state events")
+        self.statistics.add_key("ntimeevents", "Number of time events")
+        self.statistics.add_key("nstepevents", "Number of step events")
+        self.statistics.add_key("nprecs", "Number of pre-conditioner solves")
+        self.statistics.add_key("nprecsetups", "Number of pre-conditioner setups")
+        self.statistics.add_key("nsensfcns", "Number of sensitivity evaluations")
+        self.statistics.add_key("nsensfcnfcns", "Number of function eval. due to sensitivity eval.")
+        self.statistics.add_key("nsensniters", "Number of sensitivity nonlinear iterations")
+        self.statistics.add_key("nsensnfails", "Number of sensitivity nonlinear convergence failures")
+        self.statistics.add_key("nsenserrfails", "Number of sensitivity error test failures")
+
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
@@ -450,7 +474,9 @@ cdef class ODE:
         """
         This method should print the statistics of the solver.
         """
-        pass
+        if verbose >= self.options["verbosity"]:
+            self.log_message('Final Run Statistics: %s ' % self.problem.name,        verbose)
+            self.statistics.print_stats()
     
     cpdef get_elapsed_step_time(self):
         """

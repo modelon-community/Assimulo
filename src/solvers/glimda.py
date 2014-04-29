@@ -64,14 +64,6 @@ class GLIMDA(Implicit_ODE):
         self.options["minh"]     = N.finfo(N.double).eps #Minimum step-size      
         self.options["maxretry"] = 15 #Maximum number of consecutive retries  
         
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nconvfail"]   = 0 #Number of convergance failures
-        
         #Solver support 
         self.supports["report_continuously"] = True 
         self.supports["interpolated_output"] = False
@@ -82,8 +74,7 @@ class GLIMDA(Implicit_ODE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
             
         self._tlist = []
         self._ylist = []
@@ -196,11 +187,11 @@ class GLIMDA(Implicit_ODE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += istats[0]
-        self.statistics["nfcn"]        += istats[3]
-        self.statistics["njac"]        += istats[4]
-        self.statistics["nconvfail"]   += istats[2]
-        self.statistics["errfail"]     += istats[1]
-        self.statistics["nlu"]         += istats[5]
+        self.statistics["nfcns"]        += istats[3]
+        self.statistics["njacs"]        += istats[4]
+        self.statistics["nnfails"]   += istats[2]
+        self.statistics["nerrfails"]     += istats[1]
+        self.statistics["nlus"]         += istats[5]
         
         return flag, self._tlist, self._ylist, self._ydlist
     
@@ -208,14 +199,7 @@ class GLIMDA(Implicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-        self.log_message(' Number of Convergence Failures           : '+ str(self.statistics["nconvfail"]),       verbose)
+        Implicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : GLIMDA ' + self._type,          verbose)

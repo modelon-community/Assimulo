@@ -64,14 +64,6 @@ class Dopri5(Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["maxsteps"] = 100000
         
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
-        self.statistics["nstateevents"]= 0 #Number of state events
-        self.statistics["ngevals"]     = 0 #Root evaluations
-        
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
@@ -82,8 +74,7 @@ class Dopri5(Explicit_ODE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
     
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -179,9 +170,9 @@ class Dopri5(Explicit_ODE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[18]
-        self.statistics["nfcn"]        += iwork[16]
-        self.statistics["nstepstotal"] += iwork[17]
-        self.statistics["errfail"]     += iwork[19]
+        self.statistics["nfcns"]        += iwork[16]
+        #self.statistics["nstepstotal"] += iwork[17]
+        self.statistics["nerrfails"]     += iwork[19]
         
         return flag, self._tlist, self._ylist
         
@@ -195,14 +186,7 @@ class Dopri5(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Dopri5 ',          verbose)
@@ -466,18 +450,10 @@ class RungeKutta34(Explicit_ODE):
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
-        
-        #Internal values
-        # - Statistic values
-        self.statistics["nsteps"] = 0 #Number of steps
-        self.statistics["nfcn"] = 0 #Number of function evaluations
-        self.statistics["nstateevents"]= 0 #Number of state events
-        self.statistics["ngevals"]    = 0 #Root evaluations
     
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
             
     def set_problem_data(self): 
         if self.problem_info["state_events"]: 
@@ -699,7 +675,7 @@ class RungeKutta34(Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
-        self.statistics["nfcn"] += 5
+        self.statistics["nfcns"] += 5
         
         scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
@@ -736,12 +712,7 @@ class RungeKutta34(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,                  verbose)
-        self.log_message(' Number of steps                : %s '%(self.statistics["nsteps"]),             verbose)
-        self.log_message(' Number of function evaluations : %s '%(self.statistics["nfcn"]),               verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events         : '+ str(self.statistics["nstateevents"]),   verbose)
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                              verbose)
         self.log_message(' Solver             : RungeKutta34',                               verbose)

@@ -297,17 +297,6 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
         
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
-        self.statistics["nstateevents"]= 0 #Number of state events
-        self.statistics["ngevals"]     = 0 #Root evaluations
-        
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
@@ -318,8 +307,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -424,11 +412,11 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
+        self.statistics["nfcns"]        += iwork[13]
+        self.statistics["njacs"]        += iwork[14]
+        #self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nerrfails"]     += iwork[17]
+        self.statistics["nlus"]         += iwork[18]
         
         return flag, self._tlist, self._ylist
         
@@ -442,16 +430,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Rodas ',          verbose)

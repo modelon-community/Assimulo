@@ -98,26 +98,7 @@ cdef class IDA(Implicit_ODE):
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default 
-        
-        #Statistics
-        self.statistics["nfevals"]    = 0 #Function evaluations
-        self.statistics["nsteps"]     = 0 #Number of steps
-        self.statistics["netfails"]   = 0 #Number of error test failures
-        self.statistics["nlinsetups"] = 0
-        self.statistics["nncfails"]   = 0 #Nonlinear fails
-        self.statistics["nniters"]    = 0 #Nonlinear iterations
-        self.statistics["ngevals"]    = 0 #Root evaluations
-        self.statistics["njevals"]    = 0 #Jacobian evaluations
-        self.statistics["nfevalsLS"]  = 0 #Function evaluations due to Jac
-        self.statistics["nfSevals"]   = 0 #Number of sensitivity evaluations
-        self.statistics["nfevalsS"]   = 0 #Number of function evaluations due to finite sensitivity approximation
-        self.statistics["nSetfails"]  = 0 #Number of error test failures
-        self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
-        self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
-        self.statistics["nstateevents"] = 0 #Number of state events
-        self.statistics["njvevals"]   = 0 #Number of J*v evals
-        self.statistics["njvefevalsLS"]  = 0 #Number of res evals during J*v evals
-        
+
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
@@ -233,8 +214,7 @@ cdef class IDA(Implicit_ODE):
             self.problem._sensitivity_result = 1
         
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
         
         self.initialize_ida()
     
@@ -1341,78 +1321,55 @@ cdef class IDA(Implicit_ODE):
         if self.options["linear_solver"] == "SPGMR":
             flag = SUNDIALS.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
             flag = SUNDIALS.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
+            self.statistics["nfcnjacs"] += nfevalsLS
+            self.statistics["njacvecs"] += njvevals
         else:
             flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
             flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
+            self.statistics["njacs"] += njevals
+            self.statistics["nfcnjacs"] += nrevalsLS
         
         if return_flag == IDA_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
         
         self.statistics["nsteps"] += nsteps
-        self.statistics["nfevals"] += nrevals
-        self.statistics["netfails"] += netfails
+        self.statistics["nfcns"] += nrevals
+        self.statistics["nerrfails"] += netfails
         self.statistics["nniters"] += nniters
-        self.statistics["nncfails"] += nncfails
-        self.statistics["ngevals"] += ngevals
-        self.statistics["njevals"] += njevals
-        self.statistics["nfevalsLS"] += nrevalsLS
-        self.statistics["njvevals"] += njvevals
-        self.statistics["njvefevalsLS"] += nfevalsLS
+        self.statistics["nnfails"] += nncfails
         
+        if self.pData.ROOT != NULL:
+            self.statistics["nstatefcns"] += ngevals
+
         #If sensitivity    
         if self.pData.dimSens > 0:
             flag = SUNDIALS.IDAGetSensStats(self.ida_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
             flag = SUNDIALS.IDAGetSensNonlinSolvStats(self.ida_mem, &nSniters, &nSncfails)
             
-            self.statistics["nfSevals"]   += nfSevals
-            self.statistics["nfevalsS"]   += nfevalsS
-            self.statistics["nSetfails"]  += nSetfails
-            self.statistics["nSniters"]   += nSniters
-            self.statistics["nSncfails"]  += nSncfails
+            self.statistics["nsensfcns"]   += nfSevals
+            self.statistics["nsensfcnfcns"]   += nfevalsS
+            self.statistics["nsenserrfails"]  += nSetfails
+            self.statistics["nsensniters"]   += nSniters
+            self.statistics["nsensnfails"]  += nSncfails
     
     def print_statistics(self, verbose=NORMAL):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+ str(self.statistics["nsteps"]),         verbose)               
-        self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfevals"]),        verbose)
-        if self.options["linear_solver"] == "SPGMR":
-            self.log_message(' Number of Jacobian*vector evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
-            self.log_message(' Number of F-evals during Jac*vec-evals   : ' + str(self.statistics["njvefevalsLS"]), verbose)
-        else:     
-            self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),    verbose)
-            self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
-            
-        #self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),        verbose)
-        #self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),      verbose)
-        self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["netfails"]),       verbose)
-        self.log_message(' Number of Newton iterations              : '+ str(self.statistics["nniters"]),        verbose)
-        self.log_message(' Number of Newton convergence failures    : '+ str(self.statistics["nncfails"]),       verbose)
-        if self.pData.dimRoot > 0:
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
-        
+        Implicit_ODE.print_statistics(self, verbose) #Calls the base class
+
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
-            self.log_message('\nSensitivity Statistics:\n', verbose)
-            self.log_message(' Number of sensitivity calculations             : ' + str(self.statistics["nfSevals"]), verbose)
-            self.log_message(' Number of F-evals due to finite diff. approx.  : ' + str(self.statistics["nfevalsS"]), verbose)
-            self.log_message(' Number of local error test failures            : ' + str(self.statistics["nSetfails"]),verbose)
-            self.log_message(' Number of Newton iterations                    : ' + str(self.statistics["nSniters"]), verbose)
-            self.log_message(' Number of Newton convergence failures          : ' + str(self.statistics["nSncfails"]),verbose)
-            
             self.log_message('\nSensitivity options:\n' , verbose)
-            self.log_message(' Method                   : ' + str(self.options["sensmethod"]), verbose)
-            self.log_message(' Difference quotient type : ' + str(self.options["dqtype"]), verbose)
-            self.log_message(' Suppress Sens            : ' + str(self.options["suppress_sens"]), verbose)
+            self.log_message(' Method                       : ' + str(self.options["sensmethod"]), verbose)
+            self.log_message(' Difference quotient type     : ' + str(self.options["dqtype"]), verbose)
+            self.log_message(' Suppress Sens                : ' + str(self.options["suppress_sens"]), verbose)
    
         self.log_message('\nSolver options:\n',                                       verbose)
-        self.log_message(' Solver                  : IDA (BDF)',                      verbose)
-        self.log_message(' Maximal order                  : ' + str(self.options["maxord"]), verbose)
-        self.log_message(' Suppressed algebr. variables   : ' + str(self.options["suppress_alg"]), verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),   verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),   verbose)
+        self.log_message(' Solver                       : IDA (BDF)',                      verbose)
+        self.log_message(' Maximal order                : ' + str(self.options["maxord"]), verbose)
+        self.log_message(' Suppressed algebr. variables : ' + str(self.options["suppress_alg"]), verbose)
+        self.log_message(' Tolerances (absolute)        : ' + str(self._compact_atol()),   verbose)
+        self.log_message(' Tolerances (relative)        : ' + str(self.options["rtol"]),   verbose)
         self.log_message('',                                                          verbose)
 
 cdef class CVode(Explicit_ODE):
@@ -1474,26 +1431,6 @@ cdef class CVode(Explicit_ODE):
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
-        
-        #Statistics
-        self.statistics["nfevals"]    = 0 #Function evaluations
-        self.statistics["nsteps"]     = 0 #Number of steps
-        self.statistics["netfails"]   = 0 #Number of error test failures
-        self.statistics["nlinsetups"] = 0
-        self.statistics["nncfails"]   = 0 #Nonlinear fails
-        self.statistics["nniters"]    = 0 #Nonlinear iterations
-        self.statistics["ngevals"]    = 0 #Root evaluations
-        self.statistics["njevals"]    = 0 #Jacobian evaluations
-        self.statistics["nfevalsLS"]  = 0 #Function evaluations due to Jac
-        self.statistics["njvevals"]   = 0 #Number of Jacobian*Vector eval
-        self.statistics["nfSevals"]   = 0 #Number of sensitivity evaluations
-        self.statistics["nfevalsS"]   = 0 #Number of function evaluations due to finite sensitivity approximation
-        self.statistics["nSetfails"]  = 0 #Number of error test failures
-        self.statistics["nSniters"]   = 0 #Number of sensitivity nonlinear iterations
-        self.statistics["nSncfails"]  = 0 #Number of sensitivity convergence failures
-        self.statistics["nstateevents"] = 0 #Number of state events
-        self.statistics["npevals"]    = 0
-        self.statistics["npsolves"]   = 0
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -1820,8 +1757,7 @@ cdef class CVode(Explicit_ODE):
             self.problem._sensitivity_result = 1
         
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
         
         self.initialize_cvode() 
     
@@ -2764,13 +2700,17 @@ cdef class CVode(Explicit_ODE):
         if self.options["linear_solver"] == "SPGMR":
             flag = SUNDIALS.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
             flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
+            self.statistics["njacvecs"]  += njvevals
         else:
             flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
             flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
+            self.statistics["njacs"]   += njevals
         if self.pData.PREC_SOLVE != NULL:
             flag = SUNDIALS.CVSpilsGetNumPrecSolves(self.cvode_mem, &npsolves)
+            self.statistics["nprecs"]  += npsolves
         if self.pData.PREC_SETUP != NULL:
             flag = SUNDIALS.CVSpilsGetNumPrecEvals(self.cvode_mem, &npevals)
+            self.statistics["nprecsetups"]   += npevals
             
         flag = SUNDIALS.CVodeGetNumGEvals(self.cvode_mem, &ngevals) #Number of root evals
         
@@ -2784,78 +2724,44 @@ cdef class CVode(Explicit_ODE):
         if return_flag == CV_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
         self.statistics["nsteps"]    += nsteps
-        self.statistics["nfevals"]   += nfevals
-        self.statistics["netfails"]  += netfails
+        self.statistics["nfcns"]   += nfevals
+        self.statistics["nerrfails"]  += netfails
         self.statistics["nniters"]   += nniters
-        self.statistics["nncfails"]  += nncfails
-        self.statistics["nfevalsLS"] += nfevalsLS
-        self.statistics["njvevals"]  += njvevals
-        self.statistics["njevals"]   += njevals
-        self.statistics["ngevals"]   += ngevals
-        self.statistics["npevals"]   += npevals
-        self.statistics["npsolves"]  += npsolves
+        self.statistics["nnfails"]  += nncfails
+        self.statistics["nfcnjacs"] += nfevalsLS
+        if self.pData.ROOT != NULL:
+            self.statistics["nstatefcns"]   += ngevals
         
         #If sensitivity    
         if self.pData.dimSens > 0:
             flag = SUNDIALS.CVodeGetSensStats(self.cvode_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
             flag = SUNDIALS.CVodeGetSensNonlinSolvStats(self.cvode_mem, &nSniters, &nSncfails)
             
-            self.statistics["nfSevals"]   += nfSevals
-            self.statistics["nfevalsS"]   += nfevalsS
-            self.statistics["nSetfails"]  += nSetfails
-            self.statistics["nSniters"]   += nSniters
-            self.statistics["nSncfails"]  += nSncfails
+            self.statistics["nsensfcns"]   += nfSevals
+            self.statistics["nsensfcnfcns"]   += nfevalsS
+            self.statistics["nsenserrfails"]  += nSetfails
+            self.statistics["nsensniters"]   += nSniters
+            self.statistics["nsensnfails"]  += nSncfails
                 
     def print_statistics(self, verbose=NORMAL):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfevals"]),         verbose)
-        if self.options["linear_solver"] == "SPGMR":
-            self.log_message(' Number of Jacobian*Vector Evaluations    : ' + str(self.statistics["njvevals"]),  verbose)
-            self.log_message(' Number of F-Evals During Jac*Vec-Evals   : ' + str(self.statistics["nfevalsLS"]), verbose)
-        else:     
-            self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njevals"]),    verbose)
-            self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["nfevalsLS"]),  verbose)
-        if self.pData.PREC_SOLVE != NULL and self.options["linear_solver"] == "SPGMR":
-            self.log_message(' Number of Preconditioner Solves          : '+str(self.statistics["npsolves"]), verbose)
-        if self.pData.PREC_SETUP != NULL and self.options["linear_solver"] == "SPGMR":
-            self.log_message(' Number of Preconditioner Setups          : '+str(self.statistics["npevals"]), verbose)
-        self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["netfails"]),       verbose)
-        if self.options["iter"] == "FixedPoint":
-            self.log_message(' Number of Functional Iterations          : '+ str(self.statistics["nniters"]),        verbose)
-            self.log_message(' Number of Functional Convergence Failures: '+ str(self.statistics["nncfails"]),       verbose)
-        else:
-            self.log_message(' Number of Newton iterations              : '+ str(self.statistics["nniters"]),        verbose)
-            self.log_message(' Number of Newton convergence failures    : '+ str(self.statistics["nncfails"]),       verbose)
-        if self.pData.dimRoot > 0:
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),       verbose)
-        
-        
-        if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
-            self.log_message('\nSensitivity Statistics:\n', verbose)
-            self.log_message(' Number of Sensitivity Calculations             : ' + str(self.statistics["nfSevals"]), verbose)
-            self.log_message(' Number of F-Evals Due to Finite Approximation  : ' + str(self.statistics["nfevalsS"]), verbose)
-            self.log_message(' Number of Local Error Test Failures            : ' + str(self.statistics["nSetfails"]),verbose)
-            self.log_message(' Number of Newton iterations                    : ' + str(self.statistics["nSniters"]), verbose)
-            self.log_message(' Number of Newton Convergance Failures          : ' + str(self.statistics["nSncfails"]),verbose)
-            
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
+
+        if self.problem_info['dimSens'] > 0: #Senstivity calculations is on            
             self.log_message('\nSensitivity options:\n' , verbose)
             self.log_message(' Method                   : ' + str(self.options["sensmethod"]), verbose)
             self.log_message(' Difference quotient type : ' + str(self.options["dqtype"]), verbose)
             self.log_message(' Suppress Sens            : ' + str(self.options["suppress_sens"]), verbose)
     
         self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : CVode',                         verbose)
-        self.log_message(' Linear multistep method : ' +self.options["discr"],       verbose)
-        self.log_message(' Nonlinear solver        : ' + self.options["iter"],       verbose)
-        self.log_message(' Maximal order           : ' + str(self.options["maxord"]),verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
+        self.log_message(' Solver                   : CVode',                         verbose)
+        self.log_message(' Linear multistep method  : ' +self.options["discr"],       verbose)
+        self.log_message(' Nonlinear solver         : ' + self.options["iter"],       verbose)
+        self.log_message(' Maximal order            : ' + str(self.options["maxord"]),verbose)
+        self.log_message(' Tolerances (absolute)    : ' + str(self._compact_atol()),  verbose)
+        self.log_message(' Tolerances (relative)    : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
 
 

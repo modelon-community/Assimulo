@@ -46,17 +46,9 @@ class Radau_Common(object):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of Steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Function Evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian Evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of F-Eval During Jac-Eval         : '+ str(self.statistics["njacfcn"]),  verbose)
-        self.log_message(' Number of Error Test Failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of Newton Iterations              : '+ str(self.statistics["nniter"]),        verbose)
-        self.log_message(' Number of Newton Convergence Failures    : '+ str(self.statistics["nniterfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-
+        if verbose >= self.options["verbosity"]:
+            self.log_message('Final Run Statistics: %s ' % self.problem.name,        verbose)
+            self.statistics.print_stats()
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
