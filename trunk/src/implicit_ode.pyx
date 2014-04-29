@@ -225,6 +225,8 @@ cdef class Implicit_ODE(ODE):
                                 
                 #Get and store event information
                 event_info = [[],flag == ID_COMPLETE]
+                if flag == ID_COMPLETE:
+                    self.statistics["ntimeevents"] += 1#Time event detected
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
 
@@ -302,7 +304,9 @@ cdef class Implicit_ODE(ODE):
          
         #Callback to FMU 
         if self.problem_info["step_events"]:  
-            flag_initialize = self.problem.step_events(self) #completed step returned to FMU 
+            flag_initialize = self.problem.step_events(self) #completed step returned to FMU
+            if flag_initialize:
+                self.statistics["nstepevents"] += 1
         else: 
             flag_initialize = False 
              
@@ -317,7 +321,7 @@ cdef class Implicit_ODE(ODE):
         
         g_high = self.event_func(t_high, y_high, yd_high)
         g_low = self.g_old
-        self.statistics["ngevals"] += 1
+        self.statistics["nstatefcns"] += 1
         n_g = self.problem_info["dimRoot"]
         TOL = max(t_low, t_high) * 1e-13
         #Check for events in [t_low, t_high].
@@ -378,7 +382,7 @@ cdef class Implicit_ODE(ODE):
             
             #Calculate g at t_mid and check for events in [t_low, t_mid].
             g_mid = self.event_func(t_mid, self.interpolate(t_mid), self.interpolate(t_mid, 1))
-            self.statistics["ngevals"] += 1
+            self.statistics["nstatefcns"] += 1
             sideprev = side
             for i in xrange(n_g):
                 if (g_low[i] > 0) != (g_mid[i] > 0):

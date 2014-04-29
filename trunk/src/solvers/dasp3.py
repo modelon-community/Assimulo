@@ -76,22 +76,16 @@ class DASP3ODE(Explicit_ODE):
         self.wsz=N.empty((max(9*self.m,1),))  # array must be at least 1 element long
         self.wsz[:self.m]=self.problem.zz0
 
-        
         # - Default values
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         
-        # - Statistic values 
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nyder"]     = 0 #Number of y-function evaluations
-        self.statistics["nzder"]     = 0 #Number of z-function evaluations
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
+        self.statistics.add_key("nyder", "Number of slow function evaluations (Y)")
+        self.statistics.add_key("nzder", "Number of fast function evaluations (Z)")
 
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        self.statistics.reset()
             
         self._tlist = []
         self._ylist = []
@@ -145,8 +139,8 @@ class DASP3ODE(Explicit_ODE):
         self.statistics["nsteps"]      += dasp3dp.COUNTS.NSTEP
         self.statistics["nyder"]        += dasp3dp.COUNTS.NYDER
         self.statistics["nzder"]        += dasp3dp.COUNTS.NZDER
-        self.statistics["errfail"]     +=  dasp3dp.COUNTS.NREJ
-        self.statistics["nlu"]         += 0
+        self.statistics["nerrfails"]     +=  dasp3dp.COUNTS.NREJ
+        self.statistics["nlus"]         += 0
         
         return flag, self._tlist, self._ylist
     
@@ -155,13 +149,7 @@ class DASP3ODE(Explicit_ODE):
         Prints the run-time statistics for the problem.
         """
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of Slow Function Evaluations (Y)  : '+str(self.statistics["nyder"]),         verbose)
-        self.log_message(' Number of Fast Function Evaluations (Z)  : '+ str(self.statistics["nzder"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
-        
+
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : DASP3 ',          verbose)
         self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)

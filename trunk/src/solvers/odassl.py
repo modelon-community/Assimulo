@@ -237,15 +237,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 5000
         self.options["maxord"]   = 0
-        
-        # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        #self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["convfail"]         = 0 #Number of LU decompositions
-        
+
         #Solver support
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
@@ -256,10 +248,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         
     def initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
-        
-   
+        self.statistics.reset()
     
     def integrate(self, t, y, yprime, tf, opts):
         ny  = self.problem_info["dim"]
@@ -352,10 +341,10 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[10]
-        self.statistics["nfcn"]        += iwork[11]
-        self.statistics["njac"]        += iwork[12]
-        self.statistics["errfail"]     += iwork[13]
-        self.statistics["convfail"]         += iwork[14]
+        self.statistics["nfcns"]        += iwork[11]
+        self.statistics["njacs"]        += iwork[12]
+        self.statistics["nerrfails"]     += iwork[13]
+        self.statistics["nnfails"]         += iwork[14]
         
         return flag, tlist, ylist, ydlist
         
@@ -363,13 +352,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]), verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]), verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]), verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]), verbose)
-        self.log_message(' Number of Convergence Test Failures      : '+ str(self.statistics["convfail"]), verbose)
+        OverdeterminedDAE.print_statistics(self, verbose) #Calls the base class
         
         self.log_message('\nSolver options:\n', verbose)
         self.log_message(' Solver                  : ODASSL ',          verbose)

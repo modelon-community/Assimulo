@@ -20,7 +20,8 @@ cimport numpy as N
 
 cdef class ODE:
     cdef public dict options, solver_options, problem_info
-    cdef public dict supports, statistics
+    cdef public dict supports, 
+    cdef public object statistics
     
     cdef public list event_data
     

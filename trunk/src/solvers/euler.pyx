@@ -74,15 +74,6 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         
-        #Statistics
-        self.statistics["nsteps"] = 0
-        self.statistics["nfcn"] = 0 #Number of function evaluations
-        self.statistics["newt"]        = 0 #Number of Newton iterations
-        self.statistics["njac"] = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"] = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["nniterfail"] = 0 #Number of nonlinear failures
-        self.statistics["ngevals"]    = 0 #Root evaluations
-        
         #Internal temporary result vector
         self.yd1 = N.array([0.0]*len(self.y0))
         self._yold = N.array([0.0]*len(self.y0))
@@ -92,9 +83,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
-        
-        # - Statistic values
-        self.statistics["nstateevents"] = 0 #Number of state events
+
         
         self._leny = len(self.y) #Dimension of the problem
         self._eps  = N.finfo('double').eps
@@ -337,9 +326,9 @@ cdef class ImplicitEuler(Explicit_ODE):
             grad = ((Fdelt-self.f(t,y)).T/delt.diagonal()).T
             jac = N.array(grad).T
             
-            self.statistics["njacfcn"] += 1+self._leny #Add the number of function evaluations
+            self.statistics["nfcnjacs"] += 1+self._leny #Add the number of function evaluations
         
-        self.statistics["njac"] += 1 #add the number of jacobian evaluation
+        self.statistics["njacs"] += 1 #add the number of jacobian evaluation
         return jac
     
     
@@ -368,7 +357,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         #cdef N.ndarray yn1 = y.copy() #First newton guess
         cdef N.ndarray yn1 = y+h*self.f(t,y) #First newton guess
         cdef N.ndarray I = N.eye(self._leny)
-        self.statistics["nfcn"] += 1
+        self.statistics["nfcns"] += 1
         
         FLAG_CONV = False
         
@@ -381,13 +370,13 @@ cdef class ImplicitEuler(Explicit_ODE):
                 jac = self._old_jac
             
             for i in range(self.newt):
-                self.statistics["newt"] += 1
+                self.statistics["nniters"] += 1
                 
                 #jac = self._jacobian(tn1, yn1)
                 
                 #ynew = yn1 - N.dot(LIN.inv(h*jac-I),(yn-yn1+h*self.problem.rhs(tn1,yn1)))
                 ynew = yn1 - LIN.solve(h*jac-I, yn-yn1+h*self.f(tn1,yn1) )
-                self.statistics["nfcn"] += 1
+                self.statistics["nfcns"] += 1
                 
                 #print tn1, self.WRMS(ynew-yn1, 1.0/(self.rtol*N.abs(yn1)+self.atol))
                 new_norm = self.WRMS(ynew-yn1, 1.0/(self.rtol*N.abs(yn1)+self.atol))
@@ -406,7 +395,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                 FLAG_FAIL = True
             
             if FLAG_FAIL:
-                self.statistics["nniterfail"] += 1
+                self.statistics["nnfails"] += 1
                 
                 if self._curjac: #The current Jacobian is updated (Newton failed)
                     raise AssimuloException("Newton iteration failed at %f"%t)
@@ -472,17 +461,8 @@ cdef class ImplicitEuler(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        self.log_message(' Number of steps                          : %s'%self.statistics["nsteps"],          verbose)  
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of F-eval during Jac-eval         : '+ str(self.statistics["njacfcn"]),  verbose)
-        self.log_message(' Number of Newton iterations              : %s'%(self.statistics["newt"]), verbose)
-        self.log_message(' Number of Newton convergence failures    : '+ str(self.statistics["nniterfail"]),       verbose)
-        if self.problem_info["state_events"]:
-            self.log_message(' Number of event function evaluations     : '+ str(self.statistics["ngevals"]),        verbose)
-            self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
-            
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
+
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ImplicitEuler',                     verbose)
         self.log_message(' Solver type       : fixed step size',                      verbose)
@@ -539,10 +519,6 @@ cdef class ExplicitEuler(Explicit_ODE):
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = False
         self.supports["state_events"] = True
-        
-        # - Statistic values
-        self.statistics["nstateevents"] = 0 #Number of state events
-        self.statistics["ngevals"]      = 0 #Root evaluations
     
     def set_problem_data(self): 
         if self.problem_info["state_events"]: 
@@ -688,10 +664,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         """
         Should print the statistics.
         """
-        self.log_message('Final Run Statistics                    : %s \n' % self.problem.name,        verbose)
-        if self.problem_info["state_events"]:
-           self.log_message(' Number of event function evaluations   : '+ str(self.statistics["ngevals"]),        verbose)
-           self.log_message(' Number of state events                 : '+ str(self.statistics["nstateevents"]),   verbose)
+        Explicit_ODE.print_statistics(self, verbose) #Calls the base class
             
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : ExplicitEuler',                     verbose)

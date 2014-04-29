@@ -232,10 +232,10 @@ class Test_CVode:
         
         exp_sim.iter = "FixedPoint"
         exp_sim.simulate(1)
-        assert exp_sim.statistics["njevals"] == 0
+        assert exp_sim.statistics["njacs"] == 0
         exp_sim.iter = "Newton"
         exp_sim.simulate(2)
-        assert exp_sim.statistics["njevals"] > 0
+        assert exp_sim.statistics["njacs"] > 0
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -253,7 +253,7 @@ class Test_CVode:
         exp_sim.iter='Newton'
         exp_sim.simulate(5.,100)
         
-        assert exp_sim.statistics["nfevalsLS"] == 0
+        assert exp_sim.statistics["nfcnjacs"] == 0
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
         
         exp_sim.reset()
@@ -261,7 +261,7 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
 
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
-        assert exp_sim.statistics["nfevalsLS"] > 0
+        assert exp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
     def test_switches(self):
@@ -813,7 +813,7 @@ class Test_IDA:
         
         imp_sim.simulate(3,100)
 
-        assert imp_sim.statistics["nfevalsLS"] == 0
+        assert imp_sim.statistics["nfcnjacs"] == 0
         nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
         
         imp_sim.reset()
@@ -821,7 +821,7 @@ class Test_IDA:
         imp_sim.simulate(3.,100)
 
         nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
-        assert imp_sim.statistics["nfevalsLS"] > 0
+        assert imp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
     def test_terminate_simulation(self):
