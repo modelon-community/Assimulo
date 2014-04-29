@@ -312,6 +312,20 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.usejac = False
     
     @testattr(stddist = True)
+    def test_nbr_fcn_evals_due_to_jac(self):
+        sim = Radau5ODE(self.mod)
+        
+        sim.usejac = False
+        sim.simulate(1)
+        
+        assert sim.statistics["nfcnjacs"] > 0
+        
+        sim = Radau5ODE(self.mod)
+        sim.simulate(1)
+        
+        assert sim.statistics["nfcnjacs"] == 0
+    
+    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -562,6 +576,15 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.inith = 1.e-4 #Initial step-size
+    
+    @testattr(stddist = True)
+    def test_nbr_fcn_evals_due_to_jac(self):
+        sim = Radau5DAE(self.mod)
+        
+        sim.usejac = False
+        sim.simulate(1)
+        
+        assert sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
     def test_simulate_explicit(self):
