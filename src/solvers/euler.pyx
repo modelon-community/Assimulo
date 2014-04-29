@@ -306,8 +306,9 @@ cdef class ImplicitEuler(Explicit_ODE):
     
     cpdef initialize(self):
         #Reset statistics
-        for k in self.statistics.keys():
-            self.statistics[k] = 0
+        #for k in self.statistics.keys():
+        #    self.statistics[k] = 0
+        self.statistics.reset()
     
     def _jacobian(self, t, y):
         """
