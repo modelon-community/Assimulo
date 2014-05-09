@@ -42,6 +42,13 @@ BLASname = 'blas'
 BLASname_t = ""
 debug_flag = False
 
+try:
+    from subprocess import Popen, PIPE
+    _p = Popen(["svnversion", "."], stdout=PIPE)
+    revision = _p.communicate()[0]
+except:
+    revision = "unknown"
+
 if S.platform == 'win32':
     incdirs = ''
     libdirs = ''
@@ -533,6 +540,18 @@ together with a C-compiler and a FORTRAN-compiler.
 """
 
 
+version_txt = 'assimulo'+O.path.sep+'version.txt'
+#If a revision is found, always write it!
+if revision != "unknown" and revision!="":
+    with open(version_txt, 'w') as f:
+        f.write(VERSION+'\n')
+        f.write("r"+revision)
+else:# If it does not, check if the file exists and if not, create the file!
+    if not O.path.isfile(version_txt):
+        with open(version_txt, 'w') as f:
+            f.write(VERSION+'\n')
+            f.write("unknown")
+
 
 setup(name=NAME,
       version=VERSION,
@@ -549,7 +568,8 @@ setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['thirdparty'+O.sep+'hairer'+O.sep+'LICENSE_HAIRER','lib'+O.sep+'LICENSE_HAIRER',
+      package_data={'assimulo': ['version.txt',
+                                 'thirdparty'+O.sep+'hairer'+O.sep+'LICENSE_HAIRER','lib'+O.sep+'LICENSE_HAIRER',
                                  'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
                                  'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
                                  'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
