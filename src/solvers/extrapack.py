@@ -5,19 +5,19 @@ from assimulo.exception import *
 
 
 try:
-    from assimulo.lib.extrapack import eulex
+    from assimulo.lib import eulex
 except ImportError:
     print "Could not find extrapolation pack functions"
 
 
 
-class eulex(Explicit_ODE):
+class Eulex(Explicit_ODE):
     '''
     add some documentation
     
            
     '''       
-   def __init__(self, problem):
+    def __init__(self, problem):
         """
         Initiates the solver.
         
@@ -86,7 +86,7 @@ class eulex(Explicit_ODE):
         
         
         # Do we need this one?
-     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
@@ -162,7 +162,7 @@ class eulex(Explicit_ODE):
             
         
 ####najmeh
-			
+            
         output_list=linspace(0,10,100) 
         kflag=0
         
@@ -246,7 +246,7 @@ class eulex(Explicit_ODE):
         
 
       
-			
-		
+            
+        
         
     

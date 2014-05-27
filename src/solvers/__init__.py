@@ -28,6 +28,7 @@ from rosenbrock import RodasODE
 from odassl import ODASSL
 from odepack import LSODAR
 from radar5 import Radar5ODE
+from extrapack import Eulex
 try:
     from dasp3 import DASP3ODE
 except ImportError:
