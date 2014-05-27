@@ -1,0 +1,60 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module eulex__user__routines 
+    interface eulex_user_interface 
+        subroutine fcn(n,t,y,dy) ! in :eulex:eulex.f:eulex:unknown_interface
+	    integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            
+            double precision, intent(in) :: t
+            double precision dimension(51), intent(in) :: y
+            double precision dimension(51), intent(out) :: dy
+        end subroutine fcn
+    end interface eulex_user_interface
+end python module eulex__user__routines
+python module eulex ! in 
+    interface  ! in :eulex
+        subroutine eulex(n,fcn,t,y,tend,tol,hmax,h,kflag) ! in :eulex:eulex.f
+            use eulex__user__routines
+            integer, intent(in) :: n
+            external, intent(in) :: fcn
+            double precision, intent(in, out) :: t
+            double precision dimension(51), intent(in, out) :: y
+            double precision, intent(in) :: tend
+            double precision, intent(in) :: tol
+            double precision, intent(in) :: hmax
+            double precision , intent(in, out):: h
+            integer  , intent(in, out):: kflag
+            integer :: nfcn
+            integer :: nstep
+            integer :: naccpt
+            integer :: nrejct
+            integer :: ndec
+            integer :: nsol
+            common /statp/ nfcn,nstep,naccpt,nrejct,ndec,nsol
+        end subroutine eulex
+        subroutine exseq(m,nj) ! in :eulex:eulex.f
+            integer, optional,check(len(nj)>=m),depend(nj) :: m=len(nj)
+            integer dimension(m) :: nj
+        end subroutine exseq
+        subroutine exscal(mode,y,n,yold,ywgt,ymax,threl,thabs) ! in :eulex:eulex.f
+            character*8 :: mode
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: yold
+            double precision dimension(n),depend(n) :: ywgt
+            double precision dimension(n),depend(n) :: ymax
+            double precision :: threl
+            double precision :: thabs
+        end subroutine exscal
+        function exerrn(y,n,ywgt) ! in :eulex:eulex.f
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: ywgt
+            double precision :: exerrn
+        end function exerrn
+    end interface 
+end python module eulex
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
