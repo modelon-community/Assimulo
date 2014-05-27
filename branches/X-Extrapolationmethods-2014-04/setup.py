@@ -130,6 +130,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     create_dir(join("build","assimulo","thirdparty","odassl"))
     create_dir(join("build","assimulo","thirdparty","dasp3"))
+    create_dir(join("build","assimulo","thirdparty","extrap")) # add this line
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -143,7 +144,7 @@ def pre_processing():
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
     fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
-    
+    fileThirdPartyextrap = O.listdir(join("thirdparty","extrap")) # added
     curdir = O.path.dirname(O.path.abspath(__file__))
     
     desSrc = O.path.join(curdir,O.path.join("build","assimulo"))
@@ -158,7 +159,7 @@ def pre_processing():
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
     desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
     desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
-
+    desThirdPartyextrap = join(curdir,"build","assimulo","thirdparty","extrap") #added
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
             SH.copy2(O.path.join("src",f), desSrc)
@@ -205,7 +206,14 @@ def pre_processing():
             SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
         if f == "LICENSE_DASP3":
             SH.copy2(join("thirdparty","dasp3",f),join(curdir,"build","assimulo","lib"))    
-            
+    # added   
+    for f in fileThirdPartyextrap:
+        if not O.path.isdir(join("thirdparty","extrap",f)):
+            SH.copy2(join("thirdparty","extrap",f),desThirdPartyextrap)
+     #   if f == "LICENSE_DASP3":  # we need to ask for lic
+        
+           # SH.copy2(join("thirdparty","extrap",f),join(curdir,"build","assimulo","lib"))  
+                   
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
     for item in delFiles:
@@ -401,11 +409,11 @@ def check_fortran_extensions():
 
     config.add_extension('assimulo.lib.radar5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
+                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
@@ -425,6 +433,15 @@ def check_fortran_extensions():
     config.add_extension('assimulo.lib.odassl',
                          sources=[odassl_dir+file for file in odassl_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+    
+    #extrap
+    extrap_dir='assimulo'+O.sep+'thirdparty'+O.sep+'extrap'+O.sep
+    extrap_files=['eulex.pyf','eulex.f','zibconst.f']
+    
+    config.add_extension('assimulo.lib.eulex', # inja esme aslie foldero mizarim
+                         sources=[extrap_dir+file for file in extrap_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                          
     
     #DASP3
     if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
