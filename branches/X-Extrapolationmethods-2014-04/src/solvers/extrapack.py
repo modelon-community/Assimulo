@@ -1,3 +1,5 @@
+from  __future__  import division
+from  scipy       import *
 import numpy as N
 from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
@@ -84,7 +86,7 @@ class Eulex(Explicit_ODE):
             self.f = self.problem.rhs
         
         
-        
+    '''    
         # Do we need this one?
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
@@ -118,7 +120,7 @@ class Eulex(Explicit_ODE):
                 self._opts["output_index"] = output_index
         
         return irtrn
-   
+    '''
    
    
    
@@ -126,7 +128,7 @@ class Eulex(Explicit_ODE):
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
-        IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        #IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         MLJAC = self.problem_info["dim"] #The jacobian is full
         MUJAC = self.problem_info["dim"] #See MLJAC
         IMAS  = 0 #The mass matrix is the identity
@@ -135,7 +137,7 @@ class Eulex(Explicit_ODE):
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
         IWORK = N.array([0]*(3*self.problem_info["dim"]+20)) #Work (integer) vector
-        
+        '''
         #Setting work options
         WORK[1] = self.safe
         WORK[2] = self.thet
@@ -153,7 +155,7 @@ class Eulex(Explicit_ODE):
         #Dummy methods
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
-        
+        '''
         #Check for initialization
         if opts["initialize"]:
             self.set_problem_data()
@@ -165,20 +167,36 @@ class Eulex(Explicit_ODE):
             
         output_list=linspace(0,10,100) 
         kflag=0
+        h=1.e-15 #H
+        hmax=1.
+        y=array(1*[10.])
+        told=0.  # T / starting point 
+        tresult=[]
+        yresult=[]
+        hresult=[]
         
-        
-        for tout in output_list:
-            output_index += 1
-                        
-            t,y,h, iwork, flag  = eulex.eulex(self.f, t, y.copy(),  tout, self.atol, self.maxh, self.h, kflag)
+        for t in output_list:
+            #output_index += 1
+             
+             
+            '''            
+            t,y,h, iwork, flag  = eulex.eulex(self.f, t, y.copy(),  tout, self.atol, self.options["maxh"] 
+                                , self.h, kflag)
             #Store results
             tlist.append(t)
             ylist.append(y.copy())
             self._event_info = roots
-            
-            
+            '''
+            result=eulex.eulex(self.f,0.,y.copy(),t,1.e-4,1.,1.e-15,kflag)
+            print eulex.statp.nfcn
+            y=result[1]
+            told=result[0]
+            H=result[2]
+            tresult.append(t)
+            hresult.append(H)
+            yresult.append(y[0])
         
-            opts["output_index"] = output_index
+            #opts["output_index"] = output_index
        
         
         #Retrieving statistics
