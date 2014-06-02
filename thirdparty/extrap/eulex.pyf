@@ -7,8 +7,8 @@ python module eulex__user__routines
 	    integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
             
             double precision, intent(in) :: t
-            double precision dimension(51), intent(in) :: y
-            double precision dimension(51), intent(out) :: dy
+            double precision dimension(n), intent(in) :: y
+            double precision dimension(n), intent(out) :: dy
         end subroutine fcn
     end interface eulex_user_interface
 end python module eulex__user__routines
@@ -16,10 +16,10 @@ python module eulex ! in
     interface  ! in :eulex
         subroutine eulex(n,fcn,t,y,tend,tol,hmax,h,kflag) ! in :eulex:eulex.f
             use eulex__user__routines
-            integer, intent(in) :: n
+            integer,  optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
             external, intent(in) :: fcn
             double precision, intent(in, out) :: t
-            double precision dimension(51), intent(in, out) :: y
+            double precision dimension(n), intent(in, out) :: y
             double precision, intent(in) :: tend
             double precision, intent(in) :: tol
             double precision, intent(in) :: hmax

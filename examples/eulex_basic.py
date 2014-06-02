@@ -15,12 +15,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#sudo python setup.py install
+
 import numpy as N
 import pylab as P
 import nose
 from assimulo.solvers import Eulex
 from assimulo.problem import Explicit_Problem
 
+
+# cd -;sudo python setup.py install;cd -;ipython
+ 
 def run_example(with_plots=True):
     r"""
     Demonstration of the use of eulex by solving the
