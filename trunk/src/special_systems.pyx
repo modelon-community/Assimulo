@@ -29,7 +29,7 @@ cdef class cMechanical_System:
             
             \\begin{eqnarray}
                 \dot{p} & = & v \\\\
-                M(p) \dot{v} & = & f(t,p,v)-G(p)^\mathrm{T}  \\\\
+                M(p) \dot{v} & = & f(t,p,v)-G(p)^\mathrm{T} \lambda  \\\\
                 0 & = & g(p)
             \end{eqnarray}
         
