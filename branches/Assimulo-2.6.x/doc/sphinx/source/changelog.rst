@@ -3,6 +3,16 @@
 Changelog
 ==========
 
+--- Assimulo-2.6 ---
+    * Added version as an attribute (ticket:264)
+    * Added more information is Sunials was found or not during install
+      (ticket:265)
+    * Fixed problem with storing event points (ticket:297)
+    * Fixed wrong number of F-Evals in statistics in Radau/Rodas 
+      (ticket:331)
+    * Fixed problem with event detection in Euler (ticket:332)
+    * Improved performance when using LSODAR (ticket:328)
+
 --- Assimulo-2.5 ---
     * Added support for retrieving the last step in CVode (ticket:298)
     * Added support for retrieving the actual step in CVode (ticket:298)
@@ -11,7 +21,8 @@ Changelog
     * Added option for timing a step (ticket:325)
     * Added an option to specify an upper bound on the integration time
       (ticket:289)
-    * Added an option for a user specified J*v in the IDA case (ticket:284)
+    * Added an option for a user specified J*v in the IDA case 
+      (ticket:284)
     * Various bug fixes.
 
 --- Assimulo-2.4 ---
@@ -27,16 +38,20 @@ Changelog
     * Changed license to LGPL from GPL (ticket:261)
     * Fixed re_init problem with scalars (ticket:248)
     * Added a timer for measuring elapsed time of a step (ticket:260)
-    * Added options to CVode to get order, weights and errors (ticket:258, ticket:259)
-    * Fixed problem with wrong dimensions when getting sensitivities in CVode (ticket:255)
+    * Added options to CVode to get order, weights and errors 
+      (ticket:258, ticket:259)
+    * Fixed problem with wrong dimensions when getting sensitivities in 
+      CVode (ticket:255)
     * Added parameters when using Jac*Vec in CVode (ticket:250)
-    * Added automatically creation of res function for explicit problems (ticket:195)
+    * Added automatically creation of res function for explicit problems 
+      (ticket:195)
     * Removed catching of exceptions in Explicit Euler (ticket:252)
 
 --- Assimulo-2.2 ---
     * Added the solver LSODAR from ODEPACK (ticket:219)
     * Added number of state events to the statistics (ticket:224)
-    * Fixed bug when storing result points together with events (ticket:222)
+    * Fixed bug when storing result points together with events 
+      (ticket:222)
     * Bug fixes.
     
 --- Assimulo-2.1.1 ---
@@ -67,8 +82,8 @@ Changelog
     * The current time and states (state derivative) have changed name from
       t_cur, y_cur, yd_cur -> t, y, yd.
     * Method in IDA make_consistency have been renamed to make_consistent.
-    * Added a method get_support which returns a dictionary with information
-      about what the current solver supports.
+    * Added a method get_support which returns a dictionary with 
+      information about what the current solver supports.
     * Change name of the function in Explicit_Problem, f -> rhs
     * Change name of the function in Implicit_Problem, f -> res
     * Multiple name changes. (To be specified)
@@ -86,8 +101,8 @@ Changelog
 
 --- Assimulo-1.4b2 ---
     * Fixed statistics for SPGMR (ticket:162).
-    * Fixed bug when using fixed point iteration and jacobian related calls 
-      (ticket:152).
+    * Fixed bug when using fixed point iteration and jacobian related 
+      calls (ticket:152).
     * Added options to terminate a simulation from handle_event via an 
       exception (ticket:163).
     * Fixed problem with atol and integers (ticket:161).
@@ -107,41 +122,45 @@ Changelog
     * Added a regularization technique (ticket:135).
     * Added SuperLU as a linear solver in Kinsol (ticket:153).
     * Fixed various bug related to Kinsol.
-    * Updated the setup script to allow for specifying paths to SuperLU and 
-      Blas (ticket:148).
+    * Updated the setup script to allow for specifying paths to SuperLU 
+      and Blas (ticket:148).
 
 --- Assimulo-1.3b1 ---
     * Improved the tolerance handling in RungeKutta34.
     * Improved information output from all the solvers.
-    * Implemented basic support for calculating sensitivites using IDAS.
+    * Implemented basic support for calculating sensitivities using 
+      IDAS.
     * Fixed a bug with the discretization method reseting the maximum
       order in CVode.
     * Minor bug fix in implicit Radau interpolate.
-    * Changed the default value of pbar in CVodes and IDAs to the absolute
-      values of the parameters.
+    * Changed the default value of pbar in CVodes and IDAs to the 
+      absolute values of the parameters.
 
 --- Assimulo-1.2b1 ---
-    * Implemented basic support for calculating sensitivities using CVodes.
+    * Implemented basic support for calculating sensitivities using 
+      CVodes.
     * Changed from using CVode to CVodes.
     * Added 'echo' methods used for viewing the current solver settings.
     * Fixed a bug with the reset method not resetting the statistics.
     * Fixed a bug which was exposed when overwriting the switches.
     * Added a custom error method in CVode and IDA.
     * Fixed a segmentation fault discovered on Mac when IDAS was used.
-    * Renamed the test modules to lowercase.
-    * Renamed the setup script to setup_from_binary (used when a pre-compiled
-      binary is distributed)
+    * Renamed the test modules to lower-case.
+    * Renamed the setup script to setup_from_binary (used when a
+      pre-compiled binary is distributed)
 
 --- Assimulo-1.1b1 ---
     * Fixed a bug with re-init resulting in resetting the options.
     * Moved the result handling to the problem class.
     * Renamed the event function to state_events.
-    * Improved the information displayed after a simulation (mainly for IDA and CVode).
+    * Improved the information displayed after a simulation (mainly for 
+      IDA and CVode).
     * Added support for step events (completed_step).
     * Added support for time events.
-    * Implemented basic support for calculating sensitivities using IDAS.
-    * Renamed the modules to correspond to Python standard (all lowercase).
-      Classes starts with a capital letter.
+    * Implemented basic support for calculating sensitivities using 
+      IDAS.
+    * Renamed the modules to correspond to Python standard (all 
+      lowercase). Classes starts with a capital letter.
     * Implemented Radau5 for both explicit and implicit problems.
     * Wrapped an interpolate method from Sundials (IDAGetDky, CVodeGetDky)
     * Changed from using IDA to IDAS
@@ -149,7 +168,7 @@ Changelog
     * Changed assimulo.ODE.problemname to problem_name.
     * Fixed a bug when printing information when used FixedPoint.
     * Changed algvar to be more type independent.
-    * Added kwargs to the plotting functionality.
+    * Added **kwargs to the plotting functionality.
 
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.
@@ -170,6 +189,3 @@ Changelog
 
 --- Assimulo-1.0b1 ---
     * The rough first version.
-
-
-
