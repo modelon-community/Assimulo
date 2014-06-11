@@ -258,12 +258,14 @@ cdef class ODE:
         
         #Return the results
         if isinstance(self.problem, Explicit_Problem) or isinstance(self.problem, Delay_Explicit_Problem) or isinstance(self.problem, SingPerturbed_Problem):
+            print 'I am here'
             return self.t_sol, N.array(self.y_sol)
         else:
+            print 'no, I am here instead'
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
         
     def _simulate(self,t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT):
-         pass
+         raise Exception('No _simulate method defined')
          
     cpdef initialize(self):
         pass

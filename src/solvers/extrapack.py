@@ -192,6 +192,7 @@ class Eulex(Explicit_ODE):
             y=result[1]
             told=result[0]
             H=result[2]
+            flag=result[3]
             tresult.append(t)
             hresult.append(H)
             yresult.append(y[0])
@@ -200,15 +201,15 @@ class Eulex(Explicit_ODE):
        
         
         #Retrieving statistics
-        self.statistics["ng"]            += IWORK[9]
-        self.statistics["nsteps"]        += IWORK[10]
-        self.statistics["nfcn"]          += IWORK[11]
-        self.statistics["njac"]          += IWORK[12]   
-        self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
+        #self.statistics["ngevals"]            += IWORK[9]
+        #self.statistics["nsteps"]        += IWORK[10]
+        self.statistics["nfcn"]          += eulex.statp.nfcn
+        #self.statistics["njac"]          += IWORK[12]   
+        #self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
         
     
-        return flag, tlist, ylist
+        return flag, tresult, yresult
         
         
     ##############
