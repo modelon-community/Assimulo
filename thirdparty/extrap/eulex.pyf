@@ -4,8 +4,7 @@
 python module eulex__user__routines 
     interface eulex_user_interface 
         subroutine fcn(n,t,y,dy) ! in :eulex:eulex.f:eulex:unknown_interface
-	    integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
-            
+            integer, check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
             double precision, intent(in) :: t
             double precision dimension(n), intent(in) :: y
             double precision dimension(n), intent(out) :: dy
