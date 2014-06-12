@@ -168,7 +168,7 @@ cdef class ODE:
             raise AssimuloException('Final time must be an integer or float.')
             
         if (self.t > tfinal) and not self.options["backward"]:
-            raise AssimuloException('Final time must be greater than start time.')
+            raise AssimuloException('Final time {} is not greater than start time {}.'.format(tfinal,self.t))
         
         if not isinstance(ncp, int):
             raise AssimuloException('Number of communication points must be an integer')
@@ -265,7 +265,7 @@ cdef class ODE:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
         
     def _simulate(self,t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT):
-         raise Exception('No _simulate method defined')
+        pass
          
     cpdef initialize(self):
         pass

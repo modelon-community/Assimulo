@@ -169,7 +169,6 @@ class Eulex(Explicit_ODE):
         kflag=0
         h=1.e-15 #H
         hmax=1.
-        y=array(1*[10.])
         told=0.  # T / starting point 
         tresult=[]
         yresult=[]
@@ -188,14 +187,13 @@ class Eulex(Explicit_ODE):
             self._event_info = roots
             '''
             result=eulex.eulex(self.f,0.,y.copy(),t,1.e-4,1.,1.e-15,kflag)
-            print eulex.statp.nfcn
             y=result[1]
             told=result[0]
             H=result[2]
             flag=result[3]
             tresult.append(t)
             hresult.append(H)
-            yresult.append(y[0])
+            yresult.append(y)
         
             #opts["output_index"] = output_index
        
@@ -208,7 +206,7 @@ class Eulex(Explicit_ODE):
         #self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
         
-    
+        print flag, tresult, yresult
         return flag, tresult, yresult
         
         
