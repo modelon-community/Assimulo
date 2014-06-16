@@ -29,7 +29,7 @@ from time import clock, time
 include "constants.pxi" #Includes the constants (textual include)
 
 realtype = N.float
-
+#realtype = N.int
 cdef class Explicit_ODE(ODE):
     """
     Baseclass for our explicit ODE integrators.

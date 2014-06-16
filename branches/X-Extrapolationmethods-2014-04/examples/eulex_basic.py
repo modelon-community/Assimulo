@@ -40,13 +40,15 @@ def run_example(with_plots=True):
     """
 
     
-    #Define the rhs
+        
+    #Defines the rhs
     def f(t,y):
-        return N.array([-y[0]])
+        ydot = -y[0]
+        return N.array([ydot])
 
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, y0=N.array([4]), name = r'Eulex Test Example: $\dot y = - y$')
+    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulex Test Example: $\dot y = - y$')
     #Define an explicit solver
     exp_sim = Eulex(exp_mod) #Create an eulex solver
     

@@ -1,9 +1,9 @@
-from  __future__  import division
-from  scipy       import *
 import numpy as N
-from assimulo.ode import *
-from assimulo.explicit_ode import Explicit_ODE
+
 from assimulo.exception import *
+from assimulo.ode import *
+
+from assimulo.explicit_ode import Explicit_ODE
 
 
 try:
@@ -11,6 +11,7 @@ try:
 except ImportError:
     print "Could not find extrapolation pack functions"
 
+# cd -;sudo python setup.py install;cd -;ipython
 
 
 class Eulex(Explicit_ODE):
@@ -32,20 +33,17 @@ class Eulex(Explicit_ODE):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Default values
-        self.options["inith"]    = 0.01
-        self.options["newt"]     = 7 #Maximum number of newton iterations
-        self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
-        self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
-        self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
-        self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
-        self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
-        self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.e-4       #1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
-        self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
-        self.options["maxsteps"] = 10000
+        self.options["usejac"]   = False
+        self.options["maxsteps"] = 1.    #100000
+        self.options["maxh"]     = 0.    #N.inf #Maximum step-size.
+        self.options["maxordn"] = 12
+        self.options["maxords"] =  5
+        self.options["hmax"] = 0.
+        self.options["inith"]    = 0.1
+        
+        
         
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
@@ -86,7 +84,7 @@ class Eulex(Explicit_ODE):
             self.f = self.problem.rhs
         
         
-    '''    
+   
         # Do we need this one?
     def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
         """
@@ -120,7 +118,7 @@ class Eulex(Explicit_ODE):
                 self._opts["output_index"] = output_index
         
         return irtrn
-    '''
+  
    
    
    
@@ -164,37 +162,50 @@ class Eulex(Explicit_ODE):
             
         
 ####najmeh
-            
+        '''
         output_list=linspace(0,10,100) 
         kflag=0
         h=1.e-15 #H
         hmax=1.
         told=0.  # T / starting point 
-        tresult=[]
-        yresult=[]
-        hresult=[]
         
+       
         for t in output_list:
             #output_index += 1
              
              
-            '''            
+                       
             t,y,h, iwork, flag  = eulex.eulex(self.f, t, y.copy(),  tout, self.atol, self.options["maxh"] 
                                 , self.h, kflag)
             #Store results
             tlist.append(t)
             ylist.append(y.copy())
             self._event_info = roots
-            '''
-            result=eulex.eulex(self.f,0.,y.copy(),t,1.e-4,1.,1.e-15,kflag)
+        '''
+        tresult=[]
+        yresult=[]
+        hresult=[]
+        flag=[]
+        #opts["output_list"]=0
+        print opts
+        output_index = opts["output_index"]
+        output_list  = opts["output_list"][output_index:]   #[0.,1.,2.,3.,4.]
+            
+        kflag = ID_PY_COMPLETE
+
+        for tout in output_list:
+            output_index += 1
+            print tout
+       
+            result=eulex.eulex(self.f,t,y.copy(),tout, self.atol , self.options["maxh"] ,self.options["inith"],kflag)
             y=result[1]
-            told=result[0]
+            t=result[0]
             H=result[2]
             flag=result[3]
             tresult.append(t)
             hresult.append(H)
             yresult.append(y)
-        
+            
             #opts["output_index"] = output_index
        
         
@@ -205,8 +216,8 @@ class Eulex(Explicit_ODE):
         #self.statistics["njac"]          += IWORK[12]   
         #self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
         # save RWORK, IWORK for restarting feature
+       
         
-        print flag, tresult, yresult
         return flag, tresult, yresult
         
         
