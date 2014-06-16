@@ -60,8 +60,8 @@ def run_example(with_plots=True):
 
     #Simulate
     t1, y1 = exp_sim.simulate(5,100) #Simulate 5 seconds
-    t2, y2 = exp_sim.simulate(7) #Simulate 2 seconds more
-    
+    t2, y2 = exp_sim.simulate(7,50) #Simulate 2 seconds more
+
     #Basic test
     nose.tools.assert_almost_equal(y2[-1], 0.00347746, 5)
     nose.tools.assert_almost_equal(exp_sim.get_last_step(), 0.0222169642893, 3)

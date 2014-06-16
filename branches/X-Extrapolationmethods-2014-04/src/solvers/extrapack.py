@@ -191,7 +191,7 @@ class Eulex(Explicit_ODE):
         output_index = opts["output_index"]
         output_list  = opts["output_list"][output_index:]   #[0.,1.,2.,3.,4.]
             
-        kflag = ID_PY_COMPLETE
+        kflag = 0#ID_PY_COMPLETE
 
         for tout in output_list:
             output_index += 1
@@ -209,13 +209,12 @@ class Eulex(Explicit_ODE):
             #opts["output_index"] = output_index
        
         
-        #Retrieving statistics
-        #self.statistics["ngevals"]            += IWORK[9]
-        #self.statistics["nsteps"]        += IWORK[10]
-        self.statistics["nfcn"]          += eulex.statp.nfcn
-        #self.statistics["njac"]          += IWORK[12]   
-        #self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
-        # save RWORK, IWORK for restarting feature
+            #Retrieving statistics
+            #self.statistics["ngevals"]            += IWORK[9]
+            #self.statistics["nsteps"]        += IWORK[10]
+            self.statistics["nfcn"]          += eulex.statp.nfcn
+            # self.statistics["njac"]          += IWORK[12]   
+            #self.statistics["nevents"] += 1  if flag == ID_PY_EVENT else 0
        
         
         return flag, tresult, yresult
