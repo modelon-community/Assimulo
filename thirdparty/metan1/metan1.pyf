@@ -1,0 +1,64 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module metan1__user__routines 
+    interface metan1_user_interface 
+        subroutine fcn(n,t,y,dz,ifail) ! in :metan1:metan1.f:metan1:unknown_interface
+            integer, check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision , intent(in):: t
+            double precision dimension(n), intent(in) :: y
+            double precision dimension(n) , intent(out):: dz
+            integer , intent(in, out):: ifail
+        end subroutine fcn
+    end interface metan1_user_interface
+end python module metan1__user__routines
+python module metan1 ! in 
+    interface  ! in :metan1
+        subroutine metan1(n,fcn,t,y,tend,tol,hmax,h,kflag) ! in :metan1:metan1.f
+            use metan1__user__routines
+            integer, check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            external , intent(in) :: fcn
+            double precision, intent(in,out) :: t
+            double precision dimension(n), intent(in,out) :: y
+            double precision, intent(in) :: tend
+            double precision , intent(in):: tol
+            double precision , intent(in):: hmax
+            double precision , intent(in,out):: h
+            integer, intent(in,out) :: kflag
+            integer :: nfcn
+            integer :: nstep
+            integer :: naccpt
+            integer :: nrejct
+            integer :: ndec
+            integer :: nsol
+            common /statp/ nfcn,nstep,naccpt,nrejct,ndec,nsol
+        end subroutine metan1
+        function m1errn(y,n,ywgt) ! in :metan1:metan1.f
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: ywgt
+            double precision :: m1errn
+        end function m1errn
+        subroutine m1jac(m,n,t,y,a) ! in :metan1:metan1.f
+            integer, optional,check(len(y)>=m),depend(y) :: m=len(y)
+            integer :: n
+            double precision :: t
+            double precision dimension(m) :: y
+            double precision dimension(m,m),depend(m,m) :: a
+        end subroutine m1jac
+        subroutine m1scal(iflag,y,n,ywgt,thresh) ! in :metan1:metan1.f
+            integer :: iflag
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: ywgt
+            double precision :: thresh
+        end subroutine m1scal
+        subroutine m1seq(m,nj) ! in :metan1:metan1.f
+            integer, optional,check(len(nj)>=m),depend(nj) :: m=len(nj)
+            integer dimension(m) :: nj
+        end subroutine m1seq
+    end interface 
+end python module metan1
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

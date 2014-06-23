@@ -1,0 +1,64 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module eulsim__user__routines 
+    interface eulsim_user_interface 
+        subroutine fcn(n,t,y,dz,ifail) ! in :eulsim:eulsim.f:eulsim:unknown_interface
+            integer, check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision , intent(in):: t
+            double precision dimension(n) ,intent(in) :: y
+            double precision dimension(n) ,intent(out):: dz
+            integer ,intent(in,out):: ifail
+        end subroutine fcn
+    end interface eulsim_user_interface
+end python module eulsim__user__routines
+python module eulsim ! in 
+    interface  ! in :eulsim
+        subroutine eulsim(n,fcn,t,y,tend,tol,hmax,h,kflag) ! in :eulsim:eulsim.f
+            use eulsim__user__routines
+            integer,  optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            external , intent(in) ::fcn
+            double precision ,intent(in,out):: t
+            double precision dimension(n),intent(in,out) :: y
+            double precision ,intent(in):: tend
+            double precision ,intent(in):: tol
+            double precision ,intent(in):: hmax
+            double precision ,intent(in,out):: h
+            integer ,intent(in,out):: kflag
+            integer :: nfcn
+            integer :: nstep
+            integer :: naccpt
+            integer :: nrejct
+            integer :: ndec
+            integer :: nsol
+            common /statp/ nfcn,nstep,naccpt,nrejct,ndec,nsol
+        end subroutine eulsim
+        function emerrn(y,n,ywgt) ! in :eulsim:eulsim.f
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: ywgt
+            double precision :: emerrn
+        end function emerrn
+        subroutine emjac(m,n,t,y,a) ! in :eulsim:eulsim.f
+            integer, optional,check(len(y)>=m),depend(y) :: m=len(y)
+            integer :: n
+            double precision :: t
+            double precision dimension(m) :: y
+            double precision dimension(m,m),depend(m,m) :: a
+        end subroutine emjac
+        subroutine emscal(iflag,y,n,ywgt,thresh) ! in :eulsim:eulsim.f
+            integer :: iflag
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y) :: n=len(y)
+            double precision dimension(n),depend(n) :: ywgt
+            double precision :: thresh
+        end subroutine emscal
+        subroutine emseq(m,nj) ! in :eulsim:eulsim.f
+            integer, optional,check(len(nj)>=m),depend(nj) :: m=len(nj)
+            integer dimension(m) :: nj
+        end subroutine emseq
+    end interface 
+end python module eulsim
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
