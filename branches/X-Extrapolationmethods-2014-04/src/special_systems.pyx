@@ -60,15 +60,16 @@ cdef class cMechanical_System:
                  'ind1' Index-1 DAE (lambda constraints)
                  'ostab2' overdetermined stabilized index 2
                  'ostab1' overdetermined stabilized index 1
+                 'oproj2' overdetermined projected  index 2
                  
-    """         
+    """
     def __init__(self, int n_p,  object forces, int n_la, object pos0,
                  object vel0, object lam0, object posd0,
-                 object veld0, object GT,  
-                 double t0 = 0.0, object mass_matrix = None, 
-                 object constr3 = None, object constr2 = None, 
+                 object veld0, object GT,
+                 double t0 = 0.0, object mass_matrix = None,
+                 object constr3 = None, object constr2 = None,
                  object constr1 = None, p0=None, sw0=None):
-                                        
+
         self.pos0 = set_type_shape_array(pos0)
         self.vel0 = set_type_shape_array(vel0)
         self.posd0= set_type_shape_array(posd0)
@@ -76,11 +77,11 @@ cdef class cMechanical_System:
         if [constr1,constr2,constr3]==3*[None]:
             self.constrained=False
         else:
-            self.constrained=True    
+            self.constrained=True
         if self.constrained:
             if lam0 is None:
                 raise ValueError('lam0 should not be None.')
-            self.lam0 = set_type_shape_array(lam0)         
+            self.lam0 = set_type_shape_array(lam0)
         self.n_p=n_p
         self.n_la=n_la
         self.forces = forces
@@ -91,11 +92,38 @@ cdef class cMechanical_System:
         self.constr1=constr1
         self.mass_matrix=mass_matrix
         self.sw0=sw0
-            
+
+    def make_fprob(self):
+        """
+        This method constructs a problem function for the mexax problem class
+        :return:  fprob
+        """
+		def frob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):
+			if qflag[0]:
+				am=self.mass_matrix(t,p)
+			if qflag[1]:
+				gp=self.GT(p)
+			if qflag[2]:
+				GP=(self.GT(P)).T
+			if qflag[3]:
+				f=self.forces(t,p,v)
+			if qflag[4]:
+				pdot=v
+			if qflaq[5]:
+				pass
+			if qflag[6]:
+				g=self.constr3(t,p)
+			if qflag[7]:
+				pass
+			if qflag[8]:
+				raise Exception('feature using fl in MEXAX not provided')
+		    return ifail
+		return fprob
+
     def make_res(self,index):
         n_p,n_v,n_la=self.n_p, 2*self.n_p, self.n_la
         M=self.mass_matrix
-        
+
         def set_constraints(func,index):
             if index=='ind1':
                 constraint=self.constr1
@@ -109,51 +137,51 @@ cdef class cMechanical_System:
             elif index=='ovstab1':
                 constraint=lambda t,y: N.hstack((self.constr1(t,y),
                                                 self.constr3(t,y),
-                                                self.constr2(t,y)))         
+                                                self.constr2(t,y)))
             else:
-                raise Exception("index should be one of 'ind1', 'ind2', ind3'"+ 
+                raise Exception("index should be one of 'ind1', 'ind2', ind3'"+
                                 "ovstab2", "ovstab1","ggl2")
-            
-            if not index =="ggl2":          
+
+            if not index =="ggl2":
                 def with_constraint(t,y,yd):
                     p,v,la=y[0:n_p], y[n_p:n_v], y[n_v:]
                     residual=func(t,y,yd)
                     return N.hstack((
                           residual[0:n_p],
-                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)), 
+                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)),
                           constraint(t,y)
-                          ))  
+                          ))
             else:
                 def with_constraint(t,y,yd):
                     p,v,la,mue=y[0:n_p], y[n_p:n_v], y[n_v:n_v+n_la],y[n_v+n_la:]
                     residual=func(t,y,yd)
                     return N.hstack((
                           residual[0:n_p]+N.dot(self.GT(p),mue.reshape(-1,)),
-                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)), 
+                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)),
                           constraint(t,y)
-                          )) 
-            
+                          ))
+
             return with_constraint
 
         def res(t,y,yd):
             p,pd=y[0:n_p], yd[0:n_p]
             v,vd=y[n_p:n_v], yd[n_p:n_v]
             Mvd = N.dot(M,vd) if M != None else vd
-            
+
             return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
-            
+
         if n_la==0:
             return res
-        else:   
+        else:
             return set_constraints(res,index)
-            
+
     def generate_problem(self,index):
         # 0. Input check
-        index_values=['ind0', 'ind1','ind2', 'ind3','ovstab1','ovstab2','ggl1','ggl2'] 
-        index_error= 'index got not correct value.\n Should be one of {}'.format(index_values)         
+        index_values=['ind0', 'ind1','ind2', 'ind3','ovstab1','ovstab2','ggl1','ggl2','oproj2']
+        index_error= 'index got not correct value.\n Should be one of {}'.format(index_values)
         if not (index is None or index in index_values):
             raise ValueError(index_error)
-        
+
         # 1. Treatment of initial conditions depending on the index
         y0=N.hstack((self.pos0,self.vel0))
         yd0=N.hstack((self.posd0,self.veld0))
@@ -162,7 +190,7 @@ cdef class cMechanical_System:
                 raise ValueError(index_error)
             y0=N.hstack((y0,self.lam0))
             yd0=N.hstack((yd0,N.zeros(self.lam0.shape)))
-        # 2. Indicating algebraic variables    
+        # 2. Indicating algebraic variables
         if index == 'ind1':
             algvar = (self.pos0.size + self.vel0.size) * [1]\
                         + self.lam0.size*[1]
@@ -171,15 +199,15 @@ cdef class cMechanical_System:
                         + self.lam0.size*[0]
         elif index == 'ind3':
             algvar = self.pos0.size * [1] \
-                        +self.vel0.size* [0] + self.lam0.size*[0]   
+                        +self.vel0.size* [0] + self.lam0.size*[0]
         elif index == 'ovstab1':
             algvar = (self.pos0.size + self.vel0.size) * [1]\
                         + self.lam0.size*[1]
-            neq=len(algvar)+2*self.lam0.size            
+            neq=len(algvar)+2*self.lam0.size
         elif index == 'ovstab2':
             algvar = (self.pos0.size + self.vel0.size) * [1] \
-                        + self.lam0.size*[0] 
-            neq=len(algvar)+self.lam0.size                          
+                        + self.lam0.size*[0]
+            neq=len(algvar)+self.lam0.size
         elif index == 'ggl1':
             mue = N.zeros(self.lam0.shape)
             gamma = N.zeros(self.lam0.shape)
@@ -187,23 +215,35 @@ cdef class cMechanical_System:
             yd0 = N.hstack((yd0,mue,gamma))
             algvar = (self.pos0.size + self.vel0.size) * [1] \
                         + 3*self.lam0.size*[0]
-        elif index == 'ggl2': 
+        elif index == 'ggl2':
             mue = N.zeros(self.lam0.shape)
             y0 = N.hstack((y0,mue))
             yd0 = N.hstack((yd0,N.zeros(mue.shape)))
             algvar = (self.pos0.size + self.vel0.size) * [1] \
                          + 2*self.lam0.size*[0]
+        #naj
+        elif index == 'oproj2':
+            mue = N.zeros(self.lam0.shape)
+            y0 = N.hstack((y0,mue))
+            yd0 = N.hstack((yd0,N.zeros(mue.shape)))
+            algvar = (self.pos0.size + self.vel0.size) * [1] \
+                         + 2*self.lam0.size*[0]
+        #####
+
         elif index is None:
             algvar = (self.pos0.size + self.vel0.size) * [1]
         if index in ('ovstab2','ovstab1'):
             problem=ap.Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
-            problem.neq=neq           
+            problem.neq=neq
+        elif index in ('oproj2'):
+            problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.t0, self.sw0)
+            problem.neq=neq
         else:
             problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
         problem.algvar=algvar
-        return problem          
-                    
-                       
+        return problem
+
+
 class Mechanical_System(cMechanical_System):
     """
         Problem for our explicit integrators (ODEs). A problem
