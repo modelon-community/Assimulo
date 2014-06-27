@@ -101,10 +101,8 @@ cdef class cMechanical_System:
 		def frob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):
 			if qflag[0]:
 				am=self.mass_matrix(t,p)
-			if qflag[1]:
-				gp=self.GT(p)
-			if qflag[2]:
-				GP=(self.GT(P)).T
+			if qflag[1] or qflag[2]:
+				gp=self.GT(p).T
 			if qflag[3]:
 				f=self.forces(t,p,v)
 			if qflag[4]:
@@ -221,14 +219,6 @@ cdef class cMechanical_System:
             yd0 = N.hstack((yd0,N.zeros(mue.shape)))
             algvar = (self.pos0.size + self.vel0.size) * [1] \
                          + 2*self.lam0.size*[0]
-        #naj
-        elif index == 'oproj2':
-            mue = N.zeros(self.lam0.shape)
-            y0 = N.hstack((y0,mue))
-            yd0 = N.hstack((yd0,N.zeros(mue.shape)))
-            algvar = (self.pos0.size + self.vel0.size) * [1] \
-                         + 2*self.lam0.size*[0]
-        #####
 
         elif index is None:
             algvar = (self.pos0.size + self.vel0.size) * [1]
@@ -236,8 +226,7 @@ cdef class cMechanical_System:
             problem=ap.Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
             problem.neq=neq
         elif index in ('oproj2'):
-            problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.t0, self.sw0)
-            problem.neq=neq
+            problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.n_la, self.t0, self.sw0)
         else:
             problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
         problem.algvar=algvar
