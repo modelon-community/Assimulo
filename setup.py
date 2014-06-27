@@ -130,7 +130,11 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","hindmarsh"))
     create_dir(join("build","assimulo","thirdparty","odassl"))
     create_dir(join("build","assimulo","thirdparty","dasp3"))
-    create_dir(join("build","assimulo","thirdparty","extrap")) # add this line
+    create_dir(join("build","assimulo","thirdparty","eulex")) # add this line
+    create_dir(join("build","assimulo","thirdparty","difex1")) # add this line
+    create_dir(join("build","assimulo","thirdparty","eulsim")) # add this line
+    create_dir(join("build","assimulo","thirdparty","metan1")) # add this line
+    create_dir(join("build","assimulo","thirdparty","mexax")) # add this line
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -144,7 +148,12 @@ def pre_processing():
     fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
     fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
     fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
-    fileThirdPartyextrap = O.listdir(join("thirdparty","extrap")) # added
+    fileThirdPartyeulex = O.listdir(join("thirdparty","eulex")) # added
+    fileThirdPartydifex = O.listdir(join("thirdparty","difex1")) # added
+    fileThirdPartyeulsim = O.listdir(join("thirdparty","eulsim")) # added
+    fileThirdPartymetan1 = O.listdir(join("thirdparty","metan1")) # added
+    fileThirdPartymexax = O.listdir(join("thirdparty","mexax")) # added
+    
     curdir = O.path.dirname(O.path.abspath(__file__))
     
     desSrc = O.path.join(curdir,O.path.join("build","assimulo"))
@@ -159,7 +168,12 @@ def pre_processing():
     desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
     desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
     desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
-    desThirdPartyextrap = join(curdir,"build","assimulo","thirdparty","extrap") #added
+    desThirdPartyeulex = join(curdir,"build","assimulo","thirdparty","eulex") #added
+    desThirdPartydifex = join(curdir,"build","assimulo","thirdparty","difex1") #added
+    desThirdPartyeulsim = join(curdir,"build","assimulo","thirdparty","eulsim") #added
+    desThirdPartymetan1 = join(curdir,"build","assimulo","thirdparty","metan1") #added
+    desThirdPartymexax = join(curdir,"build","assimulo","thirdparty","mexax") #added
+    
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
             SH.copy2(O.path.join("src",f), desSrc)
@@ -207,13 +221,47 @@ def pre_processing():
         if f == "LICENSE_DASP3":
             SH.copy2(join("thirdparty","dasp3",f),join(curdir,"build","assimulo","lib"))    
     # added   
-    for f in fileThirdPartyextrap:
-        if not O.path.isdir(join("thirdparty","extrap",f)):
-            SH.copy2(join("thirdparty","extrap",f),desThirdPartyextrap)
+    for f in fileThirdPartyeulex:
+        if not O.path.isdir(join("thirdparty","eulex",f)):
+            SH.copy2(join("thirdparty","eulex",f),desThirdPartyeulex)
      #   if f == "LICENSE_DASP3":  # we need to ask for lic
         
-           # SH.copy2(join("thirdparty","extrap",f),join(curdir,"build","assimulo","lib"))  
-                   
+           # SH.copy2(join("thirdparty","eulex",f),join(curdir,"build","assimulo","lib"))  
+     
+    # added   
+    for f in fileThirdPartydifex:
+        if not O.path.isdir(join("thirdparty","difex1",f)):
+            SH.copy2(join("thirdparty","difex1",f),desThirdPartydifex)
+     #   if f == "LICENSE_DASP3":  # we need to ask for lic
+        
+           # SH.copy2(join("thirdparty","difex",f),join(curdir,"build","assimulo","lib"))  
+    # added   
+    for f in fileThirdPartyeulsim:
+        if not O.path.isdir(join("thirdparty","eulsim",f)):
+            SH.copy2(join("thirdparty","eulsim",f),desThirdPartyeulsim)
+     #   if f == "LICENSE_DASP3":  # we need to ask for lic
+        
+           # SH.copy2(join("thirdparty","eulsim",f),join(curdir,"build","assimulo","lib"))  
+    # added   
+    for f in fileThirdPartymetan1:
+        if not O.path.isdir(join("thirdparty","metan1",f)):
+            SH.copy2(join("thirdparty","metan1",f),desThirdPartymetan1)
+     #   if f == "LICENSE_DASP3":  # we need to ask for lic
+        
+           # SH.copy2(join("thirdparty","metan1",f),join(curdir,"build","assimulo","lib")) 
+           
+    # added   
+    for f in fileThirdPartymexax:
+        if not O.path.isdir(join("thirdparty","mexax",f)):
+            SH.copy2(join("thirdparty","mexax",f),desThirdPartymexax)
+     #   if f == "LICENSE_DASP3":  # we need to ask for lic
+        
+           # SH.copy2(join("thirdparty","mexax",f),join(curdir,"build","assimulo","lib")) 
+           
+           
+           
+   
+   
     #Delete OLD renamed files
     delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
     for item in delFiles:
@@ -434,14 +482,49 @@ def check_fortran_extensions():
                          sources=[odassl_dir+file for file in odassl_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
-    #extrap
-    extrap_dir='assimulo'+O.sep+'thirdparty'+O.sep+'extrap'+O.sep
-    extrap_files=['eulex.pyf','eulex.f','zibconst.f']
+    #eulex
+    eulex_dir='assimulo'+O.sep+'thirdparty'+O.sep+'eulex'+O.sep
+    eulex_files=['eulex.pyf','eulex.f','zibconst.f']
     
     config.add_extension('assimulo.lib.eulex', # inja esme aslie foldero mizarim
-                         sources=[extrap_dir+file for file in extrap_files],
+                         sources=[eulex_dir+file for file in eulex_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-                          
+    
+    #difex
+    difex_dir='assimulo'+O.sep+'thirdparty'+O.sep+'difex1'+O.sep
+    difex_files=['difex1.pyf','difex1.f','zibconst.f','zibmon.f','zibsec.f']
+    
+    config.add_extension('assimulo.lib.difex1', # inja esme aslie foldero mizarim
+                         sources=[difex_dir+file for file in difex_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+    
+    #eulsim
+    eulsim_dir='assimulo'+O.sep+'thirdparty'+O.sep+'eulsim'+O.sep
+    eulsim_files=['eulsim.pyf','eulsim.f','zibconst.f','linalg_eulsim.f']
+    
+    config.add_extension('assimulo.lib.eulsim', # inja esme aslie foldero mizarim
+                         sources=[eulsim_dir+file for file in eulsim_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         
+                         
+    #metan1
+    metan1_dir='assimulo'+O.sep+'thirdparty'+O.sep+'metan1'+O.sep
+    metan1_files=['metan1.pyf','metan1.f','zibconst.f','linalg_metan1.f']
+    
+    config.add_extension('assimulo.lib.metan1', # inja esme aslie foldero mizarim
+                         sources=[metan1_dir+file for file in metan1_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         
+                         
+    #mexax
+    mexax_dir='assimulo'+O.sep+'thirdparty'+O.sep+'mexax'+O.sep
+    mexax_files=['mexax.pyf','mexax.f','zibconst.f','linalg_mexax.f','zibmon.f','zibsec.f']
+    
+    config.add_extension('assimulo.lib.mexax', # inja esme aslie foldero mizarim
+                         sources=[mexax_dir+file for file in mexax_files],
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+    
+    
     
     #DASP3
     if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
