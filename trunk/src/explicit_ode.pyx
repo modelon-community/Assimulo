@@ -181,7 +181,7 @@ cdef class Explicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal) or (flag == ID_COMPLETE and TIME_EVENT and tret==tevent): #Event has been detected
                 
-                if self.store_event_points and output_list != None and output_list[opts["output_index"]-1] != self.t:
+                if self.store_event_points and output_list != None and abs(output_list[opts["output_index"]-1]-self.t) > eps:
                     self.problem.handle_result(self, self.t, self.y.copy())
                 
                 #Get and store event information
