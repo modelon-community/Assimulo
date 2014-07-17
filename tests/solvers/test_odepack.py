@@ -92,8 +92,6 @@ class Test_LSODAR:
         r=N.ones((245,),'d')
         i=N.ones((55,),'i')
         dsrcar(r,i,1)
-        print r
-        print i
         nose.tools.assert_almost_equal(r[217], 2.22044605e-16, 20)
         nose.tools.assert_equal(i[36], 3)
         
@@ -108,8 +106,6 @@ class Test_LSODAR:
         r[0]=100.
         i[0]=10
         dsrcar(r,i,1)
-        print r
-        print i
         nose.tools.assert_almost_equal(r[0], 1., 4)
         nose.tools.assert_equal(i[0], 1)  
     def test_rkstarter(self):
@@ -148,7 +144,7 @@ class Test_LSODAR:
         self.sim.reset()
         t_sol1,y_sol1=self.sim.simulate(0.5)
         ind05=N.nonzero(N.array(t_sol)==0.5)[0][0]
-        print y_sol[ind05],y_sol1[-1]
+        #print y_sol[ind05],y_sol1[-1]
         nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
         
         

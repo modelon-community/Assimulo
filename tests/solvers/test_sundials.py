@@ -176,7 +176,6 @@ class Test_CVode:
         exp_sim.verbosity = 10
         exp_sim(5.,100)
         
-        print exp_sim.event_data, len(exp_sim.event_data)
         assert len(exp_sim.event_data) == 4
         
         tnext = 0.0
@@ -332,7 +331,7 @@ class Test_CVode:
         t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
-        nose.tools.assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
+        nose.tools.assert_almost_equal(float(y100[-2]), float(sim.interpolate(9.9,0)),5)
     
     @testattr(stddist = True)
     def test_ncp_list(self):
@@ -344,7 +343,7 @@ class Test_CVode:
         
         t, y = sim.simulate(7, ncp_list=N.arange(0, 7, 0.1)) #Simulate 5 seconds
         
-        nose.tools.assert_almost_equal(y[-1], 0.00364832, 4)
+        nose.tools.assert_almost_equal(float(y[-1]), 0.00364832, 4)
         
     @testattr(stddist = True)
     def test_handle_result(self):
@@ -420,7 +419,10 @@ class Test_CVode:
         
         #Need someway of suppressing error messages from deep down in the Cython wrapper
         #See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
-        from cStringIO import StringIO
+        try:
+            from cStringIO import StringIO
+        except ImportError:
+            from io import StringIO
         import sys
         stderr = sys.stderr
         sys.stderr = StringIO()
@@ -474,11 +476,8 @@ class Test_CVode:
         """
         This tests the precondition option.
         """
-        print self.simulator.options
-        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         self.simulator.precond = 'prec_none'
-        print self.simulator.precond
         assert self.simulator.precond == 'PREC_NONE'
         
         nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, -1.0)
@@ -599,7 +598,7 @@ class Test_IDA:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
     
     @testattr(stddist = True)    
     def test_init(self):

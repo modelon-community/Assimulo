@@ -50,14 +50,14 @@ class Statistics:
         
     def print_stats(self):
         max_len_msg = 0
-        for k in self.statistics.keys():
+        for k in list(self.statistics.keys()):
             if self.statistics[k] == -1:
                 continue
             if max_len_msg < len(self.statistics_msg[k]):
                 max_len_msg = len(self.statistics_msg[k])
         
         print("")
-        for k in self.statistics.keys():
+        for k in list(self.statistics.keys()):
             if self.statistics[k] == -1:
                 continue
             print(" %s %s: %d")%(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1) ,self.statistics[k])
@@ -66,7 +66,7 @@ class Statistics:
         """
         Resets the statistics (to zero) that has been previously used
         """
-        for k in self.statistics.keys():
+        for k in list(self.statistics.keys()):
             if self.statistics[k] > -1:
                 self.statistics[k] = 0
             
@@ -74,7 +74,7 @@ class Statistics:
         """
         Resets all statistic to -1 (i.e. not used).
         """
-        for k in self.statistics.keys():
+        for k in list(self.statistics.keys()):
             self.statistics[k] = -1
         
     def keys(self):

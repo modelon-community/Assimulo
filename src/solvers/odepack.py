@@ -26,7 +26,7 @@ try:
     from assimulo.lib.odepack import dlsodar, dcfode, dintdy
     from assimulo.lib.odepack import set_lsod_common, get_lsod_common
 except ImportError:
-    print "Could not find ODEPACK functions"
+    print("Could not find ODEPACK functions")
 
 # Real work array  
 class common_like(object):

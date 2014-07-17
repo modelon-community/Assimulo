@@ -210,9 +210,9 @@ cdef class Implicit_ODE(ODE):
             if REPORT_CONTINUOUSLY is False:
                 self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
                 if type == 0:
-                    map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
+                    list(map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist))
                 else:
-                    map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist, ydlist)
+                    list(map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist, ydlist))
             
             #Initialize flag to false
             flag_initialize = False

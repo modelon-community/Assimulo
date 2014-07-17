@@ -601,7 +601,7 @@ class Test_Implicit_Fortran_Radau5:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(y[-1], N.exp(-1.0),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -620,7 +620,6 @@ class Test_Implicit_Fortran_Radau5:
                 else:
                     tnext = None
             nevent += 1
-            print tnext
             return tnext
             
         def handle_event(solver, event_info):
@@ -785,7 +784,6 @@ class Test_Implicit_Radau5:
                 else:
                     tnext = None
             nevent += 1
-            print tnext
             return tnext
             
         def handle_event(solver, event_info):

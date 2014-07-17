@@ -317,7 +317,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self._tc = t
         self._yc = y
         
-        for i in xrange(self.maxsteps):
+        for i in range(self.maxsteps):
             
             if t < tf:
                 t, y = self._step(t, y)
@@ -343,7 +343,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
     def step(self, t, y, tf, opts):
         if opts["initialize"]:
             self._next_step = self.step_generator(t,y,tf,opts)
-        return self._next_step.next()
+        return next(self._next_step)
     
     def integrate(self, t, y, tf, opts):
         
@@ -358,7 +358,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             res = [ID_PY_OK]
             
             while res[0] != ID_PY_COMPLETE:
-                res = next_step.next()
+                res = next(next_step)
                 try:
                     while output_list[output_index] <= res[1]:
                         tlist.append(output_list[output_index])
@@ -369,7 +369,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                     pass
             return res[0], tlist, ylist
         else:
-            [flags, tlist, ylist] = zip(*list(self.step_generator(t, y, tf,opts)))
+            [flags, tlist, ylist] = list(zip(*list(self.step_generator(t, y, tf,opts))))
 
             return flags[-1], tlist, ylist
         
@@ -492,7 +492,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         The newton iteration. 
         """
         
-        for k in xrange(20):
+        for k in range(20):
             
             self._curiter = 0 #Reset the iteration
             self._fac_con = max(self._fac_con, self._eps)**0.8;
@@ -519,7 +519,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                     
             Z, W = self.calc_start_values()
         
-            for i in xrange(self.newt):
+            for i in range(self.newt):
                 self._curiter += 1 #The current iteration
                 self.statistics["nniters"] += 1 #Adding one iteration
                 
@@ -1110,7 +1110,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self._yc = y
         self._ydc = yd
         
-        for i in xrange(self.maxsteps):
+        for i in range(self.maxsteps):
             
             if t < tf:
                 t, y, yd = self._step(t, y, yd)
@@ -1135,7 +1135,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         
         if opts["initialize"]:
             self._next_step = self.step_generator(t,y,yd,tf,opts)
-        return self._next_step.next()
+        return next(self._next_step)
     
     def integrate(self, t, y, yd, tf, opts):
         
@@ -1150,7 +1150,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             res = [ID_PY_OK]
             
             while res[0] != ID_PY_COMPLETE:
-                res = next_step.next()
+                res = next(next_step)
                 try:
                     while output_list[output_index] <= res[1]:
                         tlist.append(output_list[output_index])
@@ -1162,7 +1162,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                     pass
             return res[0], tlist, ylist, ydlist
         else:
-            [flags, tlist, ylist, ydlist] = zip(*list(self.step_generator(t, y, yd, tf,opts)))
+            [flags, tlist, ylist, ydlist] = list(zip(*list(self.step_generator(t, y, yd, tf,opts))))
             
             return flags[-1], tlist, ylist, ydlist
     
@@ -1265,7 +1265,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         The newton iteration. 
         """
         
-        for k in xrange(20):
+        for k in range(20):
             
             self._curiter = 0 #Reset the iteration
             self._fac_con = max(self._fac_con, self._eps)**0.8;
@@ -1292,7 +1292,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                     
             Z, W = self.calc_start_values()
 
-            for i in xrange(self.newt):
+            for i in range(self.newt):
                 self._curiter += 1 #The current iteration
                 self.statistics["nniters"] += 1 #Adding one iteration
 
