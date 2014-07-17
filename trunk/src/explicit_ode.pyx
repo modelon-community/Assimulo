@@ -173,7 +173,7 @@ cdef class Explicit_ODE(ODE):
             #Store data if not done after each step
             if REPORT_CONTINUOUSLY is False:
                 self.t, self.y = tlist[-1], ylist[-1].copy()
-                map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist)
+                list(map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist))
             
             #Initialize flag to false
             flag_initialize = False

@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 try:
-    from lib.sundials_kinsol_core_wSLU import KINSOL_wrap, KINError
+    from .lib.sundials_kinsol_core_wSLU import KINSOL_wrap, KINError
 except:
-    from lib.sundials_kinsol_core import KINSOL_wrap, KINError
+    from .lib.sundials_kinsol_core import KINSOL_wrap, KINError
 
 from scipy.linalg import pinv2
 from scipy.optimize import fminbound
@@ -100,7 +100,7 @@ class KINSOL:
                 # Test if initial guess x0 is consistant with constraints
                 for c,xi,i in zip(self.constraints,self.x0,N.arange(0,self.x0.__len__())):
                     if re.search('float',type(c).__name__) == None:
-                        print "Type problem with: ", c, type(c).__name__
+                        print("Type problem with: ", c, type(c).__name__)
                         raise KINSOL_Exception("Constraints must contain floats.")
                     if abs(c) > 2:
                         raise KINSOL_Exception("Entries in constraint vector must be between -2 and 2, see documentation.")
@@ -125,7 +125,7 @@ class KINSOL:
             self.constraints = None
             
         if broken_constraints != []:
-            print "Variables breaking initial constraint: "
+            print("Variables breaking initial constraint: ")
             for i in broken_constraints:
                 self.problem.print_var_info(i)
 
@@ -299,38 +299,38 @@ class KINSOL:
                 if error.value == 42:
                     # Try the heuristic
                     if hasattr(self.problem, 'get_heuristic_x0'):
-                        print "----------------------------------------------------"
-                        print "      Solver stuck with zero step-length."
-                        print "----------------------------------------------------"
-                        print "The following variables have start value zero"
-                        print "and min set to zero causing the zero step-lenght."
-                        print "These settings are either set by default or by user."
-                        print ""
+                        print("----------------------------------------------------")
+                        print("      Solver stuck with zero step-length.")
+                        print("----------------------------------------------------")
+                        print("The following variables have start value zero")
+                        print("and min set to zero causing the zero step-lenght.")
+                        print("These settings are either set by default or by user.")
+                        print("")
 
                         self.x0 = self.problem.get_heuristic_x0()
                         self.reg_count += 1
                         
-                        print ""
-                        print "This setting (start and min to zero) can often"
-                        print "cause problem when initializing the system. "
-                        print ""
-                        print "To avoid this the above variables have"
-                        print "their start attributes reset to one."
-                        print ""
-                        print "Trying to solve the system again..."
+                        print("")
+                        print("This setting (start and min to zero) can often")
+                        print("cause problem when initializing the system. ")
+                        print("")
+                        print("To avoid this the above variables have")
+                        print("their start attributes reset to one.")
+                        print("")
+                        print("Trying to solve the system again...")
                     else:
                         raise KINSOL_Exception("Regularization failed due to constraints, tried getting heuristic initial guess but failed.")
                 
 
                 elif (error.value == 2):
-                    print "---------------------------------------------------------"
-                    print ""
-                    print " !!! WARNING !!!"
-                    print ""
-                    print " KINSOL has returned a result but the algorithm has converged"
-                    print " to a local minima, the initial values are NOT consistant!"
-                    print ""
-                    print "---------------------------------------------------------"
+                    print("---------------------------------------------------------")
+                    print("")
+                    print(" !!! WARNING !!!")
+                    print("")
+                    print(" KINSOL has returned a result but the algorithm has converged")
+                    print(" to a local minima, the initial values are NOT consistant!")
+                    print("")
+                    print("---------------------------------------------------------")
                     solved = True
                     local_min = True
                 else:
@@ -345,6 +345,6 @@ class KINSOL:
         if self.check_with_model:
             self.problem.check_constraints(res)
         if not local_min:
-            print "Problem sent to KINSOL solved."
+            print("Problem sent to KINSOL solved.")
             
         return res

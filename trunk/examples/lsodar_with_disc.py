@@ -62,7 +62,6 @@ class Extended_Problem(Explicit_Problem):
         This is our function that keeps track of our events. When the sign
         of any of the events has changed, we have an event.
         """
-        print sw
         event_0 = y[1] - 1.0 
         event_1 = -y[2] + 1.0
         event_2 = -t + 1.0

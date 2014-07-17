@@ -41,11 +41,12 @@ LAPACKdir = ""
 BLASname = 'blas'
 BLASname_t = ""
 debug_flag = False
+python3_flag = True if S.hexversion > 0x03000000 else False
 
 try:
     from subprocess import Popen, PIPE
     _p = Popen(["svnversion", "."], stdout=PIPE)
-    revision = _p.communicate()[0]
+    revision = _p.communicate()[0].decode('ascii')
 except:
     revision = "unknown"
 
@@ -326,6 +327,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
     
     for i in ext_list:
+        if python3_flag:
+            i.cython_directives = {"language_level": 3}
         i.extra_link_args += extra_link_flags
     
     return ext_list
