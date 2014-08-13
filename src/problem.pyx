@@ -59,10 +59,10 @@ cdef class cProblem:
         a discontinuity has been found in the supplied event functions. The solver
         is the solver attribute while the event_info is a list of length 2 where
         the first element is a list containing information about state events and
-        the second element is a boolean for indicating if there have been an time
-        event. If there have not been a state event the first element is an empty
+        the second element is a Boolean for indicating if there has been a time
+        event. If there has not been a state event the first element is an empty
         list. The state event list contains a set of integers of values (-1,0,1),
-        the values indicates which state event have triggered (determined from 
+        the values indicates which state event has triggered (determined from 
         state_event(...) ) and the value indicates to where the state event is 'headed'.
         """
         solver.log_message("No event handling defined.", NORMAL)
@@ -311,10 +311,10 @@ class Implicit_Problem(cImplicit_Problem):
                 a discontinuity has been found in the supplied event functions. The solver
                 is the solver attribute while the event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a boolean for indicating if there have been an time
-                event. If there have not been a state event the first element is an empty
+                the second element is a Boolean for indicating if there has been a time
+                event. If there has not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event have triggered (determined from 
+                the values indicates which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
@@ -396,10 +396,10 @@ class Overdetermined_Problem(cOverdetermined_Problem):
                 a discontinuity has been found in the supplied event functions. The solver
                 is the solver attribute while the event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a boolean for indicating if there have been an time
+                the second element is a Boolean for indicating if there has been a time
                 event. If there have not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event have triggered (determined from 
+                the values indicates which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
@@ -482,10 +482,10 @@ class Explicit_Problem(cExplicit_Problem):
                 a discontinuity has been found in the supplied event functions. The solver
                 is the solver attribute while the event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a boolean for indicating if there have been an time
+                the second element is a Boolean for indicating if there has been a time
                 event. If there have not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event have triggered (determined from 
+                the values indicates which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
