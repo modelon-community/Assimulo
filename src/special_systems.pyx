@@ -98,25 +98,25 @@ cdef class cMechanical_System:
         This method constructs a problem function for the MEXAX_Problem class
         :return:  fprob
         """
-		def frob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):
-			if qflag[0]:
-				am=self.mass_matrix(t,p)
-			if qflag[1] or qflag[2]:
-				gp=self.GT(p).T
-			if qflag[3]:
-				f=self.forces(t,p,v)
-			if qflag[4]:
-				pdot=v
-			if qflaq[5]:
-				pass
-			if qflag[6]:
-				g=self.constr3(t,p)
-			if qflag[7]:
-				pass
-			if qflag[8]:
-				raise Exception('feature using fl in MEXAX not provided')
-		    return ifail
-		return fprob
+        def fprob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):
+            if qflag[0]:
+                am=self.mass_matrix(t,p)
+            if qflag[1] or qflag[2]:
+                gp=self.GT(p).T
+            if qflag[3]:
+                f=self.forces(t,p,v)
+            if qflag[4]:
+                pdot=v
+            if qflag[5]:
+                pass
+            if qflag[6]:
+                g=self.constr3(t,p)
+            if qflag[7]:
+                pass
+            if qflag[8]:
+                raise Exception('feature using fl in MEXAX not provided')
+            return 0
+        return fprob
 
     def make_res(self,index):
         n_p,n_v,n_la=self.n_p, 2*self.n_p, self.n_la
