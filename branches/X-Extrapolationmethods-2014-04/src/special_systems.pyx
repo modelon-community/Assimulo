@@ -228,8 +228,9 @@ cdef class cMechanical_System:
         elif index in ('oproj2'):
             problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.n_la, self.t0, self.sw0)
         else:
-            problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
-        problem.algvar=algvar
+			# it was algvar= the line below and next line was problem.algvar=algvar
+            algvar=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            
         return problem
 
 
