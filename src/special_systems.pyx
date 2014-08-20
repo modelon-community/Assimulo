@@ -95,7 +95,7 @@ cdef class cMechanical_System:
 
     def make_fprob(self):
         """
-        This method constructs a problem function for the mexax problem class
+        This method constructs a problem function for the MEXAX_Problem class
         :return:  fprob
         """
 		def frob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):

@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from ode cimport ODE
-from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
+from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem , MEXAX_Problem #?
 from problem import cExplicit_Problem
 
 import pylab as P
@@ -477,6 +477,10 @@ cdef class OverdeterminedDAE(Implicit_ODE):
         if not isinstance(self.problem, Overdetermined_Problem):
             raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem.')
 
+#?
+cdef class MexaxDAE(Implicit_ODE):
+    def check_instance(self):
+        if not isinstance(self.problem, MEXAX_Problem):
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of MEXAX_Problem.')
 
-        
 
