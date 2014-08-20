@@ -134,7 +134,7 @@ def pre_processing():
     create_dir(join("build","assimulo","thirdparty","difex1")) # add this line
     create_dir(join("build","assimulo","thirdparty","eulsim")) # add this line
     create_dir(join("build","assimulo","thirdparty","metan1")) # add this line
-    create_dir(join("build","assimulo","thirdparty","mexax")) # add this line
+    #create_dir(join("build","assimulo","thirdparty","mexax")) # add this line
     
     fileSrc     = O.listdir("src")
     fileLib     = O.listdir(O.path.join("src","lib"))
@@ -152,7 +152,7 @@ def pre_processing():
     fileThirdPartydifex = O.listdir(join("thirdparty","difex1")) # added
     fileThirdPartyeulsim = O.listdir(join("thirdparty","eulsim")) # added
     fileThirdPartymetan1 = O.listdir(join("thirdparty","metan1")) # added
-    fileThirdPartymexax = O.listdir(join("thirdparty","mexax")) # added
+    #fileThirdPartymexax = O.listdir(join("thirdparty","mexax")) # added
     
     curdir = O.path.dirname(O.path.abspath(__file__))
     
@@ -172,7 +172,7 @@ def pre_processing():
     desThirdPartydifex = join(curdir,"build","assimulo","thirdparty","difex1") #added
     desThirdPartyeulsim = join(curdir,"build","assimulo","thirdparty","eulsim") #added
     desThirdPartymetan1 = join(curdir,"build","assimulo","thirdparty","metan1") #added
-    desThirdPartymexax = join(curdir,"build","assimulo","thirdparty","mexax") #added
+    #desThirdPartymexax = join(curdir,"build","assimulo","thirdparty","mexax") #added
     
     for f in fileSrc:
         if not O.path.isdir(O.path.join("src",f)):
@@ -250,7 +250,8 @@ def pre_processing():
         
            # SH.copy2(join("thirdparty","metan1",f),join(curdir,"build","assimulo","lib")) 
            
-    # added   
+    # added
+    '''   
     for f in fileThirdPartymexax:
         if not O.path.isdir(join("thirdparty","mexax",f)):
             SH.copy2(join("thirdparty","mexax",f),desThirdPartymexax)
@@ -258,7 +259,7 @@ def pre_processing():
         
            # SH.copy2(join("thirdparty","mexax",f),join(curdir,"build","assimulo","lib")) 
            
-           
+    '''       
            
    
    
@@ -517,13 +518,14 @@ def check_fortran_extensions():
                          
                          
     #mexax
+    '''
     mexax_dir='assimulo'+O.sep+'thirdparty'+O.sep+'mexax'+O.sep
     mexax_files=['mexax.pyf','mexax.f','zibconst.f','linalg_mexax.f','zibmon.f','zibsec.f']
     
     config.add_extension('assimulo.lib.mexax', # inja esme aslie foldero mizarim
                          sources=[mexax_dir+file for file in mexax_files],
                          include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-    
+    '''
     
     
     #DASP3

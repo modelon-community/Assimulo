@@ -53,9 +53,10 @@ class Test_MEXAX:
                                          constr2 = constr2,
                                          constr1 = constr1)
         my_pend_sys=pendulum()
-        index='oproj2'
-        my_pend=my_pend_sys.generate_problem(index)
-        my_pend.name='Index = {}'.format(index)
+        self.index=index='oproj2'
+        self.my_pend=my_pend_sys.generate_problem(index)
+        self.my_pend.name='Index = {}'.format(index)
     @testattr(stddist = True)
     def test_problem_fprob(self):
-        assert len(inspect.getargspec(self.fprob)[0])==19+1 # 1 is for self
+        assert hasattr(self.my_pend,'fprob')
+        
