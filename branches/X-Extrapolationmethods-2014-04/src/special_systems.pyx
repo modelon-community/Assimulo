@@ -138,7 +138,7 @@ cdef class cMechanical_System:
                                                 self.constr2(t,y)))
             else:
                 raise Exception("index should be one of 'ind1', 'ind2', ind3'"+
-                                "ovstab2", "ovstab1","ggl2")
+                                "ovstab2", "ovstab1","ggl2","oproj2")
 
             if not index =="ggl2":
                 def with_constraint(t,y,yd):
@@ -176,7 +176,7 @@ cdef class cMechanical_System:
     def generate_problem(self,index):
         # 0. Input check
         index_values=['ind0', 'ind1','ind2', 'ind3','ovstab1','ovstab2','ggl1','ggl2','oproj2']
-        index_error= 'index got not correct value.\n Should be one of {}'.format(index_values)
+        index_error= 'index got incorrect value.\n Should be in {}'.format(index_values)
         if not (index is None or index in index_values):
             raise ValueError(index_error)
 

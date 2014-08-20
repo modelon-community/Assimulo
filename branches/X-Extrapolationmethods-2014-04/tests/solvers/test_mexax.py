@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import nose
+import inspect
 from assimulo import testattr
 from assimulo.solvers.sundials import *
 from assimulo.special_systems import Mechanical_System
@@ -44,7 +45,7 @@ class Test_MEXAX:
             def constr1(t,y):
                 p,v,la=y[0:2],y[2:4],y[4:5]
                 return N.array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
-            return ass.Mechanical_System(n_p, forces, n_la,
+            return Mechanical_System(n_p, forces, n_la,
                                          [1.,0.], [0.,0.],
                                          [0],
                                          [0.,0.], [0.,-g], GT=GT,
@@ -55,3 +56,6 @@ class Test_MEXAX:
         index='oproj2'
         my_pend=my_pend_sys.generate_problem(index)
         my_pend.name='Index = {}'.format(index)
+    @testattr(stddist = True)
+    def test_problem_fprob(self):
+        assert len(inspect.getargspec(self.fprob)[0])==19+1 # 1 is for self
