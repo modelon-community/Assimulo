@@ -109,7 +109,7 @@ cdef class cImplicit_Problem(cProblem):
             return ID_FAIL
         return ID_OK
 
-cdef class MEXAX_Problem(cProblem):
+cdef class cMEXAX_Problem(cProblem):
     def __init__(self, object fprob=None, y0=None, yd0=None, n_la=0, double t0=0.0, 
                                                           p0=None, sw0=None, name=None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
@@ -117,11 +117,11 @@ cdef class MEXAX_Problem(cProblem):
         self.n_la = n_la
         if (self.ny-n_la)%2 !=0:
             raise Exception("""Dimension of the problem {} minus n_la {} has to be an even number. 
-                             Number of postion dofs == Number of velocity dofs.""".{ny, n_la))
+                             Number of postion dofs == Number of velocity dofs.""".format(ny, n_la))
         self.np = (ny-n_la)/2
         self.nv = self.np
         self.nu = 0  # should be changed later to allow even other suported features of MEXAX.
-    def handle_result(self) # Najmeh knows how.
+    def handle_result(self): # Najmeh knows how.
            pass
 
         
