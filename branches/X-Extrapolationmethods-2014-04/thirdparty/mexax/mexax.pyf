@@ -1,0 +1,110 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module mexax__user__routines 
+    interface mexax_user_interface 
+        subroutine solout(np,nv,nu,nl,t,p,v,u,a,rlam,infos,irtrn) 
+            integer, intend(in) :: np
+            integer, intend(in) :: nv
+            integer, intend(in) :: nu
+            intege, intend(in)r :: nl
+            double precision, intend(in) :: t
+            double precision dimension(np), intend(in) :: p
+            double precision dimension(nv), intend(in) :: v
+            double precision dimension(nu), intend(in) :: u
+            double precision dimension(nv), intend(in) :: a
+            double precision dimension(nl), intend(in) :: rlam
+            integer dimension(50) :: infos
+            integer, intend(in) :: irtrn
+        end subroutine solout
+        subroutine fprob(np, nv, nl, ng, nu, ldg,  &
+                                  t, p, v, u, rlam, &
+                                  am, gp, f, pdot, udot, g, gi, fl, &
+                                  qflag, ifail) 
+            integer :: np
+            integer :: nv
+            integer :: nl
+            integer :: ng
+            integer :: nu
+            integer, optional,check(shape(gp,0)==ldg),depend(gp) :: ldg=shape(gp,0)
+            double precision :: t
+            double precision dimension(np) :: p
+            double precision dimension(nv) :: v
+            double precision dimension(nu) :: u
+            double precision dimension(nl) :: rlam
+            double precision dimension(nv,nv) :: am
+            double precision dimension(ldg,*) :: gp          ! lookup
+            double precision dimension(nv) :: f
+            double precision dimension(np) :: pdot
+            double precision dimension(nu) :: udot
+            double precision dimension(ng) :: g
+            double precision dimension(nl) :: gi
+            double precision dimension(nv,nl) :: fl
+            logical dimension(9) :: qflag
+            integer :: ifail
+        end subroutine fprob
+        subroutine denout(np,nv,nu,nl,t, p,v,u,a,rl,info, irtrn)
+
+            integer, intend(in) :: np, nv, nu, nl
+            integer dimension(50), intend(in) :: info
+            integer, intend(out):: irtrn
+            double precision, intend(in) :: t
+            double precision dimension(np), intend(in) :: p
+            double precision dimension(nv), intend(in) :: v
+            double precision dimension(nu), intend(in) :: u
+            double precision dimension(nv), intend(in) :: a
+            double precision dimension(nl), intend(in) :: rl
+        end subroutine denout
+        subroutine fswit(np,nv,nl,nu,t,p,v,u,a,rlam,nswif,g) 
+            integer, intend(in) :: np
+            integer, intend(in) :: nv
+            integer, intend(in) :: nl
+            integer, intend(in) :: nu
+            double precision :: t
+            double precision dimension(np) :: p
+            double precision dimension(nv) :: v
+            double precision dimension(nu) :: u
+            double precision dimension(nu) :: a
+            double precision dimension(nl) :: rlam
+            integer   :: nswif
+            double precision dimension(nswif) :: g
+        end subroutine fswit
+    end interface mexax_user_interface 
+end python module mexax__user__routines
+python module mexax ! in 
+    interface mexax ! in :mexax
+        subroutine mexx(np,nv,nl,ng,nu,fprob,t,tfin,p,v,u,a,rlam,itol, &
+                        rtol,atol,h,mxjob,ierr,liwk,iwk,lrwk,rwk,solout, &
+                        denout,fswit) 
+            use mexax__user__routines
+            integer, intend(in) :: np
+            integer, intend(in) :: nv
+            integer, intend(in):: nl
+            integer, intend(in) :: ng
+            integer, intend(in) :: nu
+            external fprob
+            double precision :: t
+            double precision :: tfin
+            double precision dimension(np) :: p
+            double precision dimension(nv) :: v
+            double precision dimension(nu) :: u
+            double precision dimension(nv) :: a
+            double precision dimension(nl) :: rlam
+            integer :: itol
+            double precision dimension(*) :: rtol
+            double precision dimension(*) :: atol
+            double precision :: h
+            integer dimension(150) :: mxjob
+            integer :: ierr
+            integer, optional,check(len(iwk)>=liwk),depend(iwk) :: liwk=len(iwk)
+            integer dimension(liwk) :: iwk
+            integer, optional,check(len(rwk)>=lrwk),depend(rwk) :: lrwk=len(rwk)
+            double precision dimension(lrwk) :: rwk
+            external solout
+            external denout
+            external fswit
+        end subroutine mexx
+    end interface mexax
+end python module mexax
+
+
