@@ -32,7 +32,7 @@ from eulex import Eulex
 from difex1 import Difex1
 from eulsim import Eulsim
 from metan1 import Metan1
-#from mexax import Mexax
+from mexax import Mexax
 try:
     from dasp3 import DASP3ODE
 except ImportError:
