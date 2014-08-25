@@ -83,23 +83,23 @@ python module mexax ! in
             integer, intend(in) :: ng
             integer, intend(in) :: nu
             external fprob
-            double precision :: t
-            double precision :: tfin
-            double precision dimension(np) :: p
-            double precision dimension(nv) :: v
-            double precision dimension(nu) :: u
-            double precision dimension(nv) :: a
-            double precision dimension(nl) :: rlam
+            double precision, intend(in) :: t
+            double precision, intend(in) :: tfin
+            double precision dimension(np), intend(in) :: p
+            double precision dimension(nv), intend(in) :: v
+            double precision dimension(nu), intend(in) :: u
+            double precision dimension(nv), intend(in) :: a
+            double precision dimension(nl), intend(in) :: rlam
             integer :: itol
-            double precision dimension(*) :: rtol
-            double precision dimension(*) :: atol
-            double precision :: h
-            integer dimension(150) :: mxjob
-            integer :: ierr
+            double precision dimension(*), intend(in) :: rtol
+            double precision dimension(*), intend(in) :: atol
+            double precision, intend(in) :: h
+            integer dimension(150), intend(in) :: mxjob
+            integer, intend(out) :: ierr
             integer, optional,check(len(iwk)>=liwk),depend(iwk) :: liwk=len(iwk)
-            integer dimension(liwk) :: iwk
+            integer dimension(liwk), intend(in,out) :: iwk
             integer, optional,check(len(rwk)>=lrwk),depend(rwk) :: lrwk=len(rwk)
-            double precision dimension(lrwk) :: rwk
+            double precision dimension(lrwk), intend(in, out) :: rwk
             external solout
             external denout
             external fswit
