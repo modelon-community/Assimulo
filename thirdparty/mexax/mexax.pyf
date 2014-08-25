@@ -4,18 +4,18 @@
 python module mexax__user__routines 
     interface mexax_user_interface 
         subroutine solout(np,nv,nu,nl,t,p,v,u,a,rlam,infos,irtrn) 
-            integer, intend(in) :: np
-            integer, intend(in) :: nv
-            integer, intend(in) :: nu
-            intege, intend(in)r :: nl
-            double precision, intend(in) :: t
-            double precision dimension(np), intend(in) :: p
-            double precision dimension(nv), intend(in) :: v
-            double precision dimension(nu), intend(in) :: u
-            double precision dimension(nv), intend(in) :: a
-            double precision dimension(nl), intend(in) :: rlam
+            integer, intent(in) :: np
+            integer, intent(in) :: nv
+            integer, intent(in) :: nu
+            intege, intent(in)r :: nl
+            double precision, intent(in) :: t
+            double precision dimension(np), intent(in) :: p
+            double precision dimension(nv), intent(in) :: v
+            double precision dimension(nu), intent(in) :: u
+            double precision dimension(nv), intent(in) :: a
+            double precision dimension(nl), intent(in) :: rlam
             integer dimension(50) :: infos
-            integer, intend(in) :: irtrn
+            integer, intent(in) :: irtrn
         end subroutine solout
         subroutine fprob(np, nv, nl, ng, nu, ldg,  &
                                   t, p, v, u, rlam, &
@@ -45,21 +45,21 @@ python module mexax__user__routines
         end subroutine fprob
         subroutine denout(np,nv,nu,nl,t, p,v,u,a,rl,info, irtrn)
 
-            integer, intend(in) :: np, nv, nu, nl
-            integer dimension(50), intend(in) :: info
-            integer, intend(out):: irtrn
-            double precision, intend(in) :: t
-            double precision dimension(np), intend(in) :: p
-            double precision dimension(nv), intend(in) :: v
-            double precision dimension(nu), intend(in) :: u
-            double precision dimension(nv), intend(in) :: a
-            double precision dimension(nl), intend(in) :: rl
+            integer, intent(in) :: np, nv, nu, nl
+            integer dimension(50), intent(in) :: info
+            integer, intent(out):: irtrn
+            double precision, intent(in) :: t
+            double precision dimension(np), intent(in) :: p
+            double precision dimension(nv), intent(in) :: v
+            double precision dimension(nu), intent(in) :: u
+            double precision dimension(nv), intent(in) :: a
+            double precision dimension(nl), intent(in) :: rl
         end subroutine denout
         subroutine fswit(np,nv,nl,nu,t,p,v,u,a,rlam,nswif,g) 
-            integer, intend(in) :: np
-            integer, intend(in) :: nv
-            integer, intend(in) :: nl
-            integer, intend(in) :: nu
+            integer, intent(in) :: np
+            integer, intent(in) :: nv
+            integer, intent(in) :: nl
+            integer, intent(in) :: nu
             double precision :: t
             double precision dimension(np) :: p
             double precision dimension(nv) :: v
@@ -77,29 +77,29 @@ python module mexax ! in
                         rtol,atol,h,mxjob,ierr,liwk,iwk,lrwk,rwk,solout, &
                         denout,fswit) 
             use mexax__user__routines
-            integer, intend(in) :: np
-            integer, intend(in) :: nv
-            integer, intend(in):: nl
-            integer, intend(in) :: ng
-            integer, intend(in) :: nu
+            integer, intent(in) :: np
+            integer, intent(in) :: nv
+            integer, intent(in):: nl
+            integer, intent(in) :: ng
+            integer, intent(in) :: nu
             external fprob
-            double precision, intend(in) :: t
-            double precision, intend(in) :: tfin
-            double precision dimension(np), intend(in) :: p
-            double precision dimension(nv), intend(in) :: v
-            double precision dimension(nu), intend(in) :: u
-            double precision dimension(nv), intend(in) :: a
-            double precision dimension(nl), intend(in) :: rlam
+            double precision, intent(in, out) :: t
+            double precision, intent(in) :: tfin
+            double precision dimension(np), intent(in, out) :: p
+            double precision dimension(nv), intent(in, out) :: v
+            double precision dimension(nu), intent(in, out) :: u
+            double precision dimension(nv), intent(in, out) :: a
+            double precision dimension(nl), intent(in, out) :: rlam
             integer :: itol
-            double precision dimension(*), intend(in) :: rtol
-            double precision dimension(*), intend(in) :: atol
-            double precision, intend(in) :: h
-            integer dimension(150), intend(in) :: mxjob
-            integer, intend(out) :: ierr
+            double precision dimension(*), intent(in) :: rtol
+            double precision dimension(*), intent(in) :: atol
+            double precision, intent(in, out) :: h
+            integer dimension(150), intent(in, out) :: mxjob
+            integer, intent(out) :: ierr
             integer, optional,check(len(iwk)>=liwk),depend(iwk) :: liwk=len(iwk)
-            integer dimension(liwk), intend(in,out) :: iwk
+            integer dimension(liwk), intent(in,out) :: iwk
             integer, optional,check(len(rwk)>=lrwk),depend(rwk) :: lrwk=len(rwk)
-            double precision dimension(lrwk), intend(in, out) :: rwk
+            double precision dimension(lrwk), intent(in, out) :: rwk
             external solout
             external denout
             external fswit
