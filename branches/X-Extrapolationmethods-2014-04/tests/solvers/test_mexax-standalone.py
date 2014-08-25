@@ -16,10 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from scipy import *
-from assimulo.thirdparty import mexax
+from assimulo.lib import mexax
 
-class mexaxpendulum(object):
-    def __init__(index,gr=9.81):
+class Mexaxpendulum(object):
+    def __init__(self,index,gr=9.81):
         self.index=index
         # initial conditions
         self.p=array([0.,1.])
@@ -66,16 +66,30 @@ class mexaxpendulum(object):
                 nl=1
             else:
                 raise Exception('Only index 2 implemented so far')
+            np=len(self.p)
+            nv=len(self.v)
+            nu=len(self.u)
+            # Work arrays and their dimensions
+            liwk=np + 4*nv + nl + max(nu,1) + 60
+            iwk=empty((liwk,),dtype=int)
+            ngl=max(1,ng,nl)
+            lrwk=(nv+max(nl,1))**2+np*(ngl+18)+nv*(nv+45)+28*max(nl,1)+ng+18*max(ng,1)+500
+            rwk=empty((lrwk,))
             t=t0
             tfin=te
             itol=0
             rtol=atol=1.e-5
             h=1.e-4
             mxjob=zeros((150,))
-            ierr = mexax.mexx(ng,self.fprob,t,tfin,
+            [t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
+                 mexax.mexx(ng,self.fprob,t,tfin,
                  self.p,self.v,self.u,self.a,self.lam,
-                 itol,rtol,atol,h,mxjob,ierr,iwk,rwk,
+                 itol,rtol,atol,h,mxjob,iwk,rwk,
                  self.solout,self.denout,self.fswit)
+            print 'Simulated until {} with return code ierr {} and step size {}'.format(t,ierr,h)
+if __name__=='__main__':
+    mexax_test=Mexaxpendulum(2)
+    mexax_test.simulate(0.,10.)
 
 
 
