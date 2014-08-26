@@ -22,7 +22,7 @@ class Mexaxpendulum(object):
     def __init__(self,index,gr=9.81):
         self.index=index
         # initial conditions
-        self.p=array([0.,1.])
+        self.p=array([1.,0.])
         self.np=2
         self.v=array([0.,0.])
         self.nv=2
@@ -37,33 +37,26 @@ class Mexaxpendulum(object):
         """
         problem function for index-2 single pendulum example
         """
-        print qflag
-        
         ifail=0
         gr=self.gr # gravitation constant
         exception_text='We should not need to evaluate this {}'
 
         if qflag[0]:  # set mass matrix
             mass=eye(2)
-            print 'mass',mass
         if qflag[1]: # set velocity constraint matrix
             gp=array(p).reshape((1,-1))
-            print 'gp',gp
         if qflag[2]: # raise error
             raise Exception(exception_text.format('C-matrix'))
         if qflag[3]:
             f=array([0.,-gr]).reshape([-1,1])
-            print 'f',f
         if qflag[4]:
             pdot = v.copy()
-            print 'pdot',pdot
         if qflag[5]:
             raise Exception(exception_text.format('udot'))
         if qflag[6]:
             raise Exception(exception_text.format('g-position residual'))
         if qflag[7]:
             gi=array([0.])
-            print 'gi',gi
         if qflag[8]:
             raise Exception(exception_text.format('fl (df/dla)'))
         return mass,gp,f,pdot,udot,g,gi,ifail
@@ -81,10 +74,10 @@ class Mexaxpendulum(object):
                 raise Exception('Only index 2 implemented so far')
             # Work arrays and their dimensions
             np=self.np;nv=self.nv;nu=self.nu
-            liwk=np + 4*nv + nl + max(nu,1) + 60
+            liwk=np + 4*nv + nl + nu + 60
             iwk=empty((liwk,),dtype=int)
-            ngl=max(1,ng,nl)
-            lrwk=(nv+max(nl,1))**2+np*(ngl+18)+nv*(nv+45)+28*max(nl,1)+ng+18*max(ng,1)+500
+            ngl=max(ng,nl)
+            lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50
             rwk=empty((lrwk,),dtype=float)
             t=t0
             tfin=te
@@ -92,17 +85,19 @@ class Mexaxpendulum(object):
             rtol=atol=1.e-5
             h=1.e-4
             mxjob=zeros((150,))
+            mxjob[11-1]=2
+            print 'v',self.v
             [t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
                  mexax.mexx(nl,ng,nu,self.fprob,t,tfin,
                  self.p,self.v,self.u,self.a,self.lam,
                  itol,rtol,atol,h,mxjob,iwk,rwk,
-                 self.solout,self.denout,self.fswit)
+                 self.solout,self.denout,self.fswit,lrwk=lrwk,liwk=liwk)
             print 'Simulated until {} with return code ierr {} and step size {}'.format(t,ierr,h)
             print 't,p,v,lam',t,p,v,lam
             print mxjob[50:74]
 if __name__=='__main__':
-    mexax_test=Mexaxpendulum(2)
-    mexax_test.simulate(0.,1.e-3)
+    mexax_test=Mexaxpendulum(2,gr=13.750371636040738)
+    mexax_test.simulate(0.,10.)
 
 
 
