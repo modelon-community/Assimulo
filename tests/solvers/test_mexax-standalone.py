@@ -17,6 +17,7 @@
 
 from scipy import *
 from assimulo.lib import mexax
+import nose
 
 class Mexaxpendulum(object):
     def __init__(self,index,gr=9.81):
@@ -32,6 +33,7 @@ class Mexaxpendulum(object):
         self.lam=array([0.])
         self.nl=1
         self.a=array([0.,-gr])
+        self.mxjob=zeros((150,),dtype=int)
         
     def fprob(self,nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag,np,nv,ldg):
         """
@@ -82,23 +84,42 @@ class Mexaxpendulum(object):
             t=t0
             tfin=te
             itol=0
-            rtol=atol=1.e-5
-            h=1.e-4
-            mxjob=zeros((150,))
-            mxjob[11-1]=2
-            print 'v',self.v
-            [t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
+            rtol=atol=1.e-11
+            h=1.e-4            
+            self.sol=[t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
                  mexax.mexx(nl,ng,nu,self.fprob,t,tfin,
                  self.p,self.v,self.u,self.a,self.lam,
-                 itol,rtol,atol,h,mxjob,iwk,rwk,
+                 itol,rtol,atol,h,self.mxjob,iwk,rwk,
                  self.solout,self.denout,self.fswit,lrwk=lrwk,liwk=liwk)
-            print 'Simulated until {} with return code ierr {} and step size {}'.format(t,ierr,h)
-            print 't,p,v,lam',t,p,v,lam
-            print mxjob[50:74]
-if __name__=='__main__':
+
+class Test_Mexax_Standalone(object):
+    def setUp(self):
+        self.mexax_test=Mexaxpendulum(2,gr=13.750371636040738)
+    def test_finalresult(self):
+        self.mexax_test.simulate(0.,10.)
+        nose.tools.assert_almost_equal(self.mexax_test.sol[1][0],1.,9)
+    #def test_solout(self):
+        #def solout(...):
+     
+        #self.mexax_test.solout=...
+        #self.mxjob[??]= ...
+
+if __name__ == '__main__':
     mexax_test=Mexaxpendulum(2,gr=13.750371636040738)
+    mexax_test.mxjob[11-1]=1
+    mexax_test.mxjob[30-1]=1
     mexax_test.simulate(0.,10.)
+    print 'Solution at t={} is \n p={} \n v={}\n\n'.format(mexax_test.sol[0],mexax_test.sol[1],mexax_test.sol[2])
+    print """
+    Statistics:
 
-
-
-       
+    Number of all computed steps            {}
+    Number of accepted steps                {}
+    Number of steps, where ERR .GT. TOL     {}
+    Number of calls to FPROB                {}
+    Number of f-evaluations                 {}   
+    Number of g-evaluations                 {}
+    Number of calls to MMULT                {}
+    Number of decompositions                {}
+    Number of forward-back substitutions    {}
+    """.format(*mexax_test.sol[7][50:59])
