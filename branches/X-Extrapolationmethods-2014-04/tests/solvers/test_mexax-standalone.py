@@ -68,13 +68,14 @@ class Mexaxpendulum(object):
     def solout(self,t,p,v,u,a,rlam,infos,irtrn):
         self.tlist.append(t)
         self.ylist.append(p.copy())
-        print t, p[0]
-        
-        
-        
-        #raise Exception('solout only in dummy mode')
-    def denout(self,t,p,v,u,a,rlam,infos,irtrn):
-        raise Exception('denout only in dummy mode')
+    def denout(self,t,p,v,u,a,rl,indp,indv,indu,inda,indl,info):
+        """
+        note: this function does always provide *all* solution components
+        the parameters indp etc are ignored.
+        """
+        self.tlist.append(t)
+        self.ylist.append(p.copy())
+        return 0
     def fswit(self,t,p,v,u,a,rlam,g):
         raise Exception('fswit only in dummy mode')
     def simulate(self,t0,te):
@@ -88,7 +89,8 @@ class Mexaxpendulum(object):
             liwk=np + 4*nv + nl + nu + 60
             iwk=empty((liwk,),dtype=int)
             ngl=max(ng,nl)
-            lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50
+            lo=(np+nv+nu+nv+nl)*156 if self.mxjob[31-1] else 0
+            lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50+lo
             rwk=empty((lrwk,),dtype=float)
             t=t0
             tfin=te
@@ -107,23 +109,26 @@ class Test_Mexax_Standalone(object):
     def test_finalresult(self):
         self.mexax_test.simulate(0.,10.)
         nose.tools.assert_almost_equal(self.mexax_test.sol[1][0],1.,9)
-    def test_solout(self):
+    def test_solout_plot(self):
         self.mexax_test.mxjob[29]=1
         self.mexax_test.simulate(0.,10.)
-        plot(self.tlist,self.ylist[:-1])
+        plot(self.tlist,self.y)
      
         #self.mexax_test.solout=...
-        #self.mxjob[??]= ...
+        #self.mxjob[29]= 1
 
 if __name__ == '__main__':
     mexax_test=Mexaxpendulum(2,gr=13.750371636040738)
-    mexax_test.mxjob[11-1]=1
-    mexax_test.mxjob[30-1]=1
+    mexax_test.mxjob[11-1]=2
+    mexax_test.mxjob[30-1]=0   # for step output
+    mexax_test.mxjob[31-1]=1
+    mexax_test.mxjob[32-1]=1000  # number of dense output points
+    #print'tlist {}'.format(mexax_test.tlist)
+    mexax_test.mxjob[33-1]=0    # =0 i.e. all components 
     mexax_test.simulate(0.,10.)
     plot(mexax_test.tlist,mexax_test.ylist)
     show()
     print 'Solution at t={} is \n p={} \n v={}\n\n'.format(mexax_test.sol[0],mexax_test.sol[1],mexax_test.sol[2])
-    print 'tlist{}'.format(mexax_test.tlist)
     print """
     Statistics:
 
