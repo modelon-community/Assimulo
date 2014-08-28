@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from scipy import *
+from  matplotlib.pyplot import *
 from assimulo.lib import mexax
 import nose
 
@@ -34,6 +35,8 @@ class Mexaxpendulum(object):
         self.nl=1
         self.a=array([0.,-gr])
         self.mxjob=zeros((150,),dtype=int)
+        self.tlist=[]
+        self.ylist=[]
         
     def fprob(self,nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag,np,nv,ldg):
         """
@@ -63,7 +66,13 @@ class Mexaxpendulum(object):
             raise Exception(exception_text.format('fl (df/dla)'))
         return mass,gp,f,pdot,udot,g,gi,ifail
     def solout(self,t,p,v,u,a,rlam,infos,irtrn):
-        raise Exception('solout only in dummy mode')
+        self.tlist.append(t)
+        self.ylist.append(p.copy())
+        print t, p[0]
+        
+        
+        
+        #raise Exception('solout only in dummy mode')
     def denout(self,t,p,v,u,a,rlam,infos,irtrn):
         raise Exception('denout only in dummy mode')
     def fswit(self,t,p,v,u,a,rlam,g):
@@ -84,7 +93,7 @@ class Mexaxpendulum(object):
             t=t0
             tfin=te
             itol=0
-            rtol=atol=1.e-11
+            rtol=1.e-14;atol=1.e-10
             h=1.e-4            
             self.sol=[t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
                  mexax.mexx(nl,ng,nu,self.fprob,t,tfin,
@@ -98,8 +107,10 @@ class Test_Mexax_Standalone(object):
     def test_finalresult(self):
         self.mexax_test.simulate(0.,10.)
         nose.tools.assert_almost_equal(self.mexax_test.sol[1][0],1.,9)
-    #def test_solout(self):
-        #def solout(...):
+    def test_solout(self):
+        self.mexax_test.mxjob[29]=1
+        self.mexax_test.simulate(0.,10.)
+        plot(self.tlist,self.ylist[:-1])
      
         #self.mexax_test.solout=...
         #self.mxjob[??]= ...
@@ -109,7 +120,10 @@ if __name__ == '__main__':
     mexax_test.mxjob[11-1]=1
     mexax_test.mxjob[30-1]=1
     mexax_test.simulate(0.,10.)
+    plot(mexax_test.tlist,mexax_test.ylist)
+    show()
     print 'Solution at t={} is \n p={} \n v={}\n\n'.format(mexax_test.sol[0],mexax_test.sol[1],mexax_test.sol[2])
+    print 'tlist{}'.format(mexax_test.tlist)
     print """
     Statistics:
 
