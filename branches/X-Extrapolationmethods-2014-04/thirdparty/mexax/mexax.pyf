@@ -43,17 +43,23 @@ python module mexax__user__routines
             logical dimension(9), intent(in) :: qflag
             integer, intent(out) :: ifail
         end subroutine fprob
-        subroutine denout(np,nv,nu,nl,t, p,v,u,a,rl,info, irtrn)
+        subroutine denout(np, nv, nu, na, nl, t, p, v, u, a, rl, indp, indv, indu, inda, indl, info,ifail)
 
-            integer, intent(in) :: np, nv, nu, nl
+            integer, intent(in) :: np, nv, nu, na, nl
             integer dimension(50), intent(in) :: info
-            integer, intent(out):: irtrn
+            integer, intent(out):: ifail
             double precision, intent(in) :: t
             double precision dimension(np), intent(in) :: p
             double precision dimension(nv), intent(in) :: v
             double precision dimension(nu), intent(in) :: u
-            double precision dimension(nv), intent(in) :: a
+            double precision dimension(na), intent(in) :: a
             double precision dimension(nl), intent(in) :: rl
+            double precision dimension(max(len(indp),1)), intent(in)::indp
+            double precision dimension(max(len(indv),1)), intent(in)::indv
+            double precision dimension(max(len(indu),1)), intent(in)::indu
+            double precision dimension(max(len(inda),1)), intent(in)::inda
+            double precision dimension(max(len(indl),1)), intent(in)::indl
+
         end subroutine denout
         subroutine fswit(np,nv,nl,nu,t,p,v,u,a,rlam,nswif,g) 
             integer, intent(in) :: np
