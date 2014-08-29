@@ -1,11 +1,11 @@
 __author__ = 'najmeh'
 
-#ticket:341
+#ticket:346
 
 import numpy as np
 from assimulo.exception import *
 from assimulo.ode import *
-from assimulo.implicit_ode import OverdeterminedDAE
+from assimulo.implicit_ode import MexaxDAE
 
 
 try:
@@ -77,29 +77,21 @@ class Mexax(ImplicitProblem):
     
 
     def integrate(self, t, y, yprime, tf, opts):
-        ny  = self.problem_info["dim"]
-        neq = self.problem_info["neq"]
-        lrw = 40+8*ny + neq**2 + 3*neq
-        rwork = np.zeros((lrw,))                                                
-        liw = 22+neq
-        iwork = np.zeros((liw,),np.int)                                                                          
-        jac_dummy = lambda t,x,xp: x
+                                                                            
+        
         info = np.zeros((15,),np.int) 
-        info[1] = 1  # Tolerances are vectors  
-        info[2] = normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
-        info[6] = 1 if self.options["maxh"] > 0.0 else 0       
-        rwork[1] = self.options["maxh"]            
-        info[7] = 1 if self.options["inith"] > 0.0 else 0
-        rwork[2] = self.options["inith"]
-        info[8] =  1 if self.options["maxord"] > 0 else 0  
-        iwork[2] = self.options["maxord"]                     
+        info[1] = 1  # Tolerances are vectors
+        # set mxjob control parameters  
+        mxjob=zeros((150,),np.int)
+        normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
+        mxjob[30-1] = 1 if normal_mode == 0 else 0
+        mxjob[31-1] = 1 if normal_mode else 0
+        mxjob[32-1] = len(opts["output_list"])
+                            
                                
         atol = self.options["atol"]
         rtol = self.options["rtol"]
-        for i in range(ny):
-            if self.problem.algvar[i] == 0:
-                rtol[i]=1.e7
-                atol[i]=1.e7
+        itol = 1
         tlist=[]
         ylist=[]
         ydlist=[]
@@ -108,7 +100,22 @@ class Mexax(ImplicitProblem):
         #Store the opts
         self._opts = opts
     
+        # Provide the workspace
+        # a) Compute the size of the workspace
+        np = self.problem.n_p
+        nv = np
+        nu = 0
+        nl = self.problem.n_la
+        ny  = self.problem_info["dim"]  # should be np+nv+nu+nl
+        if np+nv+nu+nl != ny:
+           raise Exception('Dimension error: np+nv+nu+nl != ny')
         
+        liwk=np + 4*nv + nl + nu + 60
+        iwk=empty((liwk,),dtype=int)
+        ngl=max(ng,nl)
+        lo=(np+nv+nu+nv+nl)*156 if mxjob[31-1] else 0
+        lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50+lo
+        rwk=empty((lrwk,),dtype=float)
         
         
         
