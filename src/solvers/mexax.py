@@ -16,7 +16,7 @@ except ImportError:
 # cd -;sudo python setup.py install;cd -;ipython
 
 
-class Mexax(ImplicitProblem):
+class Mexax(MexaxDAE):
     '''
     add some documentation
 

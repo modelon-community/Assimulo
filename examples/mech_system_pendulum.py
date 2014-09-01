@@ -41,13 +41,16 @@ def pendulum():
     def constr1(t,y):
         p,v,la=y[0:2],y[2:4],y[4:5]
         return N.array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
+    def mass_matrix(t,p):
+        return N.eye(2)
     return ass.Mechanical_System(n_p, forces, n_la,  
                                    [1.,0.], [0.,0.],
                                    [0],
                                    [0.,0.], [0.,-g], GT=GT,
                                    constr3 = constr3,
                                    constr2 = constr2, 
-                                   constr1 = constr1)
+                                   constr1 = constr1,
+                                   mass_matrix=mass_matrix)
 
 def run_example(index, with_plots=True, with_test=False):
     my_pend_sys=pendulum()

@@ -98,9 +98,10 @@ cdef class cMechanical_System:
         This method constructs a problem function for the MEXAX_Problem class
         :return:  fprob
         """
-        def fprob(np,nv,nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag):
+        def fprob(nl,ng,nu,t,p,v,u,rlam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
+            ifail=0
             if qflag[0]:
-                am=self.mass_matrix(t,p)
+                mass=self.mass_matrix(t,p)
             if qflag[1] or qflag[2]:
                 gp=self.GT(p).T
             if qflag[3]:
@@ -115,7 +116,7 @@ cdef class cMechanical_System:
                 pass
             if qflag[8]:
                 raise Exception('feature using fl in MEXAX not provided')
-            return 0
+            return  mass,gp,f,pdot,udot,g,gi,ifail
         return fprob
 
     def make_res(self,index):
@@ -164,8 +165,7 @@ cdef class cMechanical_System:
         def res(t,y,yd):
             p,pd=y[0:n_p], yd[0:n_p]
             v,vd=y[n_p:n_v], yd[n_p:n_v]
-            Mvd = N.dot(M,vd) if M != None else vd
-
+            Mvd = N.dot(M(t,y),vd) if M != None else vd
             return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
 
         if n_la==0:
@@ -226,10 +226,11 @@ cdef class cMechanical_System:
             problem=ap.Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
             problem.neq=neq
         elif index in ('oproj2'):
+            algvar=len(y0)*[1]
             problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.n_la, self.t0, self.sw0)
         else:
-			# it was algvar= the line below and next line was problem.algvar=algvar
-            algvar=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+        problem.algvar=algvar
             
         return problem
 
