@@ -38,7 +38,7 @@ class Mexaxpendulum(object):
         self.tlist=[]
         self.ylist=[]
         
-    def fprob(self,nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag,np,nv,ldg):
+    def fprob(self,nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
         """
         problem function for index-2 single pendulum example
         """
