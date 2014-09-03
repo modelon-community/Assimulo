@@ -98,7 +98,7 @@ cdef class cMechanical_System:
         This method constructs a problem function for the MEXAX_Problem class
         :return:  fprob
         """
-        def fprob(nl,ng,nu,t,p,v,u,rlam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
+        def fprob(nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
             ifail=0
             if qflag[0]:
                 mass=self.mass_matrix(t,p)

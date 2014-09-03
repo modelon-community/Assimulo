@@ -22,6 +22,11 @@ from assimulo.solvers.sundials import *
 from assimulo.special_systems import Mechanical_System
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
+from assimulo.lib import mexax
+from scipy import *
+from assimulo.tests.solvers import test_mexax_standalone
+
+
 
 class Test_MEXAX:
     def setUp(self):
@@ -45,18 +50,40 @@ class Test_MEXAX:
             def constr1(t,y):
                 p,v,la=y[0:2],y[2:4],y[4:5]
                 return N.array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
+            def mass_matrix(t,p):
+                return eye(2)
             return Mechanical_System(n_p, forces, n_la,
                                          [1.,0.], [0.,0.],
                                          [0],
                                          [0.,0.], [0.,-g], GT=GT,
                                          constr3 = constr3,
                                          constr2 = constr2,
-                                         constr1 = constr1)
+                                         constr1 = constr1,
+                                         mass_matrix=mass_matrix)
         my_pend_sys=pendulum()
         self.index=index='oproj2'
         self.my_pend=my_pend_sys.generate_problem(index)
         self.my_pend.name='Index = {}'.format(index)
+        # Build no the standalone solution which does not use Assimulo
+        self.mexax_sta_test=test_mexax_standalone.Mexaxpendulum(2,gr=13.750371636040738)
     @testattr(stddist = True)
     def test_problem_fprob(self):
         assert hasattr(self.my_pend,'fprob')
+    def test_problem_fpob_mass(self):
+        # compute standalone fprob
+        qflag=9*[False]
+        qflag[0]=True
+        parameterlist={'nl':1,'ng':0,'nu':0,'t':0.,
+                                  'p':array([0.,1.]),'v':array([0.,0.]),'u':array([0.]),
+                                  'lam':array([0.]),'mass':empty((2,2)),'gp':empty((1,2)),
+                                  'f':empty((2,)),'pdot':empty((2,)),'udot':empty((1,)),
+                                  'g':empty((1,)),'gi':empty((1,)),'fl':empty((1,)),
+                                  'qflag':qflag}
+        self.mexax_sta_test.fprob(**parameterlist)
+        self.my_pend.fprob(**parameterlist)
+        assert((self.mexax_sta_test.fprob(**parameterlist)[0]==self.my_pend.fprob(**parameterlist)[0]).all())
+        qflag[0]=False
+        qflag[1]=True
+        assert((self.mexax_sta_test.fprob(**parameterlist)[1]==self.my_pend.fprob(**parameterlist)[1]).all())
         
+#fprob(nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag,[np,nv]):
