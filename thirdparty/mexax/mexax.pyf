@@ -17,7 +17,7 @@ python module mexax__user__routines
             integer dimension(50) :: infos
             integer, intent(in) :: irtrn
         end subroutine solout
-        subroutine fprob(np, nv, nl, ng, nu, ldg,  &
+        subroutine fprob(np, nv, nl, ng, nu, ldg, &
                                   t, p, v, u, rlam, &
                                   am, gp, f, pdot, udot, g, gi, fl, &
                                   qflag, ifail) 
@@ -26,14 +26,14 @@ python module mexax__user__routines
             integer, intent(in) :: nl
             integer, intent(in) :: ng
             integer, intent(in) :: nu
-            integer, intent(in) :: ldg
+            integer, intent(hide) :: ldg
             double precision :: t
             double precision dimension(np), intent(in) :: p
             double precision dimension(nv), intent(in) :: v
             double precision dimension(max(nu,1)), intent(in) :: u
             double precision dimension(max(nl,1)), intent(in) :: rlam
             double precision dimension(nv,nv), intent(in, out) :: am
-            double precision dimension(ldg,nv), intent(in, out) :: gp         
+            double precision dimension(max(max(nl,nu),1),nv), intent(in, out) :: gp         
             double precision dimension(nv), intent(in, out) :: f
             double precision dimension(np), intent(in, out) :: pdot
             double precision dimension(max(nu,1)),  intent(in, out) :: udot
