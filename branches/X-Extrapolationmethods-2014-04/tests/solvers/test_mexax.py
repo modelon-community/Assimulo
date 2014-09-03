@@ -67,9 +67,7 @@ class Test_MEXAX:
         # Build no the standalone solution which does not use Assimulo
         self.mexax_sta_test=test_mexax_standalone.Mexaxpendulum(2,gr=13.750371636040738)
     @testattr(stddist = True)
-    def test_problem_fprob(self):
-        assert hasattr(self.my_pend,'fprob')
-    def test_problem_fpob_mass(self):
+    def test_problem_fprob_mass(self):
         # compute standalone fprob
         qflag=9*[False]
         qflag[0]=True
@@ -86,4 +84,4 @@ class Test_MEXAX:
         qflag[1]=True
         assert((self.mexax_sta_test.fprob(**parameterlist)[1]==self.my_pend.fprob(**parameterlist)[1]).all())
         
-#fprob(nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag,[np,nv]):
+
