@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-
 #from distutils.core import setup, Extension
 import numpy as N
 import logging as L
@@ -22,8 +21,6 @@ import sys as S
 import os as O
 import os
 import shutil as SH
-from numpy.distutils.misc_util import Configuration
-from numpy.distutils.core import setup
 import ctypes.util
 try:
     from Cython.Distutils import build_ext
@@ -59,10 +56,14 @@ elif S.platform == 'win64':
 else:
     incdirs = '/usr/local/include'
     libdirs = '/usr/local/lib'
-    
+
 static_link_gcc = ["-static-libgcc"]
 static_link_gfortran = ["-static-libgfortran"]
+flag_32bit = ["-m32"]
 static = False
+force_32bit = False
+no_msvcr = False
+extra_c_flags = ''
 
 copy_args=S.argv[1:]
 
@@ -105,6 +106,17 @@ for x in S.argv[1:]:
             L.warning("No log-level defined for: "+level)
             num_level = 30
         L.basicConfig(level=num_level)
+        copy_args.remove(x)
+    if not x.find('--force-32bit'):
+        if x[14:].upper() == "TRUE":
+            force_32bit = True
+        copy_args.remove(x)
+    if not x.find('--no-msvcr'):
+        if x[11:].upper() == "TRUE":
+            no_msvcr = True
+        copy_args.remove(x)
+    if not x.find('--extra-c-flags'):
+        extra_c_flags = x[16:]
         copy_args.remove(x)
 
 def check_platform():
@@ -227,12 +239,21 @@ def pre_processing():
             except:
                 L.warning("Could not remove: "+str(dirDel))
 
+if no_msvcr:
+    # prevent the MSVCR* being added to the DLLs passed to the linker
+    def msvc_runtime_library_mod(): 
+        return None
+
+    import numpy.distutils
+    numpy.distutils.misc_util.msvc_runtime_library = msvc_runtime_library_mod
+
 def check_extensions():
+    extra_link_flags = []
     
     if static:
-        extra_link_flags = static_link_gcc
-    else:
-        extra_link_flags = [""]
+        extra_link_flags += static_link_gcc
+    if force_32bit:
+        extra_link_flags += flag_32bit
     
     #Cythonize main modules
     ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
@@ -270,7 +291,12 @@ def check_extensions():
             i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
         if check_platform() == "mac":
             i.extra_compile_args += ["-Wno-error=return-type"]
-
+        if force_32bit:
+            i.extra_compile_args += flag_32bit
+        if extra_c_flags:
+            flags = extra_c_flags.split(' ')
+            for f in flags:
+                i.extra_compile_args.append(f)
     
     #Sundials found
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -299,13 +325,19 @@ def check_extensions():
             ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
             ext_list[-1].include_dirs = [N.get_include(), SLUincdir, incdirs]
             ext_list[-1].library_dirs = [libdirs,SLUlibdir,BLASdir]
-            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",BLASname]
+            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",BLASname,'gfortran']
             if debug_flag:
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
             if check_platform() == "mac":
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
+            if force_32bit:
+                ext_list[-1].extra_compile_args += flag_32bit
+            if extra_c_flags:
+                flags = extra_c_flags.split(' ')
+                for f in flags:
+                    ext_list[-1].extra_compile_args.append(f)
                 
         else:
             #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
@@ -325,6 +357,12 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
             if check_platform() == "mac":
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
+            if force_32bit:
+                ext_list[-1].extra_compile_args += flag_32bit
+            if extra_c_flags:
+                flags = extra_c_flags.split(' ')
+                for f in flags:
+                    ext_list[i].extra_compile_args.append(f)
     
     for i in ext_list:
         if python3_flag:
@@ -390,24 +428,32 @@ def check_fortran_extensions():
     """
     Adds the Fortran extensions using Numpy's distutils extension.
     """
+    extra_link_flags = []
+    extra_compile_flags = []
     if static:
-        extra_link_flags = static_link_gfortran+static_link_gcc
-    else:
-        extra_link_flags = [""]
+        extra_link_flags += static_link_gfortran + static_link_gcc
+    if force_32bit:
+        extra_link_flags += flag_32bit
+        extra_compile_flags += flag_32bit
+    if extra_c_flags:
+        flags = extra_c_flags.split(' ')
+        for f in flags:
+            extra_compile_flags.append(f)
     
+    from numpy.distutils.misc_util import Configuration
     config = Configuration()
 
     config.add_extension('assimulo.lib.dopri5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                         ,extra_link_args=extra_link_flags[:])#include_dirs=[N.get_include()])
+                         ,extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])#include_dirs=[N.get_include()])
     
     config.add_extension('assimulo.lib.rodas',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
     
     config.add_extension('assimulo.lib.radau5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
 
     config.add_extension('assimulo.lib.radar5',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
@@ -417,7 +463,7 @@ def check_fortran_extensions():
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
 								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
     
     #ODEPACK
     config.add_extension('assimulo.lib.odepack',
@@ -426,7 +472,7 @@ def check_fortran_extensions():
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
                                   'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     
     #ODASSL
     odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
@@ -434,16 +480,20 @@ def check_fortran_extensions():
                   'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
     config.add_extension('assimulo.lib.odassl',
                          sources=[odassl_dir+file for file in odassl_files],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     
     #DASP3
+    dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
+    if force_32bit:
+        dasp3_f77_compile_flags += flag_32bit
+    
     if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
         dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
         dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
                        'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
         config.add_extension('assimulo.lib.dasp3dp',
                               sources=[dasp3_dir+file for file in dasp3_files],
-                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=["-fdefault-double-8","-fdefault-real-8"])
+                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     else:
         L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
     
@@ -471,7 +521,7 @@ def check_fortran_extensions():
     if lapack and blas:
         config.add_extension('assimulo.lib.glimda',
                          sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
@@ -555,7 +605,7 @@ else:# If it does not, check if the file exists and if not, create the file!
             f.write(VERSION+'\n')
             f.write("unknown")
 
-
+from numpy.distutils.core import setup
 setup(name=NAME,
       version=VERSION,
       license=LICENSE,
