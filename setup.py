@@ -443,45 +443,85 @@ def check_fortran_extensions():
     from numpy.distutils.misc_util import Configuration
     config = Configuration()
 
-    config.add_extension('assimulo.lib.dopri5',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                         ,extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])#include_dirs=[N.get_include()])
+    if force_32bit:
+        config.add_extension('assimulo.lib.dopri5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
+                             ,extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])#include_dirs=[N.get_include()])
+        
+        config.add_extension('assimulo.lib.rodas',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
+        
+        config.add_extension('assimulo.lib.radau5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
     
-    config.add_extension('assimulo.lib.rodas',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
+        config.add_extension('assimulo.lib.radar5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
+        
+        #ODEPACK
+        config.add_extension('assimulo.lib.odepack',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+        
+        #ODASSL
+        odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
+        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+        config.add_extension('assimulo.lib.odassl',
+                             sources=[odassl_dir+file for file in odassl_files],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+    else:
+        config.add_extension('assimulo.lib.dopri5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
+                             ,extra_link_args=extra_link_flags[:])#include_dirs=[N.get_include()])
+        
+        config.add_extension('assimulo.lib.rodas',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+        
+        config.add_extension('assimulo.lib.radau5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
     
-    config.add_extension('assimulo.lib.radau5',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
-
-    config.add_extension('assimulo.lib.radar5',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
-								  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
-                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
-    
-    #ODEPACK
-    config.add_extension('assimulo.lib.odepack',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
-                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
-                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
-                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
-                                  'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    
-    #ODASSL
-    odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
-    odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-    config.add_extension('assimulo.lib.odassl',
-                         sources=[odassl_dir+file for file in odassl_files],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    
+        config.add_extension('assimulo.lib.radar5',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
+        
+        #ODEPACK
+        config.add_extension('assimulo.lib.odepack',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
+                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+        
+        #ODASSL
+        odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
+        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+        config.add_extension('assimulo.lib.odassl',
+                             sources=[odassl_dir+file for file in odassl_files],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+        
     #DASP3
     dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
     if force_32bit:
@@ -496,6 +536,7 @@ def check_fortran_extensions():
                               include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     else:
         L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
+
     
     #GLIMDA
     #ADD liblapack and libblas
@@ -519,9 +560,15 @@ def check_fortran_extensions():
             blas = True
     
     if lapack and blas:
-        config.add_extension('assimulo.lib.glimda',
-                         sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                         include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+        if force_32bit:
+            config.add_extension('assimulo.lib.glimda',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+        else:
+            config.add_extension('assimulo.lib.glimda',
+                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
+                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
+
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
