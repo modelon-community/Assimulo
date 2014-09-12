@@ -15,7 +15,7 @@ python module mexax__user__routines
             double precision dimension(nv), intent(in) :: a
             double precision dimension(nl), intent(in) :: rlam
             integer dimension(50) :: infos
-            integer, intent(in) :: irtrn
+            integer, intent(out) :: irtrn
         end subroutine solout
         subroutine fprob(np, nv, nl, ng, nu, ldg, &
                                   t, p, v, u, rlam, &

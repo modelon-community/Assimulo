@@ -2,10 +2,25 @@ __author__ = 'najmeh'
 
 #ticket:346
 
+
 import numpy as np
+
+from assimulo.ode import *
+
+
+
+
+from scipy import *
+from assimulo.support import set_type_shape_array
 from assimulo.exception import *
 from assimulo.ode import *
 from assimulo.implicit_ode import MexaxDAE
+
+
+from assimulo.special_systems import Mechanical_System
+
+from assimulo.exception import *
+
 
 
 try:
@@ -32,10 +47,10 @@ class Mexax(MexaxDAE):
                             - The problem to be solved. Should be an instance
                               of the 'Explicit_Problem' class.
         """
-        Implicit_ODE.__init__(self, problem) #Calls the base class
+        MexaxDAE.__init__(self, problem) #Calls the base class
 
          #Default values
-        self.options["inith"]    = 0.0
+        self.options["inith"]    = 1.e-4
         self.options["maxh"]     = 0.0
         self.options["safe"]     = 0.9 #Safety factor
         self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
@@ -43,7 +58,7 @@ class Mexax(MexaxDAE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 5000
         self.options["maxord"]   = 0
-
+        
 
 
         # - Statistic values
@@ -63,20 +78,40 @@ class Mexax(MexaxDAE):
         self.supports["state_events"] = False
         
         self.problem_info["dim"]
-        
-    def check_instance(self):
-        if not isinstance(self.problem, MEXAX_Problem):
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of MEXAX_Problem.')
-
+   
 
     def initialize(self):
         #Reset statistics
         for k in self.statistics.keys():
             self.statistics[k] = 0
-
+            
+   
+    def _solout(self,t, p, v, u, a, rlam, infos, irtrn):   # <--- change pyf so that this becomes an out variable only
+        self._tlist.append(t)
+        y=vstack((p,v))
+        yd=vstack((v,a))
+        self._ylist.append(y.copy())   #  <---- return y and check if you want also a self.yd
+        self._ydlist.append(yd.copy())
+        return irtrn   #?? now istrn is output in pyf do we need it to be return?
     
-
-    def integrate(self, t, y, yprime, tf, opts):
+    
+              
+    def _denout(self,t, p,v,u,a, lam,indp,indv,indu,inda,indl,info):
+        
+        self._tlist.append(t)
+        self._ylist.append(self.p)  #  <---- return y and check if you want also a self.yd
+        y=vstack((p,v))
+        yd=vstack((v,a))
+        self._ylist.append(y.copy())   #  <---- return y and check if you want also a self.yd
+        self._ydlist.append(yd.copy())
+    
+        
+    def fswit(self,t,p,v,u,a,rlam,g=9.81):
+        raise Exception('fswit only in dummy mode')
+        
+    
+   
+    def integrate(self, t, y, yd, tfin):
                                                                             
         
         info = np.zeros((15,),np.int) 
@@ -92,18 +127,18 @@ class Mexax(MexaxDAE):
         atol = self.options["atol"]
         rtol = self.options["rtol"]
         itol = 1
-        tlist=[]
-        ylist=[]
-        ydlist=[]
         
         
+        self._tlist  = []
+        self._ylist  = []
+        self._ydlist = []
+    
         #Store the opts
         self._opts = opts
     
         # Provide the workspace
         # a) Compute the size of the workspace
-        np = self.problem.n_p
-        nv = np
+        np = nv = self.problem.n_p
         nu = 0
         nl = self.problem.n_la
         ny  = self.problem_info["dim"]  # should be np+nv+nu+nl
@@ -116,163 +151,31 @@ class Mexax(MexaxDAE):
         lo=(np+nv+nu+nv+nl)*156 if mxjob[31-1] else 0
         lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50+lo
         rwk=empty((lrwk,),dtype=float)
+        p=y[:np].copy()
+        v=y[np,np+nv].copy()
+        a=yd[nv,2*nv].copy()   #  <---------------- take this from  ydot
+        u=zeros((1,))
+        lam=y[np+nv,:].copy()
+        h=self.options["inith"]
         
+        [t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
+                                                 mexax.mexx(nl,ng,nu,self.fprob,t,tfin,                                            
+                                                     p,v,u,a,lam,
+                                                     itol,rtol,atol,
+                                                     h,mxjob,iwk,rwk,
+                                                     self.solout,self.denout,self.fswit,lrwk=lrwk,liwk=liwk)
         
-        
-        
-        
-        if opts["report_continuously"]:
-            idid = 1
-            while idid==1:
-
-
-
-
-                mexax.mexx(self.problem.np,self.problem.nv,
-                           self.n_la,
-                           ng,nu,self.problem.fprob,
-                           t,tfin,
-                           y[:self.np],y[self.np:self.nv+self.np],  # p,v
-                           u,a,   # ????
-                           y[self.nv+self.np:],    # lambda
-                           itol,rtol,atol,h,mxjob,ierr,liwk,iwk,lrwk,rwk,solout,denout,fswit)
-
-                #?
-                initialize_flag = self.report_solution(t, y, yprime, opts)
-                if initialize_flag:
-                    flag = ID_PY_EVENT
-                    break
-                if idid==2 or idid==3:
-                    flag=ID_PY_COMPLETE
-                elif idid < 0:
-                    raise MEXAX_Exception("MEXAX failed with flag IDID {IDID}".format(IDID=idid))
-        else:   
-            if normal_mode == 1: # intermediate output mode
-                idid = 1
-                while idid==1:
-                    t,y,yprime,tf,info,idid,rwork,iwork = \
-                       mexax.mexax(callback_prob,neq,ny,t,y,yprime,
-                             tf,info,rtol,atol,rwork,iwork,jac_dummy)
-                    
-                    tlist.append(t)
-                    ylist.append(y.copy())
-                    ydlist.append(yprime.copy())
-                    if idid==2 or idid==3:
-                        flag=ID_PY_COMPLETE
-                    elif idid < 0:
-                        raise MEXAX_Exception("MEXAX  failed with flag IDID {IDID}".format(IDID=idid))
-                    
-            else:   # mode with output_list          
-                output_list  = opts["output_list"]
-                for tout in output_list: 
-                    t,y,yprime,tout,info,idid,rwork,iwork = \
-                      mexax.mexax(callback_prob,neq,ny,t,y,yprime, \
-                             tout,info,rtol,atol,rwork,iwork,jac_dummy)
-                    tlist.append(t)
-                    ylist.append(y.copy())
-                    ydlist.append(yprime.copy())
-                    if idid > 0 and t >= tf:
-                        flag=ID_PY_COMPLETE
-                    elif idid < 0:
-                        raise MEXAX_Exception("MEXAX  failed with flag IDID {IDID}".format(IDID=idid))                                      
- 
         
         
         #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[10]
-        self.statistics["nfcn"]        += iwork[11]
-        self.statistics["njac"]        += iwork[12]
-        self.statistics["errfail"]     += iwork[13]
-        self.statistics["convfail"]         += iwork[14]
-        
-        return flag, tlist, ylist, ydlist
-        
-    def print_statistics(self, verbose=NORMAL):
-        """
-        Prints the run-time statistics for the problem.
-        """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
-        
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]), verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]), verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]), verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]), verbose)
-        self.log_message(' Number of Convergence Test Failures      : '+ str(self.statistics["convfail"]), verbose)
-        
-        self.log_message('\nSolver options:\n', verbose)
-        self.log_message(' Solver                  : mexax ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+
+        self.statistics["nsteps"]        += mxjob[51-1]
+        self.statistics["nfcn"]          += mxjob[55-1]
+        self.statistics["errfail"]       += mxjob[73-1]
+        self.statistics["nlu"]           += mxjob[58-1]
 
 
-
-    
-    
-    
-    
-    
-       
-        
-
-        tresult=[]
-        yresult=[]
-        hresult=[]
-        flag=[]
-        #opts["output_list"]=0
-        print opts
-        output_index = opts["output_index"]
-        output_list  = opts["output_list"][output_index:]   #[0.,1.,2.,3.,4.]
-
-        kflag = 0#ID_PY_COMPLETE
-
-        for tout in output_list:
-            output_index += 1
-            print tout
-
-            result=mexax.mexax(self.f,t,y.copy(),tout, self.atol , self.options["maxh"] ,self.options["inith"],kflag)
-            y=result[1]
-            t=result[0]
-            H=result[2]
-            flag=result[3]
-            tresult.append(t)
-            hresult.append(H)
-            yresult.append(y)
-
-            #opts["output_index"] = output_index
-
-
-            #Retrieving statistics
-
-            self.statistics["nsteps"]        += mexax.statp.nstep
-            self.statistics["nfcn"]          += mexax.statp.nfcn
-            self.statistics["errfail"]       += mexax.statp.nrejct
-            self.statistics["nlu"]           += mexax.statp.ndec
-
-
-
-        return flag, tresult, yresult
-
-
-    ##############
-
-        #Checking return
-        if flag == 1:
-            flag = ID_PY_COMPLETE
-        elif flag == 2:
-            flag = ID_PY_EVENT
-        else:
-            raise Exception("mexax failed with flag %d"%flag)
-
-        #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
-
-        return flag, self._tlist, self._ylist
+        return mxjob
 
     def state_event_info(self):
         return self._event_info

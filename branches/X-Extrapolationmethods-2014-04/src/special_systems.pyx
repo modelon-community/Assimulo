@@ -227,6 +227,7 @@ cdef class cMechanical_System:
             problem.neq=neq
         elif index in ('oproj2'):
             algvar=len(y0)*[1]
+            print index
             problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.n_la, self.t0, self.sw0)
         else:
             problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
