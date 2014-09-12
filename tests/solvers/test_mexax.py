@@ -18,13 +18,13 @@
 import nose
 import inspect
 from assimulo import testattr
-from assimulo.solvers.sundials import *
 from assimulo.special_systems import Mechanical_System
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
 from assimulo.lib import mexax
 from scipy import *
 from assimulo.tests.solvers import test_mexax_standalone
+import unittest
 
 
 
@@ -81,7 +81,10 @@ class Test_MEXAX:
         self.my_pend.fprob(**parameterlist)
         assert((self.mexax_sta_test.fprob(**parameterlist)[0]==self.my_pend.fprob(**parameterlist)[0]).all())
         qflag[0]=False
-        qflag[1]=True
-        assert((self.mexax_sta_test.fprob(**parameterlist)[1]==self.my_pend.fprob(**parameterlist)[1]).all())
+        qflag[3]=True
+        assert((self.mexax_sta_test.fprob(**parameterlist)[3]==self.my_pend.fprob(**parameterlist)[3]).all())
+        qflag[3]=False
+        assertRaises()
+        qflag[2]=True
         
 

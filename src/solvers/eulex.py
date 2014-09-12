@@ -34,10 +34,10 @@ class Eulex(Explicit_ODE):
         
         #Default values
         self.options["atol"]     = 1.e-4       #1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
-        self.options["rtol"]     = 1.0e-6 #Relative tolerance
+        self.options["rtol"]     = 1.0e-12      #Relative tolerance
         self.options["usejac"]   = False
-        self.options["maxsteps"] = 1.    #100000
-        self.options["maxh"]     = 0.    #N.inf #Maximum step-size.
+        self.options["maxsteps"] = 100000
+        self.options["maxh"]     = N.inf       #Maximum step-size.
         self.options["maxordn"] = 12
         self.options["maxords"] =  5
         self.options["hmax"] = 0.
@@ -150,7 +150,7 @@ class Eulex(Explicit_ODE):
         hresult=[]
         flag=[]
         #opts["output_list"]=0
-        print opts
+        #print opts
         output_index = opts["output_index"]
         output_list  = opts["output_list"][output_index:]   #[0.,1.,2.,3.,4.]
             
@@ -160,7 +160,7 @@ class Eulex(Explicit_ODE):
             output_index += 1
             print tout
        
-            result=eulex.eulex(self.f,t,y.copy(),tout, self.atol , self.options["maxh"] ,self.options["inith"],kflag)
+            result=eulex.eulex(self.f,t,y.copy(),tout, self.options["rtol"] , self.options["maxh"] ,self.options["inith"],kflag)
             y=result[1]
             t=result[0]
             H=result[2]
@@ -174,12 +174,12 @@ class Eulex(Explicit_ODE):
         
             #Retrieving statistics
             
-            self.statistics["nsteps"]        += eulex.statp.nstep
+            self.statistics["nsteps"]        += eulex.statp.nstep #Number of Integration Steps
             self.statistics["nfcn"]          += eulex.statp.nfcn
-            self.statistics["errfail"]       += eulex.statp.nrejct 
+            self.statistics["errfail"]       += eulex.statp.nrejct #Number of Steps Rejected
             self.statistics["nlu"]           += eulex.statp.ndec
-             
-            
+	    
+  
             
         return flag, tresult, yresult
         
@@ -193,7 +193,7 @@ class Eulex(Explicit_ODE):
             flag = ID_PY_EVENT
         else:
             raise Exception("eulex failed with flag %d"%flag)
-        
+        '''
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
         self.statistics["nfcn"]        += iwork[13]
@@ -201,7 +201,7 @@ class Eulex(Explicit_ODE):
         self.statistics["nstepstotal"] += iwork[15]
         self.statistics["errfail"]     += iwork[17]
         self.statistics["nlu"]         += iwork[18]
-        
+        '''
         return flag, self._tlist, self._ylist
         
     def state_event_info(self):
@@ -218,7 +218,7 @@ class Eulex(Explicit_ODE):
         
         self.log_message(' Number of steps                          : '+ str(self.statistics["nsteps"]),          verbose)               
         self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
+        #self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
         if self.problem_info["state_events"]:
@@ -227,7 +227,7 @@ class Eulex(Explicit_ODE):
         
         self.log_message('\nSolver options:\n',                                      verbose)
         self.log_message(' Solver                  : eulex ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
+        #self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
         

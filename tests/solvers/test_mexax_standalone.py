@@ -119,7 +119,7 @@ class Test_Mexax_Standalone(object):
 
 if __name__ == '__main__':
     mexax_test=Mexaxpendulum(2,gr=13.750371636040738)
-    mexax_test.mxjob[11-1]=2
+    mexax_test.mxjob[11-1]=2   # =2 for additionally information on MEXX
     mexax_test.mxjob[30-1]=0   # for step output
     mexax_test.mxjob[31-1]=1
     mexax_test.mxjob[32-1]=1000  # number of dense output points
