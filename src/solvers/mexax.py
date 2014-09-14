@@ -161,10 +161,10 @@ class Mexax(MexaxDAE):
         self.statistics["nfcn"]          += mxjob[55-1]
         self.statistics["errfail"]       += mxjob[73-1]
         self.statistics["nlu"]           += mxjob[58-1]
-
-
-        return mxjob,self._tlist, self._ylist, self._ydlist
-
+        print 'here ...',mxjob[0],self._tlist, self._ylist, self._ydlist
+        print 'leave integrate'
+        return mxjob[0],self._tlist, self._ylist, self._ydlist
+ 
     def state_event_info(self):
         return self._event_info
 

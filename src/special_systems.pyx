@@ -104,7 +104,6 @@ cdef class cMechanical_System:
             fprob(nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag)
             """
             ifail=0
-            print qflag
             if qflag[0]:
                 mass=self.mass_matrix(t,p)
             if qflag[1] or qflag[2]:
