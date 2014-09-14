@@ -205,7 +205,6 @@ cdef class Implicit_ODE(ODE):
                 self.clock_start = clock()
                 
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
-
             #Store data if not done in report_solution
             if REPORT_CONTINUOUSLY is False:
                 self.t, self.y, self.yd = tlist[-1], ylist[-1].copy(), ydlist[-1].copy()
