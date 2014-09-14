@@ -112,7 +112,7 @@ class Test_Mexax_Standalone(object):
     def test_solout_plot(self):
         self.mexax_test.mxjob[29]=1
         self.mexax_test.simulate(0.,10.)
-        plot(self.tlist,self.y)
+        plot(self.mexax_test.tlist,self.mexax_test.ylist)
      
         #self.mexax_test.solout=...
         #self.mxjob[29]= 1

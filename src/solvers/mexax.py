@@ -1,25 +1,13 @@
 __author__ = 'najmeh'
 
 #ticket:346
-
-
-import numpy as np
-
-from assimulo.ode import *
-
-
-
-
 from scipy import *
 from assimulo.support import set_type_shape_array
 from assimulo.exception import *
 from assimulo.ode import *
 from assimulo.implicit_ode import MexaxDAE
-
-
 from assimulo.special_systems import Mechanical_System
 
-from assimulo.exception import *
 
 
 
@@ -28,7 +16,6 @@ try:
 except ImportError:
     print "Could not find extrapolation pack functions"
 
-# cd -;sudo python setup.py install;cd -;ipython
 
 
 class Mexax(MexaxDAE):
@@ -53,7 +40,7 @@ class Mexax(MexaxDAE):
         self.options["inith"]    = 1.e-4
         self.options["maxh"]     = 0.0
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 5000
@@ -86,23 +73,23 @@ class Mexax(MexaxDAE):
             self.statistics[k] = 0
             
    
-    def _solout(self,t, p, v, u, a, rlam, infos, irtrn):   # <--- change pyf so that this becomes an out variable only
+    def solout(self,t, p, v, u, a, rlam, infos, irtrn):   
         self._tlist.append(t)
         y=vstack((p,v))
         yd=vstack((v,a))
-        self._ylist.append(y.copy())   #  <---- return y and check if you want also a self.yd
+        self._ylist.append(y.copy())   
         self._ydlist.append(yd.copy())
-        return irtrn   #?? now istrn is output in pyf do we need it to be return?
+        return irtrn  
     
     
               
-    def _denout(self,t, p,v,u,a, lam,indp,indv,indu,inda,indl,info):
+    def denout(self,t, p,v,u,a, lam,indp,indv,indu,inda,indl,info):
         
         self._tlist.append(t)
-        self._ylist.append(self.p)  #  <---- return y and check if you want also a self.yd
+        self._ylist.append(self.p)  
         y=vstack((p,v))
         yd=vstack((v,a))
-        self._ylist.append(y.copy())   #  <---- return y and check if you want also a self.yd
+        self._ylist.append(y.copy())   
         self._ydlist.append(yd.copy())
     
         
@@ -111,13 +98,13 @@ class Mexax(MexaxDAE):
         
     
    
-    def integrate(self, t, y, yd, tfin):
+    def integrate(self, t, y, yd, tfin, opts):
                                                                             
         
-        info = np.zeros((15,),np.int) 
+        info = zeros((15,),int) 
         info[1] = 1  # Tolerances are vectors
         # set mxjob control parameters  
-        mxjob=zeros((150,),np.int)
+        mxjob=zeros((150,),int)
         normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
         mxjob[30-1] = 1 if normal_mode == 0 else 0
         mxjob[31-1] = 1 if normal_mode else 0
@@ -138,8 +125,8 @@ class Mexax(MexaxDAE):
     
         # Provide the workspace
         # a) Compute the size of the workspace
-        np = nv = self.problem.n_p
-        nu = 0
+        np = nv = self.problem.np
+        nu = ng = 0
         nl = self.problem.n_la
         ny  = self.problem_info["dim"]  # should be np+nv+nu+nl
         if np+nv+nu+nl != ny:
@@ -152,14 +139,15 @@ class Mexax(MexaxDAE):
         lrwk=(nv+nl)**2+np*(ngl+18)+nv*(nv+45)+28*nl+max(ng,1)+18*max(nu,1)+50+lo
         rwk=empty((lrwk,),dtype=float)
         p=y[:np].copy()
-        v=y[np,np+nv].copy()
-        a=yd[nv,2*nv].copy()   #  <---------------- take this from  ydot
+        v=y[np:np+nv].copy()
+        a=yd[nv:2*nv].copy()   #  <---------------- take this from  ydot
         u=zeros((1,))
-        lam=y[np+nv,:].copy()
+        lam=y[np+nv:].copy()
         h=self.options["inith"]
-        
+    
         [t, p, v, u, a, lam, h, mxjob, ierr, iwk, rwk]= \
-                                                 mexax.mexx(nl,ng,nu,self.fprob,t,tfin,                                            
+                                                 mexax.mexx(nl,ng,nu,self.problem.fprob,
+                                                     t,tfin,                                            
                                                      p,v,u,a,lam,
                                                      itol,rtol,atol,
                                                      h,mxjob,iwk,rwk,

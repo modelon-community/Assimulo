@@ -122,9 +122,25 @@ cdef class cMEXAX_Problem(cProblem):
         self.np = (ny-n_la)/2
         self.nv = self.np
         self.nu = 0  # should be changed later to allow even other suported features of MEXAX.
-    def handle_result(self): # Najmeh knows how.
-           pass
-
+        if yd0!=None:
+            self.yd0 = set_type_shape_array(yd0)
+    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+        """
+        Method for specifying how the result is to be handled. As default the
+        data is stored in three vectors: solver.(t/y/yd).
+        """
+        cdef int i = 0
+        
+        solver.t_sol.extend([t])
+        solver.y_sol.extend([y])
+        solver.yd_sol.extend([yd])
+        
+    cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+        try:
+            res[:] = self.res(t,y,yd)
+        except:
+            return ID_FAIL
+        return ID_OK
         
 cdef class cOverdetermined_Problem(cProblem):
     

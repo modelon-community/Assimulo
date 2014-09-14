@@ -97,6 +97,7 @@ cdef class cMechanical_System:
         """
         This method constructs a problem function for the MEXAX_Problem class
         :return:  fprob
+                 (nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag,[np,nv])
         """
         def fprob(nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
             ifail=0
@@ -227,7 +228,6 @@ cdef class cMechanical_System:
             problem.neq=neq
         elif index in ('oproj2'):
             algvar=len(y0)*[1]
-            print index
             problem=ap.MEXAX_Problem(self.make_fprob(), y0, yd0, self.n_la, self.t0, self.sw0)
         else:
             problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)

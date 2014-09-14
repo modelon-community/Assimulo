@@ -7,7 +7,6 @@ from scipy import *
 from  matplotlib.pyplot import *
 
 from assimulo.special_systems import Mechanical_System
-#from assimulo.problem import MEXAX_Problem #? 
 from assimulo.exception import *
 from assimulo.solvers import Mexax
 
