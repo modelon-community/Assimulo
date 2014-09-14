@@ -99,8 +99,12 @@ cdef class cMechanical_System:
         :return:  fprob
                  (nl,ng,nu,t,p,v,u,rlam,am,gp,f,pdot,udot,g,gi,fl,qflag,[np,nv])
         """
-        def fprob(nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
+        def fprob(inst,nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag):
+            """
+            fprob(nl,ng,nu,t,p,v,u,lam,mass,gp,f,pdot,udot,g,gi,fl,qflag)
+            """
             ifail=0
+            print qflag
             if qflag[0]:
                 mass=self.mass_matrix(t,p)
             if qflag[1] or qflag[2]:

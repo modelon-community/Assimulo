@@ -21,8 +21,8 @@ python module mexax__user__routines
                                   t, p, v, u, rlam, &
                                   am, gp, f, pdot, udot, g, gi, fl, &
                                   qflag, ifail) 
-            integer, intent(in) :: np
-            integer, intent(in) :: nv
+            integer, intent(in,hide) :: np
+            integer, intent(in,hide) :: nv
             integer, intent(in) :: nl
             integer, intent(in) :: ng
             integer, intent(in) :: nu
