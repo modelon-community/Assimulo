@@ -17,6 +17,7 @@
 
 import numpy as N
 cimport numpy as N
+import types
 
 from assimulo.support import set_type_shape_array
 
@@ -113,7 +114,7 @@ cdef class cMEXAX_Problem(cProblem):
     def __init__(self, object fprob=None, y0=None, yd0=None, n_la=0, double t0=0.0, 
                                                           p0=None, sw0=None, name=None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
-        self.fprob=fprob
+        self.fprob=types.MethodType(fprob, self)
         self.ny = ny =len(y0)
         self.n_la = n_la
         if (self.ny-n_la)%2 !=0:
@@ -148,7 +149,7 @@ cdef class cOverdetermined_Problem(cProblem):
                                                           p0=None, sw0=None, name=None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
         if res != None:
-            self.res = res
+            self.res=types.MethodType(res, self)
         if yd0!=None:
             self.yd0 = set_type_shape_array(yd0)
         

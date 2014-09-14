@@ -16,18 +16,18 @@ def pendulum():
         n_p=2
         n_la=1
         def forces(t, p, v):
-            return N.array([0.,-g])
+            return array([0.,-g])
         def GT(p):
-            return N.array([p[0],p[1]]).reshape((2,1))
+            return array([p[0],p[1]]).reshape((2,1))
         def constr3(t,y):
             p=y[0:2]
-            return N.array([p[0]**2+p[1]**2-1.])
+            return array([p[0]**2+p[1]**2-1.])
         def constr2(t,y):
             p,v=y[0:2],y[2:4]
-            return N.array([p[0]*v[0]+p[1]*v[1]])
+            return array([p[0]*v[0]+p[1]*v[1]])
         def constr1(t,y):
             p,v,la=y[0:2],y[2:4],y[4:5]
-            return N.array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
+            return array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
         def mass_matrix(t,p):
             return eye(2)
         return Mechanical_System(n_p, forces, n_la,

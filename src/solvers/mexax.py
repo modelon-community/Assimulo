@@ -163,7 +163,7 @@ class Mexax(MexaxDAE):
         self.statistics["nlu"]           += mxjob[58-1]
 
 
-        return mxjob
+        return mxjob,self._tlist, self._ylist, self._ydlist
 
     def state_event_info(self):
         return self._event_info
