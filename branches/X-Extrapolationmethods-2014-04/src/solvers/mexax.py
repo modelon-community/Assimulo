@@ -73,10 +73,11 @@ class Mexax(MexaxDAE):
             self.statistics[k] = 0
             
    
-    def solout(self,t, p, v, u, a, rlam, infos, irtrn):   
+    def solout(self,t, p, v, u, a, rlam, infos):
+        irtrn=0   
         self._tlist.append(t)
-        y=vstack((p,v))
-        yd=vstack((v,a))
+        y=concatenate((p,v,rlam))
+        yd=concatenate((v,a,zeros(len(rlam))))
         self._ylist.append(y.copy())   
         self._ydlist.append(yd.copy())
         return irtrn  
@@ -161,8 +162,6 @@ class Mexax(MexaxDAE):
         self.statistics["nfcn"]          += mxjob[55-1]
         self.statistics["errfail"]       += mxjob[73-1]
         self.statistics["nlu"]           += mxjob[58-1]
-        print 'here ...',mxjob[0],self._tlist, self._ylist, self._ydlist
-        print 'leave integrate'
         return mxjob[0],self._tlist, self._ylist, self._ydlist
  
     def state_event_info(self):
@@ -187,7 +186,7 @@ class Mexax(MexaxDAE):
             self.log_message(' Number of State-Events                   : '+ str(self.statistics["nstateevents"]),   verbose)
 
         self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : mexax ' + self._type,          verbose)
+        self.log_message(' Solver                  : mexax ' ,          verbose)
         self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)

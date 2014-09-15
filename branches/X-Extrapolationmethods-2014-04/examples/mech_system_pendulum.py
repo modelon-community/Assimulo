@@ -21,7 +21,8 @@ import assimulo.problem as ap
 import assimulo.special_systems as ass
 import numpy as N
 import scipy.linalg as sl
-from assimulo.solvers import IDA, ODASSL
+from assimulo.solvers import IDA, ODASSL, Mexax
+from pylab import figure
 
 
 def pendulum():
@@ -56,12 +57,22 @@ def run_example(index, with_plots=True, with_test=False):
     my_pend_sys=pendulum()
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index = {}'.format(index)
-    dae_pend = IDA(my_pend) if index not in ('ovstab2','ovstab1') else ODASSL(my_pend)
+    if index in ('ind1','ind2','ind3','ggl2'):
+        dae_pend = IDA(my_pend)  
+    elif index in ('ovstab2','ovstab1'):
+        dae_pend = ODASSL(my_pend) 
+    elif index in ('oproj2') :
+        dae_pend = Mexax(my_pend) 
+    else:
+        raise Exception('No method for index {}'.format(index))
     dae_pend.atol=1.e-6
     dae_pend.rtol=1.e-6
     dae_pend.suppress_alg=True  
     t,y,yd=dae_pend.simulate(10.,100)   
-    final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
+    if index != 'oproj2':
+        final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
+    else:
+        final_residual=N.array([0.])   
     print(my_pend.name+"  Residuals after the integration run\n")
     print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
@@ -71,7 +82,7 @@ def run_example(index, with_plots=True, with_test=False):
     return my_pend, dae_pend
         
 if __name__=='__main__':
-    index_values=['ind1','ind2','ind3','ggl2','ovstab2','ovstab1']
+    index_values=['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2']
     sim={}
     mod={}
     for ind in index_values:

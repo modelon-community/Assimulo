@@ -49,7 +49,8 @@ def run_example(index, with_plots=True, with_test=False):
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index = {}'.format(index)
     mexax_pend=Mexax(my_pend)    
-    mexax_pend.simulate(10.,100)   
+    mexax_pend.simulate(10.,100)  
+    mexax_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0])  
     return my_pend, mexax_pend
         
 if __name__=='__main__':
