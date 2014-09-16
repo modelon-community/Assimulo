@@ -73,6 +73,7 @@ def run_example(index, with_plots=True, with_test=False):
         final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
     else:
         final_residual=N.array([0.])   
+        #print'y is {}'.format(dae_pend.y)
     print(my_pend.name+"  Residuals after the integration run\n")
     print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
