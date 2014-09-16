@@ -109,7 +109,8 @@ class Mexax(MexaxDAE):
         normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
         mxjob[30-1] = 1 if normal_mode == 0 else 0
         mxjob[31-1] = 1 if normal_mode else 0
-        mxjob[32-1] = len(opts["output_list"])
+        mxjob[32-1] = len(opts["output_list"]) if opts["output_list"] != None else 0
+        print opts["output_list"]
                             
                                
         atol = self.options["atol"]

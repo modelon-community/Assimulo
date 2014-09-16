@@ -122,11 +122,6 @@ cdef class cMechanical_System:
                 raise Exception('feature using fl in MEXAX not provided')
             return  mass,gp,f,pdot,udot,g,gi,ifail
             
-        def res(t,y,yd):
-            p,pd=y[0:n_p], yd[0:n_p]
-            v,vd=y[n_p:n_v], yd[n_p:n_v]
-            Mvd = N.dot(M(t,y),vd) if M != None else vd
-            return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
 
         return fprob
 

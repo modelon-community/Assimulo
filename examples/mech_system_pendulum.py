@@ -56,7 +56,7 @@ def pendulum():
 def run_example(index, with_plots=True, with_test=False):
     my_pend_sys=pendulum()
     my_pend=my_pend_sys.generate_problem(index)
-    my_pend.name='Index = {}'.format(index)
+    my_pend.name='Index {} System'.format(index)
     if index in ('ind1','ind2','ind3','ggl2'):
         dae_pend = IDA(my_pend)  
     elif index in ('ovstab2','ovstab1'):
@@ -68,13 +68,22 @@ def run_example(index, with_plots=True, with_test=False):
     dae_pend.atol=1.e-6
     dae_pend.rtol=1.e-6
     dae_pend.suppress_alg=True  
-    t,y,yd=dae_pend.simulate(10.,100)   
+    t,y,yd=dae_pend.simulate(10.,1)   
     if index != 'oproj2':
         final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
+        whichres='All'
     else:
-        final_residual=N.array([0.])   
-        #print'y is {}'.format(dae_pend.y)
-    print(my_pend.name+"  Residuals after the integration run\n")
+        qflag=9*[0]
+        qflag[6]=1
+        parameterlist={'nl':my_pend.n_la,'ng':0,'nu':0,'t':dae_pend.t,
+                                  'p':dae_pend.y[:2],'v':dae_pend.y[2:4],'u':N.array([0.]),
+                                  'lam':dae_pend.y[4],'mass':N.empty((2,2)),'gp':N.empty((1,2)),
+                                  'f':N.empty((2,)),'pdot':dae_pend.yd[:2],'udot':N.empty((1,)),
+                                  'g':N.empty((1,)),'gi':N.empty((1,)),'fl':N.empty((1,)),
+                                  'qflag':qflag}
+        final_residual=my_pend.fprob(**parameterlist)[5]      # only position residual
+        whichres='Position'
+    print(my_pend.name+" {} residuals after the integration run\n".format(whichres))
     print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
         assert(sl.norm(final_residual) < 1.5e-2)
@@ -83,7 +92,7 @@ def run_example(index, with_plots=True, with_test=False):
     return my_pend, dae_pend
         
 if __name__=='__main__':
-    index_values=['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2']
+    index_values=[['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2'][-1]]
     sim={}
     mod={}
     for ind in index_values:
