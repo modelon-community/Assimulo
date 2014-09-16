@@ -48,12 +48,35 @@ def run_example(index, with_plots=True, with_test=False):
     my_pend_sys=pendulum()
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index = {}'.format(index)
-    mexax_pend=Mexax(my_pend)    
+    mexax_pend=Mexax(my_pend) 
+    my_pend.atol=1.e-12
+    my_pend.rtol=1.e-12  
     mexax_pend.simulate(10.,100)  
+    print'y is {} and y0 {}'.format(mexax_pend.y,mexax_pend.y0)
+    print 'final_residual={}'.format(my_pend.res(0.,mexax_pend.y,mexax_pend.yd))
     mexax_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0])  
     return my_pend, mexax_pend
         
 if __name__=='__main__':
     index='oproj2'
     results=run_example(index)
-    
+    '''
+    my_pend_sys=pendulum()
+    my_pend=my_pend_sys.generate_problem(index)
+    my_pend.name='Index = {}'.format(index)
+    mexax_pend=Mexax(my_pend) 
+    qflag=9*[False]
+    parameterlist={'nl':1,'ng':0,'nu':0,'t':0.,
+                                  'p':array([0.,1.]),'v':array([0.,0.]),'u':array([0.]),
+                                  'lam':array([0.]),'mass':empty((2,2)),'gp':empty((1,2)),
+                                  'f':empty((2,)),'pdot':empty((2,)),'udot':empty((1,)),
+                                  'g':empty((1,)),'gi':empty((1,)),'fl':empty((1,)),
+                                  'qflag':qflag}
+                                  
+    my_pend.fprob(**parameterlist)[0]                              
+    '''
+
+
+
+
+
