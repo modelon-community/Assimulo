@@ -28,6 +28,7 @@ from assimulo.exception import *
 
 from assimulo.explicit_ode cimport Explicit_ODE 
 from assimulo.implicit_ode cimport Implicit_ODE
+from assimulo.support import set_type_shape_array
 
 cimport sundials_includes as SUNDIALS
 
@@ -873,7 +874,8 @@ cdef class IDA(Implicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        #self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
@@ -2141,7 +2143,8 @@ cdef class CVode(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        #self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)

@@ -1057,6 +1057,9 @@ class Test_Sundials:
             assert self.simulators[i].atol == 1.0
             self.simulators[i].atol = 1001.0
             assert self.simulators[i].atol == 1001.0
+            self.simulators[i].atol = [N.array([1e-5])]
+            assert len(self.simulators[i].atol.shape) == 1
+            assert self.simulators[i].atol == 1e-5
             """
             self.simulators[i].Integrator.dim = 3
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, [1.0, 1.0])
