@@ -16,7 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #sudo python setup.py install
-
+from  __future__  import division
+from  scipy       import *
+from  matplotlib.pyplot import *
+import math
 import numpy as N
 import pylab as P
 import nose
@@ -38,46 +41,36 @@ def run_example(with_plots=True):
        - :dfn:`exp_sim`    solver instance
        
     """
-
-    
         
     #Defines the rhs
     def f(t,y):
-        ydot = -y[0]
-        return N.array([ydot])
+        l=1.0
+        g=9.81
+        yd_0=y[1]
+        yd_1=-g/l*sin(y[0]) 
+        
+        return N.array([yd_0,yd_1])
 
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulex Test Example: $\dot y = - y$')
+    exp_mod = Explicit_Problem(f, y0=N.array([1.0,1.0]), name = 'Eulex Test Example: $\dot y = - y$')
     #Define an explicit solver
     exp_sim = Eulex(exp_mod) #Create an eulex solver
     
     #Sets the parameters
     exp_sim.rtol = 1e-4 #Default 1e-6
+    
     #Simulate
-    t1, y1 = exp_sim.simulate(5,100) #Simulate 5 seconds
-    
-    
-    Explicit_Problem.reset
-    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulex Test Example: $\dot y = - y$')
-    #Define an explicit solver
-    exp_sim = Eulex(exp_mod) #Create an eulex solver
-    
-    
-    exp_sim.rtol = 1e-6 #Default 1e-6
-    #Simulate
-    t2, y2 = exp_sim.simulate(5,100) #Simulate 5 seconds
-    #print exp_sim.statistics["nfcn"]
+    t, y = exp_sim.simulate(10,100) #Simulate 5 seconds
+    print exp_sim.statistics["nfcn"]
     #Basic test
     #nose.tools.assert_almost_equal(y2[-1], 0.00347746, 5)
     #nose.tools.assert_almost_equal(exp_sim.get_last_step(), 0.0222169642893, 3)
     
     #Plot
     if with_plots:
-        P.figure(1)
-        P.plot(t1, y1, color="b")
-        P.figure(2)
-        P.plot(t2, y2, color="r")
+        P.plot(t, y, color="b")
+        #P.plot(t2, y2, color="r")
         P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')
