@@ -809,6 +809,33 @@ class RungeKutta4(Explicit_ODE):
             self.solver_iterator = self._iter(t,y,tf)
 
         return self.solver_iterator.next()
+
+    
+    def _set_rtol(self, rtol):
+        try:
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.options["rtol"] = rtol
+            
+    def _get_rtol(self):
+        """
+        The relative tolerance to be used in the integration.
+        
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        return self.options["rtol"]
+    
+    rtol = property(_get_rtol, _set_rtol)
+    
+
     
     def integrate(self, t, y, tf, opts):
         """

@@ -65,8 +65,8 @@ def run_example(index, with_plots=True, with_test=False):
         dae_pend = Mexax(my_pend) 
     else:
         raise Exception('No method for index {}'.format(index))
-    dae_pend.atol=1.e-6
-    dae_pend.rtol=1.e-6
+    dae_pend.atol=1.e-4
+    dae_pend.rtol=1.e-4
     dae_pend.suppress_alg=True  
     t,y,yd=dae_pend.simulate(10.,1)   
     if index != 'oproj2':
@@ -92,7 +92,7 @@ def run_example(index, with_plots=True, with_test=False):
     return my_pend, dae_pend
         
 if __name__=='__main__':
-    index_values=[['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2'][-1]]
+    index_values=[['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2'][1]]
     sim={}
     mod={}
     for ind in index_values:

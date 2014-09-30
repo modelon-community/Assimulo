@@ -543,6 +543,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         # - Statistic values
         self.statistics["nstateevents"] = 0 #Number of state events
         self.statistics["ngevals"]      = 0 #Root evaluations
+        
     
     def set_problem_data(self): 
         if self.problem_info["state_events"]: 
@@ -568,6 +569,31 @@ cdef class ExplicitEuler(Explicit_ODE):
             h = min(h, abs(tf-t))
             t, y = self._step(t,y,h)
             return ID_COMPLETE, t, y
+            
+    def _set_rtol(self, rtol):
+        try:
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.options["rtol"] = rtol
+            
+    def _get_rtol(self):
+        """
+        The relative tolerance to be used in the integration.
+        
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        return self.options["rtol"]
+    
+    rtol = property(_get_rtol, _set_rtol)
+    
     
     cpdef integrate(self, double t,N.ndarray y,double tf, dict opts):
         cdef double h

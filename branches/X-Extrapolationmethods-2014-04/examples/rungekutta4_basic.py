@@ -45,7 +45,7 @@ def run_example(with_plots=True):
               name = 'RK4 Example: $\dot y = - y$')
     
     exp_sim = RungeKutta4(exp_mod) #Create a RungeKutta4 solver
-    
+    exp_sim.rtol = 1e-7
     #Simulate
     t, y = exp_sim.simulate(5, 100) #Simulate 5 seconds
     
