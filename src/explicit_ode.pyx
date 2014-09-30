@@ -58,6 +58,64 @@ cdef class Explicit_ODE(ODE):
         
         self.t = self.t0
         self.y = self.y0.copy()
+        
+        
+        
+    def _set_atol(self,atol):
+        
+        self.options["atol"] = set_type_shape_array(atol) 
+        if len(self.options["atol"]) == 1:
+            self.options["atol"] = self.options["atol"]*N.ones(len(self.y))
+        elif len(self.options["atol"]) != len(self.y):
+            raise ODASSL_Exception("atol must be of length one or same as the dimension of the problem.")
+
+    def _get_atol(self):
+        """
+        Defines the absolute tolerance(s) that is to be used by the solver.
+        Can be set differently for each variable.
+        
+            Parameters::
+            
+                atol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float or a numpy vector
+                          of floats.
+                        
+                            Example:
+                                atol = [1.0e-4, 1.0e-6]
+        """
+        return self.options["atol"]
+    
+    atol=property(_get_atol,_set_atol)
+    
+    def _set_rtol(self,rtol):
+        self.options["rtol"] = set_type_shape_array(rtol) 
+        if len(self.options["rtol"]) == 1:
+            self.options["rtol"] = self.options["rtol"]*N.ones(len(self.y))
+        elif len(self.options["rtol"]) != len(self.y):
+            raise ODASSL_Exception("rtol must be of length one or same as the dimension of the problem.")    
+    
+    def _get_rtol(self):
+        """
+        Defines the relative tolerance that is to be used by the solver.
+        
+            Parameters::
+            
+                rtol    
+                        - Default '1.0e-6'.
+                
+                        - Should be a positive float.
+                        
+                            Example:
+                                rtol = 1.0e-4
+        """
+        return self.options["rtol"]
+        
+    rtol=property(_get_rtol,_set_rtol)
+
+
+
             
     def reset(self):
         """
@@ -97,6 +155,9 @@ cdef class Explicit_ODE(ODE):
             
         #Clear logs
         self.clear_logs()
+        
+        
+    
 
     cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):

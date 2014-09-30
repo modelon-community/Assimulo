@@ -84,57 +84,34 @@ class Eulsim(Explicit_ODE):
             self.f = self.problem.rhs
         
         
-   
-        # Do we need this one?
-    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
-        """
-        This method is called after every successful step taken by Radau5
-        """
-        self.cont = cont #Saved to be used by the interpolation function.
-        
-        if self.problem_info["state_events"]:
-            flag, t, y = self.event_locator(told, t, y)
-            #Convert to Fortram indicator.
-            if flag == ID_PY_EVENT: irtrn = -1
+    def _set_rtol(self, rtol):
+        try:
+            rtol = float(rtol)
+        except (TypeError,ValueError):
+            raise Explicit_ODE_Exception('Relative tolerance must be a float.')
+        if rtol <= 0.0:
+            raise Explicit_ODE_Exception('Relative tolerance must be a positive (scalar) float.')
+        self.options["rtol"] = rtol
             
-        if self._opts["report_continuously"]:
-            initialize_flag = self.report_solution(t, y, self._opts)
-            if initialize_flag: irtrn = -1
-        else:
-            if self._opts["output_list"] == None:
-                self._tlist.append(t)
-                self._ylist.append(y.copy())
-            else:
-                output_list = self._opts["output_list"]
-                output_index = self._opts["output_index"]
-                try:
-                    while output_list[output_index] <= t:
-                        self._tlist.append(output_list[output_index])
-                        self._ylist.append(self.interpolate(output_list[output_index]))
-                        
-                        output_index += 1
-                except IndexError:
-                    pass
-                self._opts["output_index"] = output_index
+    def _get_rtol(self):
+        """
+        The relative tolerance to be used in the integration.
         
-        return irtrn
-  
-   
-   
-   
+            Parameters::
+            
+                rtol    
+                            - Default 1.0e-6
+                            
+                            - Should be a float.
+        """
+        return self.options["rtol"]
+    
+    rtol = property(_get_rtol, _set_rtol)
+    
+                             
                                      
     
     def integrate(self, t, y, tf, opts):
-        ITOL  = 1 #Both atol and rtol are vectors
-        #IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
-        MLJAC = self.problem_info["dim"] #The jacobian is full
-        MUJAC = self.problem_info["dim"] #See MLJAC
-        IMAS  = 0 #The mass matrix is the identity
-        MLMAS = self.problem_info["dim"] #The mass matrix is full
-        MUMAS = self.problem_info["dim"] #See MLMAS
-        IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*self.problem_info["dim"]+20)) #Work (integer) vector
         
         #Check for initialization
         if opts["initialize"]:
@@ -149,8 +126,7 @@ class Eulsim(Explicit_ODE):
         yresult=[]
         hresult=[]
         flag=[]
-        #opts["output_list"]=0
-        #print opts
+        
         output_index = opts["output_index"]
         output_list  = opts["output_list"][output_index:]   #[0.,1.,2.,3.,4.]
             
@@ -158,11 +134,8 @@ class Eulsim(Explicit_ODE):
 
         for tout in output_list:
             output_index += 1
-            #print tout
-       
-            result=eulsim.eulsim(self.f,t,y.copy(),tout, self.atol , self.options["maxh"] ,self.options["inith"],kflag)
+            result=eulsim.eulsim(self.f,t,y.copy(),tout, self.options["rtol"], self.options["maxh"] ,self.options["inith"],kflag)
             y=result[1]
-            print y
             t=result[0]
             H=result[2]
             flag=result[3]
@@ -194,15 +167,7 @@ class Eulsim(Explicit_ODE):
             flag = ID_PY_EVENT
         else:
             raise Exception("difex failed with flag %d"%flag)
-        
-        #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
-        
+      
         return flag, self._tlist, self._ylist
         
     def state_event_info(self):

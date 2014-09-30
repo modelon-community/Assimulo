@@ -45,7 +45,7 @@ def run_example(with_plots=True):
     
     exp_sim = RungeKutta34(exp_mod) #Create a RungeKutta34 solver
     exp_sim.inith = 0.1 #Sets the initial step, default = 0.01
-    
+    exp_sim.rtol = 1e-8 #Default 1e-6
     #Simulate
     t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
