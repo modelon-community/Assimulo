@@ -49,12 +49,11 @@ def squeezer():
     c0=4530.
     lo=0.07785
         
-    def forces(t, y):
-        beta,theta,gamma,phi,delta,omega,epsilon=y[0:7]
-        bep,thp,gap,php,dep,omp,epp=y[7:14]
-        lamb=y[14:20]
-        sibe,sith,siga,siph,side,siom,siep=sin(y[0:7])
-        cobe,coth,coga,coph,code,coom,coep=cos(y[0:7])
+    def forces(t, p, v):
+        beta,theta,gamma,phi,delta,omega,epsilon=p
+        bep,thp,gap,php,dep,omp,epp=v
+        sibe,sith,siga,siph,side,siom,siep=sin(p)
+        cobe,coth,coga,coph,code,coom,coep=cos(p)
         
         xd = sd*coga + sc*siga + xb
         yd = sd*siga - sc*coga + yb
@@ -73,11 +72,9 @@ def squeezer():
         return ff
         
     def GT(p):
-        beta,theta,gamma,phi,delta,omega,epsilon=y[0:7]
-        bep,thp,gap,php,dep,omp,epp=y[7:14]
-        lamb=y[14:20]
-        sibe,sith,siga,siph,side,siom,siep=sin(y[0:7])
-        cobe,coth,coga,coph,code,coom,coep=cos(y[0:7])
+        beta,theta,gamma,phi,delta,omega,epsilon=p
+        sibe,sith,siga,siph,side,siom,siep=sin(p)
+        cobe,coth,coga,coph,code,coom,coep=cos(p)
         gp=zeros((6,7))
         
         sibeth = sin(beta+theta);cobeth = cos(beta+theta)
@@ -118,10 +115,9 @@ def squeezer():
     def constr1(t,y):
         #p,v,la=y[0:2],y[2:4],y[4:5]
         return N.array([v[0]**2+v[1]**2 - la[0] * (p[0]**2 + p[1]**2) - p[1] * g])
-    def mass_matrix(t,y):
-        print y
-        sibe,sith,siga,siph,side,siom,siep=sin(y[0:7])
-        cobe,coth,coga,coph,code,coom,coep=cos(y[0:7])
+    def mass_matrix(t,p):
+        sibe,sith,siga,siph,side,siom,siep=sin(p)
+        cobe,coth,coga,coph,code,coom,coep=cos(p)
                
         m=zeros((7,7))
         m[0,0] = m1*ra**2 + m2*(rr**2-2*da*rr*coth+da**2) + i1 + i2
@@ -145,7 +141,7 @@ def squeezer():
                                     1.23054744454982119249735015568],   #epsilon 
                                    zeros(7,),
                                    [98.5668703962410896057654982170,        # lambda[0]
-                                    -6.12268834425566265503114393122],       # lambda[1]
+                                    -6.12268834425566265503114393122]+4*[0.],       # lambda[1:7]
                                    zeros(7,),
                                    [14222.4439199541138705911625887,        #  betadotdot
                                     -10666.8329399655854029433719415,       #  Thetadotdot
