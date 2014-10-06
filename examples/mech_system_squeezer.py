@@ -169,7 +169,7 @@ def run_example(index, with_plots=True, with_test=False):
     dae_sque.atol=1.e-4
     dae_sque.rtol=1.e-4
     dae_sque.suppress_alg=True  
-    t,y,yd=dae_sque.simulate(10.,1)   
+    t,y,yd=dae_sque.simulate(.03,1)   
     if index != 'oproj2':
         final_residual=my_sque.res(0.,dae_sque.y,dae_sque.yd)
         whichres='All'
@@ -185,11 +185,11 @@ def run_example(index, with_plots=True, with_test=False):
         final_residual=my_sque.fprob(**parameterlist)[5]      # only position residual
         whichres='Position'
     print(my_sque.name+" {} residuals after the integration run\n".format(whichres))
-    print final_residual, 'Norm:  ', sl.norm(final_residual) 
+    if index != 'oproj2': print final_residual, 'Norm:  ', sl.norm(final_residual) 
     if with_test:
         assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:
-        dae_sque.plot(mask=[1,1]+(len(my_sque.y0)-2)*[0]) 
+        dae_sque.plot(mask=7*[1]+(len(my_sque.y0)-7)*[0]) 
     return my_sque, dae_sque
         
 if __name__=='__main__':
