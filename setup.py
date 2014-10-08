@@ -632,7 +632,7 @@ Documentation and installation instructions can be found at:
 http://www.jmodelica.org/assimulo . 
 
 For questions and comments, visit: 
-http://www.jmodelica.org/forums/jmodelicaorg-users/assimulo
+http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
 compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
