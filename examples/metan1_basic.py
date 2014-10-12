@@ -49,7 +49,7 @@ def run_example(with_plots=True):
     
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulex Test Example: $\dot y = - y$')
+    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Metan1 Test Example: $\dot y = - y$')
     #Define an explicit solver
     exp_sim = Metan1(exp_mod) #Create an eulex solver
     

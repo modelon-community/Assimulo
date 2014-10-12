@@ -48,7 +48,7 @@ def run_example(with_plots=True):
     
     
     #Define an Assimulo problem
-    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulex Test Example: $\dot y = - y$')
+    exp_mod = Explicit_Problem(f, y0=N.array([4.0]), name = 'Eulsim Test Example: $\dot y = - y$')
     #Define an explicit solver
     exp_sim = Eulsim(exp_mod) #Create an eulex solver
     
@@ -60,7 +60,7 @@ def run_example(with_plots=True):
 
     #Simulate
     t1, y1 = exp_sim.simulate(5,90) #Simulate 5 seconds
-    t2, y2 = exp_sim.simulate(7,50) #Simulate 2 seconds more
+    #t2, y2 = exp_sim.simulate(7,50) #Simulate 2 seconds more
 
     #Basic test
     #nose.tools.assert_almost_equal(y2[-1], 0.00347746, 5)
@@ -69,7 +69,7 @@ def run_example(with_plots=True):
     #Plot
     if with_plots:
         P.plot(t1, y1, color="b")
-        P.plot(t2, y2, color="r")
+        #P.plot(t2, y2, color="r")
         P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')

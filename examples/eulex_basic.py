@@ -76,8 +76,8 @@ def run_example(with_plots=True):
     if with_plots:
         P.figure(1)
         P.plot(t1, y1, color="b")
-        P.figure(2)
-        P.plot(t2, y2, color="r")
+        #P.figure(2)
+        #P.plot(t2, y2, color="r")
         P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')

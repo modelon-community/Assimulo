@@ -240,7 +240,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
+        self.statistics["nfevals"]        = 0 #Number of function evaluations
         self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         #self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["errfail"]     = 0 #Number of step rejections
@@ -352,10 +352,10 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[10]
-        self.statistics["nfcn"]        += iwork[11]
+        self.statistics["nfevals"]     += iwork[11]
         self.statistics["njac"]        += iwork[12]
         self.statistics["errfail"]     += iwork[13]
-        self.statistics["convfail"]         += iwork[14]
+        self.statistics["convfail"]    += iwork[14]
         
         return flag, tlist, ylist, ydlist
         
@@ -366,7 +366,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
         
         self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]), verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]), verbose)
+        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfevals"]), verbose)
         self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]), verbose)
         self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]), verbose)
         self.log_message(' Number of Convergence Test Failures      : '+ str(self.statistics["convfail"]), verbose)

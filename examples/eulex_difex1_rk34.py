@@ -175,24 +175,15 @@ if __name__=='__main__':
     mod3,sim3 ,nfev_rk34,t3,nep3= run_rk34(f,eps)
     mod4,sim4 ,nfev_Dopri5,t4,nep4= run_dopri5(f,eps)
     
-    
+    m=['eulex','difex1','RK34','Dopri5']
     fig=figure(1)
-    loglog(eps,nfev_eulex,'r')
-    loglog(eps,nfev_difex1,'b')
-    loglog(eps,nfev_rk34,'c')
-    loglog(eps,nfev_Dopri5,'g')
+    loglog(eps,nfev_eulex,'r',label='method={}'.format(m[0]))
+    loglog(eps,nfev_difex1,'b',label='method={}'.format(m[1]))
+    loglog(eps,nfev_rk34,'c',label='method={}'.format(m[2]))
+    loglog(eps,nfev_Dopri5,'g',label='method={}'.format(m[3]))
     axis([1e-14,1e-2,10,1e5])
+    xlabel('Tolerance')
+    ylabel('nfevals')
+    legend()
     show()
-    #fig=figure(2)
     
-    #plot(nep1,t1,'r')
-    #plot(nep2,t2,'b')
-    #plot(nep3,t3,'c')
-    #plot(nep4,t4,'g')
-    #title('Comparison of total number of function evaluations over whole test set(pendulum)',fontsize=12)
-    #xlabel('tolerance')
-    #ylabel('NFEV')
-    #show()
-    ###fig.saving('test.jpg')
-    
-  

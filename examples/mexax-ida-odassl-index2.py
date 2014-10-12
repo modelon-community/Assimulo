@@ -22,7 +22,7 @@ import assimulo.special_systems as ass
 import numpy as N
 import scipy.linalg as sl
 from assimulo.solvers import IDA, ODASSL, Mexax
-from pylab import figure
+from  matplotlib.pyplot import *
 
 
 def pendulum():
@@ -53,7 +53,7 @@ def pendulum():
                                    constr1 = constr1,
                                    mass_matrix=mass_matrix)
 
-def run_example(index, with_plots=True, with_test=False):
+def run_example(eps,index, with_plots=False, with_test=False):
     my_pend_sys=pendulum()
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index {} System'.format(index)
@@ -65,10 +65,10 @@ def run_example(index, with_plots=True, with_test=False):
         dae_pend = Mexax(my_pend) 
     else:
         raise Exception('No method for index {}'.format(index))
-    dae_pend.atol=1.e-10
+    dae_pend.atol=eps
     dae_pend.rtol=1.e-10
     dae_pend.suppress_alg=True  
-    t,y,yd=dae_pend.simulate(10.,1)   
+    t,y,yd=dae_pend.simulate(5.,100)   
     if index != 'oproj2':
         final_residual=my_pend.res(0.,dae_pend.y,dae_pend.yd)
         whichres='All'
@@ -89,17 +89,33 @@ def run_example(index, with_plots=True, with_test=False):
         assert(sl.norm(final_residual) < 1.5e-2)
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
-    return my_pend, dae_pend
+    nfv=dae_pend.statistics["nfevals"]
+    return my_pend, dae_pend,nfv
         
 if __name__=='__main__':
-    index_values=[['ind1','ind2','ind3','ggl2','ovstab2','ovstab1','oproj2'][-1]]
-    sim={}
-    mod={}
-    for ind in index_values:
-        mod[ind], sim[ind]=run_example(index=ind)
+    eps=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-9,1e-10,1e-11,1e-12,1e-13]
+    index_values=['ind2','ggl2','ovstab2','oproj2']
+    ind_color=['r','b','c','y']
+    index_all=zip(index_values,ind_color)
+    sim=[]
+    mod=[]
     
-    
-                              
-                                   
+    for ind,colour in index_all:
+        nfv=[]
+        for i in eps:
+            m, s,nf=run_example(i,index=ind)
+            mod.append(m)
+            sim.append(s)
+            nfv.append(nf)
+        loglog(eps,nfv,'{}o'.format(colour))
+        loglog(eps,nfv,'{}'.format(colour),label='Method={}'.format(ind))
+        xlabel('Tolerance')
+        ylabel('nfevals')
+        legend()
+    show()
+        
+        
+                                  
+                                       
     
         
