@@ -50,7 +50,7 @@ class Mexax(MexaxDAE):
 
         # - Statistic values
         self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
+        self.statistics["nfevals"]        = 0 #Number of function evaluations
         self.statistics["njac"]        = 0 #Number of Jacobian evaluations
         self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["errfail"]     = 0 #Number of step rejections
@@ -110,7 +110,7 @@ class Mexax(MexaxDAE):
         mxjob[30-1] = 1 if normal_mode == 0 else 0
         mxjob[31-1] = 1 if normal_mode else 0
         mxjob[32-1] = len(opts["output_list"]) if opts["output_list"] != None else 0
-        print opts["output_list"]
+      
                             
                                
         atol = self.options["atol"]
@@ -160,7 +160,7 @@ class Mexax(MexaxDAE):
         #Retrieving statistics
 
         self.statistics["nsteps"]        += mxjob[51-1]
-        self.statistics["nfcn"]          += mxjob[55-1]
+        self.statistics["nfevals"]       += mxjob[55-1]
         self.statistics["errfail"]       += mxjob[73-1]
         self.statistics["nlu"]           += mxjob[58-1]
         return mxjob[0],self._tlist, self._ylist, self._ydlist
@@ -178,7 +178,7 @@ class Mexax(MexaxDAE):
         self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
 
         self.log_message(' Number of steps                          : '+ str(self.statistics["nsteps"]),          verbose)
-        self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfcn"]),         verbose)
+        self.log_message(' Number of function evaluations           : '+ str(self.statistics["nfevals"]),         verbose)
         self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
         self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
         self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)

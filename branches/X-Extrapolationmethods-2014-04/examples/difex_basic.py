@@ -55,8 +55,8 @@ def run_example(with_plots=True):
     #Sets the parameters
     exp_sim.iter  = 'Newton' #Default 'FixedPoint'
     exp_sim.discr = 'BDF' #Default 'Adams'
-    exp_sim.atol = [1e-4] #Default 1e-6
-    exp_sim.rtol = 1e-4 #Default 1e-6
+    #exp_sim.atol = [1e-4] #Default 1e-6
+    #exp_sim.rtol = 1e-4 #Default 1e-6
 
     #Simulate
     t1, y1 = exp_sim.simulate(5,90) #Simulate 5 seconds
