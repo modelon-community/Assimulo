@@ -7,7 +7,7 @@ python module mexax__user__routines
             integer, intent(in) :: np
             integer, intent(in) :: nv
             integer, intent(in) :: nu
-            intege, intent(in)r :: nl
+            integer, intent(in) :: nl
             double precision, intent(in) :: t
             double precision dimension(np), intent(in) :: p
             double precision dimension(nv), intent(in) :: v
