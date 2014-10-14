@@ -96,11 +96,13 @@ if __name__=='__main__':
     eps=[1e-1,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-9,1e-10,1e-11,1e-12,1e-13]
     index_values=['ind2','ggl2','ovstab2','oproj2']
     ind_color=['r','b','c','y']
-    index_all=zip(index_values,ind_color)
+    method=['IDA','IDA','ODASSL','Mexax']
+    index_all=zip(index_values,ind_color,method)
+    
     sim=[]
     mod=[]
     
-    for ind,colour in index_all:
+    for ind,colour,j in index_all:
         nfv=[]
         for i in eps:
             m, s,nf=run_example(i,index=ind)
@@ -108,10 +110,10 @@ if __name__=='__main__':
             sim.append(s)
             nfv.append(nf)
         loglog(eps,nfv,'{}o'.format(colour))
-        loglog(eps,nfv,'{}'.format(colour),label='Method={}'.format(ind))
+        loglog(eps,nfv,'{}'.format(colour),label='Method={} algvar={}'.format(j,ind))
         xlabel('Tolerance')
         ylabel('nfevals')
-        legend()
+        legend(loc='lower left')
     show()
         
         
