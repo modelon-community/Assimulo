@@ -98,7 +98,7 @@ cdef class Explicit_ODE(ODE):
         #Clear logs
         self.clear_logs()
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
+    cpdef _simulate(self, double t0, double tfinal, N.ndarray output_list, int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
@@ -109,22 +109,38 @@ cdef class Explicit_ODE(ODE):
         
             Parameters::
             
+            
+                t0
+                        - Initial time 
+                        
+                        - Should be float or integer less than final time.
+            
                 tfinal  
                         - Final time for the simulation
                 
                         - Should be a float or integer greater than the initial time.
                         
-                ncp     
-                        - Default '0'. Number of communication points where the 
-                          solution is returned. If '0', the integrator will return 
-                          at its internal steps.
+                output_list
                           
-                        - Should be an integer.
+                        - List of communication points
+                        
+                        - Should be an array.
+                        
+                REPORT_CONTINUOUSLY
+                
+                        - integer flag: 1 indicates that results are reported at every internal time step
+                
+                INTERPOLATE_OUTPUT
+                
+                        - integer flag: 1 indicates that results at output points should be obtained by interpolation
+                                        0 indicates that results at output points should be computed exactly.
+                                          This might slow down integration. 
+                
+                
+                TIME_EVENT
                           
-                    Example:
+                        - integer flag: 1 indicates that time events were defined in problem else 0
                     
-                        __call__(10.0, 100), 10.0 is the final time and 100 is the number
-                                             communication points.
         """
         cdef double tevent
         cdef int flag, output_index
