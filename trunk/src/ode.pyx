@@ -192,7 +192,7 @@ cdef class ODE:
             raise AssimuloException('Final time must be an integer or float.')
             
         if (self.t > tfinal) and not self.options["backward"]:
-            raise AssimuloException('Final time must be greater than start time.')
+            raise AssimuloException('Final time {} must be greater than start time {}.\n Perhaps you should consider to reset the integration.'.format(tfinal,self.t))
         
         if not isinstance(ncp, int):
             raise AssimuloException('Number of communication points must be an integer')
