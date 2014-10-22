@@ -148,7 +148,7 @@ class Test_Explicit_Radau5:
     @testattr(stddist = True)
     def test_simulation(self):
         """
-        This tests the Radau5 with a simulation of the van der pol problem.
+        This tests the Radau5 with a simulation of the van der Pol problem.
         """
         self.sim.simulate(2.) #Simulate 2 seconds
         
@@ -664,7 +664,7 @@ class Test_Implicit_Fortran_Radau5:
     @testattr(stddist = True)    
     def test_simulation(self):
         """
-        Test a simulation of the vanderpol equations.
+        Test a simulation of the van der Pol equations (1).
         """
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
@@ -676,7 +676,7 @@ class Test_Implicit_Fortran_Radau5:
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706272, 3)
+        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706166, 3)
         
         self.sim_t0.simulate(3.)
         nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
@@ -828,7 +828,7 @@ class Test_Implicit_Radau5:
     @testattr(stddist = True)    
     def test_simulation(self):
         """
-        Test a simulation of the vanderpol equations.
+        Test a simulation of the van der Pol equations (2).
         """
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
@@ -840,7 +840,7 @@ class Test_Implicit_Radau5:
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706272, 3)
+        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706947, 3)
         
         self.sim_t0.simulate(3.)
         nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
