@@ -30,10 +30,9 @@ from .odepack import LSODAR
 from .radar5 import Radar5ODE
 try:
     from .dasp3 import DASP3ODE
-except ImportError:
-    pass
-
+except ImportError as ie:
+    print("Could not find {}".format(ie.args[0][16:]))
 try:
     from .glimda import GLIMDA
-except ImportError:
-    print("Could not find GLIMDA")
+except ImportError as ie:
+    print("Could not find {}".format(ie.args[0][16:]))
