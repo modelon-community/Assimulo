@@ -88,7 +88,7 @@ cdef class cImplicit_Problem(cProblem):
     
     def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         """
-        Method for specifying how the result is to be handled. As default the
+        Method for specifying how the result is handled. By default the
         data is stored in three vectors: solver.(t/y/yd).
         """
         cdef int i = 0
@@ -301,20 +301,20 @@ class Implicit_Problem(cImplicit_Problem):
                     A numpy array of size len(y)*len(y).
                     
             def handle_result(self, solver, t, y, yd)
-                Method for specifying how the result is to be handled. 
-                As default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
+                Method for specifying how the result is  handled. 
+                By default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
                 If the problem to be solved also involve sensitivities these results are
                 stored in p_sol
                 
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
                 a discontinuity has been found in the supplied event functions. The solver
-                is the solver attribute while the event_info is a list of length 2 where
+                is the solver attribute. The event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a Boolean for indicating if there has been a time
+                the second element is a Boolean  indicating if there has been a time
                 event. If there has not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event has triggered (determined from 
+                the values indicate which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
@@ -386,20 +386,20 @@ class Overdetermined_Problem(cOverdetermined_Problem):
                     A numpy array of size neq*len(y).
                     
             def handle_result(self, solver, t, y, yd)
-                Method for specifying how the result is to be handled. 
-                As default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
+                Method for specifying how the result is  handled. 
+                By default the data is stored in three vectors, solver.(t_sol/y_sol/yd_sol). 
                 If the problem to be solved also involve sensitivities these results are
                 stored in p_sol
                 
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
                 a discontinuity has been found in the supplied event functions. The solver
-                is the solver attribute while the event_info is a list of length 2 where
+                is the solver attribute. The event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a Boolean for indicating if there has been a time
+                the second element is a Boolean indicating if there has been a time
                 event. If there have not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event has triggered (determined from 
+                the values indicate which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
@@ -412,12 +412,12 @@ class Explicit_Problem(cExplicit_Problem):
             
             rhs 
                 Function that calculates the right-hand-side. Depending on
-                the problem and the support of the solver, this function can
-                have the following input parameters.
+                the problem and the support of the solver, this function has
+                the following input parameters:
                 
                     rhs(t,y)      - Normal ODE
                     rhs(t,y,sw)   - An ODE with different modes, sw is a list of
-                                    switches (boolean list) which should be held
+                                    switches (Boolean list) which should be held
                                     constant during the integration and only be
                                     changed when an event have occured. Used together
                                     with event functions.
@@ -429,7 +429,7 @@ class Explicit_Problem(cExplicit_Problem):
                         A numpy array of size len(y).
             
             y0
-                Defines the starting values of y0
+                Defines the starting values 
             t0
                 Defines the starting time
             p0 (Depending on if the solver supports sensitivity calculations)
@@ -472,20 +472,20 @@ class Explicit_Problem(cExplicit_Problem):
                     A numpy vector of size len(y).
             
             def handle_result(self, solver, t, y)
-                Method for specifying how the result is to be handled. 
-                As default the data is stored in two vectors, solver.(t_sol/y_sol). If
+                Method for specifying how the result is handled. 
+                By default the data is stored in two vectors, solver.(t_sol/y_sol). If
                 the problem to be solved also involve sensitivities these results are
                 stored in p_sol
                 
             def handle_event(self, object solver, event_info):
-                Defines how to handle a discontinuity. This functions gets called when
+                Defines how to handle a discontinuity. This functions is called when
                 a discontinuity has been found in the supplied event functions. The solver
-                is the solver attribute while the event_info is a list of length 2 where
+                is the solver attribute. The event_info is a list of length 2 where
                 the first element is a list containing information about state events and
-                the second element is a Boolean for indicating if there has been a time
-                event. If there have not been a state event the first element is an empty
+                the second element is a Boolean  indicating if there has been a time
+                event. If there has not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicates which state event has triggered (determined from 
+                the values indicate which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
     """
     pass
