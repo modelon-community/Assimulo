@@ -272,7 +272,7 @@ class Implicit_Problem(cImplicit_Problem):
                 Should be a list of integers. For more information, see the
                 property algvar in IDA.
         
-        Available (optional) options (depending on the solver support)::
+        Signature of default or user provided methods. Their use is solver dependent.::
         
             def state_events(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
