@@ -42,7 +42,7 @@ Creating an Assimulo CVode solver instance
     
 And now we create the actual solver object using SUNDIAL's CVode::
 
-    from assimulo.solvers.sundials import CVode #Imports the solver CVode from Assimulo
+    from assimulo.solvers import CVode #Imports the solver CVode from Assimulo
 
     sim = CVode(model)
 
@@ -59,7 +59,11 @@ This returns all sorts of information in the prompt, the statistics of the solve
 
 The results are stored in the returned *t* and *y* variables.
 
-To plot the simulation result, plot functionality from pylab can be used::
+To plot the simulation result, just execute::
+    
+   sim.plot()
+
+or use the plot functionality from pylab::
 
     #Plots the result
     P.plot(t,y)

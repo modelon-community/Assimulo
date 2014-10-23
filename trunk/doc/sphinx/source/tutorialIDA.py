@@ -10,10 +10,9 @@ or,
 
     python tutorialIDA.py (in a command prompt)
 """
-import numpy as N
-import pylab as P
+import numpy as np
 from assimulo.problem import Implicit_Problem #Imports the problem formulation from Assimulo
-from assimulo.solvers.sundials import IDA #Imports the solver IDA from Assimulo
+from assimulo.solvers import IDA              #Imports the solver IDA from Assimulo
 
 
 def run_example():
@@ -26,7 +25,7 @@ def run_example():
         res_3 = yd[3]+y[4]*y[1]+9.82
         res_4 = y[2]**2+y[3]**2-y[4]*(y[0]**2+y[1]**2)-y[1]*9.82
 
-        return N.array([res_0,res_1,res_2,res_3,res_4])
+        return np.array([res_0,res_1,res_2,res_3,res_4])
     
     #The initial conditons
     t0  = 0.0 #Initial time
@@ -43,8 +42,7 @@ def run_example():
 
     t,y,yd = sim.simulate(tfinal, ncp) #Use the .simulate method to simulate and provide the final time and ncp (optional)
     
-    P.plot(t,y)
-    P.show()
+    sim.plot()
 
 if __name__=='__main__':
     run_example()

@@ -17,8 +17,7 @@ The initial data should be consistent. Otherwise a numerical method might encoun
 
 An example of a residual is shown below (Python)::
 
-    import numpy as N
-    import pylab as P
+    import numpy as np
 
     def residual(t,y,yd):
         
@@ -28,7 +27,7 @@ An example of a residual is shown below (Python)::
         res_3 = yd[3]+y[4]*y[1]+9.82
         res_4 = y[2]**2+y[3]**2-y[4]*(y[0]**2+y[1]**2)-y[1]*9.82
 
-        return N.array([res_0,res_1,res_2,res_3,res_4])
+        return np.array([res_0,res_1,res_2,res_3,res_4])
 
 The initial conditions to the residual need also to be specified::
 
@@ -49,7 +48,7 @@ Creating an Assimulo solver instance
 
 And now to create the actual solver object for SUNDIAL's IDA::
 
-    from assimulo.solvers.sundials import IDA #Imports the solver IDA from Assimulo
+    from assimulo.solvers import IDA #Imports the solver IDA from Assimulo
 
     sim = IDA(model)
 
@@ -67,9 +66,8 @@ This will give all sorts of information in the prompt, the statistics of the sol
 
 To plot the simulation result, plot functionality from pylab can be used::
 
-    #Plots the result
-    P.plot(t,y)
-    P.show()
+    #Plot the result
+    sim.plot()
     
 The plot is given below,
 

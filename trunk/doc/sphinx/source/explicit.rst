@@ -1,10 +1,3 @@
-ODE
-=========================
-
-.. automodule:: assimulo.ode
-   :members:
-
- 
 Explicit ODE
 =========================
  

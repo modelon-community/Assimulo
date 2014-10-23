@@ -27,11 +27,11 @@ cdef class cMechanical_System:
         .. math::
             :nowrap:
             
-            \\begin{eqnarray}
+            \\begin{eqnarray*}
                 \dot{p} & = & v \\\\
                 M(p) \dot{v} & = & f(t,p,v)-G(p)^\mathrm{T} \lambda  \\\\
                 0 & = & g(p)
-            \end{eqnarray}
+            \end{eqnarray*}
         
  
         Parameters ::
@@ -51,7 +51,7 @@ cdef class cMechanical_System:
             mass_matrix(p)  n_p x n_p nonsingular mass matrix
                   (if not defined it is assumed to be the identity matrix)
             constr_3(t,y)  n_la index-3 constraints
-            constr_2(t,y) n_la index-2 constraints
+            constr_2(t,y)  n_la index-2 constraints
                   (optional)
             constr_1(t,y) n_la index-1 constraints
             index  sets the type of equations to be solved

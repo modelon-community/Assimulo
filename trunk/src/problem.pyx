@@ -272,7 +272,7 @@ class Implicit_Problem(cImplicit_Problem):
                 Should be a list of integers. For more information, see the
                 property algvar in IDA.
         
-        Signature of default or user provided methods. Their use is solver dependent.::
+        Signature of default or user provided methods. Their use is solver dependent. ::
         
             def state_events(self ,t ,y ,yd, sw)
                 Defines the event (root) functions.
@@ -438,7 +438,7 @@ class Explicit_Problem(cExplicit_Problem):
                 Defines the starting values of the switches. 
                 Should be a list of Booleans.
         
-        Available (optional) options (depending on the solver support)::
+        Signature of default or user provided methods. Their use is solver dependent. ::
         
             def state_events(self ,t ,y, sw)
                 Defines the event (root) functions.
