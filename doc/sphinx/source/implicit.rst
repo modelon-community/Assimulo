@@ -33,6 +33,7 @@ GLIMDA
    :show-inheritance:
 
 ODASSL
+--------
 
 .. autoclass:: assimulo.solvers.odassl.ODASSL
    :members:
