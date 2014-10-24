@@ -19,8 +19,7 @@
 Example by Johannes Herold
 """
 
-import numpy as N
-import pylab as P
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -45,21 +44,21 @@ def run_example(with_plots=True):
 
     #Define the rhs
     def rhs(t, y):
-        A = N.array([[2.0, 1.0], [3.0, 2.0]])
-        yd = N.dot(A * t, N.sin(y))
+        A = np.array([[2.0, 1.0], [3.0, 2.0]])
+        yd = np.dot(A * t, np.sin(y))
         return yd
         
     #Define the preconditioner setup function
     def prec_setup(t, y, fy, jok, gamma, data):
-        A = N.array([[2.0, 1.0], [3.0, 2.0]])
+        A = np.array([[2.0, 1.0], [3.0, 2.0]])
         
         #If jok is false the jacobian data needs to be recomputed
         if jok == False:
                 
             #Extract the diagonal of the jacobian to form a Jacobi preconditioner
-            a0 = A[0, 0] * t * N.cos(y[0])
-            a1 = A[1, 1] * t * N.cos(y[1])
-            a = N.array([a0, a1])
+            a0 = A[0, 0] * t * np.cos(y[0])
+            a1 = A[1, 1] * t * np.cos(y[1])
+            a = np.array([(1. - gamma * a0), (1. - gamma * a1)])
             
             #Return true (jacobian data was recomputed) and the new data
             return [True, a]
@@ -74,10 +73,10 @@ def run_example(with_plots=True):
     def prec_solve(t, y, fy, r, gamma, delta, data):
         
         #Solve the system Pz = r
-        z0 = r[0]/(1 - gamma * data[0])
-        z1 = r[1]/(1 - gamma * data[1])
+        z0 = r[0]/data[0]
+        z1 = r[1]/data[1]
            
-        z = N.array([z0, z1])
+        z = np.array([z0, z1])
         return z
         
     #Initial conditions
@@ -109,12 +108,7 @@ def run_example(with_plots=True):
     nose.tools.assert_almost_equal(y[-1,1],3.19318992,4)
     
     if with_plots:
-        P.plot(t,y)
-        P.grid()
-        P.ylabel('States')
-        P.xlabel('Time')
-        P.title(exp_mod.name)
-        P.show()
+        exp_sim.plot()
 
     return exp_mod, exp_sim
     
