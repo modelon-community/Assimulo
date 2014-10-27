@@ -139,6 +139,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeGetIntegratorStats(void* cvode_mem, long int *nsteps, long int *nfevals,
                                 long int *nlinsetups, long int *netfails, int *qlast, int *qcur,
                                 realtype *hinused, realtype *hlast, realtype *hcur, realtype *tcur)
+    int CVodeGetNumStabLimOrderReds(void *cvode_mem, long int *nslred)
     
     #Sensitivity methods
     ctypedef int (*CVSensRhsFn)(int Ns, realtype t, N_Vector y, N_Vector ydot, N_Vector *yS,
@@ -161,6 +162,9 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetSensDQMethod(void *cvode_mem, int DQtype, realtype DQrhomax)
     int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS)
     int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS)
+    int CVodeSetStabLimDet(void *cvode_mem, booleantype stldet)
+    
+    
     
     #Statistics
     int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele)               #Estimated local errors
