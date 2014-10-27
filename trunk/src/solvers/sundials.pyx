@@ -1430,6 +1430,7 @@ cdef class CVode(Explicit_ODE):
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
+        self.options["stablimit"] = False
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -1440,6 +1441,8 @@ cdef class CVode(Explicit_ODE):
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
         
+        self.statistics.add_key("nlsred", "Number of order reductions due to stability")
+         
         #Get options from Problem
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
@@ -2060,6 +2063,12 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag)
             
+        #Stability limit
+        if self.options["discr"] == "BDF":
+            flag = SUNDIALS.CVodeSetStabLimDet(self.cvode_mem, self.options["stablimit"])
+            if flag < 0:
+                raise CVodeError(flag)
+            
         #Initialize sensitivity if any
         if self.pData.dimSens > 0:
             self.initialize_sensitivity_options()
@@ -2536,6 +2545,34 @@ cdef class CVode(Explicit_ODE):
     
     dqtype = property(_get_dqtype, _set_dqtype)
     
+    def _set_stability_limit_detection(self, stablimit):
+        if stablimit:
+            self.options["stablimit"] = True
+        else:
+            self.options["stablimit"] = False
+            
+    def _get_stability_limit_detection(self):
+        """
+        Specifies if the internal stability limit detection for BDF 
+        should be used or not. Used to reduce the order if the stability
+        is detected to be an issue.
+        
+        Parameters::
+            
+            stablimit 
+                    - Boolean value
+                    - Default False
+                        
+        Returns::
+            
+            The current value of DQtype.
+        
+        See SUNDIALS documentation 'CVodeSetstabLimDet' 
+        """
+        return self.options["stablimit"]
+    
+    stablimdet = property(_get_stability_limit_detection, _set_stability_limit_detection)
+    
     def _set_dqrhomax(self, dqrhomax):
         try:
             self.options["dqrhomax"] = float(dqrhomax)
@@ -2696,7 +2733,7 @@ cdef class CVode(Explicit_ODE):
         cdef long int nsteps = 0, njevals = 0, ngevals = 0, netfails = 0, nniters = 0, nncfails = 0
         cdef long int nSniters = 0, nSncfails = 0, nfevalsLS = 0, njvevals = 0, nfevals = 0
         cdef long int nfSevals = 0,nfevalsS = 0,nSetfails = 0,nlinsetupsS = 0, nlinsetups = 0
-        cdef long int npevals = 0, npsolves = 0
+        cdef long int npevals = 0, npsolves = 0, nlsred = 0
         cdef int qlast = 0, qcur = 0
         cdef realtype hinused = 0.0, hlast = 0.0, hcur = 0.0, tcur = 0.0
 
@@ -2723,6 +2760,10 @@ cdef class CVode(Explicit_ODE):
         
         flag = SUNDIALS.CVodeGetNonlinSolvStats(self.cvode_mem, &nniters, &nncfails) #Number of nonlinear iteration
                                                                             #Number of nonlinear conv failures
+        
+        if self.options["discr"] == "BDF" and self.options["stablimit"] == True:
+            flag = SUNDIALS.CVodeGetNumStabLimOrderReds(self.cvode_mem, &nlsred)
+            self.statistics["nlsred"]   += nlsred
         
         if return_flag == CV_ROOT_RETURN and not self.options["external_event_detection"]:
             self.statistics["nstateevents"] += 1
