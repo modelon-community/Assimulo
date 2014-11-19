@@ -377,8 +377,8 @@ cdef class Explicit_ODE(ODE):
             Parameters::
             
                 mask    
-                        - Default 'None'. Used to determine which variables that is to be plotted.
-                          Used as a list of integers, ones represents the variable that is to be
+                        - Default 'None'. Used to determine which solution components should be plotted.
+                          Used as a list of integers, ones represent the components to be
                           plotted and zeros that is not. 
                         
                         - Should be a list of integers.
