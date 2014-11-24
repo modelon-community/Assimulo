@@ -71,7 +71,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
-        self.options["maxsteps"] = 10000
+        self.options["maxsteps"] = 100000
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -783,7 +783,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
-        self.options["maxsteps"] = 10000
+        self.options["maxsteps"] = 100000
         
         #Solver support
         self.supports["report_continuously"] = True
