@@ -23,6 +23,7 @@ Contents
    changelog
    tutorial
    museum
+   citation
 
 
 .. toctree::
