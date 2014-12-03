@@ -17,7 +17,7 @@ A problem is the formulation of the differential equation to be solved
 together with its initial values and special properties, e.g. events.
 
 The problem class collects the complete mathematical description without 
-refering to the solution process or solution control parameters.
+referring to the solution process or solution control parameters.
 
 The formulation of the problem might differ, it might be
 an implicit problem (often also called a differential-algebraic system), 
@@ -34,7 +34,7 @@ Solver
 
 Assimulo collects a variety of numerical ODE solvers. They are strongly 
 related to the problem type. Some of them can only solve implicit problems.
-The use of others might be restriceted to explicit problems.
+The use of others might be restricted to explicit problems.
 
 More on solver classes see :doc:`explicit`  and :doc:`implicit`.
 
@@ -50,4 +50,4 @@ Execution:
 -----------
 
 The solver instance has a method simulate which has to be invoked to 
-perform simultation, i.e. to numerically solve the differential equation.  
+perform simulation, i.e. to numerically solve the differential equation.  
