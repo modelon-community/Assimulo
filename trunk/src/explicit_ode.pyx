@@ -289,7 +289,7 @@ cdef class Explicit_ODE(ODE):
         g_low = self.g_old
         self.statistics["nstatefcns"] += 1
         n_g = self.problem_info["dimRoot"]
-        TOL = max(t_low, t_high) * 1e-13
+        TOL = max(abs(t_low), abs(t_high)) * 1e-13
         #Check for events in [t_low, t_high].
         for i in xrange(n_g):
             if (g_low[i] > 0) != (g_high[i] > 0):
