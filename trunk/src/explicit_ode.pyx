@@ -251,7 +251,7 @@ cdef class Explicit_ODE(ODE):
         #Check elapsed timed
         if self.time_limit_activated:
             if self.time_limit-(time()-self.time_integration_start) < 0.0:
-                raise TimeLimitExceeded("The time limit was exceeded at integration time %f."%self.t)
+                raise TimeLimitExceeded("The time limit was exceeded at integration time %.8E."%self.t)
         
         #Store data depending on situation
         if opts["output_list"] != None:
