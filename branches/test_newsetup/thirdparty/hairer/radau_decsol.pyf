@@ -1,0 +1,97 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module radcor__user__routines 
+    interface radcor_user_interface 
+        subroutine fcn(n,x,y,y0,rpar,ipar) ! in :radau5:radau_decsol.f:radcor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(n),depend(n),intent(out) :: y0
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine fcn
+        subroutine mas(n,am,lmas,rpar,ipar) ! in :radau5:radau_decsol.f:radcor:unknown_interface
+            integer, optional,check(len(am)>=n),depend(am) :: n=shape(am,0)
+            double precision dimension(lmas,n),depend(lmas,n),intent(in,out) :: am
+            !double precision dimension(n),depend(n),intent(hide) :: lmas
+            integer, optional,intent(hide) :: lmas=1
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine mas
+        subroutine solout(nrsol,xosol,xsol,y,cont,lrc,nsolu,rpar,ipar,irtrn) ! in :radau5:radau_decsol.f:radcor:unknown_interface
+            integer :: nrsol
+            double precision :: xosol
+            double precision :: xsol
+            double precision dimension(nsolu) :: y
+            double precision dimension(4*nsolu) :: cont
+            integer :: lrc
+            integer, optional,check(len(y)>=nsolu),depend(y),intent(hide) :: nsolu=len(y)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(in,out) :: irtrn
+        end subroutine solout
+        subroutine jac(n,x,y,fjac,ldjac,rpar,ipar) ! in :radau5:radau_decsol.f:radcor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(ldjac,n),depend(n,ldjac),intent(out) :: fjac
+            !integer, optional,check(shape(fjac,0)==ldjac),depend(fjac),intent(hide) :: ldjac=shape(fjac,0)
+            integer, optional,check(len(y)==ldjac),depend(y),intent(hide) :: ldjac=len(y)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine jac
+    end interface radcor_user_interface
+end python module radcor__user__routines
+python module radau5 ! in 
+    interface  ! in :radau5
+        subroutine radau5(n,fcn,x,y,xend,h,rtol,atol,itol,jac,ijac,mljac,mujac,mas,imas,mlmas,mumas,solout,iout,work,lwork,iwork,liwork,rpar,ipar,idid) ! in :radau5:radau_decsol.f
+            use radcor__user__routines
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            external fcn
+            double precision,intent(in,out) :: x
+            double precision dimension(n),intent(in,out) :: y
+            double precision :: xend
+            double precision,intent(in,out) :: h
+            double precision dimension(n),intent(in) :: rtol
+            double precision dimension(n),intent(in) :: atol
+            integer :: itol
+            external jac
+            integer :: ijac
+            integer :: mljac
+            integer :: mujac
+            external mas
+            integer :: imas
+            integer :: mlmas
+            integer :: mumas
+            external solout
+            integer :: iout
+            double precision dimension(lwork),intent(in) :: work
+            integer, optional,check(len(work)>=lwork),depend(work),intent(hide) :: lwork=len(work)
+            integer dimension(liwork),intent(in,out) :: iwork
+            integer, optional,check(len(iwork)>=liwork),depend(iwork),intent(hide) :: liwork=len(iwork)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(out) :: idid
+        end subroutine radau5
+        function contr5(i,x,cont,lrc) ! in :radau5:radau_decsol.f
+            integer :: i
+            double precision :: x
+            double precision dimension(lrc) :: cont
+            integer, optional,check(len(cont)>=lrc),depend(cont),intent(hide) :: lrc=len(cont)
+            integer :: nn
+            integer :: nn2
+            integer :: nn3
+            integer :: nn4
+            double precision :: xsol
+            double precision :: hsol
+            double precision :: c2m1
+            double precision :: c1m1
+            double precision :: contr5
+            common /conra5/ nn,nn2,nn3,nn4,xsol,hsol,c2m1,c1m1
+        end function contr5
+    end interface
+end python module radau5
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
