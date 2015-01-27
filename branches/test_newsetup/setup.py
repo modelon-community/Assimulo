@@ -316,7 +316,7 @@ class Assimulo_setup(object):
                 if self.force_32bit:
                     el.extra_compile_args += self.flag_32bit
                 if self.extra_c_flags:
-                    for f in extra_c_flags.split(' '):
+                    for f in self.extra_c_flags.split(' '):
                         el.extra_compile_args.append(f)
     
     #Sundials found
@@ -350,9 +350,7 @@ class Assimulo_setup(object):
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
             if self.force_32bit:
                 ext_list[-1].extra_compile_args += flag_32bit
-            if extra_c_flags:
-                flags = extra_c_flags.split(' ')
-                for f in flags:
+            for f in extra_c_flags.split(' '):
                     ext_list[-1].extra_compile_args.append(f)
         else:
             ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+os.sep+"lib"])
@@ -368,17 +366,14 @@ class Assimulo_setup(object):
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
             if force_32bit:
                 ext_list[-1].extra_compile_args += flag_32bit
-            if extra_c_flags:
-                flags = extra_c_flags.split(' ')
-                for f in flags:
+            for f in extra_c_flags.split(' '):
                     ext_list[-1].extra_compile_args.append(f)
-    
-    for i in ext_list:
-        if is_python3:
-            i.cython_directives = {"language_level": 3}
-        i.extra_link_args += extra_link_flags
-    
-    return ext_list
+        
+            for el in ext_list:
+                if is_python3:
+                    el.cython_directives = {"language_level": 3} 
+                el.extra_link_args += extra_link_flags
+        return ext_list
 
 
 
