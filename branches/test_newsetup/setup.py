@@ -87,6 +87,22 @@ for x in sys.argv[1:]:
         copy_args[copy_args.index(x)] = x.replace('/',os.sep)
 
 class Assimulo_setup(object):
+# helper functions
+    def create_dir(self,d):
+        try:
+            os.makedirs(d) #Create the build directory
+        except OSError:
+            pass #Directory already exists
+    def copy_file(self,fi, to_dir):
+        # copies only files not directories
+        if not os.path.isdir(fi):
+            SH.copy2(fi, to_dir)
+    def copy_all_files(self,file_list, from_dir, to_dir):
+        for f in file_list:
+            if from_dir:
+                copy_file(os.path.join(from_dir,f),to_dir)
+            else:
+                copy_file(f,to_dir)
     def __init__(self,args,thirdpartymethods):
         # args[0] are optinal arguments given above
         # args[1] are argumenets passed to disutils 
@@ -116,7 +132,7 @@ class Assimulo_setup(object):
         self.platform = 'win' if 'win' in sys.platform
         self.platform = 'mac' if 'darwin' in sys.platform
         
-        self. is_python3 = True if sys.version_info.major >= 3 else False
+        self.is_python3 = True if sys.version_info.major >= 3 else False
         L.debug('Platform {}'.format(self.platform))
     
         if args[0].sundials_home:
@@ -127,28 +143,7 @@ class Assimulo_setup(object):
             self.libdirs = ''
         else:
             self.incdirs = '/usr/local/include'
-            self.libdirs = '/usr/local/lib'
-            
-        # helper functions
-        
-        def create_dir(self,d):
-            try:
-                os.makedirs(d) #Create the build directory
-            except OSError:
-                pass #Directory already exists
-                
-        def copy_file(fi, to_dir):
-            # copies only files not directories
-            if not os.path.isdir(fi):
-                SH.copy2(fi, to_dir)
-                
-        def copy_all_files(file_list, from_dir, to_dir):
-            for f in file_list:
-                if from_dir:
-                    self.copy_file(os.path.join(from_dir,f),to_dir)
-                else:
-                    self.copy_file(f,to_dir)
-            
+            self.libdirs = '/usr/local/lib'            
         # directory paths
         self.curdir = os.path.dirname(os.path.abspath(__file__))
         # build directories
