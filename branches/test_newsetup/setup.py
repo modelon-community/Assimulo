@@ -25,23 +25,10 @@ import argparse
 import np.distutils
 
 
-
-try:
-    from subprocess import Popen, PIPE
-    _p = Popen(["svnversion", "."], stdout=PIPE)
-    revision = _p.communicate()[0].decode('ascii')
-except:
-    revision = "unknown"
-
-
-
 static_link_gcc = ["-static-libgcc"]
 static_link_gfortran = ["-static-libgfortran"]
 flag_32bit = ["-m32"]
 
-force_32bit = False
-no_msvcr = False
-extra_c_flags = ''
 
 parser = argparse.ArgumentParser(description='Assimulo setup script.')
 package_arguments=['plugins','sundials','blas','superlu','lapack']
@@ -63,6 +50,13 @@ args = parser.parse_known_args()
 
 L.basicConfig(level=getattr(L,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
 L.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
+try:
+    from subprocess import Popen, PIPE
+    _p = Popen(["svnversion", "."], stdout=PIPE)
+    revision = _p.communicate()[0].decode('ascii')
+except:
+    revision = "unknown"
+L.debug('Source from svn revision {}.format(revision))
 
 try:
     from Cython.Distutils import build_ext
@@ -126,7 +120,7 @@ class Assimulo_setup(object):
             def msvc_runtime_library_mod(): 
                 return None
             np.distutils.misc_util.msvc_runtime_library = msvc_runtime_library_mod
-            L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.)
+            L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
         
         self.platform = 'linux'
         self.platform = 'win' if 'win' in sys.platform
@@ -229,9 +223,10 @@ class Assimulo_setup(object):
         Check if SuperLU package installed
         """
         self.with_SLU = True and self.check_BLAS()
+        kinsol_msg='KINSOL will not be compiled with support for SuperLU'
         
         if !self.with_BLAS:
-           L.warning('KINSOL will not be compiled with support for SuperLU as BLAS is missing')
+           L.warning(kinsol_msg+' as BLAS is missing.')
            return self.with_SLU
     
         if self.SLUdir != "":    
@@ -242,7 +237,7 @@ class Assimulo_setup(object):
                 L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
                 L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
                 L.debug("usage: --superlu-home path")
-                L.debug("KINSOL will not be compiled with support for SuperLU.")
+                L.debug(kinsol_msg+'.')
             
             L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir)
         else:
@@ -251,7 +246,7 @@ class Assimulo_setup(object):
             L.debug("usage: --superlu-home=path")
             L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
             self.with_SLU = False
-            L.debug("KINSOL will not be compiled with support for SUperLU.")
+            L.debug(kinsol_msg+'.')
         return wSLU
     
     def check_SUNDIALS(self):
@@ -259,8 +254,8 @@ class Assimulo_setup(object):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
         else:    
-            L.warning("Could not find Sundials, check the provided path (--sundials-home={}) 
-                       to see that it actually points to Sundials.".format(self.sundials_home))
+            L.warning("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
+                    "to see that it actually points to Sundials.".format(self.sundials_home))
             L.debug("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
             self.with_SUNDIALS=False
         return self.with_SUNDIALS    
@@ -309,21 +304,20 @@ class Assimulo_setup(object):
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
     
         
-    for i in ext_list:
-        #Debug
-        if debug_flag:
-            i.extra_compile_args = ["-g","-fno-strict-aliasing"]
-            i.extra_link_args = ["-g"]
-        else:
-            i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-        if self.platform == "mac":
-            i.extra_compile_args += ["-Wno-error=return-type"]
-        if force_32bit:
-            i.extra_compile_args += flag_32bit
-        if extra_c_flags:
-            flags = extra_c_flags.split(' ')
-            for f in flags:
-                i.extra_compile_args.append(f)
+            for el in ext_list:
+                #Debug
+                if self.debug_flag:
+                    el.extra_compile_args = ["-g","-fno-strict-aliasing"]
+                    el.extra_link_args = ["-g"]
+                else:
+                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                if self.platform == "mac":
+                    el.extra_compile_args += ["-Wno-error=return-type"]
+                if self.force_32bit:
+                    el.extra_compile_args += self.flag_32bit
+                if self.extra_c_flags:
+                    for f in extra_c_flags.split(' '):
+                        el.extra_compile_args.append(f)
     
     #Sundials found
     if os.path.exists(os.path.join(os.path.join(incdirs,'cvodes'), 'cvodes.h')):
@@ -354,13 +348,12 @@ class Assimulo_setup(object):
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
             if self.platform == "mac":
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            if force_32bit:
+            if self.force_32bit:
                 ext_list[-1].extra_compile_args += flag_32bit
             if extra_c_flags:
                 flags = extra_c_flags.split(' ')
                 for f in flags:
                     ext_list[-1].extra_compile_args.append(f)
-                
         else:
             ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+os.sep+"lib"])
             ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
@@ -378,7 +371,7 @@ class Assimulo_setup(object):
             if extra_c_flags:
                 flags = extra_c_flags.split(' ')
                 for f in flags:
-                    ext_list[i].extra_compile_args.append(f)
+                    ext_list[-1].extra_compile_args.append(f)
     
     for i in ext_list:
         if is_python3:
