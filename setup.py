@@ -24,12 +24,6 @@ import ctypes.util
 import argparse
 import np.distutils
 
-
-static_link_gcc = ["-static-libgcc"]
-static_link_gfortran = ["-static-libgfortran"]
-flag_32bit = ["-m32"]
-
-
 parser = argparse.ArgumentParser(description='Assimulo setup script.')
 package_arguments=['plugins','sundials','blas','superlu','lapack']
 package_arguments.sort()
@@ -109,10 +103,13 @@ class Assimulo_setup(object):
         self.LAPACKdir = args[0].lapack_home
         self.PLUGINSdir = args[0].plugins_home
         self.static = args[0].is_static 
+        self.static_link_gcc = ["-static-libgcc"] if self.static else []
+        static_link_gfortran = ["-static-libgfortran"] if self.static else []
         self.debug_flag = args[0].debug 
-        self.force_32bit = args[0].force_32bit 
+        self.force_32bit = args[0].force_32bit
+        self.flag_32bit = ["-m32"] if self.force_32bit else [] 
         self.no_mvscr = args[0].no_msvcr 
-        self.extra_c_flags = args[0].extra_c_flags
+        self.extra_c_flags = args[0].extra_c_flags.split()
         self.thirdpartymethods = thirdpartymethods
         
         if args[0].no_msvcr:
@@ -153,6 +150,8 @@ class Assimulo_setup(object):
         self.desTestsSolvers = os.path.join(self.desTests,"solvers")
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
+                                          
+        self.assimulo_lib = os.path.join('assimulo','lib')
         
         # filelists
         
@@ -165,6 +164,11 @@ class Assimulo_setup(object):
         self.filelist_thirdparty=dict([(thp,os.listdir(join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
+        
+        # check packages
+        self.check_SuperLU()
+        self.check_BLAS()
+        self.check_SUNDIALS()
         
     def create_assimulo_dirs_and_populate(self):
         for subdir in ["lib," "solvers", "examples"]:
@@ -201,6 +205,9 @@ class Assimulo_setup(object):
                     L.debug("Could not remove: "+str(dirDel))
     
     def check_BLAS(self):
+        """
+        Check if BLAS can be found
+        """
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
@@ -215,21 +222,18 @@ class Assimulo_setup(object):
                 L.debug("usage: --blas-home=path")
                 self.with_BLAS = False
             else:
-                L.debug("BLAS found at "+BLASdir+"/"+BLASname_t)
-        return self.with_BLAS
+                L.debug("BLAS found at "+BLASdir+"/"+BLASname_
         
     def check_SuperLU(self):
         """
         Check if SuperLU package installed
         """
-        self.with_SLU = True and self.check_BLAS()
+        self.with_SLU = self.with_BLAS
         kinsol_msg='KINSOL will not be compiled with support for SuperLU'
         
         if !self.with_BLAS:
-           L.warning(kinsol_msg+' as BLAS is missing.')
-           return self.with_SLU
-    
-        if self.SLUdir != "":    
+            L.warning(kinsol_msg+' as BLAS is missing.')
+        elif self.SLUdir != "":    
             self.SLUincdir = os.path.join(SLUdir,'SRC')
             self.SLUlibdir = os.path.join(SLUdir,'lib')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
@@ -238,8 +242,8 @@ class Assimulo_setup(object):
                 L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
                 L.debug("usage: --superlu-home path")
                 L.debug(kinsol_msg+'.')
-            
-            L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir)
+            else:
+                L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir)
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
             L.debug("No path to SuperLU supplied, KINSOL will not be compiled with support for SUperLU.")
@@ -247,9 +251,11 @@ class Assimulo_setup(object):
             L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
             self.with_SLU = False
             L.debug(kinsol_msg+'.')
-        return wSLU
     
     def check_SUNDIALS(self):
+        """
+        Check if Sundials installed
+        """
         if os.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
@@ -258,15 +264,10 @@ class Assimulo_setup(object):
                     "to see that it actually points to Sundials.".format(self.sundials_home))
             L.debug("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
             self.with_SUNDIALS=False
-        return self.with_SUNDIALS    
             
 
     def cython_extensionlists(self):
-        extra_link_flags = []
-        if self.static:
-            extra_link_flags += self.static_link_gcc
-        if self.force_32bit:
-            extra_link_flags += self.flag_32bit
+        extra_link_flags = self.static_link_gcc + self.flag_32bit
     
         #Cythonize main modules
         ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
@@ -283,7 +284,6 @@ class Assimulo_setup(object):
             el.include_dirs = [np.get_include()]
             
         # SUNDIALS
-        self.check_SUNDIALS()
         if self.with_SUNDIALS:
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
@@ -304,185 +304,89 @@ class Assimulo_setup(object):
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
     
         
-            for el in ext_list:
-                #Debug
-                if self.debug_flag:
-                    el.extra_compile_args = ["-g","-fno-strict-aliasing"]
-                    el.extra_link_args = ["-g"]
+        for el in ext_list:
+            #Debug
+            if self.debug_flag:
+                el.extra_compile_args = ["-g","-fno-strict-aliasing"]
+                el.extra_link_args = ["-g"]
+            else:
+                el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if self.platform == "mac":
+                el.extra_compile_args += ["-Wno-error=return-type"]
+            el.extra_compile_args += self.flag_32bit + self.extra_c_flags
+            
+        if self.with_SUNDIALS:
+            cordir_KINSOL_wSLU = os.path.join(self.assimulo.lib,'sundials_kinsol_core_wSLU.pyx')
+            cordir_KINSOL = os.path.join(self.assimulo.lib,'sundials_kinsol_core.pyx')
+        
+            cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo.lib,'kinsol_jmod_wSLU.c')
+            cordir_KINSOL_jmod = os.path.join(self.assimulo.lib,'lib'),'kinsol_jmod.c')
+        
+            cordir_kinpinv = os.path.join(self.assimulo.lib,'kinpinv.c')
+            cordir_kinslug = os.path.join(self.assimulo.lib,'kinslug.c')
+            cordir_reg_routines = os.path.join(self.assimulo.lib,'reg_routines.c')
+            if self.with_SLU:
+                ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo","assimulo"+os.sep+"lib"])
+                ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
+                ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, incdirs]
+                ext_list[-1].library_dirs = [libdirs,self.SLUlibdir,args[0].blas]
+                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",args[0].blas_name,'gfortran']
+            else:
+                ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+os.sep+"lib"])
+                ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
+                ext_list[-1].include_dirs = [np.get_include(), incdirs]
+                ext_list[-1].library_dirs = [libdirs]
+                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+            if self.debug_flag:
+                    ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
                 else:
-                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                    ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
                 if self.platform == "mac":
-                    el.extra_compile_args += ["-Wno-error=return-type"]
-                if self.force_32bit:
-                    el.extra_compile_args += self.flag_32bit
-                if self.extra_c_flags:
-                    for f in self.extra_c_flags.split(' '):
-                        el.extra_compile_args.append(f)
-    
-    #Sundials found
-    if os.path.exists(os.path.join(os.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        cordir = os.path.join(os.path.join('assimulo','lib'),'sundials_core.pyx')
-        cordir_KINSOL_wSLU = os.path.join(os.path.join('assimulo','lib'),'sundials_kinsol_core_wSLU.pyx')
-        cordir_KINSOL = os.path.join(os.path.join('assimulo','lib'),'sundials_kinsol_core.pyx')
-    
-        cordir_KINSOL_jmod_wSLU = os.path.join(os.path.join('assimulo','lib'),'kinsol_jmod_wSLU.c')
-        cordir_KINSOL_jmod = os.path.join(os.path.join('assimulo','lib'),'kinsol_jmod.c')
-    
-        cordir_kinpinv = os.path.join(os.path.join('assimulo','lib'),'kinpinv.c')
-        cordir_kinslug = os.path.join(os.path.join('assimulo','lib'),'kinslug.c')
-        cordir_reg_routines = os.path.join(os.path.join('assimulo','lib'),'reg_routines.c')
-
-        
-        self.check_SuperLU()
-        if self.with_SLU:
-            SLUincdir = os.path.join(args[0].superlu_home,'SRC')
-            SLUlibdir = os.path.join(args[0].superlu_home,'lib')
-            ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo","assimulo"+os.sep+"lib"])
-            ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
-            ext_list[-1].include_dirs = [np.get_include(), SLUincdir, incdirs]
-            ext_list[-1].library_dirs = [libdirs,SLUlibdir,args[0].blas]
-            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",args[0].blas_name,'gfortran']
-            if debug_flag:
-                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-            else:
-                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            if self.platform == "mac":
-                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            if self.force_32bit:
-                ext_list[-1].extra_compile_args += flag_32bit
-            for f in extra_c_flags.split(' '):
-                    ext_list[-1].extra_compile_args.append(f)
-        else:
-            ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+os.sep+"lib"])
-            ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
-            ext_list[-1].include_dirs = [np.get_include(), incdirs]
-            ext_list[-1].library_dirs = [libdirs]
-            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            if debug_flag:
-                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-            else:
-                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            if self.platform == "mac":
-                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            if force_32bit:
-                ext_list[-1].extra_compile_args += flag_32bit
-            for f in extra_c_flags.split(' '):
-                    ext_list[-1].extra_compile_args.append(f)
-        
+                    ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
+                ext_list[-1].extra_compile_args += self.flag_32bit + self.extra_c_flags
+            
             for el in ext_list:
                 if is_python3:
                     el.cython_directives = {"language_level": 3} 
                 el.extra_link_args += extra_link_flags
         return ext_list
 
-
-
-
-def check_fortran_extensions():
+def check_fortran_extensions(self):
     """
     Adds the Fortran extensions using Numpy's distutils extension.
     """
-    extra_link_flags = []
-    extra_compile_flags = []
-    if static:
-        extra_link_flags += static_link_gfortran + static_link_gcc
-    if force_32bit:
-        extra_link_flags += flag_32bit
-        extra_compile_flags += flag_32bit
-    if extra_c_flags:
-        flags = extra_c_flags.split(' ')
-        for f in flags:
-            extra_compile_flags.append(f)
+    extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
+    extra_compile_flags = self.flag_32bit + self.extra_c_flags
     
     from numpy.distutils.misc_util import Configuration
     config = Configuration()
+    extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
 
-    if force_32bit:
-        config.add_extension('assimulo.lib.dopri5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dopri5.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dopri5.pyf']
-                             ,extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])#include_dirs=[np.get_include()])
-        
-        config.add_extension('assimulo.lib.rodas',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'rodas_decsol.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'rodas_decsol.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
-        
-        config.add_extension('assimulo.lib.radau5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radau_decsol.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radau_decsol.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
+    #Hairer
+    sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
+    config.add_extension('assimulo.lib.dopri5', sources=[sources.format('dopri'), **extraargs)
+    config.add_extension('assimulo.lib.rodas', sources=[sources.format('rodas_decsol'), include_dirs=[np.get_include()],**extraargs)
+    config.add_extension('assimulo.lib.rodas', sources=[sources.format('radau_decsol'), include_dirs=[np.get_include()],**extraargs)
+                         
+    radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
+    src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
+    config.add_extension('assimulo.lib.radar5', sources= src, include_dirs=[np.get_include()],**extraargs)
     
-        config.add_extension('assimulo.lib.radar5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'contr5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5_int.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dontr5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'decsol.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dc_decdel.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
-        
-        #ODEPACK
-        config.add_extension('assimulo.lib.odepack',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkdmain.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkda1.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkda2.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'odepack_aux.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'odepack.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-        
-        #ODASSL
-        odassl_dir='assimulo'+os.sep+'thirdparty'+os.sep+'odassl'+os.sep
-        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-        config.add_extension('assimulo.lib.odassl',
-                             sources=[odassl_dir+file for file in odassl_files],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    else:
-        config.add_extension('assimulo.lib.dopri5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dopri5.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dopri5.pyf']
-                             ,extra_link_args=extra_link_flags[:])#include_dirs=[np.get_include()])
-        
-        config.add_extension('assimulo.lib.rodas',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'rodas_decsol.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'rodas_decsol.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])
-        
-        config.add_extension('assimulo.lib.radau5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radau_decsol.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radau_decsol.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])
-    
-        config.add_extension('assimulo.lib.radar5',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'contr5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5_int.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dontr5.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'decsol.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'dc_decdel.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'radar5.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
-        
-        #ODEPACK
-        config.add_extension('assimulo.lib.odepack',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkdmain.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkda1.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'opkda2.f',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'odepack_aux.f90',
-                                      'assimulo'+os.sep+'thirdparty'+os.sep+'opepack'+os.sep+'odepack.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])
-        
-        #ODASSL
-        odassl_dir='assimulo'+os.sep+'thirdparty'+os.sep+'odassl'+os.sep
-        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-        config.add_extension('assimulo.lib.odassl',
-                             sources=[odassl_dir+file for file in odassl_files],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])
-        
-    #DASP3
+    #ODEPACK
+    odepack_list = ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90','odepack.pyf']
+    src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
+    config.add_extension('assimulo.lib.odepack', sources= src, include_dirs=[np.get_include()],**extraargs)
+ 
+    #ODASSL
+    odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+    src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
+    config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
+
     dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
-    if force_32bit:
-        dasp3_f77_compile_flags += flag_32bit
+    dasp3_f77_compile_flags += self.flag_32bit
     
     if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
-        dasp3_dir='assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep
         dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
                        'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
         config.add_extension('assimulo.lib.dasp3dp',
