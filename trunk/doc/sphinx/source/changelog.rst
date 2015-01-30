@@ -3,6 +3,12 @@
 Changelog
 ==========
 
+--- Assimulo-2.7 ---
+    * Added Python 3 support (ticket:296)
+    * Fixed crash with atol as a matrix (ticket:351)
+    * Added option for stability detection (ticket:355)
+    * Fixed problem with event tolerance (ticket:367)
+
 --- Assimulo-2.6 ---
     * Added version as an attribute (ticket:264)
     * Added more information is Sunials was found or not during install
