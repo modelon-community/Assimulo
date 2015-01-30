@@ -211,10 +211,15 @@ class Assimulo_setup(object):
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
-            L.warning("No path to BLAS supplied" + msg)
-            L.debug("usage: --blas-home=path")
-            L.debug("Note: the path required is to where the static library lib"+BLASname+" is found")
-            self.with_BLAS = False
+            names=ctypes.util.find_library("blas")
+            if names !='':
+                self.with_Blas=True
+                L.debug('Blas found in standard library path as {}'.names)
+            else:    
+                L.warning("No path to BLAS supplied" + msg)
+                L.debug("usage: --blas-home=path")
+                L.debug("Note: the path required is to where the static library lib"+BLASname+" is found")
+                self.with_BLAS = False
         else:
             if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')):
                 L.warning("Could not find BLAS"+msg)
@@ -351,49 +356,51 @@ class Assimulo_setup(object):
                 el.extra_link_args += extra_link_flags
         return ext_list
 
-def check_fortran_extensions(self):
-    """
-    Adds the Fortran extensions using Numpy's distutils extension.
-    """
-    extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
-    extra_compile_flags = self.flag_32bit + self.extra_c_flags
+    def check_fortran_extensions(self):
+        """
+        Adds the Fortran extensions using Numpy's distutils extension.
+        """
+        extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
+        extra_compile_flags = self.flag_32bit + self.extra_c_flags
+        
+        from numpy.distutils.misc_util import Configuration
+        config = Configuration()
+        extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:],
+                  extra_f90_compile_args=extra_compile_flags[:])}
     
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration()
-    extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
-
-    #Hairer
-    sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
-    config.add_extension('assimulo.lib.dopri5', sources=[sources.format('dopri'), **extraargs)
-    config.add_extension('assimulo.lib.rodas', sources=[sources.format('rodas_decsol'), include_dirs=[np.get_include()],**extraargs)
-    config.add_extension('assimulo.lib.rodas', sources=[sources.format('radau_decsol'), include_dirs=[np.get_include()],**extraargs)
-                         
-    radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
-    src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
-    config.add_extension('assimulo.lib.radar5', sources= src, include_dirs=[np.get_include()],**extraargs)
+        #Hairer
+        sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
+        config.add_extension('assimulo.lib.dopri5', sources=[sources.format('dopri'), **extraargs)
+        config.add_extension('assimulo.lib.rodas', sources=[sources.format('rodas_decsol'), include_dirs=[np.get_include()],**extraargs)
+        config.add_extension('assimulo.lib.rodas', sources=[sources.format('radau_decsol'), include_dirs=[np.get_include()],**extraargs)
+                             
+        radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
+        config.add_extension('assimulo.lib.radar5', sources= src, include_dirs=[np.get_include()],**extraargs)
+        
+        #ODEPACK
+        odepack_list = ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90','odepack.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'odepack'+os.sep+code for code in odepack_list]
+        config.add_extension('assimulo.lib.odepack', sources= src, include_dirs=[np.get_include()],**extraargs)
+     
+        #ODASSL
+        odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
+        config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
     
-    #ODEPACK
-    odepack_list = ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90','odepack.pyf']
-    src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
-    config.add_extension('assimulo.lib.odepack', sources= src, include_dirs=[np.get_include()],**extraargs)
- 
-    #ODASSL
-    odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                  'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-    src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
-    config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
-
-    dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
-    dasp3_f77_compile_flags += self.flag_32bit
-    
-    if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
-        dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
-                       'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-        config.add_extension('assimulo.lib.dasp3dp',
-                              sources=[dasp3_dir+file for file in dasp3_files],
-                              include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    else:
-        L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
+        dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
+        dasp3_f77_compile_flags += self.flag_32bit
+        
+        if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+            dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in dasp3_list]
+            config.add_extension('assimulo.lib.dasp3dp',
+                                  sources= src,
+                                  include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
+                                  extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+        else:
+            L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
 
     
     #GLIMDA
@@ -416,17 +423,11 @@ def check_fortran_extensions(self):
         if name != None:
             extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
             blas = True
-    
     if lapack and blas:
-        if force_32bit:
-            config.add_extension('assimulo.lib.glimda',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'voigtmann'+os.sep+'glimda_complete.f','assimulo'+os.sep+'thirdparty'+os.sep+'voigtmann'+os.sep+'glimda_complete.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-        else:
-            config.add_extension('assimulo.lib.glimda',
-                             sources=['assimulo'+os.sep+'thirdparty'+os.sep+'voigtmann'+os.sep+'glimda_complete.f','assimulo'+os.sep+'thirdparty'+os.sep+'voigtmann'+os.sep+'glimda_complete.pyf'],
-                             include_dirs=[np.get_include()],extra_link_args=extra_link_flags[:])
-
+        glimda_list = ['glimda_complete.f','glimda_complete.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in glimbda_list]
+        extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
+        config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs) 
     else:
         L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
     
