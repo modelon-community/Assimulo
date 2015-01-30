@@ -1,0 +1,1 @@
+f2py -c dasp3dp.pyf *.f --f77flags="-fdefault-double-8 -fdefault-real-8"
