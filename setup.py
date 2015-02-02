@@ -38,6 +38,7 @@ parser.add_argument("--force-32bit", action="store_true", help="set to true if p
 parser.add_argument("--no-msvcr", action="store_true", help="set to true if present",default=False)
 parser.add_argument("--log",choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),default='NOTSET')
 parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
+parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
                                        
 args = parser.parse_known_args()
 
@@ -64,11 +65,8 @@ except ImportError:
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
 
-thirdparty_methods = ["hairer","voigtmann", "odepack","odassl","dasp3"]
 
 
-#  Has to be checked with chria
-copy_args=sys.argv[1:]
 
 for x in sys.argv[1:]:
     if not x.find('--prefix'):
@@ -169,6 +167,7 @@ class Assimulo_setup(object):
         self.check_SuperLU()
         self.check_BLAS()
         self.check_SUNDIALS()
+        self.check_LAPACK()
         
     def create_assimulo_dirs_and_populate(self):
         for subdir in ["lib," "solvers", "examples"]:
@@ -270,7 +269,21 @@ class Assimulo_setup(object):
             L.debug("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
             self.with_SUNDIALS=False
             
-
+    def check_LAPACK(self):
+        """
+        Check if LAPACK installed
+        """
+        self.with_LAPACK=False
+        if self.LAPACKdir != "":
+            if not os.path.exists(self.LAPACKdir):
+                L.warning('Lapack directory {} not found'.format(self.LAPACKdir))
+            else
+                self.withLAPACK = True
+        else:
+            name = ctypes.util.find_library("lapack")
+            self.withLAPACK = True
+            L.debug('Lapack found in  standard library')            
+            
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
     
@@ -403,36 +416,23 @@ class Assimulo_setup(object):
             L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
 
     
-    #GLIMDA
-    #ADD liblapack and libblas
-    lapack = False
-    blas = False
-    if LAPACKdir != "":
-        lapack = True
-        extra_link_flags += ["-L"+LAPACKdir, "-llapack"]
-    else: #Try to see if Lapack exists in PATH
-        name = ctypes.util.find_library("lapack")
-        if name != None:
-            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
-            lapack = True
-    if BLASdir != "":
-        blas = True
-        extra_link_flags += ["-L"+BLASdir, "-lblas"]
-    else: #Try to see if Blas exists in PATH
-        name = ctypes.util.find_library("blas")
-        if name != None:
-            extra_link_flags += ["-l"+name.split(os.path.sep)[-1].replace("lib","").split(".")[0]]
-            blas = True
-    if lapack and blas:
-        glimda_list = ['glimda_complete.f','glimda_complete.pyf']
-        src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in glimbda_list]
-        extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
-        config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs) 
-    else:
-        L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+        #GLIMDA
+        if self.with_blas and self.withLAPACK:
+            extra_link_flags += ["-L"+LAPACKdir, "-llapack", "-L"+BLASdir, "-lblas"]
+            glimda_list = ['glimda_complete.f','glimda_complete.pyf']
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in glimbda_list]
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
+            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs) 
+            extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
+        else:
+            L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+        
     
-
-    return config.todict()["ext_modules"]
+        return config.todict()["ext_modules"]
+        
+if __name__ == '__main__':
+    assetup=Assimulo_setup():
+        
 
 """
 Pre-processing is necessary due to the setup of the repository. 
