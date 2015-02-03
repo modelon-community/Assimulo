@@ -52,7 +52,7 @@ try:
     revision = _p.communicate()[0].decode('ascii')
 except:
     revision = "unknown"
-L.debug('Source from svn revision {}'.format(revision))
+L.debug('Source from svn revision {}'.format(revision[:-2])) # exclude newline and letter at the end
 
 try:
     from Cython.Distutils import build_ext
@@ -65,7 +65,7 @@ except ImportError:
 
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
-
+thirdparty_methods= ["hairer","voigtmann", "odepack","odassl","dasp3"] 
 
 
 
@@ -85,12 +85,13 @@ class Assimulo_prepare(object):
         if not os.path.isdir(fi):
             SH.copy2(fi, to_dir)
     def copy_all_files(self,file_list, from_dir, to_dir):
+        L.debug('fromdir {}  todir {}'.format(from_dir,to_dir))
         for f in file_list:
             if from_dir:
-                copy_file(os.path.join(from_dir,f),to_dir)
+                self.copy_file(os.path.join(from_dir,f),to_dir)
             else:
-                copy_file(f,to_dir)
-    def __init__(self,args):
+                self.copy_file(f,to_dir)
+    def __init__(self,args, thirdparty_methods):
         # args[0] are optinal arguments given above
         # args[1] are argumenets passed to disutils 
         self.distutil_args=args[1]
@@ -103,13 +104,13 @@ class Assimulo_prepare(object):
         self.PLUGINSdir = args[0].plugins_home
         self.static = args[0].is_static 
         self.static_link_gcc = ["-static-libgcc"] if self.static else []
-        static_link_gfortran = ["-static-libgfortran"] if self.static else []
+        self.static_link_gfortran = ["-static-libgfortran"] if self.static else []
         self.debug_flag = args[0].debug 
         self.force_32bit = args[0].force_32bit
         self.flag_32bit = ["-m32"] if self.force_32bit else [] 
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
-        self.thirdpartymethods  = ["hairer","voigtmann", "odepack","odassl","dasp3"] 
+        self.thirdparty_methods  = thirdparty_methods
         
         if args[0].no_msvcr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
@@ -138,7 +139,7 @@ class Assimulo_prepare(object):
         self.curdir = os.path.dirname(os.path.abspath(__file__))
         # build directories
         self.build_assimulo = os.path.join("build","assimulo")
-        self.build_assimulo_thirdparty = os.path.join(build_assimulo,'thirdparty')
+        self.build_assimulo_thirdparty = os.path.join(self.build_assimulo,'thirdparty')
         # destination directories
         self.desSrc = os.path.join(self.curdir,self.build_assimulo)
         self.desLib = os.path.join(self.desSrc,"lib")
@@ -160,41 +161,40 @@ class Assimulo_prepare(object):
         self.fileExamples= os.listdir("examples")
         self.fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
         self.fileTests   = os.listdir("tests")
-        self.filelist_thirdparty=dict([(thp,os.listdir(join("thirdparty",thp))) 
+        self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
         
         # check packages
-        self.check_SuperLU()
         self.check_BLAS()
+        self.check_SuperLU()
         self.check_SUNDIALS()
         self.check_LAPACK()
         
     def create_assimulo_dirs_and_populate(self):
-        for subdir in ["lib," "solvers", "examples"]:
+        for subdir in ["lib", "solvers", "examples"]:
             self.create_dir(os.path.join(self.build_assimulo,subdir))
-        self.create_dir(os.path.join(build_assimulo, "tests", "solvers"))
+        self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
         for pck in self.thirdparty_methods:
             self.create_dir(os.path.join(self.build_assimulo_thirdparty, pck))
         
         self.copy_all_files(self.fileSrc, "src", self.desSrc)
-        self.copy_all_files(self.fileLib, "lib", self.desLib)
+        self.copy_all_files(self.fileLib, "src/lib", self.desLib)
         self.copy_all_files(self.fileSolvers, os.path.join("src","solvers"), self.desSolvers)
         self.copy_all_files(self.fileExamples, "examples", self.desExamples)
         self.copy_all_files(self.fileMain, None, self.desMain)
-        self.copy_all_files(self.fileTests, os.path.join("tests", f), self.desTests)
-        self.copy_all_files(self.fileTestSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
+        self.copy_all_files(self.fileTests, "tests", self.desTests)
+        self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
 
-        for solver in thirdparty_methods:
-            for f in filelist_thirdparty.items():
-                self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
-                if fi == "LICENSE_{}".format(f[0].upper()):   
-                    SH.copy2(join("thirdparty",f[0],fi),self.desLib)
+        for f in self.filelist_thirdparty.items():
+            self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
+            if f[1] == "LICENSE_{}".format(f[0].upper()):   
+                SH.copy2(join("thirdparty",f[0],f[1]),self.desLib)
 
         #Delete OLD renamed files
         delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
         for item in delFiles:
-            dirDel = desSrc
+            dirDel = self.desSrc
             for f in item[:-1]:
                 dirDel = os.path.join(dirDel, f)
             dirDel = os.path.join(dirDel, item[-1])
@@ -214,7 +214,7 @@ class Assimulo_prepare(object):
             names=ctypes.util.find_library("blas")
             if names !='':
                 self.with_Blas=True
-                L.debug('Blas found in standard library path as {}'.names)
+                L.debug('Blas found in standard library path as {}'.format(names))
             else:    
                 L.warning("No path to BLAS supplied" + msg)
                 L.debug("usage: --blas-home=path")
@@ -261,13 +261,13 @@ class Assimulo_prepare(object):
         """
         Check if Sundials installed
         """
-        if os.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        if os.path.exists(os.path.join(os.path.join(self.incdirs,'cvodes'), 'cvodes.h')):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
         else:    
             L.warning("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
                     "to see that it actually points to Sundials.".format(self.sundials_home))
-            L.debug("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
+            L.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
             self.with_SUNDIALS=False
             
     def check_LAPACK(self):
@@ -309,8 +309,8 @@ class Assimulo_prepare(object):
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
                                  include_dirs=[np.get_include()],
                                  pyrex_gdb=self.debug_flag)
-            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", incdirs]
-            ext_list[-1].library_dirs = [libdirs]
+            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
+            ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
             #Kinsol
@@ -318,8 +318,8 @@ class Assimulo_prepare(object):
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
                         include_dirs=[np.get_include()],
                         pyrex_gdb=self.debug_flag)
-            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", incdirs]
-            ext_list[-1].library_dirs = [libdirs]
+            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
+            ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
     
         
@@ -335,26 +335,26 @@ class Assimulo_prepare(object):
             el.extra_compile_args += self.flag_32bit + self.extra_c_flags
             
         if self.with_SUNDIALS:
-            cordir_KINSOL_wSLU = os.path.join(self.assimulo.lib,'sundials_kinsol_core_wSLU.pyx')
-            cordir_KINSOL = os.path.join(self.assimulo.lib,'sundials_kinsol_core.pyx')
+            cordir_KINSOL_wSLU = os.path.join(self.assimulo_lib,'sundials_kinsol_core_wSLU.pyx')
+            cordir_KINSOL = os.path.join(self.assimulo_lib,'sundials_kinsol_core.pyx')
         
-            cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo.lib,'kinsol_jmod_wSLU.c')
-            cordir_KINSOL_jmod = os.path.join(self.assimulo.lib,'lib','kinsol_jmod.c')
+            cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo_lib,'kinsol_jmod_wSLU.c')
+            cordir_KINSOL_jmod = os.path.join(self.assimulo_lib,'lib','kinsol_jmod.c')
         
-            cordir_kinpinv = os.path.join(self.assimulo.lib,'kinpinv.c')
-            cordir_kinslug = os.path.join(self.assimulo.lib,'kinslug.c')
-            cordir_reg_routines = os.path.join(self.assimulo.lib,'reg_routines.c')
+            cordir_kinpinv = os.path.join(self.assimulo_lib,'kinpinv.c')
+            cordir_kinslug = os.path.join(self.assimulo_lib,'kinslug.c')
+            cordir_reg_routines = os.path.join(self.assimulo_lib,'reg_routines.c')
             if self.with_SLU:
-                ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo","assimulo"+os.sep+"lib"])
+                ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo",self.assimulo_lib])
                 ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
                 ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, incdirs]
                 ext_list[-1].library_dirs = [libdirs,self.SLUlibdir,args[0].blas]
                 ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",args[0].blas_name,'gfortran']
             else:
-                ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+os.sep+"lib"])
+                ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo",self.assimulo_lib])
                 ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
-                ext_list[-1].include_dirs = [np.get_include(), incdirs]
-                ext_list[-1].library_dirs = [libdirs]
+                ext_list[-1].include_dirs = [np.get_include(), self.incdirs]
+                ext_list[-1].library_dirs = [self.libdirs]
                 ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
             if self.debug_flag:
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
@@ -365,7 +365,7 @@ class Assimulo_prepare(object):
             ext_list[-1].extra_compile_args += self.flag_32bit + self.extra_c_flags
             
             for el in ext_list:
-                if is_python3:
+                if self.is_python3:
                     el.cython_directives = {"language_level": 3} 
                 el.extra_link_args += extra_link_flags
         return ext_list
@@ -384,9 +384,9 @@ class Assimulo_prepare(object):
     
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
-        config.add_extension('assimulo.lib.dopri5', sources=[sources.format('dopri')], **extraargs)
-        config.add_extension('assimulo.lib.rodas', sources=[sources.format('rodas_decsol')], include_dirs=[np.get_include()],**extraargs)
-        config.add_extension('assimulo.lib.rodas', sources=[sources.format('radau_decsol')], include_dirs=[np.get_include()],**extraargs)
+        config.add_extension('assimulo.lib.dopri5', sources=[s.format('dopri') for s in sources], **extraargs)
+        config.add_extension('assimulo.lib.rodas', sources=[s.format('rodas_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
+        config.add_extension('assimulo.lib.rodas', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
                              
         radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
@@ -418,7 +418,7 @@ class Assimulo_prepare(object):
 
     
         #GLIMDA
-        if self.with_blas and self.withLAPACK:
+        if self.with_BLAS and self.with_LAPACK:
             extra_link_flags += ["-L"+LAPACKdir, "-llapack", "-L"+BLASdir, "-lblas"]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in glimbda_list]
@@ -432,7 +432,7 @@ class Assimulo_prepare(object):
         return config.todict()["ext_modules"]
         
 if __name__ == '__main__':
-    pepare=Assimulo_prepare(args)
+    prepare=Assimulo_prepare(args, thirdparty_methods)
     curr_dir=os.getcwd()
     if not os.path.isdir("assimulo"):
         prepare.create_assimulo_dirs_and_populate()
@@ -531,7 +531,7 @@ if __name__ == '__main__':
           ext_modules = ext_list,
           package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
                                     'examples'+os.sep+'kinsol_ors_matrix.mtx']},
-          script_args=distutil_args)
+          script_args=prepare.distutil_args)
     
     if change_dir:
         os.chdir(curr_dir) #Change back to original directory
