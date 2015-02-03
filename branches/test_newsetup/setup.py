@@ -65,13 +65,9 @@ except ImportError:
 
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
-thirdparty_methods= ["hairer","voigtmann", "odepack","odassl","dasp3"] 
+thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3"] 
 
 
-
-for x in sys.argv[1:]:
-    if not x.find('--prefix'):
-        copy_args[copy_args.index(x)] = x.replace('/',os.sep)
 
 class Assimulo_prepare(object):
 # helper functions
@@ -111,7 +107,9 @@ class Assimulo_prepare(object):
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
         self.thirdparty_methods  = thirdparty_methods
-        
+        self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
+        self.distutil_args.append('--prefix={}'.format(self.prefix))
+         
         if args[0].no_msvcr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
@@ -187,9 +185,12 @@ class Assimulo_prepare(object):
         self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
 
         for f in self.filelist_thirdparty.items():
+            L.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
             self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
-            if f[1] == "LICENSE_{}".format(f[0].upper()):   
-                SH.copy2(join("thirdparty",f[0],f[1]),self.desLib)
+            try:   
+                SH.copy2(os.path.join("thirdparty",f[0],"LICENSE_{}".format(f[0].upper())),self.desLib)
+            except IOError:
+                L.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
 
         #Delete OLD renamed files
         delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -282,8 +283,9 @@ class Assimulo_prepare(object):
                 self.withLAPACK = True
         else:
             name = ctypes.util.find_library("lapack")
-            self.withLAPACK = True
-            L.debug('Lapack found in  standard library')            
+            self.with_LAPACK = True
+            self.LAPACKdir=''
+            L.debug('Lapack found in  standard library as {}'.format(name))            
             
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
@@ -339,7 +341,7 @@ class Assimulo_prepare(object):
             cordir_KINSOL = os.path.join(self.assimulo_lib,'sundials_kinsol_core.pyx')
         
             cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo_lib,'kinsol_jmod_wSLU.c')
-            cordir_KINSOL_jmod = os.path.join(self.assimulo_lib,'lib','kinsol_jmod.c')
+            cordir_KINSOL_jmod = os.path.join(self.assimulo_lib,'kinsol_jmod.c')
         
             cordir_kinpinv = os.path.join(self.assimulo_lib,'kinpinv.c')
             cordir_kinslug = os.path.join(self.assimulo_lib,'kinslug.c')
@@ -377,16 +379,15 @@ class Assimulo_prepare(object):
         extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
         extra_compile_flags = self.flag_32bit + self.extra_c_flags
         
-        from numpy.distutils.misc_util import Configuration
-        config = Configuration()
+        config = np.distutils.misc_util.Configuration()
         extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:],
                   'extra_f90_compile_args':extra_compile_flags[:]}
     
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
-        config.add_extension('assimulo.lib.dopri5', sources=[s.format('dopri') for s in sources], **extraargs)
+        config.add_extension('assimulo.lib.dopri5', sources=[s.format('dopri5') for s in sources], **extraargs)
         config.add_extension('assimulo.lib.rodas', sources=[s.format('rodas_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
-        config.add_extension('assimulo.lib.rodas', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
+        config.add_extension('assimulo.lib.radau5', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
                              
         radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
@@ -400,7 +401,7 @@ class Assimulo_prepare(object):
         #ODASSL
         odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
                       'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-        src=['assimulo'+os.sep+'thirdparty'+os.sep+'depack'+os.sep+code for code in odepack_list]
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'odassl'+os.sep+code for code in odassl_list]
         config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
     
         dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
@@ -408,7 +409,7 @@ class Assimulo_prepare(object):
         
         if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
             dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in dasp3_list]
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
             config.add_extension('assimulo.lib.dasp3dp',
                                   sources= src,
                                   include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
@@ -419,9 +420,9 @@ class Assimulo_prepare(object):
     
         #GLIMDA
         if self.with_BLAS and self.with_LAPACK:
-            extra_link_flags += ["-L"+LAPACKdir, "-llapack", "-L"+BLASdir, "-lblas"]
+            extra_link_flags += ["-L"+self.LAPACKdir, "-llapack", "-L"+self.BLASdir, "-lblas"]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
-            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3dp'+os.sep+code for code in glimbda_list]
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
@@ -513,7 +514,6 @@ if __name__ == '__main__':
     license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
                    for pck in  thirdparty_methods for place in ['thirdparty','lib']]
     L.debug(license_info)
-    
     ndc.setup(name=NAME,
           version=VERSION,
           license=LICENSE,
@@ -532,6 +532,7 @@ if __name__ == '__main__':
           package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
                                     'examples'+os.sep+'kinsol_ors_matrix.mtx']},
           script_args=prepare.distutil_args)
+    
     
     if change_dir:
         os.chdir(curr_dir) #Change back to original directory
