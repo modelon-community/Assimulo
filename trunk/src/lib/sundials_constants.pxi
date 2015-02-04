@@ -50,6 +50,7 @@ DEF CV_SUCCESS            = 0
 DEF CV_TSTOP_RETURN       = 1
 DEF CV_REC_ERR            = 1   # Recoverable error.
 DEF CV_ROOT_RETURN        = 2   # CVSolve succeeded and found one or more roots.
+DEF CV_STEP_RETURN        = 3
 DEF CV_WARNING            = 99
 DEF CV_TOO_MUCH_WORK      = -1
 DEF CV_TOO_MUCH_ACC       = -2

@@ -1854,15 +1854,15 @@ cdef class CVode(Explicit_ODE):
                     flag_initialize = self.report_solution(t, y, opts)
                     if flag_initialize:
                         #If a step event has occured the integration has to be reinitialized
-                        flag = CV_ROOT_RETURN
+                        flag = CV_STEP_RETURN
                 else:
                     #Store results
                     tr.append(t)
                     yr.append(y)
                     
-                if flag == CV_ROOT_RETURN: #Found a root
+                if flag == CV_ROOT_RETURN or flag == CV_STEP_RETURN: #Found a root or step event
+                    self.store_statistics(flag)
                     flag = ID_EVENT #Convert to Assimulo flags
-                    self.store_statistics(CV_ROOT_RETURN)
                     break
                 if flag == CV_TSTOP_RETURN: #Reached tf
                     flag = ID_COMPLETE
