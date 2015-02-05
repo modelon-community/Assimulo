@@ -52,7 +52,7 @@ try:
     revision = _p.communicate()[0].decode('ascii')
 except:
     revision = "unknown"
-L.debug('Source from svn revision {}'.format(revision[:-2])) # exclude newline and letter at the end
+L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
 try:
     from Cython.Distutils import build_ext
@@ -91,6 +91,9 @@ class Assimulo_prepare(object):
         # args[0] are optinal arguments given above
         # args[1] are argumenets passed to disutils 
         self.distutil_args=args[1]
+        if args[0].prefix:
+            self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
+            self.distutil_args.append('--prefix={}'.format(self.prefix))
         self.SLUdir = args[0].superlu_home
         self.BLASdir = args[0].blas_home 
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
@@ -107,9 +110,8 @@ class Assimulo_prepare(object):
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
         self.thirdparty_methods  = thirdparty_methods
-        self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
-        self.distutil_args.append('--prefix={}'.format(self.prefix))
-         
+
+        
         if args[0].no_msvcr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
