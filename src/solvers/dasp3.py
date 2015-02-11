@@ -133,7 +133,7 @@ class DASP3ODE(Explicit_ODE):
         if lflag ==  0:
             flag = ID_PY_COMPLETE
         else:
-            raise Exception("DASP3 failed with flag %d"%flag)
+            raise Exception("DASP3 failed with flag %d"%lflag)
         
         #Retrieving statistics
         self.statistics["nsteps"]      += dasp3dp.COUNTS.NSTEP
