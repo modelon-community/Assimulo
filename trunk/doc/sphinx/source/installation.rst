@@ -49,7 +49,8 @@ Once all the dependencies are satisfied an installation is done by::
 
     python setup.py install 
     
-After a successful installation, the package will be located in Pythons dist-packages folder. For troubleshooting see :ref:`instTrouble`.
+After a successful installation, the package will be located in Pythons dist-packages folder. Note, in case of 64bit systems
+the section troubleshooting see :ref:`instTrouble` should be consulted before installation.
 
 .. note::
 
@@ -109,4 +110,9 @@ There have been some problems installing Assimulo on Ubuntu 64bits machines when
     > collect2: ld returned 1 exit status
     > error: command 'gcc' failed with exit status 1
     
-To solve this problem, Sundials has to be installed with the CFLAGS="-fPIC".
+To solve this problem, Sundials has to be installed with the flag 
+
+    CFLAGS="-fPIC"
+    
+Consult the Sundials INSTALL_NOTES Sec. B.3 to see 
+how this compiler flag has to be specified.
