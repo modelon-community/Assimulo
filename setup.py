@@ -39,6 +39,7 @@ BLASname = 'blas'
 BLASname_t = ""
 debug_flag = False
 python3_flag = True if S.hexversion > 0x03000000 else False
+sundials_26 = False #if the sundials linked to it is greater or equal to 2.6
 
 try:
     from subprocess import Popen, PIPE
@@ -249,6 +250,7 @@ if no_msvcr:
 
 def check_extensions():
     extra_link_flags = []
+    global sundials_26
     
     if static:
         extra_link_flags += static_link_gcc
@@ -266,6 +268,10 @@ def check_extensions():
             
     #If Sundials
     if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
+        
+        if O.path.exists(O.path.join(O.path.join(incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
+            sundials_26 = True
+        
         #CVode and IDA
         ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
@@ -330,6 +336,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if sundials_26:
+                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
             if check_platform() == "mac":
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
             if force_32bit:
@@ -355,6 +363,8 @@ def check_extensions():
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
                 ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if sundials_26:
+                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
             if check_platform() == "mac":
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
             if force_32bit:
