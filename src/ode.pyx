@@ -214,16 +214,16 @@ cdef class ODE:
             self.log_message("The current solver does not support to report continuously. Setting report_continuously to False and continues.", WHISPER)
             self.options["report_continuously"] = False
         
-        if (ncp != 0 or ncp_list != None) and (self.options["report_continuously"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
+        if (ncp != 0 or ncp_list is not None) and (self.options["report_continuously"] or self.problem_info["step_events"]) and self.supports["interpolated_output"] is False:
             self.log_message("The current solver does not support interpolated output. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
             
-        if (ncp != 0 or ncp_list != None) and self.problem_info["state_events"] and self.supports["report_continuously"] is False:
+        if (ncp != 0 or ncp_list is not None) and self.problem_info["state_events"] and self.supports["report_continuously"] is False:
             self.log_message("The current solver does not support interpolated output together with state events. Setting ncp to 0 and ncp_list to None and continues.", WHISPER)
             ncp = 0
             ncp_list = None
-        elif (ncp != 0 or ncp_list != None) and self.problem_info["step_events"] and self.supports["report_continuously"]:
+        elif (ncp != 0 or ncp_list is not None) and self.problem_info["step_events"] and self.supports["report_continuously"]:
             if not self.report_continuously:
                  self.log_message("The problem contains step events: report_continuously is set to True", WHISPER)
             self.report_continuously = True
@@ -232,7 +232,7 @@ cdef class ODE:
         if ncp != 0:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
-        elif ncp_list != None:
+        elif ncp_list is not None:
             output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)>t0,N.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
             if output_list[-1] < tfinal: #Add the last point if necessary!
                 output_list = N.append(output_list, tfinal)
@@ -248,7 +248,7 @@ cdef class ODE:
             REPORT_CONTINUOUSLY = 0
         
         #Determine if the output should be interpolated or not
-        if output_list == None:
+        if output_list is None:
             INTERPOLATE_OUTPUT = 0
         else:
             INTERPOLATE_OUTPUT = 1

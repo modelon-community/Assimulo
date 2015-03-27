@@ -120,7 +120,7 @@ cdef class Implicit_ODE(ODE):
         self.y  = y0
         self.yd = yd0
         
-        if sw0 != None:
+        if sw0 is not None:
             self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
             
         #Clear logs
@@ -220,7 +220,7 @@ cdef class Implicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
                 
-                if self.store_event_points and output_list != None and abs(output_list[opts["output_index"]-1]-self.t) > eps:
+                if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1]-self.t) > eps:
                     self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
                                 
                 #Get and store event information
@@ -253,7 +253,7 @@ cdef class Implicit_ODE(ODE):
             opts["initialize"] = flag_initialize
             
             #Logg after the event handling if there was a communication point there.
-            if flag_initialize and (output_list == None or self.store_event_points):
+            if flag_initialize and (output_list is None or self.store_event_points):
                 if type == 0:
                     self.problem.handle_result(self, self.t, self.y.copy())
                 else:
@@ -280,7 +280,7 @@ cdef class Implicit_ODE(ODE):
                 raise TimeLimitExceeded("The time limit was exceeded at integration time %.8E."%self.t)    
         
         #Store data depending on situation 
-        if opts["output_list"] != None: 
+        if opts["output_list"] is not None: 
             output_list = opts["output_list"] 
             output_index = opts["output_index"] 
             try: 

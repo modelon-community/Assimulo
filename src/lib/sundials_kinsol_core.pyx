@@ -191,7 +191,7 @@ cdef class KINSOL_wrap:
                     raise KINError(flag)
 
             # If the user has specified constraints, connect them
-            if self.con != None:
+            if self.con is not None:
                 if self.print_level >0:
                     print "Applying constraints"
                 self.con_nv = arr2nv(self.con)
@@ -231,7 +231,7 @@ cdef class KINSOL_wrap:
                     print "Reg param ", self.reg_param, " set"
         else:
             # If the user has specified constraints, connect them
-            if con != None:
+            if con is not None:
                 if self.print_level >0:
                     print "Applying constraints"
                 self.con_nv = arr2nv(con)
@@ -275,7 +275,7 @@ cdef class KINSOL_wrap:
         # Create scaling vectors filled with ones
         # since the problem is assumed to be scaled
         self.x_scale = arr2nv(np.ones(self.pData.dim))
-        if self.fscale != None:
+        if self.fscale is not None:
             self.f_scale = arr2nv(self.fscale)
         else:
             self.f_scale = arr2nv(np.ones(self.pData.dim))

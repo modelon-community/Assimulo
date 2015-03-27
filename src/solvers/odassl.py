@@ -260,7 +260,7 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         jac_dummy = lambda t,x,xp: x
         info = np.zeros((15,),np.int) 
         info[1] = 1  # Tolerances are vectors  
-        info[2] = normal_mode = 1 if opts["output_list"] == None or opts["report_continuously"] else 0  # intermediate output mode
+        info[2] = normal_mode = 1 if opts["output_list"] is None or opts["report_continuously"] else 0  # intermediate output mode
         info[6] = 1 if self.options["maxh"] > 0.0 else 0       
         rwork[1] = self.options["maxh"]            
         info[7] = 1 if self.options["inith"] > 0.0 else 0
