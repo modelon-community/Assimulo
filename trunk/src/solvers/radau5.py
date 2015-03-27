@@ -123,7 +123,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
-            if self._opts["output_list"] == None:
+            if self._opts["output_list"] is None:
                 self._tlist.append(t)
                 self._ylist.append(y.copy())
             else:
@@ -347,7 +347,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
     
     def integrate(self, t, y, tf, opts):
         
-        if opts["output_list"] != None:
+        if opts["output_list"] is not None:
             
             output_list = opts["output_list"]
             output_index = opts["output_index"]
@@ -849,7 +849,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             initialize_flag = self.report_solution(t, y, yd, self._opts)
             if initialize_flag: irtrn = -1
         else:
-            if self._opts["output_list"] == None:
+            if self._opts["output_list"] is None:
                 self._tlist.append(t)
                 self._ylist.append(y)
                 self._ydlist.append(yd)
@@ -1139,7 +1139,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
     
     def integrate(self, t, y, yd, tf, opts):
         
-        if opts["output_list"] != None:
+        if opts["output_list"] is not None:
             
             output_list = opts["output_list"]
             output_index = opts["output_index"]

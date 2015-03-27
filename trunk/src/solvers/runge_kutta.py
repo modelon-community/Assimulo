@@ -113,7 +113,7 @@ class Dopri5(Explicit_ODE):
             initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
-            if self._opts["output_list"] == None:
+            if self._opts["output_list"] is None:
                 self._tlist.append(t)
                 self._ylist.append(y.copy())
             else:
@@ -615,7 +615,7 @@ class RungeKutta34(Explicit_ODE):
                     initialize_flag = self.report_solution(t, y, opts)
                     if initialize_flag: flag = ID_PY_EVENT
                     yield flag, t,y
-                elif opts["output_list"] == None:
+                elif opts["output_list"] is None:
                     yield flag, t, y
                 else:
                     output_list = opts["output_list"]
@@ -646,7 +646,7 @@ class RungeKutta34(Explicit_ODE):
                 if initialize_flag: flag = ID_PY_EVENT
                 else:               flag = ID_PY_COMPLETE
                 yield flag, t,y
-            elif opts["output_list"] == None:
+            elif opts["output_list"] is None:
                 yield flag, t,y
             else:
                 output_list = opts["output_list"]

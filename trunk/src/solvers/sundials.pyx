@@ -239,7 +239,7 @@ cdef class IDA(Implicit_ODE):
             for i in range(self.pData.dimSens):
                  N_VConst_Serial(ZERO,  self.ySO[i]);
                  N_VConst_Serial(ZERO, self.ydSO[i]); 
-                 if self.yS0 != None:
+                 if self.yS0 is not None:
                     for j in range(self.pData.dim):
                         (<N_VectorContent_Serial>self.ySO[i].content).data[j] = self.yS0[i,j]
 
@@ -458,7 +458,7 @@ cdef class IDA(Implicit_ODE):
         if flag < 0:
             raise IDAError(flag, t)
         
-        if opts["report_continuously"] or opts["output_list"] == None:
+        if opts["report_continuously"] or opts["output_list"] is None:
             #Integration loop
             while True:
                 
@@ -1614,7 +1614,7 @@ cdef class CVode(Explicit_ODE):
             #Filling the start vectors
             for i in range(self.pData.dimSens):
                  N_VConst_Serial(ZERO,  self.ySO[i]);
-                 if self.yS0 != None:
+                 if self.yS0 is not None:
                     for j in range(self.pData.dim):
                         (<N_VectorContent_Serial>self.ySO[i].content).data[j] = self.yS0[i,j]
 
@@ -1832,7 +1832,7 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag, t)
         
-        if opts["report_continuously"] or opts["output_list"] == None: 
+        if opts["report_continuously"] or opts["output_list"] is None: 
             #Integration loop
             while True:
                     

@@ -90,7 +90,7 @@ class KINSOL:
         if hasattr(self.problem, 'get_constraints'):
             self.constraints = self.problem.get_constraints()
             
-            if self.constraints != None:
+            if self.constraints is not None:
                 # test if constraints are of correct type
                 if type(self.constraints).__name__ != 'ndarray':
                     raise KINSOL_Exception("Constraints must be of type numpy.ndarray")
@@ -99,7 +99,7 @@ class KINSOL:
                     raise KINSOL_Exception("Constraints must have same length as x0")
                 # Test if initial guess x0 is consistant with constraints
                 for c,xi,i in zip(self.constraints,self.x0,N.arange(0,self.x0.__len__())):
-                    if re.search('float',type(c).__name__) == None:
+                    if re.search('float',type(c).__name__) is None:
                         print("Type problem with: ", c, type(c).__name__)
                         raise KINSOL_Exception("Constraints must contain floats.")
                     if abs(c) > 2:
@@ -211,7 +211,7 @@ class KINSOL:
                 most info. For more information please see the documentation for KINSOL.
         """
         type_name = type(verbosity).__name__
-        if re.search('int',type_name) != None:
+        if re.search('int',type_name) is not None:
             
             # It is an integer, tes bounds
             if verbosity < 4 and verbosity > -1:
@@ -253,7 +253,7 @@ class KINSOL:
         """
         
         type_name = type(reg_param).__name__
-        if re.search('float',type_name) != None:
+        if re.search('float',type_name) is not None:
             if reg_param < 0:
                 raise KINSOL_Exception("Value sent to set_reg_param must be equal to or larger than zero.")
             else:
