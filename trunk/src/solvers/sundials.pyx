@@ -23,6 +23,7 @@ N.import_array()
 
 import numpy.linalg
 import traceback 
+import scipy.sparse as sparse
  
 from assimulo.exception import * 
 
@@ -34,7 +35,7 @@ cimport sundials_includes as SUNDIALS
 
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
-from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat
+from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat
 from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
@@ -620,12 +621,12 @@ cdef class IDA(Implicit_ODE):
         elif method == 'IDA_YA_YDP_INIT':
             icopt = IDA_YA_YDP_INIT 
         else:
-            raise Exception("The method is unknown.")
+            raise AssimuloException("The method is unknown.")
         
         direction = self.t+self.options["tout1"] #tout1 is needed for the solver to determine the direction of the integration
         
         if self.ida_mem == NULL: 
-            raise Exception("IDA must be initialized.")
+            raise AssimuloException("IDA must be initialized.")
         
         #Set the options lsoff and calculate initial conditions
         flag = SUNDIALS.IDASetLineSearchOffIC(self.ida_mem, self.options["lsoff"])
@@ -767,7 +768,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["inith"] = float(initstep)
         except (ValueError, TypeError):
-            raise Exception('The initial step must be an integer or float.')
+            raise AssimuloException('The initial step must be an integer or float.')
         
     def _get_initial_step(self):
         """
@@ -792,7 +793,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["tout1"] = float(tout1)
         except (ValueError,TypeError):
-            raise Exception('tout1 must be an integer or float.')
+            raise AssimuloException('tout1 must be an integer or float.')
         
     def _get_tout1(self):
         """
@@ -819,7 +820,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["suppress_alg"] = bool(suppress_alg)
         except:
-            raise Exception("Unkown input to suppress_alg, must be a boolean.")
+            raise AssimuloException("Unkown input to suppress_alg, must be a boolean.")
 
     def _get_suppress_alg(self):
         """
@@ -848,7 +849,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["suppress_sens"] = bool(suppress_sens)
         except:
-            raise Exception("Unkown input to suppress_sens, must be a boolean.")
+            raise AssimuloException("Unkown input to suppress_sens, must be a boolean.")
 
     def _get_suppress_sens(self):
         """
@@ -880,9 +881,9 @@ cdef class IDA(Implicit_ODE):
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
-            raise Exception("atol must be of length one or same as the dimension of the problem.")
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
         if (self.options["atol"]<=0.0).any():
-            raise Exception("The absolute tolerance must be positive.")
+            raise AssimuloException("The absolute tolerance must be positive.")
     
     def _get_atol(self):
         """
@@ -911,9 +912,9 @@ cdef class IDA(Implicit_ODE):
         try:
             rtol = float(rtol)
         except (ValueError, TypeError):
-            raise Exception('Relative tolerance must be a (scalar) float.')
+            raise AssimuloException('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
-            raise Exception('Relative tolerance must be a positive (scalar) float.')
+            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
         
         self.options["rtol"] = rtol
     
@@ -940,7 +941,7 @@ cdef class IDA(Implicit_ODE):
         try:
             maxord = int(maxord)
         except ValueError:
-            raise Exception("The maximal order must be an integer.")
+            raise AssimuloException("The maximal order must be an integer.")
         
         if maxord > 5 or maxord < 1:
             self.options["maxord"] = 5 if maxord > 5 else 1
@@ -977,7 +978,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["maxcorS"] = int(maxcorS)
         except:
-            raise Exception("The maximum nonlinear sensitivity iterations must be a positiv integer.")
+            raise AssimuloException("The maximum nonlinear sensitivity iterations must be a positiv integer.")
     
     def _get_max_cor_S(self):
         """
@@ -999,9 +1000,9 @@ cdef class IDA(Implicit_ODE):
     
     def _set_max_steps(self, maxsteps):
         if not isinstance(maxsteps,int):
-            raise Exception('The maximum number of steps must be an integer.')
+            raise AssimuloException('The maximum number of steps must be an integer.')
         if maxsteps < 1:
-            raise Exception('The maximum number of steps must be a positive integer.')
+            raise AssimuloException('The maximum number of steps must be a positive integer.')
         self.options["maxsteps"] = maxsteps
     
     def _get_max_steps(self):
@@ -1028,7 +1029,7 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["maxh"] = float(max_h)
         except:
-            raise Exception("Maximal stepsize must be a (scalar) float.")
+            raise AssimuloException("Maximal stepsize must be a (scalar) float.")
     
     def _get_max_h(self):
         """
@@ -1054,7 +1055,7 @@ cdef class IDA(Implicit_ODE):
         if lsolver.upper() == "DENSE" or lsolver.upper() == "SPGMR":
             self.options["linear_solver"] = lsolver.upper()
         else:
-            raise Exception('The linear solver must be either "DENSE" or "SPGMR".')
+            raise AssimuloException('The linear solver must be either "DENSE" or "SPGMR".')
         
     def _get_linear_solver(self):
         """
@@ -1073,7 +1074,7 @@ cdef class IDA(Implicit_ODE):
         self.options["algvar"] = N.array(algvar,dtype=N.float) if len(N.array(algvar,dtype=N.float).shape)>0 else N.array([algvar],dtype=N.float)
         
         if len(self.options["algvar"]) != self.pData.dim:
-            raise Exception('When setting the algebraic variables, the' \
+            raise AssimuloException('When setting the algebraic variables, the' \
                                 ' vector must be of the same size as the problem dimension.')
         
     def _get_algvar(self):
@@ -1153,14 +1154,14 @@ cdef class IDA(Implicit_ODE):
     
     def _set_sensitivity_method(self, ism):
         if not isinstance(ism, str):
-            raise Exception('Sensitivity method must be string.')
+            raise AssimuloException('Sensitivity method must be string.')
         
         if ism.upper() == 'SIMULTANEOUS':
             self.options["sensmethod"] = 'SIMULTANEOUS' 
         elif ism.upper() == 'STAGGERED':
             self.options["sensmethod"] = 'STAGGERED'
         else:
-            raise Exception('Sensitivity method must be either "SIMULTANEOUS" or "STAGGERED".')
+            raise AssimuloException('Sensitivity method must be either "SIMULTANEOUS" or "STAGGERED".')
         
     def _get_sensitivity_method(self):
         """
@@ -1185,14 +1186,14 @@ cdef class IDA(Implicit_ODE):
     
     def _set_dqtype(self, dqtype):
         if not isinstance(dqtype, str):
-            raise Exception('DQtype must be string.')
+            raise AssimuloException('DQtype must be string.')
         
         if dqtype.upper() == 'CENTERED':
             self.options["dqtype"] = "CENTERED"
         elif dqtype.upper() == 'FORWARD':
             self.options["dqtype"] = "FORWARD"
         else:
-            raise Exception('DQtype must be either "CENTERED" or "FORWARD".')
+            raise AssimuloException('DQtype must be either "CENTERED" or "FORWARD".')
             
     def _get_dqtype(self):
         """
@@ -1219,9 +1220,9 @@ cdef class IDA(Implicit_ODE):
         try:
             self.options["dqrhomax"] = float(dqrhomax)
         except (TypeError, ValueError):
-            raise Exception('DQrhomax must be convertable to a float.')
+            raise AssimuloException('DQrhomax must be convertable to a float.')
         if self.options["dqrhomax"] < 0.0:
-            raise Exception("DQrhomax must be positive.")
+            raise AssimuloException("DQrhomax must be positive.")
             
     def _get_dqrhomax(self):
         """
@@ -1246,7 +1247,7 @@ cdef class IDA(Implicit_ODE):
     
     def _set_pbar(self, pbar):
         if len(pbar) != self.problem_info['dimSens']:
-            raise Exception('pbar must be of equal length as the parameters.')
+            raise AssimuloException('pbar must be of equal length as the parameters.')
         
         self.options["pbar"] = pbar
     
@@ -1275,7 +1276,7 @@ cdef class IDA(Implicit_ODE):
         try: 
             self.options["external_event_detection"] = bool(event_opt) 
         except: 
-            raise Exception("Unkown input to external_event_detection, must be a boolean.") 
+            raise AssimuloException("Unkown input to external_event_detection, must be a boolean.") 
              
     def _get_external_event_detection(self): 
         """ 
@@ -1431,6 +1432,7 @@ cdef class CVode(Explicit_ODE):
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         self.options["stablimit"] = False
+        self.options["nnz" ] = -1
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -2030,6 +2032,26 @@ cdef class CVode(Explicit_ODE):
                 flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, NULL)
                 if flag < 0:
                     raise CVodeError(flag)
+        elif self.options["linear_solver"] == 'SPARSE' and self.options["iter"] == "Newton":
+            
+            if SUNDIALS.version() < (2,6,0): 
+                raise AssimuloException("Not supported with this SUNDIALS version.")
+            
+            #Specify the use of CVSPGMR linear solver.
+            if self.problem_info["jac_fcn_nnz"] == -1:
+                raise AssimuloException("Need to specify the number of non zero elements in the Jacobian via the option 'jac_nnz'")
+            flag = SUNDIALS.CVSuperLUMT(self.cvode_mem, self.options["num_threads"], self.pData.dim, self.problem_info["jac_fcn_nnz"])
+            if flag < 0:
+                    raise CVodeError(flag)
+            
+            #Specify the jacobian to the solver
+            if self.pData.JAC != NULL and self.options["usejac"]:
+                flag = SUNDIALS.CVSlsSetSparseJacFn(self.cvode_mem, cv_jac_sparse)
+                if flag < 0:
+                    raise CVodeError(flag)
+            else:
+                raise AssimuloException("For the SPARSE linear solver, the Jacobian must be provided and activated.")
+            
         else: #Functional Iteration choosen.
             pass #raise CVodeError(100,t0) #Unknown error message
 
@@ -2084,7 +2106,7 @@ cdef class CVode(Explicit_ODE):
             self.options["discr"] = "Adams"
             self.options["maxord"] = 12
         else:
-            raise Exception('Discretization method must be either Adams or BDF')
+            raise AssimuloException('Discretization method must be either Adams or BDF')
             
         #Free Memory as we need another CVode memory object
         SUNDIALS.CVodeFree(&self.cvode_mem)
@@ -2123,7 +2145,7 @@ cdef class CVode(Explicit_ODE):
         elif iter.upper()=='FIXEDPOINT':
             self.options["iter"] = "FixedPoint"
         else:
-            raise Exception('Iteration method must be either FixedPoint or Newton')
+            raise AssimuloException('Iteration method must be either FixedPoint or Newton')
             
         #Free Memory as we need another CVode memory object
         SUNDIALS.CVodeFree(&self.cvode_mem)
@@ -2158,9 +2180,9 @@ cdef class CVode(Explicit_ODE):
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
-            raise Exception("atol must be of length one or same as the dimension of the problem.")
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
         if (self.options["atol"]<=0.0).any():
-            raise Exception("The absolute tolerance must be positive.")
+            raise AssimuloException("The absolute tolerance must be positive.")
     
     def _get_atol(self):
         """
@@ -2189,9 +2211,9 @@ cdef class CVode(Explicit_ODE):
         try:
             rtol = float(rtol)
         except (ValueError, TypeError):
-            raise Exception('Relative tolerance must be a (scalar) float.')
+            raise AssimuloException('Relative tolerance must be a (scalar) float.')
         if rtol <= 0.0:
-            raise Exception('Relative tolerance must be a positive (scalar) float.')
+            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
         
         self.options["rtol"] = rtol
     
@@ -2218,7 +2240,7 @@ cdef class CVode(Explicit_ODE):
         try:
             maxord = int(maxord)
         except ValueError:
-            raise Exception("The maximal order must be an integer.")
+            raise AssimuloException("The maximal order must be an integer.")
         
         if self.options["discr"] == "Adams":
             if maxord > 12 or maxord < 1:
@@ -2260,10 +2282,10 @@ cdef class CVode(Explicit_ODE):
     maxord=property(_get_max_ord,_set_max_ord)
     
     def _set_linear_solver(self, lsolver):
-        if lsolver.upper() == "DENSE" or lsolver.upper() == "SPGMR":
+        if lsolver.upper() == "DENSE" or lsolver.upper() == "SPGMR" or lsolver.upper() == "SPARSE":
             self.options["linear_solver"] = lsolver.upper()
         else:
-            raise Exception('The linear solver must be either "DENSE" or "SPGMR".')
+            raise AssimuloException('The linear solver must be either "DENSE", "SPGMR" or "SPARSE".')
         
     def _get_linear_solver(self):
         """
@@ -2272,7 +2294,7 @@ cdef class CVode(Explicit_ODE):
             Parameters::
             
                 linearsolver
-                        - Default 'DENSE'. Can also be 'SPGMR'.
+                        - Default 'DENSE'. Can also be 'SPGMR' or 'SPARSE'.
         """
         return self.options["linear_solver"]
     
@@ -2282,7 +2304,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["inith"] = float(initstep)
         except (ValueError, TypeError):
-            raise Exception('The initial step must be an integer or float.')
+            raise AssimuloException('The initial step must be an integer or float.')
         
     def _get_initial_step(self):
         """
@@ -2305,9 +2327,9 @@ cdef class CVode(Explicit_ODE):
     
     def _set_max_steps(self, maxsteps):
         if not isinstance(maxsteps,int):
-            raise Exception('The maximum number of steps must be an integer.')
+            raise AssimuloException('The maximum number of steps must be an integer.')
         if maxsteps < 1:
-            raise Exception('The maximum number of steps must be a positive integer.')
+            raise AssimuloException('The maximum number of steps must be a positive integer.')
         self.options["maxsteps"] = maxsteps
     
     def _get_max_steps(self):
@@ -2332,7 +2354,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["maxcorS"] = int(maxcorS)
         except:
-            raise Exception("The maximum nonlinear sensitivity iterations must be a positiv integer.")
+            raise AssimuloException("The maximum nonlinear sensitivity iterations must be a positiv integer.")
     
     def _get_max_cor_S(self):
         """
@@ -2358,7 +2380,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["maxh"] = float(max_h)
         except:
-            raise Exception("Maximal stepsize must be a (scalar) float.")
+            raise AssimuloException("Maximal stepsize must be a (scalar) float.")
     
     def _get_max_h(self):
         """
@@ -2384,7 +2406,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["minh"] = float(min_h)
         except:
-            raise Exception("Minimal stepsize must be a (scalar) float.")
+            raise AssimuloException("Minimal stepsize must be a (scalar) float.")
     
     def _get_min_h(self):
         """
@@ -2455,14 +2477,14 @@ cdef class CVode(Explicit_ODE):
     
     def _set_sensitivity_method(self, ism):
         if not isinstance(ism, str):
-            raise Exception('Sensitivity method must be string.')
+            raise AssimuloException('Sensitivity method must be string.')
         
         if ism.upper() == 'SIMULTANEOUS':
             self.options["sensmethod"] = 'SIMULTANEOUS' 
         elif ism.upper() == 'STAGGERED':
             self.options["sensmethod"] = 'STAGGERED'
         else:
-            raise Exception('Sensitivity method must be either "SIMULTANEOUS" or "STAGGERED".')
+            raise AssimuloException('Sensitivity method must be either "SIMULTANEOUS" or "STAGGERED".')
         
     def _get_sensitivity_method(self):
         """
@@ -2489,7 +2511,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["suppress_sens"] = bool(suppress_sens)
         except:
-            raise Exception("Unkown input to suppress_sens, must be a boolean.")
+            raise AssimuloException("Unkown input to suppress_sens, must be a boolean.")
 
     def _get_suppress_sens(self):
         """
@@ -2515,14 +2537,14 @@ cdef class CVode(Explicit_ODE):
     
     def _set_dqtype(self, dqtype):
         if not isinstance(dqtype, str):
-            raise Exception('DQtype must be string.')
+            raise AssimuloException('DQtype must be string.')
         
         if dqtype.upper() == 'CENTERED':
             self.options["dqtype"] = "CENTERED"
         elif dqtype.upper() == 'FORWARD':
             self.options["dqtype"] = "FORWARD"
         else:
-            raise Exception('DQtype must be either "CENTERED" or "FORWARD".')
+            raise AssimuloException('DQtype must be either "CENTERED" or "FORWARD".')
             
     def _get_dqtype(self):
         """
@@ -2577,9 +2599,9 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["dqrhomax"] = float(dqrhomax)
         except (TypeError, ValueError):
-            raise Exception('DQrhomax must be convertable to a float.')
+            raise AssimuloException('DQrhomax must be convertable to a float.')
         if self.options["dqrhomax"] < 0.0:
-            raise Exception("DQrhomax must be positive.")
+            raise AssimuloException("DQrhomax must be positive.")
             
     def _get_dqrhomax(self):
         """
@@ -2606,9 +2628,9 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["maxkrylov"] = int(maxkrylov)
         except:
-            raise Exception("Maximum number of krylov dimension should be an integer.")
+            raise AssimuloException("Maximum number of krylov dimension should be an integer.")
         if self.options["maxkrylov"] < 0:
-            raise Exception("Maximum number of krylov dimension should be an positive integer.")
+            raise AssimuloException("Maximum number of krylov dimension should be an positive integer.")
             
     def _get_max_krylov(self):
         """
@@ -2640,7 +2662,7 @@ cdef class CVode(Explicit_ODE):
         elif precond.upper() == "PREC_BOTH":
             self.options["precond"] = PREC_BOTH
         else:
-            raise Exception('Unknown input of precond. Should be either "PREC_NONE", "PREC_LEFT","PREC_RIGHT" or "PREC_BOTH"')
+            raise AssimuloException('Unknown input of precond. Should be either "PREC_NONE", "PREC_LEFT","PREC_RIGHT" or "PREC_BOTH"')
     def _get_pre_cond(self):
         """
         Specifies the preconditioning type.
@@ -2671,7 +2693,7 @@ cdef class CVode(Explicit_ODE):
     
     def _set_pbar(self, pbar):
         if len(pbar) != self.problem_info['dimSens']:
-            raise Exception('pbar must be of equal length as the parameters.')
+            raise AssimuloException('pbar must be of equal length as the parameters.')
         
         self.options["pbar"] = pbar
     
@@ -2700,7 +2722,7 @@ cdef class CVode(Explicit_ODE):
         try:
             self.options["external_event_detection"] = bool(event_opt)
         except:
-            raise Exception("Unkown input to external_event_detection, must be a boolean.")
+            raise AssimuloException("Unkown input to external_event_detection, must be a boolean.")
         
     def _get_external_event_detection(self):
         """
@@ -2741,6 +2763,9 @@ cdef class CVode(Explicit_ODE):
             flag = SUNDIALS.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
             flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
             self.statistics["njacvecs"]  += njvevals
+        elif self.options["linear_solver"] == "SPARSE":
+            flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
+            self.statistics["njacs"]   += njevals
         else:
             flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
             flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
