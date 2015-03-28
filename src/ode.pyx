@@ -21,6 +21,7 @@ import time
 import pylab as P
 
 import itertools
+import multiprocessing
 
 from exception import *
 from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
@@ -41,11 +42,18 @@ cdef class ODE:
         problem.
         """
         self.statistics = Statistics() #Initialize the statistics dictionary
-        self.options = {"report_continuously":False,"verbosity":NORMAL,"backward":False, "store_event_points":True, "time_limit":0, "clock_step":False}
+        self.options = {"report_continuously":False,
+                        "verbosity":NORMAL,
+                        "backward":False, 
+                        "store_event_points":True, 
+                        "time_limit":0, 
+                        "clock_step":False, 
+                        "num_threads":multiprocessing.cpu_count()}
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
-                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False}
+                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False
+                             ,"jac_fcn_nnz": -1}
         #Type of the problem
         #0 = Explicit
         #1 = Implicit
@@ -95,6 +103,8 @@ cdef class ODE:
             
         if hasattr(problem, "jac"):
             self.problem_info["jac_fcn"] = True
+        if hasattr(problem, "jac_nnz"):
+            self.problem_info["jac_fcn_nnz"] = problem.jac_nnz
         if hasattr(problem, "jacv"):
             self.problem_info["jacv_fcn"] = True
         if hasattr(problem, "jaclag"):
@@ -365,6 +375,28 @@ cdef class ODE:
         return self.options["report_continuously"]
     
     report_continuously = property(_get_report_continuously,_set_report_continuously)
+    
+    def _set_number_threads(self, num_threads):
+        self.options["num_threads"] = int(num_threads)
+    
+    def _get_number_threads(self):
+        """
+        This options specifies the number of threads to be used for those
+        solvers that supports it.
+        
+            Parameters::
+            
+                num_threads
+                  
+                        - Default is the number of cores
+                    
+                        - Should be a integer.
+
+        """
+        return self.options["num_threads"]
+    
+    num_threads = property(_get_number_threads,_set_number_threads)
+    
     
     def _set_store_event_points(self, store_event_points):
         self.options["store_event_points"] = bool(store_event_points)

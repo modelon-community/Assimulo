@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
     This method is used to connect the Assimulo.Problem.f to the Sundials
@@ -60,6 +59,53 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
             return CV_SUCCESS
         except:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
+
+
+cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
+                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+    """
+    This method is used to connect the Assimulo.Problem.jac to the Sundials
+    Sparse Jacobian function.
+    """
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y = nv2arr(yv)
+    cdef int i
+    cdef int nnz = Jacobian.NNZ
+    cdef int dim = Jacobian.N
+    cdef realtype* data = Jacobian.data
+    cdef int* rowvals = Jacobian.rowvals
+    cdef int* colptrs = Jacobian.colptrs
+
+    """
+        realtype *data;
+        int *rowvals;
+        int *colptrs;
+    """
+    if pData.dimSens>0: #Sensitivity activated
+        raise Exception("Not Suppported!")
+    else:
+        try:
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+            else:
+                jac=(<object>pData.JAC)(t,y)
+                
+            if not isinstance(jac, sparse.csc.csc_matrix):
+                jac = sparse.csc.csc_matrix(jac)
+                raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
+    
+            for i in range(nnz):
+                data[i]    = jac.data[i]
+                rowvals[i] = jac.indices[i]
+            for i in range(dim+1):
+                colptrs[i] = jac.indptr[i]
+            
+            return CVDLS_SUCCESS
+        except(N.linalg.LinAlgError,ZeroDivisionError):
+            return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+        except:
+            traceback.print_exc()
+            return CVDLS_JACFUNC_UNRECVR
 
 cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):

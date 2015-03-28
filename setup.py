@@ -258,10 +258,10 @@ def check_extensions():
         extra_link_flags += flag_32bit
     
     #Cythonize main modules
-    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"])#,include_dirs=[N.get_include()])
     
     #Cythonize Euler
-    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"])#,include_dirs=[N.get_include()])
     
     for i in ext_list:
         i.include_dirs = [N.get_include()]
@@ -271,15 +271,22 @@ def check_extensions():
         
         if O.path.exists(O.path.join(O.path.join(incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
             sundials_26 = True
-        
+            
+        if sundials_26:
+            #sundials_version = "2.6.0"
+            sundials_version = (2,6,0)
+        else:
+            #sundials_version = "2.5.0"
+            sundials_version = (2,5,0)
+
         #CVode and IDA
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"], compile_time_env={'SUNDIALS_VERSION': sundials_version})#,include_dirs=[N.get_include()])
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
         ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
         #Kinsol
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"kinsol.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"],include_dirs=[N.get_include()],pyrex_gdb=debug_flag)
+        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"kinsol.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"], compile_time_env={'SUNDIALS_VERSION': sundials_version})#,include_dirs=[N.get_include()])
         ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
         ext_list[-1].library_dirs = [libdirs]
         ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
