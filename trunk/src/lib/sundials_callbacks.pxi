@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import cython
+
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
     This method is used to connect the Assimulo.Problem.f to the Sundials
@@ -60,7 +62,8 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
         except:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
 
-
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
     """
@@ -71,6 +74,7 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
     cdef N.ndarray y = nv2arr(yv)
     cdef int i
     cdef int nnz = Jacobian.NNZ
+    cdef int ret_nnz
     cdef int dim = Jacobian.N
     cdef realtype* data = Jacobian.data
     cdef int* rowvals = Jacobian.rowvals
@@ -93,8 +97,11 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
             if not isinstance(jac, sparse.csc.csc_matrix):
                 jac = sparse.csc.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
-    
-            for i in range(nnz):
+            ret_nnz = jac.nnz
+            if ret_nnz> nnz:
+                raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
+                
+            for i in range(min(ret_nnz,nnz)):
                 data[i]    = jac.data[i]
                 rowvals[i] = jac.indices[i]
             for i in range(dim+1):
