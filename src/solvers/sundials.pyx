@@ -2828,6 +2828,8 @@ cdef class CVode(Explicit_ODE):
         self.log_message(' Solver                   : CVode',                         verbose)
         self.log_message(' Linear multistep method  : ' +self.options["discr"],       verbose)
         self.log_message(' Nonlinear solver         : ' + self.options["iter"],       verbose)
+        if self.options["iter"] == "Newton":
+            self.log_message(' Linear solver type       : ' + self.options["linear_solver"],       verbose)
         self.log_message(' Maximal order            : ' + str(self.options["maxord"]),verbose)
         self.log_message(' Tolerances (absolute)    : ' + str(self._compact_atol()),  verbose)
         self.log_message(' Tolerances (relative)    : ' + str(self.options["rtol"]),  verbose)
