@@ -96,6 +96,7 @@ class Assimulo_prepare(object):
             self.distutil_args.append('--prefix={}'.format(self.prefix))
         self.SLUdir = args[0].superlu_home
         self.BLASdir = args[0].blas_home 
+        self.sundialsdir = args[0].sundials_home
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.debug_flag = args[0].debug 
@@ -110,6 +111,7 @@ class Assimulo_prepare(object):
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
         self.thirdparty_methods  = thirdparty_methods
+        
 
         
         if args[0].no_msvcr:
@@ -125,10 +127,10 @@ class Assimulo_prepare(object):
         
         self.is_python3 = True if sys.version_info.major >= 3 else False
         L.debug('Platform {}'.format(self.platform))
-    
+        
         if args[0].sundials_home:
-            self.incdirs = os.path.join(sundials_home,'include')
-            self.libdirs = os.path.join(sundials_home,'lib')
+            self.incdirs = os.path.join(self.sundialsdir,'include')
+            self.libdirs = os.path.join(self.sundialsdir,'lib')
         elif 'win' in self.platform:
             self.incdirs = ''
             self.libdirs = ''
@@ -268,8 +270,8 @@ class Assimulo_prepare(object):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
         else:    
-            L.warning("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
-                    "to see that it actually points to Sundials.".format(self.sundials_home))
+            L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
+                    "to see that it actually points to Sundials.").format(self.sundialsdir))
             L.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
             self.with_SUNDIALS=False
             
@@ -294,15 +296,11 @@ class Assimulo_prepare(object):
     
         #Cythonize main modules
         ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
-                             include_path=[".","assimulo"],
-                             include_dirs=[np.get_include()],
-                             pyrex_gdb=self.debug_flag)
+                             include_path=[".","assimulo"])
          #Cythonize Solvers
          # Euler
         ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
-                             include_path=[".","assimulo"],
-                             include_dirs=[np.get_include()],
-                             pyrex_gdb=self.debug_flag)
+                             include_path=[".","assimulo"])
         for el in ext_list:
             el.include_dirs = [np.get_include()]
             
@@ -310,18 +308,14 @@ class Assimulo_prepare(object):
         if self.with_SUNDIALS:
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
-                                 include_path=[".","assimulo","assimulo" + os.sep + "lib"],
-                                 include_dirs=[np.get_include()],
-                                 pyrex_gdb=self.debug_flag)
+                                 include_path=[".","assimulo","assimulo" + os.sep + "lib"])
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
-                        include_path=[".","assimulo","assimulo"+os.sep+"lib"],
-                        include_dirs=[np.get_include()],
-                        pyrex_gdb=self.debug_flag)
+                        include_path=[".","assimulo","assimulo"+os.sep+"lib"])
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
@@ -422,7 +416,7 @@ class Assimulo_prepare(object):
     
         #GLIMDA
         if self.with_BLAS and self.with_LAPACK:
-            extra_link_flags += ["-L"+self.LAPACKdir, "-llapack", "-L"+self.BLASdir, "-lblas"]
+            extra_link_flags += ["-L {} {}".format(self.LAPACKdir, self.BLASdir), "-llapack blas"]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
