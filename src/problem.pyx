@@ -80,9 +80,9 @@ cdef class cImplicit_Problem(cProblem):
     def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
                                                           p0=None, sw0=None, name = None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
-        if res != None:
+        if res is not None:
             self.res = res
-        if yd0!=None:
+        if yd0 is not None:
             self.yd0 = set_type_shape_array(yd0)
         
     
@@ -114,9 +114,9 @@ cdef class cOverdetermined_Problem(cProblem):
     def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
                                                           p0=None, sw0=None, name=None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
-        if res != None:
+        if res is not None:
             self.res = res
-        if yd0!=None:
+        if yd0 is not None:
             self.yd0 = set_type_shape_array(yd0)
         
     
@@ -143,7 +143,7 @@ cdef class cExplicit_Problem(cProblem):
     def __init__(self, object rhs=None, y0=None,double t0=0.0, p0=None, sw0=None, name = None):
         
         cProblem.__init__(self, y0, t0, p0, sw0, name)        
-        if rhs != None:
+        if rhs is not None:
             self.rhs = rhs
     def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
         """
@@ -177,11 +177,11 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
     def __init__(self, object rhs=None, y0=None, phi = None, arglag = None, lagcompmap = None, jaclag = None, nlags = None, njacl = None, double t0=0.0, p0=None, sw0=None):
         cExplicit_Problem.__init__(self, rhs, y0, t0, p0, sw0)
         
-        if phi != None:
+        if phi is not None:
             self.phi = phi
-        if arglag != None:
+        if arglag is not None:
             self.arglag = arglag
-        if jaclag != None:
+        if jaclag is not None:
             self.jaclag = jaclag
             
         self.lagcompmap = lagcompmap
@@ -192,27 +192,27 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
 cdef class cSingPerturbed_Problem(cExplicit_Problem):
     
     def __init__(self, rhs1=None, rhs2=None, yy0=None, zz0=None, double t0=0.0, eps=None, name = None):
-        if rhs1 != None:
+        if rhs1 is not None:
             self.rhs1 = rhs1
-        if rhs2 != None:
+        if rhs2 is not None:
             self.rhs2 = rhs2
-        if eps != None:
+        if eps is not None:
             self.eps = eps
-        if yy0 != None:
+        if yy0 is not None:
             self.yy0 = set_type_shape_array(yy0)
-        if zz0 != None:
+        if zz0 is not None:
             self.zz0 = set_type_shape_array(zz0)
         # preparing things so that the problem also describes a 
         # classical explicit problem without exposing the structure
         # of a singularly perturbed problem
-        if yy0 != None and zz0 != None:
+        if yy0 is not None and zz0 is not None:
             y0 = N.hstack((self.yy0,self.zz0))
-        elif yy0 != None:
+        elif yy0 is not None:
             y0 = self.yy0
-        elif zz0 != None:
+        elif zz0 is not None:
             y0 = self.zz0
-        self.n = len(self.yy0) if yy0 != None else 0
-        self.m = len(self.zz0) if zz0 != None else 0
+        self.n = len(self.yy0) if yy0 is not None else 0
+        self.m = len(self.zz0) if zz0 is not None else 0
         cExplicit_Problem.__init__(self, y0=y0, t0=t0, name=name)   
         
     def rhs(self,t,y):

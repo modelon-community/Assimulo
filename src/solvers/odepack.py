@@ -257,7 +257,7 @@ class LSODAR(Explicit_ODE):
         
         
         #Run in normal mode?
-        normal_mode = 1 if opts["output_list"] != None else 0
+        normal_mode = 1 if opts["output_list"] is not None else 0
         
         #Tolerances:
         atol = self.atol
@@ -265,7 +265,7 @@ class LSODAR(Explicit_ODE):
         rhs = self.problem.rhs
         
         #if normal_mode == 0:
-        if opts["report_continuously"] or opts["output_list"] == None:
+        if opts["report_continuously"] or opts["output_list"] is None:
             
             while (ISTATE == 2 or ISTATE == 1) and t < tf:
             

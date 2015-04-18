@@ -840,7 +840,7 @@ class Test_Implicit_Radau5:
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706947, 3)
+        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706947, 2)
         
         self.sim_t0.simulate(3.)
         nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
