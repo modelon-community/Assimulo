@@ -132,7 +132,11 @@ static void kinPinvFree(KINMem kin_mem);
 #define fscale         (kin_mem->kin_fscale)
 #define sqrt_relfunc   (kin_mem->kin_sqrt_relfunc)
 #define sJpnorm        (kin_mem->kin_sJpnorm)
-#define sfdotJp        (kin_mem->kin_sfdotJp)
+#if SUNDIALS_26
+  #define sFdotJp        (kin_mem->kin_sFdotJp)
+#else
+  #define sfdotJp        (kin_mem->kin_sfdotJp)
+#endif
 #define errfp          (kin_mem->kin_errfp)
 #define infofp         (kin_mem->kin_infofp)
 #define setupNonNull   (kin_mem->kin_setupNonNull)
@@ -541,7 +545,11 @@ static int kinPinvSolve(KINMem kin_mem, N_Vector x, N_Vector b, realtype *res_no
   sJpnorm = N_VWL2Norm(b,fscale);
   N_VProd(b, fscale, b);
   N_VProd(b, fscale, b);
+#if SUNDIALS_26
+  sFdotJp = N_VDotProd(fval, b);
+#else
   sfdotJp = N_VDotProd(fval, b);
+#endif
   
   last_flag = KINPINV_SUCCESS;
   

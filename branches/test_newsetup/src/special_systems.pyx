@@ -138,7 +138,7 @@ cdef class cMechanical_System:
         def res(t,y,yd):
             p,pd=y[0:n_p], yd[0:n_p]
             v,vd=y[n_p:n_v], yd[n_p:n_v]
-            Mvd = N.dot(M,vd) if M != None else vd
+            Mvd = N.dot(M,vd) if M is not None else vd
             
             return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
             
@@ -158,7 +158,7 @@ cdef class cMechanical_System:
         y0=N.hstack((self.pos0,self.vel0))
         yd0=N.hstack((self.posd0,self.veld0))
         if self.constrained:
-            if index==None or index=='ind0':
+            if index is None or index=='ind0':
                 raise ValueError(index_error)
             y0=N.hstack((y0,self.lam0))
             yd0=N.hstack((yd0,N.zeros(self.lam0.shape)))

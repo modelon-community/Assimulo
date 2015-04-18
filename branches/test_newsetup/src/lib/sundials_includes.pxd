@@ -24,8 +24,8 @@ see also Jon Olav Vik:
 http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 
 """
-import numpy as N
-cimport numpy as N
+#import numpy as N
+#cimport numpy as N
 
 from numpy cimport NPY_DOUBLE, npy_intp, NPY_INT
 
@@ -87,6 +87,26 @@ cdef extern from "sundials/sundials_direct.h":
         realtype **cols
     ctypedef _DlsMat* DlsMat
     cdef realtype* DENSE_COL(DlsMat A, int j)
+
+IF SUNDIALS_VERSION >= (2,6,0):
+    cdef extern from "sundials/sundials_sparse.h":
+        cdef struct _SlsMat:
+            int M
+            int N
+            int NNZ
+            realtype *data
+            int *rowvals
+            int *colptrs
+        ctypedef _SlsMat* SlsMat
+ELSE:
+    cdef struct _SlsMat:
+        int M
+        int N
+        int NNZ
+        realtype *data
+        int *rowvals
+        int *colptrs
+    ctypedef _SlsMat* SlsMat
 
 cdef extern from "cvodes/cvodes.h":
     void* CVodeCreate(int lmm, int iter)
@@ -191,6 +211,26 @@ cdef extern from "cvodes/cvodes_dense.h":
 
 cdef extern from "cvodes/cvodes_spgmr.h":
     int CVSpgmr(void *cvode_mem, int pretype, int max1)
+    
+IF SUNDIALS_VERSION >= (2,6,0):
+    cdef extern from "cvodes/cvodes_sparse.h":
+        int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
+        ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
+                                  SlsMat Jac, void *user_data, N_Vector tmp1,
+                                    N_Vector tmp2, N_Vector tmp3)
+        int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
+        int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
+    #cdef inline char* version(): return "2.6.0"
+    cdef inline tuple version(): return (2,6,0)
+ELSE:
+    cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+    ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
+                              SlsMat Jac, void *user_data, N_Vector tmp1,
+                                N_Vector tmp2, N_Vector tmp3)
+    cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac): return -1
+    cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals): return -1
+    #cdef inline char* version(): return "2.5.0"
+    cdef inline tuple version(): return (2,5,0)
     
 cdef extern from "cvodes/cvodes_spils.h":
     ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,

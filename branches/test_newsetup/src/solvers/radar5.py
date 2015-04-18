@@ -118,7 +118,7 @@ class Radar5ODE(Explicit_ODE):
         #print "SOLOUT:", told, t, hold, y, cont
 #        print cont
 #        print told, t, told + hold
-        if self._opts["output_list"] == None:
+        if self._opts["output_list"] is None:
             self._tlist.append(t)
             self._ylist.append(y.copy())
         else:

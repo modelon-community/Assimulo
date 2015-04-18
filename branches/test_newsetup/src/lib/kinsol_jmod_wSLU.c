@@ -505,7 +505,11 @@ int kinPinvDQJac(int N,
     ujsaved = u_data[j];
     ujscale = ONE/uscale_data[j];
     sign = (ujsaved >= ZERO) ? ONE : -ONE;
+#if SUNDIALS_26
+    inc = sqrt_relfunc*SUNMAX(SUNRabs(ujsaved), ujscale)*sign;
+#else
     inc = sqrt_relfunc*MAX(ABS(ujsaved), ujscale)*sign;
+#endif
     u_data[j] += inc;
 
     retval = func(u, ftemp, user_data);
