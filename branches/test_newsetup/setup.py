@@ -58,10 +58,17 @@ try:
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
 except ImportError:
-    msg="Please upgrade to a newer Cython version, >= 0.15."
+    msg="Please upgrade to a newer Cython version, >= 0.18."
     L.error(msg)
     raise Exception(msg)
 
+#Verify Cython version
+import Cython
+cython_version = Cython.__version__.split(".")
+if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[1] >= '18')):
+    msg="Please upgrade to a newer Cython version, >= 0.18."
+    L.error(msg)
+    raise Exception(msg)
 
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
@@ -101,6 +108,7 @@ class Assimulo_prepare(object):
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.debug_flag = args[0].debug 
         self.LAPACKdir = args[0].lapack_home
+        self.LAPACKname = ""
         self.PLUGINSdir = args[0].plugins_home
         self.static = args[0].is_static 
         self.static_link_gcc = ["-static-libgcc"] if self.static else []
@@ -216,15 +224,18 @@ class Assimulo_prepare(object):
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
-            names=ctypes.util.find_library("blas")
-            if names !='':
+            """
+            name = ctypes.util.find_library("blas")
+            if name !='':
                 self.with_Blas=True
-                L.debug('Blas found in standard library path as {}'.format(names))
-            else:    
-                L.warning("No path to BLAS supplied" + msg)
-                L.debug("usage: --blas-home=path")
-                L.debug("Note: the path required is to where the static library lib"+BLASname+" is found")
-                self.with_BLAS = False
+                self.BLASname = name
+                L.debug('Blas found in standard library path as {}'.format(name))
+            else:
+            """
+            L.warning("No path to BLAS supplied" + msg)
+            L.debug("usage: --blas-home=path")
+            L.debug("Note: the path required is to where the static library lib is found")
+            self.with_BLAS = False
         else:
             if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')):
                 L.warning("Could not find BLAS"+msg)
@@ -232,7 +243,8 @@ class Assimulo_prepare(object):
                 L.debug("usage: --blas-home=path")
                 self.with_BLAS = False
             else:
-                L.debug("BLAS found at "+BLASdir+os.sep+BLASname_)
+                L.debug("BLAS found at "+self.BLASdir)
+                self.with_BLAS = True
         
     def check_SuperLU(self):
         """
@@ -269,6 +281,16 @@ class Assimulo_prepare(object):
         if os.path.exists(os.path.join(os.path.join(self.incdirs,'cvodes'), 'cvodes.h')):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
+            
+            if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
+                sundials_version = (2,6,0)
+                L.debug('SUNDIALS 2.6 found.')
+            else:
+                sundials_version = (2,5,0)
+                L.debug('SUNDIALS 2.5 found.')
+                
+            self.SUNDIALS_version = sundials_version
+            
         else:    
             L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
                     "to see that it actually points to Sundials.").format(self.sundialsdir))
@@ -279,17 +301,27 @@ class Assimulo_prepare(object):
         """
         Check if LAPACK installed
         """
+        msg=", disabling support. View more information using --log=DEBUG"
         self.with_LAPACK=False
         if self.LAPACKdir != "":
             if not os.path.exists(self.LAPACKdir):
-                L.warning('Lapack directory {} not found'.format(self.LAPACKdir))
+                L.warning('LAPACK directory {} not found'.format(self.LAPACKdir))
             else:
-                self.withLAPACK = True
+                L.debug("LAPACK found at "+self.LAPACKdir)
+                self.with_LAPACK = True
         else:
+            """
             name = ctypes.util.find_library("lapack")
-            self.with_LAPACK = True
-            self.LAPACKdir=''
-            L.debug('Lapack found in  standard library as {}'.format(name))            
+            if name != "":
+                L.debug('LAPACK found in standard library path as {}'.format(name))
+                self.with_LAPACK=True
+                self.LAPACKname = name
+            else:
+            """
+            L.warning("No path to LAPACK supplied" + msg)
+            L.debug("usage: --lapack-home=path")
+            L.debug("Note: the path required is to where the static library lib is found")
+            self.with_LAPACK = False
             
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
@@ -308,14 +340,16 @@ class Assimulo_prepare(object):
         if self.with_SUNDIALS:
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
-                                 include_path=[".","assimulo","assimulo" + os.sep + "lib"])
+                                 include_path=[".","assimulo","assimulo" + os.sep + "lib"],
+                                 compile_time_env={'SUNDIALS_VERSION': self.SUNDIALS_version})
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
-                        include_path=[".","assimulo","assimulo"+os.sep+"lib"])
+                        include_path=[".","assimulo","assimulo"+os.sep+"lib"],
+                        compile_time_env={'SUNDIALS_VERSION': self.SUNDIALS_version})
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
@@ -354,6 +388,8 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs = [np.get_include(), self.incdirs]
                 ext_list[-1].library_dirs = [self.libdirs]
                 ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+            if self.SUNDIALS_version > (2,5,0):
+                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
             if self.debug_flag:
                 ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
             else:
@@ -362,10 +398,10 @@ class Assimulo_prepare(object):
                 ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
             ext_list[-1].extra_compile_args += self.flag_32bit + self.extra_c_flags
             
-            for el in ext_list:
-                if self.is_python3:
-                    el.cython_directives = {"language_level": 3} 
-                el.extra_link_args += extra_link_flags
+        for el in ext_list:
+            if self.is_python3:
+                el.cython_directives = {"language_level": 3} 
+            el.extra_link_args += extra_link_flags
         return ext_list
 
     def fortran_extensionlists(self):
@@ -416,11 +452,19 @@ class Assimulo_prepare(object):
     
         #GLIMDA
         if self.with_BLAS and self.with_LAPACK:
-            extra_link_flags += ["-L {} {}".format(self.LAPACKdir, self.BLASdir), "-llapack blas"]
+            lapack_blas = ""
+            if self.LAPACKdir != "": lapack_blas += "-L{} ".format(self.LAPACKdir)
+            #if self.LAPACKname != "": 
+            #    lapack_blas += "-L{} ".format(self.LAPACKname) 
+            #else: 
+            lapack_blas += "-llapack "
+            if self.BLASdir != "": lapack_blas += "-L{} ".format(self.BLASdir)
+            lapack_blas += "-lblas"
+            extra_link_flags += [lapack_blas]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
-            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs) 
+            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
         else:
             L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
@@ -428,108 +472,108 @@ class Assimulo_prepare(object):
     
         return config.todict()["ext_modules"]
         
-if __name__ == '__main__':
-    prepare=Assimulo_prepare(args, thirdparty_methods)
-    curr_dir=os.getcwd()
-    if not os.path.isdir("assimulo"):
-        prepare.create_assimulo_dirs_and_populate()
-        os.chdir("build") #Change dir
-        change_dir = True
-    else:
-        change_dir = False
-    
-    ext_list = prepare.cython_extensionlists()
 
-    #MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
-    #HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
-    #SAME TIME.
-    for e in ext_list:
-        e.extra_f77_compile_args = []
-        e.extra_f90_compile_args = []
+prepare=Assimulo_prepare(args, thirdparty_methods)
+curr_dir=os.getcwd()
+if not os.path.isdir("assimulo"):
+    prepare.create_assimulo_dirs_and_populate()
+    os.chdir("build") #Change dir
+    change_dir = True
+else:
+    change_dir = False
 
-    ext_list += prepare.fortran_extensionlists()
-    
-    # distutils part
+ext_list = prepare.cython_extensionlists()
+
+#MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
+#HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
+#SAME TIME.
+for e in ext_list:
+    e.extra_f77_compile_args = []
+    e.extra_f90_compile_args = []
+
+ext_list += prepare.fortran_extensionlists()
+
+# distutils part
 
 
-    NAME = "Assimulo"
-    AUTHOR = u"C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
-    AUTHOR_EMAIL = "chria@maths.lth.se"
-    VERSION = "trunk"
-    LICENSE = "LGPL"
-    URL = "http://www.jmodelica.org/assimulo"
-    DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
-    DESCRIPTION = "A package for solving ordinary differential equations and differential algebraic equations."
-    PLATFORMS = ["Linux", "Windows", "MacOS X"]
-    CLASSIFIERS = [ 'Programming Language :: Python',
-                    'Programming Language :: Cython',
-                    'Programming Language :: C',
-                    'Programming Language :: Fortran',
-                    'Operating System :: MacOS :: MacOS X',
-                    'Operating System :: Microsoft :: Windows',
-                    'Operating System :: Unix']
-    
-    LONG_DESCRIPTION = """
-    Assimulo is a Cython / Python based simulation package that allows for 
-    simulation of both ordinary differential equations (ODEs), f(t,y), and 
-    differential algebraic equations (DAEs), f(t,y,yd). It combines a 
-    variety of different solvers written in C, FORTRAN and Python via a 
-    common high-level interface.
-    
-    Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of 
-    order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
-    (https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
-    (for ODEs) and IDA (for DAEs). Ernst Hairer's 
-    (http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
-    Dopri5 are also available.
-    
-    Documentation and installation instructions can be found at: 
-    http://www.jmodelica.org/assimulo . 
-    
-    For questions and comments, visit: 
-    http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
-    
-    The package requires Numpy, Scipy and Matplotlib and additionally for 
-    compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
-    together with a C-compiler and a FORTRAN-compiler.
-    """
-    
-    
-    version_txt = 'assimulo'+os.path.sep+'version.txt'
-    #If a revision is found, always write it!
-    if revision != "unknown" and revision!="":
+NAME = "Assimulo"
+AUTHOR = u"C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
+AUTHOR_EMAIL = "chria@maths.lth.se"
+VERSION = "trunk"
+LICENSE = "LGPL"
+URL = "http://www.jmodelica.org/assimulo"
+DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
+DESCRIPTION = "A package for solving ordinary differential equations and differential algebraic equations."
+PLATFORMS = ["Linux", "Windows", "MacOS X"]
+CLASSIFIERS = [ 'Programming Language :: Python',
+                'Programming Language :: Cython',
+                'Programming Language :: C',
+                'Programming Language :: Fortran',
+                'Operating System :: MacOS :: MacOS X',
+                'Operating System :: Microsoft :: Windows',
+                'Operating System :: Unix']
+
+LONG_DESCRIPTION = """
+Assimulo is a Cython / Python based simulation package that allows for 
+simulation of both ordinary differential equations (ODEs), f(t,y), and 
+differential algebraic equations (DAEs), f(t,y,yd). It combines a 
+variety of different solvers written in C, FORTRAN and Python via a 
+common high-level interface.
+
+Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of 
+order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
+(https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
+(for ODEs) and IDA (for DAEs). Ernst Hairer's 
+(http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
+Dopri5 are also available.
+
+Documentation and installation instructions can be found at: 
+http://www.jmodelica.org/assimulo . 
+
+For questions and comments, visit: 
+http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
+
+The package requires Numpy, Scipy and Matplotlib and additionally for 
+compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
+together with a C-compiler and a FORTRAN-compiler.
+"""
+
+
+version_txt = 'assimulo'+os.path.sep+'version.txt'
+#If a revision is found, always write it!
+if revision != "unknown" and revision!="":
+    with open(version_txt, 'w') as f:
+        f.write(VERSION+'\n')
+        f.write("r"+revision)
+else:# If it does not, check if the file exists and if not, create the file!
+    if not os.path.isfile(version_txt):
         with open(version_txt, 'w') as f:
             f.write(VERSION+'\n')
-            f.write("r"+revision)
-    else:# If it does not, check if the file exists and if not, create the file!
-        if not os.path.isfile(version_txt):
-            with open(version_txt, 'w') as f:
-                f.write(VERSION+'\n')
-                f.write("unknown")
-    
-    license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
-                   for pck in  thirdparty_methods for place in ['thirdparty','lib']]
-    L.debug(license_info)
-    ndc.setup(name=NAME,
-          version=VERSION,
-          license=LICENSE,
-          description=DESCRIPTION,
-          long_description=LONG_DESCRIPTION,
-          author=AUTHOR,
-          author_email=AUTHOR_EMAIL,
-          url=URL,
-          download_url=DOWNLOAD_URL,
-          platforms=PLATFORMS,
-          classifiers=CLASSIFIERS,
-          package_dir = {'assimulo':'assimulo'},
-          packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
-          #cmdclass = {'build_ext': build_ext},
-          ext_modules = ext_list,
-          package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
-                                    'examples'+os.sep+'kinsol_ors_matrix.mtx']},
-          script_args=prepare.distutil_args)
-    
-    
-    if change_dir:
-        os.chdir(curr_dir) #Change back to original directory
-    
+            f.write("unknown")
+
+license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
+               for pck in  thirdparty_methods for place in ['thirdparty','lib']]
+L.debug(license_info)
+ndc.setup(name=NAME,
+      version=VERSION,
+      license=LICENSE,
+      description=DESCRIPTION,
+      long_description=LONG_DESCRIPTION,
+      author=AUTHOR,
+      author_email=AUTHOR_EMAIL,
+      url=URL,
+      download_url=DOWNLOAD_URL,
+      platforms=PLATFORMS,
+      classifiers=CLASSIFIERS,
+      package_dir = {'assimulo':'assimulo'},
+      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
+      #cmdclass = {'build_ext': build_ext},
+      ext_modules = ext_list,
+      package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
+                                'examples'+os.sep+'kinsol_ors_matrix.mtx']},
+      script_args=prepare.distutil_args)
+
+
+if change_dir:
+    os.chdir(curr_dir) #Change back to original directory
+
