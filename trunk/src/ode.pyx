@@ -48,7 +48,7 @@ cdef class ODE:
                         "store_event_points":True, 
                         "time_limit":0, 
                         "clock_step":False, 
-                        "num_threads":multiprocessing.cpu_count()}
+                        "num_threads":1} #multiprocessing.cpu_count()
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
         self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
