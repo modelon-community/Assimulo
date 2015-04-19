@@ -34,6 +34,7 @@ for pg in package_arguments:
 parser.add_argument("--blas-name", help="name of the blas package",default='blas')   
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')                  
 parser.add_argument("--is_static", action="store_true", help="set to true if present",default=False)
+parser.add_argument("--sundials-with-superlu", action="store_true", help="set to true if Sundials has been compiled with SuperLU",default=False)
 parser.add_argument("--debug", action="store_true", help="set to true if present",default=False)
 parser.add_argument("--force-32bit", action="store_true", help="set to true if present",default=False)
 parser.add_argument("--no-msvcr", action="store_true", help="set to true if present",default=False)
@@ -42,7 +43,6 @@ parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
                                        
 args = parser.parse_known_args()
-
 
 L.basicConfig(level=getattr(L,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
 L.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
@@ -104,6 +104,7 @@ class Assimulo_prepare(object):
         self.SLUdir = args[0].superlu_home
         self.BLASdir = args[0].blas_home 
         self.sundialsdir = args[0].sundials_home
+        self.sundials_with_superlu = args[0].sundials_with_superlu
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.debug_flag = args[0].debug 
@@ -338,10 +339,12 @@ class Assimulo_prepare(object):
             
         # SUNDIALS
         if self.with_SUNDIALS:
+            compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
+                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu}
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
-                                 compile_time_env={'SUNDIALS_VERSION': self.SUNDIALS_version})
+                                 compile_time_env=compile_time_env)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
@@ -349,7 +352,7 @@ class Assimulo_prepare(object):
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
-                        compile_time_env={'SUNDIALS_VERSION': self.SUNDIALS_version})
+                        compile_time_env=compile_time_env)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
