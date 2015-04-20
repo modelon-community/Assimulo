@@ -386,8 +386,8 @@ class Assimulo_prepare(object):
             if self.with_SLU:
                 ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo",self.assimulo_lib])
                 ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
-                ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, incdirs]
-                ext_list[-1].library_dirs = [libdirs,self.SLUlibdir,args[0].blas]
+                ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, self.incdirs]
+                ext_list[-1].library_dirs = [self.libdirs,self.SLUlibdir,args[0].blas]
                 ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",args[0].blas_name,'gfortran']
             else:
                 ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo",self.assimulo_lib])
