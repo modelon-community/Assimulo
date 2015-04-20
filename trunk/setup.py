@@ -25,7 +25,11 @@ import argparse
 import numpy.distutils as nd
 import numpy.distutils.core as ndc
 
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
 parser = argparse.ArgumentParser(description='Assimulo setup script.')
+parser.register('type','bool',str2bool)
 package_arguments=['plugins','sundials','blas','superlu','lapack']
 package_arguments.sort()
 for pg in package_arguments:
@@ -33,11 +37,11 @@ for pg in package_arguments:
            help="Location of the {} directory".format(pg.upper()),type=str,default='')
 parser.add_argument("--blas-name", help="name of the blas package",default='blas')   
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')                  
-parser.add_argument("--is_static", action="store_true", help="set to true if present",default=False)
-parser.add_argument("--sundials-with-superlu", action="store_true", help="set to true if Sundials has been compiled with SuperLU",default=False)
-parser.add_argument("--debug", action="store_true", help="set to true if present",default=False)
-parser.add_argument("--force-32bit", action="store_true", help="set to true if present",default=False)
-parser.add_argument("--no-msvcr", action="store_true", help="set to true if present",default=False)
+parser.add_argument("--is_static", type='bool', help="set to true if present",default=False)
+parser.add_argument("--sundials-with-superlu", type='bool', help="set to true if Sundials has been compiled with SuperLU",default=False)
+parser.add_argument("--debug", type='bool', help="set to true if present",default=False)
+parser.add_argument("--force-32bit", type='bool', help="set to true if present",default=False)
+parser.add_argument("--no-msvcr", type='bool', help="set to true if present",default=False)
 parser.add_argument("--log",choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),default='NOTSET')
 parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
