@@ -261,8 +261,8 @@ class Assimulo_prepare(object):
         if not self.with_BLAS:
             L.warning(kinsol_msg+' as BLAS is missing.')
         elif self.SLUdir != "":    
-            self.SLUincdir = os.path.join(SLUdir,'SRC')
-            self.SLUlibdir = os.path.join(SLUdir,'lib')
+            self.SLUincdir = os.path.join(self.SLUdir,'SRC')
+            self.SLUlibdir = os.path.join(self.SLUdir,'lib')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.with_SLU = False
                 L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
