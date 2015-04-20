@@ -419,8 +419,11 @@ class Assimulo_prepare(object):
         extra_compile_flags = self.flag_32bit + self.extra_c_flags
         
         config = np.distutils.misc_util.Configuration()
-        extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:],
-                  'extra_f90_compile_args':extra_compile_flags[:]}
+        extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
+                  
+        if np.version.version > "1.6.1": 
+            extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
+            extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
     
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
@@ -470,7 +473,9 @@ class Assimulo_prepare(object):
             extra_link_flags += [lapack_blas]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
-            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'extra_f77_compile_args':extra_compile_flags[:]}
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
+            if np.version.version > "1.6.1": 
+                extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
         else:
