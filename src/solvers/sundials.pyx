@@ -1418,6 +1418,7 @@ cdef class CVode(Explicit_ODE):
         self.options["minh"] = 0.0           #Minimal step-size
         self.options["inith"] = 0.0          #Initial step-size
         self.options["maxord"] = 5        #Maximum order allowed
+        self.options["maxncf"] = 10
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["maxsteps"] = 10000  #Maximum number of steps
@@ -2060,6 +2061,11 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag)
             
+        #Maximum number of convergence failures
+        flag = SUNDIALS.CVodeSetMaxConvFails(self.cvode_mem, self.options["maxncf"])
+        if flag < 0:
+            raise CVodeError(flag)
+            
         #Initial step
         flag = SUNDIALS.CVodeSetInitStep(self.cvode_mem, self.options["inith"])
         if flag < 0:
@@ -2324,6 +2330,25 @@ cdef class CVode(Explicit_ODE):
         return self.options["inith"]
         
     inith = property(_get_initial_step,_set_initial_step)
+    
+    def _set_max_conv_fails(self, maxncf):
+        if maxncf <= 0:
+            raise AssimuloException("The maximum number of convergence failures must be positive")
+        self.options["maxncf"] = int(maxncf)
+        
+    def _get_max_conv_fails(self):
+        """
+        This determines the maximum number of convergence failures allowed
+        by the solver.
+        
+            Parameters::
+            
+                maxncf
+                        - Default 10
+        """
+        return self.options["maxncf"]
+    
+    maxncf = property(_get_max_conv_fails, _set_max_conv_fails)
     
     def _set_max_steps(self, maxsteps):
         if not isinstance(maxsteps,int):
