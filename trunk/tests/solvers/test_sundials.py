@@ -79,6 +79,14 @@ class Test_CVode:
         assert qlast == 4
         
     @testattr(stddist = True)
+    def test_max_convergence_failures(self):
+        assert self.simulator.maxncf == self.simulator.options["maxncf"]
+        self.simulator.maxncf = 15
+        assert self.simulator.maxncf == 15
+        
+        nose.tools.assert_raises(AssimuloException, self.simulator._set_max_conv_fails, -1)
+        
+    @testattr(stddist = True)
     def test_get_current_order(self):  
         
         nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)
