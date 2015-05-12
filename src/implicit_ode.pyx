@@ -21,6 +21,7 @@ from problem import cExplicit_Problem
 
 import pylab as P
 import itertools
+import sys
 import numpy as N
 cimport numpy as N
 
@@ -278,6 +279,14 @@ cdef class Implicit_ODE(ODE):
         if self.time_limit_activated:
             if self.time_limit-(time()-self.time_integration_start) < 0.0:
                 raise TimeLimitExceeded("The time limit was exceeded at integration time %.8E."%self.t)    
+        
+        if self.display_progress:
+            if (time() - self.time_integration_start) > self.display_counter*10:
+                self.display_counter += 1
+                
+                sys.stdout.write(" Integrator time: %e" % self.t)
+                sys.stdout.write('\r')
+                sys.stdout.flush()
         
         #Store data depending on situation 
         if opts["output_list"] is not None: 

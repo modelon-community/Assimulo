@@ -28,6 +28,7 @@ cdef class ODE:
     cdef public object problem
     
     cdef public double t, t0
+    cdef public int display_counter
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
     cdef double elapsed_step_time, time_integration_start
