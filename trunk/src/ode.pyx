@@ -43,6 +43,7 @@ cdef class ODE:
         """
         self.statistics = Statistics() #Initialize the statistics dictionary
         self.options = {"report_continuously":False,
+                        "display_progress":True,
                         "verbosity":NORMAL,
                         "backward":False, 
                         "store_event_points":True, 
@@ -123,6 +124,7 @@ cdef class ODE:
         #Initialize timer
         self.elapsed_step_time = -1.0
         self.clock_start = -1.0
+        self.display_counter = 1
         
         #Add common statistics
         self.statistics.add_key("nsteps", "Number of steps")
@@ -354,6 +356,25 @@ cdef class ODE:
         return self.options["time_limit"]
     
     time_limit = property(_get_time_limit, _set_time_limit)
+    
+    def _set_display_progress(self, display_progress):
+        self.options["display_progress"] = bool(display_progress)
+    
+    def _get_display_progress(self):
+        """
+        This option actives output during the integration in terms of
+        that the current integration is periodically printed to the
+        stdout. Note though that report_continuously needs to be 
+        activated.
+        
+            Parameters::
+            
+                display_progress
+                            - Default True
+        """
+        return self.options["display_progress"]
+    
+    display_progress = property(_get_display_progress, _set_display_progress)
     
     def _set_report_continuously(self, report_continuously):
         self.options["report_continuously"] = bool(report_continuously)
