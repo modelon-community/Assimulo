@@ -26,9 +26,12 @@ cdef class ODE:
     cdef public list event_data
     
     cdef public object problem
+    cdef public object hysteresis_check
     
     cdef public double t, t0
     cdef public int display_counter
+    cdef public int hysteresis_clear_counter
+    cdef public int hysteresis_ok_print
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
     cdef double elapsed_step_time, time_integration_start
@@ -52,3 +55,4 @@ cdef class ODE:
     cpdef initialize(self)
     cdef _reset_solution_variables(self)
     cpdef get_elapsed_step_time(self)
+    cpdef _hysteresis_check(self, object event_info)
