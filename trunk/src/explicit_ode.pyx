@@ -207,6 +207,8 @@ cdef class Explicit_ODE(ODE):
                     self.statistics["ntimeevents"] += 1#Time event detected
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
+                    if REPORT_CONTINUOUSLY:
+                        self._hysteresis_check(event_info)
                 
                 #Log the information
                 if LOUD >= self.options["verbosity"]:
@@ -253,6 +255,11 @@ cdef class Explicit_ODE(ODE):
         if self.time_limit_activated:
             if self.time_limit-(time()-self.time_integration_start) < 0.0:
                 raise TimeLimitExceeded("The time limit was exceeded at integration time %.8E."%self.t)
+                
+        self.hysteresis_clear_counter += 1
+        if self.hysteresis_clear_counter > 3:
+            self.hysteresis_check = None
+            self.hysteresis_ok_print = 1
                 
         if self.display_progress:
             if (time() - self.time_integration_start) > self.display_counter*10:
