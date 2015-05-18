@@ -558,12 +558,13 @@ cdef class ODE:
     
     cpdef _hysteresis_check(self, object event_info):
         self.hysteresis_clear_counter = 0
-        if self.hysteresis_check is None:
-            self.hysteresis_check  = abs(N.array(event_info[0]))
-        else:
-            self.hysteresis_check += abs(N.array(event_info[0]))
-            
-            if max(self.hysteresis_check) > 5 and self.hysteresis_ok_print:
-                self.hysteresis_ok_print = 0
-                self.log_message("Warning: Possible hysteresis detected at t = %e in state event(s): "%self.t + 
-                                 str(N.where(self.hysteresis_check == max(self.hysteresis_check))[0]), NORMAL)
+        if event_info[0] is not None:
+            if self.hysteresis_check is None:
+                self.hysteresis_check  = abs(N.array(event_info[0]))
+            else:
+                self.hysteresis_check += abs(N.array(event_info[0]))
+                
+                if max(self.hysteresis_check) > 5 and self.hysteresis_ok_print:
+                    self.hysteresis_ok_print = 0
+                    self.log_message("Warning: Possible hysteresis detected at t = %e in state event(s): "%self.t + 
+                                     str(N.where(self.hysteresis_check == max(self.hysteresis_check))[0]), NORMAL)
