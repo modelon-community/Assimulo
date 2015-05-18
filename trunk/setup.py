@@ -15,594 +15,485 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #from distutils.core import setup, Extension
-import numpy as N
+import numpy as np
 import logging as L
-import sys as S
-import os as O
+import sys 
 import os
 import shutil as SH
 import ctypes.util
-try:
-    from Cython.Distutils import build_ext
-    from Cython.Build import cythonize
-except ImportError:
-    raise Exception("Please upgrade to a newer Cython version, >= 0.15.")
+import argparse
+import numpy.distutils as nd
 
-#L.basicConfig(format='%(levelname)s:%(message)s')
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
 
-incdirs = ''
-libdirs = ''
-SLUdir = ""
-BLASdir = ""
-LAPACKdir = ""
-BLASname = 'blas'
-BLASname_t = ""
-debug_flag = False
-python3_flag = True if S.hexversion > 0x03000000 else False
-sundials_26 = False #if the sundials linked to it is greater or equal to 2.6
+parser = argparse.ArgumentParser(description='Assimulo setup script.')
+parser.register('type','bool',str2bool)
+package_arguments=['plugins','sundials','blas','superlu','lapack']
+package_arguments.sort()
+for pg in package_arguments:
+    parser.add_argument("--{}-home".format(pg), 
+           help="Location of the {} directory".format(pg.upper()),type=str,default='')
+parser.add_argument("--blas-name", help="name of the blas package",default='blas')   
+parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')                  
+parser.add_argument("--is_static", type='bool', help="set to true if present",default=False)
+parser.add_argument("--sundials-with-superlu", type='bool', help="set to true if Sundials has been compiled with SuperLU",default=False)
+parser.add_argument("--debug", type='bool', help="set to true if present",default=False)
+parser.add_argument("--force-32bit", type='bool', help="set to true if present",default=False)
+parser.add_argument("--no-msvcr", type='bool', help="set to true if present",default=False)
+parser.add_argument("--log",choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),default='NOTSET')
+parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
+parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
+                                       
+args = parser.parse_known_args()
 
+L.basicConfig(level=getattr(L,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
+L.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
 try:
     from subprocess import Popen, PIPE
     _p = Popen(["svnversion", "."], stdout=PIPE)
     revision = _p.communicate()[0].decode('ascii')
 except:
     revision = "unknown"
+L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
-if S.platform == 'win32':
-    incdirs = ''
-    libdirs = ''
-elif S.platform == 'win64':
-    incdirs = ''
-    libdirs = ''
-else:
-    incdirs = '/usr/local/include'
-    libdirs = '/usr/local/lib'
+try:
+    from Cython.Distutils import build_ext
+    from Cython.Build import cythonize
+except ImportError:
+    msg="Please upgrade to a newer Cython version, >= 0.18."
+    L.error(msg)
+    raise Exception(msg)
 
-static_link_gcc = ["-static-libgcc"]
-static_link_gfortran = ["-static-libgfortran"]
-flag_32bit = ["-m32"]
-static = False
-force_32bit = False
-no_msvcr = False
-extra_c_flags = ''
+#Verify Cython version
+import Cython
+cython_version = Cython.__version__.split(".")
+if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[1] >= '18')):
+    msg="Please upgrade to a newer Cython version, >= 0.18."
+    L.error(msg)
+    raise Exception(msg)
 
-copy_args=S.argv[1:]
+L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
-for x in S.argv[1:]:
-    if not x.find('--sundials-home'):
-        incdirs = O.path.join(x[16:],'include')
-        libdirs = O.path.join(x[16:],'lib')
-        copy_args.remove(x)
-    if not x.find('--prefix'):
-        copy_args[copy_args.index(x)] = x.replace('/',O.sep)
-    if not x.find('--superlu-home'):
-        SLUdir = x[15:]
-        copy_args.remove(x)
-    if not x.find('--blas-home'):
-        BLASdir = x[12:]
-        copy_args.remove(x)
-    if not x.find('--blas-name'):
-        BLASname_t = x[12:]
-        copy_args.remove(x)
-    if not x.find('--debug'):
-        debug_flag = x[8:]
-        if x[8:].upper() == "TRUE":
-            debug_flag = True
-        copy_args.remove(x)
-    if not x.find('--lapack-home'):
-        LAPACKdir = x[14:]
-        copy_args.remove(x)
-    if not x.find('--static'):
-        static = x[9:]
-        if x[9:].upper() == "TRUE":
-            static = True
-        else:
-            static = False
-        copy_args.remove(x)
-    if not x.find('--log'):
-        level = x[6:]
+thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3"] 
+
+
+
+class Assimulo_prepare(object):
+# helper functions
+    def create_dir(self,d):
         try:
-            num_level = getattr(L, level.upper())
-        except AttributeError:
-            L.warning("No log-level defined for: "+level)
-            num_level = 30
-        L.basicConfig(level=num_level)
-        copy_args.remove(x)
-    if not x.find('--force-32bit'):
-        if x[14:].upper() == "TRUE":
-            force_32bit = True
-        copy_args.remove(x)
-    if not x.find('--no-msvcr'):
-        if x[11:].upper() == "TRUE":
-            no_msvcr = True
-        copy_args.remove(x)
-    if not x.find('--extra-c-flags'):
-        extra_c_flags = x[16:]
-        copy_args.remove(x)
-
-def check_platform():
-    platform = None
-    if S.platform == 'win32':
-        platform = "win"
-    elif S.platform == 'darwin':
-        platform = "mac"
-    else:
-        platform = "linux"
-    return platform
-
-def pre_processing():
-    join = O.path.join
-    
-    def create_dir(d):
-        try:
-            O.mkdir(d) #Create the build directory
-        except:
+            os.makedirs(d) #Create the build directory
+        except OSError:
             pass #Directory already exists
-    create_dir(O.path.join("build"))
-    create_dir(O.path.join("build","assimulo"))
-    create_dir(O.path.join(O.path.join("build","assimulo"),"lib"))
-    create_dir(O.path.join(O.path.join("build","assimulo"),"solvers"))
-    create_dir(O.path.join(O.path.join("build","assimulo"),"examples"))
-    create_dir(O.path.join(O.path.join("build","assimulo"),"tests"))
-    create_dir(O.path.join(O.path.join("build","assimulo"),"tests","solvers"))
-    create_dir(join("build","assimulo","thirdparty"))
-    create_dir(join("build","assimulo","thirdparty","hairer"))
-    create_dir(join("build","assimulo","thirdparty","voigtmann"))
-    create_dir(join("build","assimulo","thirdparty","hindmarsh"))
-    create_dir(join("build","assimulo","thirdparty","odassl"))
-    create_dir(join("build","assimulo","thirdparty","dasp3"))
-    
-    fileSrc     = O.listdir("src")
-    fileLib     = O.listdir(O.path.join("src","lib"))
-    fileSolvers = O.listdir(O.path.join("src","solvers"))
-    fileExamples= O.listdir("examples")
-    fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
-    fileTests   = O.listdir("tests")
-    fileTestsSolvers = O.listdir(O.path.join("tests","solvers"))
-    fileThirdPartyHairer = O.listdir(join("thirdparty","hairer"))
-    fileThirdPartyVoigtmann = O.listdir(join("thirdparty","voigtmann"))
-    fileThirdPartyHindmarsh = O.listdir(join("thirdparty","hindmarsh"))
-    fileThirdPartyOdassl = O.listdir(join("thirdparty","odassl"))
-    fileThirdPartyDasp3 = O.listdir(join("thirdparty","dasp3"))
-    
-    curdir = O.path.dirname(O.path.abspath(__file__))
-    
-    desSrc = O.path.join(curdir,O.path.join("build","assimulo"))
-    desLib = O.path.join(curdir,O.path.join(O.path.join("build","assimulo"),"lib"))
-    desSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"solvers")
-    desExamples = O.path.join(curdir,O.path.join("build","assimulo"),"examples")
-    desMain = O.path.join(curdir,"build")
-    desTests = O.path.join(curdir,O.path.join("build","assimulo"),"tests")
-    desTestsSolvers = O.path.join(curdir,O.path.join("build","assimulo"),"tests","solvers")
-    desThirdPartyHairer = join(curdir,"build","assimulo","thirdparty","hairer")
-    desThirdPartyVoigtmann = join(curdir,"build","assimulo","thirdparty","voigtmann")
-    desThirdPartyHindmarsh = join(curdir,"build","assimulo","thirdparty","hindmarsh")
-    desThirdPartyOdassl = join(curdir,"build","assimulo","thirdparty","odassl")
-    desThirdPartyDasp3 = join(curdir,"build","assimulo","thirdparty","dasp3")
-
-    for f in fileSrc:
-        if not O.path.isdir(O.path.join("src",f)):
-            SH.copy2(O.path.join("src",f), desSrc)
-    for f in fileLib:
-        if not O.path.isdir(O.path.join(O.path.join("src","lib"),f)):
-            SH.copy2(O.path.join(O.path.join("src","lib"),f), desLib)
-    for f in fileSolvers:
-        if not O.path.isdir(O.path.join(O.path.join("src","solvers"),f)):
-            SH.copy2(O.path.join(O.path.join("src","solvers"),f), desSolvers)
-    for f in fileExamples:
-        if not O.path.isdir(O.path.join("examples",f)):
-            SH.copy2(O.path.join("examples",f), desExamples)
-    for f in fileMain:
-        if not O.path.isdir(f):
-            SH.copy2(f,desMain)
-    for f in fileTests:
-        if not O.path.isdir(O.path.join("tests",f)):
-            SH.copy2(O.path.join("tests",f), desTests)
-    for f in fileTestsSolvers:
-        if not O.path.isdir(O.path.join("tests","solvers",f)):
-            SH.copy2(O.path.join("tests","solvers",f),desTestsSolvers)
-    for f in fileThirdPartyHairer:
-        if not O.path.isdir(join("thirdparty","hairer",f)):
-            SH.copy2(join("thirdparty","hairer",f),desThirdPartyHairer)
-        if f == "LICENSE_HAIRER":
-            SH.copy2(join("thirdparty","hairer",f),join(curdir,"build","assimulo","lib"))
-    for f in fileThirdPartyVoigtmann:
-        if not O.path.isdir(join("thirdparty","voigtmann",f)):
-            SH.copy2(join("thirdparty","voigtmann",f),desThirdPartyVoigtmann)
-        if f == "LICENSE_GLIMDA":
-            SH.copy2(join("thirdparty","voigtmann",f),join(curdir,"build","assimulo","lib"))
-    for f in fileThirdPartyHindmarsh:
-        if not O.path.isdir(join("thirdparty","hindmarsh",f)):
-            SH.copy2(join("thirdparty","hindmarsh",f),desThirdPartyHindmarsh)
-        if f == "LICENSE_ODEPACK":
-            SH.copy2(join("thirdparty","hindmarsh",f),join(curdir,"build","assimulo","lib"))
-    for f in fileThirdPartyOdassl:
-        if not O.path.isdir(join("thirdparty","odassl",f)):
-            SH.copy2(join("thirdparty","odassl",f),desThirdPartyOdassl)
-        if f == "LICENSE_ODASSL":
-            SH.copy2(join("thirdparty","odassl",f),join(curdir,"build","assimulo","lib"))        
-    for f in fileThirdPartyDasp3:
-        if not O.path.isdir(join("thirdparty","dasp3",f)):
-            SH.copy2(join("thirdparty","dasp3",f),desThirdPartyDasp3)
-        if f == "LICENSE_DASP3":
-            SH.copy2(join("thirdparty","dasp3",f),join(curdir,"build","assimulo","lib"))    
-            
-    #Delete OLD renamed files
-    delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
-    for item in delFiles:
-        dirDel = desSrc
-        for f in item[:-1]:
-            dirDel = O.path.join(dirDel, f)
-        dirDel = O.path.join(dirDel, item[-1])
-        if O.path.exists(dirDel):
-            try:
-                O.remove(dirDel)
-            except:
-                L.warning("Could not remove: "+str(dirDel))
-
-if no_msvcr:
-    # prevent the MSVCR* being added to the DLLs passed to the linker
-    def msvc_runtime_library_mod(): 
-        return None
-
-    import numpy.distutils
-    numpy.distutils.misc_util.msvc_runtime_library = msvc_runtime_library_mod
-
-def check_extensions():
-    extra_link_flags = []
-    global sundials_26
-    
-    if static:
-        extra_link_flags += static_link_gcc
-    if force_32bit:
-        extra_link_flags += flag_32bit
-    
-    #Cythonize main modules
-    ext_list = cythonize(["assimulo"+O.path.sep+"*.pyx"], include_path=[".","assimulo"])#,include_dirs=[N.get_include()])
-    
-    #Cythonize Euler
-    ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"euler.pyx"], include_path=[".","assimulo"])#,include_dirs=[N.get_include()])
-    
-    for i in ext_list:
-        i.include_dirs = [N.get_include()]
-            
-    #If Sundials
-    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        
-        if O.path.exists(O.path.join(O.path.join(incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
-            sundials_26 = True
-            
-        if sundials_26:
-            #sundials_version = "2.6.0"
-            sundials_version = (2,6,0)
-        else:
-            #sundials_version = "2.5.0"
-            sundials_version = (2,5,0)
-
-        #CVode and IDA
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"sundials.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"], compile_time_env={'SUNDIALS_VERSION': sundials_version})#,include_dirs=[N.get_include()])
-        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
-        ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
-        
-        #Kinsol
-        ext_list = ext_list + cythonize(["assimulo"+O.path.sep+"solvers"+O.path.sep+"kinsol.pyx"], include_path=[".","assimulo","assimulo"+O.sep+"lib"], compile_time_env={'SUNDIALS_VERSION': sundials_version})#,include_dirs=[N.get_include()])
-        ext_list[-1].include_dirs = [N.get_include(), "assimulo","assimulo"+O.sep+"lib", incdirs]
-        ext_list[-1].library_dirs = [libdirs]
-        ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-    else:
-        L.warning("Could not find Sundials, check the provided path (--sundials-home) to see that it actually points to Sundials.")
-        L.warning("Could not find cvodes.h in " + O.path.join(incdirs,'cvodes'))
-
-        
-    for i in ext_list:
-        #Debug
-        if debug_flag:
-            i.extra_compile_args = ["-g","-fno-strict-aliasing"]
-            i.extra_link_args = ["-g"]
-        else:
-            i.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-        if check_platform() == "mac":
-            i.extra_compile_args += ["-Wno-error=return-type"]
-        if force_32bit:
-            i.extra_compile_args += flag_32bit
-        if extra_c_flags:
-            flags = extra_c_flags.split(' ')
-            for f in flags:
-                i.extra_compile_args.append(f)
-    
-    #Sundials found
-    if O.path.exists(O.path.join(O.path.join(incdirs,'cvodes'), 'cvodes.h')):
-        cordir = O.path.join(O.path.join('assimulo','lib'),'sundials_core.pyx')
-        cordir_KINSOL_wSLU = O.path.join(O.path.join('assimulo','lib'),'sundials_kinsol_core_wSLU.pyx')
-        cordir_KINSOL = O.path.join(O.path.join('assimulo','lib'),'sundials_kinsol_core.pyx')
-    
-        cordir_KINSOL_jmod_wSLU = O.path.join(O.path.join('assimulo','lib'),'kinsol_jmod_wSLU.c')
-        cordir_KINSOL_jmod = O.path.join(O.path.join('assimulo','lib'),'kinsol_jmod.c')
-    
-        cordir_kinpinv = O.path.join(O.path.join('assimulo','lib'),'kinpinv.c')
-        cordir_kinslug = O.path.join(O.path.join('assimulo','lib'),'kinslug.c')
-        cordir_reg_routines = O.path.join(O.path.join('assimulo','lib'),'reg_routines.c')
-
-        
-        wSLU = check_wSLU()
-        if wSLU:
-            SLUincdir = O.path.join(SLUdir,'SRC')
-            SLUlibdir = O.path.join(SLUdir,'lib')
-            #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core_wSLU',
-            #              [cordir_KINSOL_wSLU,cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines],
-            #              include_dirs=[incdirs, N.get_include(),SLUincdir],
-            #              library_dirs=[libdirs,SLUlibdir,BLASdir],
-            #              libraries=['sundials_kinsol','sundials_nvecserial','superlu_4.1',BLASname])]
-            ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo","assimulo"+O.sep+"lib"])
-            ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
-            ext_list[-1].include_dirs = [N.get_include(), SLUincdir, incdirs]
-            ext_list[-1].library_dirs = [libdirs,SLUlibdir,BLASdir]
-            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",BLASname,'gfortran']
-            if debug_flag:
-                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
+    def copy_file(self,fi, to_dir):
+        # copies only files not directories
+        if not os.path.isdir(fi):
+            SH.copy2(fi, to_dir)
+    def copy_all_files(self,file_list, from_dir, to_dir):
+        L.debug('fromdir {}  todir {}'.format(from_dir,to_dir))
+        for f in file_list:
+            if from_dir:
+                self.copy_file(os.path.join(from_dir,f),to_dir)
             else:
-                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            if sundials_26:
-                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
-            if check_platform() == "mac":
-                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            if force_32bit:
-                ext_list[-1].extra_compile_args += flag_32bit
-            if extra_c_flags:
-                flags = extra_c_flags.split(' ')
-                for f in flags:
-                    ext_list[-1].extra_compile_args.append(f)
-                
-        else:
-            #ext_list = ext_list + [Extension('assimulo.lib.sundials_kinsol_core',
-            #              [cordir_KINSOL,cordir_KINSOL_jmod,cordir_kinpinv],
-            #              include_dirs=[incdirs, N.get_include()],
-            #              library_dirs=[libdirs],
-            #              libraries=['sundials_kinsol','sundials_nvecserial'])]
-
-            ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo","assimulo"+O.sep+"lib"])
-            ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
-            ext_list[-1].include_dirs = [N.get_include(), incdirs]
-            ext_list[-1].library_dirs = [libdirs]
-            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            if debug_flag:
-                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-            else:
-                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            if sundials_26:
-                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
-            if check_platform() == "mac":
-                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            if force_32bit:
-                ext_list[-1].extra_compile_args += flag_32bit
-            if extra_c_flags:
-                flags = extra_c_flags.split(' ')
-                for f in flags:
-                    ext_list[i].extra_compile_args.append(f)
-    
-    for i in ext_list:
-        if python3_flag:
-            i.cython_directives = {"language_level": 3}
-        i.extra_link_args += extra_link_flags
-    
-    return ext_list
-
-def check_wSLU():
-    wSLU = True
-    
-    global BLASname, BLASname_t
-    
-    if SLUdir != "":    
-        SLUincdir = O.path.join(SLUdir,'SRC')
-        SLUlibdir = O.path.join(SLUdir,'lib')
-        if not O.path.exists(O.path.join(SLUincdir,'supermatrix.h')):
-            wSLU = False
-            L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
-            L.debug("Could not find SuperLU at the given path.")
-            L.debug("usage: --superlu-home=path")
-            L.debug("KINSOL will not be compiled with support for SUperLU.")
-            
-        L.debug("SLUinc: "+SLUincdir)
-        L.debug("SLUlib: "+SLUlibdir)
-
-    else:
-        L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
-        L.debug("No path to SuperLU supplied, KINSOL will not be compiled with support for SUperLU.")
-        L.debug("usage: --superlu-home=path")
-        L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
-        wSLU = False
+                self.copy_file(f,to_dir)
+    def __init__(self,args, thirdparty_methods):
+        # args[0] are optinal arguments given above
+        # args[1] are argumenets passed to disutils 
+        self.distutil_args=args[1]
+        if args[0].prefix:
+            self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
+            self.distutil_args.append('--prefix={}'.format(self.prefix))
+        self.SLUdir = args[0].superlu_home
+        self.BLASdir = args[0].blas_home 
+        self.sundialsdir = args[0].sundials_home
+        self.sundials_with_superlu = args[0].sundials_with_superlu
+        self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
+        self.BLASname = self.BLASname_t[3:]    # the name without "lib"
+        self.debug_flag = args[0].debug 
+        self.LAPACKdir = args[0].lapack_home
+        self.LAPACKname = ""
+        self.PLUGINSdir = args[0].plugins_home
+        self.static = args[0].is_static 
+        self.static_link_gcc = ["-static-libgcc"] if self.static else []
+        self.static_link_gfortran = ["-static-libgfortran"] if self.static else []
+        self.debug_flag = args[0].debug 
+        self.force_32bit = args[0].force_32bit
+        self.flag_32bit = ["-m32"] if self.force_32bit else [] 
+        self.no_mvscr = args[0].no_msvcr 
+        self.extra_c_flags = args[0].extra_c_flags.split()
+        self.thirdparty_methods  = thirdparty_methods
         
-    if BLASname_t != "":
-        if BLASname_t.startswith("lib"):
-            BLASname = BLASname_t[3:]
+
+        
+        if self.no_mvscr:
+        # prevent the MSVCR* being added to the DLLs passed to the linker
+            def msvc_runtime_library_mod(): 
+                return None
+            nd.misc_util.msvc_runtime_library = msvc_runtime_library_mod
+            L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
+        
+        self.platform = 'linux'
+        if 'win' in sys.platform: self.platform = 'win'
+        if 'darwin' in sys.platform: self.platform = 'mac' 
+        
+        self.is_python3 = True if sys.version_info.major >= 3 else False
+        L.debug('Platform {}'.format(self.platform))
+        
+        if args[0].sundials_home:
+            self.incdirs = os.path.join(self.sundialsdir,'include')
+            self.libdirs = os.path.join(self.sundialsdir,'lib')
+        elif 'win' in self.platform:
+            self.incdirs = ''
+            self.libdirs = ''
         else:
-            BLASname = BLASname_t
-            BLASname_t = "lib"+BLASname_t
-    else:
-        BLASname_t = "lib" + BLASname
-           
-    if BLASdir == "":
-        L.warning("No path to BLAS supplied, disabling support. View more information using --log=DEBUG")
-        L.debug("No path to BLAS supplied, KINSOL will not be compiled with support for SUperLU.")
-        L.debug("usage: --blas-home=path")
-        L.debug("Note: the path required is to where the static library lib"+BLASname+" is found")
-        wSLU = False
-    else:
-        if not O.path.exists(O.path.join(BLASdir,BLASname_t+'.a')):
-            L.warning("Could not find BLAS, disabling support. View more information using --log=DEBUG")
-            L.debug("Could not find BLAS at the given path.")
+            self.incdirs = '/usr/local/include'
+            self.libdirs = '/usr/local/lib'            
+        # directory paths
+        self.curdir = os.path.dirname(os.path.abspath(__file__))
+        # build directories
+        self.build_assimulo = os.path.join("build","assimulo")
+        self.build_assimulo_thirdparty = os.path.join(self.build_assimulo,'thirdparty')
+        # destination directories
+        self.desSrc = os.path.join(self.curdir,self.build_assimulo)
+        self.desLib = os.path.join(self.desSrc,"lib")
+        self.desSolvers = os.path.join(self.desSrc,"solvers")
+        self.desExamples = os.path.join(self.desSrc,"examples")
+        self.desMain = os.path.join(self.curdir,"build")
+        self.desTests = os.path.join(self.desSrc,"tests")
+        self.desTestsSolvers = os.path.join(self.desTests,"solvers")
+        self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
+                                          for thp in self.thirdparty_methods])
+                                          
+        self.assimulo_lib = os.path.join('assimulo','lib')
+        
+        # filelists
+        
+        self.fileSrc     = os.listdir("src")
+        self.fileLib     = os.listdir(os.path.join("src","lib"))
+        self.fileSolvers = os.listdir(os.path.join("src","solvers"))
+        self.fileExamples= os.listdir("examples")
+        self.fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
+        self.fileTests   = os.listdir("tests")
+        self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
+                                         for thp in self.thirdparty_methods])
+        self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
+        
+        # check packages
+        self.check_BLAS()
+        self.check_SuperLU()
+        self.check_SUNDIALS()
+        self.check_LAPACK()
+        
+    def create_assimulo_dirs_and_populate(self):
+        for subdir in ["lib", "solvers", "examples"]:
+            self.create_dir(os.path.join(self.build_assimulo,subdir))
+        self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
+        for pck in self.thirdparty_methods:
+            self.create_dir(os.path.join(self.build_assimulo_thirdparty, pck))
+        
+        self.copy_all_files(self.fileSrc, "src", self.desSrc)
+        self.copy_all_files(self.fileLib, "src/lib", self.desLib)
+        self.copy_all_files(self.fileSolvers, os.path.join("src","solvers"), self.desSolvers)
+        self.copy_all_files(self.fileExamples, "examples", self.desExamples)
+        self.copy_all_files(self.fileMain, None, self.desMain)
+        self.copy_all_files(self.fileTests, "tests", self.desTests)
+        self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
+
+        for f in self.filelist_thirdparty.items():
+            L.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
+            self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
+            try:   
+                SH.copy2(os.path.join("thirdparty",f[0],"LICENSE_{}".format(f[0].upper())),self.desLib)
+            except IOError:
+                L.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
+
+        #Delete OLD renamed files
+        delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
+        for item in delFiles:
+            dirDel = self.desSrc
+            for f in item[:-1]:
+                dirDel = os.path.join(dirDel, f)
+            dirDel = os.path.join(dirDel, item[-1])
+            if os.path.exists(dirDel):
+                try:
+                    os.remove(dirDel)
+                except:
+                    L.debug("Could not remove: "+str(dirDel))
+    
+    def check_BLAS(self):
+        """
+        Check if BLAS can be found
+        """
+        self.with_BLAS = True
+        msg=", disabling support. View more information using --log=DEBUG"
+        if self.BLASdir == "":
+            """
+            name = ctypes.util.find_library("blas")
+            if name !='':
+                self.with_Blas=True
+                self.BLASname = name
+                L.debug('Blas found in standard library path as {}'.format(name))
+            else:
+            """
+            L.warning("No path to BLAS supplied" + msg)
             L.debug("usage: --blas-home=path")
-            L.debug("KINSOL will not be compiled with support for SUperLU.")
-            wSLU = False
-            
-        L.debug("BLAS: "+BLASdir+"/"+BLASname_t)
-    
-    return wSLU
-
-
-def check_fortran_extensions():
-    """
-    Adds the Fortran extensions using Numpy's distutils extension.
-    """
-    extra_link_flags = []
-    extra_compile_flags = []
-    if static:
-        extra_link_flags += static_link_gfortran + static_link_gcc
-    if force_32bit:
-        extra_link_flags += flag_32bit
-        extra_compile_flags += flag_32bit
-    if extra_c_flags:
-        flags = extra_c_flags.split(' ')
-        for f in flags:
-            extra_compile_flags.append(f)
-    
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration()
-
-    if force_32bit:
-        config.add_extension('assimulo.lib.dopri5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                             ,extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])#include_dirs=[N.get_include()])
-        
-        config.add_extension('assimulo.lib.rodas',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
-        
-        config.add_extension('assimulo.lib.radau5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:])
-    
-        config.add_extension('assimulo.lib.radar5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
-        
-        #ODEPACK
-        config.add_extension('assimulo.lib.odepack',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-        
-        #ODASSL
-        odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
-        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-        config.add_extension('assimulo.lib.odassl',
-                             sources=[odassl_dir+file for file in odassl_files],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    else:
-        config.add_extension('assimulo.lib.dopri5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dopri5.pyf']
-                             ,extra_link_args=extra_link_flags[:])#include_dirs=[N.get_include()])
-        
-        config.add_extension('assimulo.lib.rodas',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'rodas_decsol.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-        
-        config.add_extension('assimulo.lib.radau5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.f','assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radau_decsol.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-    
-        config.add_extension('assimulo.lib.radar5',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'contr5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5_int.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dontr5.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'decsol.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'dc_decdel.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hairer'+O.sep+'radar5.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])#, extra_f90_compile_args=["-O2"])#, extra_f77_compile_args=['-O2']) # extra_compile_args=['--noopt'])
-        
-        #ODEPACK
-        config.add_extension('assimulo.lib.odepack',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkdmain.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda1.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'opkda2.f',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack_aux.f90',
-                                      'assimulo'+O.sep+'thirdparty'+O.sep+'hindmarsh'+O.sep+'odepack.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-        
-        #ODASSL
-        odassl_dir='assimulo'+O.sep+'thirdparty'+O.sep+'odassl'+O.sep
-        odassl_files=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
-                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
-        config.add_extension('assimulo.lib.odassl',
-                             sources=[odassl_dir+file for file in odassl_files],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-        
-    #DASP3
-    dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
-    if force_32bit:
-        dasp3_f77_compile_flags += flag_32bit
-    
-    if N.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
-        dasp3_dir='assimulo'+O.sep+'thirdparty'+O.sep+'dasp3'+O.sep
-        dasp3_files = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f',
-                       'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-        config.add_extension('assimulo.lib.dasp3dp',
-                              sources=[dasp3_dir+file for file in dasp3_files],
-                              include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-    else:
-        L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
-
-    
-    #GLIMDA
-    #ADD liblapack and libblas
-    lapack = False
-    blas = False
-    if LAPACKdir != "":
-        lapack = True
-        extra_link_flags += ["-L"+LAPACKdir, "-llapack"]
-    else: #Try to see if Lapack exists in PATH
-        name = ctypes.util.find_library("lapack")
-        if name != None:
-            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
-            lapack = True
-    if BLASdir != "":
-        blas = True
-        extra_link_flags += ["-L"+BLASdir, "-lblas"]
-    else: #Try to see if Blas exists in PATH
-        name = ctypes.util.find_library("blas")
-        if name != None:
-            extra_link_flags += ["-l"+name.split(O.path.sep)[-1].replace("lib","").split(".")[0]]
-            blas = True
-    
-    if lapack and blas:
-        if force_32bit:
-            config.add_extension('assimulo.lib.glimda',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:],extra_compile_args=extra_compile_flags[:], extra_f77_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+            L.debug("Note: the path required is to where the static library lib is found")
+            self.with_BLAS = False
         else:
-            config.add_extension('assimulo.lib.glimda',
-                             sources=['assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.f','assimulo'+O.sep+'thirdparty'+O.sep+'voigtmann'+O.sep+'glimda_complete.pyf'],
-                             include_dirs=[N.get_include()],extra_link_args=extra_link_flags[:])
-
-    else:
-        L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+            if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')):
+                L.warning("Could not find BLAS"+msg)
+                L.debug("Could not find BLAS at the given path {}.".format(self.BLASdir))
+                L.debug("usage: --blas-home=path")
+                self.with_BLAS = False
+            else:
+                L.debug("BLAS found at "+self.BLASdir)
+                self.with_BLAS = True
+        
+    def check_SuperLU(self):
+        """
+        Check if SuperLU package installed
+        """
+        self.with_SLU = self.with_BLAS
+        kinsol_msg='KINSOL will not be compiled with support for SuperLU'
+        
+        if not self.with_BLAS:
+            L.warning(kinsol_msg+' as BLAS is missing.')
+        elif self.SLUdir != "":    
+            self.SLUincdir = os.path.join(self.SLUdir,'SRC')
+            self.SLUlibdir = os.path.join(self.SLUdir,'lib')
+            if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
+                self.with_SLU = False
+                L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
+                L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
+                L.debug("usage: --superlu-home path")
+                L.debug(kinsol_msg+'.')
+            else:
+                L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
+        else:
+            L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
+            L.debug("No path to SuperLU supplied, KINSOL will not be compiled with support for SUperLU.")
+            L.debug("usage: --superlu-home=path")
+            L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
+            self.with_SLU = False
+            L.debug(kinsol_msg+'.')
     
+    def check_SUNDIALS(self):
+        """
+        Check if Sundials installed
+        """
+        if os.path.exists(os.path.join(os.path.join(self.incdirs,'cvodes'), 'cvodes.h')):
+            self.with_SUNDIALS=True
+            L.debug('SUNDIALS found.')
+            
+            if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
+                sundials_version = (2,6,0)
+                L.debug('SUNDIALS 2.6 found.')
+            else:
+                sundials_version = (2,5,0)
+                L.debug('SUNDIALS 2.5 found.')
+                
+            self.SUNDIALS_version = sundials_version
+            
+        else:    
+            L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
+                    "to see that it actually points to Sundials.").format(self.sundialsdir))
+            L.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
+            self.with_SUNDIALS=False
+            
+    def check_LAPACK(self):
+        """
+        Check if LAPACK installed
+        """
+        msg=", disabling support. View more information using --log=DEBUG"
+        self.with_LAPACK=False
+        if self.LAPACKdir != "":
+            if not os.path.exists(self.LAPACKdir):
+                L.warning('LAPACK directory {} not found'.format(self.LAPACKdir))
+            else:
+                L.debug("LAPACK found at "+self.LAPACKdir)
+                self.with_LAPACK = True
+        else:
+            """
+            name = ctypes.util.find_library("lapack")
+            if name != "":
+                L.debug('LAPACK found in standard library path as {}'.format(name))
+                self.with_LAPACK=True
+                self.LAPACKname = name
+            else:
+            """
+            L.warning("No path to LAPACK supplied" + msg)
+            L.debug("usage: --lapack-home=path")
+            L.debug("Note: the path required is to where the static library lib is found")
+            self.with_LAPACK = False
+            
+    def cython_extensionlists(self):
+        extra_link_flags = self.static_link_gcc + self.flag_32bit
+    
+        #Cythonize main modules
+        ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
+                             include_path=[".","assimulo"])
+         #Cythonize Solvers
+         # Euler
+        ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
+                             include_path=[".","assimulo"])
+        for el in ext_list:
+            el.include_dirs = [np.get_include()]
+            
+        # SUNDIALS
+        if self.with_SUNDIALS:
+            compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
+                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu}
+            #CVode and IDA
+            ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
+                                 include_path=[".","assimulo","assimulo" + os.sep + "lib"],
+                                 compile_time_env=compile_time_env)
+            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
+            ext_list[-1].library_dirs = [self.libdirs]
+            ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
+        
+            #Kinsol
+            ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
+                        include_path=[".","assimulo","assimulo"+os.sep+"lib"],
+                        compile_time_env=compile_time_env)
+            ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
+            ext_list[-1].library_dirs = [self.libdirs]
+            ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+    
+        
+        for el in ext_list:
+            #Debug
+            if self.debug_flag:
+                el.extra_compile_args = ["-g","-fno-strict-aliasing"]
+                el.extra_link_args = ["-g"]
+            else:
+                el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if self.platform == "mac":
+                el.extra_compile_args += ["-Wno-error=return-type"]
+            el.extra_compile_args += self.flag_32bit + self.extra_c_flags
+            
+        if self.with_SUNDIALS:
+            cordir_KINSOL_wSLU = os.path.join(self.assimulo_lib,'sundials_kinsol_core_wSLU.pyx')
+            cordir_KINSOL = os.path.join(self.assimulo_lib,'sundials_kinsol_core.pyx')
+        
+            cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo_lib,'kinsol_jmod_wSLU.c')
+            cordir_KINSOL_jmod = os.path.join(self.assimulo_lib,'kinsol_jmod.c')
+        
+            cordir_kinpinv = os.path.join(self.assimulo_lib,'kinpinv.c')
+            cordir_kinslug = os.path.join(self.assimulo_lib,'kinslug.c')
+            cordir_reg_routines = os.path.join(self.assimulo_lib,'reg_routines.c')
+            if self.with_SLU:
+                ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo",self.assimulo_lib])
+                ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
+                ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, self.incdirs]
+                ext_list[-1].library_dirs = [self.libdirs,self.SLUlibdir,self.BLASdir]
+                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",self.BLASname,'gfortran']
+            else:
+                ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo",self.assimulo_lib])
+                ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
+                ext_list[-1].include_dirs = [np.get_include(), self.incdirs]
+                ext_list[-1].library_dirs = [self.libdirs]
+                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+            if self.SUNDIALS_version > (2,5,0):
+                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
+            if self.debug_flag:
+                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
+            else:
+                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+            if self.platform == "mac":
+                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
+            ext_list[-1].extra_compile_args += self.flag_32bit + self.extra_c_flags
+            
+        for el in ext_list:
+            if self.is_python3:
+                el.cython_directives = {"language_level": 3} 
+            el.extra_link_args += extra_link_flags
+        return ext_list
 
-    return config.todict()["ext_modules"]
+    def fortran_extensionlists(self):
+        """
+        Adds the Fortran extensions using Numpy's distutils extension.
+        """
+        extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
+        extra_compile_flags = self.flag_32bit + self.extra_c_flags
+        
+        config = np.distutils.misc_util.Configuration()
+        extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
+                  
+        if np.version.version > "1.6.1": 
+            extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
+            extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
+    
+        #Hairer
+        sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
+        config.add_extension('assimulo.lib.dopri5', sources=[s.format('dopri5') for s in sources], **extraargs)
+        config.add_extension('assimulo.lib.rodas', sources=[s.format('rodas_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
+        config.add_extension('assimulo.lib.radau5', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
+                             
+        radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
+        config.add_extension('assimulo.lib.radar5', sources= src, include_dirs=[np.get_include()],**extraargs)
+        
+        #ODEPACK
+        odepack_list = ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90','odepack.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'odepack'+os.sep+code for code in odepack_list]
+        config.add_extension('assimulo.lib.odepack', sources= src, include_dirs=[np.get_include()],**extraargs)
+     
+        #ODASSL
+        odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
+                      'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'odassl'+os.sep+code for code in odassl_list]
+        config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
+    
+        dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
+        dasp3_f77_compile_flags += extra_compile_flags
+        
+        if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+            dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
+            config.add_extension('assimulo.lib.dasp3dp',
+                                  sources= src,
+                                  include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
+                                  extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+        else:
+            L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
 
-"""
-Pre-processing is necessary due to the setup of the repository. 
-"""
-if not O.path.isdir("assimulo"):
-    pre_processing()
-    O.chdir("build") #Change dir
+    
+        #GLIMDA
+        if self.with_BLAS and self.with_LAPACK:
+            lapack_blas = ""
+            if self.LAPACKdir != "": lapack_blas += "-L{} ".format(self.LAPACKdir)
+            #if self.LAPACKname != "": 
+            #    lapack_blas += "-L{} ".format(self.LAPACKname) 
+            #else: 
+            lapack_blas += "-llapack "
+            if self.BLASdir != "": lapack_blas += "-L{} ".format(self.BLASdir)
+            lapack_blas += "-lblas"
+            extra_link_flags += [lapack_blas]
+            glimda_list = ['glimda_complete.f','glimda_complete.pyf']
+            src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
+            if np.version.version > "1.6.1": 
+                extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
+            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
+            extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
+        else:
+            L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+        
+    
+        return config.todict()["ext_modules"]
+        
+
+prepare=Assimulo_prepare(args, thirdparty_methods)
+curr_dir=os.getcwd()
+if not os.path.isdir("assimulo"):
+    prepare.create_assimulo_dirs_and_populate()
+    os.chdir("build") #Change dir
     change_dir = True
 else:
     change_dir = False
-      
-ext_list = check_extensions()
+
+ext_list = prepare.cython_extensionlists()
 
 #MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
 #HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
@@ -611,11 +502,13 @@ for e in ext_list:
     e.extra_f77_compile_args = []
     e.extra_f90_compile_args = []
 
-ext_list += check_fortran_extensions()
+ext_list += prepare.fortran_extensionlists()
+
+# distutils part
 
 
 NAME = "Assimulo"
-AUTHOR = "C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
+AUTHOR = u"C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
 VERSION = "trunk"
 LICENSE = "LGPL"
@@ -657,20 +550,24 @@ together with a C-compiler and a FORTRAN-compiler.
 """
 
 
-version_txt = 'assimulo'+O.path.sep+'version.txt'
+version_txt = 'assimulo'+os.path.sep+'version.txt'
 #If a revision is found, always write it!
 if revision != "unknown" and revision!="":
     with open(version_txt, 'w') as f:
         f.write(VERSION+'\n')
         f.write("r"+revision)
 else:# If it does not, check if the file exists and if not, create the file!
-    if not O.path.isfile(version_txt):
+    if not os.path.isfile(version_txt):
         with open(version_txt, 'w') as f:
             f.write(VERSION+'\n')
             f.write("unknown")
 
-from numpy.distutils.core import setup
-setup(name=NAME,
+license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
+               for pck in  thirdparty_methods for place in ['thirdparty','lib']]
+L.debug(license_info)
+
+import numpy.distutils.core as ndc
+ndc.setup(name=NAME,
       version=VERSION,
       license=LICENSE,
       description=DESCRIPTION,
@@ -685,14 +582,11 @@ setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['version.txt',
-                                 'thirdparty'+O.sep+'hairer'+O.sep+'LICENSE_HAIRER','lib'+O.sep+'LICENSE_HAIRER',
-                                 'thirdparty'+O.sep+'voigtmann'+O.sep+'LICENSE_GLIMDA','lib'+O.sep+'LICENSE_GLIMDA',
-                                 'thirdparty'+O.sep+'hindmarsh'+O.sep+'LICENSE_ODEPACK','lib'+O.sep+'LICENSE_ODEPACK',
-                                 'thirdparty'+O.sep+'odassl'+O.sep+'LICENSE_ODASSL','lib'+O.sep+'LICENSE_ODASSL',
-                                 'thirdparty'+O.sep+'dasp3'+O.sep+'LICENSE_DASP3','lib'+O.sep+'LICENSE_DASP3',
-                                 'examples'+O.sep+'kinsol_ors_matrix.mtx','examples'+O.sep+'kinsol_ors_matrix.mtx']},
-      script_args=copy_args)
+      package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
+                                'examples'+os.sep+'kinsol_ors_matrix.mtx']},
+      script_args=prepare.distutil_args)
+
 
 if change_dir:
-    O.chdir("..") #Change back to dir
+    os.chdir(curr_dir) #Change back to original directory
+

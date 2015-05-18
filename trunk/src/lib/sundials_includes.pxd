@@ -215,7 +215,6 @@ cdef extern from "cvodes/cvodes_spgmr.h":
     
 IF SUNDIALS_VERSION >= (2,6,0):
     cdef extern from "cvodes/cvodes_sparse.h":
-        int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
         ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                   SlsMat Jac, void *user_data, N_Vector tmp1,
                                     N_Vector tmp2, N_Vector tmp3)
@@ -223,6 +222,11 @@ IF SUNDIALS_VERSION >= (2,6,0):
         int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
     #cdef inline char* version(): return "2.6.0"
     cdef inline tuple version(): return (2,6,0)
+    IF SUNDIALS_WITH_SUPERLU:
+        cdef extern from "cvodes/cvodes_sparse.h":
+            int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
+    ELSE:
+        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
 ELSE:
     cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
     ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
