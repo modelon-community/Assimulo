@@ -125,8 +125,8 @@ cdef class ODE:
         self.elapsed_step_time = -1.0
         self.clock_start = -1.0
         self.display_counter = 1
-        self.hysteresis_clear_counter = 0
-        self.hysteresis_ok_print = 1
+        self.chattering_clear_counter = 0
+        self.chattering_ok_print = 1
         
         #Add common statistics
         self.statistics.add_key("nsteps", "Number of steps")
@@ -556,15 +556,15 @@ cdef class ODE:
         else:
                 return self.atol
     
-    cpdef _hysteresis_check(self, object event_info):
-        self.hysteresis_clear_counter = 0
-        if event_info[0] is not None:
-            if self.hysteresis_check is None:
-                self.hysteresis_check  = abs(N.array(event_info[0]))
+    cpdef _chattering_check(self, object event_info):
+        self.chattering_clear_counter = 0
+        if event_info[0] is not None and event_info[0] != []:
+            if self.chattering_check is None:
+                self.chattering_check  = abs(N.array(event_info[0]))
             else:
-                self.hysteresis_check += abs(N.array(event_info[0]))
-                
-                if max(self.hysteresis_check) > 5 and self.hysteresis_ok_print:
-                    self.hysteresis_ok_print = 0
-                    self.log_message("Warning: Possible hysteresis detected at t = %e in state event(s): "%self.t + 
-                                     str(N.where(self.hysteresis_check == max(self.hysteresis_check))[0]), NORMAL)
+                self.chattering_check += abs(N.array(event_info[0]))
+
+                if max(self.chattering_check) > 5 and self.chattering_ok_print:
+                    self.chattering_ok_print = 0
+                    self.log_message("Warning: Possible chattering detected at t = %e in state event(s): "%self.t + 
+                                     str(N.where(self.chattering_check == max(self.chattering_check))[0]), NORMAL)
