@@ -231,7 +231,7 @@ cdef class Implicit_ODE(ODE):
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
                     if REPORT_CONTINUOUSLY:
-                        self._hysteresis_check(event_info)
+                        self._chattering_check(event_info)
 
                 #Log the information
                 if LOUD >= self.options["verbosity"]:
@@ -290,10 +290,10 @@ cdef class Implicit_ODE(ODE):
                 sys.stdout.write('\r')
                 sys.stdout.flush()
                 
-        self.hysteresis_clear_counter += 1
-        if self.hysteresis_clear_counter > 3:
-            self.hysteresis_check = None
-            self.hysteresis_ok_print = 1
+        self.chattering_clear_counter += 1
+        if self.chattering_clear_counter > 3:
+            self.chattering_check = None
+            self.chattering_ok_print = 1
         
         #Store data depending on situation 
         if opts["output_list"] is not None: 
