@@ -1,5 +1,15 @@
 --- CHANGELOG ---
 
+--- Assimulo-2.8 ---
+    * Added support for Sundials 2.6 (ticket:382)
+    * Added support for sparse Jacobians (together with Sundials) 
+      (ticket:383)
+    * Added warning about chattering (ticket:387)
+    * Added run-time status update (ticket:181)
+    * Added option to set max-conv failures (ticket:386)
+    * Removed warningen about comparison to None (ticket:381)
+    * Update requirement for Cython to 0.18 (ticket:384)
+
 --- Assimulo-2.7 ---
     * Added Python 3 support (ticket:296)
     * Fixed crash with atol as a matrix (ticket:351)
