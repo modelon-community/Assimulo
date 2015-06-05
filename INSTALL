@@ -8,8 +8,8 @@ INSTALL
 *REQUIREMENTS
 	- Python-2.6 / 2.7 (with headers)
 	- Numpy, Scipy, Pylab
-	- Sundials-2.4.0/2.5.0
-	- Cython >= 0.15
+	- Sundials-2.5.0/2.6.0
+	- Cython >= 0.18
     - C-compiler
     - Fortran-compiler
     - BLAS
