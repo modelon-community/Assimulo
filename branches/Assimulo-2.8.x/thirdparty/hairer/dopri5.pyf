@@ -1,0 +1,66 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module dopcor__user__routines 
+    interface dopcor_user_interface 
+        subroutine fcn(n,x,y,k1,rpar,ipar) ! in :dopri5:dopri5.f:dopcor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(n),depend(n),intent(out) :: k1
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine fcn
+        subroutine solout(e_naccpt_1_err,xold,x,y,n,cont,icomp,nrd,rpar,ipar,irtrn) ! in :dopri5:dopri5.f:dopcor:unknown_interface
+            double precision :: e_naccpt_1_err
+            double precision :: xold
+            double precision :: x
+            double precision dimension(n) :: y
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision dimension(5 * nrd) :: cont
+            integer dimension(nrd),depend(nrd) :: icomp
+            integer, optional,check((len(cont))/(5)>=nrd),depend(cont),intent(hide) :: nrd=(len(cont))/(5)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(in,out) :: irtrn
+        end subroutine solout
+    end interface dopcor_user_interface
+end python module dopcor__user__routines
+python module dopri5 ! in 
+    interface  ! in :dopri5
+        subroutine dopri5(n,fcn,x,y,xend,rtol,atol,itol,solout,iout,work,lwork,iwork,liwork,rpar,ipar,idid) ! in :dopri5:dopri5.f
+            use dopcor__user__routines
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            external fcn
+            double precision,intent(in,out) :: x
+            double precision dimension(n),intent(in,out) :: y
+            double precision :: xend
+            double precision dimension(n) :: rtol
+            double precision dimension(n) :: atol
+            integer :: itol
+            external solout
+            integer :: iout
+            double precision dimension(lwork) :: work
+            integer, optional,check(len(work)>=lwork),depend(work),intent(hide) :: lwork=len(work)
+            integer dimension(liwork),intent(in,out) :: iwork
+            integer, optional,check(len(iwork)>=liwork),depend(iwork),intent(hide) :: liwork=len(iwork)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(out) :: idid
+        end subroutine dopri5
+        function contd5(ii,x,con,icomp,nd) ! in :dopri5:dopri5.f
+            integer :: ii
+            double precision :: x
+            double precision dimension(5 * nd) :: con
+            integer dimension(nd),depend(nd) :: icomp
+            integer, optional,check((len(con))/(5)>=nd),depend(con),intent(hide) :: nd=(len(con))/(5)
+            double precision :: xold
+            double precision :: h
+            double precision :: contd5
+            common /condo5/ xold,h
+        end function contd5
+    end interface 
+end python module dopri5
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

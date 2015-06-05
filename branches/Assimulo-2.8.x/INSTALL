@@ -1,0 +1,27 @@
+========
+ASSIMULO
+========
+
+INSTALL
+=======
+
+*REQUIREMENTS
+	- Python-2.6 / 2.7 (with headers)
+	- Numpy, Scipy, Pylab
+	- Sundials-2.5.0/2.6.0
+	- Cython >= 0.18
+    - C-compiler
+    - Fortran-compiler
+    - BLAS
+    - LAPACK
+
+Installation is performed using the command:
+
+	'python setup.py install --sundials-home=/path/to/sundials --blas-home=/path/to/blas --lapack-home=/path/to/lapack'
+	
+Assimulo is then installed under Python dist-packages. 
+To test the installation, browse to the tests folder and do a 'nosetests'.
+(The testing needs additionally the python-nose package)
+
+For more information regarding Assimulo and the installation procedure, 
+please visit: http://www.jmodelica.org/assimulo
