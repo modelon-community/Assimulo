@@ -188,7 +188,7 @@ cdef class Explicit_ODE(ODE):
             flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
             
             #Store data if not done after each step
-            if REPORT_CONTINUOUSLY is False:
+            if REPORT_CONTINUOUSLY is False and len(tlist) > 0:
                 self.t, self.y = tlist[-1], ylist[-1].copy()
                 list(map(self.problem.handle_result,itertools.repeat(self,len(tlist)), tlist, ylist))
             

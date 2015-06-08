@@ -129,6 +129,10 @@ class Dopri5(Explicit_ODE):
                     pass
                 self._opts["output_index"] = output_index
                 
+                if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+                    self._tlist.append(t)
+                    self._ylist.append(y)
+                
         return irtrn
     
     def integrate(self, t, y, tf, opts):

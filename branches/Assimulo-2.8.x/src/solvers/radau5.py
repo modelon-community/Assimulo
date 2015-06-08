@@ -138,6 +138,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except IndexError:
                     pass
                 self._opts["output_index"] = output_index
+                
+                if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+                    self._tlist.append(t)
+                    self._ylist.append(y)
         
         return irtrn
             
@@ -866,6 +870,11 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 except IndexError:
                     pass
                 self._opts["output_index"] = output_index
+                
+                if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+                    self._tlist.append(t)
+                    self._ylist.append(y)
+                    self._ydlist.append(yd)
             
         return irtrn
         

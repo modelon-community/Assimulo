@@ -344,7 +344,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
             initialize_flag = self.report_solution(t, y, self._opts)
             if initialize_flag: irtrn = -1
         else:
-            if self._opts["output_list"] == None:
+            if self._opts["output_list"] is None:
                 self._tlist.append(t)
                 self._ylist.append(y.copy())
             else:
@@ -359,6 +359,10 @@ class RodasODE(Rodas_Common, Explicit_ODE):
                 except IndexError:
                     pass
                 self._opts["output_index"] = output_index
+                
+                if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+                    self._tlist.append(t)
+                    self._ylist.append(y)
         
         return irtrn
     
