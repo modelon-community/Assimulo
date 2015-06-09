@@ -347,7 +347,7 @@ class Assimulo_prepare(object):
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
-                                 compile_time_env=compile_time_env)
+                                 compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
@@ -355,7 +355,7 @@ class Assimulo_prepare(object):
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
-                        compile_time_env=compile_time_env)
+                        compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
