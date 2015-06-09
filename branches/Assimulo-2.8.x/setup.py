@@ -150,6 +150,8 @@ class Assimulo_prepare(object):
             self.incdirs = '/usr/local/include'
             self.libdirs = '/usr/local/lib'            
         
+        self.assimulo_lib = os.path.join('assimulo','lib')
+        
         # check packages
         self.check_BLAS()
         self.check_SuperLU()
@@ -172,9 +174,6 @@ class Assimulo_prepare(object):
         self.desTestsSolvers = os.path.join(self.desTests,"solvers")
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
-                                          
-        self.assimulo_lib = os.path.join('assimulo','lib')
-        
         # filelists
         
         self.fileSrc     = os.listdir("src")
