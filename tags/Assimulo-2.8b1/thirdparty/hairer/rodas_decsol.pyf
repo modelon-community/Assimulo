@@ -1,0 +1,103 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module roscor__user__routines 
+    interface roscor_user_interface 
+        subroutine solout(e_naccpt_1_err,xold,x,y,cont,lrc,n,rpar,ipar,irtrn) ! in :rodas:rodas_decsol.f:roscor:unknown_interface
+            double precision :: e_naccpt_1_err
+            double precision :: xold
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(4 * n),depend(n) :: cont
+            integer :: lrc
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(in,out) :: irtrn
+        end subroutine solout
+        subroutine fcn(n,x,y,dy1,rpar,ipar) ! in :rodas:rodas_decsol.f:roscor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(n),depend(n),intent(out) :: dy1
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine fcn
+        subroutine mas(n,am,lmas,rpar,ipar) ! in :rodas:rodas_decsol.f:roscor:unknown_interface
+            integer, optional,check(len(am)>=n),depend(am) :: n=shape(am,0)
+            double precision dimension(lmas,n),depend(lmas,n),intent(in,out) :: am
+            !double precision dimension(n),depend(n),intent(hide) :: lmas
+            integer, optional,intent(hide) :: lmas=1
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine mas
+        subroutine jac(n,x,y,fjac,ldjac,rpar,ipar) ! in :rodas:rodas_decsol.f:roscor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(ldjac,n),depend(n,ldjac),intent(out) :: fjac
+            integer, optional,check(len(y)==ldjac),depend(y),intent(hide) :: ldjac=len(y)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine jac
+        subroutine dfx(n,x,y,fx,rpar,ipar) ! in :rodas:rodas_decsol.f:roscor:unknown_interface
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            double precision :: x
+            double precision dimension(n) :: y
+            double precision dimension(n),depend(n) :: fx
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+        end subroutine dfx
+    end interface roscor_user_interface
+end python module roscor__user__routines
+
+python module rodas ! in 
+    interface  ! in :rodas
+        subroutine rodas(n,fcn,ifcn,x,y,xend,h,rtol,atol,itol,jac,ijac,mljac,mujac,dfx,idfx,mas,imas,mlmas,mumas,solout,iout,work,lwork,iwork,liwork,rpar,ipar,idid) ! in :rodas:rodas_decsol.f
+            use roscor__user__routines
+            integer, optional,check(len(y)>=n),depend(y),intent(hide) :: n=len(y)
+            external fcn
+            integer :: ifcn
+            double precision,intent(in,out) :: x
+            double precision dimension(n),intent(in,out) :: y
+            double precision :: xend
+            double precision,intent(in,out) :: h
+            double precision dimension(n) :: rtol
+            double precision dimension(n) :: atol
+            integer :: itol
+            external jac
+            integer :: ijac
+            integer :: mljac
+            integer :: mujac
+            external dfx
+            integer :: idfx
+            external mas
+            integer :: imas
+            integer :: mlmas
+            integer :: mumas
+            external solout
+            integer :: iout
+            double precision dimension(lwork) :: work
+            integer, optional,check(len(work)>=lwork),depend(work),intent(hide) :: lwork=len(work)
+            integer dimension(liwork),intent(in,out) :: iwork
+            integer, optional,check(len(iwork)>=liwork),depend(iwork),intent(hide) :: liwork=len(iwork)
+            double precision dimension(1),intent(hide) :: rpar
+            integer dimension(1),intent(hide) :: ipar
+            integer,intent(out) :: idid
+        end subroutine rodas
+        function contro(i,x,cont,lrc) ! in :rodas:rodas_decsol.f
+            integer :: i
+            double precision :: x
+            double precision dimension(lrc) :: cont
+            integer, optional,check(len(cont)>=lrc),depend(cont),intent(hide) :: lrc=len(cont)
+            double precision :: xold
+            double precision :: h
+            integer :: n
+            double precision :: contro
+            common /conros/ xold,h,n
+        end function contro
+    end interface 
+end python module rodas
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

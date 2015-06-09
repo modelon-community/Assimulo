@@ -1,0 +1,33 @@
+This zip-file contains the FORTRAN code ODASSL and all 
+related subroutines.
+ODASSL is an experimental code for solving overdetermined
+differential-algebraic equation as they occur in mechanical 
+multibody systems. (These systems become overdetermined
+when considering position constraints *and* velocity constraints
+*and* perhaps even accelaration constraints, see the example)
+
+ODASSL is written on the basis of DASSL (Linda Petzold, Minnesota, USA)
+The theoretical background of the extensions, the "O", can be found
+in Führer/Leimkuhler: Numerical Solution of differential-algebraic equations
+for constrained mechanical motion, Num.Math. 59, 55-69, 1991
+and in a less compressed form in the textbook:
+Eich-Soellner: Numerical Methods in Multibody Dynamics, Teubner 1998
+
+The calling sequence of ODASSL is described in the heading comments
+of ODASSL.F
+A demonstration example and a sample driver can be found in DEMO.F .
+
+I would like to emphasize that ODASSL is not a state-of-the-art
+production code. It was written as a demonstration code to verify
+a -at these days- new numerical approach. 
+
+In case of questions please contact:
+
+Claus Führer
+Numerical Analysis
+Centre for Methematical Sciences
+Lund University
+POB 117
+SE-22100 Lund
+
+e-mail: claus.fuhrer@na.lu.se
