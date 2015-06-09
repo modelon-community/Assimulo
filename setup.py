@@ -149,6 +149,16 @@ class Assimulo_prepare(object):
         else:
             self.incdirs = '/usr/local/include'
             self.libdirs = '/usr/local/lib'            
+        
+        self.assimulo_lib = os.path.join('assimulo','lib')
+        
+        # check packages
+        self.check_BLAS()
+        self.check_SuperLU()
+        self.check_SUNDIALS()
+        self.check_LAPACK()
+        
+    def _set_directories(self):
         # directory paths
         self.curdir = os.path.dirname(os.path.abspath(__file__))
         # build directories
@@ -164,9 +174,6 @@ class Assimulo_prepare(object):
         self.desTestsSolvers = os.path.join(self.desTests,"solvers")
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
-                                          
-        self.assimulo_lib = os.path.join('assimulo','lib')
-        
         # filelists
         
         self.fileSrc     = os.listdir("src")
@@ -179,13 +186,9 @@ class Assimulo_prepare(object):
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
         
-        # check packages
-        self.check_BLAS()
-        self.check_SuperLU()
-        self.check_SUNDIALS()
-        self.check_LAPACK()
-        
     def create_assimulo_dirs_and_populate(self):
+        self._set_directories()
+        
         for subdir in ["lib", "solvers", "examples"]:
             self.create_dir(os.path.join(self.build_assimulo,subdir))
         self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
@@ -347,7 +350,7 @@ class Assimulo_prepare(object):
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
-                                 compile_time_env=compile_time_env)
+                                 compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
@@ -355,7 +358,7 @@ class Assimulo_prepare(object):
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
-                        compile_time_env=compile_time_env)
+                        compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
@@ -510,7 +513,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
-VERSION = "trunk"
+VERSION = "2.8b1"
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
