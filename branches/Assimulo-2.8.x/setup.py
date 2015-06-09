@@ -531,12 +531,12 @@ differential algebraic equations (DAEs), f(t,y,yd). It combines a
 variety of different solvers written in C, FORTRAN and Python via a 
 common high-level interface.
 
-Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of 
+Assimulo supports Explicit Euler, adaptive Runge-Kutta of 
 order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
 (https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
 (for ODEs) and IDA (for DAEs). Ernst Hairer's 
 (http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
-Dopri5 are also available.
+Dopri5 are also available. For the full list, see the documentation.
 
 Documentation and installation instructions can be found at: 
 http://www.jmodelica.org/assimulo . 
@@ -545,7 +545,7 @@ For questions and comments, visit:
 http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.15, Sundials 2.4/2.5, BLAS and LAPACK 
+compiling from source, Cython 0.18, Sundials 2.5/2.6, BLAS and LAPACK 
 together with a C-compiler and a FORTRAN-compiler.
 """
 
