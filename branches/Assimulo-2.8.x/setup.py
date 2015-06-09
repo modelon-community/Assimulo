@@ -149,6 +149,14 @@ class Assimulo_prepare(object):
         else:
             self.incdirs = '/usr/local/include'
             self.libdirs = '/usr/local/lib'            
+        
+        # check packages
+        self.check_BLAS()
+        self.check_SuperLU()
+        self.check_SUNDIALS()
+        self.check_LAPACK()
+        
+    def _set_directories(self):
         # directory paths
         self.curdir = os.path.dirname(os.path.abspath(__file__))
         # build directories
@@ -179,13 +187,9 @@ class Assimulo_prepare(object):
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
         
-        # check packages
-        self.check_BLAS()
-        self.check_SuperLU()
-        self.check_SUNDIALS()
-        self.check_LAPACK()
-        
     def create_assimulo_dirs_and_populate(self):
+        self._set_directories()
+        
         for subdir in ["lib", "solvers", "examples"]:
             self.create_dir(os.path.join(self.build_assimulo,subdir))
         self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
