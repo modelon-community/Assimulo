@@ -2891,7 +2891,8 @@ class CVodeError(Exception):
             CV_BAD_K             : 'The derivative order k is larger than the order used.',
             CV_BAD_T             : 'The time t is outside the last step taken.',
             CV_BAD_DKY           : 'The output derivative vector is NULL.',
-            CV_TOO_CLOSE         : 'The output and initial times are too close to each other.'}
+            CV_TOO_CLOSE         : 'The output and initial times are too close to each other.',
+            CV_SRHSFUNC_FAIL     : 'The sensitivity right-hand side function failed unrecoverable.'}
     
     def __init__(self, value, t = 0.0):
         self.value = value

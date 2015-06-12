@@ -76,20 +76,23 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
     nv2mat_inplace(Ns, yvS, s)
     p = realtype2arr(pData.p,pData.dimSens)
     
-    #try:
-    if pData.sw != NULL:
-        sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p,<list>pData.sw)
-    else:
-        sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p)
-    
-    for i in range(Ns):
-        resptr=(<N_VectorContent_Serial>yvSdot[i].content).data
-        for j in range(pData.dim):
-            resptr[j] = sens_rhs[j,i]
-    
-    return CV_SUCCESS
-    #except:
-    #    return CV_REC_ERR
+    try:
+        if pData.sw != NULL:
+            sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p,<list>pData.sw)
+        else:
+            sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p)
+        
+        for i in range(Ns):
+            resptr=(<N_VectorContent_Serial>yvSdot[i].content).data
+            for j in range(pData.dim):
+                resptr[j] = sens_rhs[j,i]
+        
+        return CV_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+        return CV_REC_ERR
+    except:
+        traceback.print_exc()
+        return CV_UNREC_RHSFUNC_ERR 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
