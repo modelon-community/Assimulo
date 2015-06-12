@@ -61,6 +61,35 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
             return CV_SUCCESS
         except:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
+            
+cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
+                         N_Vector *yvS, N_Vector *yvSdot, void *problem_data, 
+                         N_Vector tmp1, N_Vector tmp2):
+    
+    cdef ProblemData pData = <ProblemData>problem_data
+    cdef N.ndarray y = pData.work_y
+    cdef N.ndarray s = pData.work_ys
+    cdef realtype* resptr
+    cdef int i, j
+    
+    nv2arr_inplace(yv, y)
+    nv2mat_inplace(Ns, yvS, s)
+    p = realtype2arr(pData.p,pData.dimSens)
+    
+    #try:
+    if pData.sw != NULL:
+        sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p,<list>pData.sw)
+    else:
+        sens_rhs = (<object>pData.RHS_SENS_ALL)(t,y,s,p)
+    
+    for i in range(Ns):
+        resptr=(<N_VectorContent_Serial>yvSdot[i].content).data
+        for j in range(pData.dim):
+            resptr[j] = sens_rhs[j,i]
+    
+    return CV_SUCCESS
+    #except:
+    #    return CV_REC_ERR
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -698,6 +727,7 @@ cdef int ida_err(int error_code, char *module, char *function, char *msg, void *
 cdef class ProblemData:
     cdef:
         void *RHS          #Should store the residual or the right-hand-side
+        void *RHS_SENS_ALL #Should store the sensitivty equation of all parameters
         void *ROOT         #Should store the root function
         void *JAC          #Should store the jacobian
         void *JACV         #Should store the jacobian times a vector
@@ -719,10 +749,12 @@ cdef class ProblemData:
         object PREC_DATA   #Arbitrary data from the preconditioner
         N.ndarray work_y
         N.ndarray work_yd
+        N.ndarray work_ys
         
     cdef create_work_arrays(self):
         self.work_y = N.empty(self.dim)
         self.work_yd = N.empty(self.dim)
+        self.work_ys = N.empty((self.dim, self.dimSens))
         
 
 cdef class ProblemDataEquationSolver:
@@ -769,6 +801,13 @@ cdef inline void nv2arr_inplace(N_Vector v, N.ndarray o):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
     memcpy(o.data, v_data, n*sizeof(realtype))
+    
+cdef inline void nv2mat_inplace(int Ns, N_Vector *v, N.ndarray o):
+    cdef long int i,j, Nf
+    for i in range(Ns):
+        Nf = (<N_VectorContent_Serial>v[i].content).length
+        for j in range(Nf):
+            o[j,i] = (<N_VectorContent_Serial>v[i].content).data[j]
 
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
