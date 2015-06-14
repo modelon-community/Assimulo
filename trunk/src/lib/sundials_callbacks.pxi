@@ -88,7 +88,7 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
                 resptr[j] = sens_rhs[j,i]
         
         return CV_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return CV_REC_ERR
     except:
         traceback.print_exc()
@@ -117,34 +117,38 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
         int *rowvals;
         int *colptrs;
     """
-    if pData.dimSens>0: #Sensitivity activated
-        raise Exception("Not Suppported!")
-    else:
-        try:
+    try:
+        if pData.dimSens > 0: #Sensitivity activated
+            p = realtype2arr(pData.p,pData.dimSens)
+            if pData.sw != NULL:
+                jac=(<object>pData.JAC)(t,y,p=p,sw=<list>pData.sw)
+            else:
+                jac=(<object>pData.JAC)(t,y,p=p)
+        else:
             if pData.sw != NULL:
                 jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
             else:
                 jac=(<object>pData.JAC)(t,y)
-                
-            if not isinstance(jac, sparse.csc.csc_matrix):
-                jac = sparse.csc.csc_matrix(jac)
-                raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
-            ret_nnz = jac.nnz
-            if ret_nnz> nnz:
-                raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
-                
-            for i in range(min(ret_nnz,nnz)):
-                data[i]    = jac.data[i]
-                rowvals[i] = jac.indices[i]
-            for i in range(dim+1):
-                colptrs[i] = jac.indptr[i]
             
-            return CVDLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
-            return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-        except:
-            traceback.print_exc()
-            return CVDLS_JACFUNC_UNRECVR
+        if not isinstance(jac, sparse.csc.csc_matrix):
+            jac = sparse.csc.csc_matrix(jac)
+            raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
+        ret_nnz = jac.nnz
+        if ret_nnz> nnz:
+            raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
+            
+        for i in range(min(ret_nnz,nnz)):
+            data[i]    = jac.data[i]
+            rowvals[i] = jac.indices[i]
+        for i in range(dim+1):
+            colptrs[i] = jac.indptr[i]
+        
+        return CVDLS_SUCCESS
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+    except:
+        traceback.print_exc()
+        return CVDLS_JACFUNC_UNRECVR
 
 cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
@@ -173,7 +177,7 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
                     col_i[j] = jac[j,i]
 
             return CVDLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except:
             traceback.print_exc()
@@ -191,7 +195,7 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
                     col_i[j] = jac[j,i]
 
             return CVDLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except:
             traceback.print_exc()
@@ -223,7 +227,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except:
             traceback.print_exc()
@@ -239,7 +243,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except:
             traceback.print_exc()
@@ -372,7 +376,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
 
             return IDA_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             traceback.print_exc()
@@ -390,7 +394,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
             
             return IDA_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except:
             traceback.print_exc()
@@ -424,7 +428,7 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
                 for j in range(Neq):
                     col_i[j] = jac[j,i]
             return IDADLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDADLS_JACFUNC_RECVR #Recoverable Error
         except:
             traceback.print_exc()
@@ -441,7 +445,7 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
                 for j in range(Neq):
                     col_i[j] = jac[j,i]
             return IDADLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDADLS_JACFUNC_RECVR #Recoverable Error
         except:
             traceback.print_exc()
@@ -502,7 +506,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except:
             traceback.print_exc()
@@ -518,7 +522,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError):
+        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except:
             traceback.print_exc()
@@ -564,7 +568,7 @@ cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
             jacvptr[i] = jacv[i]
         
         return SPGMR_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return SPGMR_ATIMES_FAIL_REC
     except:
         traceback.print_exc()
@@ -586,7 +590,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
             resptr[i] = res[i]
 
         return KIN_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except:
         traceback.print_exc()
@@ -611,7 +615,7 @@ cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval,
     
     try:
         zres = (<object>pData.PREC_SOLVE)(r)
-    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except:
         traceback.print_exc()
@@ -636,7 +640,7 @@ cdef int kin_prec_setup(N_Vector uN, N_Vector uscaleN, N_Vector fvalN,
     
     try:
         (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
-    except(N.linalg.LinAlgError,ZeroDivisionError, AssimuloRecoverableError):
+    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except:
         traceback.print_exc()
