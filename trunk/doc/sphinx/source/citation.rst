@@ -10,15 +10,15 @@ If you wish to cite Assimulo in a publication, please use the following publicat
 
 Here is an BibTeX example::
     
-    @article{Andersson2015,
-        title = "Assimulo: A unified framework for \{ODE\} solvers ",
-        journal = "Mathematics and Computers in Simulation",
-        volume = "116",
-        number = "0",
-        pages = "26 - 43",
-        year = "2015",
-        note = "",
-        issn = "0378-4754",
-        doi = "http://dx.doi.org/10.1016/j.matcom.2015.04.007",
-        author       = {Andersson, Christian and F\"u hrer, Claus and \AA kesson, Johan},
-    }
+    @Article{Andersson2015,
+          Title   = {Assimulo: A unified framework for \{ODE\} solvers },
+          Author  = {Andersson, Christian and F\"uhrer, Claus and {\AA}kesson, Johan},
+          Journal = {Mathematics and Computers in Simulation},
+          Year    = {2015},
+          Number  = {0},
+          Pages   = {26 - 43},
+          Volume  = {116},
+
+          Doi     = {http://dx.doi.org/10.1016/j.matcom.2015.04.007},
+          ISSN    = {0378-4754}
+        }
