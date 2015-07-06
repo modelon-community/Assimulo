@@ -1,0 +1,108 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module glimda__user__routines 
+    interface glimda_user_interface 
+        subroutine fevl(m,n,qprime,xin,t,fzxt,rpar,ipar,ierr) ! in :glimda_complete:glimda_complete.f:glimda:unknown_interface
+            integer, optional,check(len(xin)>=m),depend(xin) :: m=len(xin)
+            integer, optional,check(len(qprime)>=n),depend(qprime) :: n=len(qprime)
+            real*8 dimension(n) :: qprime
+            real*8 dimension(m) :: xin
+            real*8 :: t
+            real*8 dimension(m),depend(m),intent(out) :: fzxt
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer :: ierr
+        end subroutine fevl
+        subroutine qevl(m,n,xin,t,q,rpar,ipar,ierr) ! in :glimda_complete:glimda_complete.f:glimda:unknown_interface
+            integer, optional,check(len(xin)>=m),depend(xin) :: m=len(xin)
+            integer, optional,check(len(q)>=n),depend(q) :: n=len(q)
+            real*8 dimension(m) :: xin
+            real*8 :: t
+            real*8 dimension(n),intent(out) :: q
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer :: ierr
+        end subroutine qevl
+        subroutine dqxevl(m,n,x,t,mat_d,rpar,ipar,ierr) ! in :glimda_complete:glimda_complete.f:get_d:unknown_interface
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer, optional,check(shape(mat_d,0)==n),depend(mat_d) :: n=shape(mat_d,0)
+            real*8 dimension(m) :: x
+            real*8 :: t
+            real*8 dimension(n,m),depend(m) :: mat_d
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer :: ierr
+        end subroutine dqxevl
+        subroutine dfyevl(m,n,z,x,t,mat_a,rpar,ipar,ierr) ! in :glimda_complete:glimda_complete.f:get_a:unknown_interface
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer, optional,check(len(z)>=n),depend(z) :: n=len(z)
+            real*8 dimension(n) :: z
+            real*8 dimension(m) :: x
+            real*8 :: t
+            real*8 dimension(m,n),depend(m,n) :: mat_a
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer :: ierr
+        end subroutine dfyevl
+        subroutine dfxevl(m,n,z,x,t,jac,rpar,ipar,ierr) ! in :glimda_complete:glimda_complete.f:get_j:unknown_interface
+            integer, optional,check(len(x)>=m),depend(x) :: m=len(x)
+            integer, optional,check(len(z)>=n),depend(z) :: n=len(z)
+            real*8 dimension(n) :: z
+            real*8 dimension(m) :: x
+            real*8 :: t
+            real*8 dimension(m,m),depend(m,m) :: jac
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer dimension(1),intent(in,hide) :: ipar
+            integer :: ierr
+        end subroutine dfxevl
+        subroutine solout(f_sol,tph,h,p,y,m,yd,n) ! in :glimda_complete:glimda_complete.f:get_j:unknown_interface
+            integer :: f_sol
+            real*8 :: tph
+            real*8 :: h
+            integer :: p
+            real*8 dimension(m) :: y
+            integer, optional,check(len(y)>=m),depend(y) :: m=len(y)
+            real*8 dimension(n) :: yd
+            integer, optional,check(len(yd)>=n),depend(yd) :: n=len(yd)
+        end subroutine solout
+    end interface glimda_user_interface
+end python module glimda__user__routines
+
+python module glimda ! in 
+    interface  ! in :glimda
+        subroutine glimda(m,n,fevl,qevl,dfyevl,dfxevl,dqxevl,t0,tend,xin,qprime,h0,atolx,rtolx,tolvec,num_a,num_d,num_b,ode,adcnst,icount,iopt,ropt,ipar,rpar,ierr,solout) ! in :glimda:glimda_complete.f
+            use glimda__user__routines
+            integer, optional,check(len(xin)>=m),depend(xin) :: m=len(xin)
+            integer, optional,check(len(qprime)>=n),depend(qprime) :: n=len(qprime)
+            external fevl
+            external qevl
+            external dfyevl
+            external dfxevl
+            external dqxevl
+            real*8 :: t0
+            real*8 :: tend
+            real*8 dimension(m),intent(in,out) :: xin
+            real*8 dimension(n),intent(in,out) :: qprime
+            real*8 :: h0
+            real*8 dimension(m),depend(m) :: atolx
+            real*8 dimension(m),depend(m) :: rtolx
+            logical :: tolvec
+            logical :: num_a
+            logical :: num_d
+            logical :: num_b
+            logical :: ode
+            logical :: adcnst
+            integer dimension(6),intent(out) :: icount
+            integer dimension(9) :: iopt
+            real*8 dimension(11) :: ropt
+            integer dimension(1),intent(in,hide) :: ipar
+            real*8 dimension(1),intent(in,hide) :: rpar
+            integer,intent(out) :: ierr
+            external solout
+        end subroutine glimda
+    end interface 
+end python module glimda 
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
