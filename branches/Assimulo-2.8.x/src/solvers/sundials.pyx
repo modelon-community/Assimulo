@@ -1591,8 +1591,8 @@ cdef class CVode(Explicit_ODE):
             self.pData.PREC_DATA = None
             
         if self.problem_info["sens_fcn"] is True: #Sets the sensitivity function
-            self.pt_sens = self.problem.sens
-            self.pData.SENS = <void*>self.pt_sens#<void*>self.problem.sens
+            self.pt_sens = self.problem.rhs_sens
+            self.pData.RHS_SENS_ALL = <void*>self.pt_sens#<void*>self.problem.sens
            
         if self.problem_info["dimSens"] > 0: #Sensitivity parameters (does not need the sensitivity function)
             self.pData.dimSens = self.problem_info["dimSens"]    
@@ -1652,9 +1652,17 @@ cdef class CVode(Explicit_ODE):
             if flag < 0:
                 raise CVodeError(flag, self.t)
                 
+            #Set the user data
+            flag = SUNDIALS.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
+            if flag < 0:
+                raise CVodeError(flag, self.t)
+                
             #Sensitivity
             if self.pData.dimSens > 0:
-                flag = SUNDIALS.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
+                if self.problem_info["sens_fcn"]:
+                    flag = SUNDIALS.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, cv_sens_rhs_all, self.ySO)
+                else:
+                    flag = SUNDIALS.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
             
@@ -1670,11 +1678,10 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag, self.t)
             
-            
-        #Set the user data
-        flag = SUNDIALS.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
-        if flag < 0:
-            raise CVodeError(flag, self.t)
+            #Set the user data
+            flag = SUNDIALS.CVodeSetUserData(self.cvode_mem, <void*>self.pData)
+            if flag < 0:
+                raise CVodeError(flag, self.t)
             
     def initialize_event_detection(self):
         def event_func(t, y):
@@ -2884,7 +2891,8 @@ class CVodeError(Exception):
             CV_BAD_K             : 'The derivative order k is larger than the order used.',
             CV_BAD_T             : 'The time t is outside the last step taken.',
             CV_BAD_DKY           : 'The output derivative vector is NULL.',
-            CV_TOO_CLOSE         : 'The output and initial times are too close to each other.'}
+            CV_TOO_CLOSE         : 'The output and initial times are too close to each other.',
+            CV_SRHSFUNC_FAIL     : 'The sensitivity right-hand side function failed unrecoverable.'}
     
     def __init__(self, value, t = 0.0):
         self.value = value
