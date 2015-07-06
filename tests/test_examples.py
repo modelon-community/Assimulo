@@ -77,6 +77,10 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_cvode_with_parameters(self):
         cvode_with_parameters.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
+    def test_cvode_with_parameters_fcn(self):
+        cvode_with_parameters_fcn.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_cvode_with_parameters_modified(self):

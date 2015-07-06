@@ -114,6 +114,8 @@ cdef class ODE:
             self.problem_info["prec_solve"] = True
         if hasattr(problem, "prec_setup"):
             self.problem_info["prec_setup"] = True
+        if hasattr(problem, "rhs_sens"):
+            self.problem_info["sens_fcn"] = True
             
         #Reset solution variables
         self._reset_solution_variables()
