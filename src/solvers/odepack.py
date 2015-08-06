@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-
+import scipy.linalg as Sc
 from assimulo.exception import *
 from assimulo.ode import *
 
@@ -132,6 +132,52 @@ class LSODAR(Explicit_ODE):
         elif iflag==-2:
             dky=self.y.copy()
         return dky
+     
+    def autostart(self,t,y,sw0=[]):
+        """
+        autostart determines the initial stepsize for Runge--Kutta solvers 
+        """
+        RWORK=self._RWORK.copy()
+        IWORK=self._IWORK.copy()
+        pr=self.rkstarter+1 
+        tol=self.options["atol"]  
+        tolscale=tol[0]**(1./pr)
+        normscale=1.
+        f=self.problem.rhs
+        
+        t0=t
+        tf=RWORK[0]
+        T=abs(tf-t0)
+        direction=N.sign(tf-t0)
+        
+        #Perturb initial condition and compute rough Lipschitz constant
+        cent=Sc.norm(y)/normscale/100.
+        v0=y+cent*N.random.rand(len(y),1)
+        u0prime=f(t,y,sw0)
+        v0prime=f(t,v0,sw0)
+        Lip=Sc.norm(u0prime-v0prime)/Sc.norm(y-v0)
+        h=direction*min(1e-3*T,max(1e-8*T,0.05/Lip))
+        #step 1: fwd Euler step
+        u1=y+h*u0prime
+        t1=t+h
+        #step 2: fwd Euler step in reverse
+        u1prime=f(t1,u1,sw0)
+        u0comp=u1-h*u1prime
+        #step 3: estimate of local error
+        du=u0comp-y
+        dunorm=Sc.norm(du)
+        errnorm=dunorm/normscale
+        #step 4: new estimate of Lipschitz constant
+        u0comprime=f(t0,u0comp,sw0)
+        L=Sc.norm(u0comprime-u0prime)/dunorm
+        M=N.dot(du,u0comprime-u0prime)/dunorm**2
+        #step 5: construct a refined starting stepsize
+        theta1=tolscale/N.sqrt(errnorm)
+        theta2=tolscale/abs(h*(L+M/2))
+        h=h*(theta1+theta2)/2
+        h=direction*min(3e-3*T,abs(h))
+        return h
+        
         
     def integrate_start(self, t, y):
         """
@@ -155,9 +201,12 @@ class LSODAR(Explicit_ODE):
             # a) get previous stepsize if any
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
             #H = hu if hu != 0. else 1.e-4  # this needs some reflections 
-            H = 1e-1 #if hu != 0. else 1.e-4
+            #H =(abs(RWORK[0]-t)*((self.options["rtol"])**(1/(self.rkstarter+1))))/(100*Sc.norm(self.problem.rhs(t,y,self.sw))+10)#if hu != 0. else 1.e-4
+            #H=1e-2
+            H=self.autostart(t,y)
+            H=3*H
             # b) compute the Nordsieck array and put it into RWORK
-            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H*self.rkstarter,number_of_steps=self.rkstarter)
+            rkNordsieck = RKStarterNordsieck(self.problem.rhs,H,number_of_steps=self.rkstarter)
             t,nordsieck = rkNordsieck(t,y,self.sw)
             nordsieck=nordsieck.T
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
@@ -197,11 +246,11 @@ class LSODAR(Explicit_ODE):
             #RWORK[6]=dls001.hmin
             #RWORK[5]=dls001.hmxi
             
-            number_of_fevals=N.array([1,2,4,6,11])
+            number_of_fevals=N.array([1,2,4,7,11])
             # d) Reset statistics
             IWORK[9:13]=[0]*4
             dls001.nst=1
-            dls001.nfe=number_of_fevals[self.rkstarter]   # from the starter
+            dls001.nfe=number_of_fevals[self.rkstarter-1]   # from the starter
             dls001.nje=0
             dlsr01.nge=0
             # set common block
@@ -574,6 +623,7 @@ class LSODAR(Explicit_ODE):
         self.options["rkstarter"] = rkstarter
     
     rkstarter = property(_get_rkstarter, _set_rkstarter)
+
 class RKStarterNordsieck(object):
     """
     A family of Runge-Kutta starters producing a 
@@ -598,7 +648,54 @@ class RKStarterNordsieck(object):
                       [0.,0.,1./2.,-4./9.,1./9.],
                       [0.,0.,7./3.,-19./9.,7./9.],
                       [0.,0.,-3.,10./3.,-4./3.],
-                      [0.,0.,1.,-11./9.,5./9.]])]  
+                      [0.,0.,1.,-11./9.,5./9.]]),
+             N.array([[0.,0.,0.,0.,0.,0.,0.,0.],
+                      [1./6.,0.,0.,0.,0.,0.,0.,0.],
+                      [0.,1./6.,0.,0.,0.,0.,0.,0.],
+                      [0.,0.,1./3.,0.,0.,0.,0.,0.],
+                      [1./18.,1./9.,1./9.,1./18.,0.,0.,0.,0.],
+                      [2.5,-3.,-3.,2.25,2.25,0.,0.,0.],
+                      [10./45.,-8./45.,-8./45.,-4./45.,13./15.,1./45.,0.,0.],
+                      [29./1062.,83./531.,83./531.,83./1062.,2./531.,56./531.,251./531.,0.]]),
+             N.array([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [1./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [3./160,9./160,0.,0.,0.,0.,0., 0.,0.,0.,0.,0.,0.,0.],
+                      [3./40,-9./40,6./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [-11./216,5/8,-70/108,35./108,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [1631/221184,175./2048,575./55296,44275./442368,253./16384,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [37./1512,0.,250/2484,125./2376,0.,512/7084,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [32.2687682,-39.4956646,-20.7849921,22.2296308,45.4543383,51.9961815,-91.1682621,0.,0.,0.,0.,0.,0.,0.],
+                      [-23.867154567764317,41+31195543/31462660,8+6080897/76520184,-23-7543649/15003372,-63-91662407/130833420,-55-27823937/32947321,117+23615874/27978401,0.,0.,0.,0.,0.,0.,0.],
+                      [-0.5118403967750724,0.,2+379808/6250467,-2-866339/6430593,-1-151963/7810968,-18723895/33225736,8/3,0.,303385/143008499,0.,0.,0.,0.,0.],
+                      [-118.50992840087292,4+1586290/42052551,7+76050433/143964928,11+61385198/111742353,16+54354964/63299173,15+84679766/214253769,15+71618817/71932238,24+14108046/149713813,
+                       2+12784603/81260661,21+38484710/59808171,0.,0.,0.,0.],
+                      [10.183365237189525,0.,-36-34947657/185923229,38+50251318/55929787,18+114017528/325586295,10+78529445/98887874,-43.5,0.,-6714159/175827524,2.25,0.,0.,0.,0.],
+                      [-0.1491588850008383,0.,19145766/113939551,8434687/36458574,2012005/39716421,8409989/57254530,10739409/94504714,0.,-3321/86525909,-30352753/150092385,0.,70257074/109630355,
+                       0.,0.],
+                      [0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
+                       38892959/120069679,11804845./141497517   , 0.00000000e+00]])]        
+    C=[N.array([0.]),
+       N.array([0.]),
+       N.array([0.]),
+       N.array([0.]),
+       N.array([0.,1./6,1./6,1./3,1./3,1.,1.,2./3,1.]),
+       N.array([0.,1./20,3./40,3./20,1./4,7./28,1./4,2./4,1.,2./4,3./4,3./4,1.,1.])]      # C-values in Butcher tableau of 8-stages Runge-Kutta
+
+    #A=N.array([[1.,0.,0.,0.],
+    #          [1.,1./9.,1./27,1./81.],
+    #           [1.,4./9.,8./27,16./81.],
+    #           [1.,1.,1.,1.]]) 
+    A=[N.array([0.]),
+       N.array([0.]),
+       N.array([0.]),
+       N.array([0.]),
+       N.array([[1./9,1./27,1./81.],
+                [4./9.,8./27,16./81],
+                [1.,1.,1.]]),
+       N.array([[1./16,1./64,1./256,1./1024],
+                [1./4,1./8,1./16,1./32],
+                [9./16,27./64,81./256,243./1024],
+                [1.,1.,1.,1.]])]
                       
     scale=N.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
     
@@ -629,13 +726,13 @@ class RKStarterNordsieck(object):
         self.f = rhs
         self.H = H
         
-        if not 1 < number_of_steps < 5:
+        if not 1 < number_of_steps < 6:
             raise RKStarter_Exception('Step number larget than 4 not yet implemented')            
         self.number_of_steps = number_of_steps 
         self.eval_at = float(eval_at)
         if not self.eval_at == 0.:
            raise RKStarter_Exception("Parameter eval_at different from 0 not yet implemented.")                    
-    def rk_like4(self, t0, y0, sw0): 
+    def rk_like14(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
         Note, the currently implementation is **only** correct for
@@ -650,7 +747,7 @@ class RKStarterNordsieck(object):
         k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
         k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
         return N.array([y0,k1,k2,k3,k4,k5,k6])
-    def rk_like3(self, t0, y0, sw0): 
+    def rk_like13(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
         Note, the currently implementation is **only** correct for
@@ -664,22 +761,69 @@ class RKStarterNordsieck(object):
         k3 = h*f(y0 + k1+ k2)
         k4 = h*f(y0 + 3./2. * k1)
         return N.array([y0,k1,k2,k3,k4])
-    def rk_like2(self, t0, y0, sw0):
+    def rk_like12(self, t0, y0, sw0):
         """
         rk_like2 computes Runge-Kutta 2nd-stages
         Note, the currently implementation is **only** correct for
         autonomous systems.
         """
         f=lambda y: self.f(t0, y, sw0)
-        h=self.H/2
+        h=self.H/2.
         k1=h*f(y0)
         k2=h*f(y0+k1)
-        return N.array([y0,k1,k2])        
+        return N.array([y0,k1,k2]) 
+    def rk_like4(self, t0, y0, sw0):
+        """
+        rk_like6 computes Runge-Kutta 4th-stages 
+        """
+        h = self.H
+        self.Gamma_2=self.Gamma_0[4]
+        f=lambda y: self.f(t0 , y , sw0)
+        K=N.zeros((8,len(y0)))
+        sol=N.zeros((4,len(y0)))
+        b=N.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = N.zeros((5,len(y0)))     #Nordsieck vector
+        for i in range(7):
+            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+        c=0
+        for i in range(4):
+            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+4,:],K)
+            if i!=1:
+                b[c,:]=sol[i,:]-y0-(c+1)*h/3*K[0,:]
+                c+=1
+        nord[0,:] = y0
+        nord[1,:] = h*K[0,:]
+        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        return nord       
+    def rk_like5(self, t0, y0, sw0):
+        """
+        rk_like6 computes Runge-Kutta 5th-stages ****needs to be modified****
+        """
+        h = self.H
+        self.Gamma_2=self.Gamma_0[4]
+        f=lambda y: self.f(t0 , y , sw0)
+        K=N.zeros((8,len(y0)))
+        sol=N.zeros((4,len(y0)))
+        b=N.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = N.zeros((5,len(y0)))     #Nordsieck vector
+        for i in range(7):
+            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+        c=0
+        for i in range(4):
+            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+4,:],K)
+            if i!=1:
+                b[c,:]=sol[i,:]-y0-(c+1)*h/3*K[0,:]
+                c+=1
+        nord[0,:] = y0
+        nord[1,:] = h*K[0,:]
+        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        return nord     
     def nordsieck(self,k):
         """
         Nordsieck array computed at initial point
         """
         nord=self.scale[:self.number_of_steps+1]*N.dot(self.Gamma_0[self.number_of_steps-1].T,k)
+ 
         return nord  
     def __call__(self, t0 , y0, sw0=[]):
         """
@@ -693,4 +837,5 @@ class RKStarterNordsieck(object):
         # We construct a call like: rk_like4(self, t0, y0, sw0) 
         k=self.__getattribute__('rk_like{}'.format(self.number_of_steps))(t0, y0, sw0)
         t = t0+self.eval_at*self.H
-        return t, self.nordsieck(k)
+        #t= t0 + self.H
+        return t, k#self.nordsieck(k)
