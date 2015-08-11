@@ -44,6 +44,8 @@ parser.add_argument("--no-msvcr", type='bool', help="set to true if present",def
 parser.add_argument("--log",choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),default='NOTSET')
 parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
+parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags (a list enclosed in " ")', default='')
+parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
                                        
 args = parser.parse_known_args()
 
@@ -122,6 +124,8 @@ class Assimulo_prepare(object):
         self.flag_32bit = ["-m32"] if self.force_32bit else [] 
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
+        self.extra_fortran_link_flags = args[0].extra_fortran_link_flags.split()
+        self.extra_fortran_link_files = args[0].extra_fortran_link_files.split()
         self.thirdparty_methods  = thirdparty_methods
         
 
@@ -223,6 +227,14 @@ class Assimulo_prepare(object):
                     os.remove(dirDel)
                 except:
                     L.debug("Could not remove: "+str(dirDel))
+        
+        if self.extra_fortran_link_files:
+            for extra_fortran_lib in self.extra_fortran_link_files:
+                path_extra_fortran_lib = ctypes.util.find_library(extra_fortran_lib)
+                if path_extra_fortran_lib != None:
+                    SH.copy2(path_extra_fortran_lib,self.desSrc)
+                else:
+                    L.debug("Could not find Fortran link file: "+str(extra_fortran_lib))
     
     def check_BLAS(self):
         """
@@ -417,7 +429,7 @@ class Assimulo_prepare(object):
         """
         Adds the Fortran extensions using Numpy's distutils extension.
         """
-        extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit
+        extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit + self.extra_fortran_link_flags
         extra_compile_flags = self.flag_32bit + self.extra_c_flags
         
         config = np.distutils.misc_util.Configuration()
@@ -586,7 +598,7 @@ ndc.setup(name=NAME,
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
       package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
-                                'examples'+os.sep+'kinsol_ors_matrix.mtx']},
+                                'examples'+os.sep+'kinsol_ors_matrix.mtx'] + (['lib'+os.sep+f for f in prepare.extra_fortran_link_files] if prepare.extra_fortran_link_files else [])},
       script_args=prepare.distutil_args)
 
 
