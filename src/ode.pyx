@@ -208,7 +208,7 @@ cdef class ODE:
             raise AssimuloException('Final time must be an integer or float.')
             
         if (self.t > tfinal) and not self.options["backward"]:
-            raise AssimuloException('Final time {} must be greater than start time {}.\n Perhaps you should consider to reset the integration.'.format(tfinal,self.t))
+            raise AssimuloException('Final time {} must be greater than start time {}.\n Perhaps you should consider to reset the integration. If the intention is to integrate backwards, please use the backwards option.'.format(tfinal,self.t))
         
         if not isinstance(ncp, int):
             raise AssimuloException('Number of communication points must be an integer')
@@ -249,9 +249,15 @@ cdef class ODE:
             output_list = N.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list is not None:
-            output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)>t0,N.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
-            if output_list[-1] < tfinal: #Add the last point if necessary!
-                output_list = N.append(output_list, tfinal)
+            if self.options["backward"]:
+                output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)<t0,N.array(ncp_list, dtype=realtype, ndmin=1)>=tfinal)]
+                output_list = -N.sort(-output_list)
+                if output_list[-1] > tfinal: #Add the last point if necessary!
+                    output_list = N.append(output_list, tfinal)
+            else:
+                output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)>t0,N.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
+                if output_list[-1] < tfinal: #Add the last point if necessary!
+                    output_list = N.append(output_list, tfinal)
             output_index = 0
         else:
             output_list = None

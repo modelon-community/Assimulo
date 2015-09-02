@@ -21,6 +21,7 @@ from assimulo.solvers.sundials import *
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
+import numpy as np
 
 class Test_CVode:
     
@@ -34,7 +35,28 @@ class Test_CVode:
         self.problem = Explicit_Problem(f,y0)
         self.simulator = CVode(self.problem)
         self.simulator.verbosity = 0
+    
+    @testattr(stddist = True)
+    def test_backward_integration(self):
+        def f(t, y):
+            x, v = y
+            return [x, -x - 0.1*v]
+            
+        mod = Explicit_Problem(f, y0=[1, 0], t0=10)
+        sim = CVode(mod)
+        sim.backward = True
+        t, y = sim.simulate(0, ncp_list=np.arange(1, 10))
         
+        assert np.all(t == np.arange(0,11)[::-1])
+        
+        mod = Explicit_Problem(f, y0=[1, 0], t0=10)
+        sim = CVode(mod)
+        sim.backward = True
+        t, y = sim.simulate(0, ncp_list=np.arange(1, 10)[::-1])
+        
+        assert np.all(t == np.arange(0,11)[::-1])
+
+    
     @testattr(stddist = True)
     def test_get_error_weights(self):
         nose.tools.assert_raises(CVodeError, self.simulator.get_error_weights)
