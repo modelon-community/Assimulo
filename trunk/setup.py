@@ -23,6 +23,7 @@ import shutil as SH
 import ctypes.util
 import argparse
 import numpy.distutils as nd
+from distutils.version import StrictVersion
 
 def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
@@ -435,7 +436,7 @@ class Assimulo_prepare(object):
         config = np.distutils.misc_util.Configuration()
         extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
                   
-        if np.version.version > "1.6.1": 
+        if StrictVersion(np.version.version) > StrictVersion("1.6.1"): 
             extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
             extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
     
@@ -463,7 +464,7 @@ class Assimulo_prepare(object):
         dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
         dasp3_f77_compile_flags += extra_compile_flags
         
-        if np.version.version > "1.6.1": #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
+        if StrictVersion(np.version.version) > StrictVersion("1.6.1"): #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
             dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
             config.add_extension('assimulo.lib.dasp3dp',
@@ -488,7 +489,7 @@ class Assimulo_prepare(object):
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
-            if np.version.version > "1.6.1": 
+            if StrictVersion(np.version.version) > StrictVersion("1.6.1"): 
                 extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
