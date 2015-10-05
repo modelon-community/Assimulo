@@ -23,6 +23,10 @@ from assimulo.examples import *
 class Test_Examples:
     
     @testattr(stddist = True)
+    def test_ida_with_user_defined_handle_result(self):
+        ida_with_user_defined_handle_result.run_example(with_plots=False)
+    
+    @testattr(stddist = True)
     def test_radau5dae_time_events(self):
         radau5dae_time_events.run_example(with_plots=False)
         

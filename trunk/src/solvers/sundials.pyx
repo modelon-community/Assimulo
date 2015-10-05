@@ -640,6 +640,19 @@ cdef class IDA(Implicit_ODE):
         self.yd = nv2arr(self.ydTemp)
         
         return [flag, self.y, self.yd]
+        
+    cpdef get_last_order(self):
+        """
+        Returns the order used on the last successful step.
+        """
+        cdef int flag
+        cdef int qlast
+        
+        flag = SUNDIALS.IDAGetLastOrder(self.ida_mem, &qlast)
+        if flag < 0:
+            raise IDAError(flag, self.t)
+            
+        return qlast
     
     cpdef get_last_estimated_errors(self):
         cdef flag
