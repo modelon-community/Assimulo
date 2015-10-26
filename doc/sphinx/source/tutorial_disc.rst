@@ -42,7 +42,7 @@ to a user specified method ``handle_event``, ::
 A value +1 indicates that the ``state_event`` function crossed zero from negative to positive and a value -1 indictes that the 
 function became negative in the respective component.
 
-Assimulos own event locator method not only allows zero crossing but also domain changes, where the state event method is checked for becoming or ceasing to be positive. For localizing the events in this method Illinois algorithm is used. CVode and IDA can use Assimulos method through the option ”external_event_detection”. The solvers supporting problems with discontinuities are: CVode, Radau5ODE, Dopri5, RodasODE, RungeKutta34, Explicit Euler, Implicit Euler, IDA and Radau5DAE.
+Assimulos own event locator method not only allows zero crossing but also domain changes, where the state event method is checked for becoming or ceasing to be positive. For localizing the events in this method Illinois algorithm is used. CVode and IDA can use Assimulos method through the option ”external_event_detection”. The solvers supporting problems with discontinuities are: CVode, LSODAR, Radau5ODE, Dopri5, RodasODE, RungeKutta34, Explicit Euler, Implicit Euler, IDA and Radau5DAE.
 
 
 Example
