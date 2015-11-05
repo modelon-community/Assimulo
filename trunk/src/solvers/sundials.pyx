@@ -1432,7 +1432,7 @@ cdef class CVode(Explicit_ODE):
         self.options["inith"] = 0.0          #Initial step-size
         self.options["maxord"] = 5        #Maximum order allowed
         self.options["maxncf"] = 10
-        self.options["maxnef"] = 7
+        self.options["maxnef"] = 20  #Increased from the default 7 in Sundials
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["maxsteps"] = 10000  #Maximum number of steps
