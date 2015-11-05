@@ -109,6 +109,15 @@ class Test_CVode:
         nose.tools.assert_raises(AssimuloException, self.simulator._set_max_conv_fails, -1)
         
     @testattr(stddist = True)
+    def test_max_error_tests_failures(self):
+        assert self.simulator.maxnef == self.simulator.options["maxnef"]
+        self.simulator.maxnef = 15
+        assert self.simulator.maxnef == 15
+        assert self.simulator.options["maxnef"] == 15
+        
+        nose.tools.assert_raises(AssimuloException, self.simulator._set_max_err_fails, -1)
+        
+    @testattr(stddist = True)
     def test_get_current_order(self):  
         
         nose.tools.assert_raises(CVodeError, self.simulator.get_current_order)

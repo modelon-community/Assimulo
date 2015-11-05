@@ -1432,6 +1432,7 @@ cdef class CVode(Explicit_ODE):
         self.options["inith"] = 0.0          #Initial step-size
         self.options["maxord"] = 5        #Maximum order allowed
         self.options["maxncf"] = 10
+        self.options["maxnef"] = 7
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["maxsteps"] = 10000  #Maximum number of steps
@@ -2086,6 +2087,11 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag)
             
+        #Maximum number of error test failures
+        flag = SUNDIALS.CVodeSetMaxErrTestFails(self.cvode_mem, self.options["maxnef"])
+        if flag < 0:
+            raise CVodeError(flag)
+            
         #Initial step
         flag = SUNDIALS.CVodeSetInitStep(self.cvode_mem, self.options["inith"])
         if flag < 0:
@@ -2359,7 +2365,7 @@ cdef class CVode(Explicit_ODE):
     def _get_max_conv_fails(self):
         """
         This determines the maximum number of convergence failures allowed
-        by the solver.
+        by the solver (in each step).
         
             Parameters::
             
@@ -2369,6 +2375,25 @@ cdef class CVode(Explicit_ODE):
         return self.options["maxncf"]
     
     maxncf = property(_get_max_conv_fails, _set_max_conv_fails)
+    
+    def _set_max_err_fails(self, maxnef):
+        if maxnef <= 0:
+            raise AssimuloException("The maximum number of error test failures must be positive")
+        self.options["maxnef"] = int(maxnef)
+        
+    def _get_max_err_fails(self):
+        """
+        This determines the maximum number of error test failures 
+        allowed by the solver (in each step).
+        
+            Parameters::
+            
+                maxncf
+                        - Default 7
+        """
+        return self.options["maxnef"]
+    
+    maxnef = property(_get_max_err_fails, _set_max_err_fails)
     
     def _set_max_steps(self, maxsteps):
         if not isinstance(maxsteps,int):
