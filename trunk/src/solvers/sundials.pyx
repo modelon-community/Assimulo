@@ -1442,6 +1442,7 @@ cdef class CVode(Explicit_ODE):
         self.options["discr"] = "BDF"
         self.options["suppress_sens"] = False #Turn on or off the local error test on the sensitivity variables
         self.options["maxcorS"] = 3          #Maximum number of nonlinear iteration for sensitivity variables
+        self.options["maxcor"] = 3          #Maximum number of nonlinear iteration
         self.options["dqtype"] = "CENTERED"
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
@@ -2111,6 +2112,11 @@ cdef class CVode(Explicit_ODE):
         flag = SUNDIALS.CVodeSetMaxNumSteps(self.cvode_mem, self.options["maxsteps"])
         if flag < 0:
             raise CVodeError(flag)
+            
+        #Maximum nonlinear iterations
+        flag = SUNDIALS.CVodeSetMaxNonlinIters(self.cvode_mem, self.options["maxcor"])
+        if flag < 0:
+            raise CVodeError(flag)
         
         #Tolerances
         flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], arr2nv(self.options["atol"]))
@@ -2419,6 +2425,8 @@ cdef class CVode(Explicit_ODE):
                                     
         """
         return self.options["maxsteps"]
+        
+    maxsteps = property(_get_max_steps, _set_max_steps)
     
     def _set_max_cor_S(self,maxcorS):
         try:
@@ -2444,7 +2452,28 @@ cdef class CVode(Explicit_ODE):
     
     maxcorS=property(_get_max_cor_S,_set_max_cor_S)
     
-    maxsteps = property(_get_max_steps, _set_max_steps)
+    def _set_max_cor(self, maxcor):
+        try:
+            self.options["maxcor"] = int(maxcor)
+        except:
+            raise AssimuloException("The maximum nonlinear iterations must be a positiv integer.")
+    
+    def _get_max_cor(self):
+        """
+        This detmines the maximum number of nonlinear iterations.
+        
+            Parameters::
+            
+                maxcor
+                        - Default 3
+                        
+                        - Should be an integer
+                        
+        For more information see SUNDIALS CVODES documentation.
+        """
+        return self.options["maxcor"]
+    
+    maxcor = property(_get_max_cor,_set_max_cor)
     
     def _set_max_h(self,max_h):
         try:

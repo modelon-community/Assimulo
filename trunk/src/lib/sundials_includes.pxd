@@ -128,6 +128,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetUserData(void  *cvode_mem,void *user_data)
     int CVodeSetMaxConvFails(void *cvode_mem, int maxncf)
     int CVodeSetMaxErrTestFails(void *cvode_mem, int maxnef)
+    int CVodeSetMaxNonlinIters(void *cvode_mem, int maxcor)
     
     #Functions for retrieving results
     int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky)
