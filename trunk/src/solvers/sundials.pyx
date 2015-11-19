@@ -1449,6 +1449,7 @@ cdef class CVode(Explicit_ODE):
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         self.options["stablimit"] = False
         self.options["nnz" ] = -1
+        self.options["norm"] = "WRMS"
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -1623,7 +1624,10 @@ cdef class CVode(Explicit_ODE):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
         
-        self.yTemp = arr2nv(self.y)
+        if self.options["norm"] == "EUCLIDEAN":
+            self.yTemp = arr2nv_euclidean(self.y)
+        else:
+            self.yTemp = arr2nv(self.y)
         
         if self.pData.dimSens > 0:
             #Create the initial matrices
@@ -1842,8 +1846,11 @@ cdef class CVode(Explicit_ODE):
         cdef double tret = self.t, tout
         cdef list tr = [], yr = []
         cdef N.ndarray output_list
-        
-        yout = arr2nv(y)
+    
+        if self.options["norm"] == "EUCLIDEAN":
+            yout = arr2nv_euclidean(y)
+        else:
+            yout = arr2nv(y)
         
         #Initialize? 
         if opts["initialize"]:
@@ -2208,7 +2215,36 @@ cdef class CVode(Explicit_ODE):
         """
         return self.options["iter"]
         
-    iter = property(_get_iter_method,_set_iter_method)   
+    iter = property(_get_iter_method,_set_iter_method)
+    
+    def _set_norm_method(self,norm='WRMS'):
+
+        if norm.upper() == 'WRMS':
+            self.options["norm"] = "WRMS"
+        elif norm.upper() == 'EUCLIDEAN':
+            self.options["norm"] = "EUCLIDEAN"
+        else:
+            raise AssimuloException('The norm method must be either WRMS or EUCLIDEAN')
+    
+    def _get_norm_method(self):
+        """
+        This determines the norm that is used by the solver when 
+        determining errors.
+        
+            Parameters::
+            
+                norm    
+                        - Default 'WRMS', which indicates the
+                          use of a weighted root-mean-square norm. Can
+                          also be set to 'EUCLIDEAN' which indicates
+                          the use of a weighted Euclidean norm.
+                          
+                            Example:
+                                norm = 'EUCLIDEAN'
+        """
+        return self.options["norm"]
+        
+    norm = property(_get_norm_method,_set_norm_method)
     
     def _set_atol(self,atol):
         

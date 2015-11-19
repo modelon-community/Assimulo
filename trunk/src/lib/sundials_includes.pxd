@@ -51,12 +51,17 @@ cdef extern from "stdlib.h":
 #==============================================
 
 cdef extern from "sundials/sundials_nvector.h":
-    cdef struct _generic_N_Vector:
-        void* content
     ctypedef _generic_N_Vector* N_Vector
     
+    cdef struct _generic_N_Vector_Ops:
+        realtype    (*nvwrmsnorm)(N_Vector, N_Vector)
+        realtype    (*nvwl2norm)(N_Vector, N_Vector)
+    ctypedef _generic_N_Vector_Ops *N_Vector_Ops
     
-    
+    cdef struct _generic_N_Vector:
+        void* content
+        N_Vector_Ops ops
+
 cdef extern from "nvector/nvector_serial.h":
     cdef struct _N_VectorContent_Serial:
         long int length
