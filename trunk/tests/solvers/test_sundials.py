@@ -283,6 +283,31 @@ class Test_CVode:
         exp_sim.iter = "Newton"
         exp_sim.simulate(2)
         assert exp_sim.statistics["njacs"] > 0
+        
+    @testattr(stddist = True)
+    def test_change_norm(self):
+        
+        assert self.simulator.options["norm"] == "WRMS"
+        self.simulator.norm = 'WRMS'
+        assert self.simulator.norm == 'WRMS'
+        self.simulator.norm = 'EUCLIDEAN'
+        assert self.simulator.options["norm"] == "EUCLIDEAN"
+        assert self.simulator.norm == 'EUCLIDEAN'
+        
+        f = lambda t,y: N.array([1.0])
+        y0 = 4.0 #Initial conditions
+        
+        exp_mod = Explicit_Problem(f,y0)
+        exp_sim = CVode(exp_mod) #Create a CVode solver
+        
+        exp_sim.norm = "WRMS"
+        exp_sim.simulate(1)
+        
+        exp_mod = Explicit_Problem(f,y0)
+        exp_sim = CVode(exp_mod) #Create a CVode solver
+        
+        exp_sim.norm = "EUCLIDEAN"
+        exp_sim.simulate(1)
     
     @testattr(stddist = True)
     def test_usejac(self):
