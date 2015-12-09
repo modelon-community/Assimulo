@@ -2336,9 +2336,9 @@ cdef class CVode(Explicit_ODE):
             Parameters::
             
                 maxord  
-                        - Default '12', which is the maximum for the
-                          Adams method, which is also default. For the
-                          BDF method the maximum order is 5. 'maxord'
+                        - Default '5', which is the maximum for the
+                          BDF method, which is also default. For the
+                          Adams method the maximum order is 12. 'maxord'
                           can be set in an interval from 1 to the
                           maximum order allowed.
                 
