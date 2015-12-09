@@ -2163,9 +2163,9 @@ cdef class CVode(Explicit_ODE):
             Parameters::
             
                 discr   
-                        - Default 'Adams', which indicates the use
-                          of the Adams method. Can also be set to
-                          'BDF' which indicates the use of the BDF
+                        - Default 'BDF', which indicates the use
+                          of the BDF method. Can also be set to
+                          'Adams' which indicates the use of the Adams
                           method.
                 
                     Example:
@@ -2203,10 +2203,10 @@ cdef class CVode(Explicit_ODE):
             Parameters::
             
                 iter    
-                        - Default 'FixedPoint', which indicates the
-                          use of a fixedpoint iteration method. Can
-                          also be set to 'Newton' which indicates
-                          the use of a Newton method.
+                        - Default 'Newton', which indicates the
+                          use of a Newton method. Can
+                          also be set to 'FixedPoint' which indicates
+                          the use of a fixedpoint method.
                           
                             Example:
                                 iter = 'Newton'
