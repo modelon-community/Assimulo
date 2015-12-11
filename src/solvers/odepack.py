@@ -144,7 +144,7 @@ class LSODAR(Explicit_ODE):
         tolscale=tol[0]**(1./pr)
         normscale=1.
         f=self.problem.rhs
-        
+        print "I am here"
         t0=t
         tf=RWORK[0]
         T=abs(tf-t0)
@@ -202,9 +202,9 @@ class LSODAR(Explicit_ODE):
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
             #H = hu if hu != 0. else 1.e-4  # this needs some reflections 
             #H =(abs(RWORK[0]-t)*((self.options["rtol"])**(1/(self.rkstarter+1))))/(100*Sc.norm(self.problem.rhs(t,y,self.sw))+10)#if hu != 0. else 1.e-4
-            #H=1e-2
-            H=self.autostart(t,y)
-            H=3*H
+            H=1e-2
+            #H=self.autostart(t,y)
+            #H=3*H
             # b) compute the Nordsieck array and put it into RWORK
             rkNordsieck = RKStarterNordsieck(self.problem.rhs,H,number_of_steps=self.rkstarter)
             t,nordsieck = rkNordsieck(t,y,self.sw)
@@ -632,6 +632,7 @@ class RKStarterNordsieck(object):
     
     See: Mohammadi (2013): https://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=4196026&fileOId=4196027
     """
+    # Gamma matrix of Gear's RK starter which produce Nordsieck vector at t0
     Gamma_0=[N.array([[1.,0.],                        # 1st order
                       [0.,1.]]),
              N.array([[1.,0.,0.],                     # 2nd order
@@ -648,16 +649,23 @@ class RKStarterNordsieck(object):
                       [0.,0.,1./2.,-4./9.,1./9.],
                       [0.,0.,7./3.,-19./9.,7./9.],
                       [0.,0.,-3.,10./3.,-4./3.],
-                      [0.,0.,1.,-11./9.,5./9.]]),
-             N.array([[0.,0.,0.,0.,0.,0.,0.,0.],
-                      [1./6.,0.,0.,0.,0.,0.,0.,0.],
-                      [0.,1./6.,0.,0.,0.,0.,0.,0.],
-                      [0.,0.,1./3.,0.,0.,0.,0.,0.],
-                      [1./18.,1./9.,1./9.,1./18.,0.,0.,0.,0.],
-                      [2.5,-3.,-3.,2.25,2.25,0.,0.,0.],
-                      [10./45.,-8./45.,-8./45.,-4./45.,13./15.,1./45.,0.,0.],
-                      [29./1062.,83./531.,83./531.,83./1062.,2./531.,56./531.,251./531.,0.]]),
-             N.array([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
+                      [0.,0.,1.,-11./9.,5./9.]])]
+                      
+    # A matrices of RK starter with equidistanced states 
+    
+    A_s=[    N.array([1]),                                           # 1st order
+             N.array([[0.,0],[1,0]]),                                # 2nd order
+             N.array([[0.,0.,0.,0.,0.],[1./2,0.,0.,0.,0.],          # 3rd order
+                     [0.,3./4,0.,0.,0.],[2./9,1./3,4./9,0.,0.],
+                     [17./72,1./6,2./9,-1./8,0.]]),
+             N.array([[0.,0.,0.,0.,0.,0.,0.],                       # 4th order
+                      [1./6.,0.,0.,0.,0.,0.,0.],
+                      [0.,1./6.,0.,0.,0.,0.,0.],
+                      [0.,0.,1./3.,0.,0.,0.,0.],
+                      [1./18.,1./9.,1./9.,1./18.,0.,0.,0.],
+                      [2.5,-3.,-3.,2.25,2.25,0.,0.],
+                      [10./45.,-8./45.,-8./45.,-4./45.,13./15.,1./45.,0.]]),
+             N.array([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],  # 5th order
                       [1./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
                       [3./160,9./160,0.,0.,0.,0.,0., 0.,0.,0.,0.,0.,0.,0.],
                       [3./40,-9./40,6./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
@@ -673,22 +681,48 @@ class RKStarterNordsieck(object):
                       [-0.1491588850008383,0.,19145766/113939551,8434687/36458574,2012005/39716421,8409989/57254530,10739409/94504714,0.,-3321/86525909,-30352753/150092385,0.,70257074/109630355,
                        0.,0.],
                       [0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
-                       38892959/120069679,11804845./141497517   , 0.00000000e+00]])]        
-    C=[N.array([0.]),
-       N.array([0.]),
-       N.array([0.]),
-       N.array([0.]),
-       N.array([0.,1./6,1./6,1./3,1./3,1.,1.,2./3,1.]),
-       N.array([0.,1./20,3./40,3./20,1./4,7./28,1./4,2./4,1.,2./4,3./4,3./4,1.,1.])]      # C-values in Butcher tableau of 8-stages Runge-Kutta
+                       38892959/120069679,11804845./141497517]])]  
 
+    co_ord_s=[[],[],[4],[4,6],[6,9,11]]                       
+    b_s=[    N.array([1]),
+             N.array([1./2,1./2]),
+             N.array([1./6,0.,0.,1./6,2./3]),
+             N.array([29./1062.,83./531.,83./531.,83./1062.,2./531.,56./531.,251./531.]),  # b-vectors of of 1st to 5th order RK starter method
+             N.array([0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
+                       38892959/120069679,11804845./141497517,0.])] 
+                               
+    C_s=[    N.array([0.]),
+             N.array([0.]),
+             N.array([0.,1./2,3./4,1.,1./2,1.]),
+             N.array([0.,1./6,1./6,1./3,1./3,1.,1.,2./3,1.]),
+             N.array([0.,1./20,3./40,3./20,1./4,7./28,1./4,2./4,1.,2./4,3./4,3./4,1.,1.])]    # C-values in Butcher tableau of 8-stages Runge-Kutta                           
+            
+    # A matrices of RK starter with non-equidistanced stages        
+    A_n=[    N.array([1]),
+             N.array([[0.,0.],[0.,0.]]),
+             N.array([[0.,0.,0.,0.],[1./2,0.,0.,0.],[0.,1./2,0.,0.],[0.,0.,1.,0.]]),           # 3rd order
+             N.array([[0.,0.,0.,0.,0.,0.],[2./5,0.,0.,0.,0.,0.],[-3./20,3./4,0.,0.,0.,0.],    # 4th order
+                      [19./44,-15./44,40./44,0.,0.,0.],[-31./64,185./192,5./64,-11./192,0.,0.],[11./72,25./72,25./72,11./72,0.,0.]])]
+             
+    b_n=[    N.array([0.]),
+             N.array([1./2.,1./2.]),
+             N.array([[5./24,1./6,1./6,-1/24],[1./6,1./3,1./3,1./6]]),
+             N.array([[802./5625,68./225,-67./225,-143./5625,144./625,6./125],[699./5000,81./200,-39./200,99./5000,144./625,0.],[11./72,25./72,25./72,11./72,0.,0.]])]   
+             
+    C_n=[    N.array([0.]),
+             N.array([0.]),
+             N.array([0.,1./2,1./2,1.]),
+             N.array([0.,2./5,3./5,1.,1./2,1.])]
+
+    #co_ord_n=[[],[],[1./2,1.],[2./5,3./5,1.]]
     #A=N.array([[1.,0.,0.,0.],
     #          [1.,1./9.,1./27,1./81.],
     #           [1.,4./9.,8./27,16./81.],
     #           [1.,1.,1.,1.]]) 
-    A=[N.array([0.]),
+    A=[N.array([0.]),                       # Convert the state values to Nordsieck vector
        N.array([0.]),
-       N.array([0.]),
-       N.array([0.]),
+       N.array([1.]),
+       N.array([[1./4,1./8],[1.,1.]]),
        N.array([[1./9,1./27,1./81.],
                 [4./9.,8./27,16./81],
                 [1.,1.,1.]]),
@@ -699,7 +733,8 @@ class RKStarterNordsieck(object):
                       
     scale=N.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
     
-    def __init__(self,  rhs, H, eval_at=0.,number_of_steps=4):
+    
+    def __init__(self,  rhs, H, method='RKs_f', eval_at=0., number_of_steps=4):
         """
         Initiates the Runge-Kutta Starter.
         
@@ -725,14 +760,54 @@ class RKStarterNordsieck(object):
         """
         self.f = rhs
         self.H = H
+        self.method=method
         
         if not 1 < number_of_steps < 6:
             raise RKStarter_Exception('Step number larget than 4 not yet implemented')            
         self.number_of_steps = number_of_steps 
         self.eval_at = float(eval_at)
         if not self.eval_at == 0.:
-           raise RKStarter_Exception("Parameter eval_at different from 0 not yet implemented.")                    
-    def rk_like14(self, t0, y0, sw0): 
+           raise RKStarter_Exception("Parameter eval_at different from 0 not yet implemented.")
+
+    def RKs_f(self,t0,y0,sw0):
+
+        s=self.number_of_steps
+        A_s,C_s,b_s,co_ord_s=self.A_s,self.C_s,self.b_s,self.co_ord_s
+        A_s=A_s[s-1]
+        C_s=C_s[s-1]
+        b_s=b_s[s-1]
+        co_ord_s=co_ord_s[s-1]
+        H=(s-1)*self.H
+        K=zeros((size(A_s,0),size(y0)))
+        for i in range(size(A_s,0)):
+            K[i,:]=self.f(t0+C_s[i]*H,y0+H*dot(A_s[i,:],K),sw0)   
+        y=zeros((s,size(y0)))
+        y[0,:]=y0
+        for i in range(1,s):
+            if i==s-1:
+                y[i,:]=y0+H*dot(b_s,K)
+            else:
+                y[i,:]=y0+H*dot(A_s[co_ord_s[i-1],:],K)
+        return y    
+    def RKn_f(self,t0,y0,sw0):
+        s=self.number_of_steps
+        H=(s-1)*self.H
+        A_n,C_n,b_n=self.A_n,self.C_n,self.b_n
+        A_n=A_n[s-1]
+        C_n=C_n[s-1]
+        b_n=b_n[s-1]
+        
+        K=zeros((size(A_n,0),size(y0)))
+        for i in range(size(A_n,0)):
+            K[i,:]=self.f(t0+C_n[i]*H,y0+H*dot(A_n[i,:],K),sw0)
+        y=zeros((s,size(y0)))  
+        y[0,:]=y0
+        for i in range(1,s):
+                y[i,:]=y0+H*dot(b_n[i-1],K)
+        return y
+  
+            
+    def rk_like4(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
         Note, the currently implementation is **only** correct for
@@ -747,7 +822,7 @@ class RKStarterNordsieck(object):
         k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
         k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
         return N.array([y0,k1,k2,k3,k4,k5,k6])
-    def rk_like13(self, t0, y0, sw0): 
+    def rk_like3(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
         Note, the currently implementation is **only** correct for
@@ -761,7 +836,7 @@ class RKStarterNordsieck(object):
         k3 = h*f(y0 + k1+ k2)
         k4 = h*f(y0 + 3./2. * k1)
         return N.array([y0,k1,k2,k3,k4])
-    def rk_like12(self, t0, y0, sw0):
+    def rk_like2(self, t0, y0, sw0):
         """
         rk_like2 computes Runge-Kutta 2nd-stages
         Note, the currently implementation is **only** correct for
@@ -771,10 +846,33 @@ class RKStarterNordsieck(object):
         h=self.H/2.
         k1=h*f(y0)
         k2=h*f(y0+k1)
-        return N.array([y0,k1,k2]) 
-    def rk_like4(self, t0, y0, sw0):
+        return N.array([y0,k1,k2])
+    def rk_like13(self, t0, y0, sw0):
         """
-        rk_like6 computes Runge-Kutta 4th-stages 
+        rk_like6 computes Runge-Kutta 8th-stages 
+        """
+        h = self.H
+        self.Gamma_2=self.Gamma_0[3]
+        f=lambda y: self.f(t0 , y , sw0)
+        K=N.zeros((6,len(y0)))
+        sol=N.zeros((3,len(y0)))
+        b=N.zeros((2,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = N.zeros((4,len(y0)))     #Nordsieck vector
+        for i in range(5):
+            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+        c=0
+        for i in range(3):
+            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+3,:],K)
+            if i!=0:
+                b[c,:]=sol[i,:]-y0-(c+1)*h/2*K[0,:]
+                c+=1
+        nord[0,:] = y0
+        nord[1,:] = h*K[0,:]
+        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        return nord     
+    def rk_like14(self, t0, y0, sw0):
+        """
+        rk_like6 computes Runge-Kutta 8th-stages 
         """
         h = self.H
         self.Gamma_2=self.Gamma_0[4]
@@ -795,28 +893,28 @@ class RKStarterNordsieck(object):
         nord[1,:] = h*K[0,:]
         nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
         return nord       
-    def rk_like5(self, t0, y0, sw0):
+    def rk_like15(self, t0, y0, sw0):
         """
         rk_like6 computes Runge-Kutta 5th-stages ****needs to be modified****
         """
         h = self.H
-        self.Gamma_2=self.Gamma_0[4]
+        Gamma_2=self.Gamma_0[5]
         f=lambda y: self.f(t0 , y , sw0)
-        K=N.zeros((8,len(y0)))
-        sol=N.zeros((4,len(y0)))
-        b=N.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
-        nord = N.zeros((5,len(y0)))     #Nordsieck vector
-        for i in range(7):
-            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+        K=N.zeros((14,len(y0)))
+        sol=N.zeros((8,len(y0)))
+        b=N.zeros((4,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = N.zeros((6,len(y0)))     #Nordsieck vector
+        for i in range(13):
+            K[i,:]= f(y0+h*N.dot(Gamma_2[i,:],K))
         c=0
-        for i in range(4):
-            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+4,:],K)
-            if i!=1:
-                b[c,:]=sol[i,:]-y0-(c+1)*h/3*K[0,:]
+        for i in range(8):
+            sol[i,:]=y0+h*N.dot(Gamma_2[i+6,:],K)
+            if (i!=1) and (i!=2) and (i!=4) and (i!=6):
+                b[c,:]=sol[i,:]-y0-(c+1)*h/4*K[0,:]
                 c+=1
         nord[0,:] = y0
         nord[1,:] = h*K[0,:]
-        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)        
         return nord     
     def nordsieck(self,k):
         """
@@ -825,6 +923,43 @@ class RKStarterNordsieck(object):
         nord=self.scale[:self.number_of_steps+1]*N.dot(self.Gamma_0[self.number_of_steps-1].T,k)
  
         return nord  
+    def Nordsieck_RKn(self,t0,y,sw0):
+        s=self.number_of_steps
+        H=(s-1)*self.H
+        co_nord=[N.array([1./2,1.]),N.array([2./5,3./5,1.])]
+        l=size(y,0)
+        y0=y[0,:]
+        yf=self.f(t0,y0,sw0)
+        
+        if l==3:
+            co=array([co_nord[0]])
+            nord_n=vander(co_nord[0],self.number_of_steps+1)
+            b=y[1:]-y0-co.T*yf
+            nord=solve(nord_n[0:2,0:2],b)
+        elif l==4:
+            co=array([co_nord[1]])
+            nord_n=vander(co_nord[1],self.number_of_steps+1)
+            b=y[1:]-y0-H*co.T*yf
+            nord=Sc.solve(nord_n[0:3,0:3],b)
+        nord=N.vstack((y0,H*yf,nord[::-1]))       
+        return nord
+    def Nordsieck_RKs(self,t0,y,sw0):
+        s=self.number_of_steps
+        H=(s-1)*self.H
+        co_nord=[N.array([1]),N.array([1./2,1]),N.array([1./3,2./3,1]),
+                 N.array([1./4,2./4,3./4,1.])]
+        A=self.A
+        y0=y[0,:]
+        yf=self.f(t0,y0,sw0)
+        co=co_nord[s-2]
+        co=array([co])
+        b=y[1:]-y0-H*co.T*yf
+        nord=Sc.solve(A[s],b)
+        nord=N.vstack((y0,H*yf,nord))
+        return nord
+        
+        
+        
     def __call__(self, t0 , y0, sw0=[]):
         """
         Evaluates the Runge-Kutta starting values
@@ -834,8 +969,23 @@ class RKStarterNordsieck(object):
                 y0   
                     - starting value
         """
+        if self.method=='RK_G':
         # We construct a call like: rk_like4(self, t0, y0, sw0) 
-        k=self.__getattribute__('rk_like{}'.format(self.number_of_steps))(t0, y0, sw0)
-        t = t0+self.eval_at*self.H
-        #t= t0 + self.H
-        return t, k#self.nordsieck(k)
+            k=self.__getattribute__('rk_like{}'.format(self.number_of_steps))(t0, y0, sw0)
+            t = t0+self.eval_at*self.H
+            #t= t0 + self.H
+            k=self.nordsieck(k)
+            
+        elif self.method=='RKs_f':
+            y=self.RKs_f(t0, y0, sw0)
+            t = t0+self.eval_at*self.H
+            k=self.Nordsieck_RKs(t0,y,sw0)
+
+        elif self.method=='RKn_f':
+            y=self.RKn_f(t0,y0,sw0)
+            t=t0+self.eval_at*self.H
+            k=self.Nordsieck_RKn(t0,y,sw0)
+        return t,k 
+
+
+                
