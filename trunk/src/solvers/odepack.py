@@ -875,17 +875,17 @@ class RKStarterNordsieck(object):
         rk_like6 computes Runge-Kutta 8th-stages 
         """
         h = self.H
-        self.Gamma_2=self.Gamma_0[4]
+        Gamma_2=self.Gamma_0[4]
         f=lambda y: self.f(t0 , y , sw0)
         K=N.zeros((8,len(y0)))
         sol=N.zeros((4,len(y0)))
         b=N.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
         nord = N.zeros((5,len(y0)))     #Nordsieck vector
         for i in range(7):
-            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+            K[i,:]= f(y0+h*N.dot(Gamma_2[i,:],K))
         c=0
         for i in range(4):
-            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+4,:],K)
+            sol[i,:]=y0+h*N.dot(Gamma_2[i+4,:],K)
             if i!=1:
                 b[c,:]=sol[i,:]-y0-(c+1)*h/3*K[0,:]
                 c+=1
