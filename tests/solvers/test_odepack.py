@@ -176,6 +176,17 @@ class Test_LSODAR:
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
         
     @testattr(stddist = True)    
+    def test_maxh(self):
+        
+        self.sim.hmax = 1.0
+        assert self.sim.options["maxh"] == 1.0
+        assert self.sim.maxh == 1.0
+        
+        self.sim.maxh = 2.0
+        assert self.sim.options["maxh"] == 2.0
+        assert self.sim.maxh == 2.0
+        
+    @testattr(stddist = True)    
     def test_simulation_ncp_list_2(self):
         """
         Test a simulation with ncp.
