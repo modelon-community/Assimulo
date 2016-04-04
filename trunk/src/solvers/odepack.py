@@ -19,6 +19,7 @@ import numpy as N
 import scipy.linalg as Sc
 from assimulo.exception import *
 from assimulo.ode import *
+import logging
 
 from assimulo.explicit_ode import Explicit_ODE
 
@@ -74,7 +75,7 @@ class LSODAR(Explicit_ODE):
         self.options["rkstarter"] = 1
         self.options["maxordn"] = 12
         self.options["maxords"] =  5
-        self.options["hmax"] = 0.
+        self.options["maxh"] = 0.
         
         self._leny = len(self.y) #Dimension of the problem
         self._nordsieck_array = []
@@ -276,7 +277,7 @@ class LSODAR(Explicit_ODE):
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
-        RWORK[5] = self.options["hmax"]
+        RWORK[5] = self.options["maxh"]
         
         #Setting iwork options
         IWORK[5] = self.maxsteps
@@ -434,8 +435,8 @@ class LSODAR(Explicit_ODE):
         if self.maxordn < 12 or self.maxords < 5:
             self.log_message(' Maximal order Adams     : {}'.format(self.maxordn),  verbose)
             self.log_message(' Maximal order BDF       : {}'.format(self.maxords),  verbose)
-        if self.hmax > 0. :
-            self.log_message(' Maximal stepsize hmax   : {}'.format(self.hmax),  verbose)
+        if self.maxh > 0. :
+            self.log_message(' Maximal stepsize maxh   : {}'.format(self.maxh),  verbose)
         self.log_message('',                                                         verbose)
     
     def _set_usejac(self, jac):
@@ -551,12 +552,31 @@ class LSODAR(Explicit_ODE):
                           
                           - Should be a positive float
         """
-        return self.options["hmax"]
+        logging.warning("The option 'hmax' is deprecated and will be removed, please use 'maxh' instead.")
+        return self.options["maxh"]
     def _set_hmax(self,hmax):
         if not (isinstance(hmax,float) and hmax >= 0.):
            raise ODEPACK_Exception("Maximal step size hmax should be a positive float")
-        self.options["hmax"]=hmax
+        logging.warning("The option 'hmax' is deprecated and will be removed, please use 'maxh' instead.")
+        self.options["maxh"]=hmax
     hmax = property(_get_hmax, _set_hmax)
+    def _get_maxh(self):
+        """
+        The absolute value of the maximal stepsize for all methods
+        
+        Parameters::
+        
+               maxh
+                          - Default:  0.  (no maximal step size)
+                          
+                          - Should be a positive float
+        """
+        return self.options["maxh"]
+    def _set_maxh(self,maxh):
+        if not (isinstance(maxh,float) and maxh >= 0.):
+           raise ODEPACK_Exception("Maximal step size maxh should be a positive float")
+        self.options["maxh"]=maxh
+    maxh = property(_get_maxh, _set_maxh)
     def _get_maxordn(self):
         """
         The maximum order used by the Adams-Moulton method (nonstiff case)
