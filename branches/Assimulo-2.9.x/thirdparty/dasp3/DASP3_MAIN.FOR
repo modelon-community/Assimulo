@@ -1,0 +1,71 @@
+C    Main Program to call DASP3
+C
+      DIMENSION WGHT(4),EPS(1),ABSREL(4)
+      DOUBLE PRECISION WSY(30), WSZ(9), T, TEND
+      DIMENSION A(1,1),W(1,1),SLU(2),IPS(1),IND(2)
+      LOGICAL EQ(2)
+      EXTERNAL DYDT, DZDT, OUTPDA
+      COMMON /COUNTS/ NYDER,NZDER,NSTEP,NREJ,MATEST,NREST,LUFACT
+      N = 3
+      M = 1
+C
+C...RANGE OF INTEGRATION
+      T = 0.0D0
+      TEND = 1D1
+C
+C...INITIAL VALUEs
+      WSY(1) =  3.D0
+      WSY(2) = .216D0
+      WSY(3) = 1.D0
+      WSZ(1) = 1.35D0
+C
+c...ERROR TOLERANCE PARAMETERS
+      TOL = 1.E-3
+      DO 760 I=1,4
+         ABSREL(I) = 1.0
+  760    WGHT(I) = 1.0
+C
+C...SINGULAR PERTURBATION PARAMETER
+      EPS(1) = .33333333E-3
+C
+C...SIMULATION OF BELOUSOV-ZHABOTINSKII REACTION
+C
+      CALL DASP3(DYDT, DZDT, OUTPDA, T,TEND,WSY,WSZ,N,M,TOL,ABSREL,
+     *           WGHT,EPS,A,W,
+     *           SLU,IPS,EQ,IND,LFLAG)
+      WRITE(6,20) LFLAG,T
+   20 FORMAT(1X,'TERMINATION CODE ',I1,' AT T=',D22.16)
+      WRITE(6,30) NSTEP,NYDER,NZDER,MATEST
+   30 FORMAT('ON STEP=',I4,' NYDER=',I5,', NZDER=',I5,', MATEST=',I3)
+      STOP
+      END 
+C
+      SUBROUTINE OUTPDA(T,Y,Z,N,M,JSTOP)
+      IMPLICIT REAL*8(A-H,O-Z)
+      DIMENSION Y(1),Z(1)
+      COMMON /COUNTs/ NYDER,NZDER,NSTEP,NREJ,MATEST,NREST,LUFACT
+      IF(NSTEP.GT.10000) JSTOP = -1
+      IF(MOD(NSTEP,1).EQ.0) WRITE(6,10) T,(Y(I),I=1,3),Z(1)
+   10 FORMAT(1X,5G13.5)
+      RETURN
+      END 
+C
+      SUBROUTINE DYDT(T,Y,Z,F,N,M)
+      IMPLICIT REAL*8(A-H,O-Z)
+      DIMENSION Y(1),Z(1),F(1)
+      eps=(1./3)*1.e-3
+      F(1) = -(.6D0*Z(1)+.8D0*Y(3))*Y(1)+1D1*Y(2)
+      F(2) = -1D1*Y(2)+1.6D0*Z(1)*Y(3)
+      F(3) = -1.33*eps**2*Y(3)*(Y(1)+2D0*Z(1))
+
+      RETURN
+      END 
+C
+      SUBROUTINE DZDT(T,Y,Z,G,N,M)
+      IMPLICIT REAL*8(A-H,O-Z)
+      DIMENSION Y(1),Z(1),G(1)
+      eps=(1./3)*1.e-3
+      G(1) = 1.6D0*Z(1)*Y(3)-.6D0*Z(1)*Y(1)
+     *       -45.d0*(eps*Z(1))**2+.8D0*Y(3)*Y(1)
+      RETURN
+      END

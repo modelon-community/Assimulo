@@ -1,0 +1,10 @@
+Regarding ODEPACK
+
+------------------------------------------------------------------------------
+
+The following Fortran solvers for ordinary differential equation (ODE) 
+systems were written at LLNL. All are in the Public Domain and are 
+freely available from the CASC Software Download Site . 
+https://computation.llnl.gov/casc/software.html
+
+------------------------------------------------------------------------------
