@@ -798,16 +798,16 @@ class RKStarterNordsieck(object):
         b_s=b_s[s-1]
         co_ord_s=co_ord_s[s-1]
         H=(s-1)*self.H
-        K=zeros((size(A_s,0),size(y0)))
-        for i in range(size(A_s,0)):
-            K[i,:]=self.f(t0+C_s[i]*H,y0+H*dot(A_s[i,:],K),sw0)   
-        y=zeros((s,size(y0)))
+        K=N.zeros((N.size(A_s,0),len(y0)))
+        for i in range(N.size(A_s,0)):
+            K[i,:]=self.f(t0+C_s[i]*H,y0+H*N.dot(A_s[i,:],K),sw0)   
+        y=N.zeros((s,len(y0)))
         y[0,:]=y0
         for i in range(1,s):
             if i==s-1:
-                y[i,:]=y0+H*dot(b_s,K)
+                y[i,:]=y0+H*N.dot(b_s,K)
             else:
-                y[i,:]=y0+H*dot(A_s[co_ord_s[i-1],:],K)
+                y[i,:]=y0+H*N.dot(A_s[co_ord_s[i-1],:],K)
         return y    
     def RKn_f(self,t0,y0,sw0):
         s=self.number_of_steps
@@ -817,13 +817,13 @@ class RKStarterNordsieck(object):
         C_n=C_n[s-1]
         b_n=b_n[s-1]
         
-        K=zeros((size(A_n,0),size(y0)))
-        for i in range(size(A_n,0)):
-            K[i,:]=self.f(t0+C_n[i]*H,y0+H*dot(A_n[i,:],K),sw0)
-        y=zeros((s,size(y0)))  
+        K=N.zeros((N.size(A_n,0),len(y0)))
+        for i in range(N.size(A_n,0)):
+            K[i,:]=self.f(t0+C_n[i]*H,y0+H*N.dot(A_n[i,:],K),sw0)
+        y=N.zeros((s,len(y0)))  
         y[0,:]=y0
         for i in range(1,s):
-                y[i,:]=y0+H*dot(b_n[i-1],K)
+                y[i,:]=y0+H*N.dot(b_n[i-1],K)
         return y
   
             
@@ -952,13 +952,13 @@ class RKStarterNordsieck(object):
         yf=self.f(t0,y0,sw0)
         
         if l==3:
-            co=array([co_nord[0]])
-            nord_n=vander(co_nord[0],self.number_of_steps+1)
+            co=N.array([co_nord[0]])
+            nord_n=N.vander(co_nord[0],self.number_of_steps+1)
             b=y[1:]-y0-co.T*yf
-            nord=solve(nord_n[0:2,0:2],b)
+            nord=Sc.solve(nord_n[0:2,0:2],b)
         elif l==4:
-            co=array([co_nord[1]])
-            nord_n=vander(co_nord[1],self.number_of_steps+1)
+            co=N.array([co_nord[1]])
+            nord_n=N.vander(co_nord[1],self.number_of_steps+1)
             b=y[1:]-y0-H*co.T*yf
             nord=Sc.solve(nord_n[0:3,0:3],b)
         nord=N.vstack((y0,H*yf,nord[::-1]))       
@@ -972,7 +972,7 @@ class RKStarterNordsieck(object):
         y0=y[0,:]
         yf=self.f(t0,y0,sw0)
         co=co_nord[s-2]
-        co=array([co])
+        co=N.array([co])
         b=y[1:]-y0-H*co.T*yf
         nord=Sc.solve(A[s],b)
         nord=N.vstack((y0,H*yf,nord))
