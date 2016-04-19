@@ -145,7 +145,7 @@ class LSODAR(Explicit_ODE):
         tolscale=tol[0]**(1./pr)
         normscale=1.
         f=self.problem.rhs
-        print "I am here"
+        
         t0=t
         tf=RWORK[0]
         T=abs(tf-t0)
