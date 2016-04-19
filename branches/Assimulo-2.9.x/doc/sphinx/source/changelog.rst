@@ -3,6 +3,14 @@
 Changelog
 ==========
 
+--- Assimulo-2.9 ---
+    * Added option to specify to use the 2-norm in CVode (ticket:401)
+    * Added option to set max nonlinear iteration in CVode (ticket:400)
+    * Renamed hmax to maxh in LSODAR for consistency (ticket:399)
+    * Fixed version checking in setup for numpy (ticket:394)
+    * Fixed bug with ncp list and backward integration (ticket:393)
+    * Added method to retrieve current order in IDA (ticket:395)
+
 --- Assimulo-2.8 ---
     * Added support for Sundials 2.6 (ticket:382)
     * Added support for sparse Jacobians (together with Sundials) 
