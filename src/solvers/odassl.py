@@ -252,7 +252,9 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
     
     def integrate(self, t, y, yprime, tf, opts):
         ny  = self.problem_info["dim"]
-        neq = self.problem_info["neq"]
+        
+        neq = len(set_type_shape_array(self.problem.res(t,y,yprime)))
+        #neq = self.problem_info["neq"]
         lrw = 40+8*ny + neq**2 + 3*neq
         rwork = np.zeros((lrw,))                                                
         liw = 22+neq
@@ -269,13 +271,19 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         iwork[2] = self.options["maxord"]                     
         #info[11] will be set later (see Ticket #230)                        
         #iwork[0] = ML
-        #iwork[1] = MU                             
+        #iwork[1] = MU
+         
         atol = self.options["atol"]
-        rtol = self.options["rtol"]
-        for i in range(ny):
-            if self.problem.algvar[i] == 0:
-                rtol[i]=1.e7
-                atol[i]=1.e7
+        rtol = set_type_shape_array(self.options["rtol"])
+        
+        if len(rtol) == 1:
+            rtol = rtol*np.ones(self._leny)
+        
+        if hasattr(self.problem, "algvar"):
+            for i in range(ny):
+                if self.problem.algvar[i] == 0:
+                    rtol[i]=1.e7
+                    atol[i]=1.e7
         tlist=[]
         ylist=[]
         ydlist=[]
