@@ -494,8 +494,8 @@ cdef class Implicit_ODE(ODE):
             
 cdef class OverdeterminedDAE(Implicit_ODE):
     def check_instance(self):
-        if not isinstance(self.problem, Overdetermined_Problem):
-            raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem.')
+        if not isinstance(self.problem, Overdetermined_Problem) and not isinstance(self.problem, Implicit_Problem):
+            raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem or of Implicit_Problem.')
 
         
 
