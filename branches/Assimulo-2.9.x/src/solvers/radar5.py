@@ -26,8 +26,10 @@ from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 
-from assimulo.lib import radar5
-
+try:
+    from assimulo.lib import radar5
+except ImportError:
+    print("Could not find RADAR5")
 
 class Radar_Exception(Exception):
     pass

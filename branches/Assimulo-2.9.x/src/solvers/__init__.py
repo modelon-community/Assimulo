@@ -23,50 +23,50 @@ try:
     from .euler import ExplicitEuler
     from .euler import ImplicitEuler
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .radau5 import Radau5ODE
     from .radau5 import Radau5DAE
     from .radau5 import _Radau5ODE
     from .radau5 import _Radau5DAE 
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .sundials import IDA
     from .sundials import CVode
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .kinsol import KINSOL
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .runge_kutta import RungeKutta34
     from .runge_kutta import RungeKutta4
     from .runge_kutta import Dopri5
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .rosenbrock import RodasODE
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .odassl import ODASSL
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .odepack import LSODAR
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .radar5 import Radar5ODE
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .dasp3 import DASP3ODE
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
 try:
     from .glimda import GLIMDA
 except ImportError as ie:
-    print("Could not find {}".format(ie.args[0][16:]))
+    print("Could not find {}".format(ie.args[0].split("'")[1]))
