@@ -9,7 +9,7 @@ python module radcor__user__routines
             double precision dimension(n) :: y
             double precision dimension(n),depend(n),intent(out) :: y0
             double precision dimension(1),intent(hide) :: rpar
-            integer dimension(1),intent(hide) :: ipar
+            integer dimension(1),intent(out) :: ipar
         end subroutine fcn
         subroutine mas(n,am,lmas,rpar,ipar) ! in :radau5:radau_decsol.f:radcor:unknown_interface
             integer, optional,check(len(am)>=n),depend(am) :: n=shape(am,0)
