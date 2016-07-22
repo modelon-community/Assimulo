@@ -28,6 +28,27 @@ from assimulo.lib.radau_core import Radau_Common
 
 from assimulo.lib import radau5
 
+class Radau5Error(AssimuloException):
+    """
+    Defines the Radau5Error and provides the textual error message.
+    """
+    msg = { -1    : 'The input is not consistent.',
+            -2    : 'The solver took max internal steps but could not reach the next output time.',
+            -3    : 'The step size became too small.',
+            -4    : 'The matrix is repeatedly singular.',
+            -5    : 'Repeated unexpected step rejections.'}
+    
+    def __init__(self, value, t = 0.0):
+        self.value = value
+        self.t = t
+        
+    def __str__(self): 
+        try:
+            return repr(self.msg[self.value]+' At time %f.'%self.t)    
+        except KeyError:
+            return repr('Radau failed with flag %s. At time %f.'%(self.value, self.t))
+
+
 class Radau5ODE(Radau_Common,Explicit_ODE):
     """
     Radau IIA fifth-order three-stages with step-size control and 
@@ -93,13 +114,27 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             def event_func(t, y):
                 return self.problem.state_events(t, y, self.sw)
             def f(t, y):
-                return self.problem.rhs(t, y, self.sw)
+                ret = 0
+                try:
+                    rhs = self.problem.rhs(t, y, self.sw)
+                except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                    rhs = y.copy()
+                    ret = -1 #Recoverable error
+                return rhs, [ret]
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_old = self.event_func(self.t, self.y)
         else:
-            self.f = self.problem.rhs
+            def f(t, y):
+                ret = 0
+                try:
+                    rhs = self.problem.rhs(t, y)
+                except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                    rhs = y.copy()
+                    ret = -1 #Recoverable error
+                return rhs, [ret]
+            self.f = f
     
     def interpolate(self, time):
         y = N.empty(self._leny)
@@ -194,7 +229,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         elif flag == 2:
             flag = ID_PY_EVENT
         else:
-            raise Exception("Radau5 failed with flag %d"%flag)
+            raise Radau5Error(flag, t)
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
@@ -814,8 +849,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                     return self.problem.state_events(t, y, self.sw)
             def f(t, y):
                 leny = self._leny
+                ret = 0
                 res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
-                return N.append(y[leny:2*leny],res)
+                return N.append(y[leny:2*leny],res), [ret]
             self._f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
@@ -823,8 +859,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         else:
             def f(t, y):
                 leny = self._leny
+                ret = 0
                 res = self.problem.res(t, y[:leny], y[leny:2*leny])
-                return N.append(y[leny:2*leny],res)
+                return N.append(y[leny:2*leny],res), [ret]
             self._f = f
     
     def interpolate(self, time, k=0):
@@ -947,7 +984,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         elif flag == 2:
             flag = ID_PY_EVENT
         else:
-            raise Exception("Radau5 failed with flag %d"%flag)
+            raise Radau5Error(flag, t)
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]

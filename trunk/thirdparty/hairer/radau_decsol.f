@@ -754,6 +754,7 @@ C ---------- CONSTANTS ---------
       FACCON=1.D0
       CFAC=SAFE*(1+2*NIT)
       NSING=0
+      NUNEXPECT=0
       XOLD=X
       IF (IOUT.NE.0) THEN
           IRTRN=1
@@ -833,9 +834,21 @@ C --- JACOBIAN IS FULL
                DELT=DSQRT(UROUND*MAX(1.D-5,ABS(YSAFE)))
                Y(I)=YSAFE+DELT
                CALL FCN(N,X,Y,CONT,RPAR,IPAR)
-               DO J=M1+1,N
-                 FJAC(J-M1,I)=(CONT(J)-Y0(J))/DELT
-               END DO
+               IF (IPAR(1).LT.0) THEN
+                 Y(I)=YSAFE-DELT
+                 CALL FCN(N,X,Y,CONT,RPAR,IPAR)
+                 IF (IPAR(1).LT.0) THEN
+                    Y(I)=YSAFE
+                    GOTO 79
+                 END IF
+                 DO J=M1+1,N
+                   FJAC(J-M1,I)=(Y0(J)-CONT(J))/DELT
+                 END DO
+               ELSE 
+                 DO J=M1+1,N
+                   FJAC(J-M1,I)=(CONT(J)-Y0(J))/DELT
+                 END DO
+               END IF
                Y(I)=YSAFE
             END DO
          END IF
@@ -916,15 +929,20 @@ C ---     COMPUTE THE RIGHT-HAND SIDE
                CONT(I)=Y(I)+Z1(I)
             END DO
             CALL FCN(N,X+C1*H,CONT,Z1,RPAR,IPAR)
+            NFCN=NFCN+1
+            IF (IPAR(1).LT.0) GOTO 79
             DO I=1,N
                CONT(I)=Y(I)+Z2(I)
             END DO
             CALL FCN(N,X+C2*H,CONT,Z2,RPAR,IPAR)
+            NFCN=NFCN+1
+            IF (IPAR(1).LT.0) GOTO 79
             DO I=1,N
                CONT(I)=Y(I)+Z3(I)
             END DO
             CALL FCN(N,XPH,CONT,Z3,RPAR,IPAR)
-            NFCN=NFCN+3
+            NFCN=NFCN+1
+            IF (IPAR(1).LT.0) GOTO 79
 C ---     SOLVE THE LINEAR SYSTEMS
            DO I=1,N
               A1=Z1(I)
@@ -1100,7 +1118,21 @@ C --- UNEXPECTED STEP-REJECTION
       LAST=.FALSE.
       IF (CALJAC) GOTO 20
       GOTO 10
+  79  CONTINUE
+      NUNEXPECT=NUNEXPECT+1
+      IF (NUNEXPECT.GE.10) GOTO 175
+      H=H*0.5D0 
+      HHFAC=0.5D0
+      REJECT=.TRUE.
+      LAST=.FALSE.
+      IF (CALJAC) GOTO 20
+      GOTO 10
 C --- FAIL EXIT
+ 175  CONTINUE
+      WRITE(6,979)X   
+      WRITE(6,*) ' REPEATEDLY UNEXPECTED STEP REJECTIONS'
+      IDID=-5
+      RETURN
  176  CONTINUE
       WRITE(6,979)X   
       WRITE(6,*) ' MATRIX IS REPEATEDLY SINGULAR, IER=',IER
