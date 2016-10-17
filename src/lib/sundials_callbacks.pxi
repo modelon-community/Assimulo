@@ -103,7 +103,8 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
     Sparse Jacobian function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y = nv2arr(yv)
+    #cdef N.ndarray y = nv2arr(yv)
+    cdef N.ndarray y = pData.work_y
     cdef int i
     cdef int nnz = Jacobian.NNZ
     cdef int ret_nnz
@@ -111,7 +112,8 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
     cdef realtype* data = Jacobian.data
     cdef int* rowvals = Jacobian.rowvals
     cdef int* colptrs = Jacobian.colptrs
-
+    
+    nv2arr_inplace(yv, y)
     """
         realtype *data;
         int *rowvals;
@@ -160,8 +162,11 @@ cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian,
     #cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
     #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    cdef N.ndarray y = nv2arr(yv)
+    #cdef N.ndarray y = nv2arr(yv)
+    cdef N.ndarray y = pData.work_y
     cdef int i,j
+    
+    nv2arr_inplace(yv, y)
 
     if pData.dimSens>0: #Sensitivity activated
         p = realtype2arr(pData.p,pData.dimSens)
@@ -358,10 +363,15 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     cdef N.ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
-    cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray yd = nv2arr(yvdot)
+    cdef N.ndarray y = pData.work_y
+    cdef N.ndarray yd = pData.work_yd
+    # cdef N.ndarray y = nv2arr(yv)
+    # cdef N.ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef int i
+    
+    nv2arr_inplace(yv, y)
+    nv2arr_inplace(yvdot, yd)
     
     if pData.dimSens!=0: #SENSITIVITY 
         p = realtype2arr(pData.p,pData.dimSens)
@@ -411,9 +421,14 @@ cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N
     cdef realtype* col_i=DENSE_COL(Jacobian,0)
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
-    cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray yd = nv2arr(yvdot)
+    cdef N.ndarray y = pData.work_y
+    cdef N.ndarray yd = pData.work_yd
+    #cdef N.ndarray y = nv2arr(yv)
+    #cdef N.ndarray yd = nv2arr(yvdot)
     cdef int i,j
+    
+    nv2arr_inplace(yv, y)
+    nv2arr_inplace(yvdot, yd)
     
     if pData.dimSens!=0: #SENSITIVITY 
         p = realtype2arr(pData.p,pData.dimSens)
@@ -461,9 +476,14 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     cdef N.ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
     #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
-    cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray yd = nv2arr(yvdot)
+    cdef N.ndarray y = pData.work_y
+    cdef N.ndarray yd = pData.work_yd
+    #cdef N.ndarray y = nv2arr(yv)
+    #cdef N.ndarray yd = nv2arr(yvdot)
     cdef int i
+    
+    nv2arr_inplace(yv, y)
+    nv2arr_inplace(yvdot, yd)
     
     try:
         if pData.sw != NULL:
