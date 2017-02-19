@@ -26,7 +26,7 @@ import numpy as N
 cimport numpy as N
 
 from exception import *
-from time import clock, time
+from timeit import default_timer as timer
 import warnings
 
 realtype = N.float
@@ -187,7 +187,7 @@ cdef class Implicit_ODE(ODE):
         output_index = 0
         
         self.time_limit_activated = 1 if self.time_limit > 0 else 0
-        self.time_integration_start = time()
+        self.time_integration_start = timer()
 
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
 
@@ -203,7 +203,7 @@ cdef class Implicit_ODE(ODE):
             
             #Initialize the clock, enabling storing elapsed time for each step 
             if REPORT_CONTINUOUSLY and self.options["clock_step"]: 
-                self.clock_start = clock()
+                self.clock_start = timer()
                 
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
 
@@ -274,16 +274,16 @@ cdef class Implicit_ODE(ODE):
                 
         #Store the elapsed time for a single step 
         if self.options["clock_step"]:
-            self.elapsed_step_time = clock() - self.clock_start 
-            self.clock_start = clock() 
+            self.elapsed_step_time = timer() - self.clock_start 
+            self.clock_start = timer() 
         
         #Check elapsed timed
         if self.time_limit_activated:
-            if self.time_limit-(time()-self.time_integration_start) < 0.0:
+            if self.time_limit-(timer()-self.time_integration_start) < 0.0:
                 raise TimeLimitExceeded("The time limit was exceeded at integration time %.8E."%self.t)    
         
         if self.display_progress:
-            if (time() - self.time_integration_start) > self.display_counter*10:
+            if (timer() - self.time_integration_start) > self.display_counter*10:
                 self.display_counter += 1
                 
                 sys.stdout.write(" Integrator time: %e" % self.t)
