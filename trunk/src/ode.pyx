@@ -17,7 +17,7 @@
 
 import numpy as N
 cimport numpy as N
-import time
+from timeit import default_timer as timer
 import pylab as P
 
 import itertools
@@ -283,13 +283,13 @@ cdef class ODE:
         self.initialize()
         
         #Start of simulation, start the clock
-        time_start = time.clock()
+        time_start = timer()
         
         #Start the simulation
         self._simulate(t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT)
         
         #End of simulation, stop the clock
-        time_stop = time.clock()
+        time_stop = timer()
         
         #Simulation complete, call finalize
         self.finalize()

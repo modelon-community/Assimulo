@@ -26,7 +26,7 @@ import numpy as N
 import pylab as P
 import operator as O
 import re
-import time
+from timeit import default_timer as timer
 from assimulo.problem_algebraic import *
 
 class KINSOL_Exception(Exception):
@@ -290,9 +290,9 @@ class KINSOL:
                     self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param,self.fscale)
                 else:
                     self.solver.KINSOL_init(self.func,self.x0,self.dim,jac,self.constraints,self.use_sparse,self.verbosity,self.norm_of_res,self.reg_param,None)
-                start = time.clock()
+                start = timer()
                 res = self.solver.KINSOL_solve(not self._use_ls)
-                stop = time.clock()
+                stop = timer()
                 self.exec_time += (stop - start)
                 solved = True
             except KINError as error:
