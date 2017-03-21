@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import sys
 
 from assimulo.exception import *
 from assimulo.ode import *
@@ -25,7 +26,7 @@ from assimulo.implicit_ode import Implicit_ODE
 try:
     from assimulo.lib.glimda import glimda
 except ImportError:
-    print("Could not find GLIMDA")
+    sys.stderr.write("Could not find GLIMDA.\n")
 
 class GLIMDA(Implicit_ODE):
     """

@@ -17,6 +17,7 @@
 
 import numpy as N
 import scipy.linalg as Sc
+import sys
 from assimulo.exception import *
 from assimulo.ode import *
 import logging
@@ -27,7 +28,7 @@ try:
     from assimulo.lib.odepack import dlsodar, dcfode, dintdy
     from assimulo.lib.odepack import set_lsod_common, get_lsod_common
 except ImportError:
-    print("Could not find ODEPACK functions")
+    sys.stderr.write("Could not find ODEPACK functions.\n")
 
 # Real work array  
 class common_like(object):
