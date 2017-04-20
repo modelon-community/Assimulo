@@ -387,39 +387,7 @@ class Assimulo_prepare(object):
             if self.platform == "mac":
                 el.extra_compile_args += ["-Wno-error=return-type"]
             el.extra_compile_args += self.flag_32bit + self.extra_c_flags
-            
-        if self.with_SUNDIALS:
-            cordir_KINSOL_wSLU = os.path.join(self.assimulo_lib,'sundials_kinsol_core_wSLU.pyx')
-            cordir_KINSOL = os.path.join(self.assimulo_lib,'sundials_kinsol_core.pyx')
-        
-            cordir_KINSOL_jmod_wSLU = os.path.join(self.assimulo_lib,'kinsol_jmod_wSLU.c')
-            cordir_KINSOL_jmod = os.path.join(self.assimulo_lib,'kinsol_jmod.c')
-        
-            cordir_kinpinv = os.path.join(self.assimulo_lib,'kinpinv.c')
-            cordir_kinslug = os.path.join(self.assimulo_lib,'kinslug.c')
-            cordir_reg_routines = os.path.join(self.assimulo_lib,'reg_routines.c')
-            if self.with_SLU:
-                ext_list = ext_list + cythonize([cordir_KINSOL_wSLU], include_path=[".","assimulo",self.assimulo_lib])
-                ext_list[-1].sources += [cordir_KINSOL_jmod_wSLU,cordir_kinpinv,cordir_kinslug,cordir_reg_routines]
-                ext_list[-1].include_dirs = [np.get_include(), self.SLUincdir, self.incdirs]
-                ext_list[-1].library_dirs = [self.libdirs,self.SLUlibdir,self.BLASdir]
-                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial", "superlu_4.1",self.BLASname,'gfortran']
-            else:
-                ext_list = ext_list + cythonize([cordir_KINSOL])#, include_path=[".","assimulo",self.assimulo_lib])
-                ext_list[-1].sources += [cordir_KINSOL_jmod,cordir_kinpinv]
-                ext_list[-1].include_dirs = [np.get_include(), self.incdirs]
-                ext_list[-1].library_dirs = [self.libdirs]
-                ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            if self.SUNDIALS_version > (2,5,0):
-                ext_list[-1].define_macros.append(("SUNDIALS_26", 1))
-            if self.debug_flag:
-                ext_list[-1].extra_compile_args = ["-g", "-fno-strict-aliasing"]
-            else:
-                ext_list[-1].extra_compile_args = ["-O2", "-fno-strict-aliasing"]
-            if self.platform == "mac":
-                ext_list[-1].extra_compile_args += ["-Wno-error=return-type"]
-            ext_list[-1].extra_compile_args += self.flag_32bit + self.extra_c_flags
-            
+
         for el in ext_list:
             if self.is_python3:
                 el.cython_directives = {"language_level": 3} 
