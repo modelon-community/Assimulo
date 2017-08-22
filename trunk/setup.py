@@ -292,7 +292,7 @@ class Assimulo_prepare(object):
             else:
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
-            self.superLUFiles = [remove_prefix(f.split(".")[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
+            self.superLUFiles = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
             self.superLUFiles.sort(reverse=True)
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
