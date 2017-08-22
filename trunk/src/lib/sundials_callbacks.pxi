@@ -110,8 +110,13 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
     cdef int ret_nnz
     cdef int dim = Jacobian.N
     cdef realtype* data = Jacobian.data
-    cdef int* rowvals = Jacobian.rowvals
-    cdef int* colptrs = Jacobian.colptrs
+    
+    IF SUNDIALS_VERSION >= (2,6,3):
+        cdef int* rowvals = Jacobian.rowvals[0]
+        cdef int* colptrs = Jacobian.colptrs[0]
+    ELSE:
+        cdef int* rowvals = Jacobian.rowvals
+        cdef int* colptrs = Jacobian.colptrs
     
     nv2arr_inplace(yv, y)
     """
@@ -136,9 +141,9 @@ cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
             jac = sparse.csc.csc_matrix(jac)
             raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
         ret_nnz = jac.nnz
-        if ret_nnz> nnz:
+        if ret_nnz > nnz:
             raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
-            
+
         for i in range(min(ret_nnz,nnz)):
             data[i]    = jac.data[i]
             rowvals[i] = jac.indices[i]
