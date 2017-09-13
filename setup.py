@@ -468,18 +468,9 @@ class Assimulo_prepare(object):
     
         #GLIMDA
         if self.with_BLAS and self.with_LAPACK:
-            lapack_blas = ""
-            if self.LAPACKdir != "": lapack_blas += "-L{} ".format(self.LAPACKdir)
-            #if self.LAPACKname != "": 
-            #    lapack_blas += "-L{} ".format(self.LAPACKname) 
-            #else: 
-            lapack_blas += "-llapack "
-            if self.BLASdir != "": lapack_blas += "-L{} ".format(self.BLASdir)
-            lapack_blas += "-lblas"
-            extra_link_flags += [lapack_blas]
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
-            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', 'blas']}
             if StrictVersion(np.version.version) > StrictVersion("1.6.1"): 
                 extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
