@@ -1,5 +1,8 @@
 --- CHANGELOG ---
 
+--- Assimulo-trunk ---
+    * Renamed the option stablimit to stablimit (ticket:417)
+
 --- Assimulo-2.9 ---
     * Added option to specify to use the 2-norm in CVode (ticket:401)
     * Added option to set max nonlinear iteration in CVode (ticket:400)
