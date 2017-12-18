@@ -568,6 +568,13 @@ class Test_CVode:
         assert self.simulator.maxkrylov == 4
         
         nose.tools.assert_raises(Exception, self.simulator._set_max_krylov, 'Test')
+        
+    @testattr(stddist = True)
+    def test_stablimit(self):
+        assert self.simulator.stablimit == False
+        self.simulator.stablimit = True
+        assert self.simulator.stablimit == True
+        assert self.simulator.options["stablimit"] == True
     
     @testattr(stddist = True)
     def test_linearsolver(self):

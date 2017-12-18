@@ -2728,7 +2728,7 @@ cdef class CVode(Explicit_ODE):
         """
         return self.options["stablimit"]
     
-    stablimdet = property(_get_stability_limit_detection, _set_stability_limit_detection)
+    stablimit = property(_get_stability_limit_detection, _set_stability_limit_detection)
     
     def _set_dqrhomax(self, dqrhomax):
         try:
