@@ -71,23 +71,23 @@ IF SUNDIALS_VERSION >= (3,0,0):
         ELSE:
             ctypedef int sunindextype
     cdef extern from "sundials/sundials_matrix.h":
-        ctypedef _generic_SUNMatrix *SUNMatrix;
-        void SUNMatDestroy(SUNMatrix A);
+        ctypedef _generic_SUNMatrix *SUNMatrix
+        void SUNMatDestroy(SUNMatrix A)
         
         cdef struct _generic_SUNMatrix_Ops:
-            SUNMatrix_ID (*getid)(SUNMatrix);
-            SUNMatrix    (*clone)(SUNMatrix);
-            void         (*destroy)(SUNMatrix);
-            int          (*zero)(SUNMatrix);
-            int          (*copy)(SUNMatrix, SUNMatrix);
-            int          (*scaleadd)(realtype, SUNMatrix, SUNMatrix);
-            int          (*scaleaddi)(realtype, SUNMatrix);
-            int          (*matvec)(SUNMatrix, N_Vector, N_Vector);
-            int          (*space)(SUNMatrix, long int*, long int*);
+            SUNMatrix_ID (*getid)(SUNMatrix)
+            SUNMatrix    (*clone)(SUNMatrix)
+            void         (*destroy)(SUNMatrix)
+            int          (*zero)(SUNMatrix)
+            int          (*copy)(SUNMatrix, SUNMatrix)
+            int          (*scaleadd)(realtype, SUNMatrix, SUNMatrix)
+            int          (*scaleaddi)(realtype, SUNMatrix)
+            int          (*matvec)(SUNMatrix, N_Vector, N_Vector)
+            int          (*space)(SUNMatrix, long int*, long int*)
 
         cdef struct _generic_SUNMatrix:
-            void *content;
-            _generic_SUNMatrix_Ops *ops;
+            void *content
+            _generic_SUNMatrix_Ops *ops
             
         cdef enum SUNMatrix_ID:
             SUNMATRIX_DENSE, 
@@ -96,30 +96,30 @@ IF SUNDIALS_VERSION >= (3,0,0):
             SUNMATRIX_CUSTOM
     
     cdef extern from "sundials/sundials_linearsolver.h":
-        ctypedef _generic_SUNLinearSolver *SUNLinearSolver;
-        int SUNLinSolFree(SUNLinearSolver S);
+        ctypedef _generic_SUNLinearSolver *SUNLinearSolver
+        int SUNLinSolFree(SUNLinearSolver S)
         
         cdef struct _generic_SUNLinearSolver_Ops:
-            SUNLinearSolver_Type (*gettype)(SUNLinearSolver);
-            int                  (*setatimes)(SUNLinearSolver, void*, ATimesFn);
+            SUNLinearSolver_Type (*gettype)(SUNLinearSolver)
+            int                  (*setatimes)(SUNLinearSolver, void*, ATimesFn)
             int                  (*setpreconditioner)(SUNLinearSolver, void*, 
-                                                    PSetupFn, PSolveFn);
+                                                    PSetupFn, PSolveFn)
             int                  (*setscalingvectors)(SUNLinearSolver,
-                                                    N_Vector, N_Vector);
-            int                  (*initialize)(SUNLinearSolver);
-            int                  (*setup)(SUNLinearSolver, SUNMatrix);
+                                                    N_Vector, N_Vector)
+            int                  (*initialize)(SUNLinearSolver)
+            int                  (*setup)(SUNLinearSolver, SUNMatrix)
             int                  (*solve)(SUNLinearSolver, SUNMatrix, N_Vector, 
-                                        N_Vector, realtype);
-            int                  (*numiters)(SUNLinearSolver);
-            realtype             (*resnorm)(SUNLinearSolver);
-            long int             (*lastflag)(SUNLinearSolver);
-            int                  (*space)(SUNLinearSolver, long int*, long int*);
-            N_Vector             (*resid)(SUNLinearSolver);
-            int                  (*free)(SUNLinearSolver);
+                                        N_Vector, realtype)
+            int                  (*numiters)(SUNLinearSolver)
+            realtype             (*resnorm)(SUNLinearSolver)
+            long int             (*lastflag)(SUNLinearSolver)
+            int                  (*space)(SUNLinearSolver, long int*, long int*)
+            N_Vector             (*resid)(SUNLinearSolver)
+            int                  (*free)(SUNLinearSolver)
         
         cdef struct _generic_SUNLinearSolver:
-            void *content;
-            _generic_SUNLinearSolver_Ops *ops;
+            void *content
+            _generic_SUNLinearSolver_Ops *ops
             
         cdef enum SUNLinearSolver_Type:
             SUNLINEARSOLVER_DIRECT,
@@ -127,34 +127,34 @@ IF SUNDIALS_VERSION >= (3,0,0):
             SUNLINEARSOLVER_CUSTOM
     
     cdef extern from "sunmatrix/sunmatrix_dense.h":
-        ctypedef _SUNMatrixContent_Dense *SUNMatrixContent_Dense;
+        ctypedef _SUNMatrixContent_Dense *SUNMatrixContent_Dense
         cdef struct _SUNMatrixContent_Dense:
-            sunindextype M;
-            sunindextype N;
-            realtype *data;
-            sunindextype ldata;
-            realtype **cols;
-        SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N);
+            sunindextype M
+            sunindextype N
+            realtype *data
+            sunindextype ldata
+            realtype **cols
+        SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N)
     cdef extern from "sunmatrix/sunmatrix_sparse.h":
-        ctypedef _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse;
+        ctypedef _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse
         cdef struct _SUNMatrixContent_Sparse:
-            sunindextype M;
-            sunindextype N;
-            sunindextype NNZ;
-            sunindextype NP;
-            realtype *data;
-            int sparsetype;
-            sunindextype *indexvals;
-            sunindextype *indexptrs;
-            sunindextype **rowvals;
-            sunindextype **colptrs;
-            sunindextype **colvals;
-            sunindextype **rowptrs;
-        SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype);
+            sunindextype M
+            sunindextype N
+            sunindextype NNZ
+            sunindextype NP
+            realtype *data
+            int sparsetype
+            sunindextype *indexvals
+            sunindextype *indexptrs
+            sunindextype **rowvals
+            sunindextype **colptrs
+            sunindextype **colvals
+            sunindextype **rowptrs
+        SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype)
     cdef extern from "sunlinsol/sunlinsol_dense.h":
-        SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A);
+        SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A)
     cdef extern from "sunlinsol/sunlinsol_spgmr.h":
-        SUNLinearSolver SUNSPGMR(N_Vector y, int pretype, int maxl);
+        SUNLinearSolver SUNSPGMR(N_Vector y, int pretype, int maxl)
         
 ELSE: 
     #Dummy defines
@@ -341,12 +341,12 @@ IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "cvodes/cvodes_direct.h":
         ctypedef int (*CVDlsDenseJacFn)(realtype t, N_Vector y, N_Vector fy, 
                        SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-        int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A);
+        int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A)
         int CVDlsSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
     cdef extern from "cvodes/cvodes_spils.h":
-        int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS);
-        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data);
-        int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes);
+        int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS)
+        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data)
+        int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
     
     
     IF SUNDIALS_WITH_SUPERLU:
@@ -519,14 +519,14 @@ IF SUNDIALS_VERSION >= (3,0,0):
                        N_Vector yp, N_Vector rr, SUNMatrix Jac, void *user_data, 
                        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
         int IDADlsSetJacFn(void *ida_mem, IDADlsDenseJacFn djac)
-        int IDADlsSetLinearSolver(void *ida_mem, SUNLinearSolver LS, SUNMatrix A);
+        int IDADlsSetLinearSolver(void *ida_mem, SUNLinearSolver LS, SUNMatrix A)
     
     cdef extern from "idas/idas_spils.h":
-        int IDASpilsSetLinearSolver(void *ida_mem, SUNLinearSolver LS);
+        int IDASpilsSetLinearSolver(void *ida_mem, SUNLinearSolver LS)
         ctypedef int (*IDASpilsJacTimesSetupFn)(realtype tt, N_Vector yy,
-                    N_Vector yp, N_Vector rr, realtype c_j, void *user_data);
+                    N_Vector yp, N_Vector rr, realtype c_j, void *user_data)
         int IDASpilsSetJacTimes(void *ida_mem,
-                IDASpilsJacTimesSetupFn jtsetup, IDASpilsJacTimesVecFn jtimes);
+                IDASpilsJacTimesSetupFn jtsetup, IDASpilsJacTimesVecFn jtimes)
                 
     cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
 ELSE:
@@ -608,11 +608,11 @@ cdef extern from "kinsol/kinsol.h":
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "kinsol/kinsol_direct.h":
         ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2)
-        int KINDlsSetLinearSolver(void *kinmem, SUNLinearSolver LS, SUNMatrix A);
+        int KINDlsSetLinearSolver(void *kinmem, SUNLinearSolver LS, SUNMatrix A)
         int KINDlsSetJacFn(void *kinmem, KINDlsDenseJacFn djac)
     
     cdef extern from "kinsol/kinsol_spils.h":
-        int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS);
+        int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS)
 ELSE:
     # functions used for supplying jacobian, and receiving info from linear solver
     cdef extern from "kinsol/kinsol_direct.h":
