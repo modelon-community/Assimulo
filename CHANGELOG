@@ -1,6 +1,7 @@
 --- CHANGELOG ---
 
 --- Assimulo-trunk ---
+    * Added support for Sundials 3.1 (ticket:418)
     * Renamed the option stablimit to stablimit (ticket:417)
 
 --- Assimulo-2.9 ---

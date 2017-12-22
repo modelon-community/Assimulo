@@ -34,8 +34,8 @@ from assimulo.support import set_type_shape_array
 cimport sundials_includes as SUNDIALS
 
 #Various C includes transfered to namespace
-from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
-from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat
+from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
+from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
 from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
@@ -70,6 +70,8 @@ cdef class IDA(Implicit_ODE):
     cdef public N.ndarray yS0
     #cdef N.ndarray _event_info
     cdef public N.ndarray g_old
+    cdef SUNDIALS.SUNMatrix sun_matrix
+    cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     
     def __init__(self, problem):
         Implicit_ODE.__init__(self, problem) #Calls the base class
@@ -100,6 +102,8 @@ cdef class IDA(Implicit_ODE):
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default 
+        self.options["precond"] = PREC_NONE
+
 
         #Solver support
         self.supports["report_continuously"] = True
@@ -173,6 +177,13 @@ cdef class IDA(Implicit_ODE):
         if self.ida_mem != NULL: 
             #Free Memory
             SUNDIALS.IDAFree(&self.ida_mem)
+        
+        IF SUNDIALS_VERSION >= (3,0,0):
+            if self.sun_matrix != NULL:
+                SUNDIALS.SUNMatDestroy(self.sun_matrix)
+                
+            if self.sun_linearsolver != NULL:
+                SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
     
     cpdef state_event_info(self):
         """
@@ -255,21 +266,30 @@ cdef class IDA(Implicit_ODE):
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
-            #Specify the use of the internal dense linear algebra functions.
-            flag = SUNDIALS.IDADense(self.ida_mem, self.pData.dim)
-            if flag < 0:
-                raise IDAError(flag, self.t)
-                
-                    #Choose a linear solver if and only if NEWTON is choosen
+            #Choose a linear solver if and only if NEWTON is choosen
             if self.options["linear_solver"] == 'DENSE':
-                #Specify the use of the internal dense linear algebra functions.
-                flag = SUNDIALS.IDADense(self.ida_mem, self.pData.dim)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    #Create a dense Sundials matrix
+                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                    #Create a dense Sundials linear solver
+                    self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
+                    #Attach it to IDA
+                    flag = SUNDIALS.IDADlsSetLinearSolver(self.ida_mem, self.sun_linearsolver, self.sun_matrix);
+                ELSE:
+                    #Specify the use of the internal dense linear algebra functions.
+                    flag = SUNDIALS.IDADense(self.ida_mem, self.pData.dim)
                 if flag < 0:
                     raise IDAError(flag, self.t)
                         
             elif self.options["linear_solver"] == 'SPGMR':
-                #Specify the use of SPGMR linear solver.
-                flag = SUNDIALS.IDASpgmr(self.ida_mem, 0) #0 == Default krylov iterations
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    #Create the linear solver
+                    self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, self.options["precond"], 0)
+                    #Attach it to IDAS
+                    flag = SUNDIALS.IDASpilsSetLinearSolver(self.ida_mem, self.sun_linearsolver)
+                ELSE:
+                    #Specify the use of SPGMR linear solver.
+                    flag = SUNDIALS.IDASpgmr(self.ida_mem, 0) #0 == Default krylov iterations
                 if flag < 0: 
                     raise IDAError(flag, self.t)
                 
@@ -310,23 +330,34 @@ cdef class IDA(Implicit_ODE):
         if self.options["linear_solver"] == 'DENSE':
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                
-                flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.IDADlsSetJacFn(self.ida_mem, ida_jac)
+                ELSE:
+                    flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, ida_jac)
                 if flag < 0:
                     raise IDAError(flag,self.t)
             else:
-                flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, NULL)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.IDADlsSetJacFn(self.ida_mem, NULL)
+                ELSE:
+                    flag = SUNDIALS.IDADlsSetDenseJacFn(self.ida_mem, NULL)
                 if flag < 0:
                     raise IDAError(flag,self.t)
                     
         elif self.options["linear_solver"] == 'SPGMR':
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, ida_jacv);
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.IDASpilsSetJacTimes(self.ida_mem, SUNDIALS.ida_spils_jtsetup_dummy, ida_jacv);
+                ELSE:
+                    flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, ida_jacv);
                 if flag < 0:
                     raise IDAError(flag, self.t)
             else:
-                flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, NULL);
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.IDASpilsSetJacTimes(self.ida_mem, NULL, NULL);
+                ELSE:
+                    flag = SUNDIALS.IDASpilsSetJacTimesVecFn(self.ida_mem, NULL);
                 if flag < 0:
                     raise IDAError(flag, self.t)
         else:
@@ -1415,6 +1446,8 @@ cdef class CVode(Explicit_ODE):
     cdef public N.ndarray yS0
     #cdef N.ndarray _event_info
     cdef public N.ndarray g_old
+    cdef SUNDIALS.SUNMatrix sun_matrix
+    cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -1479,6 +1512,13 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem != NULL:
             #Free Memory
             SUNDIALS.CVodeFree(&self.cvode_mem)
+        
+        IF SUNDIALS_VERSION >= (3,0,0):
+            if self.sun_matrix != NULL:
+                SUNDIALS.SUNMatDestroy(self.sun_matrix)
+                
+            if self.sun_linearsolver != NULL:
+                SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
     
     cpdef get_local_errors(self):
         """
@@ -2019,29 +2059,51 @@ cdef class CVode(Explicit_ODE):
         Updates the simulation options.
         """
         cdef flag
-        
+
         #Choose a linear solver if and only if NEWTON is choosen
         if self.options["linear_solver"] == 'DENSE' and self.options["iter"] == "Newton":
-            #Specify the use of the internal dense linear algebra functions.
-            flag = SUNDIALS.CVDense(self.cvode_mem, self.pData.dim)
-            if flag < 0:
-                raise CVodeError(flag)
+            IF SUNDIALS_VERSION >= (3,0,0):
+                #Create a dense Sundials matrix
+                self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                #Create a dense Sundials linear solver
+                self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
+                #Attach it to CVode
+                flag = SUNDIALS.CVDlsSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix);
+                if flag < 0:
+                    raise CVodeError(flag)
+            ELSE:
+                #Specify the use of the internal dense linear algebra functions.
+                flag = SUNDIALS.CVDense(self.cvode_mem, self.pData.dim)
+                if flag < 0:
+                    raise CVodeError(flag)
                 
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, cv_jac)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, cv_jac);
+                ELSE:
+                    flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, cv_jac)
                 if flag < 0:
                     raise CVodeError(flag)
             else:
-                flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, NULL)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, NULL);
+                ELSE:
+                    flag = SUNDIALS.CVDlsSetDenseJacFn(self.cvode_mem, NULL)
                 if flag < 0:
                     raise CVodeError(flag)
                     
         elif self.options["linear_solver"] == 'SPGMR' and self.options["iter"] == "Newton":
-            #Specify the use of CVSPGMR linear solver.
-            flag = SUNDIALS.CVSpgmr(self.cvode_mem, self.options["precond"], self.options["maxkrylov"])
+            IF SUNDIALS_VERSION >= (3,0,0):
+                #Create the linear solver
+                self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, self.options["precond"], self.options["maxkrylov"])
+                #Attach it to CVode
+                flag = SUNDIALS.CVSpilsSetLinearSolver(self.cvode_mem, self.sun_linearsolver)
+            ELSE:
+                #Specify the use of CVSPGMR linear solver.
+                flag = SUNDIALS.CVSpgmr(self.cvode_mem, self.options["precond"], self.options["maxkrylov"])
             if flag < 0:
-                raise CVodeError(flag)
+                raise CVodeError(flag) 
                 
             if self.pData.PREC_SOLVE != NULL:
                 if self.pData.PREC_SETUP != NULL: 
@@ -2055,28 +2117,45 @@ cdef class CVode(Explicit_ODE):
                   
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, cv_jacv)
-                if flag < 0:
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.CVSpilsSetJacTimes(self.cvode_mem, SUNDIALS.cv_spils_jtsetup_dummy, cv_jacv);
+                ELSE:
+                    flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, cv_jacv)
+                if flag < 0: 
                     raise CVodeError(flag)
             else:
-                flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, NULL)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.CVSpilsSetJacTimes(self.cvode_mem, NULL, NULL);
+                ELSE:
+                    flag = SUNDIALS.CVSpilsSetJacTimesVecFn(self.cvode_mem, NULL)
                 if flag < 0:
                     raise CVodeError(flag)
         elif self.options["linear_solver"] == 'SPARSE' and self.options["iter"] == "Newton":
             
             if SUNDIALS.version() < (2,6,0): 
                 raise AssimuloException("Not supported with this SUNDIALS version.")
-            
+            if SUNDIALS.with_superlu() == 0:
+                raise AssimuloException("No support for SuperLU was detected, please verify that SuperLU and SUNDIALS has been installed correctly.")
+                
             #Specify the use of CVSPGMR linear solver.
             if self.problem_info["jac_fcn_nnz"] == -1:
                 raise AssimuloException("Need to specify the number of non zero elements in the Jacobian via the option 'jac_nnz'")
-            flag = SUNDIALS.CVSuperLUMT(self.cvode_mem, self.options["num_threads"], self.pData.dim, self.problem_info["jac_fcn_nnz"])
+                
+            IF SUNDIALS_VERSION >= (3,0,0):
+                self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
+                self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
+                flag = SUNDIALS.CVDlsSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
+            ELSE:
+                flag = SUNDIALS.CVSuperLUMT(self.cvode_mem, self.options["num_threads"], self.pData.dim, self.problem_info["jac_fcn_nnz"])
             if flag < 0:
                     raise CVodeError(flag)
             
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                flag = SUNDIALS.CVSlsSetSparseJacFn(self.cvode_mem, cv_jac_sparse)
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, cv_jac_sparse)
+                ELSE:
+                    flag = SUNDIALS.CVSlsSetSparseJacFn(self.cvode_mem, cv_jac_sparse)
                 if flag < 0:
                     raise CVodeError(flag)
             else:
@@ -2899,7 +2978,10 @@ cdef class CVode(Explicit_ODE):
             flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
             self.statistics["njacvecs"]  += njvevals
         elif self.options["linear_solver"] == "SPARSE":
-            flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
+            IF SUNDIALS_VERSION >= (3,0,0):
+                flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals)
+            ELSE:
+                flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
             self.statistics["njacs"]   += njevals
         else:
             flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals

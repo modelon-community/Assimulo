@@ -37,19 +37,6 @@ cdef extern from "sundials/sundials_types.h":
     ctypedef double realtype
     ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
 
-#==============================================
-# C headers
-#==============================================
-cdef extern from "string.h":
-    void *memcpy(void *s1, void *s2, int n)
-cdef extern from "stdlib.h":
-    void *malloc(int size)
-    void free(void *ptr)
-    
-#==============================================
-#External definitions from Sundials headers
-#==============================================
-
 cdef extern from "sundials/sundials_nvector.h":
     ctypedef _generic_N_Vector* N_Vector
     
@@ -77,6 +64,107 @@ cdef extern from "nvector/nvector_serial.h":
     void N_VDestroy_Serial(N_Vector v)
     void N_VPrint_Serial(N_Vector v)
 
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef extern from "sundials/sundials_types.h":
+        IF SUNDIALS_VECTOR_SIZE == "64":
+            ctypedef long int sunindextype
+        ELSE:
+            ctypedef int sunindextype
+    cdef extern from "sundials/sundials_matrix.h":
+        ctypedef _generic_SUNMatrix *SUNMatrix;
+        void SUNMatDestroy(SUNMatrix A);
+        
+        cdef struct _generic_SUNMatrix_Ops:
+            SUNMatrix_ID (*getid)(SUNMatrix);
+            SUNMatrix    (*clone)(SUNMatrix);
+            void         (*destroy)(SUNMatrix);
+            int          (*zero)(SUNMatrix);
+            int          (*copy)(SUNMatrix, SUNMatrix);
+            int          (*scaleadd)(realtype, SUNMatrix, SUNMatrix);
+            int          (*scaleaddi)(realtype, SUNMatrix);
+            int          (*matvec)(SUNMatrix, N_Vector, N_Vector);
+            int          (*space)(SUNMatrix, long int*, long int*);
+
+        cdef struct _generic_SUNMatrix:
+            void *content;
+            _generic_SUNMatrix_Ops *ops;
+            
+        cdef enum SUNMatrix_ID:
+            SUNMATRIX_DENSE, 
+            SUNMATRIX_BAND, 
+            SUNMATRIX_SPARSE, 
+            SUNMATRIX_CUSTOM
+    
+    cdef extern from "sundials/sundials_linearsolver.h":
+        ctypedef _generic_SUNLinearSolver *SUNLinearSolver;
+        int SUNLinSolFree(SUNLinearSolver S);
+        
+        cdef struct _generic_SUNLinearSolver_Ops:
+            SUNLinearSolver_Type (*gettype)(SUNLinearSolver);
+            int                  (*setatimes)(SUNLinearSolver, void*, ATimesFn);
+            int                  (*setpreconditioner)(SUNLinearSolver, void*, 
+                                                    PSetupFn, PSolveFn);
+            int                  (*setscalingvectors)(SUNLinearSolver,
+                                                    N_Vector, N_Vector);
+            int                  (*initialize)(SUNLinearSolver);
+            int                  (*setup)(SUNLinearSolver, SUNMatrix);
+            int                  (*solve)(SUNLinearSolver, SUNMatrix, N_Vector, 
+                                        N_Vector, realtype);
+            int                  (*numiters)(SUNLinearSolver);
+            realtype             (*resnorm)(SUNLinearSolver);
+            long int             (*lastflag)(SUNLinearSolver);
+            int                  (*space)(SUNLinearSolver, long int*, long int*);
+            N_Vector             (*resid)(SUNLinearSolver);
+            int                  (*free)(SUNLinearSolver);
+        
+        cdef struct _generic_SUNLinearSolver:
+            void *content;
+            _generic_SUNLinearSolver_Ops *ops;
+            
+        cdef enum SUNLinearSolver_Type:
+            SUNLINEARSOLVER_DIRECT,
+            SUNLINEARSOLVER_ITERATIVE,
+            SUNLINEARSOLVER_CUSTOM
+    
+    cdef extern from "sunmatrix/sunmatrix_dense.h":
+        ctypedef _SUNMatrixContent_Dense *SUNMatrixContent_Dense;
+        cdef struct _SUNMatrixContent_Dense:
+            sunindextype M;
+            sunindextype N;
+            realtype *data;
+            sunindextype ldata;
+            realtype **cols;
+        SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N);
+    cdef extern from "sunmatrix/sunmatrix_sparse.h":
+        ctypedef _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse;
+        cdef struct _SUNMatrixContent_Sparse:
+            sunindextype M;
+            sunindextype N;
+            sunindextype NNZ;
+            sunindextype NP;
+            realtype *data;
+            int sparsetype;
+            sunindextype *indexvals;
+            sunindextype *indexptrs;
+            sunindextype **rowvals;
+            sunindextype **colptrs;
+            sunindextype **colvals;
+            sunindextype **rowptrs;
+        SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype);
+    cdef extern from "sunlinsol/sunlinsol_dense.h":
+        SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A);
+    cdef extern from "sunlinsol/sunlinsol_spgmr.h":
+        SUNLinearSolver SUNSPGMR(N_Vector y, int pretype, int maxl);
+        
+ELSE: 
+    #Dummy defines
+    ctypedef void *SUNLinearSolver
+    ctypedef void *SUNMatrix
+    ctypedef void *SUNMatrixContent_Dense
+    ctypedef void *SUNMatrixContent_Sparse
+    ctypedef int sunindextype
+
+
 #Struct for handling the Jacobian data
 cdef extern from "sundials/sundials_direct.h":
     cdef struct _DlsMat:
@@ -92,7 +180,7 @@ cdef extern from "sundials/sundials_direct.h":
         realtype **cols
     ctypedef _DlsMat* DlsMat
     cdef realtype* DENSE_COL(DlsMat A, int j)
-
+    
 IF SUNDIALS_VERSION >= (2,6,3):
     cdef extern from "sundials/sundials_sparse.h":
         cdef struct _SlsMat:
@@ -128,6 +216,25 @@ ELSE:
         int *rowvals
         int *colptrs
     ctypedef _SlsMat* SlsMat
+    
+#==============================================
+# C headers
+#==============================================
+cdef extern from "string.h":
+    void *memcpy(void *s1, void *s2, int n)
+cdef extern from "stdlib.h":
+    void *malloc(int size)
+    void free(void *ptr)
+    
+#==============================================
+#External definitions from Sundials headers
+#==============================================
+
+IF SUNDIALS_WITH_SUPERLU:
+    cdef inline int with_superlu(): return 1
+ELSE:
+    cdef inline int with_superlu(): return 0
+
 
 cdef extern from "cvodes/cvodes.h":
     void* CVodeCreate(int lmm, int iter)
@@ -225,45 +332,67 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeGetSensNonlinSolvStats(void *cvode_mem, long int *nSniters, long int *nSncfails)
     int CVodeGetStgrSensNumNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters)
     int CVodeGetStgrSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSTGR1ncfails)
-    
-    
-cdef extern from "cvodes/cvodes_dense.h":
-    int CVDense(void *cvode_mem, long int n)
-    ctypedef int (*CVDlsDenseJacFn)(int n, realtype t, N_Vector y, N_Vector fy, 
-                   DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-    int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
 
-cdef extern from "cvodes/cvodes_spgmr.h":
-    int CVSpgmr(void *cvode_mem, int pretype, int max1)
+cdef extern from "cvodes/cvodes_spils.h":
+    ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
+            N_Vector y, N_Vector fy, void *user_data, N_Vector tmp)
+
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef extern from "cvodes/cvodes_direct.h":
+        ctypedef int (*CVDlsDenseJacFn)(realtype t, N_Vector y, N_Vector fy, 
+                       SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+        int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A);
+        int CVDlsSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+    cdef extern from "cvodes/cvodes_spils.h":
+        int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS);
+        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data);
+        int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes);
     
-IF SUNDIALS_VERSION >= (2,6,0):
-    cdef extern from "cvodes/cvodes_sparse.h":
+    
+    IF SUNDIALS_WITH_SUPERLU:
+        cdef extern from "sunlinsol/sunlinsol_superlumt.h":
+            SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads)
+    ELSE:
+        cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads): return NULL
+    
+    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data): return 0    
+    cdef inline tuple version(): return (3,0,0)
+ELSE:
+    cdef extern from "cvodes/cvodes_dense.h":
+        int CVDense(void *cvode_mem, long int n)
+        ctypedef int (*CVDlsDenseJacFn)(int n, realtype t, N_Vector y, N_Vector fy, 
+                       DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+        int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+
+    cdef extern from "cvodes/cvodes_spgmr.h":
+        int CVSpgmr(void *cvode_mem, int pretype, int max1)
+    
+    cdef extern from "cvodes/cvodes_spils.h":
+        int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+    
+    IF SUNDIALS_VERSION >= (2,6,0):
+        cdef extern from "cvodes/cvodes_sparse.h":
+            ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
+                                      SlsMat Jac, void *user_data, N_Vector tmp1,
+                                        N_Vector tmp2, N_Vector tmp3)
+            int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
+            int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
+        cdef inline tuple version(): return (2,6,0)
+        IF SUNDIALS_WITH_SUPERLU:
+            cdef extern from "cvodes/cvodes_sparse.h":
+                int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
+        ELSE:
+            cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+    ELSE:
+        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
         ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                   SlsMat Jac, void *user_data, N_Vector tmp1,
                                     N_Vector tmp2, N_Vector tmp3)
-        int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
-        int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
-    #cdef inline char* version(): return "2.6.0"
-    cdef inline tuple version(): return (2,6,0)
-    IF SUNDIALS_WITH_SUPERLU:
-        cdef extern from "cvodes/cvodes_sparse.h":
-            int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
-    ELSE:
-        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
-ELSE:
-    cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
-    ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
-                              SlsMat Jac, void *user_data, N_Vector tmp1,
-                                N_Vector tmp2, N_Vector tmp3)
-    cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac): return -1
-    cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals): return -1
-    #cdef inline char* version(): return "2.5.0"
-    cdef inline tuple version(): return (2,5,0)
+        cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac): return -1
+        cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals): return -1
+        cdef inline tuple version(): return (2,5,0)
     
 cdef extern from "cvodes/cvodes_spils.h":
-    ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
-				    N_Vector y, N_Vector fy,
-				    void *user_data, N_Vector tmp)
     ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
 				  booleantype jok, booleantype *jcurPtr,
 				  realtype gamma, void *user_data,
@@ -273,13 +402,12 @@ cdef extern from "cvodes/cvodes_spils.h":
 				  N_Vector r, N_Vector z,
 				  realtype gamma, realtype delta,
 				  int lr, void *user_data, N_Vector tmp)
-    int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+    
     int CVSpilsSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve)
     int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
     int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
     int CVSpilsGetNumPrecEvals(void *cvode_mem, long int *npevals)
     int CVSpilsGetNumPrecSolves(void *cvode_mem, long int *npsolves)
-    
 
 cdef extern from "idas/idas.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
@@ -380,19 +508,40 @@ cdef extern from "idas/idas.h":
     
     #End Sensitivities
     #=================
+    
+cdef extern from "idas/idas_spils.h":
+    ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, 
+            N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
+    
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef extern from "idas/idas_direct.h":
+        ctypedef int (*IDADlsDenseJacFn)(realtype tt, realtype cj, N_Vector yy, 
+                       N_Vector yp, N_Vector rr, SUNMatrix Jac, void *user_data, 
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+        int IDADlsSetJacFn(void *ida_mem, IDADlsDenseJacFn djac)
+        int IDADlsSetLinearSolver(void *ida_mem, SUNLinearSolver LS, SUNMatrix A);
+    
+    cdef extern from "idas/idas_spils.h":
+        int IDASpilsSetLinearSolver(void *ida_mem, SUNLinearSolver LS);
+        ctypedef int (*IDASpilsJacTimesSetupFn)(realtype tt, N_Vector yy,
+                    N_Vector yp, N_Vector rr, realtype c_j, void *user_data);
+        int IDASpilsSetJacTimes(void *ida_mem,
+                IDASpilsJacTimesSetupFn jtsetup, IDASpilsJacTimesVecFn jtimes);
+                
+    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
+ELSE:
+    cdef extern from "idas/idas_dense.h":
+        int IDADense(void *ida_mem, long int n)
+        ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, 
+                       N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+        int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
+    
+        int IDASpgmr(void *ida_mem, int max1)
+        
+    cdef extern from "idas/idas_spils.h":
+        int IDASpilsSetJacTimesVecFn(void *ida_mem, IDASpilsJacTimesVecFn ida_jacv)
 
-cdef extern from "idas/idas_dense.h":
-    int IDADense(void *ida_mem, long int n)
-    ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, 
-                   N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
-                   N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-    int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
-    
-cdef extern from "idas/idas_dense.h":
-    int IDASpgmr(void *ida_mem, int max1)
-    ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
-    int IDASpilsSetJacTimesVecFn(void *ida_mem, IDASpilsJacTimesVecFn ida_jacv)
-    
 cdef extern from "idas/idas_spils.h":
     int IDASpilsGetNumJtimesEvals(void *ida_mem, long int *njvevals) #Number of jac*vector
     int IDASpilsGetNumResEvals(void *ida_mem, long int *nfevalsLS) #Number of rhs due to jac*vector
@@ -455,26 +604,37 @@ cdef extern from "kinsol/kinsol.h":
     # fuction used to deallocate memory used by KINSOL
     void KINFree(void **kinmem)
 
-# functions used for supplying jacobian, and receiving info from linear solver
-cdef extern from "kinsol/kinsol_direct.h":
-    # user functions
-    ctypedef int (*KINDlsDenseJacFn)(int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
-    
-    # function used to link user functions to KINSOL
-    int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
 
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef extern from "kinsol/kinsol_direct.h":
+        ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        int KINDlsSetLinearSolver(void *kinmem, SUNLinearSolver LS, SUNMatrix A);
+        int KINDlsSetJacFn(void *kinmem, KINDlsDenseJacFn djac)
+    
+    cdef extern from "kinsol/kinsol_spils.h":
+        int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS);
+ELSE:
+    # functions used for supplying jacobian, and receiving info from linear solver
+    cdef extern from "kinsol/kinsol_direct.h":
+        # user functions
+        ctypedef int (*KINDlsDenseJacFn)(int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        
+        # function used to link user functions to KINSOL
+        int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
+    
+    cdef extern from "kinsol/kinsol_dense.h":
+        int KINDense(void *kinmem, int dim)
+    
+    cdef extern from "kinsol/kinsol_spgmr.h":
+        int KINSpgmr(void *kinmem, int maxl)
+
+cdef extern from "kinsol/kinsol_direct.h":
     # optional output fcts for linear direct solver
     int KINDlsGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
     int KINDlsGetNumJacEvals(void *kinmem, long int *njevalsB)
     int KINDlsGetNumFuncEvals(void *kinmem, long int *nfevalsB)
     int KINDlsGetLastFlag(void *kinmem, int *flag)
     char *KINDlsGetReturnFlagName(int flag)
-
-cdef extern from "kinsol/kinsol_dense.h":
-    int KINDense(void *kinmem, int dim)
-    
-cdef extern from "kinsol/kinsol_spgmr.h":
-    int KINSpgmr(void *kinmem, int maxl)
 
 cdef extern from "kinsol/kinsol_spils.h":
     ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,

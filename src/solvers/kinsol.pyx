@@ -30,8 +30,8 @@ from assimulo.algebraic cimport Algebraic
 cimport sundials_includes as SUNDIALS
 
 #Various C includes transfered to namespace
-from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL
-from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat
+from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
+from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
 from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
@@ -57,6 +57,8 @@ cdef class KINSOL(Algebraic):
     
     cdef object pt_fcn, pt_jac, pt_jacv, pt_prec_setup, pt_prec_solve
     cdef object _added_linear_solver
+    cdef SUNDIALS.SUNMatrix sun_matrix
+    cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     
     def __init__(self, problem):
         Algebraic.__init__(self, problem) #Calls the base class
@@ -86,6 +88,7 @@ cdef class KINSOL(Algebraic):
         self.options["no_min_epsilon"] = False #Specifies wheter the scaled linear residual is bounded from below
         self.options["max_beta_fails"] = 10
         self.options["max_krylov"] = 0
+        self.options["precond"] = PREC_NONE
         
         #Statistics
         self.statistics["nfevals"]    = 0 #Function evaluations
@@ -109,6 +112,13 @@ cdef class KINSOL(Algebraic):
         if self.kinsol_mem != NULL:
             #Free Memory
             SUNDIALS.KINFree(&self.kinsol_mem)
+            
+        IF SUNDIALS_VERSION >= (3,0,0):
+            if self.sun_matrix != NULL:
+                SUNDIALS.SUNMatDestroy(self.sun_matrix)
+                
+            if self.sun_linearsolver != NULL:
+                SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
         
     def update_variable_scaling(self, value="Automatic"):
         """
@@ -170,7 +180,7 @@ cdef class KINSOL(Algebraic):
             
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
-        
+
         self.y_temp  = arr2nv(self.y)
         self.y_scale = arr2nv([1.0]*self.problem_info["dim"])
         self.f_scale = arr2nv([1.0]*self.problem_info["dim"])
@@ -208,16 +218,34 @@ cdef class KINSOL(Algebraic):
             
     cpdef add_linear_solver(self):
         if self.options["linear_solver"] == "DENSE":
-            flag = SUNDIALS.KINDense(self.kinsol_mem, self.problem_info["dim"])
+            IF SUNDIALS_VERSION >= (3,0,0):
+                #Create a dense Sundials matrix
+                self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                #Create a dense Sundials linear solver
+                self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.y_temp, self.sun_matrix)
+                #Attach it to Kinsol
+                flag = SUNDIALS.KINDlsSetLinearSolver(self.kinsol_mem, self.sun_linearsolver, self.sun_matrix)
+            ELSE:
+                flag = SUNDIALS.KINDense(self.kinsol_mem, self.problem_info["dim"])
             if flag < 0:
                 raise KINSOLError(flag)
             
             if self.problem_info["jac_fcn"]:
-                flag = SUNDIALS.KINDlsSetDenseJacFn(self.kinsol_mem, kin_jac);
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    flag = SUNDIALS.KINDlsSetJacFn(self.kinsol_mem, kin_jac);
+                ELSE:
+                    flag = SUNDIALS.KINDlsSetDenseJacFn(self.kinsol_mem, kin_jac);
                 if flag < 0:
                     raise KINSOLError(flag)
         elif self.options["linear_solver"] == "SPGMR":
-            flag = SUNDIALS.KINSpgmr(self.kinsol_mem, self.options["max_krylov"])
+            IF SUNDIALS_VERSION >= (3,0,0):
+                #Create the linear solver
+                self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.y_temp, self.options["precond"], self.options["max_krylov"])
+                #Attach it to Kinsol
+                flag = SUNDIALS.KINSpilsSetLinearSolver(self.kinsol_mem, self.sun_linearsolver)
+            ELSE:
+                #Specify the use of KINSpgmr linear solver.
+                flag = SUNDIALS.KINSpgmr(self.kinsol_mem, self.options["max_krylov"])
             if flag < 0:
                 raise KINSOLError(flag)
             
