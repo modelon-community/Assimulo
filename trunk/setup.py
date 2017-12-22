@@ -309,15 +309,30 @@ class Assimulo_prepare(object):
             self.with_SUNDIALS=True
             L.debug('SUNDIALS found.')
             sundials_version = None
+            sundials_vector_type_size = None
             
             try:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')):
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
-                            if "SUNDIALS_PACKAGE_VERSION" in line:
+                            if "SUNDIALS_PACKAGE_VERSION" in line or "SUNDIALS_VERSION" in line:
                                 sundials_version = tuple([int(f) for f in line.split()[-1][1:-1].split(".")])
                                 L.debug('SUNDIALS %d.%d found.'%(sundials_version[0], sundials_version[1]))
-            except Exception:
+                                break
+                    with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
+                        for line in f:
+                            if "SUNDIALS_INT32_T" in line and line.startswith("#define"):
+                                sundials_vector_type_size = "32"
+                                L.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
+                                break
+                            if "SUNDIALS_INT64_T" in line and line.startswith("#define"):
+                                sundials_vector_type_size = "64"
+                                L.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
+                                if self.with_SLU:
+                                    L.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU.")
+                                    L.warning("SuperLU may not function properly.")
+                                break
+            except Exception as e:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
                     L.debug('SUNDIALS 2.6 found.')
@@ -326,6 +341,7 @@ class Assimulo_prepare(object):
                     L.debug('SUNDIALS 2.5 found.')
                 
             self.SUNDIALS_version = sundials_version
+            self.SUNDIALS_vector_size = sundials_vector_type_size
             
         else:    
             L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
@@ -375,18 +391,27 @@ class Assimulo_prepare(object):
         # SUNDIALS
         if self.with_SUNDIALS:
             compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
-                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu}
+                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu,
+                                'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size}
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
                                  compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
-            ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
+            
+            if self.SUNDIALS_version >= (3,0,0):
+                ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas", "sundials_sunlinsoldense", "sundials_sunlinsolspgmr", "sundials_sunmatrixdense", "sundials_sunmatrixsparse"]
+            else:
+                ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
+                if self.SUNDIALS_version >= (3,0,0):
+                    ext_list[-1].libraries.extend(["sundials_sunlinsolsuperlumt"])
+                
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
+                
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
@@ -395,7 +420,11 @@ class Assimulo_prepare(object):
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-    
+            
+            if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
+                ext_list[-1].include_dirs.append(self.SLUincdir)
+                ext_list[-1].library_dirs.append(self.SLUlibdir)
+                ext_list[-1].libraries.extend(self.superLUFiles)
         
         for el in ext_list:
             #Debug

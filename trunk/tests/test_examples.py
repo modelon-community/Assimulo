@@ -22,6 +22,14 @@ from assimulo.examples import *
 
 class Test_Examples:
     
+    
+    @testattr(stddist = True)
+    def test_cvode_with_jac_sparse(self):
+        try:
+            cvode_with_jac_sparse.run_example(with_plots=False)
+        except AssimuloException:
+            pass #Handle the case when SuperLU is not installed
+    
     @testattr(stddist = True)
     def test_ida_with_user_defined_handle_result(self):
         ida_with_user_defined_handle_result.run_example(with_plots=False)

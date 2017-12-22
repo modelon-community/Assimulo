@@ -95,6 +95,9 @@ DEF CV_UNREC_SRHSFUNC_ERR = -44   #The sensitivity right-hand side function had 
 DEF CV_BAD_IS             = -45
 
 
+DEF CSC_MAT = 0
+DEF CSR_MAT = 1
+
 #==========
 # IDA
 #==========

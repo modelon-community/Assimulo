@@ -94,122 +94,228 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
         traceback.print_exc()
         return CV_UNREC_RHSFUNC_ERR 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
-                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
-    """
-    This method is used to connect the Assimulo.Problem.jac to the Sundials
-    Sparse Jacobian function.
-    """
-    cdef ProblemData pData = <ProblemData>problem_data
-    #cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray y = pData.work_y
-    cdef int i
-    cdef int nnz = Jacobian.NNZ
-    cdef int ret_nnz
-    cdef int dim = Jacobian.N
-    cdef realtype* data = Jacobian.data
-    
-    IF SUNDIALS_VERSION >= (2,6,3):
-        cdef int* rowvals = Jacobian.rowvals[0]
-        cdef int* colptrs = Jacobian.colptrs[0]
-    ELSE:
-        cdef int* rowvals = Jacobian.rowvals
-        cdef int* colptrs = Jacobian.colptrs
-    
-    nv2arr_inplace(yv, y)
-    """
-        realtype *data;
-        int *rowvals;
-        int *colptrs;
-    """
-    try:
-        if pData.dimSens > 0: #Sensitivity activated
-            p = realtype2arr(pData.p,pData.dimSens)
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(t,y,p=p,sw=<list>pData.sw)
-            else:
-                jac=(<object>pData.JAC)(t,y,p=p)
-        else:
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
-            else:
-                jac=(<object>pData.JAC)(t,y)
-            
-        if not isinstance(jac, sparse.csc.csc_matrix):
-            jac = sparse.csc.csc_matrix(jac)
-            raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
-        ret_nnz = jac.nnz
-        if ret_nnz > nnz:
-            raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
 
-        for i in range(min(ret_nnz,nnz)):
-            data[i]    = jac.data[i]
-            rowvals[i] = jac.indices[i]
-        for i in range(dim+1):
-            colptrs[i] = jac.indptr[i]
+IF SUNDIALS_VERSION >= (3,0,0):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac,
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Sparse Jacobian function.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef SUNMatrixContent_Sparse Jacobian = <SUNMatrixContent_Sparse>Jac.content
+        cdef N.ndarray y = pData.work_y
+        cdef int i
+        cdef sunindextype nnz = Jacobian.NNZ
+        cdef int ret_nnz
+        cdef sunindextype dim = Jacobian.N
+        cdef realtype* data = Jacobian.data
+        cdef sunindextype* rowvals = Jacobian.rowvals[0]
+        cdef sunindextype* colptrs = Jacobian.colptrs[0]
         
-        return CVDLS_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
-        return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-    except:
-        traceback.print_exc()
-        return CVDLS_JACFUNC_UNRECVR
+        nv2arr_inplace(yv, y)
 
-cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
-                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
-    """
-    This method is used to connect the Assimulo.Problem.jac to the Sundials
-    Jacobian function.
-    """
-    cdef ProblemData pData = <ProblemData>problem_data
-    #cdef ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
-    cdef realtype* col_i=DENSE_COL(Jacobian,0)
-    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    #cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray y = pData.work_y
-    cdef int i,j
-    
-    nv2arr_inplace(yv, y)
-
-    if pData.dimSens>0: #Sensitivity activated
-        p = realtype2arr(pData.p,pData.dimSens)
         try:
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
+            if pData.dimSens > 0: #Sensitivity activated
+                p = realtype2arr(pData.p,pData.dimSens)
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,p=p,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y,p=p)
             else:
-                jac=(<object>pData.JAC)(t,y,p)
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y)
                 
-            for i in range(Neq):
-                col_i = DENSE_COL(Jacobian, i)
-                for j in range(Neq):
-                    col_i[j] = jac[j,i]
+            if not isinstance(jac, sparse.csc.csc_matrix):
+                jac = sparse.csc.csc_matrix(jac)
+                raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
+            ret_nnz = jac.nnz
+            if ret_nnz > nnz:
+                raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
 
+            for i in range(min(ret_nnz,nnz)):
+                data[i]    = jac.data[i]
+                rowvals[i] = jac.indices[i]
+            for i in range(dim+1):
+                colptrs[i] = jac.indptr[i]
+            
             return CVDLS_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except:
             traceback.print_exc()
             return CVDLS_JACFUNC_UNRECVR
-    else:
+ELSE:
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Sparse Jacobian function.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef N.ndarray y = pData.work_y
+        cdef int i
+        cdef int nnz = Jacobian.NNZ
+        cdef int ret_nnz
+        cdef int dim = Jacobian.N
+        cdef realtype* data = Jacobian.data
+        
+        IF SUNDIALS_VERSION >= (2,6,3):
+            cdef int* rowvals = Jacobian.rowvals[0]
+            cdef int* colptrs = Jacobian.colptrs[0]
+        ELSE:
+            cdef int* rowvals = Jacobian.rowvals
+            cdef int* colptrs = Jacobian.colptrs
+        
+        nv2arr_inplace(yv, y)
+        """
+            realtype *data;
+            int *rowvals;
+            int *colptrs;
+        """
         try:
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+            if pData.dimSens > 0: #Sensitivity activated
+                p = realtype2arr(pData.p,pData.dimSens)
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,p=p,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y,p=p)
             else:
-                jac=(<object>pData.JAC)(t,y)
-    
-            for i in range(Neq):
-                col_i = DENSE_COL(Jacobian, i)
-                for j in range(Neq):
-                    col_i[j] = jac[j,i]
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y)
+                
+            if not isinstance(jac, sparse.csc.csc_matrix):
+                jac = sparse.csc.csc_matrix(jac)
+                raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
+            ret_nnz = jac.nnz
+            if ret_nnz > nnz:
+                raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
 
+            for i in range(min(ret_nnz,nnz)):
+                data[i]    = jac.data[i]
+                rowvals[i] = jac.indices[i]
+            for i in range(dim+1):
+                colptrs[i] = jac.indptr[i]
+            
             return CVDLS_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except:
             traceback.print_exc()
             return CVDLS_JACFUNC_UNRECVR
+
+
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef int cv_jac(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac, 
+                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef realtype* col_i=Jacobian.cols[0]
+        cdef N.ndarray y = pData.work_y
+        cdef int i,j, Neq = pData.dim
+        
+        nv2arr_inplace(yv, y)
+
+        if pData.dimSens>0: #Sensitivity activated
+            p = realtype2arr(pData.p,pData.dimSens)
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
+                else:
+                    jac=(<object>pData.JAC)(t,y,p)
+                    
+                for i in range(Neq):
+                    col_i = Jacobian.cols[i]
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+
+                return CVDLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+            except:
+                traceback.print_exc()
+                return CVDLS_JACFUNC_UNRECVR
+        else:
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y)
+        
+                for i in range(Neq):
+                    col_i = Jacobian.cols[i]
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+
+                return CVDLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+            except:
+                traceback.print_exc()
+                return CVDLS_JACFUNC_UNRECVR
+ELSE:
+    cdef int cv_jac(int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef realtype* col_i=DENSE_COL(Jacobian,0)
+        cdef N.ndarray y = pData.work_y
+        cdef int i,j
+        
+        nv2arr_inplace(yv, y)
+
+        if pData.dimSens>0: #Sensitivity activated
+            p = realtype2arr(pData.p,pData.dimSens)
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
+                else:
+                    jac=(<object>pData.JAC)(t,y,p)
+                    
+                for i in range(Neq):
+                    col_i = DENSE_COL(Jacobian, i)
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+
+                return CVDLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+            except:
+                traceback.print_exc()
+                return CVDLS_JACFUNC_UNRECVR
+        else:
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
+                else:
+                    jac=(<object>pData.JAC)(t,y)
+        
+                for i in range(Neq):
+                    col_i = DENSE_COL(Jacobian, i)
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+
+                return CVDLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+            except:
+                traceback.print_exc()
+                return CVDLS_JACFUNC_UNRECVR
         
 cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
 				    void *problem_data, N_Vector tmp):
@@ -337,9 +443,6 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     Root-finding function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    #cdef ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
-    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    #cdef N.ndarray y = nv2arr(yv)
     cdef N.ndarray y = pData.work_y
     cdef int i
     
@@ -366,12 +469,8 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     """
     cdef ProblemData pData = <ProblemData>problem_data
     cdef N.ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
-    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
     cdef N.ndarray y = pData.work_y
     cdef N.ndarray yd = pData.work_yd
-    # cdef N.ndarray y = nv2arr(yv)
-    # cdef N.ndarray yd = nv2arr(yvdot)
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef int i
     
@@ -414,63 +513,113 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
         except:
             traceback.print_exc()
             return IDA_RES_FAIL
-            
-cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jacobian,
-                 void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
-    """
-    This method is used to connect the Assimulo.Problem.jac to the Sundials
-    Jacobian function.
-    """
-    cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
-    cdef realtype* col_i=DENSE_COL(Jacobian,0)
-    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
-    cdef N.ndarray y = pData.work_y
-    cdef N.ndarray yd = pData.work_yd
-    #cdef N.ndarray y = nv2arr(yv)
-    #cdef N.ndarray yd = nv2arr(yvdot)
-    cdef int i,j
-    
-    nv2arr_inplace(yv, y)
-    nv2arr_inplace(yvdot, yd)
-    
-    if pData.dimSens!=0: #SENSITIVITY 
-        p = realtype2arr(pData.p,pData.dimSens)
-        try:
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(c,t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
-            else:
-                jac=(<object>pData.JAC)(c,t,y,yd,p=p)
-            
-            for i in range(Neq):
-                col_i = DENSE_COL(Jacobian, i)
-                for j in range(Neq):
-                    col_i[j] = jac[j,i]
-            return IDADLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
-            return IDADLS_JACFUNC_RECVR #Recoverable Error
-        except:
-            traceback.print_exc()
-            return IDADLS_JACFUNC_UNRECVR
-    else:
-        try:
-            if pData.sw != NULL:
-                jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
-            else:
-                jac=(<object>pData.JAC)(c,t,y,yd)
-            
-            for i in range(Neq):
-                col_i = DENSE_COL(Jacobian, i)
-                for j in range(Neq):
-                    col_i[j] = jac[j,i]
-            return IDADLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
-            return IDADLS_JACFUNC_RECVR #Recoverable Error
-        except:
-            traceback.print_exc()
-            return IDADLS_JACFUNC_UNRECVR
+
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef int ida_jac(realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, SUNMatrix Jac,
+                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef N.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+        cdef realtype* col_i=Jacobian.cols[0]
+        cdef N.ndarray y = pData.work_y
+        cdef N.ndarray yd = pData.work_yd
+        cdef int i,j, Neq = pData.dim
         
+        nv2arr_inplace(yv, y)
+        nv2arr_inplace(yvdot, yd)
+        
+        if pData.dimSens!=0: #SENSITIVITY 
+            p = realtype2arr(pData.p,pData.dimSens)
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(c,t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
+                else:
+                    jac=(<object>pData.JAC)(c,t,y,yd,p=p)
+                
+                for i in range(Neq):
+                    col_i = Jacobian.cols[i]
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+                return IDADLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return IDADLS_JACFUNC_RECVR #Recoverable Error
+            except:
+                traceback.print_exc()
+                return IDADLS_JACFUNC_UNRECVR
+        else:
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
+                else:
+                    jac=(<object>pData.JAC)(c,t,y,yd)
+                
+                for i in range(Neq):
+                    col_i = Jacobian.cols[i]
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+                return IDADLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return IDADLS_JACFUNC_RECVR #Recoverable Error
+            except:
+                traceback.print_exc()
+                return IDADLS_JACFUNC_UNRECVR
+ELSE:
+    cdef int ida_jac(int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jacobian,
+                 void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+        """
+        This method is used to connect the Assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        cdef N.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+        cdef realtype* col_i=DENSE_COL(Jacobian,0)
+        cdef N.ndarray y = pData.work_y
+        cdef N.ndarray yd = pData.work_yd
+        cdef int i,j
+        
+        nv2arr_inplace(yv, y)
+        nv2arr_inplace(yvdot, yd)
+        
+        if pData.dimSens!=0: #SENSITIVITY 
+            p = realtype2arr(pData.p,pData.dimSens)
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(c,t,y,yd,sw=<list>pData.sw,p=p)  # call to the python residual function
+                else:
+                    jac=(<object>pData.JAC)(c,t,y,yd,p=p)
+                
+                for i in range(Neq):
+                    col_i = DENSE_COL(Jacobian, i)
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+                return IDADLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return IDADLS_JACFUNC_RECVR #Recoverable Error
+            except:
+                traceback.print_exc()
+                return IDADLS_JACFUNC_UNRECVR
+        else:
+            try:
+                if pData.sw != NULL:
+                    jac=(<object>pData.JAC)(c,t,y,yd,<list>pData.sw)  # call to the python residual function
+                else:
+                    jac=(<object>pData.JAC)(c,t,y,yd)
+                
+                for i in range(Neq):
+                    col_i = DENSE_COL(Jacobian, i)
+                    for j in range(Neq):
+                        col_i[j] = jac[j,i]
+                return IDADLS_SUCCESS
+            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                return IDADLS_JACFUNC_RECVR #Recoverable Error
+            except:
+                traceback.print_exc()
+                return IDADLS_JACFUNC_UNRECVR
+            
 
 cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):
     """
@@ -479,12 +628,8 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
     """
     cdef ProblemData pData = <ProblemData>problem_data
     cdef N.ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
-    #(<ndarray>pData.y).data  =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
-    #(<ndarray>pData.yd).data =  <realtype*>((<N_VectorContent_Serial>yvdot.content).data)
     cdef N.ndarray y = pData.work_y
     cdef N.ndarray yd = pData.work_yd
-    #cdef N.ndarray y = nv2arr(yv)
-    #cdef N.ndarray yd = nv2arr(yvdot)
     cdef int i
     
     nv2arr_inplace(yv, y)
@@ -553,30 +698,54 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
     
-
-cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
-                void *problem_data, N_Vector tmp1, N_Vector tmp2):
-    """
-    This method is used to connect the assimulo.Problem.jac to the Sundials
-    Jacobian function.
-    """
-    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
-    cdef realtype* col_i=DENSE_COL(Jacobian,0)
-    cdef N.ndarray x = nv2arr(xv)
-    cdef int i,j
-    
-    try:
-        jac=(<object>pData.JAC)(x)
-
-        for i in range(Neq):
-            col_i = DENSE_COL(Jacobian, i)
-            for j in range(Neq):
-                col_i[j] = jac[j,i]
-
-        return KINDLS_SUCCESS
-    except:
-        return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+IF SUNDIALS_VERSION >= (3,0,0):
+    cdef int kin_jac(N_Vector xv, N_Vector fval, SUNMatrix Jac, 
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+        """
+        This method is used to connect the assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
+        cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+        cdef realtype* col_i=Jacobian.cols[0]
+        cdef N.ndarray x = nv2arr(xv)
+        cdef int i,j, Neq = pData.dim
         
+        try:
+            jac=(<object>pData.JAC)(x)
+
+            for i in range(Neq):
+                col_i = Jacobian.cols[i]
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+
+            return KINDLS_SUCCESS
+        except:
+            return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+ELSE:
+    cdef int kin_jac(int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+        """
+        This method is used to connect the assimulo.Problem.jac to the Sundials
+        Jacobian function.
+        """
+        cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
+        cdef realtype* col_i=DENSE_COL(Jacobian,0)
+        cdef N.ndarray x = nv2arr(xv)
+        cdef int i,j
+        
+        try:
+            jac=(<object>pData.JAC)(x)
+
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+
+            return KINDLS_SUCCESS
+        except:
+            return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
+            
 cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
             void *problem_data):
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
