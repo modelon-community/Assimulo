@@ -193,6 +193,7 @@ class Assimulo_prepare(object):
         self.fileSolvers = os.listdir(os.path.join("src","solvers"))
         self.fileExamples= os.listdir("examples")
         self.fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
+        self.fileMainIncludes = ["README","CHANGELOG", "LICENSE"]
         self.fileTests   = os.listdir("tests")
         self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
@@ -212,6 +213,7 @@ class Assimulo_prepare(object):
         self.copy_all_files(self.fileSolvers, os.path.join("src","solvers"), self.desSolvers)
         self.copy_all_files(self.fileExamples, "examples", self.desExamples)
         self.copy_all_files(self.fileMain, None, self.desMain)
+        self.copy_all_files(self.fileMainIncludes, None, self.desSrc)
         self.copy_all_files(self.fileTests, "tests", self.desTests)
         self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
 
@@ -609,7 +611,7 @@ ndc.setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['version.txt']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
+      package_data={'assimulo': ['version.txt', 'CHANGELOG', 'README', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
                                 'examples'+os.sep+'kinsol_ors_matrix.mtx'] + (['lib'+os.sep+f for f in prepare.extra_fortran_link_files] if prepare.extra_fortran_link_files else [])},
       script_args=prepare.distutil_args)
 
