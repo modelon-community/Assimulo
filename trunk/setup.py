@@ -46,7 +46,7 @@ parser.add_argument("--blas-name", help="name of the blas package",default='blas
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')
 parser.add_argument("--with_openmp", type='bool', help="set to true if present",default=False)
 parser.add_argument("--is_static", type='bool', help="set to true if present",default=False)
-parser.add_argument("--sundials-with-superlu", type='bool', help="set to true if Sundials has been compiled with SuperLU",default=False)
+parser.add_argument("--sundials-with-superlu", type='bool', help="(DEPRECATED) set to true if Sundials has been compiled with SuperLU",default=None)
 parser.add_argument("--debug", type='bool', help="set to true if present",default=False)
 parser.add_argument("--force-32bit", type='bool', help="set to true if present",default=False)
 parser.add_argument("--no-msvcr", type='bool', help="set to true if present",default=False)
@@ -137,6 +137,8 @@ class Assimulo_prepare(object):
         self.thirdparty_methods  = thirdparty_methods
         self.with_openmp = args[0].with_openmp
 
+        if self.sundials_with_superlu is not None:
+            L.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
         
         if self.no_mvscr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
@@ -312,6 +314,7 @@ class Assimulo_prepare(object):
             L.debug('SUNDIALS found.')
             sundials_version = None
             sundials_vector_type_size = None
+            sundials_with_superlu = False
             
             try:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')):
@@ -334,6 +337,12 @@ class Assimulo_prepare(object):
                                     L.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU.")
                                     L.warning("SuperLU may not function properly.")
                                 break
+                    with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
+                        for line in f:
+                            if "SUNDIALS_SUPERLUMT" in line and line.startswith("#define"): #Sundials compiled with support for SuperLU
+                                sundials_with_superlu = True
+                                L.debug('SUNDIALS found to be compiled with support for SuperLU.')
+                                break
             except Exception as e:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
@@ -344,7 +353,9 @@ class Assimulo_prepare(object):
                 
             self.SUNDIALS_version = sundials_version
             self.SUNDIALS_vector_size = sundials_vector_type_size
-            
+            self.sundials_with_superlu = sundials_with_superlu
+            if not self.sundials_with_superlu:
+                L.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
         else:    
             L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
                     "to see that it actually points to Sundials.").format(self.sundialsdir))
@@ -393,7 +404,7 @@ class Assimulo_prepare(object):
         # SUNDIALS
         if self.with_SUNDIALS:
             compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
-                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu,
+                                'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu and self.with_SLU,
                                 'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size}
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
