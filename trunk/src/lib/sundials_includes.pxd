@@ -262,7 +262,7 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky)
     
     #Functions for error handling
-    ctypedef int (*CVErrHandlerFn)(int error_code, char *module, char *function, char *msg,
+    ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg,
                                    void *eh_data)
     int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data)
     
@@ -347,6 +347,12 @@ IF SUNDIALS_VERSION >= (3,0,0):
         int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS)
         ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data)
         int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
+
+        ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
+				  booleantype jok, booleantype *jcurPtr, realtype gamma, void *user_data)
+        ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
+				  N_Vector r, N_Vector z,
+				  realtype gamma, realtype delta, int lr, void *user_data)
     
     
     IF SUNDIALS_WITH_SUPERLU:
@@ -360,7 +366,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
 ELSE:
     cdef extern from "cvodes/cvodes_dense.h":
         int CVDense(void *cvode_mem, long int n)
-        ctypedef int (*CVDlsDenseJacFn)(int n, realtype t, N_Vector y, N_Vector fy, 
+        ctypedef int (*CVDlsDenseJacFn)(long int n, realtype t, N_Vector y, N_Vector fy, 
                        DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
         int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
 
@@ -369,6 +375,15 @@ ELSE:
     
     cdef extern from "cvodes/cvodes_spils.h":
         int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+        ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
+				  booleantype jok, booleantype *jcurPtr,
+				  realtype gamma, void *user_data,
+				  N_Vector tmp1, N_Vector tmp2,
+				  N_Vector tmp3)
+        ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
+				  N_Vector r, N_Vector z,
+				  realtype gamma, realtype delta,
+				  int lr, void *user_data, N_Vector tmp)
     
     IF SUNDIALS_VERSION >= (2,6,0):
         cdef extern from "cvodes/cvodes_sparse.h":
@@ -379,7 +394,7 @@ ELSE:
             int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
         cdef inline tuple version(): return (2,6,0)
         IF SUNDIALS_WITH_SUPERLU:
-            cdef extern from "cvodes/cvodes_sparse.h":
+            cdef extern from "cvodes/cvodes_superlumt.h":
                 int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
         ELSE:
             cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
@@ -393,16 +408,6 @@ ELSE:
         cdef inline tuple version(): return (2,5,0)
     
 cdef extern from "cvodes/cvodes_spils.h":
-    ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
-				  booleantype jok, booleantype *jcurPtr,
-				  realtype gamma, void *user_data,
-				  N_Vector tmp1, N_Vector tmp2,
-				  N_Vector tmp3)
-    ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
-				  N_Vector r, N_Vector z,
-				  realtype gamma, realtype delta,
-				  int lr, void *user_data, N_Vector tmp)
-    
     int CVSpilsSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve)
     int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
     int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
@@ -435,7 +440,7 @@ cdef extern from "idas/idas.h":
     int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
     
     #Functions for error handling
-    ctypedef int (*IDAErrHandlerFn)(int error_code, char *module, char *function, char *msg,
+    ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg,
                                     void *eh_data)
     int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data)
     
@@ -532,11 +537,12 @@ IF SUNDIALS_VERSION >= (3,0,0):
 ELSE:
     cdef extern from "idas/idas_dense.h":
         int IDADense(void *ida_mem, long int n)
-        ctypedef int (*IDADlsDenseJacFn)(int Neq, realtype tt, realtype cj, N_Vector yy, 
+        ctypedef int (*IDADlsDenseJacFn)(long int Neq, realtype tt, realtype cj, N_Vector yy, 
                        N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
                        N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
         int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
     
+    cdef extern from "idas/idas_spgmr.h":
         int IDASpgmr(void *ida_mem, int max1)
         
     cdef extern from "idas/idas_spils.h":
@@ -557,7 +563,7 @@ cdef extern from "kinsol/kinsol.h":
     # user defined functions
     ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data )
     ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
-    ctypedef void (*KINInfoHandlerFn)(char *module, char *function, char *msg, void *user_data)
+    ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data)
     # initialization routines
     void *KINCreate()
     int KINInit(void *kinmem, KINSysFn func, N_Vector tmpl)
@@ -613,11 +619,16 @@ IF SUNDIALS_VERSION >= (3,0,0):
     
     cdef extern from "kinsol/kinsol_spils.h":
         int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS)
+        
+        ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data)
+        ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, void *problem_data)
 ELSE:
     # functions used for supplying jacobian, and receiving info from linear solver
     cdef extern from "kinsol/kinsol_direct.h":
         # user functions
-        ctypedef int (*KINDlsDenseJacFn)(int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*KINDlsDenseJacFn)(long int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
         
         # function used to link user functions to KINSOL
         int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
@@ -627,22 +638,25 @@ ELSE:
     
     cdef extern from "kinsol/kinsol_spgmr.h":
         int KINSpgmr(void *kinmem, int maxl)
+        
+    cdef extern from "kinsol/kinsol_spils.h":
+        ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
+        ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
+                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
 
 cdef extern from "kinsol/kinsol_direct.h":
     # optional output fcts for linear direct solver
     int KINDlsGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
     int KINDlsGetNumJacEvals(void *kinmem, long int *njevalsB)
     int KINDlsGetNumFuncEvals(void *kinmem, long int *nfevalsB)
-    int KINDlsGetLastFlag(void *kinmem, int *flag)
+    int KINDlsGetLastFlag(void *kinmem, long int *flag)
     char *KINDlsGetReturnFlagName(int flag)
 
 cdef extern from "kinsol/kinsol_spils.h":
-    ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, bint new_u,
+    ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
                 void *problem_data)
-    ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
-    ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
+
     int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
     int KINSpilsGetNumLinIters(void *kinmem, long int *nliters)
     int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails)
