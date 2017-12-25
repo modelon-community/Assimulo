@@ -42,6 +42,7 @@ from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 include "constants.pxi" #Includes the constants (textual include)
 include "../lib/sundials_constants.pxi" #Sundials related constants
 include "../lib/sundials_callbacks.pxi"
+include "../lib/sundials_callbacks_ida_cvode.pxi"
 
 
 cdef class IDA(Implicit_ODE):

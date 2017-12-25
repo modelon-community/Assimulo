@@ -38,6 +38,7 @@ from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 include "constants.pxi" #Includes the constants (textual include)
 include "../lib/sundials_constants.pxi" #Sundials related constants
 include "../lib/sundials_callbacks.pxi"
+include "../lib/sundials_callbacks_kinsol.pxi"
 
 cdef class KINSOL(Algebraic):
     """
@@ -382,7 +383,8 @@ cdef class KINSOL(Algebraic):
         """
         Returns the last flag reported by Kinsol.
         """
-        cdef int flag = 0, lsflag = 0
+        cdef int flag = 0, 
+        cdef long int lsflag = 0
         
         flag = SUNDIALS.KINDlsGetLastFlag(self.kinsol_mem, &lsflag)
         if flag < 0:
