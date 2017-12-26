@@ -106,8 +106,9 @@ class ODASSL_Common(object):
                             
                                 Example:
                                     inith = 0.001
-            The quantity should be always positive. It will internally be multiplied
-            by the sign(tout-t0) to account for the direction of integration.                        
+            
+        The quantity should be always positive. It will internally be multiplied
+        by the sign(tout-t0) to account for the direction of integration.                        
         """
         return self.options["inith"]
         

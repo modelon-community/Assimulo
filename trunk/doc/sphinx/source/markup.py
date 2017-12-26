@@ -9,9 +9,9 @@ def mark_examples():
         file = open("EXAMPLE_"+ex+".rst",'w')
         
         file.write(ex + '.py\n')
-        file.write('===================================\n\n')
+        file.write('=============================================\n\n')
         file.write('.. autofunction:: assimulo.examples.'+ex+'.run_example\n\n')
-        file.write('===================================\n\n')
+        file.write('=============================================\n\n')
         file.write('.. program-output::   python '+os.path.join(os.getcwd(),'execute_example.py')+' '+os.path.join(os.getcwd(), examples.__path__[0]+os.sep+ex+'.py')+' \n\n')
         file.write('.. image:: '+os.sep+os.path.join(os.getcwd(),ex+'.png')+'\n\n')
         file.write('.. note::\n\n')
