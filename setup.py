@@ -334,7 +334,7 @@ class Assimulo_prepare(object):
                                 sundials_vector_type_size = "64"
                                 L.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
                                 if self.with_SLU:
-                                    L.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU.")
+                                    L.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU (or make sure that SuperLU is configured to use the same int size).")
                                     L.warning("SuperLU may not function properly.")
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
@@ -497,24 +497,20 @@ class Assimulo_prepare(object):
         dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
         dasp3_f77_compile_flags += extra_compile_flags
         
-        if StrictVersion(np.version.version) > StrictVersion("1.6.1"): #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1, DISABLE FOR NOW
-            dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
-            src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
-            config.add_extension('assimulo.lib.dasp3dp',
-                                  sources= src,
-                                  include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
-                                  extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
-        else:
-            L.warning("DASP3 requires a numpy > 1.6.1. Disabling...")
-
+        #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1
+        dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
+        config.add_extension('assimulo.lib.dasp3dp',
+                              sources= src,
+                              include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
+                              extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     
         #GLIMDA
         if self.with_BLAS and self.with_LAPACK:
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', 'blas']}
-            if StrictVersion(np.version.version) > StrictVersion("1.6.1"): 
-                extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
+            extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
         else:

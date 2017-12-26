@@ -32,7 +32,7 @@ cimport sundials_includes as SUNDIALS
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
 from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
-from sundials_includes cimport malloc, free, realtype, N_VCloneVectorArray_Serial
+from sundials_includes cimport malloc, free, N_VCloneVectorArray_Serial
 from sundials_includes cimport N_VConst_Serial, N_VDestroy_Serial
 
 include "constants.pxi" #Includes the constants (textual include)
