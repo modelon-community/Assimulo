@@ -103,8 +103,6 @@ cdef class IDA(Implicit_ODE):
         self.options["dqrhomax"] = 0.0
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default 
-        self.options["precond"] = PREC_NONE
-
 
         #Solver support
         self.supports["report_continuously"] = True
@@ -285,7 +283,7 @@ cdef class IDA(Implicit_ODE):
             elif self.options["linear_solver"] == 'SPGMR':
                 IF SUNDIALS_VERSION >= (3,0,0):
                     #Create the linear solver
-                    self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, self.options["precond"], 0)
+                    self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, PREC_NONE, 0)
                     #Attach it to IDAS
                     flag = SUNDIALS.IDASpilsSetLinearSolver(self.ida_mem, self.sun_linearsolver)
                 ELSE:
@@ -1482,7 +1480,6 @@ cdef class CVode(Explicit_ODE):
         self.options["pbar"] = [1]*self.problem_info["dimSens"]
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         self.options["stablimit"] = False
-        self.options["nnz" ] = -1
         self.options["norm"] = "WRMS"
         
         self.options["maxkrylov"] = 5

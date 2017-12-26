@@ -44,8 +44,6 @@ def run_example(with_plots=True):
     #Define the KINSOL solver
     alg_solver = KINSOL(alg_mod)
     
-    #Sets the parameters
-    
     #Solve
     y = alg_solver.solve()
     
