@@ -544,7 +544,7 @@ ext_list += prepare.fortran_extensionlists()
 
 
 NAME = "Assimulo"
-AUTHOR = u"C. Andersson, C. Führer, J. Åkesson, M. Gäfvert"
+AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "chria@maths.lth.se"
 VERSION = "trunk"
 LICENSE = "LGPL"
@@ -581,7 +581,7 @@ For questions and comments, visit:
 http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.18, Sundials 2.5/2.6, BLAS and LAPACK 
+compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1, BLAS and LAPACK 
 together with a C-compiler and a FORTRAN-compiler.
 """
 

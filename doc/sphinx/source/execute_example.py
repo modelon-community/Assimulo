@@ -1,5 +1,7 @@
 from assimulo.solvers import *
 from assimulo.problem import *
+from assimulo.examples import *
+from assimulo import examples
 import os
 import sys
 import pylab as P
@@ -19,4 +21,5 @@ def savefig(filename = name):
     return fig.savefig(filename, facecolor=fig.get_facecolor())
 P.show = savefig
 
-execfile(ex)
+examp = getattr(examples, script_name[:-3])
+examp.run_example()

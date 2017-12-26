@@ -27,7 +27,7 @@ def run_example(with_plots=True):
 
     This simple example problem for CVode, due to Robertson, 
     is from chemical kinetics, and consists of the following three 
-    equations::
+    equations:
 
     .. math:: 
     
