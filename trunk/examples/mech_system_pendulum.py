@@ -48,7 +48,7 @@ def pendulum():
                                    constr2 = constr2, 
                                    constr1 = constr1)
 
-def run_example(index, with_plots=True, with_test=False):
+def run_example(index="ind1", with_plots=True, with_test=False):
     my_pend_sys=pendulum()
     my_pend=my_pend_sys.generate_problem(index)
     my_pend.name='Index = {}'.format(index)
