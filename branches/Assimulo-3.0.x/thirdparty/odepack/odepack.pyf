@@ -1,0 +1,1085 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module dlsode__user__routines 
+    interface dlsode_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsode:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine jac(neq,t,y,ml,mu,pd,nrowpd) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: ml
+            integer :: mu
+            double precision dimension(nrowpd,neq),intent(out) :: pd
+            integer :: nrowpd
+        end subroutine jac
+    end interface dlsode_user_interface
+end python module dlsode__user__routines
+python module dlsodes__user__routines 
+    interface dlsodes_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsodes:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine jac(neq,t,y,j,ian,jan,pdj) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: j
+            double precision dimension(neq) :: ian
+            double precision dimension(neq) :: jan
+            double precision dimension(neq),intent(out) :: pdj
+        end subroutine jac
+    end interface dlsodes_user_interface
+end python module dlsodes__user__routines
+python module dlsoda__user__routines 
+    interface dlsoda_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsoda:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine jac(neq,t,y,ml,mu,pd,nrowpd) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: ml
+            integer :: mu
+            double precision dimension(nrowpd,neq),intent(out) :: pd
+            integer :: nrowpd
+        end subroutine jac
+    end interface dlsoda_user_interface
+end python module dlsoda__user__routines
+python module dlsodar__user__routines 
+    interface dlsodar_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine g(neq,t,y,ng,gout) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: ng
+            double precision dimension(ng),intent(out) :: gout
+        end subroutine g
+        subroutine jac(neq,t,y,ml,mu,pd,nrowpd) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer,intent(hide) :: ml
+            integer,intent(hide) :: mu
+            double precision dimension(nrowpd,neq),intent(out) :: pd
+            integer,intent(hide) :: nrowpd 
+        end subroutine jac
+    end interface dlsodar_user_interface
+end python module dlsodar__user__routines
+python module dlsodpk__user__routines 
+    interface dlsodpk_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsodpk:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine jac(f,neq,t,y,ysv,rewt,fty,v,hlo,wp,iwp,ier)
+            external f
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: ysv
+            double precision dimension(neq) :: rewt
+            double precision dimension(neq) :: fty
+            double precision dimension(neq) :: v
+            double precision :: hlo
+            double precision dimension (*) :: wp
+            integer dimension(*) :: iwp
+            integer :: ier
+        end subroutine jac
+        subroutine psol(neq,t,y,fty,wk,hlo,wp,iwp,b,lr,ier)
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: fty
+            double precision dimension(neq) :: wk
+            double precision :: hlo
+            double precision dimension (*) :: wp
+            integer dimension(*) :: iwp
+            double precision dimension(neq),intent(out) :: b
+            integer :: lr
+            integer :: ier
+        end subroutine psol
+    end interface dlsodpk_user_interface
+end python module dlsodpk__user__routines
+python module dlsodkr__user__routines 
+    interface dlsodkr_user_interface 
+        subroutine f(neq,t,y,ydot) ! in :odepack:opkdmain.f:dlsodkr:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq),intent(out) :: ydot
+        end subroutine f
+        subroutine g(neq,t,y,ng,gout) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: ng
+            double precision dimension(ng),intent(out) :: gout
+        end subroutine g
+        subroutine jac(f,neq,t,y,ysv,rewt,fty,v,hlo,jok,wp,iwp,ier)
+            external f
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: ysv
+            double precision dimension(neq) :: rewt
+            double precision dimension(neq) :: fty
+            double precision dimension(neq) :: v
+            double precision :: hlo
+            integer :: jok
+            double precision dimension (*) :: wp
+            integer dimension(*) :: iwp
+            integer :: ier
+        end subroutine jac
+        subroutine psol(neq,t,y,fty,wk,hlo,wp,iwp,b,lr,ier)
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: fty
+            double precision dimension(neq) :: wk
+            double precision :: hlo
+            double precision dimension (*) :: wp
+            integer dimension(*) :: iwp
+            double precision dimension(neq),intent(out) :: b
+            integer :: lr
+            integer :: ier
+        end subroutine psol
+    end interface dlsodkr_user_interface
+end python module dlsodkr__user__routines
+python module dlsodi__user__routines 
+    interface dlsodi_user_interface 
+        subroutine res(neq,tn,y,s,r,ires) ! in :odepack:opkdmain.f:dlsodi:unknown_interface
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            double precision dimension(neq),intent(out) :: r
+            integer :: ires
+        end subroutine res
+        subroutine adda(neq,tn,y,ml,mu,p,nrowp) ! in :odepack:opkdmain.f:dlsodi:unknown_interface
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            integer :: ml
+            integer :: mu
+            double precision dimension(nrowp,neq),intent(out) :: p
+            integer :: nrowp
+        end subroutine adda
+        subroutine jac(neq,t,y,s,ml,mu,p,nrowp) ! in :odepack:opkdmain.f:dlsodar:unknown_interface
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            integer :: ml
+            integer :: mu
+            double precision dimension(nrowp,neq),intent(out) :: p
+            integer :: nrowp
+        end subroutine jac
+    end interface dlsodi_user_interface
+end python module dlsodi__user__routines
+python module dlsoibt__user__routines 
+    interface dlsoibt_user_interface 
+        subroutine res(neq,tn,y,s,r,ires) ! in :odepack:opkdmain.f:dlsoibt:unknown_interface
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            double precision dimension(neq),intent(out) :: r
+            integer :: ires
+        end subroutine res
+        subroutine adda(neq,t,y,mb,nb,pa,pb,pc)
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            integer :: mb
+            integer :: nb
+            double precision dimension(mb,mb,nb),intent(out) :: pa
+            double precision dimension(mb,mb,nb),intent(out) :: pb
+            double precision dimension(mb,mb,nb),intent(out) :: pc
+        end subroutine adda
+        subroutine jac(neq,t,y,s,mb,nb,pa,pb,pc)
+            integer :: neq
+            double precision :: t
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            integer :: mb
+            integer :: nb
+            double precision dimension(mb,mb,nb),intent(out) :: pa
+            double precision dimension(mb,mb,nb),intent(out) :: pb
+            double precision dimension(mb,mb,nb),intent(out) :: pc
+        end subroutine jac
+    end interface dlsoibt_user_interface
+end python module dlsoibt__user__routines
+python module dlsodis__user__routines 
+    interface dlsodis_user_interface 
+        subroutine res(neq,tn,y,s,r,ires) ! in :odepack:opkdmain.f:dlsodis:unknown_interface
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            double precision dimension(neq),intent(out) :: r
+            integer :: ires
+        end subroutine res
+        subroutine adda(neq,tn,y,j,ian,jan,p) ! in :odepack:opkdmain.f:dlsodi:unknown_interface
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            integer :: j
+            integer dimension(*) :: ian
+            integer dimension(*) :: jan
+            double precision dimension(neq),intent(out) :: p
+        end subroutine adda
+        subroutine jac(neq,tn,y,s,j,ian,jan,pdj)
+            integer :: neq
+            double precision :: tn
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: s
+            integer :: j
+            integer dimension(*) :: ian
+            integer dimension(*) :: jan
+            double precision dimension(neq),intent(out) :: pdj
+        end subroutine jac
+    end interface dlsodis_user_interface
+end python module dlsodis__user__routines
+
+python module odepack ! in 
+    interface  ! in :odepack
+        subroutine dlsode(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,mf) ! in :odepack:opkdmain.f
+            use dlsode__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            integer :: mf
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            integer :: init,mxstep,mxhnil,nhnil,nslast,nyh
+            !common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            common /dls001/ conit, crate, el(13), elco(13,12), hold, &
+                            rmax, tesco(3,12),ccmax, el0, h, hmin,   &
+                            hmxi, hu, rc, tn, uround,                &
+                            init,mxstep,mxhnil,nhnil,nslast,nyh,     &    !iownd(6), 
+                            ialth, ipup, lmax, meo, nqnyh, nslp,     &    !iowns(6)
+                            icf, ierpj, iersl, jcur, jstart, kflag,  &
+                            l,lyh, lewt, lacor, lsavf, lwm, liwm,    &
+                            meth, miter,maxord, maxcor, msbp, mxncf, &
+                            n, nq, nst, nfe, nje, nqu
+        end subroutine dlsode
+        subroutine dlsodes(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,mf) ! in :odepack:opkdmain.f
+            use dlsodes__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            integer :: mf
+            double precision :: con0
+            double precision :: conmin
+            double precision :: ccmxj
+            double precision :: psmall
+            double precision :: rbig
+            double precision :: seth
+            integer :: iplost
+            integer :: iesp
+            integer :: istatc
+            integer :: iys
+            integer :: iba
+            integer :: ibian
+            integer :: ibjan
+            integer :: ibjgp
+            integer :: ipian
+            integer :: ipjan
+            integer :: ipjgp
+            integer :: ipigp
+            integer :: ipr
+            integer :: ipc
+            integer :: ipic
+            integer :: ipisp
+            integer :: iprsp
+            integer :: ipa
+            integer :: lenyh
+            integer :: lenyhm
+            integer :: lenwk
+            integer :: lreq
+            integer :: lrat
+            integer :: lrest
+            integer :: lwmin
+            integer :: moss
+            integer :: msbj
+            integer :: nslj
+            integer :: ngp
+            integer :: nlu
+            integer :: nnz
+            integer :: nsp
+            integer :: nzl
+            integer :: nzu
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dlss01/ con0,conmin,ccmxj,psmall,rbig,seth,iplost,iesp,istatc,iys,iba,ibian,ibjan,ibjgp,ipian,ipjan,ipjgp,ipigp,ipr,ipc,ipic,ipisp,iprsp,ipa,lenyh,lenyhm,lenwk,lreq,lrat,lrest,lwmin,moss,msbj,nslj,ngp,nlu,nnz,nsp,nzl,nzu
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsodes
+        subroutine dlsoda(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,jt) ! in :odepack:opkdmain.f
+            use dlsoda__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            integer :: jt
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            double precision :: tsw
+            double precision dimension(20) :: rowns2
+            double precision :: pdnorm
+            integer :: insufr
+            integer :: insufi
+            integer :: ixpr
+            integer dimension(2) :: iowns2
+            integer :: jtyp
+            integer :: mused
+            integer :: mxordn
+            integer :: mxords
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            common /dlsa01/ tsw,rowns2,pdnorm,insufr,insufi,ixpr,iowns2,jtyp,mused,mxordn,mxords
+        end subroutine dlsoda
+        subroutine dlsodar(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,jt,g,ng,jroot) ! in :odepack:opkdmain.f
+            use dlsodar__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq),intent(in,out) :: y
+            double precision,intent(in,out) :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer,intent(in,out) :: istate
+            integer :: iopt
+            double precision dimension(lrw), intent(in,out) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw),intent(in,out) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            integer :: jt
+            external g
+            integer, optional,check(len(jroot)>=ng),depend(jroot) :: ng=len(jroot)
+            integer dimension(ng),intent(in,out) :: jroot
+            double precision dimension(2) :: rownr3
+            double precision :: t0
+            double precision :: tlast
+            double precision :: toutc
+            integer :: lg0
+            integer :: lg1
+            integer :: lgx
+            integer dimension(2) :: iownr3
+            integer :: irfnd
+            integer :: itaskc
+            integer :: ngc
+            integer :: nge
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            double precision :: tsw
+            double precision dimension(20) :: rowns2
+            double precision :: pdnorm
+            integer :: insufr
+            integer :: insufi
+            integer :: ixpr
+            integer dimension(2) :: iowns2
+            integer :: jtyp
+            integer :: mused
+            integer :: mxordn
+            integer :: mxords
+            common /dlsr01/ rownr3,t0,tlast,toutc,lg0,lg1,lgx,iownr3,irfnd,itaskc,ngc,nge
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+            common /dlsa01/ tsw,rowns2,pdnorm,insufr,insufi,ixpr,iowns2,jtyp,mused,mxordn,mxords
+        end subroutine dlsodar
+        subroutine dlsodpk(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,psol,mf) ! in :odepack:opkdmain.f
+            use dlsodpk__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            external psol
+            integer :: mf
+            double precision :: delt
+            double precision :: epcon
+            double precision :: sqrtn
+            double precision :: rsqrtn
+            integer :: jpre
+            integer :: jacflg
+            integer :: locwp
+            integer :: lociwp
+            integer :: lsavx
+            integer :: kmp
+            integer :: maxl
+            integer :: mnewt
+            integer :: nni
+            integer :: nli
+            integer :: nps
+            integer :: ncfn
+            integer :: ncfl
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dlpk01/ delt,epcon,sqrtn,rsqrtn,jpre,jacflg,locwp,lociwp,lsavx,kmp,maxl,mnewt,nni,nli,nps,ncfn,ncfl
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsodpk
+        subroutine dlsodkr(f,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac,psol,mf,g,ng,jroot) ! in :odepack:opkdmain.f
+            use dlsodkr__user__routines
+            external f
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            external jac
+            external psol
+            integer :: mf
+            external g
+            integer :: ng
+            integer dimension(*) :: jroot
+            double precision :: delt
+            double precision :: epcon
+            double precision :: sqrtn
+            double precision :: rsqrtn
+            integer :: jpre
+            integer :: jacflg
+            integer :: locwp
+            integer :: lociwp
+            integer :: lsavx
+            integer :: kmp
+            integer :: maxl
+            integer :: mnewt
+            integer :: nni
+            integer :: nli
+            integer :: nps
+            integer :: ncfn
+            integer :: ncfl
+            double precision dimension(2) :: rownr3
+            double precision :: t0
+            double precision :: tlast
+            double precision :: toutc
+            integer :: lg0
+            integer :: lg1
+            integer :: lgx
+            integer dimension(2) :: iownr3
+            integer :: irfnd
+            integer :: itaskc
+            integer :: ngc
+            integer :: nge
+            double precision :: stifr
+            integer :: newt
+            integer :: nsfi
+            integer :: nslj
+            integer :: njev
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dlpk01/ delt,epcon,sqrtn,rsqrtn,jpre,jacflg,locwp,lociwp,lsavx,kmp,maxl,mnewt,nni,nli,nps,ncfn,ncfl
+            common /dlsr01/ rownr3,t0,tlast,toutc,lg0,lg1,lgx,iownr3,irfnd,itaskc,ngc,nge
+            common /dls002/ stifr,newt,nsfi,nslj,njev
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsodkr
+        subroutine dlsodi(res,adda,jac,neq,y,ydoti,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,mf) ! in :odepack:opkdmain.f
+            use dlsodi__user__routines
+            external res
+            external adda
+            external jac
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: ydoti
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            integer :: mf
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsodi
+        subroutine dlsoibt(res,adda,jac,neq,y,ydoti,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,mf) ! in :odepack:opkdmain.f
+            use dlsoibt__user__routines
+            external res
+            external adda
+            external jac
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: ydoti
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            integer :: mf
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsoibt
+        subroutine dlsodis(res,adda,jac,neq,y,ydoti,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,mf) ! in :odepack:opkdmain.f
+            use dlsodis__user__routines
+            external res
+            external adda
+            external jac
+            integer :: neq
+            double precision dimension(neq) :: y
+            double precision dimension(neq) :: ydoti
+            double precision :: t
+            double precision :: tout
+            integer :: itol
+            double precision dimension(neq) :: rtol
+            double precision dimension(neq) :: atol
+            integer :: itask
+            integer :: istate
+            integer :: iopt
+            double precision dimension(lrw) :: rwork
+            integer, optional,check(len(rwork)>=lrw),depend(rwork) :: lrw=len(rwork)
+            integer dimension(liw) :: iwork
+            integer, optional,check(len(iwork)>=liw),depend(iwork) :: liw=len(iwork)
+            integer :: mf
+            double precision :: con0
+            double precision :: conmin
+            double precision :: ccmxj
+            double precision :: psmall
+            double precision :: rbig
+            double precision :: seth
+            integer :: iplost
+            integer :: iesp
+            integer :: istatc
+            integer :: iys
+            integer :: iba
+            integer :: ibian
+            integer :: ibjan
+            integer :: ibjgp
+            integer :: ipian
+            integer :: ipjan
+            integer :: ipjgp
+            integer :: ipigp
+            integer :: ipr
+            integer :: ipc
+            integer :: ipic
+            integer :: ipisp
+            integer :: iprsp
+            integer :: ipa
+            integer :: lenyh
+            integer :: lenyhm
+            integer :: lenwk
+            integer :: lreq
+            integer :: lrat
+            integer :: lrest
+            integer :: lwmin
+            integer :: moss
+            integer :: msbj
+            integer :: nslj
+            integer :: ngp
+            integer :: nlu
+            integer :: nnz
+            integer :: nsp
+            integer :: nzl
+            integer :: nzu
+            double precision dimension(209) :: rowns
+            double precision :: ccmax
+            double precision :: el0
+            double precision :: h
+            double precision :: hmin
+            double precision :: hmxi
+            double precision :: hu
+            double precision :: rc
+            double precision :: tn
+            double precision :: uround
+            integer :: init
+            integer :: mxstep
+            integer :: mxhnil
+            integer :: nhnil
+            integer :: nslast
+            integer :: nyh
+            integer dimension(6) :: iowns
+            integer :: icf
+            integer :: ierpj
+            integer :: iersl
+            integer :: jcur
+            integer :: jstart
+            integer :: kflag
+            integer :: l
+            integer :: lyh
+            integer :: lewt
+            integer :: lacor
+            integer :: lsavf
+            integer :: lwm
+            integer :: liwm
+            integer :: meth
+            integer :: miter
+            integer :: maxord
+            integer :: maxcor
+            integer :: msbp
+            integer :: mxncf
+            integer :: n
+            integer :: nq
+            integer :: nst
+            integer :: nfe
+            integer :: nje
+            integer :: nqu
+            common /dlss01/ con0,conmin,ccmxj,psmall,rbig,seth,iplost,iesp,istatc,iys,iba,ibian,ibjan,ibjgp,ipian,ipjan,ipjgp,ipigp,ipr,ipc,ipic,ipisp,iprsp,ipa,lenyh,lenyhm,lenwk,lreq,lrat,lrest,lwmin,moss,msbj,nslj,ngp,nlu,nnz,nsp,nzl,nzu
+            common /dls001/ rowns,ccmax,el0,h,hmin,hmxi,hu,rc,tn,uround,init,mxstep,mxhnil,nhnil,nslast,nyh,iowns,icf,ierpj,iersl,jcur,jstart,kflag,l,lyh,lewt,lacor,lsavf,lwm,liwm,meth,miter,maxord,maxcor,msbp,mxncf,n,nq,nst,nfe,nje,nqu
+        end subroutine dlsodis
+        subroutine dsrcar(rsav, isav, job)
+            ! Save/restore LSODAR COMMON blocks
+            integer, intent(inout), dimension(55):: isav
+            integer, intent(in):: job
+            double precision, intent(inout), dimension(245):: rsav
+        end subroutine dsrcar 
+        subroutine dcfode(meth, elco, tesco)
+            ! set method and test coefficients for odepack routines
+            integer, intent(in):: meth
+            double precision, intent(out),dimension(13,12):: elco
+            double precision, intent(out),dimension(3,12)::tesco 
+        end subroutine dcfode   
+    end interface 
+        interface  ! in :odepack_aux
+        subroutine set_lsod_common(meth,nq,nqu,miter,maxord,meo,nqnyh,nst,nfe,nje,init,tn, conit,el, nge, hu, jstart) ! in :odepack_aux:odepack_aux.f90
+            integer intent(in), optional :: meth
+            integer intent(in), optional :: nq
+            integer intent(in), optional :: nqu
+            integer intent(in), optional :: miter
+            integer intent(in), optional :: maxord
+            integer intent(in), optional :: meo
+            integer intent(in), optional :: nqnyh
+            integer intent(in), optional :: nst
+            integer intent(in), optional :: nfe
+            integer intent(in), optional :: nje
+            integer intent(in), optional :: nge
+            integer intent(in), optional :: init 
+            integer intent(in), optional :: jstart
+            double precision intent(in), optional :: tn
+            double precision intent(in), optional :: conit
+            double precision intent(in), optional :: hu
+            double precision dimension(13),intent(in), optional :: el
+        end subroutine set_lsod_common
+        subroutine get_lsod_common(hu_,nqu_,nq_,nyh_, nqnyh_) ! in :odepack_aux:odepack_aux.f90
+            double precision intent(out) :: hu_
+            integer intent(out) :: nqu_
+            integer intent(out) :: nq_
+            integer intent(out) :: nyh_
+            integer intent(out) :: nqnyh_
+         end subroutine get_lsod_common
+    end interface
+    interface ! in odpkda1
+       subroutine dintdy (t, k, yh, nyh, dky, iflag) ! in: odpkda1.f
+            double precision, intent(in) :: t
+            integer, intent(in) :: k
+            double precision, depend(nyh), intent(in) :: yh(nyh,*)
+            integer, intent(in) :: nyh
+            double precision, intent(out), depend(nyh) :: dky(nyh)
+            integer, intent(out) :: iflag
+       end subroutine dintdy
+    end interface
+end python module odepack
+
+! This file was auto-generated with f2py (version:2) and edited.
+! See http://cens.ioc.ee/projects/f2py2e/

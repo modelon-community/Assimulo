@@ -1,0 +1,34 @@
+{% extends "!layout.html" %}
+
+{% block extrahead %}
+{{ super() }}
+{%- if not embedded %}
+<style type="text/css">
+  table.right { float: right; margin-left: 20px; }
+  table.right td { border: 1px solid #ccc; }
+</style>
+{%- endif %}
+{% endblock %}
+
+{%- block relbar2 %}
+{% endblock %}
+
+{% block rootrellink %}
+        <li><a href="{{ pathto('index') }}#">Assimulo home</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('contents') }}#">Documentation</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('tutorial') }}#">Tutorial</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('museum') }}#">Museum</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('download' )}}#">Download</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('examples' )}}#">Examples</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('citation' )}}#">Citation</a>&nbsp;|&nbsp;</li>
+        <li><a href="{{ pathto('contact' )}}#">Contact</a></li>
+
+{% endblock %}
+
+{#{% block header %}
+<div style="background-color: white; text-align: left; padding: 5px 5px 5px 5px">
+<a href="index.html"><img src="{{ pathto("_static/assimulo.png", 1) }}" alt="Assimulo logo" /></a>
+</div>
+{% endblock %}#}
+
+{#% block footer %}{% endblock %#}

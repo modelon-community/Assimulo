@@ -1,0 +1,54 @@
+!	-*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module dasp3__user__routines 
+	interface dasp3_user_interface 
+	subroutine dydt(t, y, z, yprime, n, m)
+		double precision intent(in) :: t  
+		integer intent(in,hide), depend(y) :: n=len(y)  
+		integer intent(in,hide), depend(z) :: m=len(z)
+		double precision dimension(n),  intent(in) :: y
+		double precision dimension(m),  intent(in) :: z 
+		double precision dimension(n),  intent(out) :: yprime  
+	end subroutine dydt	
+	subroutine dzdt(t, y, z, zprime, n, m)
+		double precision intent(in) :: t  
+		integer intent(in,hide), depend(y) :: n=len(y)  
+		integer intent(in,hide), depend(z) :: m=len(z)
+		double precision dimension(n),  intent(in) :: y
+		double precision dimension(m),  intent(in) :: z 
+		double precision dimension(m),  intent(out) :: zprime   
+	end subroutine dzdt	
+	subroutine outpda(t,wsy,wsz,n,m,jstop)
+		double precision t
+		integer n,m, jstop
+		double precision dimension(10*n), depend(n):: wsy
+		double precision dimension(9*m), depend(m):: wsz
+	end interface odassl_user_interface
+end python module odassl__user__routines
+
+python module dasp3
+	interface  dasp3
+	subroutine dasp3(dydt,dzdt,outpda,t,tend,wsy,wsz,n,m,tol,absrel,wght,eps,a,w,slu,ips,eq,ind,lflag)
+	use dasp3__user__routines
+	external dydt
+	external dzdt
+	external outpda
+	double precision, intent(in,out) :: t
+	double precision, intent(in) :: tend
+	real*4 :: tol
+	integer, intend(in) :: n,m
+	double precision dimension(10*n), depend(n):: wsy
+	double precision dimension(9*m), depend(m):: wsz
+	real*4 dimension(n+m), depend(n), depend(m):: absrel, wght
+	real*4 precision dimension(m), depend(m):: eps
+	real*4 dimension(m*m), depend(m):: a, w
+	real*4 dimension(2*m), depend(m) :: slu
+	integer dimension(m), depend(m) :: ips
+	logical dimension(m), depend(m) :: eq
+	integer dimension(2*m), depend(m) :: ind
+	integer, intent(out) :: lflag
+	end subroutine dasp3
+	end interface dasp3
+end python module dasp3
+
