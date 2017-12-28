@@ -3,6 +3,15 @@
 Changelog
 ==========
 
+--- Assimulo-3.0 ---
+    * Removed version check for numpy (it was only a problem for old 
+      numpy version < 1.6.1 which we do no longer guard against) ticket:409)
+    * Added license and changelog to the install folder (ticket:410)
+    * Deprecated the setup option "sundials-with-superlu". SuperLU support
+      using Sundials is not automatically checked (ticket:414)
+    * Added support for Sundials 3.1 (ticket:418)
+    * Renamed the option stablimit to stablimit (ticket:417)
+
 --- Assimulo-2.9 ---
     * Added option to specify to use the 2-norm in CVode (ticket:401)
     * Added option to set max nonlinear iteration in CVode (ticket:400)
