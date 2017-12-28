@@ -1,6 +1,6 @@
 --- CHANGELOG ---
 
---- Assimulo-trunk ---
+--- Assimulo-3.0 ---
     * Removed version check for numpy (it was only a problem for old 
       numpy version < 1.6.1 which we do no longer guard against) ticket:409)
     * Added license and changelog to the install folder (ticket:410)
