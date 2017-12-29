@@ -255,14 +255,6 @@ class Assimulo_prepare(object):
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
-            """
-            name = ctypes.util.find_library("blas")
-            if name !='':
-                self.with_Blas=True
-                self.BLASname = name
-                L.debug('Blas found in standard library path as {}'.format(name))
-            else:
-            """
             L.warning("No path to BLAS supplied" + msg)
             L.debug("usage: --blas-home=path")
             L.debug("Note: the path required is to where the static library lib is found")
@@ -509,7 +501,7 @@ class Assimulo_prepare(object):
         if self.with_BLAS and self.with_LAPACK:
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
-            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', 'blas']}
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', self.BLASname]}
             extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
