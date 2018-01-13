@@ -288,8 +288,24 @@ class Assimulo_prepare(object):
             else:
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
-            self.superLUFiles = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
-            self.superLUFiles.sort(reverse=True)
+            potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
+            potential_files.sort(reverse=True)
+            L.debug("Potential SuperLU files: "+str(potential_files))
+            
+            self.superLUFiles = []
+            for f in potential_files:
+                if "superlu" in f:
+                    self.superLUFiles.append(f)
+                #if self.with_BLAS == False and "blas" in f:
+                #    self.superLUFiles.append(f)
+                if "blas" in f:
+                    self.superLUFiles.append(f)
+                    
+            #if self.with_BLAS:
+            #    self.superLUFiles.append(self.BLASname)
+            
+            L.debug("SuperLU files: "+str(self.superLUFiles))
+            
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
             L.debug("No path to SuperLU supplied, SUNDIALS will not be compiled with support for SuperLU.")
