@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import scipy.sparse as sp
 
 from assimulo.ode import *
 from assimulo.explicit_ode import Explicit_ODE
@@ -366,6 +367,19 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
         return irtrn
     
+    def _jacobian(self, t, y):
+        """
+        Calculates the Jacobian, either by an approximation or by the user
+        defined (jac specified in the problem class).
+        """
+        print t, y
+        jac = self.problem.jac(t,y)
+        
+        if isinstance(jac, sp.csc_matrix):
+            jac = jac.toarray()
+        
+        return jac
+    
     def integrate(self, t, y, tf, opts):
         IFCN  = 1 #The function may depend on t
         ITOL  = 1 #Both rtol and atol are vectors
@@ -391,7 +405,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
         #Dummy methods
         mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
         dfx_dummy = lambda t:x
         
         #Check for initialization

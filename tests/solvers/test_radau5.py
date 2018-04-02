@@ -24,6 +24,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
 from assimulo.lib.radau_core import Radau_Exception, Radau_Common
+import scipy.sparse as sp
 
 
 class Test_Explicit_Radau5:
@@ -292,18 +293,33 @@ class Test_Explicit_Fortran_Radau5:
             
             return J
         
+        def jac_sparse(t,y):
+            eps = 1.e-6
+            my = 1./eps
+            J = N.zeros([2,2])
+            
+            J[0,0]=0.
+            J[0,1]=1.
+            J[1,0]=my*(-2.*y[0]*y[1]-1.)
+            J[1,1]=my*(1.-y[0]**2)
+            
+            return sp.csc_matrix(J)
+        
         #Define an Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
         exp_mod_t0 = Explicit_Problem(f,y0,1.0)
+        exp_mod_sp = Explicit_Problem(f,y0)
         
         exp_mod.jac = jac
+        exp_mod_sp.jac = jac_sparse
         self.mod = exp_mod
             
         #Define an explicit solver
         self.sim = Radau5ODE(exp_mod) #Create a Radau5 solve
         self.sim_t0 = Radau5ODE(exp_mod_t0)
+        self.sim_sp = Radau5ODE(exp_mod_sp)
         
         #Sets the parameters
         self.sim.atol = 1e-4 #Default 1e-6
@@ -436,7 +452,20 @@ class Test_Explicit_Fortran_Radau5:
         assert self.sim.statistics["nfcnjacs"] == 0
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
-
+    
+    @testattr(stddist = True)
+    def test_usejac_csc_matrix(self):
+        """
+        This tests the functionality of the property usejac.
+        """
+        self.sim_sp.usejac = True
+        
+        self.sim_sp.simulate(2.) #Simulate 2 seconds
+    
+        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        
+        nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
+    
     @testattr(stddist = True)
     def test_thet(self):
         """

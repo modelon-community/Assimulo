@@ -18,6 +18,7 @@
 import numpy as N
 import scipy as S
 import scipy.linalg as LIN
+import scipy.sparse as sp
 
 from assimulo.exception import *
 from assimulo.ode import *
@@ -179,6 +180,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     self._ylist.append(y)
         
         return irtrn
+        
+    def _jacobian(self, t, y):
+        """
+        Calculates the Jacobian, either by an approximation or by the user
+        defined (jac specified in the problem class).
+        """
+        jac = self.problem.jac(t,y)
+        
+        if isinstance(jac, sp.csc_matrix):
+            jac = jac.toarray()
+        
+        return jac
             
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
@@ -208,7 +221,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Dummy methods
         mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
         
         #Check for initialization
         if opts["initialize"]:

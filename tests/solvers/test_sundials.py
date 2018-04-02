@@ -22,6 +22,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
 import numpy as np
+import scipy.sparse as sp
 
 class Test_CVode:
     
@@ -316,6 +317,32 @@ class Test_CVode:
         """
         f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
         jac = lambda t,x: N.array([[0.,1.],[0.,0.]]) #Defines the jacobian
+        
+        exp_mod = Explicit_Problem(f, [1.0,0.0])
+        exp_mod.jac = jac
+        
+        exp_sim = CVode(exp_mod)
+        exp_sim.discr='BDF'
+        exp_sim.iter='Newton'
+        exp_sim.simulate(5.,100)
+        
+        assert exp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
+        
+        exp_sim.reset()
+        exp_sim.usejac=False
+        exp_sim.simulate(5.,100)
+
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
+        assert exp_sim.statistics["nfcnjacs"] > 0
+    
+    @testattr(stddist = True)
+    def test_usejac_csc_matrix(self):
+        """
+        This tests the functionality of the property usejac.
+        """
+        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: sp.csc_matrix(N.array([[0.,1.],[0.,0.]])) #Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
