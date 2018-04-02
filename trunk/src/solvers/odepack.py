@@ -17,6 +17,7 @@
 
 import numpy as N
 import scipy.linalg as Sc
+import scipy.sparse as sp
 import sys
 from assimulo.exception import *
 from assimulo.ode import *
@@ -263,7 +264,19 @@ class LSODAR(Explicit_ODE):
             
  
         return ISTATE, RWORK, IWORK
-                                     
+                                    
+    def _jacobian(self, t, y):
+        """
+        Calculates the Jacobian, either by an approximation or by the user
+        defined (jac specified in the problem class).
+        """
+        print t, y
+        jac = self.problem.jac(t,y)
+        
+        if isinstance(jac, sp.csc_matrix):
+            jac = jac.toarray()
+        
+        return jac
     
     def integrate(self, t, y, tf, opts):
         ITOL  = 2 #Only  atol is a  vector
@@ -292,7 +305,7 @@ class LSODAR(Explicit_ODE):
         #g_dummy = (lambda t:x) if not self.problem_info["state_events"] else self.problem.state_events
         g_fcn = g_dummy if not self.problem_info["state_events"] else self.problem.state_events
         #jac_dummy = (lambda t,y:N.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
-        jac_fcn = jac_dummy if not self.usejac else self.problem.jac
+        jac_fcn = jac_dummy if not self.usejac else self._jacobian
         
         #Extra args to rhs and state_events
         rhs_extra_args = (self.sw,) if self.problem_info["switches"] else ()

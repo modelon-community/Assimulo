@@ -24,6 +24,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.exception import *
 
 import numpy as N
+import scipy.sparse as sp
 
 class Test_LSODAR:
     """
@@ -53,17 +54,32 @@ class Test_LSODAR:
             
             return J
         
+        def jac_sparse(t,y):
+            eps = 1.e-6
+            my = 1./eps
+            J = N.zeros([2,2])
+            
+            J[0,0]=0.
+            J[0,1]=1.
+            J[1,0]=my*(-2.*y[0]*y[1]-1.)
+            J[1,1]=my*(1.-y[0]**2)
+            
+            return sp.csc_matrix(J)
+        
         #Define an Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
         exp_mod_t0 = Explicit_Problem(f,y0,1.0)
+        exp_mod_sp = Explicit_Problem(f,y0)
         
         exp_mod.jac = jac
+        exp_mod_sp.jac = jac_sparse
         self.mod = exp_mod
             
         #Define an explicit solver
         self.sim = LSODAR(exp_mod) #Create a LSODAR solve
+        self.sim_sp = LSODAR(exp_mod_sp)
         
         #Sets the parameters
         self.sim.atol = 1e-6 #Default 1e-6
@@ -162,18 +178,22 @@ class Test_LSODAR:
     
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
-        """
-        Test a simulation with ncp.
-        """
         self.sim.simulate(1.,100) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
         
+    @testattr(stddist = True)
+    def test_usejac_csc_matrix(self):
+        self.sim_sp.usejac = True
+        
+        self.sim_sp.simulate(2.) #Simulate 2 seconds
+    
+        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        
+        nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
+        
     @testattr(stddist = True)    
     def test_simulation_ncp_list(self):
-        """
-        Test a simulation with ncp.
-        """
         self.sim.simulate(1.,ncp_list=[0.5]) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
@@ -191,9 +211,6 @@ class Test_LSODAR:
         
     @testattr(stddist = True)    
     def test_simulation_ncp_list_2(self):
-        """
-        Test a simulation with ncp.
-        """
         self.sim.simulate(1.,ncp_list=[0.5,4]) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
