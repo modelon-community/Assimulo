@@ -61,7 +61,7 @@ cdef class IDA(Implicit_ODE):
     """
     cdef void* ida_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp
+    cdef N_Vector yTemp, ydTemp, nv_atol
     cdef N_Vector *ySO
     cdef N_Vector *ydSO
     cdef object f
@@ -172,6 +172,9 @@ cdef class IDA(Implicit_ODE):
         if self.ydTemp != NULL:
             #Deallocate N_Vector
             N_VDestroy_Serial(self.ydTemp)
+            
+        if self.nv_atol != NULL:
+            N_VDestroy_Serial(self.nv_atol)
         
         if self.ida_mem != NULL: 
             #Free Memory
@@ -460,7 +463,8 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag)
             
         #Set the tolerances
-        flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        self.nv_atol = arr2nv(self.options["atol"])
+        flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise IDAError(flag)
             
@@ -1436,7 +1440,7 @@ cdef class CVode(Explicit_ODE):
     """
     cdef void* cvode_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp
+    cdef N_Vector yTemp, ydTemp, nv_atol
     cdef N_Vector *ySO
     cdef object f
     cdef public object event_func
@@ -1506,6 +1510,9 @@ cdef class CVode(Explicit_ODE):
         if self.yTemp != NULL:
             #Deallocate N_Vector
             N_VDestroy_Serial(self.yTemp)
+            
+        if self.nv_atol != NULL:
+            N_VDestroy_Serial(self.nv_atol)
         
         if self.cvode_mem != NULL:
             #Free Memory
@@ -2203,7 +2210,8 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(flag)
         
         #Tolerances
-        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        self.nv_atol = arr2nv(self.options["atol"])
+        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise CVodeError(flag)
             
