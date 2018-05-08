@@ -1,0 +1,81 @@
+Index: radau_decsol.f
+===================================================================
+--- radau_decsol.f	(revision 861)
++++ radau_decsol.f	(working copy)
+@@ -680,7 +680,7 @@
+ C ---------------------------------------------------------- 
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       DIMENSION Y(N),Z1(N),Z2(N),Z3(N),Y0(N),SCAL(N),F1(N),F2(N),F3(N)
+-      DIMENSION FJAC(LDJAC,N),FMAS(LDMAS,NM1),CONT(4*N)
++      DIMENSION FJAC(LDJAC,N),FMAS(LDMAS,NM1),CONT(4*N),WERR(N)
+       DIMENSION E1(LDE1,NM1),E2R(LDE1,NM1),E2I(LDE1,NM1)
+       DIMENSION ATOL(*),RTOL(*),RPAR(*),IPAR(*)
+       INTEGER IP1(NM1),IP2(NM1),IPHES(NM1)
+@@ -762,11 +762,12 @@
+           XOSOL=XOLD
+           XSOL=X
+           DO I=1,N
++             WERR(I)=0.D0
+              CONT(I)=Y(I)
+           END DO
+           NSOLU=N
+           HSOL=HOLD
+-          CALL SOLOUT(NRSOL,XOSOL,XSOL,Y,CONT,LRC,NSOLU,
++          CALL SOLOUT(NRSOL,XOSOL,XSOL,Y,CONT,WERR,LRC,NSOLU,
+      &                RPAR,IPAR,IRTRN)
+           IF (IRTRN.LT.0) GOTO 179
+       END IF
+@@ -1005,7 +1006,7 @@
+ C --- ERROR ESTIMATION  
+       CALL ESTRAD (N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS,
+      &          H,DD1,DD2,DD3,FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,
+-     &          E1,LDE1,Z1,Z2,Z3,CONT,F1,F2,IP1,IPHES,SCAL,ERR,
++     &          E1,LDE1,Z1,Z2,Z3,CONT,WERR,F1,F2,IP1,IPHES,SCAL,ERR,
+      &          FIRST,REJECT,FAC1,RPAR,IPAR)
+ C --- COMPUTATION OF HNEW
+ C --- WE REQUIRE .2<=HNEW/H<=8.
+@@ -1062,7 +1063,7 @@
+              END DO
+              NSOLU=N
+              HSOL=HOLD
+-             CALL SOLOUT(NRSOL,XOSOL,XSOL,Y,CONT,LRC,NSOLU,
++             CALL SOLOUT(NRSOL,XOSOL,XSOL,Y,CONT,WERR,LRC,NSOLU,
+      &                   RPAR,IPAR,IRTRN)
+              IF (IRTRN.LT.0) GOTO 179
+          END IF
+@@ -3462,12 +3463,12 @@
+ C
+       SUBROUTINE ESTRAD(N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS,
+      &          H,DD1,DD2,DD3,FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,
+-     &          E1,LDE1,Z1,Z2,Z3,CONT,F1,F2,IP1,IPHES,SCAL,ERR,
++     &          E1,LDE1,Z1,Z2,Z3,CONT,WERR,F1,F2,IP1,IPHES,SCAL,ERR,
+      &          FIRST,REJECT,FAC1,RPAR,IPAR)
+       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+       DIMENSION FJAC(LDJAC,N),FMAS(LDMAS,NM1),E1(LDE1,NM1),IP1(NM1),
+      &     SCAL(N),IPHES(N),Z1(N),Z2(N),Z3(N),F1(N),F2(N),Y0(N),Y(N)
+-      DIMENSION CONT(N),RPAR(1),IPAR(1)
++      DIMENSION CONT(N),WERR(N),RPAR(1),IPAR(1)
+       LOGICAL FIRST,REJECT
+       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
+       HEE1=DD1/H
+@@ -3689,7 +3690,8 @@
+   77  CONTINUE
+       ERR=0.D0
+       DO  I=1,N
+-         ERR=ERR+(CONT(I)/SCAL(I))**2
++         WERR(I) = CONT(I)/SCAL(I)
++         ERR=ERR+(WERR(I))**2
+       END DO
+       ERR=MAX(SQRT(ERR/N),1.D-10)
+ C
+@@ -3777,7 +3779,8 @@
+    88     CONTINUE
+           ERR=0.D0 
+           DO I=1,N
+-             ERR=ERR+(CONT(I)/SCAL(I))**2
++             WERR(I) = CONT(I)/SCAL(I)
++             ERR=ERR+(WERR(I))**2
+           END DO
+           ERR=MAX(SQRT(ERR/N),1.D-10)
+        END IF
+

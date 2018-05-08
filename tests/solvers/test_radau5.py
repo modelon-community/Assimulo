@@ -521,6 +521,23 @@ class Test_Explicit_Fortran_Radau5:
         assert self.sim.statistics["nsteps"] < steps*1.5
         
     @testattr(stddist = True)
+    def test_weighted_error(self):
+        
+        def handle_result(solver, t, y):
+            err = solver.get_weighted_local_errors()
+            assert len(err) == len(y)
+        
+        self.mod.handle_result = handle_result
+            
+        #Define an explicit solver
+        sim = Radau5ODE(self.mod) #Create a Radau5 solve
+        
+        sim.get_weighted_local_errors()
+        
+        sim.simulate(1)
+        
+        
+    @testattr(stddist = True)
     def test_atol(self):
         """
         This test the absolute tolerance.
