@@ -1543,6 +1543,12 @@ cdef class CVode(Explicit_ODE):
         
         return ele_py
         
+    def get_weighted_local_errors(self):
+        """
+        Returns the vector of weighted estimated local errors at the current step.
+        """
+        return N.abs(self.get_local_errors()*self.get_error_weights())
+        
     cpdef get_last_order(self):
         """
         Returns the order used on the last successful step.

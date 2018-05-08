@@ -19,12 +19,13 @@ python module radcor__user__routines
             double precision dimension(1),intent(hide) :: rpar
             integer dimension(1),intent(hide) :: ipar
         end subroutine mas
-        subroutine solout(nrsol,xosol,xsol,y,cont,lrc,nsolu,rpar,ipar,irtrn) ! in :radau5:radau_decsol.f:radcor:unknown_interface
+        subroutine solout(nrsol,xosol,xsol,y,cont,werr,lrc,nsolu,rpar,ipar,irtrn) ! in :radau5:radau_decsol.f:radcor:unknown_interface
             integer :: nrsol
             double precision :: xosol
             double precision :: xsol
             double precision dimension(nsolu) :: y
             double precision dimension(4*nsolu) :: cont
+            double precision dimension(nsolu) :: werr
             integer :: lrc
             integer, optional,check(len(y)>=nsolu),depend(y),intent(hide) :: nsolu=len(y)
             double precision dimension(1),intent(hide) :: rpar

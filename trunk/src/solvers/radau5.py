@@ -103,6 +103,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
         self._event_info = None
+        self._werr = N.zeros(self._leny)
         
     def initialize(self):
         #Reset statistics
@@ -143,12 +144,19 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             y[i] = radau5.contr5(i+1, time, self.cont)
         
         return y
+        
+    def get_weighted_local_errors(self):
+        """
+        Returns the vector of weighted estimated local errors at the current step.
+        """
+        return N.abs(self._werr)
     
-    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
         self.cont = cont #Saved to be used by the interpolation function.
+        self._werr = werr
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
