@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import pylab as P
 import numpy as N
 
 from assimulo.ode import *
@@ -61,6 +60,8 @@ class Radau_Common(object):
         """
         Plots the step-size.
         """
+        import pylab as P
+        
         P.semilogy(N.diff(self.t),drawstyle='steps-post')
         P.title(self.problem.name)
         P.ylabel('Step length')
