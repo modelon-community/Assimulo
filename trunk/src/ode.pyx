@@ -18,7 +18,6 @@
 import numpy as N
 cimport numpy as N
 from timeit import default_timer as timer
-import pylab as P
 
 import itertools
 import multiprocessing

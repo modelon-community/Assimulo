@@ -553,7 +553,7 @@ ext_list += prepare.fortran_extensionlists()
 
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
-AUTHOR_EMAIL = "chria@maths.lth.se"
+AUTHOR_EMAIL = "christian.winther@modelon.com"
 VERSION = "trunk"
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
@@ -584,9 +584,6 @@ Dopri5 are also available. For the full list, see the documentation.
 
 Documentation and installation instructions can be found at: 
 http://www.jmodelica.org/assimulo . 
-
-For questions and comments, visit: 
-http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
 compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1, BLAS and LAPACK 
