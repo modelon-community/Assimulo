@@ -1913,6 +1913,7 @@ cdef class CVode(Explicit_ODE):
         #Set stop time
         flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
+            N_VDestroy_Serial(yout)
             raise CVodeError(flag, t)
         
         if opts["report_continuously"] or opts["output_list"] is None: 
@@ -1921,6 +1922,7 @@ cdef class CVode(Explicit_ODE):
                     
                 flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
                 if flag < 0:
+                    N_VDestroy_Serial(yout)
                     raise CVodeError(flag, tret)
                 
                 t = tret
@@ -1958,6 +1960,7 @@ cdef class CVode(Explicit_ODE):
             for tout in output_list:
                 flag = SUNDIALS.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
                 if flag < 0:
+                    N_VDestroy_Serial(yout)
                     raise CVodeError(flag, tret)
                 
                 #Store results
