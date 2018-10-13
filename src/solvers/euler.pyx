@@ -18,6 +18,7 @@
 cimport numpy as N
 import numpy as N
 import numpy.linalg as LIN
+import scipy.sparse as sp
 
 #from assimulo.ode import *
 from assimulo.explicit_ode cimport Explicit_ODE
@@ -321,6 +322,9 @@ cdef class ImplicitEuler(Explicit_ODE):
         
         if self.usejac: #Retrieve the user-defined jacobian
             jac = self.problem.jac(t,y)
+            
+            if isinstance(jac, sp.csc_matrix):
+                jac = jac.toarray()
         else:           #Calculate a numeric jacobian
             delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
             Fdelt = N.array([self.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 

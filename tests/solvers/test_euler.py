@@ -20,6 +20,7 @@ from assimulo import testattr
 from assimulo.solvers.euler import *
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import *
+import scipy.sparse as sp
 
 
 class Test_Explicit_Euler:
@@ -156,6 +157,30 @@ class Test_Implicit_Euler:
         self.simulator.simulate(6)
         
         assert self.simulator.statistics["nsteps"] < nsteps
+    
+    @testattr(stddist = True)
+    def test_usejac_csc_matrix(self):
+        """
+        This tests the functionality of the property usejac.
+        """
+        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: sp.csc_matrix(N.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        
+        exp_mod = Explicit_Problem(f, [1.0,0.0])
+        exp_mod.jac = jac
+        
+        exp_sim = ImplicitEuler(exp_mod)
+        exp_sim.simulate(5.,100)
+        
+        assert exp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
+        
+        exp_sim.reset()
+        exp_sim.usejac=False
+        exp_sim.simulate(5.,100)
+
+        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
+        assert exp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
     def test_h(self):

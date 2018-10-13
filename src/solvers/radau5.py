@@ -18,6 +18,7 @@
 import numpy as N
 import scipy as S
 import scipy.linalg as LIN
+import scipy.sparse as sp
 
 from assimulo.exception import *
 from assimulo.ode import *
@@ -102,6 +103,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
         self._event_info = None
+        self._werr = N.zeros(self._leny)
         
     def initialize(self):
         #Reset statistics
@@ -142,12 +144,19 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             y[i] = radau5.contr5(i+1, time, self.cont)
         
         return y
+        
+    def get_weighted_local_errors(self):
+        """
+        Returns the vector of weighted estimated local errors at the current step.
+        """
+        return N.abs(self._werr)
     
-    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
         self.cont = cont #Saved to be used by the interpolation function.
+        self._werr = werr
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
@@ -179,6 +188,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     self._ylist.append(y)
         
         return irtrn
+        
+    def _jacobian(self, t, y):
+        """
+        Calculates the Jacobian, either by an approximation or by the user
+        defined (jac specified in the problem class).
+        """
+        jac = self.problem.jac(t,y)
+        
+        if isinstance(jac, sp.csc_matrix):
+            jac = jac.toarray()
+        
+        return jac
             
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
@@ -208,7 +229,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Dummy methods
         mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
         
         #Check for initialization
         if opts["initialize"]:

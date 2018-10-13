@@ -61,7 +61,7 @@ cdef class IDA(Implicit_ODE):
     """
     cdef void* ida_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp
+    cdef N_Vector yTemp, ydTemp, nv_atol
     cdef N_Vector *ySO
     cdef N_Vector *ydSO
     cdef object f
@@ -172,6 +172,9 @@ cdef class IDA(Implicit_ODE):
         if self.ydTemp != NULL:
             #Deallocate N_Vector
             N_VDestroy_Serial(self.ydTemp)
+            
+        if self.nv_atol != NULL:
+            N_VDestroy_Serial(self.nv_atol)
         
         if self.ida_mem != NULL: 
             #Free Memory
@@ -460,7 +463,8 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag)
             
         #Set the tolerances
-        flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        self.nv_atol = arr2nv(self.options["atol"])
+        flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise IDAError(flag)
             
@@ -1436,7 +1440,7 @@ cdef class CVode(Explicit_ODE):
     """
     cdef void* cvode_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp
+    cdef N_Vector yTemp, ydTemp, nv_atol
     cdef N_Vector *ySO
     cdef object f
     cdef public object event_func
@@ -1506,6 +1510,9 @@ cdef class CVode(Explicit_ODE):
         if self.yTemp != NULL:
             #Deallocate N_Vector
             N_VDestroy_Serial(self.yTemp)
+            
+        if self.nv_atol != NULL:
+            N_VDestroy_Serial(self.nv_atol)
         
         if self.cvode_mem != NULL:
             #Free Memory
@@ -1535,6 +1542,12 @@ cdef class CVode(Explicit_ODE):
         N_VDestroy_Serial(ele)
         
         return ele_py
+        
+    def get_weighted_local_errors(self):
+        """
+        Returns the vector of weighted estimated local errors at the current step.
+        """
+        return N.abs(self.get_local_errors()*self.get_error_weights())
         
     cpdef get_last_order(self):
         """
@@ -1900,6 +1913,7 @@ cdef class CVode(Explicit_ODE):
         #Set stop time
         flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
+            N_VDestroy_Serial(yout)
             raise CVodeError(flag, t)
         
         if opts["report_continuously"] or opts["output_list"] is None: 
@@ -1908,6 +1922,7 @@ cdef class CVode(Explicit_ODE):
                     
                 flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
                 if flag < 0:
+                    N_VDestroy_Serial(yout)
                     raise CVodeError(flag, tret)
                 
                 t = tret
@@ -1945,6 +1960,7 @@ cdef class CVode(Explicit_ODE):
             for tout in output_list:
                 flag = SUNDIALS.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
                 if flag < 0:
+                    N_VDestroy_Serial(yout)
                     raise CVodeError(flag, tret)
                 
                 #Store results
@@ -2203,7 +2219,8 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(flag)
         
         #Tolerances
-        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], arr2nv(self.options["atol"]))
+        self.nv_atol = arr2nv(self.options["atol"])
+        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise CVodeError(flag)
             
