@@ -18,7 +18,6 @@
 from ode cimport ODE     
 from problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem
 
-import pylab as P
 import itertools
 import sys
 import numpy as N
@@ -406,6 +405,8 @@ cdef class Explicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
+        import pylab as P
+        
         if len(self.t_sol) > 0:
             P.xlabel('time')
             P.ylabel('state')

@@ -19,7 +19,6 @@ from ode cimport ODE
 from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
 from problem import cExplicit_Problem
 
-import pylab as P
 import itertools
 import sys
 import numpy as N
@@ -447,6 +446,8 @@ cdef class Implicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
+        import pylab as P
+        
         if len(self.t_sol) > 0:
             P.figure(1)
             if not mask:

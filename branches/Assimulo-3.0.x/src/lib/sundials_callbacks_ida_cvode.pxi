@@ -24,8 +24,6 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     right-hand-side function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    #cdef ndarray[realtype, ndim=1, mode='c'] rhs #Used for return from the user function
-    #(<ndarray>pData.y).data =  <realtype*>((<N_VectorContent_Serial>yv.content).data)
     cdef N.ndarray y = pData.work_y
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef int i
@@ -39,12 +37,6 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
                 rhs = (<object>pData.RHS)(t,y,sw=<list>pData.sw, p=p)
             else:
                 rhs = (<object>pData.RHS)(t,y,p)
-                
-            #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
-            for i in range(pData.dim):
-                resptr[i] = rhs[i]
-            
-            return CV_SUCCESS
         except:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         
@@ -54,14 +46,13 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
                 rhs = (<object>pData.RHS)(t,y,<list>pData.sw)
             else:
                 rhs = (<object>pData.RHS)(t,y)
-            
-            #memcpy((<N_VectorContent_Serial>yvdot.content).data,<realtype*>rhs.data,pData.memSize)
-            for i in range(pData.dim):
-                resptr[i] = rhs[i]
-            
-            return CV_SUCCESS
         except:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
+    
+    for i in range(pData.dim):
+        resptr[i] = rhs[i]
+    
+    return CV_SUCCESS
             
 cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
                          N_Vector *yvS, N_Vector *yvSdot, void *problem_data, 
@@ -236,13 +227,6 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
                 else:
                     jac=(<object>pData.JAC)(t,y,p)
-                    
-                for i in range(Neq):
-                    col_i = Jacobian.cols[i]
-                    for j in range(Neq):
-                        col_i[j] = jac[j,i]
-
-                return CVDLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except:
@@ -254,18 +238,24 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
                 else:
                     jac=(<object>pData.JAC)(t,y)
-        
-                for i in range(Neq):
-                    col_i = Jacobian.cols[i]
-                    for j in range(Neq):
-                        col_i[j] = jac[j,i]
-
-                return CVDLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
+        
+        if isinstance(jac, sparse.csc.csc_matrix):
+            for j in range(Neq):
+                col_i = Jacobian.cols[j]
+                for i in range(jac.indptr[j], jac.indptr[j+1]):
+                    col_i[jac.indices[i]] = jac.data[i]
+        else:
+            for i in range(Neq):
+                col_i = Jacobian.cols[i]
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+        
+        return CVDLS_SUCCESS
 ELSE:
     cdef int cv_jac(long int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
                     void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
@@ -287,13 +277,6 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
                 else:
                     jac=(<object>pData.JAC)(t,y,p)
-                    
-                for i in range(Neq):
-                    col_i = DENSE_COL(Jacobian, i)
-                    for j in range(Neq):
-                        col_i[j] = jac[j,i]
-
-                return CVDLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except:
@@ -305,18 +288,25 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
                 else:
                     jac=(<object>pData.JAC)(t,y)
-        
-                for i in range(Neq):
-                    col_i = DENSE_COL(Jacobian, i)
-                    for j in range(Neq):
-                        col_i[j] = jac[j,i]
-
-                return CVDLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
+                
+        if isinstance(jac, sparse.csc.csc_matrix):
+            for j in range(Neq):
+                col_i = DENSE_COL(Jacobian, j)
+                for i in range(jac.indptr[j], jac.indptr[j+1]):
+                    col_i[jac.indices[i]] = jac.data[i]
+        else:
+            for i in range(Neq):
+                col_i = DENSE_COL(Jacobian, i)
+                for j in range(Neq):
+                    col_i[j] = jac[j,i]
+        
+        return CVDLS_SUCCESS
+        
         
 cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
 				    void *problem_data, N_Vector tmp):

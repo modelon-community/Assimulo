@@ -255,14 +255,6 @@ class Assimulo_prepare(object):
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
-            """
-            name = ctypes.util.find_library("blas")
-            if name !='':
-                self.with_Blas=True
-                self.BLASname = name
-                L.debug('Blas found in standard library path as {}'.format(name))
-            else:
-            """
             L.warning("No path to BLAS supplied" + msg)
             L.debug("usage: --blas-home=path")
             L.debug("Note: the path required is to where the static library lib is found")
@@ -296,8 +288,24 @@ class Assimulo_prepare(object):
             else:
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
-            self.superLUFiles = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
-            self.superLUFiles.sort(reverse=True)
+            potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
+            potential_files.sort(reverse=True)
+            L.debug("Potential SuperLU files: "+str(potential_files))
+            
+            self.superLUFiles = []
+            for f in potential_files:
+                if "superlu" in f:
+                    self.superLUFiles.append(f)
+                #if self.with_BLAS == False and "blas" in f:
+                #    self.superLUFiles.append(f)
+                if "blas" in f:
+                    self.superLUFiles.append(f)
+                    
+            #if self.with_BLAS:
+            #    self.superLUFiles.append(self.BLASname)
+            
+            L.debug("SuperLU files: "+str(self.superLUFiles))
+            
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
             L.debug("No path to SuperLU supplied, SUNDIALS will not be compiled with support for SuperLU.")
@@ -509,7 +517,7 @@ class Assimulo_prepare(object):
         if self.with_BLAS and self.with_LAPACK:
             glimda_list = ['glimda_complete.f','glimda_complete.pyf']
             src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
-            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', 'blas']}
+            extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', self.BLASname]}
             extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
@@ -545,7 +553,7 @@ ext_list += prepare.fortran_extensionlists()
 
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
-AUTHOR_EMAIL = "chria@maths.lth.se"
+AUTHOR_EMAIL = "christian.winther@modelon.com"
 VERSION = "3.0"
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
@@ -576,9 +584,6 @@ Dopri5 are also available. For the full list, see the documentation.
 
 Documentation and installation instructions can be found at: 
 http://www.jmodelica.org/assimulo . 
-
-For questions and comments, visit: 
-http://www.jmodelica.org/forums/jmodelicaorg-platform/assimulo
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
 compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1, BLAS and LAPACK 
