@@ -4,6 +4,12 @@ Changelog
 ==========
 
 --- Assimulo-3.0 ---
+    * Changed so that setuptools is used (support creating wheels) 
+      (ticket:426)
+    * Fixed so that sparse return type can be used from the jacobian
+      method (ticket:423)
+    * Delayed import of matplotlib
+    * Fixed memory leaks in CVode and IDA (ticket:424)
     * Removed version check for numpy (it was only a problem for old 
       numpy version < 1.6.1 which we do no longer guard against) ticket:409)
     * Added license and changelog to the install folder (ticket:410)

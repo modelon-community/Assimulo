@@ -1,6 +1,8 @@
 --- CHANGELOG ---
 
 --- Assimulo-3.0 ---
+    * Changed so that setuptools is used (support creating wheels) 
+      (ticket:426)
     * Fixed so that sparse return type can be used from the jacobian
       method (ticket:423)
     * Delayed import of matplotlib
