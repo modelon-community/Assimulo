@@ -22,8 +22,6 @@ import os
 import shutil as SH
 import ctypes.util
 import argparse
-import numpy.distutils as nd
-from distutils.version import StrictVersion
 from os import listdir
 from os.path import isfile, join
 
@@ -68,6 +66,12 @@ except:
     revision = "unknown"
 L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
+#If prefix is set, we want to allow installation in a directory that is not on PYTHONPATH
+#and this is only possible with distutils, not setuptools
+if not args[0].prefix:
+    import setuptools
+import numpy.distutils as nd
+
 try:
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
@@ -87,8 +91,6 @@ if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
 thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3"] 
-
-
 
 class Assimulo_prepare(object):
 # helper functions
@@ -477,9 +479,8 @@ class Assimulo_prepare(object):
         config = np.distutils.misc_util.Configuration()
         extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
                   
-        if StrictVersion(np.version.version) > StrictVersion("1.6.1"): 
-            extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
-            extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
+        extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
+        extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
     
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
