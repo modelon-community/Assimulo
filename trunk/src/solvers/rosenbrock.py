@@ -372,7 +372,6 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         Calculates the Jacobian, either by an approximation or by the user
         defined (jac specified in the problem class).
         """
-        print t, y
         jac = self.problem.jac(t,y)
         
         if isinstance(jac, sp.csc_matrix):
