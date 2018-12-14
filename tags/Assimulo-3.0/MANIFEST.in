@@ -1,0 +1,16 @@
+include CHANGELOG
+include INSTALL
+include README
+include assimulo/*.pxd
+include assimulo/*.pyx
+include assimulo/*.pxi
+include assimulo/solvers/*.pxd
+include assimulo/solvers/*.pyx
+include assimulo/solvers/*.pxi
+include assimulo/lib/*.pxd
+include assimulo/lib/*.pyx
+include assimulo/lib/*.pxi
+include assimulo/lib/*.h
+include assimulo/lib/*.c
+include assimulo/thirdparty/dasp3/*
+include assimulo/examples/*

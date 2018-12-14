@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+{% set title = 'Overview' %}
+{% block body %}
+  <h1>Welcome</h1>
+    
+
+    <p>Assimulo is a simulation package for solving ordinary differential equations. It is written in the high-level programming language Python and combines a variety of different solvers written in FORTRAN, C and even Python via a common high-level interface. The primary aim of Assimulo is not to develop new integration algorithms. The aim is to provide a high-level interface for a wide variety of solvers, both new and old, solvers of industrial standards as well as experimental solvers. The aim is to allow comparison of solvers for a given problem without the need to define the problem in a number of different programming languages to accommodate the different solvers.</p>
+
+	<p>
+	Assimulo is created in a collaboration between the <a target="_parent" href="http://www.maths.lth.se/na/">Department of Numerical Analysis</a> and the <a target="_parent" href="http://www.control.lth.se/">Department of Automatic Control</a> at Lund University together with the company <a target="_parent" href="http://www.modelon.se/">Modelon AB</a>. The main contributors have been <em>Christian Winther (Andersson)</em>, <em>Claus Führer</em>, <em>Johan Åkesson</em> and <em>Magnus Gäfvert</em>. For citing Assimulo, see <a href="{{ pathto("citation") }}">citation</a>.
+	</p>
+	<p>
+    Assimulo is currently under development and the progress can be followed from our trac-site <a target="_parent" href="https://trac.jmodelica.org/assimulo/wiki">https://trac.jmodelica.org/assimulo/wiki</a>.
+    </p>
+       
+<p>    
+     The following solvers are present,
+  </p>
+  <table class="contentstable" align="center" style="margin-left: 30px"><tr>
+    <td width="50%" valign="top">
+        <ul>
+            <li><b>Multistep methods:</b>
+                <ul>
+                    <li><a class="biglink" href="{{ pathto("ODE_CVode") }}">CVode</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_IDA") }}">IDA</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_OVER_ODASSL") }}">ODASSL</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_LSODAR") }}">LSODAR</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_GLIMDA") }}">GLIMDA</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </td>
+    <td width="50%" valign="top">
+        <ul>
+            <li><b>One-step methods:</b>
+                <ul>
+                    <li><a class="biglink" href="{{ pathto("ODE_ExplicitEuler") }}">Explicit Euler</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_ImplicitEuler") }}">Implicit Euler</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("DAE_Radau5DAE") }}">Radau5DAE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta4") }}">Runge-Kutta4</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RungeKutta34") }}">Runge-Kutta34</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Radau5ODE") }}">Radau5ODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_RodasODE") }}">RodasODE</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_Dopri5") }}">Dopri5</a>
+                    </li>
+                    <li><a class="biglink" href="{{ pathto("ODE_SING_DASP3ODE") }}">DASP3ODE</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </td>
+  </tr>
+  </table>
+  <p>
+  Assimulo uses <a target="_parent" href="http://www.cython.org">Cython</a> to wrap the Sundials solvers, CVode and IDA as they are written in <em>C</em>. For FORTRAN solvers, f2py is used from <a target="_parent" href="http://www.numpy.org/">Numpy</a>.
+  </p>
+
+    <h2>Tutorial</h2>
+  <p>
+    A tutorial which gives a short introduction to Assimulo and how to use Assimulo to solve an explicit and an implicit problem can be found <a href="{{ pathto("tutorial") }}">here</a>. There is also a section with describing examples which can be found <a href="{{ pathto("examples") }}">here</a>.
+  </p>
+
+  <h2>Documentation</h2>
+
+  <table class="contentstable" align="center" style="margin-left: 30px"><tr>
+    <td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("usage") }}">Usage</a><br/>
+         <span class="linkdescr">overview of the attributes</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("jmodelica") }}">JModelica.org</a><br/>
+         <span class="linkdescr">Assimulo for JModelica.org users</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("search") }}">Search page</a><br/>
+         <span class="linkdescr">search the documentation</span></p>
+    </td><td width="50%">
+      <p class="biglink"><a class="biglink" href="{{ pathto("examples") }}">Examples</a><br/>
+         <span class="linkdescr">view a range of examples</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("changelog") }}">Changelog</a><br/>
+         <span class="linkdescr">view the changes</span></p>
+      <p class="biglink"><a class="biglink" href="{{ pathto("contents") }}">Contents</a><br/>
+         <span class="linkdescr">for a complete overview</span></p>
+    </td></tr>
+  </table>
+  
+
+
+  <h2>Download</h2>
+  <p>
+    Assimulo is available for download <a href="{{ pathto("download") }}">here</a>. For installation instructions, see <a href="{{ pathto("installation") }}">here</a>.
+  </p>
+  <p>The code can be found at
+    <a target="_parent" href="https://trac.jmodelica.org/assimulo/wiki">https://trac.jmodelica.org/assimulo/wiki</a>.</p>
+    
+
+  <h2>Contact</h2>
+  <p>
+  Contact us preferably through the <a target="_parent" href="http://www.jmodelica.org/forum">forum</a>. 
+  </p>
+  
+  <h2>Contribute</h2>
+  <p>
+  If you like to contribute to the Assimulo project please take a look at the <a target="_parent" href="http://www.jmodelica.org/page/14">contribution</a> license. 
+  </p>
+  
+
+{% endblock %}
