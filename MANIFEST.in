@@ -14,3 +14,4 @@ include assimulo/lib/*.h
 include assimulo/lib/*.c
 include assimulo/thirdparty/dasp3/*
 include assimulo/examples/*
+recursive-include assimulo/thirdparty *.pyf
