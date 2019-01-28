@@ -19,6 +19,7 @@ import numpy as N
 import scipy as S
 import scipy.linalg as LIN
 import copy
+import sys
 
 from assimulo.exception import *
 from assimulo.ode import *
@@ -29,7 +30,7 @@ from assimulo.implicit_ode import Implicit_ODE
 try:
     from assimulo.lib import radar5
 except ImportError:
-    print("Could not find RADAR5")
+    sys.stderr.write("Could not find RADAR5\n")
 
 class Radar_Exception(Exception):
     pass
