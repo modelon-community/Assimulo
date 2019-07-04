@@ -1,0 +1,11 @@
+include CHANGELOG
+include INSTALL
+include README
+include assimulo/*.pxd
+include assimulo/*.pxi
+include assimulo/lib/*.pxd
+include assimulo/lib/*.pxi
+include assimulo/thirdparty/dasp3/*
+include assimulo/examples/*
+recursive-include assimulo/thirdparty *.pyf
+recursive-include assimulo *.pyx
