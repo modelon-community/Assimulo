@@ -64,6 +64,16 @@ cdef extern from "nvector/nvector_serial.h":
     void N_VDestroy_Serial(N_Vector v)
     void N_VPrint_Serial(N_Vector v)
 
+IF SUNDIALS_VERSION >= (4,0,0):
+    cdef extern from "sundials/sundials_nonlinearsolver.h":
+        ctypedef _generic_SUNNonlinearSolver *SUNNonlinearSolver
+        
+        cdef struct _generic_SUNNonlinearSolver:
+            pass
+ELSE:
+    #Dummy defines
+    ctypedef void *SUNNonlinearSolver
+        
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "sundials/sundials_types.h":
         IF SUNDIALS_VECTOR_SIZE == "64":
@@ -235,9 +245,25 @@ IF SUNDIALS_WITH_SUPERLU:
 ELSE:
     cdef inline int with_superlu(): return 0
 
-
+IF SUNDIALS_VERSION >= (4,0,0):
+    cdef extern from "cvodes/cvodes.h":
+        void* CVodeCreate(int lmm)
+        
+        int CVodeSetNonlinearSolver(void *cvode_mem, SUNNonlinearSolver NLS)
+        int CVodeSetNonlinearSolverSensSim(void *cvode_mem, SUNNonlinearSolver NLS)
+        int CVodeSetNonlinearSolverSensStg(void *cvode_mem, SUNNonlinearSolver NLS)
+    
+    cdef extern from "sunnonlinsol/sunnonlinsol_newton.h":
+        SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y)
+        SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y)
+    cdef extern from "sunnonlinsol/sunnonlinsol_fixedpoint.h":
+        SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m)
+        SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m)
+ELSE:
+    cdef extern from "cvodes/cvodes.h":
+        void* CVodeCreate(int lmm, int iter)
+        
 cdef extern from "cvodes/cvodes.h":
-    void* CVodeCreate(int lmm, int iter)
     ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data)
     int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
     int CVodeReInit(void *cvode_mem, realtype t0, N_Vector y0)

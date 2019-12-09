@@ -69,7 +69,8 @@ def run_example(index="ind1", with_plots=True, with_test=False):
     return my_pend, dae_pend
         
 if __name__=='__main__':
-    index_values=['ind1','ind2','ind3','ggl2','ovstab2','ovstab1']
+    #Skip index3 as there seems to be an issue using Sundials 4.1
+    index_values=['ind1','ind2','ggl2','ovstab2','ovstab1']
     sim={}
     mod={}
     for ind in index_values:

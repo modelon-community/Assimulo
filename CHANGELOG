@@ -1,5 +1,12 @@
 --- CHANGELOG ---
 
+--- Assimulo-3.1 ---
+    * Added support for building Assimulo with Intel and MSVC on Windows (ticket: 434)
+    * Added support for Sundials 4.1 (ticket:431)
+    * Fixed so that *.pyf files are included in the source distro (ticket:430)
+    * Moved ImportError output to stderr instead of stdout (ticket:429)
+    * Disabled test dasp3_basic because problem appears to numerically unstable.
+
 --- Assimulo-3.0 ---
     * Changed so that setuptools is used (support creating wheels) 
       (ticket:426)

@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -53,19 +52,18 @@ def run_example(with_plots=True):
     #Simulate
     t, y = exp_sim.simulate(0) #Simulate 5 seconds (t0=5 -> tf=0)
 
-    #print 'y(5) = {}, y(0) ={}'.format(y[0][0],y[-1][0])
-    
-    #Basic test
-    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
-    
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t, y, color="b")
         P.title(exp_mod.name)
         P.ylabel('y')
         P.xlabel('Time')
         P.show()
-        
+    
+    #Basic test
+    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
+    
     return exp_mod, exp_sim
 
 if __name__=='__main__':

@@ -6,15 +6,15 @@ Installation
 
 Dependencies:
     
-- `Python-2.6 / 2.7 / 3.3 / 3.4 <http://www.python.org/>`_
+- `Python-2.7 / 3.* <http://www.python.org/>`_
 - `Numpy <http://www.scipy.org/Download/>`_ (>1.6.1 for the solver DASP3)
 - `Scipy <http://www.scipy.org/Download/>`_
 - `Pylab <http://matplotlib.sourceforge.net/>`_
 
 Additional dependencies for compiling from source:
 
-- `Python-2.6 / 2.7 / 3.3 / 3.4 <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
-- `Sundials-2.5/2.6 <http://computation.llnl.gov/casc/sundials/main.html>`_ (for 64bits machines, install Sundials using -fPIC)
+- `Python-2.7 / 3.* <http://www.python.org/>`_ with headers (python-dev package for Ubuntu)
+- `Sundials-2.6/2.7/3.1/4.1 <http://computation.llnl.gov/casc/sundials/main.html>`_ (for 64bits machines, install Sundials using -fPIC)
 - `Cython 0.18 <http://www.cython.org/>`_
 - C compiler
 - Fortran compiler

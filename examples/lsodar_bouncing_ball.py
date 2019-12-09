@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
@@ -135,6 +134,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.subplot(221)
         P.plot(t,y)
         P.title('LSODAR Bouncing ball (one step mode)')
@@ -151,7 +151,8 @@ def run_example(with_plots=True):
         P.ylabel('Order')
         P.suptitle(exp_mod.name)
         P.show()
-    return exp_mod, exp_sim    
+    return exp_mod, exp_sim
+    
 if __name__=="__main__":
     mod,sim = run_example()
     

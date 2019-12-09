@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import scipy as S
 import scipy.linalg as LIN
 import scipy.io as IO
@@ -40,13 +39,6 @@ def run_example(with_plots=True):
     a user provided Jacobian and a preconditioner. The example is the 
     'Problem 4' taken from the book by Saad:
     Iterative Methods for Sparse Linear Systems.
-    
-    on return:
-    
-       - :dfn:`alg_mod`    problem instance
-    
-       - :dfn:`alg_solver`    solver instance
-    
     """
     #Read the original matrix
     A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
@@ -119,7 +111,7 @@ def run_example(with_plots=True):
     print("Error (preconditioned), in y: ", LIN.norm(y_prec-N.ones(len(y_prec))))
     
     if with_plots:
-
+        import pylab as P
         P.figure(4)
         P.semilogy(alg_solver.get_residual_norm_nonlinear_iterations(), label="Original")
         P.semilogy(alg_solver_prec.get_residual_norm_nonlinear_iterations(), label='Preconditioned')

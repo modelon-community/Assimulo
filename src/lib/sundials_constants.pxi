@@ -64,6 +64,7 @@ DEF CV_FIRST_RHSFUNC_ERR  = -9
 DEF CV_REPTD_RHSFUNC_ERR  = -10
 DEF CV_UNREC_RHSFUNC_ERR  = -11
 DEF CV_RTFUNC_FAIL        = -12 # The rootfinding function failed in an unrecoverable manner.
+DEF CV_NLS_INIT_FAIL      = -13
 DEF CV_MEM_FAIL           = -20
 DEF CV_MEM_NULL           = -21
 DEF CV_ILL_INPUT          = -22

@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
@@ -148,6 +147,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t,y)
         P.title("Solution of a differential equation with discontinuities")
         P.ylabel('States')

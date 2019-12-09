@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 import nose
@@ -115,6 +114,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
         P.xlabel('Time')
         P.ylabel('State')
@@ -122,7 +122,6 @@ def run_example(with_plots=True):
         P.show()
         
     return imp_mod, imp_sim
-
 
 if __name__=='__main__':
     mod,sim = run_example()

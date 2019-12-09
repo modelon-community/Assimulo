@@ -1,29 +1,29 @@
       SUBROUTINE DEC (N, NDIM, A, IP, IER)
-C VERSION REAL DOUBLE PRECISION
+! VERSION REAL DOUBLE PRECISION
       INTEGER N,NDIM,IP,IER,NM1,K,KP1,M,I,J
       DOUBLE PRECISION A,T
       DIMENSION A(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION.
-C  INPUT..
-C     N = ORDER OF MATRIX.
-C     NDIM = DECLARED DIMENSION OF ARRAY  A .
-C     A = MATRIX TO BE TRIANGULARIZED.
-C  OUTPUT..
-C     A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U .
-C     A(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
-C     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
-C           SINGULAR AT STAGE K.
-C  USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  DETERM(A) = IP(N)*A(1,1)*A(2,2)*...*A(N,N).
-C  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+!  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION.
+!  INPUT..
+!     N = ORDER OF MATRIX.
+!     NDIM = DECLARED DIMENSION OF ARRAY  A .
+!     A = MATRIX TO BE TRIANGULARIZED.
+!  OUTPUT..
+!    A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U .
+!    A(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!    IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
+!    IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
+!          SINGULAR AT STAGE K.
+! USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! DETERM(A) = IP(N)*A(1,1)*A(2,2)*...*A(N,N).
+! IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!-----------------------------------------------------------------------
       IER = 0
       IP(N) = 1
       IF (N .EQ. 1) GO TO 70
@@ -61,27 +61,27 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DEC -------------------------
+!----------------------- END OF SUBROUTINE DEC -------------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOL (N, NDIM, A, B, IP)
-C VERSION REAL DOUBLE PRECISION
+!VERSION REAL DOUBLE PRECISION
       INTEGER N,NDIM,IP,NM1,K,KP1,M,I,KB,KM1
       DOUBLE PRECISION A,B,T
       DIMENSION A(NDIM,N), B(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B .
-C  INPUT..
-C    N = ORDER OF MATRIX.
-C    NDIM = DECLARED DIMENSION OF ARRAY  A .
-C    A = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
-C    B = RIGHT HAND SIDE VECTOR.
-C    IP = PIVOT VECTOR OBTAINED FROM DEC.
-C  DO NOT USE IF DEC HAS SET IER .NE. 0.
-C  OUTPUT..
-C    B = SOLUTION VECTOR, X .
-C-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B .
+! INPUT..
+!   N = ORDER OF MATRIX.
+!   NDIM = DECLARED DIMENSION OF ARRAY  A .
+!   A = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
+!   B = RIGHT HAND SIDE VECTOR.
+!   IP = PIVOT VECTOR OBTAINED FROM DEC.
+! DO NOT USE IF DEC HAS SET IER .NE. 0.
+! OUTPUT..
+!   B = SOLUTION VECTOR, X .
+!----------------------------------------------------------------------
       IF (N .EQ. 1) GO TO 50
       NM1 = N - 1
       DO 20 K = 1,NM1
@@ -103,39 +103,39 @@ C-----------------------------------------------------------------------
  40     CONTINUE
  50   B(1) = B(1)/A(1,1)
       RETURN
-C----------------------- END OF SUBROUTINE SOL -------------------------
+!---------------------- END OF SUBROUTINE SOL -------------------------
       END
-c
-c
+!
+!
       SUBROUTINE DECH (N, NDIM, A, LB, IP, IER)
-C VERSION REAL DOUBLE PRECISION
+!VERSION REAL DOUBLE PRECISION
       INTEGER N,NDIM,IP,IER,NM1,K,KP1,M,I,J,LB,NA
       DOUBLE PRECISION A,T
       DIMENSION A(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A HESSENBERG
-C  MATRIX WITH LOWER BANDWIDTH LB
-C  INPUT..
-C     N = ORDER OF MATRIX A.
-C     NDIM = DECLARED DIMENSION OF ARRAY  A .
-C     A = MATRIX TO BE TRIANGULARIZED.
-C     LB = LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED, LB.GE.1).
-C  OUTPUT..
-C     A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U .
-C     A(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
-C     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
-C           SINGULAR AT STAGE K.
-C  USE  SOLH  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  DETERM(A) = IP(N)*A(1,1)*A(2,2)*...*A(N,N).
-C  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     THIS IS A SLIGHT MODIFICATION OF
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A HESSENBERG
+! MATRIX WITH LOWER BANDWIDTH LB
+! INPUT..
+!    N = ORDER OF MATRIX A.
+!    NDIM = DECLARED DIMENSION OF ARRAY  A .
+!    A = MATRIX TO BE TRIANGULARIZED.
+!    LB = LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED, LB.GE.1).
+! OUTPUT..
+!    A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U .
+!    A(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!    IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
+!    IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
+!          SINGULAR AT STAGE K.
+! USE  SOLH  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! DETERM(A) = IP(N)*A(1,1)*A(2,2)*...*A(N,N).
+! IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    THIS IS A SLIGHT MODIFICATION OF
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!----------------------------------------------------------------------
       IER = 0
       IP(N) = 1
       IF (N .EQ. 1) GO TO 70
@@ -174,28 +174,28 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DECH ------------------------
+!---------------------- END OF SUBROUTINE DECH ------------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOLH (N, NDIM, A, LB, B, IP)
-C VERSION REAL DOUBLE PRECISION
+!VERSION REAL DOUBLE PRECISION
       INTEGER N,NDIM,IP,NM1,K,KP1,M,I,KB,KM1,LB,NA
       DOUBLE PRECISION A,B,T
       DIMENSION A(NDIM,N), B(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B .
-C  INPUT..
-C    N = ORDER OF MATRIX A.
-C    NDIM = DECLARED DIMENSION OF ARRAY  A .
-C    A = TRIANGULARIZED MATRIX OBTAINED FROM DECH.
-C    LB = LOWER BANDWIDTH OF A.
-C    B = RIGHT HAND SIDE VECTOR.
-C    IP = PIVOT VECTOR OBTAINED FROM DEC.
-C  DO NOT USE IF DECH HAS SET IER .NE. 0.
-C  OUTPUT..
-C    B = SOLUTION VECTOR, X .
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B .
+! INPUT..
+!   N = ORDER OF MATRIX A.
+!   NDIM = DECLARED DIMENSION OF ARRAY  A .
+!   A = TRIANGULARIZED MATRIX OBTAINED FROM DECH.
+!   LB = LOWER BANDWIDTH OF A.
+!   B = RIGHT HAND SIDE VECTOR.
+!   IP = PIVOT VECTOR OBTAINED FROM DEC.
+! DO NOT USE IF DECH HAS SET IER .NE. 0.
+! OUTPUT..
+!   B = SOLUTION VECTOR, X .
+!----------------------------------------------------------------------
       IF (N .EQ. 1) GO TO 50
       NM1 = N - 1
       DO 20 K = 1,NM1
@@ -218,39 +218,39 @@ C-----------------------------------------------------------------------
  40     CONTINUE
  50   B(1) = B(1)/A(1,1)
       RETURN
-C----------------------- END OF SUBROUTINE SOLH ------------------------
+!---------------------- END OF SUBROUTINE SOLH ------------------------
       END
-C
+!
       SUBROUTINE DECC (N, NDIM, AR, AI, IP, IER)
-C VERSION COMPLEX DOUBLE PRECISION
+!VERSION COMPLEX DOUBLE PRECISION
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER N,NDIM,IP,IER,NM1,K,KP1,M,I,J
       DIMENSION AR(NDIM,N), AI(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION
-C  ------ MODIFICATION FOR COMPLEX MATRICES --------
-C  INPUT..
-C     N = ORDER OF MATRIX.
-C     NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI .
-C     (AR, AI) = MATRIX TO BE TRIANGULARIZED.
-C  OUTPUT..
-C     AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART.
-C     AI(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; IMAGINARY PART.
-C     AR(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C                                                    REAL PART.
-C     AI(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C                                                    IMAGINARY PART.
-C     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
-C     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
-C           SINGULAR AT STAGE K.
-C  USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION
+! ------ MODIFICATION FOR COMPLEX MATRICES --------
+! INPUT..
+!    N = ORDER OF MATRIX.
+!    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI .
+!    (AR, AI) = MATRIX TO BE TRIANGULARIZED.
+! OUTPUT..
+!    AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART.
+!    AI(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; IMAGINARY PART.
+!    AR(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!                                                   REAL PART.
+!    AI(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!                                                   IMAGINARY PART.
+!    IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
+!    IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
+!          SINGULAR AT STAGE K.
+! USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!----------------------------------------------------------------------
       IER = 0
       IP(N) = 1
       IF (N .EQ. 1) GO TO 70
@@ -259,8 +259,8 @@ C-----------------------------------------------------------------------
         KP1 = K + 1
         M = K
         DO 10 I = KP1,N
-          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT.
-     &          ABS(AR(M,K))+ABS(AI(M,K))) M = I
+          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT. &
+                ABS(AR(M,K))+ABS(AI(M,K))) M = I
  10     CONTINUE
         IP(K) = M
         TR = AR(M,K)
@@ -323,27 +323,27 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DECC ------------------------
+!---------------------- END OF SUBROUTINE DECC ------------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOLC (N, NDIM, AR, AI, BR, BI, IP)
-C VERSION COMPLEX DOUBLE PRECISION
+!VERSION COMPLEX DOUBLE PRECISION
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER N,NDIM,IP,NM1,K,KP1,M,I,KB,KM1
       DIMENSION AR(NDIM,N), AI(NDIM,N), BR(N), BI(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B .
-C  INPUT..
-C    N = ORDER OF MATRIX.
-C    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI.
-C    (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
-C    (BR,BI) = RIGHT HAND SIDE VECTOR.
-C    IP = PIVOT VECTOR OBTAINED FROM DEC.
-C  DO NOT USE IF DEC HAS SET IER .NE. 0.
-C  OUTPUT..
-C    (BR,BI) = SOLUTION VECTOR, X .
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B .
+! INPUT..
+!   N = ORDER OF MATRIX.
+!   NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI.
+!   (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
+!   (BR,BI) = RIGHT HAND SIDE VECTOR.
+!   IP = PIVOT VECTOR OBTAINED FROM DEC.
+! DO NOT USE IF DEC HAS SET IER .NE. 0.
+! OUTPUT..
+!   (BR,BI) = SOLUTION VECTOR, X .
+!----------------------------------------------------------------------
       IF (N .EQ. 1) GO TO 50
       NM1 = N - 1
       DO 20 K = 1,NM1
@@ -386,41 +386,41 @@ C-----------------------------------------------------------------------
         BR(1)=PRODR/DEN
         BI(1)=PRODI/DEN
       RETURN
-C----------------------- END OF SUBROUTINE SOLC ------------------------
+!---------------------- END OF SUBROUTINE SOLC ------------------------
       END  
-C
-C
+!
+!
       SUBROUTINE DECHC (N, NDIM, AR, AI, LB, IP, IER)
-C VERSION COMPLEX DOUBLE PRECISION
+!VERSION COMPLEX DOUBLE PRECISION
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER N,NDIM,IP,IER,NM1,K,KP1,M,I,J
       DIMENSION AR(NDIM,N), AI(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION
-C  ------ MODIFICATION FOR COMPLEX MATRICES --------
-C  INPUT..
-C     N = ORDER OF MATRIX.
-C     NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI .
-C     (AR, AI) = MATRIX TO BE TRIANGULARIZED.
-C  OUTPUT..
-C     AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART.
-C     AI(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; IMAGINARY PART.
-C     AR(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C                                                    REAL PART.
-C     AI(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
-C                                                    IMAGINARY PART.
-C     LB = LOWER BANDWIDTH OF A (DIAGONAL NOT COUNTED), LB.GE.1.
-C     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
-C     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
-C           SINGULAR AT STAGE K.
-C  USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION
+! ------ MODIFICATION FOR COMPLEX MATRICES --------
+! INPUT..
+!    N = ORDER OF MATRIX.
+!    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI .
+!    (AR, AI) = MATRIX TO BE TRIANGULARIZED.
+! OUTPUT..
+!    AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART.
+!    AI(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; IMAGINARY PART.
+!    AR(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!                                                   REAL PART.
+!    AI(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L.
+!                                                   IMAGINARY PART.
+!    LB = LOWER BANDWIDTH OF A (DIAGONAL NOT COUNTED), LB.GE.1.
+!    IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW.
+!    IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE
+!          SINGULAR AT STAGE K.
+! USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!----------------------------------------------------------------------
       IER = 0
       IP(N) = 1
       IF (LB .EQ. 0) GO TO 70
@@ -431,8 +431,8 @@ C-----------------------------------------------------------------------
         M = K 
         NA = MIN0(N,LB+K)
         DO 10 I = KP1,NA
-          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT.
-     &          ABS(AR(M,K))+ABS(AI(M,K))) M = I
+          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT. &
+                ABS(AR(M,K))+ABS(AI(M,K))) M = I
  10     CONTINUE
         IP(K) = M
         TR = AR(M,K)
@@ -495,28 +495,28 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DECHC -----------------------
+!---------------------- END OF SUBROUTINE DECHC -----------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOLHC (N, NDIM, AR, AI, LB, BR, BI, IP)
-C VERSION COMPLEX DOUBLE PRECISION
+!VERSION COMPLEX DOUBLE PRECISION
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER N,NDIM,IP,NM1,K,KP1,M,I,KB,KM1
       DIMENSION AR(NDIM,N), AI(NDIM,N), BR(N), BI(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B .
-C  INPUT..
-C    N = ORDER OF MATRIX.
-C    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI.
-C    (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
-C    (BR,BI) = RIGHT HAND SIDE VECTOR.
-C    LB = LOWER BANDWIDTH OF A.
-C    IP = PIVOT VECTOR OBTAINED FROM DEC.
-C  DO NOT USE IF DEC HAS SET IER .NE. 0.
-C  OUTPUT..
-C    (BR,BI) = SOLUTION VECTOR, X .
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B .
+! INPUT..
+!   N = ORDER OF MATRIX.
+!   NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI.
+!   (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC.
+!   (BR,BI) = RIGHT HAND SIDE VECTOR.
+!   LB = LOWER BANDWIDTH OF A.
+!   IP = PIVOT VECTOR OBTAINED FROM DEC.
+! DO NOT USE IF DEC HAS SET IER .NE. 0.
+! OUTPUT..
+!   (BR,BI) = SOLUTION VECTOR, X .
+!----------------------------------------------------------------------
       IF (N .EQ. 1) GO TO 50
       NM1 = N - 1
       IF (LB .EQ. 0) GO TO 25
@@ -561,40 +561,40 @@ C-----------------------------------------------------------------------
         BR(1)=PRODR/DEN
         BI(1)=PRODI/DEN
       RETURN
-C----------------------- END OF SUBROUTINE SOLHC -----------------------
+!---------------------- END OF SUBROUTINE SOLHC -----------------------
       END  
-C
+!
       SUBROUTINE DECB (N, NDIM, A, ML, MU, IP, IER)
       DOUBLE PRECISION A,T
       DIMENSION A(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A BANDED
-C  MATRIX WITH LOWER BANDWIDTH ML AND UPPER BANDWIDTH MU
-C  INPUT..
-C     N       ORDER OF THE ORIGINAL MATRIX A.
-C     NDIM    DECLARED DIMENSION OF ARRAY  A.
-C     A       CONTAINS THE MATRIX IN BAND STORAGE.   THE COLUMNS  
-C                OF THE MATRIX ARE STORED IN THE COLUMNS OF  A  AND
-C                THE DIAGONALS OF THE MATRIX ARE STORED IN ROWS 
-C                ML+1 THROUGH 2*ML+MU+1 OF  A.
-C     ML      LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C     MU      UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C  OUTPUT..
-C     A       AN UPPER TRIANGULAR MATRIX IN BAND STORAGE AND 
-C                THE MULTIPLIERS WHICH WERE USED TO OBTAIN IT.  
-C     IP      INDEX VECTOR OF PIVOT INDICES.
-C     IP(N)   (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER     = 0 IF MATRIX A IS NONSINGULAR, OR  = K IF FOUND TO BE
-C                SINGULAR AT STAGE K.
-C  USE  SOLB  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  DETERM(A) = IP(N)*A(MD,1)*A(MD,2)*...*A(MD,N)  WITH MD=ML+MU+1.
-C  IF IP(N)=O, A IS SINGULAR, SOLB WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     THIS IS A MODIFICATION OF
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A BANDED
+! MATRIX WITH LOWER BANDWIDTH ML AND UPPER BANDWIDTH MU
+! INPUT..
+!    N       ORDER OF THE ORIGINAL MATRIX A.
+!    NDIM    DECLARED DIMENSION OF ARRAY  A.
+!    A       CONTAINS THE MATRIX IN BAND STORAGE.   THE COLUMNS  
+!               OF THE MATRIX ARE STORED IN THE COLUMNS OF  A  AND
+!               THE DIAGONALS OF THE MATRIX ARE STORED IN ROWS 
+!               ML+1 THROUGH 2*ML+MU+1 OF  A.
+!    ML      LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!    MU      UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+! OUTPUT..
+!    A       AN UPPER TRIANGULAR MATRIX IN BAND STORAGE AND 
+!               THE MULTIPLIERS WHICH WERE USED TO OBTAIN IT.  
+!    IP      INDEX VECTOR OF PIVOT INDICES.
+!    IP(N)   (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER     = 0 IF MATRIX A IS NONSINGULAR, OR  = K IF FOUND TO BE
+!               SINGULAR AT STAGE K.
+! USE  SOLB  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! DETERM(A) = IP(N)*A(MD,1)*A(MD,2)*...*A(MD,N)  WITH MD=ML+MU+1.
+! IF IP(N)=O, A IS SINGULAR, SOLB WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    THIS IS A MODIFICATION OF
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!----------------------------------------------------------------------
       IER = 0
       IP(N) = 1 
       MD = ML + MU + 1
@@ -651,27 +651,27 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DECB ------------------------
+!---------------------- END OF SUBROUTINE DECB ------------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOLB (N, NDIM, A, ML, MU, B, IP)
       DOUBLE PRECISION A,B,T
       DIMENSION A(NDIM,N), B(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B .
-C  INPUT..
-C    N      ORDER OF MATRIX A.
-C    NDIM   DECLARED DIMENSION OF ARRAY  A .
-C    A      TRIANGULARIZED MATRIX OBTAINED FROM DECB.
-C    ML     LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C    MU     UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C    B      RIGHT HAND SIDE VECTOR.
-C    IP     PIVOT VECTOR OBTAINED FROM DECB.
-C  DO NOT USE IF DECB HAS SET IER .NE. 0.
-C  OUTPUT..
-C    B      SOLUTION VECTOR, X .
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B .
+! INPUT..
+!   N      ORDER OF MATRIX A.
+!   NDIM   DECLARED DIMENSION OF ARRAY  A .
+!   A      TRIANGULARIZED MATRIX OBTAINED FROM DECB.
+!   ML     LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!   MU     UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!   B      RIGHT HAND SIDE VECTOR.
+!   IP     PIVOT VECTOR OBTAINED FROM DECB.
+! DO NOT USE IF DECB HAS SET IER .NE. 0.
+! OUTPUT..
+!   B      SOLUTION VECTOR, X .
+!----------------------------------------------------------------------
       MD = ML + MU + 1
       MD1 = MD + 1
       MDM = MD - 1
@@ -701,41 +701,41 @@ C-----------------------------------------------------------------------
  40     CONTINUE
  50   B(1) = B(1)/A(MD,1)
       RETURN
-C----------------------- END OF SUBROUTINE SOLB ------------------------
+!---------------------- END OF SUBROUTINE SOLB ------------------------
       END
-C
+!
       SUBROUTINE DECBC (N, NDIM, AR, AI, ML, MU, IP, IER)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       DIMENSION AR(NDIM,N), AI(NDIM,N), IP(N)
-C-----------------------------------------------------------------------
-C  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A BANDED COMPLEX
-C  MATRIX WITH LOWER BANDWIDTH ML AND UPPER BANDWIDTH MU
-C  INPUT..
-C     N       ORDER OF THE ORIGINAL MATRIX A.
-C     NDIM    DECLARED DIMENSION OF ARRAY  A.
-C     AR, AI     CONTAINS THE MATRIX IN BAND STORAGE.   THE COLUMNS  
-C                OF THE MATRIX ARE STORED IN THE COLUMNS OF  AR (REAL
-C                PART) AND AI (IMAGINARY PART)  AND
-C                THE DIAGONALS OF THE MATRIX ARE STORED IN ROWS 
-C                ML+1 THROUGH 2*ML+MU+1 OF  AR AND AI.
-C     ML      LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C     MU      UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C  OUTPUT..
-C     AR, AI  AN UPPER TRIANGULAR MATRIX IN BAND STORAGE AND 
-C                THE MULTIPLIERS WHICH WERE USED TO OBTAIN IT.  
-C     IP      INDEX VECTOR OF PIVOT INDICES.
-C     IP(N)   (-1)**(NUMBER OF INTERCHANGES) OR O .
-C     IER     = 0 IF MATRIX A IS NONSINGULAR, OR  = K IF FOUND TO BE
-C                SINGULAR AT STAGE K.
-C  USE  SOLBC  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
-C  DETERM(A) = IP(N)*A(MD,1)*A(MD,2)*...*A(MD,N)  WITH MD=ML+MU+1.
-C  IF IP(N)=O, A IS SINGULAR, SOLBC WILL DIVIDE BY ZERO.
-C
-C  REFERENCE..
-C     THIS IS A MODIFICATION OF
-C     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
-C     C.A.C.M. 15 (1972), P. 274.
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A BANDED COMPLEX
+! MATRIX WITH LOWER BANDWIDTH ML AND UPPER BANDWIDTH MU
+! INPUT..
+!    N       ORDER OF THE ORIGINAL MATRIX A.
+!    NDIM    DECLARED DIMENSION OF ARRAY  A.
+!    AR, AI     CONTAINS THE MATRIX IN BAND STORAGE.   THE COLUMNS  
+!               OF THE MATRIX ARE STORED IN THE COLUMNS OF  AR (REAL
+!               PART) AND AI (IMAGINARY PART)  AND
+!               THE DIAGONALS OF THE MATRIX ARE STORED IN ROWS 
+!               ML+1 THROUGH 2*ML+MU+1 OF  AR AND AI.
+!    ML      LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!    MU      UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+! OUTPUT..
+!    AR, AI  AN UPPER TRIANGULAR MATRIX IN BAND STORAGE AND 
+!               THE MULTIPLIERS WHICH WERE USED TO OBTAIN IT.  
+!    IP      INDEX VECTOR OF PIVOT INDICES.
+!    IP(N)   (-1)**(NUMBER OF INTERCHANGES) OR O .
+!    IER     = 0 IF MATRIX A IS NONSINGULAR, OR  = K IF FOUND TO BE
+!               SINGULAR AT STAGE K.
+! USE  SOLBC  TO OBTAIN SOLUTION OF LINEAR SYSTEM.
+! DETERM(A) = IP(N)*A(MD,1)*A(MD,2)*...*A(MD,N)  WITH MD=ML+MU+1.
+! IF IP(N)=O, A IS SINGULAR, SOLBC WILL DIVIDE BY ZERO.
+!
+! REFERENCE..
+!    THIS IS A MODIFICATION OF
+!    C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER,
+!    C.A.C.M. 15 (1972), P. 274.
+!----------------------------------------------------------------------
       IER = 0
       IP(N) = 1 
       MD = ML + MU + 1
@@ -755,8 +755,8 @@ C-----------------------------------------------------------------------
         M = MD
         MDL = MIN(ML,N-K) + MD
         DO 10 I = MD1,MDL
-          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT.
-     &          ABS(AR(M,K))+ABS(AI(M,K))) M = I
+          IF (ABS(AR(I,K))+ABS(AI(I,K)) .GT. &
+                ABS(AR(M,K))+ABS(AI(M,K))) M = I
  10     CONTINUE
         IP(K) = M + K - MD
         TR = AR(M,K)
@@ -830,28 +830,28 @@ C-----------------------------------------------------------------------
  80   IER = K
       IP(N) = 0
       RETURN
-C----------------------- END OF SUBROUTINE DECBC ------------------------
+!---------------------- END OF SUBROUTINE DECBC ------------------------
       END
-C
-C
+!
+!
       SUBROUTINE SOLBC (N, NDIM, AR, AI, ML, MU, BR, BI, IP)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       DIMENSION AR(NDIM,N), AI(NDIM,N), BR(N), BI(N), IP(N)
-C-----------------------------------------------------------------------
-C  SOLUTION OF LINEAR SYSTEM, A*X = B ,
-C                  VERSION BANDED AND COMPLEX-DOUBLE PRECISION.
-C  INPUT..
-C    N      ORDER OF MATRIX A.
-C    NDIM   DECLARED DIMENSION OF ARRAY  A .
-C    AR, AI TRIANGULARIZED MATRIX OBTAINED FROM DECB (REAL AND IMAG. PART).
-C    ML     LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C    MU     UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
-C    BR, BI RIGHT HAND SIDE VECTOR (REAL AND IMAG. PART).
-C    IP     PIVOT VECTOR OBTAINED FROM DECBC.
-C  DO NOT USE IF DECB HAS SET IER .NE. 0.
-C  OUTPUT..
-C    BR, BI SOLUTION VECTOR, X (REAL AND IMAG. PART).
-C-----------------------------------------------------------------------
+!----------------------------------------------------------------------
+! SOLUTION OF LINEAR SYSTEM, A*X = B ,
+!                 VERSION BANDED AND COMPLEX-DOUBLE PRECISION.
+! INPUT..
+!   N      ORDER OF MATRIX A.
+!   NDIM   DECLARED DIMENSION OF ARRAY  A .
+!   AR, AI TRIANGULARIZED MATRIX OBTAINED FROM DECB (REAL AND IMAG. PART).
+!   ML     LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!   MU     UPPER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED).
+!   BR, BI RIGHT HAND SIDE VECTOR (REAL AND IMAG. PART).
+!   IP     PIVOT VECTOR OBTAINED FROM DECBC.
+! DO NOT USE IF DECB HAS SET IER .NE. 0.
+! OUTPUT..
+!   BR, BI SOLUTION VECTOR, X (REAL AND IMAG. PART).
+!----------------------------------------------------------------------
       MD = ML + MU + 1
       MD1 = MD + 1
       MDM = MD - 1
@@ -902,106 +902,106 @@ C-----------------------------------------------------------------------
         BI(1)=PRODI/DEN
  50   CONTINUE
       RETURN
-C----------------------- END OF SUBROUTINE SOLBC ------------------------
+!---------------------- END OF SUBROUTINE SOLBC ------------------------
       END
-c
-C
+!
+!
       subroutine elmhes(nm,n,low,igh,a,int)
-C
+!
       integer i,j,m,n,la,nm,igh,kp1,low,mm1,mp1
       real*8 a(nm,n)
       real*8 x,y
-C     real*8 abs
+!    real*8 abs
       integer int(igh)
-C
-C     this subroutine is a translation of the algol procedure elmhes,
-C     num. math. 12, 349-368(1968) by martin and wilkinson.
-C     handbook for auto. comp., vol.ii-linear algebra, 339-358(1971).
-C
-C     given a real general matrix, this subroutine
-C     reduces a submatrix situated in rows and columns
-C     low through igh to upper hessenberg form by
-C     stabilized elementary similarity transformations.
-C
-C     on input:
-C
-C      nm must be set to the row dimension of two-dimensional
-C        array parameters as declared in the calling program
-C        dimension statement;
-C
-C      n is the order of the matrix;
-C
-C      low and igh are integers determined by the balancing
-C        subroutine  balanc.      if  balanc  has not been used,
-C        set low=1, igh=n;
-C
-C      a contains the input matrix.
-C
-C     on output:
-C
-C      a contains the hessenberg matrix.  the multipliers
-C        which were used in the reduction are stored in the
-C        remaining triangle under the hessenberg matrix;
-C
-C      int contains information on the rows and columns
-C        interchanged in the reduction.
-C        only elements low through igh are used.
-C
-C     questions and comments should be directed to b. s. garbow,
-C     applied mathematics division, argonne national laboratory
-C
-C     ------------------------------------------------------------------
-C
+!
+!    this subroutine is a translation of the algol procedure elmhes,
+!    num. math. 12, 349-368(1968) by martin and wilkinson.
+!    handbook for auto. comp., vol.ii-linear algebra, 339-358(1971).
+!
+!    given a real general matrix, this subroutine
+!    reduces a submatrix situated in rows and columns
+!    low through igh to upper hessenberg form by
+!    stabilized elementary similarity transformations.
+!
+!    on input:
+!
+!     nm must be set to the row dimension of two-dimensional
+!       array parameters as declared in the calling program
+!       dimension statement;
+!
+!     n is the order of the matrix;
+!
+!     low and igh are integers determined by the balancing
+!       subroutine  balanc.      if  balan! has not been used,
+!       set low=1, igh=n;
+!
+!     a contains the input matrix.
+!
+!    on output:
+!
+!     a contains the hessenberg matrix.  the multipliers
+!       which were used in the reduction are stored in the
+!       remaining triangle under the hessenberg matrix;
+!
+!     int contains information on the rows and columns
+!       interchanged in the reduction.
+!       only elements low through igh are used.
+!
+!    questions and comments should be directed to b. s. garbow,
+!    applied mathematics division, argonne national laboratory
+!
+!    ------------------------------------------------------------------
+!
       la = igh - 1
       kp1 = low + 1
       if (la .lt. kp1) go to 200
-C
+!
       do 180 m = kp1, la
        mm1 = m - 1
        x = 0.0d0
        i = m
-C
+!
        do 100 j = m, igh
           if (abs(a(j,mm1)) .le. abs(x)) go to 100
           x = a(j,mm1)
           i = j
   100   continue
-C
+!
        int(m) = i
        if (i .eq. m) go to 130
-C    :::::::::: interchange rows and columns of a ::::::::::
+!   :::::::::: interchange rows and columns of a ::::::::::
        do 110 j = mm1, n
           y = a(i,j)
           a(i,j) = a(m,j)
           a(m,j) = y
   110   continue
-C
+!
        do 120 j = 1, igh
           y = a(j,i)
           a(j,i) = a(j,m)
           a(j,m) = y
   120   continue
-C    :::::::::: end interchange ::::::::::
+!   :::::::::: end interchange ::::::::::
   130   if (x .eq. 0.0d0) go to 180
        mp1 = m + 1
-C
+
        do 160 i = mp1, igh
           y = a(i,mm1)
           if (y .eq. 0.0d0) go to 160
           y = y / x
           a(i,mm1) = y
-C
+!
           do 140 j = m, n
   140      a(i,j) = a(i,j) - y * a(m,j)
-C
+!
           do 150 j = 1, igh
   150      a(j,m) = a(j,m) + y * a(j,i)
-C
+!
   160   continue
-C
+!
   180 continue
-C
+!
   200 return
-C    :::::::::: last card of elmhes ::::::::::
+!   :::::::::: last card of elmhes ::::::::::
       end
 

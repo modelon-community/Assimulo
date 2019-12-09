@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import ExplicitEuler
 from assimulo.problem import Explicit_Problem
@@ -53,6 +52,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t1, y1, color="b")
         P.plot(t2, y2, color="r")
         P.title(exp_mod.name)
@@ -62,6 +62,7 @@ def run_example(with_plots=True):
         
     #Basic test
     nose.tools.assert_almost_equal(float(y2[-1]), 0.02628193)
+    
     return exp_mod, exp_sim
 
 if __name__=='__main__':

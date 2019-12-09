@@ -1,9 +1,9 @@
-C ******************************************
-C     VERSION OF JUNE 22, 2000      
-C ******************************************
-C
-      SUBROUTINE DECOMR(N,FJAC,LDJAC,FMAS,LDMAS,MLMAS,MUMAS,
-     &            M1,M2,NM1,FAC1,E1,LDE1,IP1,IER,IJOB,CALHES,IPHES)
+!******************************************
+!     VERSION OF JUNE 22, 2000      
+! ******************************************
+!
+      SUBROUTINE DECOMR(N,FJAC,LDJAC,FMAS,LDMAS,MLMAS,MUMAS, &
+                  M1,M2,NM1,FAC1,E1,LDE1,IP1,IER,IJOB,CALHES,IPHES)
       IMPLICIT REAL*8 (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
       REAL(kind=DP), dimension(LDJAC,N), intent(in) :: FJAC 
@@ -14,13 +14,13 @@ C
 
       LOGICAL CALHES
       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
-C
+!
       GOTO (1,2,3,4,5,6,7,55,55,55,11,12,13,14,15), IJOB
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    1  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
+!  B=IDENTITY, JACOBIAN A FULL MATRIX
       DO J=1,N
          DO  I=1,N
             E1(I,J)=-FJAC(I,J)
@@ -29,11 +29,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
       END DO
       CALL DEC (N,LDE1,E1,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   11  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -53,11 +53,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       END DO
       CALL DEC (NM1,LDE1,E1,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    2  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX
       DO J=1,N
          DO I=1,MBJAC
             E1(I+MLE,J)=-FJAC(I,J)
@@ -66,11 +66,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
       END DO
       CALL DECB (N,LDE1,E1,MLE,MUE,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   12  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,MBJAC
@@ -90,11 +90,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       END DO
       CALL DECB (NM1,LDE1,E1,MLE,MUE,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    3  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       DO J=1,N
          DO I=1,N
             E1(I,J)=-FJAC(I,J)
@@ -105,11 +105,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       END DO
       CALL DEC (N,LDE1,E1,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   13  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -120,11 +120,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 45
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    4  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       DO J=1,N
          DO I=1,MBJAC
             E1(I+MLE,J)=-FJAC(I,J)
@@ -136,11 +136,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       END DO
       CALL DECB (N,LDE1,E1,MLE,MUE,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   14  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,MBJAC
@@ -152,11 +152,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 46
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    5  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       DO J=1,N
          DO I=1,N
             E1(I,J)=FMAS(I,J)*FAC1-FJAC(I,J)
@@ -164,11 +164,11 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       END DO
       CALL DEC (N,LDE1,E1,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   15  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -176,18 +176,18 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 45
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    6  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
-C ---  THIS OPTION IS NOT PROVIDED
+!  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
+!  THIS OPTION IS NOT PROVIDED
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    7  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       IF (CALHES) CALL ELMHES (LDJAC,N,1,N,FJAC,IPHES) 
       CALHES=.FALSE.
       DO J=1,N-1
@@ -202,19 +202,19 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       END DO
       CALL DECH(N,LDE1,E1,1,IP1,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   55  CONTINUE
       RETURN
       END
-C
-C     END OF SUBROUTINE DECOMR
-C
-C ***********************************************************
-C
-      SUBROUTINE DECOMC(N,FJAC,LDJAC,FMAS,LDMAS,MLMAS,MUMAS,
-     &            M1,M2,NM1,ALPHN,BETAN,E2R,E2I,LDE1,IP2,IER,IJOB)
+!
+!     END OF SUBROUTINE DECOMR
+!
+!**********************************************************
+!
+      SUBROUTINE DECOMC(N,FJAC,LDJAC,FMAS,LDMAS,MLMAS,MUMAS, &
+                  M1,M2,NM1,ALPHN,BETAN,E2R,E2I,LDE1,IP2,IER,IJOB)
       IMPLICIT REAL*8 (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
       REAL(kind=DP), dimension(LDJAC,N), intent(in) :: FJAC
@@ -224,13 +224,13 @@ C
       INTEGER, dimension(NM1), intent(out) :: IP2
 
       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
-C
+!
       GOTO (1,2,3,4,5,6,7,55,55,55,11,12,13,14,15), IJOB
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    1  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
+!  B=IDENTITY, JACOBIAN A FULL MATRIX
       DO J=1,N
          DO I=1,N
             E2R(I,J)=-FJAC(I,J)
@@ -241,11 +241,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
       END DO
       CALL DECC (N,LDE1,E2R,E2I,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   11  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -274,11 +274,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       END DO
       CALL DECC (NM1,LDE1,E2R,E2I,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    2  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX
       DO J=1,N
          DO I=1,MBJAC
             IMLE=I+MLE
@@ -290,11 +290,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
       END DO
       CALL DECBC (N,LDE1,E2R,E2I,MLE,MUE,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   12  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,MBJAC
@@ -324,11 +324,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       END DO
       CALL DECBC (NM1,LDE1,E2R,E2I,MLE,MUE,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    3  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       DO  J=1,N
          DO  I=1,N
             E2R(I,J)=-FJAC(I,J)
@@ -344,11 +344,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       END DO
       CALL DECC(N,LDE1,E2R,E2I,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   13  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -362,11 +362,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 45
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    4  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       DO J=1,N
          DO I=1,MBJAC
             IMLE=I+MLE
@@ -382,11 +382,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       END DO
       CALL DECBC (N,LDE1,E2R,E2I,MLE,MUE,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   14  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,MBJAC
@@ -401,11 +401,10 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 46
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
    5  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       DO J=1,N
          DO I=1,N
             BB=FMAS(I,J)
@@ -415,11 +414,9 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       END DO
       CALL DECC(N,LDE1,E2R,E2I,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!--------------------------------------------------------
   15  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO J=1,NM1
          JM1=J+M1
          DO I=1,NM1
@@ -428,18 +425,17 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
          END DO
       END DO
       GOTO 45
-C
-C -----------------------------------------------------------
-C
+!--------------------------------------------------------
+!
    6  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
-C ---  THIS OPTION IS NOT PROVIDED
+!  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
+!  THIS OPTION IS NOT PROVIDED
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    7  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       DO J=1,N-1
          J1=J+1
          E2R(J1,J)=-FJAC(J1,J)
@@ -455,21 +451,21 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       END DO
       CALL DECHC(N,LDE1,E2R,E2I,1,IP2,IER)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   55  CONTINUE
       RETURN
       END
-C
-C     END OF SUBROUTINE DECOMC
-C
-C ***********************************************************
-C
-C
-      SUBROUTINE SLVRAD(N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS,
-     &          M1,M2,NM1,FAC1,ALPHN,BETAN,E1,E2R,E2I,LDE1,Z1,Z2,Z3,
-     &          F1,F2,F3,CONT,IP1,IP2,IPHES,IER,IJOB)
+!
+!     END OF SUBROUTINE DECOMC
+!
+!**********************************************************
+!
+!
+      SUBROUTINE SLVRAD(N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS, &
+                M1,M2,NM1,FAC1,ALPHN,BETAN,E1,E2R,E2I,LDE1,Z1,Z2,Z3, &
+                F1,F2,F3,CONT,IP1,IP2,IPHES,IER,IJOB)
       IMPLICIT REAL*8 (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
       REAL(kind=DP), dimension(LDJAC,N), intent(in) :: FJAC
@@ -483,13 +479,13 @@ C
       REAL(kind=DP), dimension(N), intent(inout) :: Z1,Z2,Z3,F1,F2,F3
 
       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
-C
+!
       GOTO (1,2,3,4,5,6,7,55,55,55,11,12,13,13,15), IJOB
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    1  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
+!  B=IDENTITY, JACOBIAN A FULL MATRIX
       DO I=1,N
          S2=-F2(I)
          S3=-F3(I)
@@ -500,11 +496,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX
       CALL SOL (N,LDE1,E1,Z1,IP1)
       CALL SOLC (N,LDE1,E2R,E2I,Z2,Z3,IP2)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   11  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,N
          S2=-F2(I)
          S3=-F3(I)
@@ -545,11 +541,11 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
          Z2(I)=(Z2I*ALPHN+Z3I*BETAN)/ABNO
       END DO
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    2  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX
       DO I=1,N
          S2=-F2(I)
          S3=-F3(I)
@@ -560,11 +556,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX
       CALL SOLB (N,LDE1,E1,MLE,MUE,Z1,IP1)
       CALL SOLBC (N,LDE1,E2R,E2I,MLE,MUE,Z2,Z3,IP2)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   12  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO I=1,N
          S2=-F2(I)
          S3=-F3(I)
@@ -597,11 +593,11 @@ C ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       CALL SOLB (NM1,LDE1,E1,MLE,MUE,Z1(M1+1),IP1)
       CALL SOLBC (NM1,LDE1,E2R,E2I,MLE,MUE,Z2(M1+1),Z3(M1+1),IP2)
       GOTO 49
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    3  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       DO I=1,N
          S1=0.0D0
          S2=0.0D0
@@ -619,11 +615,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       CALL SOL (N,LDE1,E1,Z1,IP1)
       CALL SOLC(N,LDE1,E2R,E2I,Z2,Z3,IP2)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   13  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,M1
          S2=-F2(I)
          S3=-F3(I)
@@ -651,11 +647,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       END DO
       IF (IJOB.EQ.14) GOTO 45
       GOTO 48
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    4  CONTINUE
-C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
+!  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       DO I=1,N
          S1=0.0D0
          S2=0.0D0
@@ -673,11 +669,11 @@ C ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       CALL SOLB (N,LDE1,E1,MLE,MUE,Z1,IP1)
       CALL SOLBC(N,LDE1,E2R,E2I,MLE,MUE,Z2,Z3,IP2)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    5  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       DO I=1,N
          S1=0.0D0
          S2=0.0D0
@@ -695,11 +691,11 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       CALL SOL (N,LDE1,E1,Z1,IP1)
       CALL SOLC(N,LDE1,E2R,E2I,Z2,Z3,IP2)
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   15  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,M1
          S2=-F2(I)
          S3=-F3(I)
@@ -724,18 +720,18 @@ C ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
          Z3(IM1)=Z3(IM1)+S3*ALPHN+S2*BETAN
       END DO
       GOTO 48
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    6  CONTINUE
-C ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
-C ---  THIS OPTION IS NOT PROVIDED
+!  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
+!  THIS OPTION IS NOT PROVIDED
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
    7  CONTINUE
-C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
+!  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       DO I=1,N
          S2=-F2(I)
          S3=-F3(I)
@@ -790,24 +786,24 @@ C ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
  750      CONTINUE
       END DO
       RETURN
-C
-C -----------------------------------------------------------
-C
+!
+!--------------------------------------------------------
+!
   55  CONTINUE
       RETURN
       END
-C
-C     END OF SUBROUTINE SLVRAD
-C
-C ***********************************************************
-C
+!
+!     END OF SUBROUTINE SLVRAD
+!
+!**********************************************************
+!
 
-      SUBROUTINE ESTRAD(N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS,
-     &                  H,G0,DD1,DD2,DD3,CL1,CL3,CQ1,CQ2,CQ3,CERLQ,
-     &                  FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,E1,LDE1,ALPHA,
-     &                  Z1,Z2,Z3,CONT,F1,F2,F3,IP1,IPHES,SCAL,ERR,CERR,
-     &                  FIRST,REJECT,FAC1,ARGLAG,PHI,RPAR,IPAR,
-     &                  IOUT,PAST,IPAST,NRDS,JEFLAG,IEFLAG,LRPAST)
+      SUBROUTINE ESTRAD(N,FJAC,LDJAC,MLJAC,MUJAC,FMAS,LDMAS,MLMAS,MUMAS, &
+                        H,G0,DD1,DD2,DD3,CL1,CL3,CQ1,CQ2,CQ3,CERLQ, &
+                        FCN,NFCN,Y0,Y,IJOB,X,M1,M2,NM1,E1,LDE1,ALPHA, &
+                        Z1,Z2,Z3,CONT,F1,F2,F3,IP1,IPHES,SCAL,ERR,CERR, &
+                        FIRST,REJECT,FAC1,ARGLAG,PHI,RPAR,IPAR, &
+                        IOUT,PAST,IPAST,NRDS,JEFLAG,IEFLAG,LRPAST)
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
       INTEGER, PARAMETER :: DP=kind(1D0)
       REAL(kind=DP), dimension(LDJAC,N), intent(in) :: FJAC
@@ -828,17 +824,17 @@ C
 
       LOGICAL FIRST,REJECT,LEFT
       COMMON/LINAL/MLE,MUE,MBJAC,MBB,MDIAG,MDIFF,MBDIAG
-C --- COMMON/BPCOM/BPP,ILBP,LEFT
+! COMMON/BPCOM/BPP,ILBP,LEFT
       EXTERNAL ARGLAG,PHI
-C      WRITE (6,*) FIRST,REJECT,LEFT
+!      WRITE (6,*) FIRST,REJECT,LEFT
       ALLOCATE (W1(N),W2(N),Q1(N),Q2(N))
       HEE1=DD1/H
       HEE2=DD2/H
       HEE3=DD3/H
       GOTO (1,2,3,4,5,6,7,55,55,55,11,12,13,14,15), IJOB
-C
+!
    1  CONTINUE
-C ------  B=IDENTITY, JACOBIAN A FULL MATRIX
+!---  B=IDENTITY, JACOBIAN A FULL MATRIX
       DO  I=1,N 
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -854,9 +850,9 @@ C ------  B=IDENTITY, JACOBIAN A FULL MATRIX
       END IF
       CALL SOL (N,LDE1,E1,CONT,IP1) 
       GOTO 77
-C
+!
   11  CONTINUE
-C ------  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
+!---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,N 
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -898,9 +894,9 @@ C ------  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER
         CONT(I)=(CONT(I)+CONT(M2+I))/FAC1
       END DO
       GOTO 77
-C
+!
    2  CONTINUE
-C ------  B=IDENTITY, JACOBIAN A BANDED MATRIX
+!---  B=IDENTITY, JACOBIAN A BANDED MATRIX
       DO I=1,N 
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -916,9 +912,9 @@ C ------  B=IDENTITY, JACOBIAN A BANDED MATRIX
       END IF
       CALL SOLB (N,LDE1,E1,MLE,MUE,CONT,IP1)
       GOTO 77
-C
+!
   12  CONTINUE
-C ------  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO I=1,N 
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -960,9 +956,9 @@ C ------  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER
          CONT(I)=(CONT(I)+CONT(M2+I))/FAC1
       END DO
       GOTO 77
-C
+!
    3  CONTINUE
-C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
+!---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       DO I=1,N
          F1(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          W1(I)=CL1*Z1(I)+CL3*Z3(I)
@@ -991,9 +987,9 @@ C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX
       END IF
       CALL SOL (N,LDE1,E1,CONT,IP1) 
       GOTO 77
-C
+!
   13  CONTINUE
-C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,M1
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -1024,9 +1020,9 @@ C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       END DO
       F3=G0*H*CONT
       GOTO 48
-C
+!
    4  CONTINUE
-C ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
+!---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       DO I=1,N
          F1(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          W1(I)=CL1*Z1(I)+CL3*Z3(I)
@@ -1055,9 +1051,9 @@ C ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX
       F3=G0*H*CONT
       CALL SOLB (N,LDE1,E1,MLE,MUE,CONT,IP1)
       GOTO 77
-C
+!
   14  CONTINUE
-C ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
+!---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
       DO I=1,M1
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -1088,9 +1084,9 @@ C ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER
       END DO
       F3=G0*H*CONT
       GOTO 45
-C
+!
    5  CONTINUE
-C ------  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
+!---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       DO I=1,N
          F1(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          W1(I)=CL1*Z1(I)+CL3*Z3(I)
@@ -1119,9 +1115,9 @@ C ------  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX
       END IF
       CALL SOL (N,LDE1,E1,CONT,IP1) 
       GOTO 77
-C
+!
   15  CONTINUE
-C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
+!---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       DO I=1,M1
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -1152,15 +1148,15 @@ C ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER
       END DO
       F3=G0*H*CONT
       GOTO 48
-C
+!
    6  CONTINUE
-C ------  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
-C ------  THIS OPTION IS NOT PROVIDED
+!---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX
+!---  THIS OPTION IS NOT PROVIDED
       DEALLOCATE (W1,W2,Q1,Q2)
       RETURN
-C
+!
    7  CONTINUE
-C ------  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
+!---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
       DO I=1,N 
          F2(I)=HEE1*Z1(I)+HEE2*Z2(I)+HEE3*Z3(I)
          CONT(I)=F2(I)+Y0(I)
@@ -1213,23 +1209,23 @@ C ------  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION
          Q2(I)=ZSAFE
  440     CONTINUE
       END DO
-C
-C --------------------------------------
-C
+!
+!-----------------------------------
+!
   77  CONTINUE
-C ********************
-C --- ERROR ESTIMATION
-C ********************
-CCC
-CCC   STIMA DELL'ERRORE QUANDO SI USA UN'INTERPOLAZIONE LINEARE
-CCC   DA INTERPRETARE COME P_LIN(0)-Y0
-CCC   Errore lin. standard (non stiff)
+!*******************
+! ERROR ESTIMATION
+!*******************
+!
+!   STIMA DELL'ERRORE QUANDO SI USA UN'INTERPOLAZIONE LINEARE
+!   DA INTERPRETARE COME P_LIN(0)-Y0
+!   Errore lin. standard (non stiff)
       ERRB=0.D0
       DO  I=1,N
          ERRB=ERRB+(W1(I)/SCAL(I))**2
       END DO
       ERRLB=MAX(SQRT(ERRB/N),1.D-10)
-CCC   Errore scalato (stiff)
+!   Errore scalato (stiff)
       IF (ALPHA.NE.0.D0) THEN
        ERR=0.D0
        DO  I=1,N
@@ -1239,16 +1235,16 @@ CCC   Errore scalato (stiff)
       ELSE
        ERRL=0.D0
       END IF
-CCC
-CCC   STIMA DELL'ERRORE QUANDO SI USA UN'INTERPOLAZIONE QUADRATA
-CCC   DA INTEROPRETARE COME P_QUAD(0)-Y0
-CCC   Errore quad. standard (non stiff)
+!
+!   STIMA DELL'ERRORE QUANDO SI USA UN'INTERPOLAZIONE QUADRATA
+!   DA INTEROPRETARE COME P_QUAD(0)-Y0
+!   Errore quad. standard (non stiff)
       ERRB=0.D0
       DO  I=1,N
          ERRB=ERRB+(Q1(I)/SCAL(I))**2
       END DO
       ERRQB=MAX(SQRT(ERRB/N),1.D-10)
-CCC   Errore scalato (stiff)
+!   Errore scalato (stiff)
       IF (ALPHA.NE.0.D0) THEN
        ERR=0.D0
        DO  I=1,N
@@ -1259,71 +1255,71 @@ CCC   Errore scalato (stiff)
        ERRQ=0.D0
       END IF
       
-CCC   CONTINUOUS ERROR EST.
-      CERRB=ERRQB*(ERRQB/SQRT(ERRQB*ERRQB+
-     &             CERLQ*CERLQ*MIN(ERRLB,ERRQB/CERLQ)**2))
+!   CONTINUOUS ERROR EST.
+      CERRB=ERRQB*(ERRQB/SQRT(ERRQB*ERRQB+ &
+                   CERLQ*CERLQ*MIN(ERRLB,ERRQB/CERLQ)**2))
       IF (ALPHA.NE.0.D0) THEN
-       CERR=ERRQ*(ERRQ/SQRT(ERRQ*ERRQ+
-     &            CERLQ*CERLQ*MIN(ERRL,ERRQ/CERLQ)**2))
+       CERR=ERRQ*(ERRQ/SQRT(ERRQ*ERRQ+ &
+                  CERLQ*CERLQ*MIN(ERRL,ERRQ/CERLQ)**2))
       ELSE
        CERR=0.D0
       END IF
-CCC   Se ne prende una c.lin
+!   Se ne prende una c.lin
       CERR=ALPHA*CERR+(1.D0-ALPHA)*CERRB
 
-CCC   Errore standard (non stiff)
+!   Errore standard (non stiff)
       ERRB=0.D0
       DO  I=1,N
          ERRB=ERRB+(F3(I)/SCAL(I))**2
       END DO
       ERRB=MAX(SQRT(ERRB/N),1.D-10)
-CCC   Errore scalato (stiff)
+!   Errore scalato (stiff)
       ERR=0.D0
       DO  I=1,N
          ERR=ERR+(CONT(I)/SCAL(I))**2
       END DO
       ERR=MAX(SQRT(ERR/N),1.D-10)
-CCC   Se ne prende il min
+!   Se ne prende il min
       ERR=MIN(ERRB,ERR)
-CCC
-CCC   Si evita la seconda pre-moltiplicazione per (I-hgJ)^-1
-CCC   se  ------------\/------------
+!
+!   Si evita la seconda pre-moltiplicazione per (I-hgJ)^-1
+!   se  ------------\/------------
       IF (ERR.LT.1.D0.OR.JEFLAG.GT.0) THEN 
         DEALLOCATE (W1,W2,Q1,Q2)
         RETURN
       ELSE IF (FIRST.OR.REJECT) THEN
-CCC
+!
         DO I=1,N
            CONT(I)=Y(I)+CONT(I)
         END DO
-C ---
-C ---   VOGLIAMO VALUTARE LA FUNZIONE IN X^+
-CD      XURO=1.D-15
-CD      IF (X.NE.0.D0) THEN
-CD       XX = X*(1.D0+XURO)
-CD      ELSE
-CD       XX = XURO
-CD      ENDIF
+!
+!   VOGLIAMO VALUTARE LA FUNZIONE IN X^+
+!      XURO=1.D-15
+!      IF (X.NE.0.D0) THEN
+!       XX = X*(1.D0+XURO)
+!      ELSE
+!       XX = XURO
+!      ENDIF
         XX=X
-C ---   VALUTA IN  XX
-C        WRITE(6,*) 'DECDEL FCN',N,XX,NRDS, SIZE(PAST), SIZE(IPAST), 
-C     &   SIZE(CONT), SIZE(F1), SIZE(RPAR), SIZE(IPAR)
-        CALL FCN(N,XX,CONT,F1,ARGLAG,PHI,RPAR,IPAR,
-     &           PAST,IPAST,NRDS,LRPAST)
-C        WRITE(6,*) 'END DECDEL FCN'
-CW      WRITE (6,*) 'Seconda premoltiplicazione per la stima di errore '
-CW      WRITE (6,*) 'X, ERR = ',X,ERR
-C ---
+!   VALUTA IN  XX
+!        WRITE(6,*) 'DECDEL FCN',N,XX,NRDS, SIZE(PAST), SIZE(IPAST), 
+!     &   SIZE(CONT), SIZE(F1), SIZE(RPAR), SIZE(IPAR)
+        CALL FCN(N,XX,CONT,F1,ARGLAG,PHI,RPAR,IPAR, &
+                 PAST,IPAST,NRDS,LRPAST)
+!        WRITE(6,*) 'END DECDEL FCN'
+!      WRITE (6,*) 'Seconda premoltiplicazione per la stima di errore '
+!      WRITE (6,*) 'X, ERR = ',X,ERR
+!
         NFCN=NFCN+1
         DO I=1,N
            CONT(I)=F1(I)+F2(I)
         END DO
         GOTO (31,32,31,32,31,32,33,55,55,55,41,42,41,42,41), IJOB
-C ----- FULL MATRIX OPTION
+!----- FULL MATRIX OPTION
   31    CONTINUE
         CALL SOL(N,LDE1,E1,CONT,IP1) 
         GOTO 88
-C ----- FULL MATRIX OPTION, SECOND ORDER
+!----- FULL MATRIX OPTION, SECOND ORDER
  41     CONTINUE
         DO J=1,M2
            SUM1=0.D0
@@ -1340,11 +1336,11 @@ C ----- FULL MATRIX OPTION, SECOND ORDER
            CONT(I)=(CONT(I)+CONT(M2+I))/FAC1
         END DO
         GOTO 88
-C ----- BANDED MATRIX OPTION
+!----- BANDED MATRIX OPTION
  32     CONTINUE
         CALL SOLB (N,LDE1,E1,MLE,MUE,CONT,IP1)
         GOTO 88
-C ----- BANDED MATRIX OPTION, SECOND ORDER
+!----- BANDED MATRIX OPTION, SECOND ORDER
  42     CONTINUE
         DO J=1,M2
            SUM1=0.D0
@@ -1361,7 +1357,7 @@ C ----- BANDED MATRIX OPTION, SECOND ORDER
            CONT(I)=(CONT(I)+CONT(M2+I))/FAC1
         END DO
         GOTO 88
-C ----- HESSENBERG MATRIX OPTION
+!----- HESSENBERG MATRIX OPTION
   33    CONTINUE
         DO MM=N-2,1,-1
            MP=N-MM
@@ -1388,7 +1384,7 @@ C ----- HESSENBERG MATRIX OPTION
            CONT(I)=ZSAFE
  640       CONTINUE
         END DO
-C -----------------------------------
+!-----------------------------------
    88   CONTINUE
         SERR=ERR
         ERR=0.D0 
@@ -1400,14 +1396,14 @@ C -----------------------------------
       END IF
       DEALLOCATE (W1,W2,Q1,Q2)
       RETURN
-C -----------------------------------------------------------
+!-----------------------------------------------------------
   55  CONTINUE
       DEALLOCATE (W1,W2,Q1,Q2)
       RETURN
       END
-C
-C     END OF SUBROUTINE ESTRAD
-C
-C ***********************************************************
-C
-C
+!
+!    END OF SUBROUTINE ESTRAD
+!
+!***********************************************************
+!
+!

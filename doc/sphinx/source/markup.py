@@ -13,7 +13,8 @@ def mark_examples():
         file.write('.. autofunction:: assimulo.examples.'+ex+'.run_example\n\n')
         file.write('=============================================\n\n')
         file.write('.. program-output::   python '+os.path.join(os.getcwd(),'execute_example.py')+' '+os.path.join(os.getcwd(), examples.__path__[0]+os.sep+ex+'.py')+' \n\n')
-        file.write('.. image:: '+os.sep+os.path.join(os.getcwd(),ex+'.png')+'\n\n')
+        if os.path.isfile(os.path.join(os.getcwd(),ex+'.png')):
+            file.write('.. image:: '+os.sep+os.path.join(os.getcwd(),ex+'.png')+'\n\n')
         file.write('.. note::\n\n')
         file.write('    Press [source] (to the top right) to view the example.\n\n')
         file.close()

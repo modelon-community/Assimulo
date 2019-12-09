@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -78,6 +77,15 @@ def run_example(with_plots=True):
     #Simulate
     t, y = exp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
     
+    #Plot
+    if with_plots:
+        import pylab as P
+        P.plot(t, y)
+        P.title(exp_mod.name)
+        P.xlabel('Time')
+        P.ylabel('State')
+        P.show()  
+    
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
     nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
@@ -86,14 +94,6 @@ def run_example(with_plots=True):
     nose.tools.assert_almost_equal(exp_sim.p_sol[1][-1][0], 2.9614e-06, 8)
     nose.tools.assert_almost_equal(exp_sim.p_sol[2][-1][0], -4.9334e-10, 12)
     
-    #Plot
-    if with_plots:
-        P.plot(t, y)
-        P.title(exp_mod.name)
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.show()  
-        
     return exp_mod, exp_sim
 
 if __name__=='__main__':
