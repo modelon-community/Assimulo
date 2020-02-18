@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 
 try:
@@ -90,18 +89,19 @@ def run_example(with_plots=True):
     #Simulate
     t, y = exp_sim.simulate(10) #Simulate 10 seconds
 
-    #Basic test
-    nose.tools.assert_almost_equal(y[-1,0], 10.860063849896818, 3)
-    
     #Plot
     if with_plots:
+        import pylab as P
         P.semilogy(t, y, color="b")
         P.grid()
         P.title(exp_mod.name+r' $\varepsilon = \frac{1}{3} 10^{-3}$')
         P.xlabel('Time')
         P.ylabel('y')
         P.show()
-        
+    
+    #Basic test
+    nose.tools.assert_almost_equal(y[-1,0], 10.860063849896818, 3)
+    
     return exp_mod, exp_sim
 
 if __name__=='__main__':

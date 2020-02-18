@@ -35,12 +35,13 @@ def remove_prefix(name, prefix):
 
 parser = argparse.ArgumentParser(description='Assimulo setup script.')
 parser.register('type','bool',str2bool)
-package_arguments=['plugins','sundials','blas','superlu','lapack']
+package_arguments=['plugins','sundials','blas','superlu','lapack','mkl']
 package_arguments.sort()
 for pg in package_arguments:
     parser.add_argument("--{}-home".format(pg), 
            help="Location of the {} directory".format(pg.upper()),type=str,default='')
-parser.add_argument("--blas-name", help="name of the blas package",default='blas')   
+parser.add_argument("--blas-name", help="name of the blas package",default='blas')
+parser.add_argument("--mkl-name", help="name of the mkl package",default='mkl')    
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')
 parser.add_argument("--with_openmp", type='bool', help="set to true if present",default=False)
 parser.add_argument("--is_static", type='bool', help="set to true if present",default=False)
@@ -114,7 +115,7 @@ class Assimulo_prepare(object):
                 self.copy_file(f,to_dir)
     def __init__(self,args, thirdparty_methods):
         # args[0] are optinal arguments given above
-        # args[1] are argumenets passed to disutils 
+        # args[1] are argumenets passed to distutils 
         self.distutil_args=args[1]
         if args[0].prefix:
             self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
@@ -122,9 +123,12 @@ class Assimulo_prepare(object):
         self.SLUdir = args[0].superlu_home
         self.BLASdir = args[0].blas_home 
         self.sundialsdir = args[0].sundials_home
+        self.MKLdir = args[0].mkl_home
         self.sundials_with_superlu = args[0].sundials_with_superlu
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
+        self.MKLname_t = args[0].mkl_name if args[0].mkl_name.startswith('lib') else 'lib'+args[0].mkl_name
+        self.MKLname = self.MKLname_t[3:]    # the name without "lib"
         self.debug_flag = args[0].debug 
         self.LAPACKdir = args[0].lapack_home
         self.LAPACKname = ""
@@ -151,6 +155,14 @@ class Assimulo_prepare(object):
             nd.misc_util.msvc_runtime_library = msvc_runtime_library_mod
             L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
         
+        # prevent Fortran to link dynamically
+        # Are there any additional flags needed for e.g. MKL, see https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+        def fortran_compiler_flags(self):
+            opt = ['/nologo', '/MT', '/nbs', '/names:lowercase', '/assume:underscore']
+            return opt
+        from numpy.distutils.fcompiler import intel
+        nd.fcompiler.intel.IntelVisualFCompiler.get_flags=fortran_compiler_flags
+        
         self.platform = 'linux'
         if 'win' in sys.platform: self.platform = 'win'
         if 'darwin' in sys.platform: self.platform = 'mac' 
@@ -175,6 +187,7 @@ class Assimulo_prepare(object):
         self.check_SuperLU()
         self.check_SUNDIALS()
         self.check_LAPACK()
+        self.check_MKL()
         
     def _set_directories(self):
         # directory paths
@@ -272,6 +285,31 @@ class Assimulo_prepare(object):
             else:
                 L.debug("BLAS found at "+self.BLASdir)
                 self.with_BLAS = True
+
+    def check_MKL(self):
+        """
+        Check if MKL can be found
+        """
+        self.with_MKL = True
+        msg=", disabling support. View more information using --log=DEBUG"
+        if self.MKLdir == "":
+            L.warning("No path to MKL supplied" + msg)
+            L.debug("usage: --mkl-home=path")
+            L.debug("Note: the path required is to where the static library lib is found")
+            self.with_MKL = False
+        else:
+            if not os.path.exists(os.path.join(self.MKLdir,self.MKLname_t+'.a')) and not os.path.exists(os.path.join(self.MKLdir,self.MKLname+'.lib')):
+                L.warning("Could not find MKL"+msg)
+                L.debug("Could not find MKL at the given path {}.".format(self.MKLdir))
+                L.debug("Searched for: {} and {}".format(self.MKLname_t+'.a', self.MKLname+'.lib'))
+                L.debug("usage: --mkl-home=path")
+                self.with_MKL = False
+            else:
+                L.debug("MKL found at "+self.MKLdir)
+                self.with_MKL = True
+                # To make sure that when MKL is found, BLAS and/or LAPACK aren't used
+                self.with_BLAS = False
+                self.with_LAPACK = False
         
     def check_SuperLU(self):
         """
@@ -282,6 +320,8 @@ class Assimulo_prepare(object):
         
         if self.SLUdir != "":    
             self.SLUincdir = os.path.join(self.SLUdir,'SRC')
+            if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
+                self.SLUincdir = os.path.join(self.SLUdir,'include')
             self.SLUlibdir = os.path.join(self.SLUdir,'lib')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.with_SLU = False
@@ -293,6 +333,11 @@ class Assimulo_prepare(object):
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
             potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
+            self.msvcSLU = False
+            if not potential_files:
+                msvs_lib_suffix=".lib"
+                self.msvcSLU = True
+                potential_files = [f[:-len(msvs_lib_suffix)] for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(msvs_lib_suffix)]
             potential_files.sort(reverse=True)
             L.debug("Potential SuperLU files: "+str(potential_files))
             
@@ -327,7 +372,7 @@ class Assimulo_prepare(object):
             sundials_version = None
             sundials_vector_type_size = None
             sundials_with_superlu = False
-            
+            sundials_with_msvc = False
             try:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')):
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
@@ -355,6 +400,8 @@ class Assimulo_prepare(object):
                                 sundials_with_superlu = True
                                 L.debug('SUNDIALS found to be compiled with support for SuperLU.')
                                 break
+                    if os.path.exists(os.path.join(self.libdirs,'sundials_nvecserial.lib')) and not os.path.exists(os.path.join(self.libdirs,'libsundials_nvecserial.a')):
+                        sundials_with_msvc = True
             except Exception as e:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
@@ -366,6 +413,7 @@ class Assimulo_prepare(object):
             self.SUNDIALS_version = sundials_version
             self.SUNDIALS_vector_size = sundials_vector_type_size
             self.sundials_with_superlu = sundials_with_superlu
+            self.sundials_with_msvc = sundials_with_msvc
             if not self.sundials_with_superlu:
                 L.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
         else:    
@@ -454,15 +502,26 @@ class Assimulo_prepare(object):
         for el in ext_list:
             #Debug
             if self.debug_flag:
-                el.extra_compile_args = ["-g","-fno-strict-aliasing"]
-                el.extra_link_args = ["-g"]
+                if self.sundials_with_msvc:
+                    el.extra_compile_args = ["/DEBUG"]
+                    el.extra_link_args = ["/DEBUG"]
+                else:
+                    el.extra_compile_args = ["-g","-fno-strict-aliasing"]
+                    el.extra_link_args = ["-g"]
             else:
-                el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                if self.sundials_with_msvc:
+                    el.extra_compile_args = ["/O2"]
+                else:
+                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
             if self.platform == "mac":
                 el.extra_compile_args += ["-Wno-error=return-type"]
             if self.with_openmp:
-                el.extra_link_args.append("-fopenmp")
-                el.extra_compile_args.append("-fopenmp")
+                if self.msvcSLU:
+                    openmp_arg = "/openmp"
+                else:
+                    openmp_arg = "-fopenmp"
+                el.extra_link_args.append(openmp_arg)
+                el.extra_compile_args.append(openmp_arg)
             el.extra_compile_args += self.flag_32bit + self.extra_c_flags
 
         for el in ext_list:
@@ -517,13 +576,15 @@ class Assimulo_prepare(object):
                               extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
     
         #GLIMDA
+        glimda_list = ['glimda_complete.f','glimda_complete.pyf']
+        src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
         if self.with_BLAS and self.with_LAPACK:
-            glimda_list = ['glimda_complete.f','glimda_complete.pyf']
-            src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', self.BLASname]}
             extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
-            extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA 
+            extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA
+        elif self.with_MKL: #assuming windows and Intel fortran compiler
+            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()], library_dirs=[self.MKLdir], libraries=[self.MKLname])
         else:
             L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
         
@@ -589,7 +650,7 @@ Documentation and installation instructions can be found at:
 http://www.jmodelica.org/assimulo . 
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1, BLAS and LAPACK 
+compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
 together with a C-compiler and a FORTRAN-compiler.
 """
 

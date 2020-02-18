@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -77,8 +76,7 @@ def run_example(with_plots=True):
     
     #Simulate
     t, y, yd = imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
-    print(imp_sim.p_sol[0][-1] , imp_sim.p_sol[1][-1], imp_sim.p_sol[0][-1])
-    
+
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
     nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
@@ -89,6 +87,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t, y)
         P.title(imp_mod.name)
         P.xlabel('Time')

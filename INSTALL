@@ -6,9 +6,9 @@ INSTALL
 =======
 
 *REQUIREMENTS
-	- Python-2.6 / 2.7 (with headers)
+	- Python-2.7/3.* (with headers)
 	- Numpy, Scipy, Pylab
-	- Sundials-2.5.0/2.6.0
+	- Sundials-2.5/2.6/3.1/4.1
 	- Cython >= 0.18
     - C-compiler
     - Fortran-compiler

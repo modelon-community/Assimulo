@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -86,14 +85,9 @@ def run_example(with_plots=True):
     #Simulate
     t, y, yd = imp_sim.simulate(400) #Simulate 400 seconds
     
-    #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 1577.6552477,3)
-    nose.tools.assert_almost_equal(y[-1][1], 611.9574565, 3)
-    nose.tools.assert_almost_equal(y[-1][2], 2215.88563217, 3)
-    nose.tools.assert_almost_equal(imp_sim.p_sol[0][1][0], 1.0)
-    
     #Plot
     if with_plots:
+        import pylab as P
         P.figure(1)
         P.subplot(221)
         P.plot(t, N.array(imp_sim.p_sol[0])[:,0],
@@ -118,7 +112,15 @@ def run_example(with_plots=True):
         P.plot(t, y)
         P.suptitle(imp_mod.name)
         P.show()
+    
+    #Basic test
+    nose.tools.assert_almost_equal(y[-1][0], 1577.6552477,3)
+    nose.tools.assert_almost_equal(y[-1][1], 611.9574565, 3)
+    nose.tools.assert_almost_equal(y[-1][2], 2215.88563217, 3)
+    nose.tools.assert_almost_equal(imp_sim.p_sol[0][1][0], 1.0)
+    
         
-        return imp_mod, imp_sim
+    return imp_mod, imp_sim
+    
 if __name__=='__main__':
     mod,sim = run_example()

@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -53,16 +52,17 @@ def run_example(with_plots=True):
     #Simulate
     t, y, yd = imp_sim.simulate(0) #Simulate 5 seconds (t0=5 -> tf=0)
     
-    #Basic test
-    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
-    
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t, y, color="b")
         P.xlabel('Time')
         P.ylabel('State')
         P.title(imp_mod.name)
         P.show()
+    
+    #Basic test
+    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
     
     return imp_mod, imp_sim
 

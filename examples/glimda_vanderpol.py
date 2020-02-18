@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import GLIMDA,IDA
 from assimulo.problem import Implicit_Problem
@@ -73,6 +72,7 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
+        import pylab as P
         P.subplot(211)
         P.plot(t,y[:,0])#, marker='o')
         P.xlabel('Time')
@@ -87,6 +87,7 @@ def run_example(with_plots=True):
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    
     return imp_mod, imp_sim
 
 if __name__=='__main__':

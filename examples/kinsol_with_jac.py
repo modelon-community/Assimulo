@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
@@ -47,9 +46,7 @@ def run_example(with_plots=True):
     
     #Define the KINSOL solver
     alg_solver = KINSOL(alg_mod)
-    
-    #Sets the parameters
-    
+
     #Solve
     y = alg_solver.solve()
     

@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 import nose
@@ -91,15 +90,9 @@ def run_example(with_plots=True):
     #Simulate
     t, y, yd = imp_sim.simulate(5) #Simulate 5 seconds
     
-    #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],0.9401995, places=4)
-    nose.tools.assert_almost_equal(y[-1][1],-0.34095124, places=4)
-    nose.tools.assert_almost_equal(yd[-1][0], -0.88198927, places=4)
-    nose.tools.assert_almost_equal(yd[-1][1], -2.43227069, places=4)
-    nose.tools.assert_almost_equal(order[-1], 5, places=4)
-    
     #Plot
     if with_plots:
+        import pylab as P
         P.figure(1)
         P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
         P.xlabel('Time')
@@ -112,7 +105,14 @@ def run_example(with_plots=True):
         P.xlabel("Time")
         P.ylabel("Order")
         P.show()
-        
+    
+    #Basic tests
+    nose.tools.assert_almost_equal(y[-1][0],0.9401995, places=4)
+    nose.tools.assert_almost_equal(y[-1][1],-0.34095124, places=4)
+    nose.tools.assert_almost_equal(yd[-1][0], -0.88198927, places=4)
+    nose.tools.assert_almost_equal(yd[-1][1], -2.43227069, places=4)
+    nose.tools.assert_almost_equal(order[-1], 5, places=4)
+    
     return imp_mod, imp_sim
 
 

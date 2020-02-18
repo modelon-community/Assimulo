@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import sys
 
 from assimulo.exception import *
 from assimulo.ode import *
@@ -26,7 +27,7 @@ try:
     from assimulo.lib.odepack import dlsodar, dcfode, dintdy
     from assimulo.lib.odepack import set_lsod_common, get_lsod_common
 except ImportError:
-    print "Could not find ODEPACK functions"
+    sys.stderr.write("Could not find ODEPACK functions\n")
 
 class SDIRK_DAE(Implicit_ODE):
     """

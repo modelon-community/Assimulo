@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import pylab as P
 import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
@@ -65,9 +64,10 @@ def run_example(with_plots=True):
     
     #Simulate
     t, y = exp_sim.simulate(2.) #Simulate 2 seconds
-    print(y)
+    
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t,y[:,0])#, marker='o')
         P.xlabel('Time')
         P.ylabel('State')
@@ -77,6 +77,7 @@ def run_example(with_plots=True):
     #Basic test
     x1 = y[:,0]
     assert N.abs(x1[-1]-1.706168035) < 1e-3 #For test purpose
+    
     return exp_mod, exp_sim
 
 if __name__=='__main__':

@@ -410,9 +410,10 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag, self.t)
         
         #Specify the maximum number of nonlinear solver iterations
-        flag = SUNDIALS.IDASetSensMaxNonlinIters(self.ida_mem, self.options["maxcorS"])
-        if flag < 0:
-            raise IDAError(flag, self.t)
+        if self.options["sensmethod"] == "STAGGERED":
+            flag = SUNDIALS.IDASetSensMaxNonlinIters(self.ida_mem, self.options["maxcorS"])
+            if flag < 0:
+                raise IDAError(flag, self.t)
         
         #Estimate the sensitivity  ----SHOULD BE IMPROVED with IDASensSVTolerances ...
         flag = SUNDIALS.IDASensEEtolerances(self.ida_mem)
@@ -1394,13 +1395,14 @@ cdef class IDA(Implicit_ODE):
         #If sensitivity    
         if self.pData.dimSens > 0:
             flag = SUNDIALS.IDAGetSensStats(self.ida_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
-            flag = SUNDIALS.IDAGetSensNonlinSolvStats(self.ida_mem, &nSniters, &nSncfails)
-            
             self.statistics["nsensfcns"]   += nfSevals
             self.statistics["nsensfcnfcns"]   += nfevalsS
             self.statistics["nsenserrfails"]  += nSetfails
-            self.statistics["nsensniters"]   += nSniters
-            self.statistics["nsensnfails"]  += nSncfails
+            
+            if self.options["sensmethod"] == "STAGGERED":
+                flag = SUNDIALS.IDAGetSensNonlinSolvStats(self.ida_mem, &nSniters, &nSncfails)
+                self.statistics["nsensniters"]   += nSniters
+                self.statistics["nsensnfails"]  += nSncfails
     
     def print_statistics(self, verbose=NORMAL):
         """
@@ -1451,11 +1453,15 @@ cdef class CVode(Explicit_ODE):
     cdef public N.ndarray g_old
     cdef SUNDIALS.SUNMatrix sun_matrix
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
+    cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver
+    cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver_sens
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
 
         self.pData = ProblemData()
+        self.sun_nonlinearsolver = NULL
+        self.sun_nonlinearsolver_sens = NULL
         
         #Populate the ProblemData
         self.set_problem_data()
@@ -1699,7 +1705,10 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL: #The solver is not initialized
             
             #Create the solver
-            self.cvode_mem= SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, CV_NEWTON if self.options["iter"] == "Newton" else CV_FUNCTIONAL)
+            IF SUNDIALS_VERSION >= (4,0,0):
+                self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS)
+            ELSE:
+                self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, CV_NEWTON if self.options["iter"] == "Newton" else CV_FUNCTIONAL)
             if self.cvode_mem == NULL:
                 raise CVodeError(CV_MEM_FAIL)
             
@@ -1707,6 +1716,19 @@ cdef class CVode(Explicit_ODE):
             flag = SUNDIALS.CVodeInit(self.cvode_mem, cv_rhs, self.t, self.yTemp)
             if flag < 0:
                 raise CVodeError(flag, self.t)
+                
+            #For Sundials >=4.0 the iteration scheme is set after init
+            IF SUNDIALS_VERSION >= (4,0,0):
+                if self.options["iter"] == "Newton":
+                    self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp)
+                else:
+                    self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0)
+                if self.sun_nonlinearsolver == NULL:
+                    raise CVodeError(CV_MEM_FAIL)
+                
+                flag = SUNDIALS.CVodeSetNonlinearSolver(self.cvode_mem, self.sun_nonlinearsolver)
+                if flag < 0:
+                    raise CVodeError(flag, self.t)
                 
             #Specify the root function to the solver
             if self.problem_info["state_events"]:
@@ -1735,6 +1757,23 @@ cdef class CVode(Explicit_ODE):
                     flag = SUNDIALS.CVodeSensInit(self.cvode_mem, self.pData.dimSens, CV_STAGGERED if self.options["sensmethod"] == "STAGGERED" else CV_SIMULTANEOUS, NULL, self.ySO)
                 if flag < 0:
                     raise CVodeError(flag, self.t)
+                
+                IF SUNDIALS_VERSION >= (4,0,0):
+                    count = self.pData.dimSens if self.options["sensmethod"] == "STAGGERED" else (self.pData.dimSens+1)
+                    
+                    if self.options["iter"] == "Newton":
+                        self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp)
+                    else:
+                        self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0)
+                    if self.sun_nonlinearsolver_sens == NULL:
+                        raise CVodeError(CV_MEM_FAIL)
+                        
+                    if self.options["sensmethod"] == "STAGGERED":
+                        flag = SUNDIALS.CVodeSetNonlinearSolverSensStg(self.cvode_mem, self.sun_nonlinearsolver_sens)
+                    else:
+                        flag = SUNDIALS.CVodeSetNonlinearSolverSensSim(self.cvode_mem, self.sun_nonlinearsolver_sens)
+                    if flag < 0:
+                        raise CVodeError(flag, self.t)
             
         else: #The solver needs to be reinitialized
             #Reinitialize
@@ -2047,10 +2086,11 @@ cdef class CVode(Explicit_ODE):
         if flag < 0:
             raise CVodeError(flag, self.t)
         
-        #Maximum number of nonlinear iterations
-        flag = SUNDIALS.CVodeSetSensMaxNonlinIters(self.cvode_mem, self.options["maxcorS"])
-        if flag < 0:
-            raise CVodeError(flag, self.t)
+        #Maximum number of nonlinear iterations (only relevant when the staggered approach is used)
+        if self.options["sensmethod"] == "STAGGERED":
+            flag = SUNDIALS.CVodeSetSensMaxNonlinIters(self.cvode_mem, self.options["maxcorS"])
+            if flag < 0:
+                raise CVodeError(flag, self.t)
         
         #Specify the error control strategy
         flag = SUNDIALS.CVodeSetSensErrCon(self.cvode_mem, self.options["suppress_sens"]==False)
@@ -3036,13 +3076,14 @@ cdef class CVode(Explicit_ODE):
         #If sensitivity    
         if self.pData.dimSens > 0:
             flag = SUNDIALS.CVodeGetSensStats(self.cvode_mem, &nfSevals, &nfevalsS, &nSetfails, &nlinsetupsS)
-            flag = SUNDIALS.CVodeGetSensNonlinSolvStats(self.cvode_mem, &nSniters, &nSncfails)
-            
             self.statistics["nsensfcns"]   += nfSevals
             self.statistics["nsensfcnfcns"]   += nfevalsS
             self.statistics["nsenserrfails"]  += nSetfails
-            self.statistics["nsensniters"]   += nSniters
-            self.statistics["nsensnfails"]  += nSncfails
+            
+            if self.options["sensmethod"] == "STAGGERED":
+                flag = SUNDIALS.CVodeGetSensNonlinSolvStats(self.cvode_mem, &nSniters, &nSncfails)
+                self.statistics["nsensniters"]   += nSniters
+                self.statistics["nsensnfails"]  += nSncfails
                 
     def print_statistics(self, verbose=NORMAL):
         """
@@ -3092,7 +3133,8 @@ class CVodeError(Exception):
             CV_BAD_T             : 'The time t is outside the last step taken.',
             CV_BAD_DKY           : 'The output derivative vector is NULL.',
             CV_TOO_CLOSE         : 'The output and initial times are too close to each other.',
-            CV_SRHSFUNC_FAIL     : 'The sensitivity right-hand side function failed unrecoverable.'}
+            CV_SRHSFUNC_FAIL     : 'The sensitivity right-hand side function failed unrecoverable.',
+            CV_NLS_INIT_FAIL     : "The nonlinear solver's init routine failed."}
     
     def __init__(self, value, t = 0.0):
         self.value = value

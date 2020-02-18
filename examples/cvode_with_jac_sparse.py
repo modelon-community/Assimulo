@@ -17,7 +17,6 @@
 
 import numpy as N
 import scipy.sparse as SP
-import pylab as P
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -84,17 +83,18 @@ def run_example(with_plots=True):
     #Simulate
     t, y = exp_sim.simulate(0.4) #Simulate 0.4 seconds
     
-    #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],0.9851,3)
-        
     #Plot
     if with_plots:
+        import pylab as P
         P.plot(t,y[:,1],linestyle="dashed",marker="o") #Plot the solution
         P.xlabel('Time')
         P.ylabel('State')
         P.title(exp_mod.name)
         P.show()
-        
+    
+    #Basic tests
+    nose.tools.assert_almost_equal(y[-1][0],0.9851,3)
+    
     return exp_mod, exp_sim
 
 

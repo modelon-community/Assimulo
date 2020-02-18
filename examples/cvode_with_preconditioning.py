@@ -103,12 +103,12 @@ def run_example(with_plots=True):
     #Simulate
     t, y = exp_sim.simulate(5)
     
+    if with_plots:
+        exp_sim.plot()
+    
     #Basic verification
     nose.tools.assert_almost_equal(y[-1,0],3.11178295,4)
     nose.tools.assert_almost_equal(y[-1,1],3.19318992,4)
-    
-    if with_plots:
-        exp_sim.plot()
 
     return exp_mod, exp_sim
     
