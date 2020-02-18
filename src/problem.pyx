@@ -38,8 +38,6 @@ cdef class cProblem:
         if name:
             self.name = name
         self.t0  = t0
-        
-    cdef public int _sensitivity_result
     
     cpdef initialize(self, solver):
         """

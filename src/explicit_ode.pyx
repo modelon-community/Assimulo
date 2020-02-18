@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from ode cimport ODE     
-from problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem
+from problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem
 
 import itertools
 import sys
@@ -47,7 +47,7 @@ cdef class Explicit_ODE(ODE):
         """
         ODE.__init__(self, problem) #Sets general attributes
         
-        if isinstance(problem, Explicit_Problem) or isinstance(problem, Delay_Explicit_Problem) or isinstance(problem, SingPerturbed_Problem):
+        if isinstance(problem, cExplicit_Problem) or isinstance(problem, Delay_Explicit_Problem) or isinstance(problem, SingPerturbed_Problem):
             self.problem = problem
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')
@@ -168,6 +168,7 @@ cdef class Explicit_ODE(ODE):
         opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
         output_index = 0
         
+        self.display_progress_activated = 1 if self.display_progress else 0
         self.time_limit_activated = 1 if self.time_limit > 0 else 0
         self.time_integration_start = timer()
         
@@ -238,7 +239,7 @@ cdef class Explicit_ODE(ODE):
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
         
-    def report_solution(self, t, y, opts):
+    cpdef report_solution(self, double t, y, opts):
         '''Is called after each successful step in case the complete step
         option is active. Here possible interpolation is done and the result 
         handeled. Furthermore possible step events are checked.
@@ -260,7 +261,7 @@ cdef class Explicit_ODE(ODE):
             self.chattering_check = None
             self.chattering_ok_print = 1
                 
-        if self.display_progress:
+        if self.display_progress_activated:
             if (timer() - self.time_integration_start) > self.display_counter*10:
                 self.display_counter += 1
                 

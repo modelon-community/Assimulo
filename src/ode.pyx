@@ -67,13 +67,22 @@ cdef class ODE:
         
         #Check Problem for event functions
         if hasattr(problem, 'time_events'):
-            self.problem_info["time_events"] = True
+            if hasattr(problem, 'time_events_use'):
+                self.problem_info["time_events"] = problem.time_events_use
+            else:
+                self.problem_info["time_events"] = True
         
         if hasattr(problem, 'state_events'):
-            self.problem_info["state_events"] = True
+            if hasattr(problem, 'state_events_use'):
+                self.problem_info["state_events"] = problem.state_events_use
+            else:
+                self.problem_info["state_events"] = True
         
         if hasattr(problem, 'step_events'):
-            self.problem_info["step_events"] = True
+            if hasattr(problem, 'step_events_use'):
+                self.problem_info["step_events"] = problem.step_events_use
+            else:
+                self.problem_info["step_events"] = True
         
         if hasattr(problem, 'y0'):
             self.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
@@ -102,7 +111,10 @@ cdef class ODE:
             self.t0 = 0.0
             
         if hasattr(problem, "jac"):
-            self.problem_info["jac_fcn"] = True
+            if hasattr(problem, "jac_use"):
+                self.problem_info["jac_fcn"] = problem.jac_use
+            else:
+                self.problem_info["jac_fcn"] = True
         if hasattr(problem, "jac_nnz"):
             self.problem_info["jac_fcn_nnz"] = problem.jac_nnz
         if hasattr(problem, "jacv"):

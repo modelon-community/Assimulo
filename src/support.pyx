@@ -28,7 +28,7 @@ def set_type_shape_array(var, datatype=realtype):
     """
     return  N.array(var, dtype = datatype).reshape(-1,)
 
-class Statistics:
+cdef class Statistics:
     def __init__(self):
         self.statistics = OrderedDict()
         self.statistics_msg = OrderedDict()

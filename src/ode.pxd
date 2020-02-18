@@ -17,11 +17,12 @@
 
 import numpy as N
 cimport numpy as N
+from support cimport Statistics
 
 cdef class ODE:
     cdef public dict options, solver_options, problem_info
     cdef public dict supports, 
-    cdef public object statistics
+    cdef public Statistics statistics
     
     cdef public list event_data
     
@@ -35,7 +36,7 @@ cdef class ODE:
     cdef public N.ndarray y,yd, p
     cdef public N.ndarray y0, yd0, p0, sw0
     cdef double elapsed_step_time, time_integration_start
-    cdef int time_limit_activated
+    cdef int time_limit_activated, display_progress_activated
     cdef double clock_start
     cdef public object _event_info
     

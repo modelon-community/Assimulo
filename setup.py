@@ -626,7 +626,7 @@ ndc.setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['version.txt', 'CHANGELOG', 'README', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
+      package_data={'assimulo': ['*.pxd', 'version.txt', 'CHANGELOG', 'README', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
                                 'examples'+os.sep+'kinsol_ors_matrix.mtx'] + (['lib'+os.sep+f for f in prepare.extra_fortran_link_files] if prepare.extra_fortran_link_files else [])},
       script_args=prepare.distutil_args)
 
