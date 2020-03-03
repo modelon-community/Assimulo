@@ -3,6 +3,9 @@
 Changelog
 ==========
 
+--- Assimulo-3.2 ---
+    * Added support for Cython user extensions
+    
 --- Assimulo-3.1 ---
     * Added support for building Assimulo with Intel and MSVC on Windows (ticket: 434)
     * Added support for Sundials 4.1 (ticket:431)
