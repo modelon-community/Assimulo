@@ -239,12 +239,13 @@ cdef class Explicit_ODE(ODE):
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
         
-    cpdef report_solution(self, double t, y, opts):
+    cpdef report_solution(self, double t, N.ndarray y, opts):
         '''Is called after each successful step in case the complete step
         option is active. Here possible interpolation is done and the result 
         handeled. Furthermore possible step events are checked.
         '''
-        self.t, self.y = t, y.copy()
+        self.t = t
+        self.y = y
         
         #Store the elapsed time for a single step
         if self.options["clock_step"]:
