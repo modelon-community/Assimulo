@@ -277,7 +277,13 @@ class Assimulo_prepare(object):
             L.debug("Note: the path required is to where the static library lib is found")
             self.with_BLAS = False
         else:
-            if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')):
+            suffix = ".so"
+            if "win" in self.platform:
+                suffix = ".lib"
+            if "mac" in self.platform:
+                suffix = ".dylib"
+                
+            if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')) and not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+suffix)):
                 L.warning("Could not find BLAS"+msg)
                 L.debug("Could not find BLAS at the given path {}.".format(self.BLASdir))
                 L.debug("usage: --blas-home=path")

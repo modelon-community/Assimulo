@@ -157,6 +157,9 @@ ELSE:
         cdef int ret_nnz
         cdef int dim = Jacobian.N
         cdef realtype* data = Jacobian.data
+        cdef N.ndarray[realtype, ndim=1, mode='c'] jdata
+        cdef N.ndarray[int, ndim=1, mode='c'] jindices
+        cdef N.ndarray[int, ndim=1, mode='c'] jindptr
         
         IF SUNDIALS_VERSION >= (2,6,3):
             cdef int* rowvals = Jacobian.rowvals[0]
@@ -190,12 +193,14 @@ ELSE:
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
                 raise AssimuloException("The Jacobian has more entries than supplied to the problem class via 'jac_nnz'")    
-
-            for i in range(min(ret_nnz,nnz)):
-                data[i]    = jac.data[i]
-                rowvals[i] = jac.indices[i]
-            for i in range(dim+1):
-                colptrs[i] = jac.indptr[i]
+            
+            jdata = jac.data
+            jindices = jac.indices
+            jindptr = jac.indptr
+            
+            memcpy(data, jdata.data, min(ret_nnz,nnz)*sizeof(realtype))
+            memcpy(rowvals, jindices.data, min(ret_nnz,nnz)*sizeof(int))
+            memcpy(colptrs, jindptr.data, (dim+1)*sizeof(int))
             
             return CVDLS_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):

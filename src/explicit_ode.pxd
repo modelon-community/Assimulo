@@ -24,4 +24,4 @@ cimport numpy as N
 cdef class Explicit_ODE(ODE):
 
     cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int COMPLETE_STEP, int INTERPOLATE_OUTPUT,int TIME_EVENT)
-    cpdef report_solution(self, double t, y, opts)
+    cpdef report_solution(self, double t, N.ndarray y, opts)
