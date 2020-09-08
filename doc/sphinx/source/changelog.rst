@@ -3,6 +3,10 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.1 --
+    * Improved detection of BLAS
+    * Minor performance improvements
+    
 --- Assimulo-3.2 ---
     * Added support for Cython user extensions
     
