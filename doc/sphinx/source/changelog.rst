@@ -3,6 +3,13 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.2 --
+    * Fixed a regression with Radau5ODE from 3.2.1.
+
+--- Assimulo-3.2.1 --
+    * Improved detection of BLAS
+    * Minor performance improvements
+
 --- Assimulo-3.2 ---
     * Added support for Cython user extensions
     

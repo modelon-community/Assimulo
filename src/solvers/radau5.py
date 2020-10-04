@@ -164,7 +164,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if flag == ID_PY_EVENT: irtrn = -1
             
         if self._opts["report_continuously"]:
-            initialize_flag = self.report_solution(t, y, self._opts)
+            initialize_flag = self.report_solution(t, y.copy(), self._opts)
             if initialize_flag: irtrn = -1
         else:
             if self._opts["output_list"] is None:
