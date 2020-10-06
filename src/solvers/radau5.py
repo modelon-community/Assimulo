@@ -126,7 +126,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_old = self.event_func(self.t, self.y)
+            self.g_old = N.array(self.event_func(self.t, self.y)).copy()
         else:
             def f(t, y):
                 ret = 0
