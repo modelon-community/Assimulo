@@ -3,6 +3,10 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.3 --
+    * Improved testing and made sure that event localization works
+      even when a user reuses vectors in the problem class.
+
 --- Assimulo-3.2.2 --
     * Fixed a regression with Radau5ODE from 3.2.1.
 

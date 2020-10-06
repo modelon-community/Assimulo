@@ -302,7 +302,7 @@ cdef class Explicit_ODE(ODE):
         returned as the time to restart the integration at.
         '''
         
-        g_high = self.event_func(t_high, y_high)
+        g_high = N.array(self.event_func(t_high, y_high)).copy()
         g_low = self.g_old
         self.statistics["nstatefcns"] += 1
         n_g = self.problem_info["dimRoot"]
@@ -364,7 +364,7 @@ cdef class Explicit_ODE(ODE):
                 t_mid = t_high - delta
             
             #Calculate g at t_mid and check for events in [t_low, t_mid].
-            g_mid = self.event_func(t_mid, self.interpolate(t_mid))
+            g_mid = N.array(self.event_func(t_mid, self.interpolate(t_mid))).copy()
             self.statistics["nstatefcns"] += 1
             sideprev = side
             for i in xrange(n_g):
