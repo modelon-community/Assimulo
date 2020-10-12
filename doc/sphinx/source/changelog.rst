@@ -3,6 +3,9 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.4 --
+    * Fixed issue with LSODAR (when being extended as a Cython problem)
+
 --- Assimulo-3.2.3 --
     * Improved testing and made sure that event localization works
       even when a user reuses vectors in the problem class.

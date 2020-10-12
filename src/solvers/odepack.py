@@ -118,7 +118,6 @@ class LSODAR(Explicit_ODE):
         Helper method to interpolate the solution at time t using the Nordsieck history
         array. Wrapper to ODEPACK's subroutine DINTDY.
         """
-        #print 'interpolate at t={} and nyh={}'.format(t,self._nyh)
         if self._update_nordsieck:
             #Nordsieck start index
             nordsieck_start_index = 21+3*self.problem_info["dimRoot"] - 1
@@ -130,6 +129,7 @@ class LSODAR(Explicit_ODE):
             self._update_nordsieck = False
                     
         dky, iflag = dintdy(t, 0, self._nordsieck_array, self._nyh)
+        
         if iflag!= 0 and iflag!=-2:
             raise ODEPACK_Exception("DINTDY returned with iflag={} (see ODEPACK documentation).".format(iflag))   
         elif iflag==-2:
@@ -298,11 +298,20 @@ class LSODAR(Explicit_ODE):
         #Setting maxord to IWORK
         IWORK[7] = self.maxordn
         IWORK[8] = self.maxords
-
         
         #Dummy methods
-        #g_dummy = (lambda t:x) if not self.problem_info["state_events"] else self.problem.state_events
-        g_fcn = g_dummy if not self.problem_info["state_events"] else self.problem.state_events
+        if self.problem_info["state_events"]:
+            if self.problem_info["switches"]:
+                def state_events(t,y,sw):
+                    return self.problem.state_events(t,y,sw)
+                g_fcn = state_events
+            else:
+                def state_events(t,y):
+                    return self.problem.state_events(t,y)
+                g_fcn = state_events
+        else:
+            g_fcn = g_dummy
+
         #jac_dummy = (lambda t,y:N.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
         jac_fcn = jac_dummy if not self.usejac else self._jacobian
         

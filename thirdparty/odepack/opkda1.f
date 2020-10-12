@@ -272,9 +272,9 @@ C
       IFLAG = -1
       RETURN
  90   MSG = 'DINTDY-  T (=R1) illegal      '
-      CALL XERRWD (MSG, 30, 52, 0, 0, 0, 0, 1, T, 0.0D0)
-      MSG='      T not in interval TCUR - HU (= R1) to TCUR (=R2)      '
-      CALL XERRWD (MSG, 60, 52, 0, 0, 0, 0, 2, TP, TN)
+C      CALL XERRWD (MSG, 30, 52, 0, 0, 0, 0, 1, T, 0.0D0)
+C      MSG='      T not in interval TCUR - HU (= R1) to TCUR (=R2)      '
+C      CALL XERRWD (MSG, 60, 52, 0, 0, 0, 0, 2, TP, TN)
       IFLAG = -2
       RETURN
 C----------------------- END OF SUBROUTINE DINTDY ----------------------
