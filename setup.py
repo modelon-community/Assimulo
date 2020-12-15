@@ -515,10 +515,10 @@ class Assimulo_prepare(object):
                     el.extra_compile_args = ["-g","-fno-strict-aliasing"]
                     el.extra_link_args = ["-g"]
             else:
-                if self.sundials_with_msvc:
-                    el.extra_compile_args = ["/O2"]
-                else:
-                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                if hasattr(self, 'sundials_with_msvc'):
+                    if self.sundials_with_msvc:
+                        el.extra_compile_args = ["/O2"]
             if self.platform == "mac":
                 el.extra_compile_args += ["-Wno-error=return-type"]
             if self.with_openmp:
