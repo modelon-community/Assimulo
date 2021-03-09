@@ -1,5 +1,11 @@
 --- CHANGELOG ---
 
+--- Assimulo-3.2.5 --
+    * Added so that additional Fortran compile flags can be provided
+      during setup.
+    * Fixed minor issue that caused exceptions during setup when
+      Sundials was not found.
+
 --- Assimulo-3.2.4 --
     * Fixed issue with LSODAR (when being extended as a Cython problem)
 

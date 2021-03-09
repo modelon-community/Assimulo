@@ -54,6 +54,7 @@ parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
 parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
+parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='')
 parser.add_argument("--version", help='Package version number', default='Default')
                                        
 args = parser.parse_known_args()
@@ -140,10 +141,12 @@ class Assimulo_prepare(object):
         self.flag_32bit = ["-m32"] if self.force_32bit else [] 
         self.no_mvscr = args[0].no_msvcr 
         self.extra_c_flags = args[0].extra_c_flags.split()
+        self.extra_fortran_compile_flags = args[0].extra_fortran_compile_flags.split()
         self.extra_fortran_link_flags = args[0].extra_fortran_link_flags.split()
         self.extra_fortran_link_files = args[0].extra_fortran_link_files.split()
         self.thirdparty_methods  = thirdparty_methods
         self.with_openmp = args[0].with_openmp
+        self.sundials_with_msvc = False
 
         if self.sundials_with_superlu is not None:
             L.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
@@ -541,7 +544,7 @@ class Assimulo_prepare(object):
         Adds the Fortran extensions using Numpy's distutils extension.
         """
         extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit + self.extra_fortran_link_flags
-        extra_compile_flags = self.flag_32bit + self.extra_c_flags
+        extra_compile_flags = self.flag_32bit + self.extra_c_flags + self.extra_fortran_compile_flags
         
         config = np.distutils.misc_util.Configuration()
         extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
