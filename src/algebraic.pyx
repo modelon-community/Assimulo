@@ -26,7 +26,7 @@ from problem import Algebraic_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 
-realtype = N.float
+realtype = float
 
 cdef class Algebraic:
     

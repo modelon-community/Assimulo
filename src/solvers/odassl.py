@@ -25,7 +25,7 @@ from assimulo.exception import *
 
 from assimulo.lib import odassl
 
-realtype =np.float
+realtype = float
 
 class ODASSL_Exception(Exception):
     pass
