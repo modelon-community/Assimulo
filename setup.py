@@ -39,7 +39,7 @@ package_arguments=['plugins','sundials','blas','superlu','lapack','mkl']
 package_arguments.sort()
 for pg in package_arguments:
     parser.add_argument("--{}-home".format(pg), 
-           help="Location of the {} directory".format(pg.upper()),type=str,default='')
+           help="Location of the {} directory".format(pg.upper()),type=str,default='/usr/lib64')
 parser.add_argument("--blas-name", help="name of the blas package",default='blas')
 parser.add_argument("--mkl-name", help="name of the mkl package",default='mkl')    
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')
@@ -331,7 +331,10 @@ class Assimulo_prepare(object):
             self.SLUincdir = os.path.join(self.SLUdir,'SRC')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.SLUincdir = os.path.join(self.SLUdir,'include')
-            self.SLUlibdir = os.path.join(self.SLUdir,'lib')
+            if self.SLUdir.find('lib'):
+                self.SLUlibdir = self.SLUdir
+            else:
+                self.SLUlibdir = os.path.join(self.SLUdir,'lib')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.with_SLU = False
                 L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
