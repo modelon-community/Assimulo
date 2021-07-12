@@ -488,7 +488,7 @@ class LSODAR(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self._leny)
@@ -723,7 +723,7 @@ class RKStarterNordsieck(object):
                       [-0.1491588850008383,0.,19145766/113939551,8434687/36458574,2012005/39716421,8409989/57254530,10739409/94504714,0.,-3321/86525909,-30352753/150092385,0.,70257074/109630355,
                        0.,0.],
                       [0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
-                       38892959/120069679,11804845./141497517]])]  
+                       38892959/120069679,11804845./141497517,0.]])]  
 
     co_ord_s=[[],[],[4],[4,6],[6,9,11]]                       
     b_s=[    N.array([1]),

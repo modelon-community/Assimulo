@@ -28,7 +28,7 @@ from support import Statistics
 
 include "constants.pxi" #Includes the constants (textual include)
 
-realtype = N.float 
+realtype = float 
 
 cdef class ODE:
     """

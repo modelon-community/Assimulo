@@ -298,7 +298,7 @@ class SDIRK_DAE(Implicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
             self.options["atol"] = self.options["atol"]*N.ones(self._leny)

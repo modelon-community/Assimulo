@@ -28,7 +28,7 @@ from timeit import default_timer as timer
 
 include "constants.pxi" #Includes the constants (textual include)
 
-realtype = N.float
+realtype = float
 
 cdef class Explicit_ODE(ODE):
     """

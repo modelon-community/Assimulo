@@ -20,7 +20,7 @@ cimport numpy as N
 
 from collections import OrderedDict
 
-realtype = N.float
+realtype = float
 
 def set_type_shape_array(var, datatype=realtype):
     """

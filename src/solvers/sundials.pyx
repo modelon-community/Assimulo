@@ -129,8 +129,8 @@ cdef class IDA(Implicit_ODE):
         self.pData.memSize = self.pData.dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        #self.yTemp   = N.zeros(self.pData.dim, dtype=N.float, order='c')
-        #self.ydTemp  = N.zeros(self.pData.dim, dtype=N.float, order='c')
+        #self.yTemp   = N.zeros(self.pData.dim, dtype=float, order='c')
+        #self.ydTemp  = N.zeros(self.pData.dim, dtype=float, order='c')
         #self.pData.y  = <void*>self.yTemp
         #self.pData.yd = <void*>self.ydTemp 
         
@@ -923,7 +923,7 @@ cdef class IDA(Implicit_ODE):
     
     def _set_atol(self,atol):
         
-        #self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
         self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
@@ -1119,7 +1119,7 @@ cdef class IDA(Implicit_ODE):
     linear_solver = property(_get_linear_solver, _set_linear_solver)
     
     def _set_algvar(self,algvar):
-        self.options["algvar"] = N.array(algvar,dtype=N.float) if len(N.array(algvar,dtype=N.float).shape)>0 else N.array([algvar],dtype=N.float)
+        self.options["algvar"] = N.array(algvar,dtype=float) if len(N.array(algvar,dtype=float).shape)>0 else N.array([algvar],dtype=float)
         
         if len(self.options["algvar"]) != self.pData.dim:
             raise AssimuloException('When setting the algebraic variables, the' \
@@ -1634,8 +1634,8 @@ cdef class CVode(Explicit_ODE):
         self.pData.memSize = self.pData.dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        #self.yTemp   = N.zeros(self.pData.dim, dtype=N.float, order='c')
-        #self.ydTemp  = N.zeros(self.pData.dim, dtype=N.float, order='c')
+        #self.yTemp   = N.zeros(self.pData.dim, dtype=float, order='c')
+        #self.ydTemp  = N.zeros(self.pData.dim, dtype=float, order='c')
         #self.pData.y  = <void*>self.yTemp
         #self.pData.yd = <void*>self.ydTemp
         
@@ -2382,7 +2382,7 @@ cdef class CVode(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        #self.options["atol"] = N.array(atol,dtype=N.float) if len(N.array(atol,dtype=N.float).shape)>0 else N.array([atol],dtype=N.float)
+        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
         self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:

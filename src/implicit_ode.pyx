@@ -28,7 +28,7 @@ from exception import *
 from timeit import default_timer as timer
 import warnings
 
-realtype = N.float
+realtype = float
 
 include "constants.pxi" #Includes the constants (textual include)
 
