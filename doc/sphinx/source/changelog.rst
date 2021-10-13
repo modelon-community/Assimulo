@@ -3,6 +3,9 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.6 --
+    * Fixed some tests that were not compatible with Python 3.
+
 --- Assimulo-3.2.5 --
     * Added so that additional Fortran compile flags can be provided
       during setup.
