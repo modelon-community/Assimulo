@@ -16,7 +16,7 @@ def dzdt(t,y,z):
 				  -45.*(eps*z[0])**2+.8*y[2]*y[0]])
 	return zp
 def outpda(t,y,z,n,m,jstop):
-	print 'outpda  :', t, y[0:3], z[0]
+	print('outpda  :', t, y[0:3], z[0])
 
 #	Main Program to call DASP3
 n = 3
@@ -46,16 +46,16 @@ slu= empty((2*m,))
 ips= empty((m,),'int32')
 ind = empty((2*m,),'int32')
 eq= empty((m,),'bool')
-print tol
+print(tol)
 t,lflag=dasp.dasp3(dydt,dzdt,outpda,t,tend,wsy,wsz,n,m,tol,absrel,wght,eps,a,w,slu,ips,eq,ind)
-print 't, lflag', t, lflag
+print('t, lflag', t, lflag)
 stats= """ 
 Statistics
 ==========
 NSTEPS {nsteps}  NYDERIV {nyderiv}  NZDERIV {nzderiv}
 Rejected steps {nrej}
 """
-print stats.format(nsteps=dasp.COUNTS.NSTEP, 
+print(stats.format(nsteps=dasp.COUNTS.NSTEP, 
                    nyderiv=dasp.COUNTS.NYDER,
                    nzderiv=dasp.COUNTS.NZDER,
-                   nrej=dasp.COUNTS.NREJ)
+                   nrej=dasp.COUNTS.NREJ))

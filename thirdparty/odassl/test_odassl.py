@@ -33,8 +33,7 @@ def res2(t,p,pp):
     return delta, ires
 def res3(t,p,pp):
     ires=0                                                                      
-    delta=empty((5,))   
-    #print t,p,pp                                                   
+    delta=empty((5,))                                                  
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -44,8 +43,7 @@ def res3(t,p,pp):
     return delta, ires
 def resStab2(t,p,pp):
     ires=0                                                                      
-    delta=empty((neq,))   
-    #print t,p,pp                                                   
+    delta=empty((neq,))                                    
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -57,8 +55,7 @@ def resStab2(t,p,pp):
     return delta, ires    
 def resStab1(t,p,pp):
     ires=0                                                                      
-    delta=empty((neq,))   
-    #print t,p,pp                                                   
+    delta=empty((neq,))
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -112,8 +109,8 @@ for irun, task in enumerate(['INDEX-3', 'INDEX-2',
          t,y,yprime,tout,info,idid,rwork,iwork = od.odassl(res[irun],neq,ny,t,p,pp,tout,info,rtol,atol,
                                                          rwork,iwork,res[irun])                                                                                
          if idid<0:                              
-            print task+':  ', idid                                                  
+            print(task+':  ', idid)
             break                                                         
          else:                                                                
-            print '{0}  : t= {1: >8.2f}  p={2[0]: >-12.8f} {2[1]: > 12.8f} {2[2]: >-12.8f} {2[3]: >-12.8f} {2[4]: >-12.8f}'.format(task, t, p)                            
-     print iwork[10:15], irun  
+            print('{0}  : t= {1: >8.2f}  p={2[0]: >-12.8f} {2[1]: > 12.8f} {2[2]: >-12.8f} {2[3]: >-12.8f} {2[4]: >-12.8f}'.format(task, t, p))                            
+     print(iwork[10:15], irun)
