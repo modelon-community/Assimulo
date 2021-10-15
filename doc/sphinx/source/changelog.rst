@@ -3,6 +3,10 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.7 ---
+    * Resolved deprecation warnings visible when using numpy 1.20, related to deprecation of the alias numpy.float.
+    * Resolved deprecation warnings visible when creating an ndarray from ragged nested sequences.
+
 --- Assimulo-3.2.6 --
     * Fixed some tests that were not compatible with Python 3.
 
