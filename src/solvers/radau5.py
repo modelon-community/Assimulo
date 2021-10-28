@@ -27,8 +27,6 @@ from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.lib.radau_core import Radau_Common
 
-from assimulo.lib import radau5
-
 class Radau5Error(AssimuloException):
     """
     Defines the Radau5Error and provides the textual error message.
@@ -94,6 +92,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
+        self.options["intsolv"]  = 1 #internal solver; 0 for fortran, 1 for c
+        self.intsolv = self.options["intsolv"] # selects the appropriate self.radau solver lib
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -141,7 +141,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def interpolate(self, time):
         y = N.empty(self._leny)
         for i in range(self._leny):
-            y[i] = radau5.contr5(i+1, time, self.cont)
+            y[i] = self.radau5.contr5(i+1, time, self.cont)
         
         return y
         
@@ -241,7 +241,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag =  radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+        t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
@@ -844,6 +844,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
+        self.options["intsolv"]  = 0 #internal solver; 0 for fortran, 1 for c
+        self.intsolv = self.options["intsolv"] # selects the appropriate self.radau solver lib
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -888,7 +890,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def interpolate(self, time, k=0):
         y = N.empty(self._leny*2)
         for i in range(self._leny*2):
-            y[i] = radau5.contr5(i+1, time, self.cont)
+            y[i] = self.radau5.contr5(i+1, time, self.cont)
         if k == 0:
             return y[:self._leny]
         elif k == 1:
@@ -996,7 +998,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = N.append(self.atol, self.atol)
         
-        t, y, h, iwork, flag =  radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
         
         #Checking return

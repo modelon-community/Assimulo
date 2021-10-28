@@ -27,6 +27,7 @@ class Radau_Common(object):
     """
     The common attributes for the Radau solvers.
     """
+    radau_c_solver, radau_f_solver = None, None
     def _get_h(self):
         """
         Sets the stepsize.
@@ -434,3 +435,49 @@ class Radau_Common(object):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    
+    def _get_intsolv(self):
+        """
+        Internal solver used, 0 for fortran based solver, 1 for c based solver
+        
+            Parameters::
+            
+                intsolv
+                            - Default 0
+                            
+                            - needs to be either 0 (Fotran) or 1 (C)
+        """
+        return self.options["intsolv"]
+    
+    def _set_intsolv(self, intsolv, other_failed = False):
+        if isinstance(intsolv, int):
+            if intsolv == 0: ## Fortran
+                try:
+                    from assimulo.lib import radau5 as radau5_f
+                    self.radau5 = radau5_f
+                except:
+                    if other_failed:
+                        raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
+                    else:
+                        self.log_message('\nImporting Fotran based Radau solver failed, attempting to import C based implementation', LOUD)
+                        self._set_intsolv(1, True)
+                        return
+            elif intsolv == 1: ## C
+                try:
+                    from assimulo.lib import radau5_c
+                    self.radau5 = radau5_c
+                except:
+                    raise Radau_Exception("Failed to import C based Radau solvers.")
+                    # if other_failed:
+                    #     raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
+                    # else:
+                    #     self.log_message('\nImporting C based Radau solver failed, attempting to import Fortran based implementation', LOUD)
+                    #     self._set_intsolv(0, True)
+                    #     return
+            else:
+                raise Radau_Exception("Internal solver parameters needs to be either 0 or 1. Set value: {}".format(self.options["intsolv"]))
+        else:
+            raise Radau_Exception("Internal solver parameters needs to be of integer type. Current type: {}".format(type(self.options["intsolv"])))
+        self.options["intsolv"] = intsolv
+        
+    intsolv = property(_get_intsolv, _set_intsolv)
