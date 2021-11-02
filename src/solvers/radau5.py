@@ -211,7 +211,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*self.problem_info["dim"]+20)) #Work (integer) vector
+        IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -956,7 +956,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         MUMAS = 0 #The mass matrix is only defined on the diagonal
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*(5*((self.problem_info["dim"]*2)**2+12)+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20)) #Work (integer) vector
+        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe

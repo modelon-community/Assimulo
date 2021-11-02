@@ -467,13 +467,13 @@ class Radau_Common(object):
                     from assimulo.thirdparty.hairer import radau5_c_py as radau5_c
                     self.radau5 = radau5_c
                 except:
-                    raise Radau_Exception("Failed to import C based Radau solvers.")
-                    # if other_failed:
-                    #     raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
-                    # else:
-                    #     self.log_message('\nImporting C based Radau solver failed, attempting to import Fortran based implementation', LOUD)
-                    #     self._set_intsolv(0, True)
-                    #     return
+                    # raise Radau_Exception("Failed to import C based Radau solvers.")
+                    if other_failed:
+                        raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
+                    else:
+                        self.log_message('\nImporting C based Radau solver failed, attempting to import Fortran based implementation', LOUD)
+                        self._set_intsolv(0, True)
+                        return
             else:
                 raise Radau_Exception("Internal solver parameters needs to be either 0 or 1. Set value: {}".format(self.options["intsolv"]))
         else:
