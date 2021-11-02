@@ -12,8 +12,7 @@
 
 #include <stdlib.h>
 #include "f2c.h"
-// #include "f2c.c"
-#include "radau_decsol.h"
+#include "radau_decsol_c.h"
 
 /* Common Block Declarations */
 

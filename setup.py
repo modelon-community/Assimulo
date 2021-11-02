@@ -330,7 +330,7 @@ class Assimulo_prepare(object):
         self.with_f2c = True
         msg=", disabling support. View more information using --log=DEBUG"
         ### TODO
-        os.path.join(os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a")
+        self.f2cdir=os.path.sep+os.path.join("workspace","libf2c")+os.path.sep
         return
         ### TODO
         if self.f2cdir == "":
@@ -488,12 +488,26 @@ class Assimulo_prepare(object):
             
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
-    
+        
         #Cythonize main modules
         ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
                              include_path=[".","assimulo"])
-         #Cythonize Solvers
-         # Euler
+        
+        ## TODO: Find a more suitable place in the code for this later on
+        ## Radau stuff
+        ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
+                              include_path=[".", "assimulo"])
+        
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", "assimulo"+os.sep+"lib", os.path.join("assimulo","thirdparty","hairer"), self.incdirs]
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
+        ## TODO: Make this work via assimulo.lib 
+        ext_list[-1].name = "assimulo.thirdparty.hairer.radau5_c_py"
+        ext_list[-1].language = "C"
+        ext_list[-1].library_dirs = [self.f2cdir]
+        ext_list[-1].libraries = ["f2c", "m"]
+        
+        #Cythonize Solvers
+        # Euler
         ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
                              include_path=[".","assimulo"])
         for el in ext_list:
@@ -536,14 +550,6 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
-               
-        
-        f2clib_dir=os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c"
-        ext_list[-1].library_dirs.append(f2clib_dir)
-        sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c']
-        # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources], depends = deps, **extraargs_f2c)
-        config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources],
-                              depends = f2clib, libraries = ['m'])
         
         for el in ext_list:
             #Debug
@@ -595,30 +601,6 @@ class Assimulo_prepare(object):
         config.add_extension('assimulo.lib.rodas', sources=[s.format('rodas_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
         # config.add_extension('assimulo.lib.radau5_f', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
         config.add_extension('assimulo.lib.radau5', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
-        
-        ## TODO: should this be in a different place, since the function is called "fortran_extensionlists" ? Extra C flags already included above?
-        # sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c', 'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.h','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pxd'
-        # sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c', os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a"
-        
-        
-        # sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c' + " " + os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a"
-        # extraargs_f2c = extraargs.copy()
-        # extraargs_f2c["extra_link_args"] = extraargs_f2c["extra_link_args"] + ["-lm"]
-        # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources], **extraargs_f2c)
-        
-        # sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c' + " " + os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a"
-        # sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c', 'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.h'
-        # deps=os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a", 'assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'f2c.h'
-        # sources=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.c']
-        # f2clib=[os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a"]
-        # # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources], depends = deps, **extraargs_f2c)
-        # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources],
-        #                       depends = f2clib, libraries = ['m'], **extraargs)
-        
-        # # f2clib=os.sep + "workspace" + os.sep + "libf2c" + os.sep + "libf2c.a"
-        # # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources], depends = deps, **extraargs_f2c)
-        # config.add_extension('assimulo.lib.radau5_c', sources=[s.format('radau_decsol') for s in sources],
-        #                      libraries = ["lm", "libf2c"], **extraargs)
                              
         radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]

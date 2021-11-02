@@ -464,7 +464,7 @@ class Radau_Common(object):
                         return
             elif intsolv == 1: ## C
                 try:
-                    from assimulo.lib import radau5_c
+                    from assimulo.thirdparty.hairer import radau5_c_py as radau5_c
                     self.radau5 = radau5_c
                 except:
                     raise Radau_Exception("Failed to import C based Radau solvers.")

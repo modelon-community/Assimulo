@@ -1,5 +1,5 @@
-#ifndef RADAU_DECSOL_H
-#define RADAU_DECSOL_H
+#ifndef RADAU_DECSOL_C_H
+#define RADAU_DECSOL_C_H
 
 int radau5_c(integer *n, U_fp fcn, doublereal *x, doublereal *
             y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
