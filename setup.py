@@ -387,7 +387,7 @@ class Assimulo_prepare(object):
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
                             if "SUNDIALS_PACKAGE_VERSION" in line or "SUNDIALS_VERSION" in line:
-                                sundials_version = tuple([int(f) for f in line.split()[-1][1:-1].split(".")])
+                                sundials_version = tuple([int(f) for f in line.split()[-1][1:-1].split('-dev')[0].split(".")])
                                 L.debug('SUNDIALS %d.%d found.'%(sundials_version[0], sundials_version[1]))
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:

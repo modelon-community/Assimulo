@@ -190,8 +190,10 @@ cdef extern from "sundials/sundials_direct.h":
         realtype **cols
     ctypedef _DlsMat* DlsMat
     cdef realtype* DENSE_COL(DlsMat A, int j)
-    
-IF SUNDIALS_VERSION >= (2,6,3):
+
+IF SUNDIALS_VERSION >= (5,0,0):
+    pass
+ELIF SUNDIALS_VERSION >= (2,6,3):
     cdef extern from "sundials/sundials_sparse.h":
         cdef struct _SlsMat:
             int M
