@@ -20,7 +20,7 @@ import nose
 from assimulo.solvers import Radau5DAE
 from assimulo.problem import Implicit_Problem
 
-def run_example(with_plots=True):
+def run_example(with_plots=True,solver='c'):
     r"""
     Example for the use of Radau5DAE to solve
     Van der Pol's equation
@@ -61,6 +61,7 @@ def run_example(with_plots=True):
     
     #Define an explicit solver
     imp_sim = Radau5DAE(imp_mod) #Create a Radau5 solver
+    imp_sim.solver = solver
     
     #Sets the parameters
     imp_sim.atol = 1e-4 #Default 1e-6

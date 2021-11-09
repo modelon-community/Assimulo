@@ -42,6 +42,14 @@ class Test_Solvers:
     @testattr(stddist = True)
     def test_radau5dae_state_events(self):
         solver = Radau5DAE(problem)
+        solver.solver = 'c'
+        
+        t,y,yd = solver.simulate(2,33)
+        
+        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+
+        solver = Radau5DAE(problem)
+        solver.solver = 'f'
         
         t,y,yd = solver.simulate(2,33)
         
@@ -50,6 +58,14 @@ class Test_Solvers:
     @testattr(stddist = True)
     def test_radau5ode_state_events(self):
         solver = Radau5ODE(eproblem)
+        solver.solver = 'c'
+        
+        t,y = solver.simulate(2,33)
+        
+        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+
+        solver = Radau5ODE(eproblem)
+        solver.solver = 'f'
         
         t,y = solver.simulate(2,33)
         

@@ -49,7 +49,7 @@ class VanDerPolProblem(Implicit_Problem):
     def handle_event(self, solver, event_info):
         self.my *= 1e-1
 
-def run_example(with_plots=True):
+def run_example(with_plots=True,solver='c'):
     
     y0 = [2.0,-0.6] #Initial conditions
     yd0 = [-.6,-200000.]
@@ -59,6 +59,7 @@ def run_example(with_plots=True):
 
     #Define an explicit solver
     imp_sim = Radau5DAE(imp_mod) #Create a Radau5 solver
+    imp_sim.solver = solver
 
     #Simulate
     t, y, yd = imp_sim.simulate(8.) #Simulate 8 seconds

@@ -36,7 +36,8 @@ class Test_Examples:
     
     @testattr(stddist = True)
     def test_radau5dae_time_events(self):
-        radau5dae_time_events.run_example(with_plots=False)
+        radau5dae_time_events.run_example(with_plots=False,solver='c')
+        radau5dae_time_events.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
     def test_kinsol_basic(self):
@@ -137,15 +138,18 @@ class Test_Examples:
         
     @testattr(stddist = True)
     def test_radau5ode_vanderpol(self):
-        radau5ode_vanderpol.run_example(with_plots=False)
+        radau5ode_vanderpol.run_example(with_plots=False,solver='c')
+        radau5ode_vanderpol.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
     def test_radau5ode_with_disc(self):
-        radau5ode_with_disc.run_example(with_plots=False)
+        radau5ode_with_disc.run_example(with_plots=False,solver='c')
+        radau5ode_with_disc.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
     def test_radau5dae_vanderpol(self):
-        radau5dae_vanderpol.run_example(with_plots=False)
+        radau5dae_vanderpol.run_example(with_plots=False,solver='c')
+        radau5dae_vanderpol.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
     def test_dopri5_basic(self):

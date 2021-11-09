@@ -20,7 +20,7 @@ import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
-def run_example(with_plots=True):
+def run_example(with_plots=True,solver='c'):
     r"""
     Example for the use of the implicit Euler method to solve
     Van der Pol's equation
@@ -56,6 +56,7 @@ def run_example(with_plots=True):
     
     #Define an explicit solver
     exp_sim = Radau5ODE(exp_mod) #Create a Radau5 solver
+    exp_sim.solver = solver
     
     #Sets the parameters
     exp_sim.atol = 1e-4 #Default 1e-6
