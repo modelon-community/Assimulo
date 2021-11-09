@@ -92,8 +92,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["intsolv"]  = 1 #internal solver; 0 for fortran, 1 for c
-        self.intsolv = self.options["intsolv"] # selects the appropriate self.radau solver lib
+        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.solver = self.options["solver"] # call necessary to load appropriate modules
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -243,7 +243,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
-        
+
         #Checking return
         if flag == 1:
             flag = ID_PY_COMPLETE
@@ -844,8 +844,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["intsolv"]  = 0 #internal solver; 0 for fortran, 1 for c
-        self.intsolv = self.options["intsolv"] # selects the appropriate self.radau solver lib
+        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.solver = self.options["solver"] # call necessary to load appropriate modules
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -896,7 +896,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         elif k == 1:
             return y[self._leny:2*self._leny]
         
-    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
@@ -997,10 +997,10 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._mass_matrix = N.array([[0]*self._leny])
         
         atol = N.append(self.atol, self.atol)
-        
-        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+
+        t, y, h, iwork, flag  =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
-        
+
         #Checking return
         if flag == 1:
             flag = ID_PY_COMPLETE
@@ -1017,7 +1017,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         #self.statistics["nstepstotal"] += iwork[15]
         self.statistics["nerrfails"]     += iwork[17]
         self.statistics["nlus"]         += iwork[18]
-        
+
         return flag, self._tlist, self._ylist, self._ydlist
         
     def state_event_info(self):

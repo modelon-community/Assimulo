@@ -43,11 +43,11 @@ static doublereal c_b103 = 1.;
 static doublereal c_b114 = .8;
 static doublereal c_b116 = .25;
 
-/* Subroutine */ int radau5_c(integer *n, U_fp fcn, doublereal *x, doublereal *
+/* Subroutine */ int radau5_c(integer *n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
-	atol, integer *itol, U_fp jac, integer *ijac, integer *mljac, integer 
-	*mujac, U_fp mas, integer *imas, integer *mlmas, integer *mumas, U_fp 
-	solout, integer *iout, doublereal *work, integer *lwork, integer *
+	atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, integer *mljac, integer 
+	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
+	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *
 	idid)
 {
@@ -72,7 +72,7 @@ static doublereal c_b116 = .25;
     static integer nmax;
     static doublereal thet, expm;
     static integer nsol;
-    static doublereal werr, quot;
+    static doublereal quot;
     static integer iee2i, iee2r, ieip1, ieip2, nind1, nind2, nind3;
     static doublereal quot1, quot2;
     static integer iejac, ldjac;
@@ -83,10 +83,10 @@ static doublereal c_b116 = .25;
     static integer nstep;
     static doublereal tolst;
     static integer ldmas2, iescal, naccpt;
-    extern /* Subroutine */ int radcor_(integer *, U_fp, doublereal *, 
+    extern /* Subroutine */ int radcor_(integer *, FP_CB_f, void*, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, U_fp, integer *, integer *,
-	     integer *, U_fp, integer *, integer *, U_fp, integer *, integer *
+	    doublereal *, doublereal *, integer *, FP_CB_jac, void*, integer *, integer *,
+	     integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *
 	    , integer *, doublereal *, doublereal *, doublereal *, doublereal 
 	    *, doublereal *, doublereal *, integer *, integer *, logical *, 
 	    integer *, integer *, integer *, logical *, doublereal *, 
@@ -634,8 +634,7 @@ static doublereal c_b116 = .25;
 	if (safe <= .001 || safe >= 1.) {
 	    s_wsle(&io___31);
 	    do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(2)=", (ftnlen)27);
-	    do_lio(&c__5, &c__1, (char *)&work[2], (ftnlen)sizeof(doublereal))
-		    ;
+	    do_lio(&c__5, &c__1, (char *)&work[2], (ftnlen)sizeof(doublereal));
 	    e_wsle();
 	    arret = TRUE_;
 	}
@@ -821,9 +820,9 @@ static doublereal c_b116 = .25;
 	return 0;
     }
 /* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_(n, (U_fp)fcn, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
-	    itol, (U_fp)jac, ijac, mljac, mujac, (U_fp)mas, mlmas, mumas, (
-	    U_fp)solout, iout, idid, &nmax, &uround, &safe, &thet, &fnewt, &
+    radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
+	    itol, (FP_CB_jac)jac, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas, (
+	    FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt, &
 	    quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3, &
 	    pred, &facl, &facr, &m1, &m2, &nm1, &implct, &jband, &ldjac, &
 	    lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
@@ -863,11 +862,11 @@ static doublereal c_b116 = .25;
 
 /* *********************************************************** */
 
-/* Subroutine */ int radcor_(integer *n, S_fp fcn, doublereal *x, doublereal *
+/* Subroutine */ int radcor_(integer *n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
-	rtol, doublereal *atol, integer *itol, S_fp jac, integer *ijac, 
-	integer *mljac, integer *mujac, S_fp mas, integer *mlmas, integer *
-	mumas, S_fp solout, integer *iout, integer *idid, integer *nmax, 
+	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, 
+	integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *mlmas, integer *
+	mumas, FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
@@ -944,7 +943,7 @@ static doublereal c_b116 = .25;
     static integer mujacp;
     extern /* Subroutine */ int estrad_(integer *, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer 
-	    *, doublereal *, doublereal *, doublereal *, doublereal *, S_fp, 
+	    *, doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
 	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
 	    integer *, integer *, integer *, doublereal *, integer *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
@@ -983,7 +982,6 @@ static doublereal c_b116 = .25;
 /* *** *** *** *** *** *** *** */
 /* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
     /* Parameter adjustments */
-//     --werr;  // not sure about this part right here, TODO
     doublereal *werr = (doublereal*) malloc(*n * sizeof(doublereal));
     --cont;
     --f3;
@@ -1000,6 +998,7 @@ static doublereal c_b116 = .25;
     --iphes;
     --ip2;
     --ip1;
+    --werr;
     fjac_dim1 = *ldjac;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
@@ -1029,7 +1028,7 @@ static doublereal c_b116 = .25;
     index3 = *nind3 != 0;
 /* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
     if (*implct) {
-	(*mas)(nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1]);
+    (*mas)(nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
     }
 /* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
@@ -1110,7 +1109,7 @@ static doublereal c_b116 = .25;
 	nsolu = *n;
 	conra5_1.hsol = hold;
 	(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
-		lrc, &nsolu, &rpar[1], &ipar[1], &irtrn);
+		lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
 	if (irtrn < 0) {
 	    goto L179;
 	}
@@ -1136,7 +1135,7 @@ static doublereal c_b116 = .25;
 	}
     }
     hhfac = *h__;
-    (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1]);
+    (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP */
 L10:
@@ -1165,7 +1164,7 @@ L12:
 		    if (j <= mm * *m2) {
 			goto L12;
 		    }
-		    (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1]);
+            (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 		    j = k + (mm - 1) * *m2;
 		    j1 = k;
 /* Computing MAX */
@@ -1199,10 +1198,10 @@ L14:
 		d__1 = 1e-5, d__2 = abs(ysafe);
 		delt = sqrt(*uround * max(d__1,d__2));
 		y[i__] = ysafe + delt;
-		(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1]);
+        (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 		if (ipar[1] < 0) {
 		    y[i__] = ysafe - delt;
-		    (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1]);
+            (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 		    if (ipar[1] < 0) {
 			y[i__] = ysafe;
 			goto L79;
@@ -1224,7 +1223,7 @@ L14:
 	}
     } else {
 /* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1]);
+    (*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
     }
     caljac = TRUE_;
     calhes = TRUE_;
@@ -1320,7 +1319,7 @@ L40:
 	cont[i__] = y[i__] + z1[i__];
     }
     d__1 = *x + c1 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1]);
+    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 	goto L79;
@@ -1330,7 +1329,7 @@ L40:
 	cont[i__] = y[i__] + z2[i__];
     }
     d__1 = *x + c2 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1]);
+    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 	goto L79;
@@ -1339,7 +1338,7 @@ L40:
     for (i__ = 1; i__ <= i__1; ++i__) {
 	cont[i__] = y[i__] + z3[i__];
     }
-    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1]);
+    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 	goto L79;
@@ -1423,7 +1422,7 @@ L40:
     }
 /* --- ERROR ESTIMATION */
     estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
-	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (S_fp)fcn, nfcn, &y0[
+	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
 	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
 	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
 	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[
@@ -1500,7 +1499,7 @@ L40:
 	    nsolu = *n;
 	    conra5_1.hsol = hold;
 	    (*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[
-		    1], &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn);
+		    1], &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
 	    if (irtrn < 0) {
 		goto L179;
 	    }
@@ -1511,7 +1510,7 @@ L40:
 	    *idid = 1;
 	    return 0;
 	}
-	(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1]);
+	(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 	++(*nfcn);
 /* Computing MIN */
 	d__1 = abs(hnew);
@@ -5136,7 +5135,7 @@ L55:
 /* Subroutine */ int estrad_(integer *n, doublereal *fjac, integer *ldjac, 
 	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
 	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd1, 
-	doublereal *dd2, doublereal *dd3, S_fp fcn, integer *nfcn, doublereal 
+	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
 	*y0, doublereal *y, integer *ijob, doublereal *x, integer *m1, 
 	integer *m2, integer *nm1, doublereal *e1, integer *lde1, doublereal *
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
@@ -5507,7 +5506,7 @@ L77:
 	for (i__ = 1; i__ <= i__1; ++i__) {
 	    cont[i__] = y[i__] + cont[i__];
 	}
-	(*fcn)(n, x, &cont[1], &f1[1], &rpar[1], &ipar[1]);
+    (*fcn)(n, x, &cont[1], &f1[1], &rpar[1], &ipar[1], fcn_PY);
 	++(*nfcn);
 	i__1 = *n;
 	for (i__ = 1; i__ <= i__1; ++i__) {
@@ -6694,7 +6693,3 @@ L240:
 L55:
     return 0;
 } /* slvseu_ */
-// 
-// int main(){
-//     return 0;
-// }

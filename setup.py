@@ -35,7 +35,7 @@ def remove_prefix(name, prefix):
 
 parser = argparse.ArgumentParser(description='Assimulo setup script.')
 parser.register('type','bool',str2bool)
-package_arguments=['plugins','sundials','blas','superlu','lapack','mkl','f2c']
+package_arguments=['plugins','sundials','blas','superlu','lapack','mkl']
 package_arguments.sort()
 for pg in package_arguments:
     parser.add_argument("--{}-home".format(pg), 
@@ -56,7 +56,6 @@ parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='')
 parser.add_argument("--version", help='Package version number', default='Default')
-parser.add_argument("--f2c-name", help="name of the f2c package",default='f2c')
                                        
 args = parser.parse_known_args()
 version_number_arg = args[0].version
@@ -126,13 +125,11 @@ class Assimulo_prepare(object):
         self.BLASdir = args[0].blas_home 
         self.sundialsdir = args[0].sundials_home
         self.MKLdir = args[0].mkl_home
-        self.f2cdir = args[0].f2c_home
         self.sundials_with_superlu = args[0].sundials_with_superlu
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.MKLname_t = args[0].mkl_name if args[0].mkl_name.startswith('lib') else 'lib'+args[0].mkl_name
         self.MKLname = self.MKLname_t[3:]    # the name without "lib"
-        self.f2cname = args[0].f2c_name if args[0].f2c_name.startswith('lib') else 'lib'+args[0].f2c_name
         self.debug_flag = args[0].debug 
         self.LAPACKdir = args[0].lapack_home
         self.LAPACKname = ""
@@ -194,7 +191,6 @@ class Assimulo_prepare(object):
         self.check_SUNDIALS()
         self.check_LAPACK()
         self.check_MKL()
-        self.check_f2c()
         
     def _set_directories(self):
         # directory paths
@@ -223,6 +219,7 @@ class Assimulo_prepare(object):
         self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
+        self.file_libf2c = [f for f in os.listdir(os.path.join("thirdparty","libf2c")) if f[-2:] == ".c"]
         
     def create_assimulo_dirs_and_populate(self):
         self._set_directories()
@@ -322,32 +319,6 @@ class Assimulo_prepare(object):
                 # To make sure that when MKL is found, BLAS and/or LAPACK aren't used
                 self.with_BLAS = False
                 self.with_LAPACK = False
-                
-    def check_f2c(self):
-        """
-        Check if f2c can be found
-        """
-        self.with_f2c = True
-        msg=", disabling support. View more information using --log=DEBUG"
-        ### TODO
-        self.f2cdir=os.path.sep+os.path.join("workspace","libf2c")+os.path.sep
-        return
-        ### TODO
-        if self.f2cdir == "":
-            L.warning("No path to f2c supplied" + msg)
-            L.debug("usage: --f2c-home=path")
-            L.debug("Note: the path required is to where the static library lib is found")
-            self.with_f2c = False
-        else:
-            if not os.path.exists(os.path.join(self.f2cdir,self.f2cname_t+'.a')) and not os.path.exists(os.path.join(self.f2cdir,self.f2cname+'.lib')):
-                L.warning("Could not find f2c"+msg)
-                L.debug("Could not find f2c at the given path {}.".format(self.f2cdir))
-                L.debug("Searched for: {} and {}".format(self.f2cname_t+'.a', self.f2cname+'.lib'))
-                L.debug("usage: --f2c-home=path")
-                self.with_f2c = False
-            else:
-                L.debug("f2c found at "+self.f2cdir)
-                self.with_f2c = True
         
     def check_SuperLU(self):
         """
@@ -492,20 +463,7 @@ class Assimulo_prepare(object):
         #Cythonize main modules
         ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
                              include_path=[".","assimulo"])
-        
-        ## TODO: Find a more suitable place in the code for this later on
-        ## Radau stuff
-        ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
-                              include_path=[".", "assimulo"])
-        
-        ext_list[-1].include_dirs = [np.get_include(), "assimulo", "assimulo"+os.sep+"lib", os.path.join("assimulo","thirdparty","hairer"), self.incdirs]
-        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
-        ## TODO: Make this work via assimulo.lib 
-        ext_list[-1].name = "assimulo.thirdparty.hairer.radau5_c_py"
-        ext_list[-1].language = "C"
-        ext_list[-1].library_dirs = [self.f2cdir]
-        ext_list[-1].libraries = ["f2c", "m"]
-        
+
         #Cythonize Solvers
         # Euler
         ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
@@ -536,7 +494,6 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
-                
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
@@ -550,6 +507,22 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
+
+        ## Radau
+        ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
+                              include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                              force = True)
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
+                                     os.path.join("assimulo","thirdparty","libf2c"),
+                                     os.path.join("assimulo","thirdparty","hairer"),
+                                     self.incdirs]
+        libf2c_skip = ["pow_qq","qbitbits","qbitshft","ftell64_","main","getarg_","iargc_","arithchk"]
+        for f in libf2c_skip:
+            self.file_libf2c.remove(f + ".c")
+        current_dir = os.getcwd()
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")] + [os.path.join(current_dir,"..","thirdparty","libf2c",f) for f in self.file_libf2c]
+        ext_list[-1].name = "assimulo.lib.radau5_c_py"
+        ext_list[-1].libraries = ["m"]
         
         for el in ext_list:
             #Debug
