@@ -49,7 +49,7 @@ class VanDerPolProblem(Implicit_Problem):
     def handle_event(self, solver, event_info):
         self.my *= 1e-1
 
-def run_example(with_plots=True,solver='c'):
+def run_example(with_plots=True, solver='c'):
     
     y0 = [2.0,-0.6] #Initial conditions
     yd0 = [-.6,-200000.]
