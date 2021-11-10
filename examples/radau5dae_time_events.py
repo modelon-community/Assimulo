@@ -79,4 +79,3 @@ def run_example(with_plots=True, solver='c'):
     return imp_mod, imp_sim
 if __name__=='__main__':
     mod,sim = run_example()
-
