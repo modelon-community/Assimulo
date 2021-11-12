@@ -93,7 +93,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
-        self.solver = self.options["solver"] # call necessary to load appropriate modules
+        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -110,6 +110,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
+        if not self.solver_module_imported:
+            self.solver = self.options["solver"] 
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -141,6 +143,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def interpolate(self, time):
         y = N.empty(self._leny)
         for i in range(self._leny):
+            # Note: index shift to Fortan based indices
             y[i] = self.radau5.contr5(i+1, time, self.cont)
         
         return y
@@ -890,6 +893,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def interpolate(self, time, k=0):
         y = N.empty(self._leny*2)
         for i in range(self._leny*2):
+            # Note: index shift to Fortan based indices
             y[i] = self.radau5.contr5(i+1, time, self.cont)
         if k == 0:
             return y[:self._leny]

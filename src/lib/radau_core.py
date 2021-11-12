@@ -437,43 +437,34 @@ class Radau_Common(object):
     
     def _get_solver(self):
         """
-        Internal solver used, "f" for fortran based solver, "c" for c based solver
+        Solver implemenation used, "f" for Fortran, "c" for C
         
             Parameters::
             
-                intsolv
+                solver
                             - Default "f"
                             
                             - needs to be either "f" (Fotran) or "c" (C)
         """
         return self.options["solver"]
     
-    def _set_solver(self, solver, other_failed = False):
+    def _set_solver(self, solver):
         if solver.lower() == "f": ## Fortran
             try:
                 from assimulo.lib import radau5 as radau5_f
                 self.radau5 = radau5_f
+                self.solver_module_imported = True
             except:
-                if other_failed:
-                    raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
-                else:
-                    self.log_message('\nImporting Fotran based Radau solver failed, attempting to import C based implementation', LOUD)
-                    self._set_solver("c", True)
-                    return
+                raise Radau_Exception("Failed to import the Fotran based Radau solver. Try using solver = 'c' for the C based solver instead.")
         elif solver.lower() == "c":
             try:
                 from assimulo.lib import radau5_c_py as radau5_c
                 self.radau5 = radau5_c
+                self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the C based Radau solvers.") ## TODO: Remove this line at the very end
-                if other_failed:
-                    raise Radau_Exception("Failed to import both the Fotran and C based Radau solvers.")
-                else:
-                    self.log_message('\nImporting C based Radau solver failed, attempting to import Fortran based implementation', LOUD)
-                    self._set_solver("f", True)
-                    return
+                raise Radau_Exception("Failed to import the C based Radau solver. Try using solver = 'f' for the Fortran based solver instead.")
         else:
-            raise Radau_Exception("Internal solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
+            raise Radau_Exception("Solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
         self.options["solver"] = solver
         
     solver = property(_get_solver, _set_solver)

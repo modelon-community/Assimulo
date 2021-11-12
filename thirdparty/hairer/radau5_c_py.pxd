@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Copyright (C) 2018-2021 Modelon AB, all rights reserved.
+    Copyright (C) 2021 Modelon AB, all rights reserved.
 """
 
 cdef extern from "string.h":

@@ -35,8 +35,11 @@ class Test_Examples:
         ida_with_user_defined_handle_result.run_example(with_plots=False)
     
     @testattr(stddist = True)
-    def test_radau5dae_time_events(self):
+    def test_radau5dae_time_events_c(self):
         radau5dae_time_events.run_example(with_plots=False,solver='c')
+        
+    @testattr(stddist = True)
+    def test_radau5dae_time_events_f(self):
         radau5dae_time_events.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
@@ -137,18 +140,27 @@ class Test_Examples:
         ida_with_parameters.run_example(with_plots=False)
         
     @testattr(stddist = True)
-    def test_radau5ode_vanderpol(self):
+    def test_radau5ode_vanderpol_c(self):
         radau5ode_vanderpol.run_example(with_plots=False,solver='c')
+    
+    @testattr(stddist = True)
+    def test_radau5ode_vanderpol_f(self):
         radau5ode_vanderpol.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
-    def test_radau5ode_with_disc(self):
+    def test_radau5ode_with_disc_c(self):
         radau5ode_with_disc.run_example(with_plots=False,solver='c')
-        radau5ode_with_disc.run_example(with_plots=False,solver='f')
+
+    @testattr(stddist = True)
+    def test_radau5ode_with_disc_f(self):
+        radau5ode_with_disc.run_example(with_plots=False,solver='c')
         
     @testattr(stddist = True)
-    def test_radau5dae_vanderpol(self):
+    def test_radau5dae_vanderpol_c(self):
         radau5dae_vanderpol.run_example(with_plots=False,solver='c')
+
+    @testattr(stddist = True)
+    def test_radau5dae_vanderpol_f(self):
         radau5dae_vanderpol.run_example(with_plots=False,solver='f')
         
     @testattr(stddist = True)
