@@ -41,7 +41,7 @@ cdef int callback_fcn(integer* n, doublereal* x, doublereal* y_in, doublereal* y
     cdef np.ndarray[double,mode="c"]y_py_in = np.zeros(n[0])
     c2py(y_py_in, y_in, n[0])
     res = (<object>fcn_PY)(x[0], y_py_in)
-    py2c(y_out, res[0], res[0].size)
+    py2c(y_out, res[0], len(res[0]))
     ipar[0] = res[1][0]
     return 0
 
