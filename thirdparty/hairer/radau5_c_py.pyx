@@ -53,7 +53,7 @@ cdef int callback_jac(integer* n, doublereal* x, doublereal* y, doublereal* fjac
     cdef np.ndarray[double,mode="c"]y_py = np.zeros(n[0])
     c2py(y_py, y, n[0])
     res = (<object>jac_PY)(x[0], y_py)
-    res = res.flatten()
+    res = res.flatten('F')
     py2c(fjac, res, res.size)
     return 0
 
@@ -65,7 +65,7 @@ cdef int callback_mas(integer* n, doublereal* am, integer* lmas, doublereal* rpa
     cdef np.ndarray[double,mode="c",ndim=2]am_py = np.zeros((lmas[0], n[0]))
     c2py_mat(am_py, am, n[0]*lmas[0])
     res = (<object>mas_PY)(am_py)
-    res = res.flatten()
+    res = res.flatten('F')
     py2c(am, res, res.size)
     return 0
 

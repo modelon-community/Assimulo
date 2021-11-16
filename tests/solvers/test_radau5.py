@@ -495,7 +495,7 @@ class Test_Explicit_Fortran_Radau5:
         
         #Test both y0 in problem and not.
         sim = Radau5ODE(self.mod)
-        exp_sim.solver = 'f'
+        sim.solver = 'f'
         
         assert sim._leny == 2
     

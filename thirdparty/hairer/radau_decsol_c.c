@@ -11,6 +11,7 @@
 */
 
 #include <stdlib.h>
+#include <math.h>
 #include "f2c.h"
 #include "radau_decsol_c.h"
 
@@ -1385,7 +1386,7 @@ L40:
 	if (theta < .99) {
 	    faccon = theta / (1. - theta);
 	    i__1 = *nit - 1 - newt;
-	    dyth = faccon * dyno * pow_di(&theta, &i__1) / *fnewt;
+	    dyth = faccon * dyno * pow(theta, i__1) / *fnewt;
 	    if (dyth >= 1.) {
 /* Computing MAX */
 		d__1 = 1e-4, d__2 = min(20.,dyth);
