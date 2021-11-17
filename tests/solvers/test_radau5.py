@@ -436,6 +436,24 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.inith = 1.e-4 #Initial step-size
         self.sim.usejac = False
+
+    @testattr(stddist = True)
+    def test_event_localizer(self):
+        exp_mod = Extended_Problem() #Create the problem
+
+        exp_sim = Radau5ODE(exp_mod) #Create the solver
+        exp_sim.solver = 'f'
+        
+        exp_sim.verbosity = 0
+        exp_sim.report_continuously = True
+        
+        #Simulate
+        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        
+        #Basic test
+        nose.tools.assert_almost_equal(y[-1][0],8.0)
+        nose.tools.assert_almost_equal(y[-1][1],3.0)
+        nose.tools.assert_almost_equal(y[-1][2],2.0)
     
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
@@ -766,6 +784,24 @@ class Test_Explicit_C_Radau5:
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.inith = 1.e-4 #Initial step-size
         self.sim.usejac = False
+
+    @testattr(stddist = True)
+    def test_event_localizer(self):
+        exp_mod = Extended_Problem() #Create the problem
+
+        exp_sim = Radau5ODE(exp_mod) #Create the solver
+        exp_sim.solver = 'c'
+        
+        exp_sim.verbosity = 0
+        exp_sim.report_continuously = True
+        
+        #Simulate
+        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        
+        #Basic test
+        nose.tools.assert_almost_equal(y[-1][0],8.0)
+        nose.tools.assert_almost_equal(y[-1][1],3.0)
+        nose.tools.assert_almost_equal(y[-1][2],2.0)
     
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
