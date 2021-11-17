@@ -508,273 +508,271 @@ static doublereal c_b116 = .25;
     ndec = 0;
     nsol = 0;
     arret = FALSE_;
-/* -------- UROUND   SMALLEST NUMBER SATISFYING 1.0D0+UROUND>1.0D0 */
+	/* -------- UROUND   SMALLEST NUMBER SATISFYING 1.0D0+UROUND>1.0D0 */
     if (work[1] == 0.) {
-	uround = 1e-16;
+		uround = 1e-16;
     } else {
-	uround = work[1];
-	if (uround <= 1e-19 || uround >= 1.) {
-	    s_wsle(&io___10);
-	    do_lio(&c__9, &c__1, " COEFFICIENTS HAVE 20 DIGITS, UROUND=", (
-		    ftnlen)37);
-	    do_lio(&c__5, &c__1, (char *)&work[1], (ftnlen)sizeof(doublereal))
-		    ;
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		uround = work[1];
+		if (uround <= 1e-19 || uround >= 1.) {
+			s_wsle(&io___10);
+			// c__9 = 9;
+			// c__1 = 1
+			// c__5 = 5
+			do_lio(&c__9, &c__1, " COEFFICIENTS HAVE 20 DIGITS, UROUND=", (ftnlen)37);
+			do_lio(&c__5, &c__1, (char *)&work[1], (ftnlen)sizeof(doublereal));
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* -------- CHECK AND CHANGE THE TOLERANCES */
+	/* -------- CHECK AND CHANGE THE TOLERANCES */
     expm = .66666666666666663;
     if (*itol == 0) {
-	if (atol[1] <= 0. || rtol[1] <= uround * 10.) {
-	    s_wsle(&io___12);
-	    do_lio(&c__9, &c__1, " TOLERANCES ARE TOO SMALL", (ftnlen)25);
-	    e_wsle();
-	    arret = TRUE_;
-	} else {
-	    quot = atol[1] / rtol[1];
-	    rtol[1] = pow(rtol[1], expm) * .1;
-	    atol[1] = rtol[1] * quot;
-	}
+		if (atol[1] <= 0. || rtol[1] <= uround * 10.) {
+			s_wsle(&io___12);
+			do_lio(&c__9, &c__1, " TOLERANCES ARE TOO SMALL", (ftnlen)25);
+			e_wsle();
+			arret = TRUE_;
+		} else {
+			quot = atol[1] / rtol[1];
+			rtol[1] = pow(rtol[1], expm) * .1;
+			atol[1] = rtol[1] * quot;
+		}
     } else {
 	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    if (atol[i__] <= 0. || rtol[i__] <= uround * 10.) {
-		s_wsle(&io___15);
-		do_lio(&c__9, &c__1, " TOLERANCES(", (ftnlen)12);
-		do_lio(&c__3, &c__1, (char *)&i__, (ftnlen)sizeof(integer));
-		do_lio(&c__9, &c__1, ") ARE TOO SMALL", (ftnlen)15);
-		e_wsle();
-		arret = TRUE_;
-	    } else {
-		quot = atol[i__] / rtol[i__];
-		rtol[i__] = pow(rtol[i__], expm) * .1;
-		atol[i__] = rtol[i__] * quot;
-	    }
-	}
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			if (atol[i__] <= 0. || rtol[i__] <= uround * 10.) {
+				s_wsle(&io___15);
+				do_lio(&c__9, &c__1, " TOLERANCES(", (ftnlen)12);
+				do_lio(&c__3, &c__1, (char *)&i__, (ftnlen)sizeof(integer));
+				do_lio(&c__9, &c__1, ") ARE TOO SMALL", (ftnlen)15);
+				e_wsle();
+				arret = TRUE_;
+			} else {
+				quot = atol[i__] / rtol[i__];
+				rtol[i__] = pow(rtol[i__], expm) * .1;
+				atol[i__] = rtol[i__] * quot;
+			}
+		}
     }
-/* -------- NMAX , THE MAXIMAL NUMBER OF STEPS ----- */
+	/* -------- NMAX , THE MAXIMAL NUMBER OF STEPS ----- */
     if (iwork[2] == 0) {
-	nmax = 100000;
+		nmax = 100000;
     } else {
 	nmax = iwork[2];
-	if (nmax <= 0) {
-	    s_wsle(&io___17);
-	    do_lio(&c__9, &c__1, " WRONG INPUT IWORK(2)=", (ftnlen)22);
-	    do_lio(&c__3, &c__1, (char *)&iwork[2], (ftnlen)sizeof(integer));
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		if (nmax <= 0) {
+			s_wsle(&io___17);
+			do_lio(&c__9, &c__1, " WRONG INPUT IWORK(2)=", (ftnlen)22);
+			do_lio(&c__3, &c__1, (char *)&iwork[2], (ftnlen)sizeof(integer));
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* -------- NIT    MAXIMAL NUMBER OF NEWTON ITERATIONS */
+	/* -------- NIT    MAXIMAL NUMBER OF NEWTON ITERATIONS */
     if (iwork[3] == 0) {
-	nit = 7;
+		nit = 7;
     } else {
 	nit = iwork[3];
-	if (nit <= 0) {
-	    s_wsle(&io___19);
-	    do_lio(&c__9, &c__1, " CURIOUS INPUT IWORK(3)=", (ftnlen)24);
-	    do_lio(&c__3, &c__1, (char *)&iwork[3], (ftnlen)sizeof(integer));
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		if (nit <= 0) {
+			s_wsle(&io___19);
+			do_lio(&c__9, &c__1, " CURIOUS INPUT IWORK(3)=", (ftnlen)24);
+			do_lio(&c__3, &c__1, (char *)&iwork[3], (ftnlen)sizeof(integer));
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* -------- STARTN  SWITCH FOR STARTING VALUES OF NEWTON ITERATIONS */
+	/* -------- STARTN  SWITCH FOR STARTING VALUES OF NEWTON ITERATIONS */
     if (iwork[4] == 0) {
-	startn = FALSE_;
+		startn = FALSE_;
     } else {
-	startn = TRUE_;
+		startn = TRUE_;
     }
-/* -------- PARAMETER FOR DIFFERENTIAL-ALGEBRAIC COMPONENTS */
+	/* -------- PARAMETER FOR DIFFERENTIAL-ALGEBRAIC COMPONENTS */
     nind1 = iwork[5];
     nind2 = iwork[6];
     nind3 = iwork[7];
     if (nind1 == 0) {
-	nind1 = *n;
+		nind1 = *n;
     }
     if (nind1 + nind2 + nind3 != *n) {
-	s_wsle(&io___24);
-	do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(5,6,7)=", (ftnlen)32);
-	do_lio(&c__3, &c__1, (char *)&nind1, (ftnlen)sizeof(integer));
-	do_lio(&c__3, &c__1, (char *)&nind2, (ftnlen)sizeof(integer));
-	do_lio(&c__3, &c__1, (char *)&nind3, (ftnlen)sizeof(integer));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___24);
+		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(5,6,7)=", (ftnlen)32);
+		do_lio(&c__3, &c__1, (char *)&nind1, (ftnlen)sizeof(integer));
+		do_lio(&c__3, &c__1, (char *)&nind2, (ftnlen)sizeof(integer));
+		do_lio(&c__3, &c__1, (char *)&nind3, (ftnlen)sizeof(integer));
+		e_wsle();
+		arret = TRUE_;
     }
-/* -------- PRED   STEP SIZE CONTROL */
+	/* -------- PRED   STEP SIZE CONTROL */
     if (iwork[8] <= 1) {
-	pred = TRUE_;
+		pred = TRUE_;
     } else {
-	pred = FALSE_;
+		pred = FALSE_;
     }
-/* -------- PARAMETER FOR SECOND ORDER EQUATIONS */
+	/* -------- PARAMETER FOR SECOND ORDER EQUATIONS */
     m1 = iwork[9];
     m2 = iwork[10];
     nm1 = *n - m1;
     if (m1 == 0) {
-	m2 = *n;
+		m2 = *n;
     }
     if (m2 == 0) {
-	m2 = m1;
+		m2 = m1;
     }
     if (m1 < 0 || m2 < 0 || m1 + m2 > *n) {
-	s_wsle(&io___29);
-	do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(9,10)=", (ftnlen)31);
-	do_lio(&c__3, &c__1, (char *)&m1, (ftnlen)sizeof(integer));
-	do_lio(&c__3, &c__1, (char *)&m2, (ftnlen)sizeof(integer));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___29);
+		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(9,10)=", (ftnlen)31);
+		do_lio(&c__3, &c__1, (char *)&m1, (ftnlen)sizeof(integer));
+		do_lio(&c__3, &c__1, (char *)&m2, (ftnlen)sizeof(integer));
+		e_wsle();
+		arret = TRUE_;
     }
-/* --------- SAFE     SAFETY FACTOR IN STEP SIZE PREDICTION */
+	/* --------- SAFE     SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
-	safe = .9;
+		safe = .9;
     } else {
-	safe = work[2];
-	if (safe <= .001 || safe >= 1.) {
-	    s_wsle(&io___31);
-	    do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(2)=", (ftnlen)27);
-	    do_lio(&c__5, &c__1, (char *)&work[2], (ftnlen)sizeof(doublereal));
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		safe = work[2];
+		if (safe <= .001 || safe >= 1.) {
+			s_wsle(&io___31);
+			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(2)=", (ftnlen)27);
+			do_lio(&c__5, &c__1, (char *)&work[2], (ftnlen)sizeof(doublereal));
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* ------ THET     DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
+	/* ------ THET     DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
     if (work[3] == 0.) {
-	thet = .001;
+		thet = .001;
     } else {
-	thet = work[3];
-	if (thet >= 1.) {
-	    s_wsle(&io___33);
-	    do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(3)=", (ftnlen)27);
-	    do_lio(&c__5, &c__1, (char *)&work[3], (ftnlen)sizeof(doublereal))
-		    ;
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		thet = work[3];
+		if (thet >= 1.) {
+			s_wsle(&io___33);
+			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(3)=", (ftnlen)27);
+			do_lio(&c__5, &c__1, (char *)&work[3], (ftnlen)sizeof(doublereal))
+				;
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* --- FNEWT   STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
+	/* --- FNEWT   STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
     tolst = rtol[1];
     if (work[4] == 0.) {
-/* Computing MAX */
-/* Computing MIN */
-	d__3 = .03, d__4 = pow(tolst, c_b54);
-	d__1 = uround * 10 / tolst, d__2 = min(d__3,d__4);
-	fnewt = max(d__1,d__2);
+		/* Computing MAX */
+		/* Computing MIN */
+		d__3 = .03, d__4 = pow(tolst, c_b54);
+		d__1 = uround * 10 / tolst, d__2 = min(d__3,d__4);
+		fnewt = max(d__1,d__2);
     } else {
-	fnewt = work[4];
-	if (fnewt <= uround / tolst) {
-	    s_wsle(&io___36);
-	    do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(4)=", (ftnlen)27);
-	    do_lio(&c__5, &c__1, (char *)&work[4], (ftnlen)sizeof(doublereal))
-		    ;
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		fnewt = work[4];
+		if (fnewt <= uround / tolst) {
+			s_wsle(&io___36);
+			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(4)=", (ftnlen)27);
+			do_lio(&c__5, &c__1, (char *)&work[4], (ftnlen)sizeof(doublereal));
+			e_wsle();
+			arret = TRUE_;
+		}
     }
-/* --- QUOT1 AND QUOT2: IF QUOT1 < HNEW/HOLD < QUOT2, STEP SIZE = CONST. */
+	/* --- QUOT1 AND QUOT2: IF QUOT1 < HNEW/HOLD < QUOT2, STEP SIZE = CONST. */
     if (work[5] == 0.) {
-	quot1 = 1.;
+		quot1 = 1.;
     } else {
-	quot1 = work[5];
+		quot1 = work[5];
     }
     if (work[6] == 0.) {
-	quot2 = 1.2;
+		quot2 = 1.2;
     } else {
-	quot2 = work[6];
+		quot2 = work[6];
     }
     if (quot1 > 1. || quot2 < 1.) {
-	s_wsle(&io___39);
-	do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(5,6)=", (ftnlen)29);
-	do_lio(&c__5, &c__1, (char *)&quot1, (ftnlen)sizeof(doublereal));
-	do_lio(&c__5, &c__1, (char *)&quot2, (ftnlen)sizeof(doublereal));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___39);
+		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(5,6)=", (ftnlen)29);
+		do_lio(&c__5, &c__1, (char *)&quot1, (ftnlen)sizeof(doublereal));
+		do_lio(&c__5, &c__1, (char *)&quot2, (ftnlen)sizeof(doublereal));
+		e_wsle();
+		arret = TRUE_;
     }
-/* -------- MAXIMAL STEP SIZE */
+	/* -------- MAXIMAL STEP SIZE */
     if (work[7] == 0.) {
-	hmax = *xend - *x;
+		hmax = *xend - *x;
     } else {
-	hmax = work[7];
+		hmax = work[7];
     }
-/* -------  FACL,FACR     PARAMETERS FOR STEP SIZE SELECTION */
+	/* -------  FACL,FACR     PARAMETERS FOR STEP SIZE SELECTION */
     if (work[8] == 0.) {
-	facl = 5.;
+		facl = 5.;
     } else {
-	facl = 1. / work[8];
+		facl = 1. / work[8];
     }
     if (work[9] == 0.) {
-	facr = .125;
+		facr = .125;
     } else {
-	facr = 1. / work[9];
+		facr = 1. / work[9];
     }
     if (facl < 1. || facr > 1.) {
-	s_wsle(&io___43);
-	do_lio(&c__9, &c__1, " CURIOUS INPUT WORK(8,9)=", (ftnlen)25);
-	do_lio(&c__5, &c__1, (char *)&work[8], (ftnlen)sizeof(doublereal));
-	do_lio(&c__5, &c__1, (char *)&work[9], (ftnlen)sizeof(doublereal));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___43);
+		do_lio(&c__9, &c__1, " CURIOUS INPUT WORK(8,9)=", (ftnlen)25);
+		do_lio(&c__5, &c__1, (char *)&work[8], (ftnlen)sizeof(doublereal));
+		do_lio(&c__5, &c__1, (char *)&work[9], (ftnlen)sizeof(doublereal));
+		e_wsle();
+		arret = TRUE_;
     }
-/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
-/*         COMPUTATION OF ARRAY ENTRIES */
-/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
-/* ---- IMPLICIT, BANDED OR NOT ? */
+	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
+	/*         COMPUTATION OF ARRAY ENTRIES */
+	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
+	/* ---- IMPLICIT, BANDED OR NOT ? */
     implct = *imas != 0;
     jband = *mljac < nm1;
-/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
-/* -- JACOBIAN  AND  MATRICES E1, E2 */
+	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
+	/* -- JACOBIAN  AND  MATRICES E1, E2 */
     if (jband) {
-	ldjac = *mljac + *mujac + 1;
-	lde1 = *mljac + ldjac;
+		ldjac = *mljac + *mujac + 1;
+		lde1 = *mljac + ldjac;
     } else {
-	*mljac = nm1;
-	*mujac = nm1;
-	ldjac = nm1;
-	lde1 = nm1;
+		*mljac = nm1;
+		*mujac = nm1;
+		ldjac = nm1;
+		lde1 = nm1;
     }
-/* -- MASS MATRIX */
+	/* -- MASS MATRIX */
     if (implct) {
-	if (*mlmas != nm1) {
-	    ldmas = *mlmas + *mumas + 1;
-	    if (jband) {
-		ijob = 4;
-	    } else {
-		ijob = 3;
-	    }
-	} else {
-	    *mumas = nm1;
-	    ldmas = nm1;
-	    ijob = 5;
-	}
-/* ------ BANDWITH OF "MAS" NOT SMALLER THAN BANDWITH OF "JAC" */
-	if (*mlmas > *mljac || *mumas > *mujac) {
-	    s_wsle(&io___50);
-	    do_lio(&c__9, &c__1, "BANDWITH OF \"MAS\" NOT SMALLER THAN BANDW"
-		    "ITH OF \"JAC\"", (ftnlen)52);
-	    e_wsle();
-	    arret = TRUE_;
-	}
+		if (*mlmas != nm1) {
+			ldmas = *mlmas + *mumas + 1;
+			if (jband) {
+				ijob = 4;
+			} else {
+				ijob = 3;
+			}
+		} else {
+			*mumas = nm1;
+			ldmas = nm1;
+			ijob = 5;
+		}
+	/* ------ BANDWITH OF "MAS" NOT SMALLER THAN BANDWITH OF "JAC" */
+		if (*mlmas > *mljac || *mumas > *mujac) {
+			s_wsle(&io___50);
+			do_lio(&c__9, &c__1, "BANDWITH OF \"MAS\" NOT SMALLER THAN BANDWITH OF \"JAC\"", (ftnlen)52);
+			e_wsle();
+			arret = TRUE_;
+		}
     } else {
-	ldmas = 0;
-	if (jband) {
-	    ijob = 2;
-	} else {
-	    ijob = 1;
-	    if (*n > 2 && iwork[1] != 0) {
-		ijob = 7;
-	    }
-	}
+		ldmas = 0;
+		if (jband) {
+			ijob = 2;
+		} else {
+			ijob = 1;
+			if (*n > 2 && iwork[1] != 0) {
+				ijob = 7;
+			}
+		}
     }
     ldmas2 = max(1,ldmas);
-/* ------ HESSENBERG OPTION ONLY FOR EXPLICIT EQU. WITH FULL JACOBIAN */
+	/* ------ HESSENBERG OPTION ONLY FOR EXPLICIT EQU. WITH FULL JACOBIAN */
     if ((implct || jband) && ijob == 7) {
-	s_wsle(&io___52);
-	do_lio(&c__9, &c__1, " HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS"
-		" WITH FULL JACOBIAN", (ftnlen)65);
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___52);
+		do_lio(&c__9, &c__1, " HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS WITH FULL JACOBIAN", (ftnlen)65);
+		e_wsle();
+		arret = TRUE_;
     }
-/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
+	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
     iez1 = 21;
     iez2 = iez1 + *n;
     iez3 = iez2 + *n;
@@ -789,36 +787,34 @@ static doublereal c_b116 = .25;
     iee1 = iemas + nm1 * ldmas;
     iee2r = iee1 + nm1 * lde1;
     iee2i = iee2r + nm1 * lde1;
-/* ------ TOTAL STORAGE REQUIREMENT ----------- */
+	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
     istore = iee2i + nm1 * lde1 - 1;
     if (istore > *lwork) {
-	s_wsle(&io___68);
-	do_lio(&c__9, &c__1, " INSUFFICIENT STORAGE FOR WORK, MIN. LWORK=", (
-		ftnlen)43);
-	do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___68);
+		do_lio(&c__9, &c__1, " INSUFFICIENT STORAGE FOR WORK, MIN. LWORK=", (ftnlen)43);
+		do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
+		e_wsle();
+		arret = TRUE_;
     }
-/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
+	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
     ieip1 = 21;
     ieip2 = ieip1 + nm1;
     ieiph = ieip2 + nm1;
-/* --------- TOTAL REQUIREMENT --------------- */
+	/* --------- TOTAL REQUIREMENT --------------- */
     istore = ieiph + nm1 - 1;
     if (istore > *liwork) {
-	s_wsle(&io___72);
-	do_lio(&c__9, &c__1, " INSUFF. STORAGE FOR IWORK, MIN. LIWORK=", (
-		ftnlen)40);
-	do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
-	e_wsle();
-	arret = TRUE_;
+		s_wsle(&io___72);
+		do_lio(&c__9, &c__1, " INSUFF. STORAGE FOR IWORK, MIN. LIWORK=", (ftnlen)40);
+		do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
+		e_wsle();
+		arret = TRUE_;
     }
-/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
+	/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
     if (arret) {
-	*idid = -1;
-	return 0;
+		*idid = -1;
+		return 0;
     }
-/* -------- CALL TO CORE INTEGRATOR ------------ */
+	/* -------- CALL TO CORE INTEGRATOR ------------ */
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
 	    itol, (FP_CB_jac)jac, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas, (
 	    FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt, &
@@ -836,23 +832,23 @@ static doublereal c_b116 = .25;
     iwork[18] = nrejct;
     iwork[19] = ndec;
     iwork[20] = nsol;
-/* -------- RESTORE TOLERANCES */
+	/* -------- RESTORE TOLERANCES */
     expm = 1. / expm;
     if (*itol == 0) {
-	quot = atol[1] / rtol[1];
-	d__1 = rtol[1] * 10.;
-	rtol[1] = pow(d__1, expm);
-	atol[1] = rtol[1] * quot;
+		quot = atol[1] / rtol[1];
+		d__1 = rtol[1] * 10.;
+		rtol[1] = pow(d__1, expm);
+		atol[1] = rtol[1] * quot;
     } else {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    quot = atol[i__] / rtol[i__];
-	    d__1 = rtol[i__] * 10.;
-	    rtol[i__] = pow(d__1, expm);
-	    atol[i__] = rtol[i__] * quot;
-	}
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			quot = atol[i__] / rtol[i__];
+			d__1 = rtol[i__] * 10.;
+			rtol[i__] = pow(d__1, expm);
+			atol[i__] = rtol[i__] * quot;
+		}
     }
-/* ----------- RETURN ----------- */
+	/* ----------- RETURN ----------- */
     return 0;
 } /* radau5_ */
 
@@ -968,16 +964,17 @@ static doublereal c_b116 = .25;
     static cilist io___185 = { 0, 6, 0, 0, 0 };
 
 
-/* ---------------------------------------------------------- */
-/*     CORE INTEGRATOR FOR RADAU5 */
-/*     PARAMETERS SAME AS IN RADAU5 WITH WORKSPACE ADDED */
-/* ---------------------------------------------------------- */
-/*         DECLARATIONS */
-/* ---------------------------------------------------------- */
-/* *** *** *** *** *** *** *** */
-/*  INITIALISATIONS */
-/* *** *** *** *** *** *** *** */
-/* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
+	/* ---------------------------------------------------------- */
+	/*     CORE INTEGRATOR FOR RADAU5 */
+	/*     PARAMETERS SAME AS IN RADAU5 WITH WORKSPACE ADDED */
+	/* ---------------------------------------------------------- */
+	/*         DECLARATIONS */
+	/* ---------------------------------------------------------- */
+	/* *** *** *** *** *** *** *** */
+	/*  INITIALISATIONS */
+	/* *** *** *** *** *** *** *** */
+	/* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
+
     /* Parameter adjustments */
     doublereal *werr = (doublereal*) malloc(*n * sizeof(doublereal));
     --cont;
@@ -1019,15 +1016,15 @@ static doublereal c_b116 = .25;
     conra5_1.nn2 = *n << 1;
     conra5_1.nn3 = *n * 3;
     lrc = *n << 2;
-/* -------- CHECK THE INDEX OF THE PROBLEM ----- */
+	/* -------- CHECK THE INDEX OF THE PROBLEM ----- */
     index1 = *nind1 != 0;
     index2 = *nind2 != 0;
     index3 = *nind3 != 0;
-/* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
+	/* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
     if (*implct) {
-    (*mas)(nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
+    	(*mas)(nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
     }
-/* ---------- CONSTANTS --------- */
+	/* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
     c1 = (4. - sq6) / 10.;
     c2 = (sq6 + 4.) / 10.;
@@ -1040,9 +1037,9 @@ static doublereal c_b116 = .25;
     u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.;
     alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.;
     beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.;
-/* Computing 2nd power */
+	/* Computing 2nd power */
     d__1 = alph;
-/* Computing 2nd power */
+	/* Computing 2nd power */
     d__2 = beta;
     cno = d__1 * d__1 + d__2 * d__2;
     u1 = 1. / u1;
@@ -1065,17 +1062,17 @@ static doublereal c_b116 = .25;
     ti32 = 2.5719269498556054292;
     ti33 = -.59603920482822492497;
     if (*m1 > 0) {
-	*ijob += 10;
+		*ijob += 10;
     }
     d__1 = *xend - *x;
     posneg = copysign(1., d__1);
-/* Computing MIN */
+	/* Computing MIN */
     d__2 = abs(*hmax), d__3 = (d__1 = *xend - *x, abs(d__1));
     hmaxn = min(d__2,d__3);
     if (abs(*h__) <= *uround * 10.) {
-	*h__ = 1e-6;
+		*h__ = 1e-6;
     }
-/* Computing MIN */
+	/* Computing MIN */
     d__1 = abs(*h__);
     *h__ = min(d__1,hmaxn);
     *h__ = copysign(*h__, posneg);
@@ -1084,8 +1081,8 @@ static doublereal c_b116 = .25;
     first = TRUE_;
     last = FALSE_;
     if ((*x + *h__ * 1.0001 - *xend) * posneg >= 0.) {
-	*h__ = *xend - *x;
-	last = TRUE_;
+		*h__ = *xend - *x;
+		last = TRUE_;
     }
     hopt = *h__;
     faccon = 1.;
@@ -1094,22 +1091,22 @@ static doublereal c_b116 = .25;
     nunexpect = 0;
     xold = *x;
     if (*iout != 0) {
-	irtrn = 1;
-	nrsol = 1;
-	xosol = xold;
-	conra5_1.xsol = *x;
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
- 	    werr[i__] = 0.;
-	    cont[i__] = y[i__];
-	}
-	nsolu = *n;
-	conra5_1.hsol = hold;
-	(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
-		lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
-	if (irtrn < 0) {
-	    goto L179;
-	}
+		irtrn = 1;
+		nrsol = 1;
+		xosol = xold;
+		conra5_1.xsol = *x;
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			werr[i__] = 0.;
+			cont[i__] = y[i__];
+		}
+		nsolu = *n;
+		conra5_1.hsol = hold;
+		(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
+			lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
+		if (irtrn < 0) {
+			goto L179;
+		}
     }
     linal_1.mle = *mljac;
     linal_1.mue = *mujac;
@@ -1121,15 +1118,15 @@ static doublereal c_b116 = .25;
     n2 = *n << 1;
     n3 = *n * 3;
     if (*itol == 0) {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
-	}
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
+		}
     } else {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1));
-	}
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1));
+		}
     }
     hhfac = *h__;
     (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
@@ -1141,86 +1138,83 @@ L10:
 /* *** *** *** *** *** *** *** */
     ++(*njac);
     if (*ijac == 0) {
-/* --- COMPUTE JACOBIAN MATRIX NUMERICALLY */
-	if (*banded) {
-/* --- JACOBIAN IS BANDED */
-	    mujacp = *mujac + 1;
-	    md = min(linal_1.mbjac,*m2);
-	    i__1 = *m1 / *m2 + 1;
-	    for (mm = 1; mm <= i__1; ++mm) {
-		i__2 = md;
-		for (k = 1; k <= i__2; ++k) {
-		    j = k + (mm - 1) * *m2;
+		/* --- COMPUTE JACOBIAN MATRIX NUMERICALLY */
+		if (*banded) {
+		/* --- JACOBIAN IS BANDED */
+			mujacp = *mujac + 1;
+			md = min(linal_1.mbjac,*m2);
+			i__1 = *m1 / *m2 + 1;
+			for (mm = 1; mm <= i__1; ++mm) {
+				i__2 = md;
+				for (k = 1; k <= i__2; ++k) {
+					j = k + (mm - 1) * *m2;
 L12:
-		    f1[j] = y[j];
-/* Computing MAX */
-		    d__2 = 1e-5, d__3 = (d__1 = y[j], abs(d__1));
-		    f2[j] = sqrt(*uround * max(d__2,d__3));
-		    y[j] += f2[j];
-		    j += md;
-		    if (j <= mm * *m2) {
-			goto L12;
-		    }
-            (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
-		    j = k + (mm - 1) * *m2;
-		    j1 = k;
-/* Computing MAX */
-		    i__3 = 1, i__4 = j1 - *mujac;
-		    lbeg = max(i__3,i__4) + *m1;
+					f1[j] = y[j];
+					/* Computing MAX */
+					d__2 = 1e-5, d__3 = (d__1 = y[j], abs(d__1));
+					f2[j] = sqrt(*uround * max(d__2,d__3));
+					y[j] += f2[j];
+					j += md;
+					if (j <= mm * *m2) {
+						goto L12;
+					}
+					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					j = k + (mm - 1) * *m2;
+					j1 = k;
+					/* Computing MAX */
+					i__3 = 1, i__4 = j1 - *mujac;
+					lbeg = max(i__3,i__4) + *m1;
 L14:
-/* Computing MIN */
-		    i__3 = *m2, i__4 = j1 + *mljac;
-		    lend = min(i__3,i__4) + *m1;
-		    y[j] = f1[j];
-		    mujacj = mujacp - j1 - *m1;
-		    i__3 = lend;
-		    for (l = lbeg; l <= i__3; ++l) {
-			fjac[l + mujacj + j * fjac_dim1] = (cont[l] - y0[l]) /
-				 f2[j];
-		    }
-		    j += md;
-		    j1 += md;
-		    lbeg = lend + 1;
-		    if (j <= mm * *m2) {
-			goto L14;
-		    }
-		}
-	    }
-	} else {
-/* --- JACOBIAN IS FULL */
-	    i__1 = *n;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		ysafe = y[i__];
-/* Computing MAX */
-		d__1 = 1e-5, d__2 = abs(ysafe);
-		delt = sqrt(*uround * max(d__1,d__2));
-		y[i__] = ysafe + delt;
-        (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
-		if (ipar[1] < 0) {
-		    y[i__] = ysafe - delt;
-            (*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
-		    if (ipar[1] < 0) {
-			y[i__] = ysafe;
-			goto L79;
-		    }
-		    i__2 = *n;
-		    for (j = *m1 + 1; j <= i__2; ++j) {
-			fjac[j - *m1 + i__ * fjac_dim1] = (y0[j] - cont[j]) / 
-				delt;
-		    }
+					/* Computing MIN */
+					i__3 = *m2, i__4 = j1 + *mljac;
+					lend = min(i__3,i__4) + *m1;
+					y[j] = f1[j];
+					mujacj = mujacp - j1 - *m1;
+					i__3 = lend;
+					for (l = lbeg; l <= i__3; ++l) {
+						fjac[l + mujacj + j * fjac_dim1] = (cont[l] - y0[l]) / f2[j];
+					}
+					j += md;
+					j1 += md;
+					lbeg = lend + 1;
+					if (j <= mm * *m2) {
+						goto L14;
+					}
+				}
+			}
 		} else {
-		    i__2 = *n;
-		    for (j = *m1 + 1; j <= i__2; ++j) {
-			fjac[j - *m1 + i__ * fjac_dim1] = (cont[j] - y0[j]) / 
-				delt;
-		    }
+			/* --- JACOBIAN IS FULL */
+			i__1 = *n;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				ysafe = y[i__];
+				/* Computing MAX */
+				d__1 = 1e-5, d__2 = abs(ysafe);
+				delt = sqrt(*uround * max(d__1,d__2));
+				y[i__] = ysafe + delt;
+				(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+				if (ipar[1] < 0) {
+					y[i__] = ysafe - delt;
+					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					if (ipar[1] < 0) {
+						y[i__] = ysafe;
+						goto L79;
+					}
+					i__2 = *n;
+					for (j = *m1 + 1; j <= i__2; ++j) {
+						fjac[j - *m1 + i__ * fjac_dim1] = (y0[j] - cont[j]) / delt;
+					}
+				} else {
+					i__2 = *n;
+					for (j = *m1 + 1; j <= i__2; ++j) {
+						fjac[j - *m1 + i__ * fjac_dim1] = (cont[j] - y0[j]) / delt;
+					}
+				}
+				y[i__] = ysafe;
+			}
 		}
-		y[i__] = ysafe;
-	    }
-	}
     } else {
-/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-    (*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
+    	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
     }
     caljac = TRUE_;
     calhes = TRUE_;
@@ -1233,122 +1227,122 @@ L20:
 	    mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 	    ijob, &calhes, &iphes[1]);
     if (ier != 0) {
-	goto L78;
+		goto L78;
     }
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[
 	    e2i_offset], lde1, &ip2[1], &ier, ijob);
     if (ier != 0) {
-	goto L78;
+		goto L78;
     }
     ++(*ndec);
 L30:
     ++(*nstep);
     if (*nstep > *nmax) {
-	goto L178;
+		goto L178;
     }
     if (abs(*h__) * .1 <= abs(*x) * *uround) {
-	goto L177;
+		goto L177;
     }
     if (index2) {
-	i__1 = *nind1 + *nind2;
-	for (i__ = *nind1 + 1; i__ <= i__1; ++i__) {
-	    scal[i__] /= hhfac;
-	}
+		i__1 = *nind1 + *nind2;
+		for (i__ = *nind1 + 1; i__ <= i__1; ++i__) {
+			scal[i__] /= hhfac;
+		}
     }
     if (index3) {
-	i__1 = *nind1 + *nind2 + *nind3;
-	for (i__ = *nind1 + *nind2 + 1; i__ <= i__1; ++i__) {
-	    scal[i__] /= hhfac * hhfac;
-	}
+		i__1 = *nind1 + *nind2 + *nind3;
+		for (i__ = *nind1 + *nind2 + 1; i__ <= i__1; ++i__) {
+			scal[i__] /= hhfac * hhfac;
+		}
     }
     xph = *x + *h__;
-/* *** *** *** *** *** *** *** */
-/*  STARTING VALUES FOR NEWTON ITERATION */
-/* *** *** *** *** *** *** *** */
+	/* *** *** *** *** *** *** *** */
+	/*  STARTING VALUES FOR NEWTON ITERATION */
+	/* *** *** *** *** *** *** *** */
     if (first || *startn) {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    z1[i__] = 0.;
-	    z2[i__] = 0.;
-	    z3[i__] = 0.;
-	    f1[i__] = 0.;
-	    f2[i__] = 0.;
-	    f3[i__] = 0.;
-	}
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			z1[i__] = 0.;
+			z2[i__] = 0.;
+			z3[i__] = 0.;
+			f1[i__] = 0.;
+			f2[i__] = 0.;
+			f3[i__] = 0.;
+		}
     } else {
-	c3q = *h__ / hold;
-	c1q = c1 * c3q;
-	c2q = c2 * c3q;
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    ak1 = cont[i__ + *n];
-	    ak2 = cont[i__ + n2];
-	    ak3 = cont[i__ + n3];
-	    z1i = c1q * (ak1 + (c1q - conra5_1.c2m1) * (ak2 + (c1q - 
-		    conra5_1.c1m1) * ak3));
-	    z2i = c2q * (ak1 + (c2q - conra5_1.c2m1) * (ak2 + (c2q - 
-		    conra5_1.c1m1) * ak3));
-	    z3i = c3q * (ak1 + (c3q - conra5_1.c2m1) * (ak2 + (c3q - 
-		    conra5_1.c1m1) * ak3));
-	    z1[i__] = z1i;
-	    z2[i__] = z2i;
-	    z3[i__] = z3i;
-	    f1[i__] = ti11 * z1i + ti12 * z2i + ti13 * z3i;
-	    f2[i__] = ti21 * z1i + ti22 * z2i + ti23 * z3i;
-	    f3[i__] = ti31 * z1i + ti32 * z2i + ti33 * z3i;
-	}
+		c3q = *h__ / hold;
+		c1q = c1 * c3q;
+		c2q = c2 * c3q;
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			ak1 = cont[i__ + *n];
+			ak2 = cont[i__ + n2];
+			ak3 = cont[i__ + n3];
+			z1i = c1q * (ak1 + (c1q - conra5_1.c2m1) * (ak2 + (c1q - 
+				conra5_1.c1m1) * ak3));
+			z2i = c2q * (ak1 + (c2q - conra5_1.c2m1) * (ak2 + (c2q - 
+				conra5_1.c1m1) * ak3));
+			z3i = c3q * (ak1 + (c3q - conra5_1.c2m1) * (ak2 + (c3q - 
+				conra5_1.c1m1) * ak3));
+			z1[i__] = z1i;
+			z2[i__] = z2i;
+			z3[i__] = z3i;
+			f1[i__] = ti11 * z1i + ti12 * z2i + ti13 * z3i;
+			f2[i__] = ti21 * z1i + ti22 * z2i + ti23 * z3i;
+			f3[i__] = ti31 * z1i + ti32 * z2i + ti33 * z3i;
+		}
     }
-/* *** *** *** *** *** *** *** */
-/*  LOOP FOR THE SIMPLIFIED NEWTON ITERATION */
-/* *** *** *** *** *** *** *** */
+	/* *** *** *** *** *** *** *** */
+	/*  LOOP FOR THE SIMPLIFIED NEWTON ITERATION */
+	/* *** *** *** *** *** *** *** */
     newt = 0;
     d__1 = max(faccon,*uround);
     faccon = pow(d__1, c_b114);
     theta = abs(*thet);
 L40:
     if (newt >= *nit) {
-	goto L78;
+		goto L78;
     }
-/* ---     COMPUTE THE RIGHT-HAND SIDE */
+	/* ---     COMPUTE THE RIGHT-HAND SIDE */
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	cont[i__] = y[i__] + z1[i__];
+		cont[i__] = y[i__] + z1[i__];
     }
     d__1 = *x + c1 * *h__;
     (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
-	goto L79;
+		goto L79;
     }
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	cont[i__] = y[i__] + z2[i__];
+		cont[i__] = y[i__] + z2[i__];
     }
     d__1 = *x + c2 * *h__;
     (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
-	goto L79;
+		goto L79;
     }
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	cont[i__] = y[i__] + z3[i__];
+		cont[i__] = y[i__] + z3[i__];
     }
     (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
-	goto L79;
+		goto L79;
     }
 /* ---     SOLVE THE LINEAR SYSTEMS */
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	a1 = z1[i__];
-	a2 = z2[i__];
-	a3 = z3[i__];
-	z1[i__] = ti11 * a1 + ti12 * a2 + ti13 * a3;
-	z2[i__] = ti21 * a1 + ti22 * a2 + ti23 * a3;
-	z3[i__] = ti31 * a1 + ti32 * a2 + ti33 * a3;
+		a1 = z1[i__];
+		a2 = z2[i__];
+		a3 = z3[i__];
+		z1[i__] = ti11 * a1 + ti12 * a2 + ti13 * a3;
+		z2[i__] = ti21 * a1 + ti22 * a2 + ti23 * a3;
+		z3[i__] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
     slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[
@@ -1360,228 +1354,227 @@ L40:
     dyno = 0.;
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	denom = scal[i__];
-/* Computing 2nd power */
-	d__1 = z1[i__] / denom;
-/* Computing 2nd power */
-	d__2 = z2[i__] / denom;
-/* Computing 2nd power */
-	d__3 = z3[i__] / denom;
-	dyno = dyno + d__1 * d__1 + d__2 * d__2 + d__3 * d__3;
+		denom = scal[i__];
+		/* Computing 2nd power */
+		d__1 = z1[i__] / denom;
+		/* Computing 2nd power */
+		d__2 = z2[i__] / denom;
+		/* Computing 2nd power */
+		d__3 = z3[i__] / denom;
+		dyno = dyno + d__1 * d__1 + d__2 * d__2 + d__3 * d__3;
     }
     dyno = sqrt(dyno / n3);
-/* ---     BAD CONVERGENCE OR NUMBER OF ITERATIONS TO LARGE */
+	/* ---     BAD CONVERGENCE OR NUMBER OF ITERATIONS TO LARGE */
     if (newt > 1 && newt < *nit) {
-	thq = dyno / dynold;
-	if (newt == 2) {
-	    theta = thq;
-	} else {
-	    theta = sqrt(thq * thqold);
-	}
-	thqold = thq;
-	if (theta < .99) {
-	    faccon = theta / (1. - theta);
-	    i__1 = *nit - 1 - newt;
-	    dyth = faccon * dyno * pow(theta, i__1) / *fnewt;
-	    if (dyth >= 1.) {
-/* Computing MAX */
-		d__1 = 1e-4, d__2 = min(20.,dyth);
-		qnewt = max(d__1,d__2);
-		d__1 = -1. / (*nit + 4. - 1 - newt);
-		hhfac = pow(qnewt, d__1) * .8;
-		*h__ = hhfac * *h__;
-		reject = TRUE_;
-		last = FALSE_;
-		if (caljac) {
-		    goto L20;
+		thq = dyno / dynold;
+		if (newt == 2) {
+			theta = thq;
+		} else {
+			theta = sqrt(thq * thqold);
 		}
-		goto L10;
-	    }
-	} else {
-	    goto L78;
-	}
+		thqold = thq;
+		if (theta < .99) {
+			faccon = theta / (1. - theta);
+			i__1 = *nit - 1 - newt;
+			dyth = faccon * dyno * pow(theta, i__1) / *fnewt;
+			if (dyth >= 1.) {
+				/* Computing MAX */
+				d__1 = 1e-4, d__2 = min(20.,dyth);
+				qnewt = max(d__1,d__2);
+				d__1 = -1. / (*nit + 4. - 1 - newt);
+				hhfac = pow(qnewt, d__1) * .8;
+				*h__ = hhfac * *h__;
+				reject = TRUE_;
+				last = FALSE_;
+				if (caljac) {
+					goto L20;
+				}
+				goto L10;
+			}
+		} else {
+			goto L78;
+		}
     }
     dynold = max(dyno,*uround);
     i__1 = *n;
     for (i__ = 1; i__ <= i__1; ++i__) {
-	f1i = f1[i__] + z1[i__];
-	f2i = f2[i__] + z2[i__];
-	f3i = f3[i__] + z3[i__];
-	f1[i__] = f1i;
-	f2[i__] = f2i;
-	f3[i__] = f3i;
-	z1[i__] = t11 * f1i + t12 * f2i + t13 * f3i;
-	z2[i__] = t21 * f1i + t22 * f2i + t23 * f3i;
-	z3[i__] = t31 * f1i + f2i;
+		f1i = f1[i__] + z1[i__];
+		f2i = f2[i__] + z2[i__];
+		f3i = f3[i__] + z3[i__];
+		f1[i__] = f1i;
+		f2[i__] = f2i;
+		f3[i__] = f3i;
+		z1[i__] = t11 * f1i + t12 * f2i + t13 * f3i;
+		z2[i__] = t21 * f1i + t22 * f2i + t23 * f3i;
+		z3[i__] = t31 * f1i + f2i;
     }
     if (faccon * dyno > *fnewt) {
-	goto L40;
+		goto L40;
     }
-/* --- ERROR ESTIMATION */
+	/* --- ERROR ESTIMATION */
     estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
 	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
 	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
 	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[
 	    1]);
-/* --- COMPUTATION OF HNEW */
-/* --- WE REQUIRE .2<=HNEW/H<=8. */
-/* Computing MIN */
+	/* --- COMPUTATION OF HNEW */
+	/* --- WE REQUIRE .2<=HNEW/H<=8. */
+	/* Computing MIN */
     d__1 = *safe, d__2 = cfac / (newt + (*nit << 1));
     fac = min(d__1,d__2);
-/* Computing MAX */
-/* Computing MIN */
+	/* Computing MAX */
+	/* Computing MIN */
     d__3 = *facl, d__4 = pow(err, c_b116) / fac;
     d__1 = *facr, d__2 = min(d__3,d__4);
     quot = max(d__1,d__2);
     hnew = *h__ / quot;
-/* *** *** *** *** *** *** *** */
-/*  IS THE ERROR SMALL ENOUGH ? */
-/* *** *** *** *** *** *** *** */
+	/* *** *** *** *** *** *** *** */
+	/*  IS THE ERROR SMALL ENOUGH ? */
+	/* *** *** *** *** *** *** *** */
     if (err < 1.) {
-/* --- STEP IS ACCEPTED */
-	first = FALSE_;
-	++(*naccpt);
-	if (*pred) {
-/*       --- PREDICTIVE CONTROLLER OF GUSTAFSSON */
-	    if (*naccpt > 1) {
-/* Computing 2nd power */
-		d__2 = err;
-		d__1 = d__2 * d__2 / erracc;
-		facgus = hacc / *h__ * pow(d__1, c_b116) / *safe;
-/* Computing MAX */
-		d__1 = *facr, d__2 = min(*facl,facgus);
-		facgus = max(d__1,d__2);
-		quot = max(quot,facgus);
-		hnew = *h__ / quot;
-	    }
-	    hacc = *h__;
-	    erracc = max(.01,err);
-	}
-	xold = *x;
-	hold = *h__;
-	*x = xph;
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    y[i__] += z3[i__];
-	    z2i = z2[i__];
-	    z1i = z1[i__];
-	    cont[i__ + *n] = (z2i - z3[i__]) / conra5_1.c2m1;
-	    ak = (z1i - z2i) / c1mc2;
-	    acont3 = z1i / c1;
-	    acont3 = (ak - acont3) / c2;
-	    cont[i__ + n2] = (ak - cont[i__ + *n]) / conra5_1.c1m1;
-	    cont[i__ + n3] = cont[i__ + n2] - acont3;
-	}
-	if (*itol == 0) {
-	    i__1 = *n;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
-	    }
-	} else {
-	    i__1 = *n;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1))
-			;
-	    }
-	}
-	if (*iout != 0) {
-	    nrsol = *naccpt + 1;
-	    conra5_1.xsol = *x;
-	    xosol = xold;
-	    i__1 = *n;
-	    for (i__ = 1; i__ <= i__1; ++i__) {
-		cont[i__] = y[i__];
-	    }
-	    nsolu = *n;
-	    conra5_1.hsol = hold;
-	    (*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[
-		    1], &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
-	    if (irtrn < 0) {
-		goto L179;
-	    }
-	}
-	caljac = FALSE_;
-	if (last) {
-	    *h__ = hopt;
-	    *idid = 1;
-	    return 0;
-	}
-	(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
-	++(*nfcn);
-/* Computing MIN */
-	d__1 = abs(hnew);
-	hnew = posneg * min(d__1,hmaxn);
-	hopt = hnew;
-	hopt = min(*h__,hnew);
-	if (reject) {
-/* Computing MIN */
-	    d__1 = abs(hnew), d__2 = abs(*h__);
-	    hnew = posneg * min(d__1,d__2);
-	}
-	reject = FALSE_;
-	if ((*x + hnew / *quot1 - *xend) * posneg >= 0.) {
-	    *h__ = *xend - *x;
-	    last = TRUE_;
-	} else {
-	    qt = hnew / *h__;
-	    hhfac = *h__;
-	    if (theta <= *thet && qt >= *quot1 && qt <= *quot2) {
-		goto L30;
-	    }
-	    *h__ = hnew;
-	}
-	hhfac = *h__;
-	if (theta <= *thet) {
-	    goto L20;
-	}
-	goto L10;
+	/* --- STEP IS ACCEPTED */
+		first = FALSE_;
+		++(*naccpt);
+		if (*pred) {
+			/*       --- PREDICTIVE CONTROLLER OF GUSTAFSSON */
+			if (*naccpt > 1) {
+				/* Computing 2nd power */
+				d__2 = err;
+				d__1 = d__2 * d__2 / erracc;
+				facgus = hacc / *h__ * pow(d__1, c_b116) / *safe;
+				/* Computing MAX */
+				d__1 = *facr, d__2 = min(*facl,facgus);
+				facgus = max(d__1,d__2);
+				quot = max(quot,facgus);
+				hnew = *h__ / quot;
+			}
+			hacc = *h__;
+			erracc = max(.01,err);
+		}
+		xold = *x;
+		hold = *h__;
+		*x = xph;
+		i__1 = *n;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			y[i__] += z3[i__];
+			z2i = z2[i__];
+			z1i = z1[i__];
+			cont[i__ + *n] = (z2i - z3[i__]) / conra5_1.c2m1;
+			ak = (z1i - z2i) / c1mc2;
+			acont3 = z1i / c1;
+			acont3 = (ak - acont3) / c2;
+			cont[i__ + n2] = (ak - cont[i__ + *n]) / conra5_1.c1m1;
+			cont[i__ + n3] = cont[i__ + n2] - acont3;
+		}
+		if (*itol == 0) {
+			i__1 = *n;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
+			}
+		} else {
+			i__1 = *n;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1));
+			}
+		}
+		if (*iout != 0) {
+			nrsol = *naccpt + 1;
+			conra5_1.xsol = *x;
+			xosol = xold;
+			i__1 = *n;
+			for (i__ = 1; i__ <= i__1; ++i__) {
+				cont[i__] = y[i__];
+			}
+			nsolu = *n;
+			conra5_1.hsol = hold;
+			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[
+				1], &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
+			if (irtrn < 0) {
+				goto L179;
+			}
+		}
+		caljac = FALSE_;
+		if (last) {
+			*h__ = hopt;
+			*idid = 1;
+			return 0;
+		}
+		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+		++(*nfcn);
+		/* Computing MIN */
+		d__1 = abs(hnew);
+		hnew = posneg * min(d__1,hmaxn);
+		hopt = hnew;
+		hopt = min(*h__,hnew);
+		if (reject) {
+		/* Computing MIN */
+			d__1 = abs(hnew), d__2 = abs(*h__);
+			hnew = posneg * min(d__1,d__2);
+		}
+		reject = FALSE_;
+		if ((*x + hnew / *quot1 - *xend) * posneg >= 0.) {
+			*h__ = *xend - *x;
+			last = TRUE_;
+		} else {
+			qt = hnew / *h__;
+			hhfac = *h__;
+			if (theta <= *thet && qt >= *quot1 && qt <= *quot2) {
+				goto L30;
+			}
+			*h__ = hnew;
+		}
+		hhfac = *h__;
+		if (theta <= *thet) {
+			goto L20;
+		}
+		goto L10;
     } else {
-/* --- STEP IS REJECTED */
-	reject = TRUE_;
-	last = FALSE_;
-	if (first) {
-	    *h__ *= .1;
-	    hhfac = .1;
-	} else {
-	    hhfac = hnew / *h__;
-	    *h__ = hnew;
-	}
-	if (*naccpt >= 1) {
-	    ++(*nrejct);
-	}
-	if (caljac) {
-	    goto L20;
-	}
-	goto L10;
+		/* --- STEP IS REJECTED */
+		reject = TRUE_;
+		last = FALSE_;
+		if (first) {
+			*h__ *= .1;
+			hhfac = .1;
+		} else {
+			hhfac = hnew / *h__;
+			*h__ = hnew;
+		}
+		if (*naccpt >= 1) {
+			++(*nrejct);
+		}
+		if (caljac) {
+			goto L20;
+		}
+		goto L10;
     }
 /* --- UNEXPECTED STEP-REJECTION */
 L78:
     if (ier != 0) {
-	++nsing;
-	if (nsing >= 5) {
-	    goto L176;
-	}
+		++nsing;
+		if (nsing >= 5) {
+			goto L176;
+		}
     }
     *h__ *= .5;
     hhfac = .5;
     reject = TRUE_;
     last = FALSE_;
     if (caljac) {
-	goto L20;
+		goto L20;
     }
     goto L10;
 L79:
     ++nunexpect;
     if (nunexpect >= 10) {
-	goto L175;
+		goto L175;
     }
     *h__ *= .5;
     hhfac = .5;
     reject = TRUE_;
     last = FALSE_;
     if (caljac) {
-	goto L20;
+		goto L20;
     }
     goto L10;
 /* --- FAIL EXIT */
@@ -1590,8 +1583,7 @@ L175:
     do_fio(&c__1, (char *)&(*x), (ftnlen)sizeof(doublereal));
     e_wsfe();
     s_wsle(&io___179);
-    do_lio(&c__9, &c__1, " REPEATEDLY UNEXPECTED STEP REJECTIONS", (ftnlen)38)
-	    ;
+    do_lio(&c__9, &c__1, " REPEATEDLY UNEXPECTED STEP REJECTIONS", (ftnlen)38);
     e_wsle();
     *idid = -5;
     return 0;
@@ -1712,62 +1704,62 @@ doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer *
     *ier = 0;
     ip[*n] = 1;
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = k;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
-		    a_dim1], abs(d__2))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m;
-	t = a[m + k * a_dim1];
-	if (m == k) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	a[m + k * a_dim1] = a[k + k * a_dim1];
-	a[k + k * a_dim1] = t;
+		kp1 = k + 1;
+		m = k;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
+				a_dim1], abs(d__2))) {
+			m = i__;
+			}
+	/* L10: */
+		}
+		ip[k] = m;
+		t = a[m + k * a_dim1];
+		if (m == k) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		a[m + k * a_dim1] = a[k + k * a_dim1];
+		a[k + k * a_dim1] = t;
 L20:
-	if (t == 0.) {
-	    goto L80;
-	}
-	t = 1. / t;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-/* L30: */
-	    a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
-	}
-	i__2 = *n;
-	for (j = kp1; j <= i__2; ++j) {
-	    t = a[m + j * a_dim1];
-	    a[m + j * a_dim1] = a[k + j * a_dim1];
-	    a[k + j * a_dim1] = t;
-	    if (t == 0.) {
-		goto L45;
-	    }
-	    i__3 = *n;
-	    for (i__ = kp1; i__ <= i__3; ++i__) {
-/* L40: */
-		a[i__ + j * a_dim1] += a[i__ + k * a_dim1] * t;
-	    }
+		if (t == 0.) {
+			goto L80;
+		}
+		t = 1. / t;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			/* L30: */
+			a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
+		}
+		i__2 = *n;
+		for (j = kp1; j <= i__2; ++j) {
+			t = a[m + j * a_dim1];
+			a[m + j * a_dim1] = a[k + j * a_dim1];
+			a[k + j * a_dim1] = t;
+			if (t == 0.) {
+				goto L45;
+			}
+			i__3 = *n;
+			for (i__ = kp1; i__ <= i__3; ++i__) {
+				/* L40: */
+				a[i__ + j * a_dim1] += a[i__ + k * a_dim1] * t;
+			}
 L45:
-/* L50: */
-	    ;
-	}
-/* L60: */
+	/* L50: */
+			;
+		}
+	/* L60: */
     }
 L70:
     k = *n;
     if (a[*n + *n * a_dim1] == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -1812,35 +1804,35 @@ L80:
 
     /* Function Body */
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = ip[k];
-	t = b[m];
-	b[m] = b[k];
-	b[k] = t;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-/* L10: */
-	    b[i__] += a[i__ + k * a_dim1] * t;
-	}
-/* L20: */
+		kp1 = k + 1;
+		m = ip[k];
+		t = b[m];
+		b[m] = b[k];
+		b[k] = t;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			/* L10: */
+			b[i__] += a[i__ + k * a_dim1] * t;
+		}
+		/* L20: */
     }
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	km1 = *n - kb;
-	k = km1 + 1;
-	b[k] /= a[k + k * a_dim1];
-	t = -b[k];
-	i__2 = km1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L30: */
-	    b[i__] += a[i__ + k * a_dim1] * t;
-	}
-/* L40: */
+		km1 = *n - kb;
+		k = km1 + 1;
+		b[k] /= a[k + k * a_dim1];
+		t = -b[k];
+		i__2 = km1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			/* L30: */
+			b[i__] += a[i__ + k * a_dim1] * t;
+		}
+		/* L40: */
     }
 L50:
     b[1] /= a[a_dim1 + 1];
@@ -1897,65 +1889,65 @@ L50:
     *ier = 0;
     ip[*n] = 1;
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = k;
-/* Computing MIN */
-	i__2 = *n, i__3 = *lb + k;
-	na = min(i__2,i__3);
-	i__2 = na;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
-		    a_dim1], abs(d__2))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m;
-	t = a[m + k * a_dim1];
-	if (m == k) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	a[m + k * a_dim1] = a[k + k * a_dim1];
-	a[k + k * a_dim1] = t;
+		kp1 = k + 1;
+		m = k;
+		/* Computing MIN */
+		i__2 = *n, i__3 = *lb + k;
+		na = min(i__2,i__3);
+		i__2 = na;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
+				a_dim1], abs(d__2))) {
+				m = i__;
+			}
+		/* L10: */
+		}
+		ip[k] = m;
+		t = a[m + k * a_dim1];
+		if (m == k) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		a[m + k * a_dim1] = a[k + k * a_dim1];
+		a[k + k * a_dim1] = t;
 L20:
-	if (t == 0.) {
-	    goto L80;
-	}
-	t = 1. / t;
-	i__2 = na;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-/* L30: */
-	    a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
-	}
-	i__2 = *n;
-	for (j = kp1; j <= i__2; ++j) {
-	    t = a[m + j * a_dim1];
-	    a[m + j * a_dim1] = a[k + j * a_dim1];
-	    a[k + j * a_dim1] = t;
-	    if (t == 0.) {
-		goto L45;
-	    }
-	    i__3 = na;
-	    for (i__ = kp1; i__ <= i__3; ++i__) {
-/* L40: */
-		a[i__ + j * a_dim1] += a[i__ + k * a_dim1] * t;
-	    }
+		if (t == 0.) {
+			goto L80;
+		}
+		t = 1. / t;
+		i__2 = na;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			/* L30: */
+			a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
+		}
+		i__2 = *n;
+		for (j = kp1; j <= i__2; ++j) {
+			t = a[m + j * a_dim1];
+			a[m + j * a_dim1] = a[k + j * a_dim1];
+			a[k + j * a_dim1] = t;
+			if (t == 0.) {
+				goto L45;
+			}
+			i__3 = na;
+			for (i__ = kp1; i__ <= i__3; ++i__) {
+				/* L40: */
+				a[i__ + j * a_dim1] += a[i__ + k * a_dim1] * t;
+			}
 L45:
-/* L50: */
-	    ;
-	}
-/* L60: */
+	/* L50: */
+			;
+		}
+	/* L60: */
     }
 L70:
     k = *n;
     if (a[*n + *n * a_dim1] == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -2001,38 +1993,38 @@ L80:
 
     /* Function Body */
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = ip[k];
-	t = b[m];
-	b[m] = b[k];
-	b[k] = t;
-/* Computing MIN */
-	i__2 = *n, i__3 = *lb + k;
-	na = min(i__2,i__3);
-	i__2 = na;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-/* L10: */
-	    b[i__] += a[i__ + k * a_dim1] * t;
-	}
-/* L20: */
+		kp1 = k + 1;
+		m = ip[k];
+		t = b[m];
+		b[m] = b[k];
+		b[k] = t;
+		/* Computing MIN */
+		i__2 = *n, i__3 = *lb + k;
+		na = min(i__2,i__3);
+		i__2 = na;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			/* L10: */
+			b[i__] += a[i__ + k * a_dim1] * t;
+		}
+		/* L20: */
     }
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	km1 = *n - kb;
-	k = km1 + 1;
-	b[k] /= a[k + k * a_dim1];
-	t = -b[k];
-	i__2 = km1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L30: */
-	    b[i__] += a[i__ + k * a_dim1] * t;
-	}
-/* L40: */
+		km1 = *n - kb;
+		k = km1 + 1;
+		b[k] /= a[k + k * a_dim1];
+		t = -b[k];
+		i__2 = km1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			/* L30: */
+			b[i__] += a[i__ + k * a_dim1] * t;
+		}
+		/* L40: */
     }
 L50:
     b[1] /= a[a_dim1 + 1];
@@ -2093,102 +2085,100 @@ L50:
     *ier = 0;
     ip[*n] = 1;
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = k;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-		    k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-		    abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m;
-	tr = ar[m + k * ar_dim1];
-	ti = ai[m + k * ai_dim1];
-	if (m == k) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	ar[m + k * ar_dim1] = ar[k + k * ar_dim1];
-	ai[m + k * ai_dim1] = ai[k + k * ai_dim1];
-	ar[k + k * ar_dim1] = tr;
-	ai[k + k * ai_dim1] = ti;
+		kp1 = k + 1;
+		m = k;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
+				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
+				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+				m = i__;
+			}
+		/* L10: */
+		}
+		ip[k] = m;
+		tr = ar[m + k * ar_dim1];
+		ti = ai[m + k * ai_dim1];
+		if (m == k) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		ar[m + k * ar_dim1] = ar[k + k * ar_dim1];
+		ai[m + k * ai_dim1] = ai[k + k * ai_dim1];
+		ar[k + k * ar_dim1] = tr;
+		ai[k + k * ai_dim1] = ti;
 L20:
-	if (abs(tr) + abs(ti) == 0.) {
-	    goto L80;
-	}
-	den = tr * tr + ti * ti;
-	tr /= den;
-	ti = -ti / den;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    ar[i__ + k * ar_dim1] = -prodr;
-	    ai[i__ + k * ai_dim1] = -prodi;
-/* L30: */
-	}
-	i__2 = *n;
-	for (j = kp1; j <= i__2; ++j) {
-	    tr = ar[m + j * ar_dim1];
-	    ti = ai[m + j * ai_dim1];
-	    ar[m + j * ar_dim1] = ar[k + j * ar_dim1];
-	    ai[m + j * ai_dim1] = ai[k + j * ai_dim1];
-	    ar[k + j * ar_dim1] = tr;
-	    ai[k + j * ai_dim1] = ti;
-	    if (abs(tr) + abs(ti) == 0.) {
-		goto L48;
-	    }
-	    if (ti == 0.) {
-		i__3 = *n;
-		for (i__ = kp1; i__ <= i__3; ++i__) {
-		    prodr = ar[i__ + k * ar_dim1] * tr;
-		    prodi = ai[i__ + k * ai_dim1] * tr;
-		    ar[i__ + j * ar_dim1] += prodr;
-		    ai[i__ + j * ai_dim1] += prodi;
-/* L40: */
+		if (abs(tr) + abs(ti) == 0.) {
+			goto L80;
 		}
-		goto L48;
-	    }
-	    if (tr == 0.) {
-		i__3 = *n;
-		for (i__ = kp1; i__ <= i__3; ++i__) {
-		    prodr = -ai[i__ + k * ai_dim1] * ti;
-		    prodi = ar[i__ + k * ar_dim1] * ti;
-		    ar[i__ + j * ar_dim1] += prodr;
-		    ai[i__ + j * ai_dim1] += prodi;
-/* L45: */
+		den = tr * tr + ti * ti;
+		tr /= den;
+		ti = -ti / den;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			ar[i__ + k * ar_dim1] = -prodr;
+			ai[i__ + k * ai_dim1] = -prodi;
+		/* L30: */
 		}
-		goto L48;
-	    }
-	    i__3 = *n;
-	    for (i__ = kp1; i__ <= i__3; ++i__) {
-		prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * 
-			ti;
-		prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * 
-			ti;
-		ar[i__ + j * ar_dim1] += prodr;
-		ai[i__ + j * ai_dim1] += prodi;
-/* L47: */
-	    }
+		i__2 = *n;
+		for (j = kp1; j <= i__2; ++j) {
+			tr = ar[m + j * ar_dim1];
+			ti = ai[m + j * ai_dim1];
+			ar[m + j * ar_dim1] = ar[k + j * ar_dim1];
+			ai[m + j * ai_dim1] = ai[k + j * ai_dim1];
+			ar[k + j * ar_dim1] = tr;
+			ai[k + j * ai_dim1] = ti;
+			if (abs(tr) + abs(ti) == 0.) {
+				goto L48;
+			}
+			if (ti == 0.) {
+				i__3 = *n;
+				for (i__ = kp1; i__ <= i__3; ++i__) {
+					prodr = ar[i__ + k * ar_dim1] * tr;
+					prodi = ai[i__ + k * ai_dim1] * tr;
+					ar[i__ + j * ar_dim1] += prodr;
+					ai[i__ + j * ai_dim1] += prodi;
+				/* L40: */
+				}
+				goto L48;
+			}
+			if (tr == 0.) {
+				i__3 = *n;
+				for (i__ = kp1; i__ <= i__3; ++i__) {
+					prodr = -ai[i__ + k * ai_dim1] * ti;
+					prodi = ar[i__ + k * ar_dim1] * ti;
+					ar[i__ + j * ar_dim1] += prodr;
+					ai[i__ + j * ai_dim1] += prodi;
+					/* L45: */
+				}
+				goto L48;
+			}
+			i__3 = *n;
+			for (i__ = kp1; i__ <= i__3; ++i__) {
+				prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+				prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+				ar[i__ + j * ar_dim1] += prodr;
+				ai[i__ + j * ai_dim1] += prodi;
+				/* L47: */	
+			}
 L48:
-/* L50: */
-	    ;
-	}
-/* L60: */
+	/* L50: */
+			;
+		}
+	/* L60: */
     }
 L70:
     k = *n;
     if ((d__1 = ar[*n + *n * ar_dim1], abs(d__1)) + (d__2 = ai[*n + *n * 
 	    ai_dim1], abs(d__2)) == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -2238,54 +2228,53 @@ L80:
 
     /* Function Body */
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = ip[k];
-	tr = br[m];
-	ti = bi[m];
-	br[m] = br[k];
-	bi[m] = bi[k];
-	br[k] = tr;
-	bi[k] = ti;
-	i__2 = *n;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[i__] += prodr;
-	    bi[i__] += prodi;
-/* L10: */
-	}
-/* L20: */
+		kp1 = k + 1;
+		m = ip[k];
+		tr = br[m];
+		ti = bi[m];
+		br[m] = br[k];
+		bi[m] = bi[k];
+		br[k] = tr;
+		bi[k] = ti;
+		i__2 = *n;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[i__] += prodr;
+			bi[i__] += prodi;
+			/* L10: */
+		}
+		/* L20: */
     }
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	km1 = *n - kb;
-	k = km1 + 1;
-	den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
-		* ai[k + k * ai_dim1];
-	prodr = br[k] * ar[k + k * ar_dim1] + bi[k] * ai[k + k * ai_dim1];
-	prodi = bi[k] * ar[k + k * ar_dim1] - br[k] * ai[k + k * ai_dim1];
-	br[k] = prodr / den;
-	bi[k] = prodi / den;
-	tr = -br[k];
-	ti = -bi[k];
-	i__2 = km1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[i__] += prodr;
-	    bi[i__] += prodi;
-/* L30: */
-	}
-/* L40: */
+		km1 = *n - kb;
+		k = km1 + 1;
+		den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
+			* ai[k + k * ai_dim1];
+		prodr = br[k] * ar[k + k * ar_dim1] + bi[k] * ai[k + k * ai_dim1];
+		prodi = bi[k] * ar[k + k * ar_dim1] - br[k] * ai[k + k * ai_dim1];
+		br[k] = prodr / den;
+		bi[k] = prodi / den;
+		tr = -br[k];
+		ti = -bi[k];
+		i__2 = km1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[i__] += prodr;
+			bi[i__] += prodi;
+			/* L30: */
+		}
+		/* L40: */
     }
 L50:
-    den = ar[ar_dim1 + 1] * ar[ar_dim1 + 1] + ai[ai_dim1 + 1] * ai[ai_dim1 + 
-	    1];
+    den = ar[ar_dim1 + 1] * ar[ar_dim1 + 1] + ai[ai_dim1 + 1] * ai[ai_dim1 + 1];
     prodr = br[1] * ar[ar_dim1 + 1] + bi[1] * ai[ai_dim1 + 1];
     prodi = bi[1] * ar[ar_dim1 + 1] - br[1] * ai[ai_dim1 + 1];
     br[1] = prodr / den;
@@ -2349,108 +2338,106 @@ L50:
     *ier = 0;
     ip[*n] = 1;
     if (*lb == 0) {
-	goto L70;
+		goto L70;
     }
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     nm1 = *n - 1;
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = k;
-/* Computing MIN */
-	i__2 = *n, i__3 = *lb + k;
-	na = min(i__2,i__3);
-	i__2 = na;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-		    k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-		    abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m;
-	tr = ar[m + k * ar_dim1];
-	ti = ai[m + k * ai_dim1];
-	if (m == k) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	ar[m + k * ar_dim1] = ar[k + k * ar_dim1];
-	ai[m + k * ai_dim1] = ai[k + k * ai_dim1];
-	ar[k + k * ar_dim1] = tr;
-	ai[k + k * ai_dim1] = ti;
+		kp1 = k + 1;
+		m = k;
+		/* Computing MIN */
+		i__2 = *n, i__3 = *lb + k;
+		na = min(i__2,i__3);
+		i__2 = na;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
+				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
+				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+				m = i__;
+			}
+			/* L10: */
+		}
+		ip[k] = m;
+		tr = ar[m + k * ar_dim1];
+		ti = ai[m + k * ai_dim1];
+		if (m == k) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		ar[m + k * ar_dim1] = ar[k + k * ar_dim1];
+		ai[m + k * ai_dim1] = ai[k + k * ai_dim1];
+		ar[k + k * ar_dim1] = tr;
+		ai[k + k * ai_dim1] = ti;
 L20:
-	if (abs(tr) + abs(ti) == 0.) {
-	    goto L80;
-	}
-	den = tr * tr + ti * ti;
-	tr /= den;
-	ti = -ti / den;
-	i__2 = na;
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    ar[i__ + k * ar_dim1] = -prodr;
-	    ai[i__ + k * ai_dim1] = -prodi;
-/* L30: */
-	}
-	i__2 = *n;
-	for (j = kp1; j <= i__2; ++j) {
-	    tr = ar[m + j * ar_dim1];
-	    ti = ai[m + j * ai_dim1];
-	    ar[m + j * ar_dim1] = ar[k + j * ar_dim1];
-	    ai[m + j * ai_dim1] = ai[k + j * ai_dim1];
-	    ar[k + j * ar_dim1] = tr;
-	    ai[k + j * ai_dim1] = ti;
-	    if (abs(tr) + abs(ti) == 0.) {
-		goto L48;
-	    }
-	    if (ti == 0.) {
-		i__3 = na;
-		for (i__ = kp1; i__ <= i__3; ++i__) {
-		    prodr = ar[i__ + k * ar_dim1] * tr;
-		    prodi = ai[i__ + k * ai_dim1] * tr;
-		    ar[i__ + j * ar_dim1] += prodr;
-		    ai[i__ + j * ai_dim1] += prodi;
-/* L40: */
+		if (abs(tr) + abs(ti) == 0.) {
+			goto L80;
 		}
-		goto L48;
-	    }
-	    if (tr == 0.) {
-		i__3 = na;
-		for (i__ = kp1; i__ <= i__3; ++i__) {
-		    prodr = -ai[i__ + k * ai_dim1] * ti;
-		    prodi = ar[i__ + k * ar_dim1] * ti;
-		    ar[i__ + j * ar_dim1] += prodr;
-		    ai[i__ + j * ai_dim1] += prodi;
-/* L45: */
+		den = tr * tr + ti * ti;
+		tr /= den;
+		ti = -ti / den;
+		i__2 = na;
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			ar[i__ + k * ar_dim1] = -prodr;
+			ai[i__ + k * ai_dim1] = -prodi;
+			/* L30: */
 		}
-		goto L48;
-	    }
-	    i__3 = na;
-	    for (i__ = kp1; i__ <= i__3; ++i__) {
-		prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * 
-			ti;
-		prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * 
-			ti;
-		ar[i__ + j * ar_dim1] += prodr;
-		ai[i__ + j * ai_dim1] += prodi;
-/* L47: */
-	    }
+		i__2 = *n;
+		for (j = kp1; j <= i__2; ++j) {
+			tr = ar[m + j * ar_dim1];
+			ti = ai[m + j * ai_dim1];
+			ar[m + j * ar_dim1] = ar[k + j * ar_dim1];
+			ai[m + j * ai_dim1] = ai[k + j * ai_dim1];
+			ar[k + j * ar_dim1] = tr;
+			ai[k + j * ai_dim1] = ti;
+			if (abs(tr) + abs(ti) == 0.) {
+				goto L48;
+			}
+			if (ti == 0.) {
+				i__3 = na;
+				for (i__ = kp1; i__ <= i__3; ++i__) {
+					prodr = ar[i__ + k * ar_dim1] * tr;
+					prodi = ai[i__ + k * ai_dim1] * tr;
+					ar[i__ + j * ar_dim1] += prodr;
+					ai[i__ + j * ai_dim1] += prodi;
+					/* L40: */
+				}
+				goto L48;
+			}
+			if (tr == 0.) {
+				i__3 = na;
+				for (i__ = kp1; i__ <= i__3; ++i__) {
+					prodr = -ai[i__ + k * ai_dim1] * ti;
+					prodi = ar[i__ + k * ar_dim1] * ti;
+					ar[i__ + j * ar_dim1] += prodr;
+					ai[i__ + j * ai_dim1] += prodi;
+					/* L45: */
+				}
+				goto L48;
+			}
+			i__3 = na;
+			for (i__ = kp1; i__ <= i__3; ++i__) {
+				prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+				prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+				ar[i__ + j * ar_dim1] += prodr;
+				ai[i__ + j * ai_dim1] += prodi;
+				/* L47: */
+			}
 L48:
-/* L50: */
-	    ;
-	}
-/* L60: */
+	/* L50: */
+			;
+		}
+	/* L60: */
     }
 L70:
     k = *n;
     if ((d__1 = ar[*n + *n * ar_dim1], abs(d__1)) + (d__2 = ai[*n + *n * 
 	    ai_dim1], abs(d__2)) == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -2502,60 +2489,59 @@ L80:
 
     /* Function Body */
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     nm1 = *n - 1;
     if (*lb == 0) {
-	goto L25;
+		goto L25;
     }
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	kp1 = k + 1;
-	m = ip[k];
-	tr = br[m];
-	ti = bi[m];
-	br[m] = br[k];
-	bi[m] = bi[k];
-	br[k] = tr;
-	bi[k] = ti;
-/* Computing MIN */
-	i__3 = *n, i__4 = *lb + k;
-	i__2 = min(i__3,i__4);
-	for (i__ = kp1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[i__] += prodr;
-	    bi[i__] += prodi;
-/* L10: */
-	}
-/* L20: */
+		kp1 = k + 1;
+		m = ip[k];
+		tr = br[m];
+		ti = bi[m];
+		br[m] = br[k];
+		bi[m] = bi[k];
+		br[k] = tr;
+		bi[k] = ti;
+		/* Computing MIN */
+		i__3 = *n, i__4 = *lb + k;
+		i__2 = min(i__3,i__4);
+		for (i__ = kp1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[i__] += prodr;
+			bi[i__] += prodi;
+			/* L10: */
+		}
+		/* L20: */
     }
 L25:
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	km1 = *n - kb;
-	k = km1 + 1;
-	den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
-		* ai[k + k * ai_dim1];
-	prodr = br[k] * ar[k + k * ar_dim1] + bi[k] * ai[k + k * ai_dim1];
-	prodi = bi[k] * ar[k + k * ar_dim1] - br[k] * ai[k + k * ai_dim1];
-	br[k] = prodr / den;
-	bi[k] = prodi / den;
-	tr = -br[k];
-	ti = -bi[k];
-	i__2 = km1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[i__] += prodr;
-	    bi[i__] += prodi;
-/* L30: */
-	}
-/* L40: */
+		km1 = *n - kb;
+		k = km1 + 1;
+		den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
+			* ai[k + k * ai_dim1];
+		prodr = br[k] * ar[k + k * ar_dim1] + bi[k] * ai[k + k * ai_dim1];
+		prodi = bi[k] * ar[k + k * ar_dim1] - br[k] * ai[k + k * ai_dim1];
+		br[k] = prodr / den;
+		bi[k] = prodi / den;
+		tr = -br[k];
+		ti = -bi[k];
+		i__2 = km1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[i__] += prodr;
+			bi[i__] += prodi;
+			/* L30: */
+		}
+		/* L40: */
     }
 L50:
-    den = ar[ar_dim1 + 1] * ar[ar_dim1 + 1] + ai[ai_dim1 + 1] * ai[ai_dim1 + 
-	    1];
+    den = ar[ar_dim1 + 1] * ar[ar_dim1 + 1] + ai[ai_dim1 + 1] * ai[ai_dim1 + 1];
     prodr = br[1] * ar[ar_dim1 + 1] + bi[1] * ai[ai_dim1 + 1];
     prodi = bi[1] * ar[ar_dim1 + 1] - br[1] * ai[ai_dim1 + 1];
     br[1] = prodr / den;
@@ -2618,99 +2604,99 @@ L50:
     md1 = md + 1;
     ju = 0;
     if (*ml == 0) {
-	goto L70;
+		goto L70;
     }
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     if (*n < *mu + 2) {
-	goto L7;
+		goto L7;
     }
     i__1 = *n;
     for (j = *mu + 2; j <= i__1; ++j) {
-	i__2 = *ml;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-/* L5: */
-	    a[i__ + j * a_dim1] = 0.;
-	}
+		i__2 = *ml;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			/* L5: */
+			a[i__ + j * a_dim1] = 0.;
+		}
     }
 L7:
     nm1 = *n - 1;
     i__2 = nm1;
     for (k = 1; k <= i__2; ++k) {
-	kp1 = k + 1;
-	m = md;
-/* Computing MIN */
-	i__1 = *ml, i__3 = *n - k;
-	mdl = min(i__1,i__3) + md;
-	i__1 = mdl;
-	for (i__ = md1; i__ <= i__1; ++i__) {
-	    if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
-		    a_dim1], abs(d__2))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m + k - md;
-	t = a[m + k * a_dim1];
-	if (m == md) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	a[m + k * a_dim1] = a[md + k * a_dim1];
-	a[md + k * a_dim1] = t;
+		kp1 = k + 1;
+		m = md;
+		/* Computing MIN */
+		i__1 = *ml, i__3 = *n - k;
+		mdl = min(i__1,i__3) + md;
+		i__1 = mdl;
+		for (i__ = md1; i__ <= i__1; ++i__) {
+			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
+				a_dim1], abs(d__2))) {
+				m = i__;
+			}
+		/* L10: */
+		}
+		ip[k] = m + k - md;
+		t = a[m + k * a_dim1];
+		if (m == md) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		a[m + k * a_dim1] = a[md + k * a_dim1];
+		a[md + k * a_dim1] = t;
 L20:
-	if (t == 0.) {
-	    goto L80;
-	}
-	t = 1. / t;
-	i__1 = mdl;
-	for (i__ = md1; i__ <= i__1; ++i__) {
-/* L30: */
-	    a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
-	}
-/* Computing MIN */
-/* Computing MAX */
-	i__3 = ju, i__4 = *mu + ip[k];
-	i__1 = max(i__3,i__4);
-	ju = min(i__1,*n);
-	mm = md;
-	if (ju < kp1) {
-	    goto L55;
-	}
-	i__1 = ju;
-	for (j = kp1; j <= i__1; ++j) {
-	    --m;
-	    --mm;
-	    t = a[m + j * a_dim1];
-	    if (m == mm) {
-		goto L35;
-	    }
-	    a[m + j * a_dim1] = a[mm + j * a_dim1];
-	    a[mm + j * a_dim1] = t;
+		if (t == 0.) {
+			goto L80;
+		}
+		t = 1. / t;
+		i__1 = mdl;
+		for (i__ = md1; i__ <= i__1; ++i__) {
+			/* L30: */
+			a[i__ + k * a_dim1] = -a[i__ + k * a_dim1] * t;
+		}
+		/* Computing MIN */
+		/* Computing MAX */
+		i__3 = ju, i__4 = *mu + ip[k];
+		i__1 = max(i__3,i__4);
+		ju = min(i__1,*n);
+		mm = md;
+		if (ju < kp1) {
+			goto L55;
+		}
+		i__1 = ju;
+		for (j = kp1; j <= i__1; ++j) {
+			--m;
+			--mm;
+			t = a[m + j * a_dim1];
+			if (m == mm) {
+				goto L35;
+			}
+			a[m + j * a_dim1] = a[mm + j * a_dim1];
+			a[mm + j * a_dim1] = t;
 L35:
-	    if (t == 0.) {
-		goto L45;
-	    }
-	    jk = j - k;
-	    i__3 = mdl;
-	    for (i__ = md1; i__ <= i__3; ++i__) {
-		ijk = i__ - jk;
-/* L40: */
-		a[ijk + j * a_dim1] += a[i__ + k * a_dim1] * t;
-	    }
+			if (t == 0.) {
+				goto L45;
+			}
+			jk = j - k;
+			i__3 = mdl;
+			for (i__ = md1; i__ <= i__3; ++i__) {
+				ijk = i__ - jk;
+				/* L40: */
+				a[ijk + j * a_dim1] += a[i__ + k * a_dim1] * t;
+			}
 L45:
-/* L50: */
-	    ;
-	}
+	/* L50: */
+			;
+		}
 L55:
-/* L60: */
-	;
+	/* L60: */
+		;
     }
 L70:
     k = *n;
     if (a[md + *n * a_dim1] == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -2760,45 +2746,45 @@ L80:
     mdm = md - 1;
     nm1 = *n - 1;
     if (*ml == 0) {
-	goto L25;
+		goto L25;
     }
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	m = ip[k];
-	t = b[m];
-	b[m] = b[k];
-	b[k] = t;
-/* Computing MIN */
-	i__2 = *ml, i__3 = *n - k;
-	mdl = min(i__2,i__3) + md;
-	i__2 = mdl;
-	for (i__ = md1; i__ <= i__2; ++i__) {
-	    imd = i__ + k - md;
-/* L10: */
-	    b[imd] += a[i__ + k * a_dim1] * t;
-	}
-/* L20: */
+		m = ip[k];
+		t = b[m];
+		b[m] = b[k];
+		b[k] = t;
+		/* Computing MIN */
+		i__2 = *ml, i__3 = *n - k;
+		mdl = min(i__2,i__3) + md;
+		i__2 = mdl;
+		for (i__ = md1; i__ <= i__2; ++i__) {
+			imd = i__ + k - md;
+			/* L10: */
+			b[imd] += a[i__ + k * a_dim1] * t;
+		}
+		/* L20: */
     }
 L25:
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	k = *n + 1 - kb;
-	b[k] /= a[md + k * a_dim1];
-	t = -b[k];
-	kmd = md - k;
-/* Computing MAX */
-	i__2 = 1, i__3 = kmd + 1;
-	lm = max(i__2,i__3);
-	i__2 = mdm;
-	for (i__ = lm; i__ <= i__2; ++i__) {
-	    imd = i__ - kmd;
-/* L30: */
-	    b[imd] += a[i__ + k * a_dim1] * t;
-	}
-/* L40: */
+		k = *n + 1 - kb;
+		b[k] /= a[md + k * a_dim1];
+		t = -b[k];
+		kmd = md - k;
+		/* Computing MAX */
+		i__2 = 1, i__3 = kmd + 1;
+		lm = max(i__2,i__3);
+		i__2 = mdm;
+		for (i__ = lm; i__ <= i__2; ++i__) {
+			imd = i__ - kmd;
+			/* L30: */
+			b[imd] += a[i__ + k * a_dim1] * t;
+		}
+		/* L40: */
     }
 L50:
     b[1] /= a[md + a_dim1];
@@ -2869,142 +2855,140 @@ L50:
     md1 = md + 1;
     ju = 0;
     if (*ml == 0) {
-	goto L70;
+		goto L70;
     }
     if (*n == 1) {
-	goto L70;
+		goto L70;
     }
     if (*n < *mu + 2) {
-	goto L7;
+		goto L7;
     }
     i__1 = *n;
     for (j = *mu + 2; j <= i__1; ++j) {
-	i__2 = *ml;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    ar[i__ + j * ar_dim1] = 0.;
-	    ai[i__ + j * ai_dim1] = 0.;
-/* L5: */
-	}
+		i__2 = *ml;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			ar[i__ + j * ar_dim1] = 0.;
+			ai[i__ + j * ai_dim1] = 0.;
+			/* L5: */
+		}
     }
 L7:
     nm1 = *n - 1;
     i__2 = nm1;
     for (k = 1; k <= i__2; ++k) {
-	kp1 = k + 1;
-	m = md;
-/* Computing MIN */
-	i__1 = *ml, i__3 = *n - k;
-	mdl = min(i__1,i__3) + md;
-	i__1 = mdl;
-	for (i__ = md1; i__ <= i__1; ++i__) {
-	    if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-		    k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-		    abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
-		m = i__;
-	    }
-/* L10: */
-	}
-	ip[k] = m + k - md;
-	tr = ar[m + k * ar_dim1];
-	ti = ai[m + k * ai_dim1];
-	if (m == md) {
-	    goto L20;
-	}
-	ip[*n] = -ip[*n];
-	ar[m + k * ar_dim1] = ar[md + k * ar_dim1];
-	ai[m + k * ai_dim1] = ai[md + k * ai_dim1];
-	ar[md + k * ar_dim1] = tr;
-	ai[md + k * ai_dim1] = ti;
+		kp1 = k + 1;
+		m = md;
+		/* Computing MIN */
+		i__1 = *ml, i__3 = *n - k;
+		mdl = min(i__1,i__3) + md;
+		i__1 = mdl;
+		for (i__ = md1; i__ <= i__1; ++i__) {
+			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
+				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
+				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+				m = i__;
+			}
+			/* L10: */
+		}
+		ip[k] = m + k - md;
+		tr = ar[m + k * ar_dim1];
+		ti = ai[m + k * ai_dim1];
+		if (m == md) {
+			goto L20;
+		}
+		ip[*n] = -ip[*n];
+		ar[m + k * ar_dim1] = ar[md + k * ar_dim1];
+		ai[m + k * ai_dim1] = ai[md + k * ai_dim1];
+		ar[md + k * ar_dim1] = tr;
+		ai[md + k * ai_dim1] = ti;
 L20:
-	if (abs(tr) + abs(ti) == 0.) {
-	    goto L80;
-	}
-	den = tr * tr + ti * ti;
-	tr /= den;
-	ti = -ti / den;
-	i__1 = mdl;
-	for (i__ = md1; i__ <= i__1; ++i__) {
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    ar[i__ + k * ar_dim1] = -prodr;
-	    ai[i__ + k * ai_dim1] = -prodi;
-/* L30: */
-	}
-/* Computing MIN */
-/* Computing MAX */
-	i__3 = ju, i__4 = *mu + ip[k];
-	i__1 = max(i__3,i__4);
-	ju = min(i__1,*n);
-	mm = md;
-	if (ju < kp1) {
-	    goto L55;
-	}
-	i__1 = ju;
-	for (j = kp1; j <= i__1; ++j) {
-	    --m;
-	    --mm;
-	    tr = ar[m + j * ar_dim1];
-	    ti = ai[m + j * ai_dim1];
-	    if (m == mm) {
-		goto L35;
-	    }
-	    ar[m + j * ar_dim1] = ar[mm + j * ar_dim1];
-	    ai[m + j * ai_dim1] = ai[mm + j * ai_dim1];
-	    ar[mm + j * ar_dim1] = tr;
-	    ai[mm + j * ai_dim1] = ti;
+		if (abs(tr) + abs(ti) == 0.) {
+			goto L80;
+		}
+		den = tr * tr + ti * ti;
+		tr /= den;
+		ti = -ti / den;
+		i__1 = mdl;
+		for (i__ = md1; i__ <= i__1; ++i__) {
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			ar[i__ + k * ar_dim1] = -prodr;
+			ai[i__ + k * ai_dim1] = -prodi;
+		/* L30: */
+		}
+		/* Computing MIN */
+		/* Computing MAX */
+		i__3 = ju, i__4 = *mu + ip[k];
+		i__1 = max(i__3,i__4);
+		ju = min(i__1,*n);
+		mm = md;
+		if (ju < kp1) {
+			goto L55;
+		}
+		i__1 = ju;
+		for (j = kp1; j <= i__1; ++j) {
+			--m;
+			--mm;
+			tr = ar[m + j * ar_dim1];
+			ti = ai[m + j * ai_dim1];
+			if (m == mm) {
+				goto L35;
+			}
+			ar[m + j * ar_dim1] = ar[mm + j * ar_dim1];
+			ai[m + j * ai_dim1] = ai[mm + j * ai_dim1];
+			ar[mm + j * ar_dim1] = tr;
+			ai[mm + j * ai_dim1] = ti;
 L35:
-	    if (abs(tr) + abs(ti) == 0.) {
-		goto L48;
-	    }
-	    jk = j - k;
-	    if (ti == 0.) {
-		i__3 = mdl;
-		for (i__ = md1; i__ <= i__3; ++i__) {
-		    ijk = i__ - jk;
-		    prodr = ar[i__ + k * ar_dim1] * tr;
-		    prodi = ai[i__ + k * ai_dim1] * tr;
-		    ar[ijk + j * ar_dim1] += prodr;
-		    ai[ijk + j * ai_dim1] += prodi;
-/* L40: */
-		}
-		goto L48;
-	    }
-	    if (tr == 0.) {
-		i__3 = mdl;
-		for (i__ = md1; i__ <= i__3; ++i__) {
-		    ijk = i__ - jk;
-		    prodr = -ai[i__ + k * ai_dim1] * ti;
-		    prodi = ar[i__ + k * ar_dim1] * ti;
-		    ar[ijk + j * ar_dim1] += prodr;
-		    ai[ijk + j * ai_dim1] += prodi;
-/* L45: */
-		}
-		goto L48;
-	    }
-	    i__3 = mdl;
-	    for (i__ = md1; i__ <= i__3; ++i__) {
-		ijk = i__ - jk;
-		prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * 
-			ti;
-		prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * 
-			ti;
-		ar[ijk + j * ar_dim1] += prodr;
-		ai[ijk + j * ai_dim1] += prodi;
-/* L47: */
-	    }
+			if (abs(tr) + abs(ti) == 0.) {
+				goto L48;
+			}
+			jk = j - k;
+			if (ti == 0.) {
+				i__3 = mdl;
+				for (i__ = md1; i__ <= i__3; ++i__) {
+					ijk = i__ - jk;
+					prodr = ar[i__ + k * ar_dim1] * tr;
+					prodi = ai[i__ + k * ai_dim1] * tr;
+					ar[ijk + j * ar_dim1] += prodr;
+					ai[ijk + j * ai_dim1] += prodi;
+				/* L40: */
+				}
+				goto L48;
+			}
+			if (tr == 0.) {
+				i__3 = mdl;
+				for (i__ = md1; i__ <= i__3; ++i__) {
+					ijk = i__ - jk;
+					prodr = -ai[i__ + k * ai_dim1] * ti;
+					prodi = ar[i__ + k * ar_dim1] * ti;
+					ar[ijk + j * ar_dim1] += prodr;
+					ai[ijk + j * ai_dim1] += prodi;
+				/* L45: */
+				}
+				goto L48;
+			}
+			i__3 = mdl;
+			for (i__ = md1; i__ <= i__3; ++i__) {
+				ijk = i__ - jk;
+				prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+				prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+				ar[ijk + j * ar_dim1] += prodr;
+				ai[ijk + j * ai_dim1] += prodi;
+				/* L47: */
+			}
 L48:
-/* L50: */
-	    ;
-	}
+	/* L50: */
+			;
+		}
 L55:
-/* L60: */
-	;
+	/* L60: */
+		;
     }
 L70:
     k = *n;
     if ((d__1 = ar[md + *n * ar_dim1], abs(d__1)) + (d__2 = ai[md + *n * 
 	    ai_dim1], abs(d__2)) == 0.) {
-	goto L80;
+		goto L80;
     }
     return 0;
 L80:
@@ -3063,63 +3047,62 @@ L80:
     mdm = md - 1;
     nm1 = *n - 1;
     if (*ml == 0) {
-	goto L25;
+		goto L25;
     }
     if (*n == 1) {
-	goto L50;
+		goto L50;
     }
     i__1 = nm1;
     for (k = 1; k <= i__1; ++k) {
-	m = ip[k];
-	tr = br[m];
-	ti = bi[m];
-	br[m] = br[k];
-	bi[m] = bi[k];
-	br[k] = tr;
-	bi[k] = ti;
-/* Computing MIN */
-	i__2 = *ml, i__3 = *n - k;
-	mdl = min(i__2,i__3) + md;
-	i__2 = mdl;
-	for (i__ = md1; i__ <= i__2; ++i__) {
-	    imd = i__ + k - md;
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[imd] += prodr;
-	    bi[imd] += prodi;
-/* L10: */
-	}
-/* L20: */
+		m = ip[k];
+		tr = br[m];
+		ti = bi[m];
+		br[m] = br[k];
+		bi[m] = bi[k];
+		br[k] = tr;
+		bi[k] = ti;
+		/* Computing MIN */
+		i__2 = *ml, i__3 = *n - k;
+		mdl = min(i__2,i__3) + md;
+		i__2 = mdl;
+		for (i__ = md1; i__ <= i__2; ++i__) {
+			imd = i__ + k - md;
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[imd] += prodr;
+			bi[imd] += prodi;
+			/* L10: */
+		}
+		/* L20: */
     }
 L25:
     i__1 = nm1;
     for (kb = 1; kb <= i__1; ++kb) {
-	k = *n + 1 - kb;
-	den = ar[md + k * ar_dim1] * ar[md + k * ar_dim1] + ai[md + k * 
-		ai_dim1] * ai[md + k * ai_dim1];
-	prodr = br[k] * ar[md + k * ar_dim1] + bi[k] * ai[md + k * ai_dim1];
-	prodi = bi[k] * ar[md + k * ar_dim1] - br[k] * ai[md + k * ai_dim1];
-	br[k] = prodr / den;
-	bi[k] = prodi / den;
-	tr = -br[k];
-	ti = -bi[k];
-	kmd = md - k;
-/* Computing MAX */
-	i__2 = 1, i__3 = kmd + 1;
-	lm = max(i__2,i__3);
-	i__2 = mdm;
-	for (i__ = lm; i__ <= i__2; ++i__) {
-	    imd = i__ - kmd;
-	    prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
-	    prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
-	    br[imd] += prodr;
-	    bi[imd] += prodi;
-/* L30: */
-	}
-/* L40: */
+		k = *n + 1 - kb;
+		den = ar[md + k * ar_dim1] * ar[md + k * ar_dim1] + ai[md + k * 
+			ai_dim1] * ai[md + k * ai_dim1];
+		prodr = br[k] * ar[md + k * ar_dim1] + bi[k] * ai[md + k * ai_dim1];
+		prodi = bi[k] * ar[md + k * ar_dim1] - br[k] * ai[md + k * ai_dim1];
+		br[k] = prodr / den;
+		bi[k] = prodi / den;
+		tr = -br[k];
+		ti = -bi[k];
+		kmd = md - k;
+	/* Computing MAX */
+		i__2 = 1, i__3 = kmd + 1;
+		lm = max(i__2,i__3);
+		i__2 = mdm;
+		for (i__ = lm; i__ <= i__2; ++i__) {
+			imd = i__ - kmd;
+			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
+			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
+			br[imd] += prodr;
+			bi[imd] += prodi;
+			/* L30: */
+		}
+		/* L40: */
     }
-    den = ar[md + ar_dim1] * ar[md + ar_dim1] + ai[md + ai_dim1] * ai[md + 
-	    ai_dim1];
+    den = ar[md + ar_dim1] * ar[md + ar_dim1] + ai[md + ai_dim1] * ai[md + ai_dim1];
     prodr = br[1] * ar[md + ar_dim1] + bi[1] * ai[md + ai_dim1];
     prodi = bi[1] * ar[md + ar_dim1] - br[1] * ai[md + ai_dim1];
     br[1] = prodr / den;
@@ -3193,80 +3176,80 @@ L50:
     la = *igh - 1;
     kp1 = *low + 1;
     if (la < kp1) {
-	goto L200;
+		goto L200;
     }
 
     i__1 = la;
     for (m = kp1; m <= i__1; ++m) {
-	mm1 = m - 1;
-	x = 0.;
-	i__ = m;
+		mm1 = m - 1;
+		x = 0.;
+		i__ = m;
 
-	i__2 = *igh;
-	for (j = m; j <= i__2; ++j) {
-	    if ((d__1 = a[j + mm1 * a_dim1], abs(d__1)) <= abs(x)) {
-		goto L100;
-	    }
-	    x = a[j + mm1 * a_dim1];
-	    i__ = j;
+		i__2 = *igh;
+		for (j = m; j <= i__2; ++j) {
+			if ((d__1 = a[j + mm1 * a_dim1], abs(d__1)) <= abs(x)) {
+				goto L100;
+			}
+			x = a[j + mm1 * a_dim1];
+			i__ = j;
 L100:
-	    ;
-	}
+			;
+		}
 
-	int__[m] = i__;
-	if (i__ == m) {
-	    goto L130;
-	}
-/*    :::::::::: interchange rows and columns of a :::::::::: */
-	i__2 = *n;
-	for (j = mm1; j <= i__2; ++j) {
-	    y = a[i__ + j * a_dim1];
-	    a[i__ + j * a_dim1] = a[m + j * a_dim1];
-	    a[m + j * a_dim1] = y;
-/* L110: */
-	}
+		int__[m] = i__;
+		if (i__ == m) {
+			goto L130;
+		}
+		/*    :::::::::: interchange rows and columns of a :::::::::: */
+		i__2 = *n;
+		for (j = mm1; j <= i__2; ++j) {
+			y = a[i__ + j * a_dim1];
+			a[i__ + j * a_dim1] = a[m + j * a_dim1];
+			a[m + j * a_dim1] = y;
+			/* L110: */
+		}
 
-	i__2 = *igh;
-	for (j = 1; j <= i__2; ++j) {
-	    y = a[j + i__ * a_dim1];
-	    a[j + i__ * a_dim1] = a[j + m * a_dim1];
-	    a[j + m * a_dim1] = y;
-/* L120: */
-	}
-/*    :::::::::: end interchange :::::::::: */
+		i__2 = *igh;
+		for (j = 1; j <= i__2; ++j) {
+			y = a[j + i__ * a_dim1];
+			a[j + i__ * a_dim1] = a[j + m * a_dim1];
+			a[j + m * a_dim1] = y;
+			/* L120: */
+		}
+		/*    :::::::::: end interchange :::::::::: */
 L130:
-	if (x == 0.) {
-	    goto L180;
-	}
-	mp1 = m + 1;
+		if (x == 0.) {
+			goto L180;
+		}
+		mp1 = m + 1;
 
-	i__2 = *igh;
-	for (i__ = mp1; i__ <= i__2; ++i__) {
-	    y = a[i__ + mm1 * a_dim1];
-	    if (y == 0.) {
-		goto L160;
-	    }
-	    y /= x;
-	    a[i__ + mm1 * a_dim1] = y;
+		i__2 = *igh;
+		for (i__ = mp1; i__ <= i__2; ++i__) {
+			y = a[i__ + mm1 * a_dim1];
+			if (y == 0.) {
+				goto L160;
+			}
+			y /= x;
+			a[i__ + mm1 * a_dim1] = y;
 
-	    i__3 = *n;
-	    for (j = m; j <= i__3; ++j) {
-/* L140: */
-		a[i__ + j * a_dim1] -= y * a[m + j * a_dim1];
-	    }
+			i__3 = *n;
+			for (j = m; j <= i__3; ++j) {
+				/* L140: */
+				a[i__ + j * a_dim1] -= y * a[m + j * a_dim1];
+			}
 
-	    i__3 = *igh;
-	    for (j = 1; j <= i__3; ++j) {
-/* L150: */
-		a[j + m * a_dim1] += y * a[j + i__ * a_dim1];
-	    }
+			i__3 = *igh;
+			for (j = 1; j <= i__3; ++j) {
+				/* L150: */
+				a[j + m * a_dim1] += y * a[j + i__ * a_dim1];
+			}
 
 L160:
-	    ;
-	}
+			;
+		}
 
 L180:
-	;
+		;
     }
 
 L200:
@@ -3315,21 +3298,21 @@ L200:
 
     /* Function Body */
     switch (*ijob) {
-	case 1:  goto L1;
-	case 2:  goto L2;
-	case 3:  goto L3;
-	case 4:  goto L4;
-	case 5:  goto L5;
-	case 6:  goto L6;
-	case 7:  goto L7;
-	case 8:  goto L55;
-	case 9:  goto L55;
-	case 10:  goto L55;
-	case 11:  goto L11;
-	case 12:  goto L12;
-	case 13:  goto L13;
-	case 14:  goto L14;
-	case 15:  goto L15;
+		case 1:  goto L1;
+		case 2:  goto L2;
+		case 3:  goto L3;
+		case 4:  goto L4;
+		case 5:  goto L5;
+		case 6:  goto L6;
+		case 7:  goto L7;
+		case 8:  goto L55;
+		case 9:  goto L55;
+		case 10:  goto L55;
+		case 11:  goto L11;
+		case 12:  goto L12;
+		case 13:  goto L13;
+		case 14:  goto L14;
+		case 15:  goto L15;
     }
 
 /* ----------------------------------------------------------- */
@@ -3338,11 +3321,11 @@ L1:
 /* ---  B=IDENTITY, JACOBIAN A FULL MATRIX */
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    e1[i__ + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
-	}
-	e1[j + j * e1_dim1] += *fac1;
+		i__2 = *n;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			e1[i__ + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
+		}
+		e1[j + j * e1_dim1] += *fac1;
     }
     dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
@@ -3353,26 +3336,26 @@ L11:
 /* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER */
     i__1 = *nm1;
     for (j = 1; j <= i__1; ++j) {
-	jm1 = j + *m1;
-	i__2 = *nm1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    e1[i__ + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1];
-	}
-	e1[j + j * e1_dim1] += *fac1;
+		jm1 = j + *m1;
+		i__2 = *nm1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			e1[i__ + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1];
+		}
+		e1[j + j * e1_dim1] += *fac1;
     }
 L45:
     mm = *m1 / *m2;
     i__1 = *m2;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = *nm1;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    sum = 0.;
-	    i__3 = mm - 1;
-	    for (k = 0; k <= i__3; ++k) {
-		sum = (sum + fjac[i__ + (j + k * *m2) * fjac_dim1]) / *fac1;
-	    }
-	    e1[i__ + j * e1_dim1] -= sum;
-	}
+		i__2 = *nm1;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			sum = 0.;
+			i__3 = mm - 1;
+			for (k = 0; k <= i__3; ++k) {
+				sum = (sum + fjac[i__ + (j + k * *m2) * fjac_dim1]) / *fac1;
+			}
+			e1[i__ + j * e1_dim1] -= sum;
+		}
     }
     dec_(nm1, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
@@ -3383,11 +3366,11 @@ L2:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = linal_1.mbjac;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    e1[i__ + linal_1.mle + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
-	}
-	e1[linal_1.mdiag + j * e1_dim1] += *fac1;
+		i__2 = linal_1.mbjac;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			e1[i__ + linal_1.mle + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
+		}
+		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
     }
     decb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
@@ -3398,30 +3381,28 @@ L12:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER */
     i__1 = *nm1;
     for (j = 1; j <= i__1; ++j) {
-	jm1 = j + *m1;
-	i__2 = linal_1.mbjac;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    e1[i__ + linal_1.mle + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1]
-		    ;
-	}
-	e1[linal_1.mdiag + j * e1_dim1] += *fac1;
+		jm1 = j + *m1;
+		i__2 = linal_1.mbjac;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			e1[i__ + linal_1.mle + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1];
+		}
+		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
     }
 L46:
     mm = *m1 / *m2;
     i__1 = *m2;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = linal_1.mbjac;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    sum = 0.;
-	    i__3 = mm - 1;
-	    for (k = 0; k <= i__3; ++k) {
-		sum = (sum + fjac[i__ + (j + k * *m2) * fjac_dim1]) / *fac1;
-	    }
-	    e1[i__ + linal_1.mle + j * e1_dim1] -= sum;
-	}
+		i__2 = linal_1.mbjac;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			sum = 0.;
+			i__3 = mm - 1;
+			for (k = 0; k <= i__3; ++k) {
+				sum = (sum + fjac[i__ + (j + k * *m2) * fjac_dim1]) / *fac1;
+			}
+			e1[i__ + linal_1.mle + j * e1_dim1] -= sum;
+		}
     }
-    decb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier)
-	    ;
+    decb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3430,19 +3411,18 @@ L3:
 /* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX */
     i__1 = *n;
     for (j = 1; j <= i__1; ++j) {
-	i__2 = *n;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    e1[i__ + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
-	}
-/* Computing MAX */
-	i__2 = 1, i__3 = j - *mumas;
-/* Computing MIN */
-	i__5 = *n, i__6 = j + *mlmas;
-	i__4 = min(i__5,i__6);
-	for (i__ = max(i__2,i__3); i__ <= i__4; ++i__) {
-	    e1[i__ + j * e1_dim1] += *fac1 * fmas[i__ - j + linal_1.mbdiag + 
-		    j * fmas_dim1];
-	}
+		i__2 = *n;
+		for (i__ = 1; i__ <= i__2; ++i__) {
+			e1[i__ + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
+		}
+		/* Computing MAX */
+		i__2 = 1, i__3 = j - *mumas;
+		/* Computing MIN */
+		i__5 = *n, i__6 = j + *mlmas;
+		i__4 = min(i__5,i__6);
+		for (i__ = max(i__2,i__3); i__ <= i__4; ++i__) {
+			e1[i__ + j * e1_dim1] += *fac1 * fmas[i__ - j + linal_1.mbdiag + j * fmas_dim1];
+		}
     }
     dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
@@ -3453,20 +3433,19 @@ L13:
 /* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
     i__1 = *nm1;
     for (j = 1; j <= i__1; ++j) {
-	jm1 = j + *m1;
-	i__4 = *nm1;
-	for (i__ = 1; i__ <= i__4; ++i__) {
-	    e1[i__ + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1];
-	}
-/* Computing MAX */
-	i__4 = 1, i__2 = j - *mumas;
-/* Computing MIN */
-	i__5 = *nm1, i__6 = j + *mlmas;
-	i__3 = min(i__5,i__6);
-	for (i__ = max(i__4,i__2); i__ <= i__3; ++i__) {
-	    e1[i__ + j * e1_dim1] += *fac1 * fmas[i__ - j + linal_1.mbdiag + 
-		    j * fmas_dim1];
-	}
+		jm1 = j + *m1;
+		i__4 = *nm1;
+		for (i__ = 1; i__ <= i__4; ++i__) {
+			e1[i__ + j * e1_dim1] = -fjac[i__ + jm1 * fjac_dim1];
+		}
+		/* Computing MAX */
+		i__4 = 1, i__2 = j - *mumas;
+		/* Computing MIN */
+		i__5 = *nm1, i__6 = j + *mlmas;
+		i__3 = min(i__5,i__6);
+		for (i__ = max(i__4,i__2); i__ <= i__3; ++i__) {
+			e1[i__ + j * e1_dim1] += *fac1 * fmas[i__ - j + linal_1.mbdiag + j * fmas_dim1];
+		}
     }
     goto L45;
 

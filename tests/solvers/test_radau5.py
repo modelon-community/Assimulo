@@ -163,8 +163,9 @@ class Test_Explicit_Radau5:
         self.sim.inith = 1.e-4 #Initial step-size
         self.sim.usejac = False
     
-    # @testattr(stddist = True)
-    # def test_event_localizer(self):
+    @testattr(stddist = True)
+    def test_event_localizer(self):
+        pass
     #     exp_mod = Extended_Problem() #Create the problem
 
     #     exp_sim = _Radau5ODE(exp_mod) #Create the solver
