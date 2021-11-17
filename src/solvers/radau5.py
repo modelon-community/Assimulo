@@ -848,7 +848,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
-        self.solver = self.options["solver"] # call necessary to load appropriate modules
+        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -864,6 +864,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
+        if not self.solver_module_imported:
+            self.solver = self.options["solver"]
         
     def set_problem_data(self):
         if self.problem_info["state_events"]:
