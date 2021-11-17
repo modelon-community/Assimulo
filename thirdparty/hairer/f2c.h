@@ -26,18 +26,17 @@ use or performance of this software.
 /**  barf  [ba:rf]  2.  "He suggested using FORTRAN, and everybody barfed."
 
 	- From The Shogakukan DICTIONARY OF NEW ENGLISH (Second edition) */
-
-#include <stdint.h>
+	
 
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
 #if defined(__alpha__) || defined(__sparc64__) || defined(__x86_64__) || defined(__ia64__)
-typedef int64_t integer;
-typedef uint64_t uinteger;
+typedef int integer;
+typedef unsigned int uinteger;
 #else
-typedef int64_t integer;
-typedef uint64_t uinteger;
+typedef long int integer;
+typedef unsigned long int uinteger;
 #endif
 typedef char *address;
 typedef short int shortint;
