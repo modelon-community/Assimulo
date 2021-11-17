@@ -11,6 +11,7 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include "f2c.h"
 #include "radau_decsol_c.h"
@@ -55,10 +56,6 @@ static doublereal c_b116 = .25;
     integer i__1;
     doublereal d__1, d__2, d__3, d__4;
 
-    /* Builtin functions */
-    integer s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
-	    e_wsle(void);
-
     /* Local variables */
     static integer i__, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
 	    iez1, iez2, iez3;
@@ -101,25 +98,6 @@ static doublereal c_b116 = .25;
     static integer istore;
     static logical startn;
     static doublereal uround;
-
-    /* Fortran I/O blocks */
-    static cilist io___10 = { 0, 6, 0, 0, 0 };
-    static cilist io___12 = { 0, 6, 0, 0, 0 };
-    static cilist io___15 = { 0, 6, 0, 0, 0 };
-    static cilist io___17 = { 0, 6, 0, 0, 0 };
-    static cilist io___19 = { 0, 6, 0, 0, 0 };
-    static cilist io___24 = { 0, 6, 0, 0, 0 };
-    static cilist io___29 = { 0, 6, 0, 0, 0 };
-    static cilist io___31 = { 0, 6, 0, 0, 0 };
-    static cilist io___33 = { 0, 6, 0, 0, 0 };
-    static cilist io___36 = { 0, 6, 0, 0, 0 };
-    static cilist io___39 = { 0, 6, 0, 0, 0 };
-    static cilist io___43 = { 0, 6, 0, 0, 0 };
-    static cilist io___50 = { 0, 6, 0, 0, 0 };
-    static cilist io___52 = { 0, 6, 0, 0, 0 };
-    static cilist io___68 = { 0, 6, 0, 0, 0 };
-    static cilist io___72 = { 0, 6, 0, 0, 0 };
-
 
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
@@ -514,13 +492,7 @@ static doublereal c_b116 = .25;
     } else {
 		uround = work[1];
 		if (uround <= 1e-19 || uround >= 1.) {
-			s_wsle(&io___10);
-			// c__9 = 9;
-			// c__1 = 1
-			// c__5 = 5
-			do_lio(&c__9, &c__1, " COEFFICIENTS HAVE 20 DIGITS, UROUND=", (ftnlen)37);
-			do_lio(&c__5, &c__1, (char *)&work[1], (ftnlen)sizeof(doublereal));
-			e_wsle();
+			printf(" COEFFICIENTS HAVE 20 DIGITS, UROUND= \t %e \n", uround);
 			arret = TRUE_;
 		}
     }
@@ -528,9 +500,7 @@ static doublereal c_b116 = .25;
     expm = .66666666666666663;
     if (*itol == 0) {
 		if (atol[1] <= 0. || rtol[1] <= uround * 10.) {
-			s_wsle(&io___12);
-			do_lio(&c__9, &c__1, " TOLERANCES ARE TOO SMALL", (ftnlen)25);
-			e_wsle();
+			printf(" TOLERANCES ARE TOO SMALL \n");
 			arret = TRUE_;
 		} else {
 			quot = atol[1] / rtol[1];
@@ -541,11 +511,7 @@ static doublereal c_b116 = .25;
 	i__1 = *n;
 		for (i__ = 1; i__ <= i__1; ++i__) {
 			if (atol[i__] <= 0. || rtol[i__] <= uround * 10.) {
-				s_wsle(&io___15);
-				do_lio(&c__9, &c__1, " TOLERANCES(", (ftnlen)12);
-				do_lio(&c__3, &c__1, (char *)&i__, (ftnlen)sizeof(integer));
-				do_lio(&c__9, &c__1, ") ARE TOO SMALL", (ftnlen)15);
-				e_wsle();
+				printf("TOLERANCES (%i) ARE TOO SMALL \n", i__);
 				arret = TRUE_;
 			} else {
 				quot = atol[i__] / rtol[i__];
@@ -558,12 +524,9 @@ static doublereal c_b116 = .25;
     if (iwork[2] == 0) {
 		nmax = 100000;
     } else {
-	nmax = iwork[2];
+		nmax = iwork[2];
 		if (nmax <= 0) {
-			s_wsle(&io___17);
-			do_lio(&c__9, &c__1, " WRONG INPUT IWORK(2)=", (ftnlen)22);
-			do_lio(&c__3, &c__1, (char *)&iwork[2], (ftnlen)sizeof(integer));
-			e_wsle();
+			printf("WRONG INPUT IWORK(2)= %i \n", nmax);
 			arret = TRUE_;
 		}
     }
@@ -571,12 +534,9 @@ static doublereal c_b116 = .25;
     if (iwork[3] == 0) {
 		nit = 7;
     } else {
-	nit = iwork[3];
+		nit = iwork[3];
 		if (nit <= 0) {
-			s_wsle(&io___19);
-			do_lio(&c__9, &c__1, " CURIOUS INPUT IWORK(3)=", (ftnlen)24);
-			do_lio(&c__3, &c__1, (char *)&iwork[3], (ftnlen)sizeof(integer));
-			e_wsle();
+			printf("CURIOUS INPUT IWORK(3)= %i \n", nit);
 			arret = TRUE_;
 		}
     }
@@ -594,12 +554,7 @@ static doublereal c_b116 = .25;
 		nind1 = *n;
     }
     if (nind1 + nind2 + nind3 != *n) {
-		s_wsle(&io___24);
-		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(5,6,7)=", (ftnlen)32);
-		do_lio(&c__3, &c__1, (char *)&nind1, (ftnlen)sizeof(integer));
-		do_lio(&c__3, &c__1, (char *)&nind2, (ftnlen)sizeof(integer));
-		do_lio(&c__3, &c__1, (char *)&nind3, (ftnlen)sizeof(integer));
-		e_wsle();
+		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %i \t %i \t %i \n", nind1, nind2, nind3);
 		arret = TRUE_;
     }
 	/* -------- PRED   STEP SIZE CONTROL */
@@ -619,11 +574,7 @@ static doublereal c_b116 = .25;
 		m2 = m1;
     }
     if (m1 < 0 || m2 < 0 || m1 + m2 > *n) {
-		s_wsle(&io___29);
-		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR IWORK(9,10)=", (ftnlen)31);
-		do_lio(&c__3, &c__1, (char *)&m1, (ftnlen)sizeof(integer));
-		do_lio(&c__3, &c__1, (char *)&m2, (ftnlen)sizeof(integer));
-		e_wsle();
+		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %i \t %i \n", m1, m2);
 		arret = TRUE_;
     }
 	/* --------- SAFE     SAFETY FACTOR IN STEP SIZE PREDICTION */
@@ -632,10 +583,7 @@ static doublereal c_b116 = .25;
     } else {
 		safe = work[2];
 		if (safe <= .001 || safe >= 1.) {
-			s_wsle(&io___31);
-			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(2)=", (ftnlen)27);
-			do_lio(&c__5, &c__1, (char *)&work[2], (ftnlen)sizeof(doublereal));
-			e_wsle();
+			printf("CURIOUS INPUT FOR WORK(2)= %f \n", safe);
 			arret = TRUE_;
 		}
     }
@@ -645,11 +593,7 @@ static doublereal c_b116 = .25;
     } else {
 		thet = work[3];
 		if (thet >= 1.) {
-			s_wsle(&io___33);
-			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(3)=", (ftnlen)27);
-			do_lio(&c__5, &c__1, (char *)&work[3], (ftnlen)sizeof(doublereal))
-				;
-			e_wsle();
+			printf("CURIOUS INPUT FOR WORK(3)= %f \n", thet);
 			arret = TRUE_;
 		}
     }
@@ -664,10 +608,7 @@ static doublereal c_b116 = .25;
     } else {
 		fnewt = work[4];
 		if (fnewt <= uround / tolst) {
-			s_wsle(&io___36);
-			do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(4)=", (ftnlen)27);
-			do_lio(&c__5, &c__1, (char *)&work[4], (ftnlen)sizeof(doublereal));
-			e_wsle();
+			printf("CURIOUS INPUT FOR WORK(4)= %f \n", fnewt);
 			arret = TRUE_;
 		}
     }
@@ -683,11 +624,7 @@ static doublereal c_b116 = .25;
 		quot2 = work[6];
     }
     if (quot1 > 1. || quot2 < 1.) {
-		s_wsle(&io___39);
-		do_lio(&c__9, &c__1, " CURIOUS INPUT FOR WORK(5,6)=", (ftnlen)29);
-		do_lio(&c__5, &c__1, (char *)&quot1, (ftnlen)sizeof(doublereal));
-		do_lio(&c__5, &c__1, (char *)&quot2, (ftnlen)sizeof(doublereal));
-		e_wsle();
+		printf("CURIOUS INPUT FOR WORK(5, 6)= %f \t %f \n", quot1, quot2);
 		arret = TRUE_;
     }
 	/* -------- MAXIMAL STEP SIZE */
@@ -708,11 +645,7 @@ static doublereal c_b116 = .25;
 		facr = 1. / work[9];
     }
     if (facl < 1. || facr > 1.) {
-		s_wsle(&io___43);
-		do_lio(&c__9, &c__1, " CURIOUS INPUT WORK(8,9)=", (ftnlen)25);
-		do_lio(&c__5, &c__1, (char *)&work[8], (ftnlen)sizeof(doublereal));
-		do_lio(&c__5, &c__1, (char *)&work[9], (ftnlen)sizeof(doublereal));
-		e_wsle();
+		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
 		arret = TRUE_;
     }
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
@@ -748,9 +681,7 @@ static doublereal c_b116 = .25;
 		}
 	/* ------ BANDWITH OF "MAS" NOT SMALLER THAN BANDWITH OF "JAC" */
 		if (*mlmas > *mljac || *mumas > *mujac) {
-			s_wsle(&io___50);
-			do_lio(&c__9, &c__1, "BANDWITH OF \"MAS\" NOT SMALLER THAN BANDWITH OF \"JAC\"", (ftnlen)52);
-			e_wsle();
+			printf("BANDWITH OF \"MAS\" NOT SMALLER THAN BANDWITH OF \"JAC\"\n");
 			arret = TRUE_;
 		}
     } else {
@@ -767,9 +698,7 @@ static doublereal c_b116 = .25;
     ldmas2 = max(1,ldmas);
 	/* ------ HESSENBERG OPTION ONLY FOR EXPLICIT EQU. WITH FULL JACOBIAN */
     if ((implct || jband) && ijob == 7) {
-		s_wsle(&io___52);
-		do_lio(&c__9, &c__1, " HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS WITH FULL JACOBIAN", (ftnlen)65);
-		e_wsle();
+		printf(" HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS WITH FULL JACOBIAN\n");
 		arret = TRUE_;
     }
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
@@ -790,10 +719,7 @@ static doublereal c_b116 = .25;
 	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
     istore = iee2i + nm1 * lde1 - 1;
     if (istore > *lwork) {
-		s_wsle(&io___68);
-		do_lio(&c__9, &c__1, " INSUFFICIENT STORAGE FOR WORK, MIN. LWORK=", (ftnlen)43);
-		do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
-		e_wsle();
+		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i \n", istore);
 		arret = TRUE_;
     }
 	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
@@ -803,10 +729,7 @@ static doublereal c_b116 = .25;
 	/* --------- TOTAL REQUIREMENT --------------- */
     istore = ieiph + nm1 - 1;
     if (istore > *liwork) {
-		s_wsle(&io___72);
-		do_lio(&c__9, &c__1, " INSUFF. STORAGE FOR IWORK, MIN. LIWORK=", (ftnlen)40);
-		do_lio(&c__3, &c__1, (char *)&istore, (ftnlen)sizeof(integer));
-		e_wsle();
+		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %i \n", istore);
 		arret = TRUE_;
     }
 	/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
@@ -875,19 +798,11 @@ static doublereal c_b116 = .25;
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar)
 {
-    /* Format strings */
-    static char fmt_979[] = "(\002 EXIT OF RADAU5 AT X=\002,e18.4)";
-
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset, i__1, i__2,
 	     i__3, i__4;
     doublereal d__1, d__2, d__3, d__4;
-
-    /* Builtin functions */
-    integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void),
-	     s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
-	    e_wsle(void);
 
     /* Local variables */
     static integer i__, j, k, l;
@@ -952,17 +867,6 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, integer *);
     static doublereal thqold;
-
-    /* Fortran I/O blocks */
-    static cilist io___178 = { 0, 6, 0, fmt_979, 0 };
-    static cilist io___179 = { 0, 6, 0, 0, 0 };
-    static cilist io___180 = { 0, 6, 0, fmt_979, 0 };
-    static cilist io___181 = { 0, 6, 0, 0, 0 };
-    static cilist io___182 = { 0, 6, 0, fmt_979, 0 };
-    static cilist io___183 = { 0, 6, 0, 0, 0 };
-    static cilist io___184 = { 0, 6, 0, fmt_979, 0 };
-    static cilist io___185 = { 0, 6, 0, 0, 0 };
-
 
 	/* ---------------------------------------------------------- */
 	/*     CORE INTEGRATOR FOR RADAU5 */
@@ -1579,43 +1483,23 @@ L79:
     goto L10;
 /* --- FAIL EXIT */
 L175:
-    s_wsfe(&io___178);
-    do_fio(&c__1, (char *)&(*x), (ftnlen)sizeof(doublereal));
-    e_wsfe();
-    s_wsle(&io___179);
-    do_lio(&c__9, &c__1, " REPEATEDLY UNEXPECTED STEP REJECTIONS", (ftnlen)38);
-    e_wsle();
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
     *idid = -5;
     return 0;
 L176:
-    s_wsfe(&io___180);
-    do_fio(&c__1, (char *)&(*x), (ftnlen)sizeof(doublereal));
-    e_wsfe();
-    s_wsle(&io___181);
-    do_lio(&c__9, &c__1, " MATRIX IS REPEATEDLY SINGULAR, IER=", (ftnlen)36);
-    do_lio(&c__3, &c__1, (char *)&ier, (ftnlen)sizeof(integer));
-    e_wsle();
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("MATRIX IS REPEATEDLY SINGULAR IER= %i \n", ier);
     *idid = -4;
     return 0;
 L177:
-    s_wsfe(&io___182);
-    do_fio(&c__1, (char *)&(*x), (ftnlen)sizeof(doublereal));
-    e_wsfe();
-    s_wsle(&io___183);
-    do_lio(&c__9, &c__1, " STEP SIZE T0O SMALL, H=", (ftnlen)24);
-    do_lio(&c__5, &c__1, (char *)&(*h__), (ftnlen)sizeof(doublereal));
-    e_wsle();
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("STEP SIZE T0O SMALL, H= %e", *h__);
     *idid = -3;
     return 0;
 L178:
-    s_wsfe(&io___184);
-    do_fio(&c__1, (char *)&(*x), (ftnlen)sizeof(doublereal));
-    e_wsfe();
-    s_wsle(&io___185);
-    do_lio(&c__9, &c__1, " MORE THAN NMAX =", (ftnlen)17);
-    do_lio(&c__3, &c__1, (char *)&(*nmax), (ftnlen)sizeof(integer));
-    do_lio(&c__9, &c__1, "STEPS ARE NEEDED", (ftnlen)16);
-    e_wsle();
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("MORE THAN NMAX = %i STEPS ARE NEEDED", *nmax);
     *idid = -2;
     return 0;
 /* --- EXIT CAUSED BY SOLOUT */
@@ -3448,7 +3332,7 @@ L13:
 		}
     }
     goto L45;
-
+// TODO MORE TIDYING UP
 /* ----------------------------------------------------------- */
 
 L4:
