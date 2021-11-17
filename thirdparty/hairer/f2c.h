@@ -27,15 +27,17 @@ use or performance of this software.
 
 	- From The Shogakukan DICTIONARY OF NEW ENGLISH (Second edition) */
 
+#include <stdint.h>
+
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
 #if defined(__alpha__) || defined(__sparc64__) || defined(__x86_64__) || defined(__ia64__)
-typedef int integer;
-typedef unsigned int uinteger;
+typedef int64_t integer;
+typedef uint64_t uinteger;
 #else
-typedef long int integer;
-typedef unsigned long int uinteger;
+typedef int64_t integer;
+typedef uint64_t uinteger;
 #endif
 typedef char *address;
 typedef short int shortint;

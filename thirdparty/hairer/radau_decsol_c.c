@@ -40,7 +40,6 @@ static doublereal c_b54 = .5;
 static doublereal c_b91 = 81.;
 static doublereal c_b92 = .33333333333333331;
 static doublereal c_b93 = 9.;
-static doublereal c_b103 = 1.;
 static doublereal c_b114 = .8;
 static doublereal c_b116 = .25;
 
@@ -59,7 +58,6 @@ static doublereal c_b116 = .25;
     /* Builtin functions */
     integer s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
 	    e_wsle(void);
-    double pow_dd(doublereal *, doublereal *);
 
     /* Local variables */
     static integer i__, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
@@ -535,7 +533,7 @@ static doublereal c_b116 = .25;
 	    arret = TRUE_;
 	} else {
 	    quot = atol[1] / rtol[1];
-	    rtol[1] = pow_dd(&rtol[1], &expm) * .1;
+	    rtol[1] = pow(rtol[1], expm) * .1;
 	    atol[1] = rtol[1] * quot;
 	}
     } else {
@@ -550,7 +548,7 @@ static doublereal c_b116 = .25;
 		arret = TRUE_;
 	    } else {
 		quot = atol[i__] / rtol[i__];
-		rtol[i__] = pow_dd(&rtol[i__], &expm) * .1;
+		rtol[i__] = pow(rtol[i__], expm) * .1;
 		atol[i__] = rtol[i__] * quot;
 	    }
 	}
@@ -659,7 +657,7 @@ static doublereal c_b116 = .25;
     if (work[4] == 0.) {
 /* Computing MAX */
 /* Computing MIN */
-	d__3 = .03, d__4 = pow_dd(&tolst, &c_b54);
+	d__3 = .03, d__4 = pow(tolst, c_b54);
 	d__1 = uround * 10 / tolst, d__2 = min(d__3,d__4);
 	fnewt = max(d__1,d__2);
     } else {
@@ -843,14 +841,14 @@ static doublereal c_b116 = .25;
     if (*itol == 0) {
 	quot = atol[1] / rtol[1];
 	d__1 = rtol[1] * 10.;
-	rtol[1] = pow_dd(&d__1, &expm);
+	rtol[1] = pow(d__1, expm);
 	atol[1] = rtol[1] * quot;
     } else {
 	i__1 = *n;
 	for (i__ = 1; i__ <= i__1; ++i__) {
 	    quot = atol[i__] / rtol[i__];
 	    d__1 = rtol[i__] * 10.;
-	    rtol[i__] = pow_dd(&d__1, &expm);
+	    rtol[i__] = pow(d__1, expm);
 	    atol[i__] = rtol[i__] * quot;
 	}
     }
@@ -891,8 +889,6 @@ static doublereal c_b116 = .25;
     doublereal d__1, d__2, d__3, d__4;
 
     /* Builtin functions */
-    double sqrt(doublereal), pow_dd(doublereal *, doublereal *), d_sign(
-	    doublereal *, doublereal *), pow_di(doublereal *, integer *);
     integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void),
 	     s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
 	    e_wsle(void);
@@ -1041,9 +1037,9 @@ static doublereal c_b116 = .25;
     dd1 = -(sq6 * 7. + 13.) / 3.;
     dd2 = (sq6 * 7. - 13.) / 3.;
     dd3 = -.33333333333333331;
-    u1 = (pow_dd(&c_b91, &c_b92) + 6. - pow_dd(&c_b93, &c_b92)) / 30.;
-    alph = (12. - pow_dd(&c_b91, &c_b92) + pow_dd(&c_b93, &c_b92)) / 60.;
-    beta = (pow_dd(&c_b91, &c_b92) + pow_dd(&c_b93, &c_b92)) * sqrt(3.) / 60.;
+    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.;
+    alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.;
+    beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.;
 /* Computing 2nd power */
     d__1 = alph;
 /* Computing 2nd power */
@@ -1072,7 +1068,7 @@ static doublereal c_b116 = .25;
 	*ijob += 10;
     }
     d__1 = *xend - *x;
-    posneg = d_sign(&c_b103, &d__1);
+    posneg = copysign(1., d__1);
 /* Computing MIN */
     d__2 = abs(*hmax), d__3 = (d__1 = *xend - *x, abs(d__1));
     hmaxn = min(d__2,d__3);
@@ -1082,7 +1078,7 @@ static doublereal c_b116 = .25;
 /* Computing MIN */
     d__1 = abs(*h__);
     *h__ = min(d__1,hmaxn);
-    *h__ = d_sign(h__, &posneg);
+    *h__ = copysign(*h__, posneg);
     hold = *h__;
     reject = FALSE_;
     first = TRUE_;
@@ -1308,7 +1304,7 @@ L30:
 /* *** *** *** *** *** *** *** */
     newt = 0;
     d__1 = max(faccon,*uround);
-    faccon = pow_dd(&d__1, &c_b114);
+    faccon = pow(d__1, c_b114);
     theta = abs(*thet);
 L40:
     if (newt >= *nit) {
@@ -1392,7 +1388,7 @@ L40:
 		d__1 = 1e-4, d__2 = min(20.,dyth);
 		qnewt = max(d__1,d__2);
 		d__1 = -1. / (*nit + 4. - 1 - newt);
-		hhfac = pow_dd(&qnewt, &d__1) * .8;
+		hhfac = pow(qnewt, d__1) * .8;
 		*h__ = hhfac * *h__;
 		reject = TRUE_;
 		last = FALSE_;
@@ -1435,7 +1431,7 @@ L40:
     fac = min(d__1,d__2);
 /* Computing MAX */
 /* Computing MIN */
-    d__3 = *facl, d__4 = pow_dd(&err, &c_b116) / fac;
+    d__3 = *facl, d__4 = pow(err, c_b116) / fac;
     d__1 = *facr, d__2 = min(d__3,d__4);
     quot = max(d__1,d__2);
     hnew = *h__ / quot;
@@ -1452,7 +1448,7 @@ L40:
 /* Computing 2nd power */
 		d__2 = err;
 		d__1 = d__2 * d__2 / erracc;
-		facgus = hacc / *h__ * pow_dd(&d__1, &c_b116) / *safe;
+		facgus = hacc / *h__ * pow(d__1, c_b116) / *safe;
 /* Computing MAX */
 		d__1 = *facr, d__2 = min(*facl,facgus);
 		facgus = max(d__1,d__2);
@@ -5149,9 +5145,6 @@ L55:
 	    e1_offset, i__1, i__2, i__3, i__4, i__5, i__6;
     doublereal d__1;
 
-    /* Builtin functions */
-    double sqrt(doublereal);
-
     /* Local variables */
     static integer i__, j, k, mm, mp, im1;
     extern /* Subroutine */ int sol_(integer *, integer *, doublereal *, 
@@ -5657,9 +5650,6 @@ L55:
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset, i__1, i__2, i__3, i__4, i__5, i__6;
     doublereal d__1;
-
-    /* Builtin functions */
-    double sqrt(doublereal);
 
     /* Local variables */
     static integer i__, j, k, mm, mp, im1;
