@@ -33,10 +33,7 @@ struct {
 
 /* Table of constant values */
 
-static integer c__9 = 9;
 static integer c__1 = 1;
-static integer c__5 = 5;
-static integer c__3 = 3;
 static doublereal c_b54 = .5;
 static doublereal c_b91 = 81.;
 static doublereal c_b92 = .33333333333333331;
