@@ -219,7 +219,6 @@ class Assimulo_prepare(object):
         self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
-        # self.file_libf2c = [f for f in os.listdir(os.path.join("thirdparty","libf2c")) if f[-2:] == ".c"]
         
     def create_assimulo_dirs_and_populate(self):
         self._set_directories()
@@ -513,14 +512,8 @@ class Assimulo_prepare(object):
                               include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
                               force = True)
         ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
-                                    #  os.path.join("assimulo","thirdparty","libf2c"),
                                      os.path.join("assimulo","thirdparty","hairer"),
                                      self.incdirs]
-        # libf2c_skip = ["pow_qq","qbitbits","qbitshft","ftell64_","main","getarg_","iargc_","arithchk"]
-        # for f in libf2c_skip:
-        #     self.file_libf2c.remove(f + ".c")
-        # current_dir = os.getcwd()
-        # ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")] + [os.path.join(current_dir,"..","thirdparty","libf2c",f) for f in self.file_libf2c]
         ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
         ext_list[-1].libraries = ["m"]
