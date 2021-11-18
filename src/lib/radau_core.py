@@ -437,7 +437,7 @@ class Radau_Common(object):
     
     def _get_solver(self):
         """
-        Solver implemenation used, "f" for Fortran, "c" for C
+        Solver implementation used, "f" for Fortran, "c" for C
         
             Parameters::
             
@@ -455,14 +455,14 @@ class Radau_Common(object):
                 self.radau5 = radau5_f
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the Fotran based Radau solver. Try using solver = 'c' for the C based solver instead.")
+                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using solver = 'c' for the C based solver instead.")
         elif solver.lower() == "c":
             try:
                 from assimulo.lib import radau5_c_py as radau5_c
                 self.radau5 = radau5_c
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the C based Radau solver. Try using solver = 'f' for the Fortran based solver instead.")
+                raise Radau_Exception("Failed to import the C based Radau5 solver. Try using solver = 'f' for the Fortran based solver instead.")
         else:
             raise Radau_Exception("Solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
         self.options["solver"] = solver.lower()
