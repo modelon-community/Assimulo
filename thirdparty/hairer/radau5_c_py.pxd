@@ -8,22 +8,21 @@
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
-cdef extern from "f2c.h":
+cdef extern from "radau_decsol_c.h":
     ctypedef int integer
     ctypedef double doublereal
     
-## FunctionPointer_CallBack
-ctypedef int (*FP_CB_f)(integer*, doublereal*, doublereal*, doublereal*,
-                        doublereal*, integer*, void*)
-ctypedef int (*FP_CB_jac)(integer*, doublereal*, doublereal*, doublereal*,
-                          integer*, doublereal*, integer*, void*)
-ctypedef int (*FP_CB_mas)(integer*, doublereal*, integer*, doublereal*,
-                          integer*, void*)
-ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
-                             doublereal*, doublereal*, integer*, integer*,
-                             doublereal*, integer*, integer*, void*)
-
-cdef extern from "radau_decsol_c.h":
+    ## FunctionPointer_CallBack
+    ctypedef int (*FP_CB_f)(integer*, doublereal*, doublereal*, doublereal*,
+                            doublereal*, integer*, void*)
+    ctypedef int (*FP_CB_jac)(integer*, doublereal*, doublereal*, doublereal*,
+                            integer*, doublereal*, integer*, void*)
+    ctypedef int (*FP_CB_mas)(integer*, doublereal*, integer*, doublereal*,
+                            integer*, void*)
+    ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
+                                doublereal*, doublereal*, integer*, integer*,
+                                doublereal*, integer*, integer*, void*)
+                                
     int radau5_c(integer*, FP_CB_f, void*, doublereal*, doublereal*,
                  doublereal*, doublereal*, doublereal*, doublereal*,
                  integer*, FP_CB_jac, void*, integer*, integer*, integer*,

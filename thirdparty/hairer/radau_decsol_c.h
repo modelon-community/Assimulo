@@ -1,6 +1,12 @@
 #ifndef RADAU_DECSOL_C_H
 #define RADAU_DECSOL_C_H
 
+#include <stdint.h>
+
+typedef int64_t integer;
+typedef double doublereal;
+typedef int64_t logical;
+
 // FP_CB = FunctionPointer_CallBack
 typedef int (*FP_CB_f)(integer*, doublereal*, doublereal*, doublereal*,
                        doublereal*, integer*, void*);
