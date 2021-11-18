@@ -20,6 +20,7 @@ from assimulo import testattr
 from assimulo.solvers.radau5 import *
 from assimulo.solvers.radau5 import Radau5DAE, _Radau5DAE
 from assimulo.solvers.radau5 import Radau5ODE, _Radau5ODE
+from assimulo.solvers.radau5 import Radau5Error
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
@@ -720,6 +721,48 @@ class Test_Explicit_Fortran_Radau5:
         sim.simulate(3)
         assert sim.sw[0] == False
 
+    @testattr(stddist = True)
+    def test_nmax_steps(self):
+        """
+        This tests the error upon exceeding a set maximum number of steps
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'f'
+
+        sim.maxh = 1.e-1
+        sim.maxsteps = 9
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_step_size_too_small(self):
+        """
+        This tests the error for too small step-sizes
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'f'
+
+        sim.atol = 1.e10
+        sim.rtol = 1.e10
+
+        sim.inith = 1.e-1
+        sim.maxh = 1.e-1
+        
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+    @testattr(stddist = True)
+    def test_repeated_unexpected_step_rejections(self):
+        """
+        This tests the error for repeated unexpected step rejections
+        """
+        def f(t, y):
+            raise N.linalg.LinAlgError()
+        y0 = N.array([1.])
+        prob = Explicit_Problem(f, y0)
+        sim = Radau5ODE(prob)
+        sim.solver = 'f'
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
 class Test_Explicit_C_Radau5:
     """
@@ -1069,6 +1112,48 @@ class Test_Explicit_C_Radau5:
         sim.simulate(3)
         assert sim.sw[0] == False
 
+    @testattr(stddist = True)
+    def test_nmax_steps(self):
+        """
+        This tests the error upon exceeding a set maximum number of steps
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'c'
+
+        sim.maxh = 1.e-1
+        sim.maxsteps = 9
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_step_size_too_small(self):
+        """
+        This tests the error for too small step-sizes
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'c'
+
+        sim.atol = 1.e10
+        sim.rtol = 1.e10
+
+        sim.inith = 1.e-1
+        sim.maxh = 1.e-1
+        
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+    @testattr(stddist = True)
+    def test_repeated_unexpected_step_rejections(self):
+        """
+        This tests the error for repeated unexpected step rejections
+        """
+        def f(t, y):
+            raise N.linalg.LinAlgError()
+        y0 = N.array([1.])
+        prob = Explicit_Problem(f, y0)
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
 class Test_Implicit_Fortran_Radau5:
     """
@@ -1266,6 +1351,55 @@ class Test_Implicit_Fortran_Radau5:
         sim.simulate(3)
         assert sim.sw[0] == False
 
+    @testattr(stddist = True)
+    def test_nmax_steps(self):
+        """
+        This tests the error upon exceeding a set maximum number of steps
+        """
+        sim = Radau5DAE(self.mod)
+        sim.solver = 'f'
+
+        sim.maxh = 1.e-1
+        sim.maxsteps = 9
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_step_size_too_small(self):
+        """
+        This tests the error for too small step-sizes
+        """
+        f = lambda t, y, yd: -y
+        y0 = N.array([1.])
+        yd0 = N.array([0.])
+
+        prob = Implicit_Problem(f, y0, yd0)
+
+        sim = Radau5DAE(prob)
+        sim.solver = 'f'
+
+        sim.atol = 1.e10
+        sim.rtol = 1.e10
+
+        sim.inith = 1.e-1
+        sim.maxh = 1.e-1
+        
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+    @testattr(stddist = True)
+    def test_repeated_unexpected_step_rejections(self):
+        """
+        This tests the error for repeated unexpected step rejections
+        """
+        pass
+        # def f(t, y, yd):
+        #     raise N.linalg.LinAlgError()
+        # prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
+        # sim = Radau5DAE(prob)
+        # sim.solver = 'f'
+
+        # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
 
 class Test_Implicit_C_Radau5:
     """
@@ -1462,6 +1596,55 @@ class Test_Implicit_C_Radau5:
         assert sim.sw[0] == True
         sim.simulate(3)
         assert sim.sw[0] == False
+
+    @testattr(stddist = True)
+    def test_nmax_steps(self):
+        """
+        This tests the error upon exceeding a set maximum number of steps
+        """
+        sim = Radau5DAE(self.mod)
+        sim.solver = 'c'
+
+        sim.maxh = 1.e-1
+        sim.maxsteps = 9
+
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_step_size_too_small(self):
+        """
+        This tests the error for too small step-sizes
+        """
+        f = lambda t, y, yd: -y
+        y0 = N.array([1.])
+        yd0 = N.array([0.])
+
+        prob = Implicit_Problem(f, y0, yd0)
+
+        sim = Radau5DAE(prob)
+        sim.solver = 'c'
+
+        sim.atol = 1.e10
+        sim.rtol = 1.e10
+
+        sim.inith = 1.e-1
+        sim.maxh = 1.e-1
+        
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+    @testattr(stddist = True)
+    def test_repeated_unexpected_step_rejections(self):
+        """
+        This tests the error for repeated unexpected step rejections
+        """
+        pass
+        # def f(t, y, yd):
+        #     raise N.linalg.LinAlgError()
+        # prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
+        # sim = Radau5DAE(prob)
+        # sim.solver = 'c'
+
+        # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
 
 class Test_Implicit_Radau5:

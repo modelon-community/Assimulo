@@ -1483,7 +1483,7 @@ L176:
     return 0;
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("STEP SIZE T0O SMALL, H= %e", *h__);
+	printf("STEP SIZE TOO SMALL, H= %e", *h__);
     *idid = -3;
     return 0;
 L178:
