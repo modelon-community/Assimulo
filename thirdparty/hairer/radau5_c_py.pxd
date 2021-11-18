@@ -4,12 +4,13 @@
 """
     Copyright (C) 2021 Modelon AB, all rights reserved.
 """
+from numpy cimport int64_t
 
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
 cdef extern from "radau_decsol_c.h":
-    ctypedef int integer
+    ctypedef int64_t integer
     ctypedef double doublereal
     
     ## FunctionPointer_CallBack
@@ -22,7 +23,7 @@ cdef extern from "radau_decsol_c.h":
     ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
                                 doublereal*, doublereal*, integer*, integer*,
                                 doublereal*, integer*, integer*, void*)
-                                
+
     int radau5_c(integer*, FP_CB_f, void*, doublereal*, doublereal*,
                  doublereal*, doublereal*, doublereal*, doublereal*,
                  integer*, FP_CB_jac, void*, integer*, integer*, integer*,

@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define TRUE_ (1)
+#define FALSE_ (0)
+
 typedef int64_t integer;
 typedef double doublereal;
 typedef int64_t logical;

@@ -500,7 +500,7 @@ static doublereal c_b116 = .25;
 	i__1 = *n;
 		for (i__ = 1; i__ <= i__1; ++i__) {
 			if (atol[i__] <= 0. || rtol[i__] <= uround * 10.) {
-				printf("TOLERANCES (%PRId64) ARE TOO SMALL \n", i__);
+				printf("TOLERANCES (%+", PRId64, ") ARE TOO SMALL \n", i__);
 				arret = TRUE_;
 			} else {
 				quot = atol[i__] / rtol[i__];
@@ -515,7 +515,7 @@ static doublereal c_b116 = .25;
     } else {
 		nmax = iwork[2];
 		if (nmax <= 0) {
-			printf("WRONG INPUT IWORK(2)= %PRId64 \n", nmax);
+			printf("WRONG INPUT IWORK(2)= %+", PRId64, " \n", nmax);
 			arret = TRUE_;
 		}
     }
@@ -525,7 +525,7 @@ static doublereal c_b116 = .25;
     } else {
 		nit = iwork[3];
 		if (nit <= 0) {
-			printf("CURIOUS INPUT IWORK(3)= %PRId64 \n", nit);
+			printf("CURIOUS INPUT IWORK(3)= %+", PRId64, " \n", nit);
 			arret = TRUE_;
 		}
     }
@@ -543,7 +543,7 @@ static doublereal c_b116 = .25;
 		nind1 = *n;
     }
     if (nind1 + nind2 + nind3 != *n) {
-		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %PRId64 \t %PRId64 \t %PRId64 \n", nind1, nind2, nind3);
+		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %+", PRId64, "\t %+", PRId64, "\t %+", PRId64, "\n", nind1, nind2, nind3);
 		arret = TRUE_;
     }
 	/* -------- PRED   STEP SIZE CONTROL */
@@ -563,7 +563,7 @@ static doublereal c_b116 = .25;
 		m2 = m1;
     }
     if (m1 < 0 || m2 < 0 || m1 + m2 > *n) {
-		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %PRId64 \t %PRId64 \n", m1, m2);
+		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %+", PRId64, "\t %+", PRId64, "\n", m1, m2);
 		arret = TRUE_;
     }
 	/* --------- SAFE     SAFETY FACTOR IN STEP SIZE PREDICTION */
@@ -708,7 +708,7 @@ static doublereal c_b116 = .25;
 	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
     istore = iee2i + nm1 * lde1 - 1;
     if (istore > *lwork) {
-		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %PRId64 \n", istore);
+		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %+", PRId64, "\n", istore);
 		arret = TRUE_;
     }
 	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
@@ -718,7 +718,7 @@ static doublereal c_b116 = .25;
 	/* --------- TOTAL REQUIREMENT --------------- */
     istore = ieiph + nm1 - 1;
     if (istore > *liwork) {
-		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %PRId64 \n", istore);
+		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %+", PRId64, "\n", istore);
 		arret = TRUE_;
     }
 	/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
@@ -1478,7 +1478,7 @@ L175:
     return 0;
 L176:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MATRIX IS REPEATEDLY SINGULAR IER= %PRId64 \n", ier);
+	printf("MATRIX IS REPEATEDLY SINGULAR IER= %+", PRId64, "\n", ier);
     *idid = -4;
     return 0;
 L177:
@@ -1488,7 +1488,7 @@ L177:
     return 0;
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MORE THAN NMAX = %PRId64 STEPS ARE NEEDED", *nmax);
+	printf("MORE THAN NMAX = %+", PRId64, " STEPS ARE NEEDED", *nmax);
     *idid = -2;
     return 0;
 /* --- EXIT CAUSED BY SOLOUT */
@@ -5460,8 +5460,8 @@ L55:
 
 /* Subroutine */ int estrav_(integer *n, doublereal *fjac, integer *ldjac, 
 	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
-	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd, S_fp 
-	fcn, integer *nfcn, doublereal *y0, doublereal *y, integer *ijob, 
+	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd, FP_CB_f 
+	fcn, void* fcn_PY, integer *nfcn, doublereal *y0, doublereal *y, integer *ijob, 
 	doublereal *x, integer *m1, integer *m2, integer *nm1, integer *ns, 
 	integer *nns, doublereal *e1, integer *lde1, doublereal *zz, 
 	doublereal *cont, doublereal *ff, integer *ip1, integer *iphes, 
