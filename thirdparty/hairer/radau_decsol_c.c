@@ -5885,7 +5885,7 @@ L77:
 		for (i__ = 1; i__ <= i__1; ++i__) {
 			cont[i__] = y[i__] + cont[i__];
 		}
-		(*fcn)(n, x, &cont[1], &ff[1], &rpar[1], &ipar[1]);
+		(*fcn)(n, x, &cont[1], &ff[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		i__1 = *n;
 		for (i__ = 1; i__ <= i__1; ++i__) {

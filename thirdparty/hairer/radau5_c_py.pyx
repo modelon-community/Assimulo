@@ -182,18 +182,19 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
 
     cdef integer idid = 1 ## "Successful compution"
     
+    iwork_in = np.array(iwork, dtype = np.int64)
     cdef np.ndarray[double,mode="c"] y_vec = y
     cdef np.ndarray[double,mode="c"] rtol_vec = rtol
     cdef np.ndarray[double,mode="c"] atol_vec = atol
     cdef np.ndarray[double,mode="c"] work_vec = work
-    cdef np.ndarray[int,mode="c"] iwork_vec = iwork
+    cdef np.ndarray[integer,mode="c"] iwork_vec = iwork_in
     
     radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                          &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid)
-    return x, y, h__, iwork, idid
+    return x, y, h__, np.array(iwork_in, dtype = int), idid
 
 cpdef contr5(integer i__, doublereal x, np.ndarray cont):
     """
