@@ -1,6 +1,4 @@
-/* translated by f2c (version 20100827).
-   Must be linked with -lm
-*/
+// translated by f2c (version 20100827).
 
 #include <stdlib.h>
 #include <stdio.h>

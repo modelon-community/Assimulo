@@ -516,7 +516,6 @@ class Assimulo_prepare(object):
                                      self.incdirs]
         ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
-        ext_list[-1].libraries = ["m"]
         
         for el in ext_list:
             #Debug
