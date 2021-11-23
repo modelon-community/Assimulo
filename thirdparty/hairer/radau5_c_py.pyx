@@ -6,12 +6,15 @@
 """ 
 
 cimport radau5_c_py
-cimport numpy as np
 cimport cython
-import numpy as np
-from cython.view cimport array as cvarray
 
+import numpy as np
+cimport numpy as np
+
+from cython.view cimport array as cvarray
 from numpy cimport PyArray_DATA
+
+np.import_array()
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
