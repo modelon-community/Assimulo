@@ -32,7 +32,7 @@ cdef void py2c_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     """
     Copy (square) 2D numpy array (order = c) to (double *) C matrix (with Fortran-style column major ordering)
     """
-    cdef np.ndarray[double, ndim=2, mode='c'] source_np = np.array(source, copy=False)
+    cdef np.ndarray[double, ndim=2] source_np = np.array(source, copy=False, dtype = np.float)
     for i in range(ncol):
         for j in range(nrow):
             dest[j + i*nrow] = source_np[j][i]
@@ -58,10 +58,10 @@ cdef int callback_fcn(integer* n, doublereal* x, doublereal* y_in, doublereal* y
     """
     Internal callback function to enable call to Python based rhs function from C
     """
-    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0])
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0], dtype = np.double)
     c2py(y_py_in, y_in, n[0])
     res = (<object>fcn_PY)(x[0], y_py_in)
-    py2c(y_out, res[0], res[0].shape[0])
+    py2c(y_out, res[0], len(res[0]))
     ipar[0] = res[1][0]
     return 0
 
@@ -70,7 +70,7 @@ cdef int callback_jac(integer* n, doublereal* x, doublereal* y, doublereal* fjac
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
-    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0])
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0], dtype = np.double)
     c2py(y_py_in, y, n[0])
     res = (<object>jac_PY)(x[0], y_py_in)
     py2c_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
@@ -81,7 +81,7 @@ cdef int callback_mas(integer* n, doublereal* am, integer* lmas, doublereal* rpa
     """
     Internal callback function to enable call to Python based mass matrix function from C
     """
-    cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n[0]), order = 'F')
+    cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n[0]), order = 'F', dtype = np.double)
     c2py_mat_F(am_py, am, n[0]*lmas[0])
     res = (<object>mas_PY)(am_py)
     py2c_matrix_flat_F(am, res, res.shape[0], res.shape[1])
@@ -93,9 +93,9 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
     """
     Internal callback function to enable call to Python based solution output function from C
     """
-    cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(nsolu[0])
-    cdef np.ndarray[double, ndim=1, mode="c"]cont_py = np.empty(4*nsolu[0])
-    cdef np.ndarray[double, ndim=1, mode="c"]werr_py = np.empty(nsolu[0])
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(nsolu[0], dtype = np.double)
+    cdef np.ndarray[double, ndim=1, mode="c"]cont_py = np.empty(4*nsolu[0], dtype = np.double)
+    cdef np.ndarray[double, ndim=1, mode="c"]werr_py = np.empty(nsolu[0], dtype = np.double)
     c2py(y_py, y, nsolu[0])
     c2py(cont_py, cont, 4*nsolu[0])
     c2py(werr_py, werr, nsolu[0])

@@ -983,6 +983,7 @@ class Test_Explicit_C_Radau5:
         This tests the functionality of the property usejac.
         """
         self.sim_sp.usejac = True
+        # self.sim_sp.maxsteps = 100
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
