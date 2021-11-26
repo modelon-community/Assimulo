@@ -47,7 +47,7 @@ cdef void c2py(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int di
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortan'] dest, double* source, int dim):
+cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
     """
     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
     """
