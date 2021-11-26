@@ -1,4 +1,5 @@
 // translated by f2c (version 20100827).
+// Note: Due to this, matrices (doublereal*) are stored in Fotran-style column major format
 
 #include <stdlib.h>
 #include <stdio.h>
