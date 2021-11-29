@@ -1958,6 +1958,27 @@ class Test_Radau_Common:
         self.sim.solver = 'F'
         nose.tools.assert_equal(self.sim.solver, 'f')
         self.sim.solver = 'C'
-        nose.tools.assert_equal(self.sim.solver, 'c')
+        assert self.sim.solver == 'c'
         nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, 'Python')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, True)
+
+    @testattr(stddist = True)
+    def test_linear_solver(self):
+        """
+        This tests the functionality of the property linear_solver.
+        """
+        self.sim.linear_solver = 'dense'
+        assert self.sim.solver == 'dense'
+        self.sim.solver = 'sparse'
+        assert self.sim.solver == 'sparse'
+        self.sim.solver = 'DENSE'
+        assert self.sim.solver == 'dense'
+        self.sim.solver = 'SPARSE'
+        assert self.sim.solver == 'sparse'
+        self.sim.solver = 'dEnSe'
+        assert self.sim.solver == 'dense'
+        self.sim.solver = 'spArSe'
+        assert self.sim.solver == 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'default')
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'GMRES')
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 0)
