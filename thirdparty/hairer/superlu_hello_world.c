@@ -129,10 +129,10 @@ main(int argc, char *argv[])
     Destroy_SuperMatrix_Store(&B);
     Destroy_SuperNode_Matrix(&L);
     Destroy_CompCol_Matrix(&U);
-    Destroy_CompCol_Matrix(&AC);
     StatFree(&Gstat);
 
-    SUPERLU_FREE (a);
-    SUPERLU_FREE (xa);
-    SUPERLU_FREE (asub);
+    SUPERLU_FREE(superlumt_options.etree);
+    SUPERLU_FREE(superlumt_options.colcnt_h);
+    SUPERLU_FREE(superlumt_options.part_super_h);
+    Destroy_CompCol_Permuted(&AC);
 }
