@@ -32,4 +32,3 @@ cdef extern from "radau_decsol_c.h":
                  doublereal*, integer*, integer*)
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
-    
