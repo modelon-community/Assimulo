@@ -468,3 +468,27 @@ class Radau_Common(object):
         self.options["solver"] = solver.lower()
         
     solver = property(_get_solver, _set_solver)
+
+    def _get_linear_solver(self):
+        """
+        Which type of linear solver to use, "dense" or "sparse"
+        
+            Parameters::
+            
+                linear_solver
+                                - Default "dense"
+                            
+                                - needs to be either "dense" or "sparse"
+        """
+        return self.options["linear_solver"]
+
+    def _set_linear_solver(self, linear_solver):
+        if linear_solver.lower() == "dense":
+            pass
+        elif linear_solver.lower() == "sparse":
+            pass
+        else:
+            raise Radau_Exception("linear_solver parameters needs to be either 'dense' or 'sparse'. Set value: {}".format(linear_solver))
+        self.options["linear_solver"] = linear_solver.lower()
+        
+    linear_solver = property(_get_linear_solver, _set_linear_solver)

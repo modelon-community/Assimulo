@@ -93,6 +93,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.options["linear_solver"] = "dense" #Using dense or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
@@ -848,6 +849,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.options["linear_solver"] = "dense" #Using dense or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
