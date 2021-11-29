@@ -1969,17 +1969,17 @@ class Test_Radau_Common:
         This tests the functionality of the property linear_solver.
         """
         self.sim.linear_solver = 'dense'
-        assert self.sim.solver == 'dense'
-        self.sim.solver = 'sparse'
-        assert self.sim.solver == 'sparse'
-        self.sim.solver = 'DENSE'
-        assert self.sim.solver == 'dense'
-        self.sim.solver = 'SPARSE'
-        assert self.sim.solver == 'sparse'
-        self.sim.solver = 'dEnSe'
-        assert self.sim.solver == 'dense'
-        self.sim.solver = 'spArSe'
-        assert self.sim.solver == 'sparse'
+        assert self.sim.linear_solver == 'dense'
+        self.sim.linear_solver = 'sparse'
+        assert self.sim.linear_solver == 'sparse'
+        self.sim.linear_solver = 'DENSE'
+        assert self.sim.linear_solver == 'dense'
+        self.sim.linear_solver = 'SPARSE'
+        assert self.sim.linear_solver == 'sparse'
+        self.sim.linear_solver = 'dEnSe'
+        assert self.sim.linear_solver == 'dense'
+        self.sim.linear_solver = 'spArSe'
+        assert self.sim.linear_solver == 'sparse'
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'default')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'GMRES')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 0)
