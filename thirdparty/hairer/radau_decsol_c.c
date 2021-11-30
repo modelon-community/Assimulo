@@ -926,9 +926,9 @@ static doublereal c_b116 = .25;
     dd1 = -(sq6 * 7. + 13.) / 3.;
     dd2 = (sq6 * 7. - 13.) / 3.;
     dd3 = -.33333333333333331;
-    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.;
-    alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.;
-    beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.;
+    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.; // largest eigenvalue 
+    alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.; // 2nd largest, real part
+    beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.; // 2nd largest, imag part?
 	/* Computing 2nd power */
     d__1 = alph;
 	/* Computing 2nd power */
