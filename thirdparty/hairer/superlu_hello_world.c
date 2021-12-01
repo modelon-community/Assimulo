@@ -30,10 +30,9 @@ int superlu_init(int_t nprocs, struct SuperLU_aux *slu_aux,
                 int_t n, int_t nnz);
 
 int superlu_setup(struct SuperLU_aux *slu_aux,
-                double *A_data, int_t *A_asub, int_t *A_xa,
-                double *rhs_data);
+                double *A_data, int_t *A_asub, int_t *A_xa);
 
-int_t superlu_factorize(struct SuperLU_aux *slu_aux);
+int_t superlu_factorize(struct SuperLU_aux *slu_aux, int first);
 
 int_t superlu_solve(struct SuperLU_aux *slu_aux, double *rhs);
 
@@ -46,15 +45,13 @@ int main(int argc, char *argv[])
     int i; 
     int_t info;
 
-    // SuperMatrix L, U;
     // User input matrix and rhs vector
     double *a, *rhs;
     // Some constants for setting up the matrix
     double s, u, p, e, r, l;
     int_t n = 5; // size of (square) matrix and rhs vector
     int_t nnz = 12; // nnz = Number Non Zero
-    // required for storing matrix in compressed column format
-    int_t *asub, *xa;
+    int_t *asub, *xa; // indices & indptr
 
     /* ---------- ALLOCATE SPACE FOR MATRIX ---------- */
     if ( !(a = doubleMalloc(nnz)) ) SUPERLU_ABORT("Malloc fails for a[].");
@@ -84,9 +81,9 @@ int main(int argc, char *argv[])
     superlu_init(nprocs, &slu_aux, n, nnz);
 
     // set up matrices and rhs
-    superlu_setup(&slu_aux, a, asub, xa, rhs);
+    superlu_setup(&slu_aux, a, asub, xa);
 
-    superlu_factorize(&slu_aux);
+    superlu_factorize(&slu_aux, 1);
     
     info = superlu_solve(&slu_aux, rhs);
     if (info != 0){
@@ -126,6 +123,7 @@ int main(int argc, char *argv[])
 
 int superlu_init(int_t nprocs, struct SuperLU_aux *slu_aux,
                  int_t n, int_t nnz){
+    // TODO: Are any failures in here recoverable?
     slu_aux->nprocs = nprocs;
     slu_aux->n = n;
     slu_aux->nnz = nnz;
@@ -158,29 +156,35 @@ int superlu_init(int_t nprocs, struct SuperLU_aux *slu_aux,
     if (!(slu_aux->perm_r = intMalloc(slu_aux->n))) SUPERLU_ABORT("Malloc failed for perm_r[].");
     if (!(slu_aux->perm_c = intMalloc(slu_aux->n))) SUPERLU_ABORT("Malloc failed for perm_c[].");
 
+    dCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, NULL, slu_aux->n, SLU_DN, SLU_D, SLU_GE);
+
     return 0;
 }
 
 int superlu_setup(struct SuperLU_aux *slu_aux,
-                  double *A_data, int_t *A_asub, int_t *A_xa,
-                  double *rhs_data){
+                  double *A_data, int_t *A_asub, int_t *A_xa){
+        // TODO: Need to clear storage in case of repeated setup?
+        // if (slu_aux->A->Store){
+        //     SUPERLU_FREE(slu_aux->A->Store);
+        // }
         dCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz,
                                A_data, A_asub, A_xa, SLU_NC, SLU_D, SLU_GE);
-
         get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetric matrices
-
-        dCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, rhs_data, slu_aux->n, SLU_DN, SLU_D, SLU_GE);
-
         return 0;
 }
 
-int_t superlu_factorize(struct SuperLU_aux *slu_aux){
+int_t superlu_factorize(struct SuperLU_aux *slu_aux, int first){
     int_t info;
-    pdgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
-	            slu_aux->diag_pivot_thresh, slu_aux->usepr, slu_aux->drop_tol, slu_aux->perm_c, slu_aux->perm_r,
-	            slu_aux->work, slu_aux->lwork, slu_aux->A, slu_aux->AC, slu_aux->slu_options, slu_aux->Gstat); // initialize options
+    // TODO: enable functionality for re-factorization
+    if (first){ // first time factorization
+        pdgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
+                    slu_aux->diag_pivot_thresh, slu_aux->usepr, slu_aux->drop_tol, slu_aux->perm_c, slu_aux->perm_r,
+                    slu_aux->work, slu_aux->lwork, slu_aux->A, slu_aux->AC, slu_aux->slu_options, slu_aux->Gstat); // initialize options
 
-    pdgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info); // Factorization
+        pdgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info); // Factorization
+    } else { // re-facatorization
+        ;
+    }
     return info;
 }
 
@@ -209,6 +213,5 @@ int superlu_finalize(struct SuperLU_aux *slu_aux, double *rhs){
     SUPERLU_FREE(slu_aux->slu_options->colcnt_h);
     SUPERLU_FREE(slu_aux->slu_options->part_super_h);
     Destroy_CompCol_Permuted(slu_aux->AC);
-    printf("ALL CLEANED UP \n");
     return 0;
 }
