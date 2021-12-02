@@ -164,7 +164,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
-            #Convert to Fortram indicator.
+            #Convert to Fortran indicator.
             if flag == ID_PY_EVENT: irtrn = -1
             
         if self._opts["report_continuously"]:
