@@ -69,12 +69,12 @@ class Test_RodasODE:
         sim.usejac = False
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
         
         sim = RodasODE(self.mod)
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
@@ -84,6 +84,6 @@ class Test_RodasODE:
         
         sim.simulate(2.) #Simulate 2 seconds
     
-        assert sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(sim.y_sol[-1][0], 1.7061680350, 4)

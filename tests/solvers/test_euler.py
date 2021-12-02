@@ -173,8 +173,8 @@ class Test_Explicit_Euler:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -184,7 +184,7 @@ class Test_Explicit_Euler:
         exp_sim = ExplicitEuler(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_integrator(self):
@@ -239,9 +239,9 @@ class Test_Explicit_Euler:
         mod.handle_event = handle_event
         
         sim = ExplicitEuler(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
     
 class Test_Implicit_Euler:
     
@@ -257,13 +257,13 @@ class Test_Implicit_Euler:
     
     @testattr(stddist = True)
     def test_reset_statistics(self):
-        assert self.simulator.statistics["nsteps"] == 0
+        nose.tools.assert_equal(self.simulator.statistics["nsteps"], 0)
         
         self.simulator.simulate(5)
         nsteps = self.simulator.statistics["nsteps"]
         self.simulator.simulate(6)
         
-        assert self.simulator.statistics["nsteps"] < nsteps
+        nose.tools.assert_less(self.simulator.statistics["nsteps"], nsteps)
     
     @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
@@ -279,7 +279,7 @@ class Test_Implicit_Euler:
         exp_sim = ImplicitEuler(exp_mod)
         exp_sim.simulate(5.,100)
         
-        assert exp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(exp_sim.statistics["nfcnjacs"], 0)
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
         
         exp_sim.reset()
@@ -287,7 +287,7 @@ class Test_Implicit_Euler:
         exp_sim.simulate(5.,100)
 
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
-        assert exp_sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(exp_sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_h(self):
@@ -320,8 +320,8 @@ class Test_Implicit_Euler:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -331,7 +331,7 @@ class Test_Implicit_Euler:
         exp_sim = ImplicitEuler(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_integrator(self):
@@ -369,7 +369,7 @@ class Test_Implicit_Euler:
         y_correct = lambda t: N.exp(-15*t)
         
         abs_err = N.abs(y[:,0]-y_correct(N.array(t)))
-        assert N.max(abs_err) < 0.1
+        nose.tools.assert_less(N.max(abs_err), 0.1)
         
     @testattr(stddist = True)
     def test_switches(self):
@@ -388,6 +388,6 @@ class Test_Implicit_Euler:
         mod.handle_event = handle_event
         
         sim = ImplicitEuler(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0] )

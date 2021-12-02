@@ -75,7 +75,9 @@ def run_example(with_plots=True, solver='c'):
     
     #Basic test
     x1 = y[:,0]
-    assert N.abs(x1[-1]-1.14330840983) < 1e-3 #For test purpose
+    nose.tools.assert_almost_equal(float(x1[-1]), 1.14330840983, 3)
+
+
     return imp_mod, imp_sim
 if __name__=='__main__':
     mod,sim = run_example()

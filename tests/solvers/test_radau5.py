@@ -205,8 +205,8 @@ class Test_Explicit_Radau5:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -216,7 +216,7 @@ class Test_Explicit_Radau5:
         exp_sim = _Radau5ODE(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -224,7 +224,7 @@ class Test_Explicit_Radau5:
         #Test both y0 in problem and not.
         sim = _Radau5ODE(self.mod)
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_collocation_polynomial(self):
@@ -235,7 +235,7 @@ class Test_Explicit_Radau5:
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
         
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         print
@@ -245,7 +245,7 @@ class Test_Explicit_Radau5:
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
@@ -262,7 +262,7 @@ class Test_Explicit_Radau5:
         """
         self.sim.simulate(2.) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
     
@@ -274,13 +274,13 @@ class Test_Explicit_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -291,7 +291,7 @@ class Test_Explicit_Radau5:
         
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
 
@@ -303,7 +303,7 @@ class Test_Explicit_Radau5:
         self.sim.thet = -1
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -312,7 +312,7 @@ class Test_Explicit_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_newt(self):
@@ -322,7 +322,7 @@ class Test_Explicit_Radau5:
         self.sim.newt = 10
         self.sim.simulate(1.0)
         
-        assert self.sim.statistics["nnfails"] == 1
+        nose.tools.assert_equal(self.sim.statistics["nnfails"], 1)
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -331,7 +331,7 @@ class Test_Explicit_Radau5:
         """
         self.sim.safe = 0.99
         self.sim.simulate(1.0)
-        assert self.sim.statistics["nsteps"] < 150
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 150)
         
     @testattr(stddist = True)
     def test_reset_statistics(self):
@@ -344,7 +344,7 @@ class Test_Explicit_Radau5:
         self.sim.reset()
         self.sim.simulate(1.0)
         
-        assert self.sim.statistics["nsteps"] < steps*1.5
+        nose.tools.assert_less(self.sim.statistics["nsteps"], steps*1.5)
         
     @testattr(stddist = True)
     def test_atol(self):
@@ -363,14 +363,14 @@ class Test_Explicit_Radau5:
         self.sim.simulate(1.0)
         steps2 = self.sim.statistics["nsteps"]
         
-        assert steps2 > steps
+        nose.tools.assert_greater(steps2, steps)
         
         self.sim.reset()
         self.sim.atol = [1e-8, 1e-8]
         
         steps3 = self.sim.statistics["nsteps"]
         
-        assert steps3==steps2
+        nose.tools.assert_equal(steps3, steps2)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
 
@@ -465,13 +465,13 @@ class Test_Explicit_Fortran_Radau5:
         sim.usejac = False
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
         
         sim = Radau5ODE(self.mod)
         sim.solver = 'f'
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -496,8 +496,8 @@ class Test_Explicit_Fortran_Radau5:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -508,7 +508,7 @@ class Test_Explicit_Fortran_Radau5:
         exp_sim.solver = 'f'
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -517,7 +517,7 @@ class Test_Explicit_Fortran_Radau5:
         sim = Radau5ODE(self.mod)
         sim.solver = 'f'
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_collocation_polynomial(self):
@@ -528,7 +528,7 @@ class Test_Explicit_Fortran_Radau5:
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
         
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
@@ -537,7 +537,7 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
@@ -554,7 +554,7 @@ class Test_Explicit_Fortran_Radau5:
         """
         self.sim.simulate(2.) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
     
@@ -566,13 +566,13 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -583,7 +583,7 @@ class Test_Explicit_Fortran_Radau5:
         
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
     
@@ -596,7 +596,7 @@ class Test_Explicit_Fortran_Radau5:
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
-        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim_sp.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
     
@@ -608,7 +608,7 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.thet = -1
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -617,7 +617,7 @@ class Test_Explicit_Fortran_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_newt(self):
@@ -630,7 +630,7 @@ class Test_Explicit_Fortran_Radau5:
         # self.sim.newt = 10
         # self.sim.simulate(1.0)
         
-        # assert self.sim.statistics["nniterfail"] == 1
+        # nose.tools.assert_equal(self.sim.statistics["nniterfail"], 1)
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -639,7 +639,7 @@ class Test_Explicit_Fortran_Radau5:
         """
         self.sim.safe = 0.99
         self.sim.simulate(1.0)
-        assert self.sim.statistics["nsteps"] < 150
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 150)
         
     @testattr(stddist = True)
     def test_reset_statistics(self):
@@ -652,14 +652,14 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.reset()
         self.sim.simulate(1.0)
         
-        assert self.sim.statistics["nsteps"] < steps*1.5
+        nose.tools.assert_less(self.sim.statistics["nsteps"], steps*1.5)
         
     @testattr(stddist = True)
     def test_weighted_error(self):
         
         def handle_result(solver, t, y):
             err = solver.get_weighted_local_errors()
-            assert len(err) == len(y)
+            nose.tools.assert_equal(len(err), len(y))
         
         self.mod.handle_result = handle_result
             
@@ -689,14 +689,14 @@ class Test_Explicit_Fortran_Radau5:
         self.sim.simulate(1.0)
         steps2 = self.sim.statistics["nsteps"]
         
-        assert steps2 > steps
+        nose.tools.assert_greater(steps2, steps)
         
         self.sim.reset()
         self.sim.atol = [1e-8, 1e-8]
         
         steps3 = self.sim.statistics["nsteps"]
         
-        assert steps3==steps2
+        nose.tools.assert_equal(steps3, steps2)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
         
@@ -717,9 +717,9 @@ class Test_Explicit_Fortran_Radau5:
         mod.handle_event = handle_event
         
         sim = Radau5ODE(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
     @testattr(stddist = True)
     def test_nmax_steps(self):
@@ -855,13 +855,13 @@ class Test_Explicit_C_Radau5:
         sim.usejac = False
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
         
         sim = Radau5ODE(self.mod)
         sim.solver = 'c'
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -886,8 +886,8 @@ class Test_Explicit_C_Radau5:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -898,7 +898,7 @@ class Test_Explicit_C_Radau5:
         exp_sim.solver = 'c'
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -907,7 +907,7 @@ class Test_Explicit_C_Radau5:
         sim = Radau5ODE(self.mod)
         sim.solver = 'c'
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_collocation_polynomial(self):
@@ -918,7 +918,7 @@ class Test_Explicit_C_Radau5:
         
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
         
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
@@ -927,7 +927,7 @@ class Test_Explicit_C_Radau5:
         self.sim.reset()
         self.sim.simulate(2.,200) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
@@ -944,7 +944,7 @@ class Test_Explicit_C_Radau5:
         """
         self.sim.simulate(2.) #Simulate 2 seconds
         
-        assert self.sim.statistics["nsteps"] < 300
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
     
@@ -956,13 +956,13 @@ class Test_Explicit_C_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_usejac(self):
@@ -973,7 +973,7 @@ class Test_Explicit_C_Radau5:
         
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
     
@@ -986,7 +986,7 @@ class Test_Explicit_C_Radau5:
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
-        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim_sp.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
     
@@ -998,7 +998,7 @@ class Test_Explicit_C_Radau5:
         self.sim.thet = -1
         self.sim.simulate(2.) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -1007,7 +1007,7 @@ class Test_Explicit_C_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_newt(self):
@@ -1019,8 +1019,7 @@ class Test_Explicit_C_Radau5:
         # self.sim.reset()
         # self.sim.newt = 10
         # self.sim.simulate(1.0)
-        
-        # assert self.sim.statistics["nniterfail"] == 1
+        # nose.tools.assert_equal(self.sim.statistics["nniterfail"], 1)
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -1029,7 +1028,7 @@ class Test_Explicit_C_Radau5:
         """
         self.sim.safe = 0.99
         self.sim.simulate(1.0)
-        assert self.sim.statistics["nsteps"] < 150
+        nose.tools.assert_less(self.sim.statistics["nsteps"], 150)
         
     @testattr(stddist = True)
     def test_reset_statistics(self):
@@ -1042,14 +1041,14 @@ class Test_Explicit_C_Radau5:
         self.sim.reset()
         self.sim.simulate(1.0)
         
-        assert self.sim.statistics["nsteps"] < steps*1.5
+        nose.tools.assert_less(self.sim.statistics["nsteps"], steps*1.5)
         
     @testattr(stddist = True)
     def test_weighted_error(self):
         
         def handle_result(solver, t, y):
             err = solver.get_weighted_local_errors()
-            assert len(err) == len(y)
+            nose.tools.assert_equal(len(err), len(y))
         
         self.mod.handle_result = handle_result
             
@@ -1079,14 +1078,14 @@ class Test_Explicit_C_Radau5:
         self.sim.simulate(1.0)
         steps2 = self.sim.statistics["nsteps"]
         
-        assert steps2 > steps
+        nose.tools.assert_greater(steps2, steps)
         
         self.sim.reset()
         self.sim.atol = [1e-8, 1e-8]
         
         steps3 = self.sim.statistics["nsteps"]
         
-        assert steps3==steps2
+        nose.tools.assert_equal(steps3, steps2)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
         
@@ -1108,9 +1107,9 @@ class Test_Explicit_C_Radau5:
         
         sim = Radau5ODE(mod)
         sim.solver = 'c'
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
     @testattr(stddist = True)
     def test_nmax_steps(self):
@@ -1201,7 +1200,7 @@ class Test_Implicit_Fortran_Radau5:
         sim.usejac = False
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_simulate_explicit(self):
@@ -1215,7 +1214,7 @@ class Test_Implicit_Fortran_Radau5:
         simulator = Radau5DAE(problem)
         simulator.solver = 'f'
         
-        assert simulator.yd0[0] == -simulator.y0[0]
+        nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
         
         t,y = simulator.simulate(1.0)
         
@@ -1244,8 +1243,8 @@ class Test_Implicit_Fortran_Radau5:
             #solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
@@ -1257,7 +1256,7 @@ class Test_Implicit_Fortran_Radau5:
         exp_sim.verbosity = 0
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -1269,7 +1268,7 @@ class Test_Implicit_Fortran_Radau5:
         sim = Radau5DAE(self.mod)
         sim.solver = 'f'
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_thet(self):
@@ -1279,7 +1278,7 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
         
     @testattr(stddist = True)    
     def test_simulation(self):
@@ -1311,13 +1310,13 @@ class Test_Implicit_Fortran_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -1326,7 +1325,7 @@ class Test_Implicit_Fortran_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
         
         
     @testattr(stddist = True)
@@ -1347,9 +1346,9 @@ class Test_Implicit_Fortran_Radau5:
         
         sim = Radau5DAE(mod)
         sim.solver = 'f'
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
     @testattr(stddist = True)
     def test_nmax_steps(self):
@@ -1447,7 +1446,7 @@ class Test_Implicit_C_Radau5:
         sim.usejac = False
         sim.simulate(1)
         
-        assert sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_simulate_explicit(self):
@@ -1461,7 +1460,7 @@ class Test_Implicit_C_Radau5:
         simulator = Radau5DAE(problem)
         simulator.solver = 'c'
         
-        assert simulator.yd0[0] == -simulator.y0[0]
+        nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
         
         t,y = simulator.simulate(1.0)
         
@@ -1490,8 +1489,8 @@ class Test_Implicit_C_Radau5:
             #solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
@@ -1503,7 +1502,7 @@ class Test_Implicit_C_Radau5:
         exp_sim.verbosity = 0
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -1515,7 +1514,7 @@ class Test_Implicit_C_Radau5:
         sim = Radau5DAE(self.mod)
         sim.solver = 'c'
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_thet(self):
@@ -1525,7 +1524,7 @@ class Test_Implicit_C_Radau5:
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
         
     @testattr(stddist = True)    
     def test_simulation(self):
@@ -1557,13 +1556,13 @@ class Test_Implicit_C_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -1572,7 +1571,7 @@ class Test_Implicit_C_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
         
         
     @testattr(stddist = True)
@@ -1593,9 +1592,9 @@ class Test_Implicit_C_Radau5:
         
         sim = Radau5DAE(mod)
         sim.solver = 'c'
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
     @testattr(stddist = True)
     def test_nmax_steps(self):
@@ -1706,8 +1705,8 @@ class Test_Implicit_Radau5:
             #solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
@@ -1718,7 +1717,7 @@ class Test_Implicit_Radau5:
         exp_sim.verbosity = 0
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_init(self):
@@ -1729,7 +1728,7 @@ class Test_Implicit_Radau5:
 
         sim = _Radau5DAE(self.mod)
         
-        assert sim._leny == 2
+        nose.tools.assert_equal(sim._leny, 2)
     
     @testattr(stddist = True)
     def test_thet(self):
@@ -1739,7 +1738,7 @@ class Test_Implicit_Radau5:
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
 
-        assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
+        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
         
     @testattr(stddist = True)    
     def test_simulation(self):
@@ -1771,13 +1770,13 @@ class Test_Implicit_Radau5:
         self.sim.report_continuously = True
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
         
         self.sim.reset()
         self.sim.report_continuously = False
         
         self.sim.simulate(1.0, 200) #Simulate 1 second
-        assert len(self.sim.t_sol) == 201
+        nose.tools.assert_equal(len(self.sim.t_sol), 201)
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -1786,7 +1785,7 @@ class Test_Implicit_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        assert max(N.diff(self.sim.t_sol))-N.finfo('double').eps <= 0.01
+        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
 
 class Test_Radau_Common:
     """
@@ -1810,9 +1809,9 @@ class Test_Radau_Common:
         This tests the functionality of the property fac1.
         """
         self.sim.fac1 = 0.01
-        assert self.sim.fac1 == 0.01
+        nose.tools.assert_equal(self.sim.fac1, 0.01)
         self.sim.fac1 = 0.001
-        assert self.sim.fac1 == 0.001
+        nose.tools.assert_equal(self.sim.fac1, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, [-1.0])
@@ -1823,9 +1822,9 @@ class Test_Radau_Common:
         This tests the functionality of the property fac2.
         """
         self.sim.fac2 = 0.01
-        assert self.sim.fac2 == 0.01
+        nose.tools.assert_equal(self.sim.fac2, 0.01)
         self.sim.fac2 = 0.001
-        assert self.sim.fac2 == 0.001
+        nose.tools.assert_equal(self.sim.fac2, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, [-1.0])
@@ -1836,9 +1835,9 @@ class Test_Radau_Common:
         This tests the functionality of the property fnewt.
         """
         self.sim.fnewt = 0.01
-        assert self.sim.fnewt == 0.01
+        nose.tools.assert_equal(self.sim.fnewt, 0.01)
         self.sim.fnewt = 0.001
-        assert self.sim.fnewt == 0.001
+        nose.tools.assert_equal(self.sim.fnewt, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, [-1.0])
@@ -1849,9 +1848,9 @@ class Test_Radau_Common:
         This tests the functionality of the property h.
         """
         self.sim.h = 0.01
-        assert self.sim.h == 0.01
+        nose.tools.assert_equal(self.sim.h, 0.01)
         self.sim.h = 0.001
-        assert self.sim.h == 0.001
+        nose.tools.assert_equal(self.sim.h, 0.001)
     
     @testattr(stddist = True)
     def test_initial_step(self):
@@ -1859,9 +1858,9 @@ class Test_Radau_Common:
         This tests the functionality of the property initial step.
         """
         self.sim.inith = 0.01
-        assert self.sim.inith == 0.01
+        nose.tools.assert_equal(self.sim.inith, 0.01)
         self.sim.inith = 0.001
-        assert self.sim.inith == 0.001
+        nose.tools.assert_equal(self.sim.inith, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, [-1.0])
@@ -1872,11 +1871,11 @@ class Test_Radau_Common:
         This tests the functionality of the property newt.
         """
         self.sim.newt = 1
-        assert self.sim.newt == 1
+        nose.tools.assert_equal(self.sim.newt, 1)
         self.sim.newt = 10
-        assert self.sim.newt == 10
+        nose.tools.assert_equal(self.sim.newt, 10)
         self.sim.newt = 9.8
-        assert self.sim.newt == 9
+        nose.tools.assert_equal(self.sim.newt, 9)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, [-1.0])
@@ -1887,9 +1886,9 @@ class Test_Radau_Common:
         This tests the functionality of the property quot1.
         """
         self.sim.quot1 = 0.01
-        assert self.sim.quot1 == 0.01
+        nose.tools.assert_equal(self.sim.quot1, 0.01)
         self.sim.quot1 = 0.001
-        assert self.sim.quot1 == 0.001
+        nose.tools.assert_equal(self.sim.quot1, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, [-1.0])
@@ -1900,9 +1899,9 @@ class Test_Radau_Common:
         This tests the functionality of the property quot2.
         """
         self.sim.quot2 = 0.01
-        assert self.sim.quot2 == 0.01
+        nose.tools.assert_equal(self.sim.quot2, 0.01)
         self.sim.quot2 = 0.001
-        assert self.sim.quot2 == 0.001
+        nose.tools.assert_equal(self.sim.quot2, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, [-1.0])
@@ -1913,9 +1912,9 @@ class Test_Radau_Common:
         This tests the functionality of the property safe.
         """
         self.sim.safe = 0.01
-        assert self.sim.safe == 0.01
+        nose.tools.assert_equal(self.sim.safe, 0.01)
         self.sim.safe = 0.001
-        assert self.sim.safe == 0.001
+        nose.tools.assert_equal(self.sim.safe, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, [-1.0])
@@ -1926,9 +1925,9 @@ class Test_Radau_Common:
         This tests the functionality of the property thet.
         """
         self.sim.thet = 0.01
-        assert self.sim.thet == 0.01
+        nose.tools.assert_equal(self.sim.thet, 0.01)
         self.sim.thet = 0.001
-        assert self.sim.thet == 0.001
+        nose.tools.assert_equal(self.sim.thet, 0.001)
         
         nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, 'Test')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, [-1.0])
@@ -1939,13 +1938,13 @@ class Test_Radau_Common:
         This tests the functionality of the property usejac.
         """
         self.sim.usejac = True
-        assert self.sim.usejac == True
+        nose.tools.assert_true(self.sim.usejac)
         self.sim.usejac = False
-        assert self.sim.usejac == False
+        nose.tools.assert_false(self.sim.usejac)
         self.sim.usejac = 1
-        assert self.sim.usejac == True
+        nose.tools.assert_true(self.sim.usejac)
         self.sim.usejac = []
-        assert self.sim.usejac == False
+        nose.tools.assert_false(self.sim.usejac)
 
     @testattr(stddist = True)
     def test_solver(self):
@@ -1953,11 +1952,12 @@ class Test_Radau_Common:
         This tests the functionality of the property solver.
         """
         self.sim.solver = 'f'
-        assert self.sim.solver == 'f'
+        nose.tools.assert_equal(self.sim.solver, 'f')
         self.sim.solver = 'c'
-        assert self.sim.solver == 'c'
+        nose.tools.assert_equal(self.sim.solver, 'c')
         self.sim.solver = 'F'
-        assert self.sim.solver == 'f'
+        nose.tools.assert_equal(self.sim.solver, 'f')
         self.sim.solver = 'C'
-        assert self.sim.solver == 'c'
-
+        nose.tools.assert_equal(self.sim.solver, 'c')
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, 'Python')
+        nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, True)

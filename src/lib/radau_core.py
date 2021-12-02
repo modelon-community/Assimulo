@@ -449,6 +449,10 @@ class Radau_Common(object):
         return self.options["solver"]
     
     def _set_solver(self, solver):
+        try:
+            solver.lower()
+        except:
+            raise Radau_Exception("'solver' parameters needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(solver, type(solver)))
         if solver.lower() == "f": ## Fortran
             try:
                 from assimulo.lib import radau5 as radau5_f

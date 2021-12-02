@@ -70,7 +70,7 @@ class Test_GLIMDA:
         problem = Explicit_Problem(f,y0)
         simulator = GLIMDA(problem)
         
-        assert simulator.yd0[0] == -simulator.y0[0]
+        nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
         
         t,y = simulator.simulate(1.0)
         
@@ -81,13 +81,13 @@ class Test_GLIMDA:
         """
         Tests the maximum order of GLIMDA.
         """
-        assert self.sim.maxord == 3 #Default
-        assert self.sim.options["maxord"] == 3
+        nose.tools.assert_equal(self.sim.maxord, 3)#Default
+        nose.tools.assert_equal(self.sim.options["maxord"], 3)
         
         self.sim.maxord = 2
         
-        assert self.sim.maxord == 2 #Default
-        assert self.sim.options["maxord"] == 2
+        nose.tools.assert_equal(self.sim.maxord, 2)#Default
+        nose.tools.assert_equal(self.sim.options["maxord"], 2)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_maxord, 4)
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_maxord, 0)
@@ -97,13 +97,13 @@ class Test_GLIMDA:
         """
         Tests the minimum order of GLIMDA.
         """
-        assert self.sim.minord == 1 #Default
-        assert self.sim.options["minord"] == 1
+        nose.tools.assert_equal(self.sim.minord, 1)#Default
+        nose.tools.assert_equal(self.sim.options["minord"], 1)
         
         self.sim.minord = 2
         
-        assert self.sim.minord == 2 #Default
-        assert self.sim.options["minord"] == 2
+        nose.tools.assert_equal(self.sim.minord, 2)#Default
+        nose.tools.assert_equal(self.sim.options["minord"], 2)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_minord, 4)
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_minord, 0)
@@ -113,13 +113,13 @@ class Test_GLIMDA:
         """
         Tests the maximum allowed steps of GLIMDA
         """
-        assert self.sim.maxsteps == 100000
-        assert self.sim.options["maxsteps"] == 100000
+        nose.tools.assert_equal(self.sim.maxsteps, 100000)
+        nose.tools.assert_equal(self.sim.options["maxsteps"], 100000)
         
         self.sim.maxsteps = 100
         
-        assert self.sim.maxsteps == 100
-        assert self.sim.options["maxsteps"] == 100
+        nose.tools.assert_equal(self.sim.maxsteps, 100)
+        nose.tools.assert_equal(self.sim.options["maxsteps"], 100)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_maxsteps, -1)
     
@@ -128,13 +128,13 @@ class Test_GLIMDA:
         """
         Tests the maximum allowed number of Newton iterations GLIMDA
         """
-        assert self.sim.newt == 5
-        assert self.sim.options["newt"] == 5
+        nose.tools.assert_equal(self.sim.newt, 5)
+        nose.tools.assert_equal(self.sim.options["newt"], 5)
         
         self.sim.newt = 3
         
-        assert self.sim.newt == 3
-        assert self.sim.options["newt"] == 3
+        nose.tools.assert_equal(self.sim.newt, 3)
+        nose.tools.assert_equal(self.sim.options["newt"], 3)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_newt, -1)
         
@@ -143,26 +143,26 @@ class Test_GLIMDA:
         """
         Tests the minimum stepsize of GLIMDA.
         """
-        assert self.sim.minh == N.finfo(N.double).eps
-        assert self.sim.options["minh"] == N.finfo(N.double).eps
+        nose.tools.assert_equal(self.sim.minh, N.finfo(N.double).eps)
+        nose.tools.assert_equal(self.sim.options["minh"], N.finfo(N.double).eps)
         
         self.sim.minh = 1e-5
         
-        assert self.sim.minh == 1e-5
-        assert self.sim.options["minh"] == 1e-5
+        nose.tools.assert_equal(self.sim.minh, 1e-5)
+        nose.tools.assert_equal(self.sim.options["minh"], 1e-5)
         
     @testattr(stddist = True)
     def test_order(self):
         """
         Tests the order of GLIMDA.
         """
-        assert self.sim.order == 0
-        assert self.sim.options["order"] == 0
+        nose.tools.assert_equal(self.sim.order, 0)
+        nose.tools.assert_equal(self.sim.options["order"], 0)
         
         self.sim.order = 1
         
-        assert self.sim.order == 1
-        assert self.sim.options["order"] == 1
+        nose.tools.assert_equal(self.sim.order, 1)
+        nose.tools.assert_equal(self.sim.options["order"], 1)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_order, -1)
     
@@ -171,26 +171,26 @@ class Test_GLIMDA:
         """
         Tests the maximum stepsize of GLIMDA.
         """
-        assert self.sim.maxh == N.inf
-        assert self.sim.options["maxh"] == N.inf
+        nose.tools.assert_equal(self.sim.maxh, N.inf)
+        nose.tools.assert_equal(self.sim.options["maxh"], N.inf)
         
         self.sim.maxh = 1e5
         
-        assert self.sim.maxh == 1e5
-        assert self.sim.options["maxh"] == 1e5
+        nose.tools.assert_equal(self.sim.maxh, 1e5)
+        nose.tools.assert_equal(self.sim.options["maxh"], 1e5)
         
     @testattr(stddist = True)
     def test_maxretry(self):
         """
         Tests the maximum number of retries of GLIMDA.
         """
-        assert self.sim.maxretry == 15
-        assert self.sim.options["maxretry"] == 15
+        nose.tools.assert_equal(self.sim.maxretry, 15)
+        nose.tools.assert_equal(self.sim.options["maxretry"], 15)
         
         self.sim.maxretry = 10
         
-        assert self.sim.maxretry == 10
-        assert self.sim.options["maxretry"] == 10
+        nose.tools.assert_equal(self.sim.maxretry, 10)
+        nose.tools.assert_equal(self.sim.options["maxretry"], 10)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_maxretry, -1)
         
