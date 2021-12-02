@@ -145,7 +145,7 @@ class Test_CVode:
         sim.backward = True
         t, y = sim.simulate(0, ncp_list=np.arange(1, 10)[::-1])
         
-        nose.tools.assert_true(np.all(t == np.arange(0,11)[::-1])
+        nose.tools.assert_true(np.all(t == np.arange(0,11)[::-1]))
 
     @testattr(stddist = True)
     def test_event_localizer(self):
