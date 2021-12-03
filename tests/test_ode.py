@@ -32,8 +32,8 @@ class Test_ODE:
         """
         This tests the functionality of the method __init__.
         """
-        assert self.simulator.verbosity == NORMAL
-        assert self.simulator.report_continuously == False
+        nose.tools.assert_equal(self.simulator.verbosity, NORMAL)
+        nose.tools.assert_false(self.simulator.report_continuously)
     
     @testattr(stddist = True)
     def test_verbosity(self):
@@ -45,22 +45,22 @@ class Test_ODE:
         nose.tools.assert_raises(AssimuloException, self.simulator._set_verbosity, [1])
         
         self.simulator.verbosity=1
-        assert self.simulator.verbosity==1
-        assert self.simulator.options["verbosity"] == 1
+        nose.tools.assert_equal(self.simulator.verbosity, 1)
+        nose.tools.assert_equal(self.simulator.options["verbosity"], 1)
         self.simulator.verbosity=4
-        assert self.simulator.verbosity==4
-        assert self.simulator.options["verbosity"] == 4
+        nose.tools.assert_equal(self.simulator.verbosity, 4)
+        nose.tools.assert_equal(self.simulator.options["verbosity"], 4)
         
     @testattr(stddist = True)    
     def test_report_continuously(self):
         """
         This tests the functionality of the property report_continuously.
         """
-        assert self.simulator.report_continuously == False #Test the default value
+        nose.tools.assert_false(self.simulator.report_continuously) #Test the default value
         
         self.simulator.report_continuously = True
-        assert self.simulator.report_continuously == True
-        assert self.simulator.options["report_continuously"] == True
+        nose.tools.assert_true(self.simulator.report_continuously)
+        nose.tools.assert_true(self.simulator.options["report_continuously"])
     def test_step_events_report_continuously(self):
         """
         This test tests if report_continuously is set correctly, when step_events are present.
@@ -70,5 +70,4 @@ class Test_ODE:
         self.simulator.problem_info["step_events"] = True
         self.simulator.problem=self.problem
         self.simulator(10.,ncp=10) # output points and step events should set report_continuously to True 
-        assert self.simulator.report_continuously == True
-        
+        nose.tools.assert_true(self.simulator.report_continuously)

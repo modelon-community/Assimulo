@@ -1,4 +1,4 @@
-// translated by f2c (version 20100827).
+// based on f2c (version 20100827) translation of radau_decsol.f.
 // Note: Due to this, matrices (doublereal*) are stored in Fortran-style column major format
 
 #include <stdlib.h>
