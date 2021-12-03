@@ -31,16 +31,16 @@ class Test_Explicit_ODE:
         prob = Explicit_Problem(rhs, 0.0)
         solv = Explicit_ODE(prob)
         
-        assert solv.get_elapsed_step_time() == -1.0
+        nose.tools.assert_equal(solv.get_elapsed_step_time(), -1.0)
         
     @testattr(stddist = True)
     def test_problem_name_attribute(self):
         rhs = lambda t,y: y
         
         prob = Explicit_Problem(rhs, 0.0)
-        assert prob.name == "---"
+        nose.tools.assert_equal(prob.name, "---")
         prob = Explicit_Problem(rhs, 0.0, name="Test")
-        assert prob.name == "Test"
+        nose.tools.assert_equal(prob.name, "Test")
     
     @testattr(stddist = True)
     def test_re_init(self):
@@ -50,10 +50,10 @@ class Test_Explicit_ODE:
         prob = Explicit_Problem(rhs, 0.0)
         solv = Explicit_ODE(prob)
         
-        assert solv.t == 0.0
-        assert solv.y[0] == 0.0
+        nose.tools.assert_equal(solv.t, 0.0)
+        nose.tools.assert_equal(solv.y[0], 0.0)
         
         solv.re_init(1.0, 2.0)
         
-        assert solv.t == 1.0
-        assert solv.y[0] == 2.0
+        nose.tools.assert_equal(solv.t, 1.0)
+        nose.tools.assert_equal(solv.y[0], 2.0)

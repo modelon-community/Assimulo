@@ -296,7 +296,7 @@ class Test_LSODAR:
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
-        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(self.sim_sp.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
         
@@ -310,12 +310,12 @@ class Test_LSODAR:
     def test_maxh(self):
         
         self.sim.hmax = 1.0
-        assert self.sim.options["maxh"] == 1.0
-        assert self.sim.maxh == 1.0
+        nose.tools.assert_equal(self.sim.options["maxh"], 1.0)
+        nose.tools.assert_equal(self.sim.maxh, 1.0)
         
         self.sim.maxh = 2.0
-        assert self.sim.options["maxh"] == 2.0
-        assert self.sim.maxh == 2.0
+        nose.tools.assert_equal(self.sim.options["maxh"], 2.0)
+        nose.tools.assert_equal(self.sim.maxh, 2.0)
         
     @testattr(stddist = True)    
     def test_simulation_ncp_list_2(self):

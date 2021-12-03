@@ -138,14 +138,14 @@ class Test_CVode:
         sim.backward = True
         t, y = sim.simulate(0, ncp_list=np.arange(1, 10))
         
-        assert np.all(t == np.arange(0,11)[::-1])
+        nose.tools.assert_true(np.all(t == np.arange(0,11)[::-1]))
         
         mod = Explicit_Problem(f, y0=[1, 0], t0=10)
         sim = CVode(mod)
         sim.backward = True
         t, y = sim.simulate(0, ncp_list=np.arange(1, 10)[::-1])
         
-        assert np.all(t == np.arange(0,11)[::-1])
+        nose.tools.assert_true(np.all(t == np.arange(0,11)[::-1]))
 
     @testattr(stddist = True)
     def test_event_localizer(self):
@@ -171,7 +171,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         weights = self.simulator.get_error_weights()
-        assert weights[0] < 1e6
+        nose.tools.assert_less(weights[0], 1e6)
         
     @testattr(stddist = True)
     def test_get_used_initial_step(self):
@@ -186,7 +186,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         step = self.simulator.get_used_initial_step()
-        assert N.abs(step-1e-8) < 1e-2
+        nose.tools.assert_less(N.abs(step-1e-8), 1e-2)
         
     
     @testattr(stddist = True)
@@ -196,7 +196,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         err = self.simulator.get_local_errors()
-        assert err[0] < 1e-5
+        nose.tools.assert_less(err[0], 1e-5)
     
     @testattr(stddist = True)
     def test_get_last_order(self):
@@ -205,31 +205,31 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         qlast = self.simulator.get_last_order()
-        assert qlast == 4
+        nose.tools.assert_equal(qlast, 4)
         
     @testattr(stddist = True)
     def test_max_convergence_failures(self):
-        assert self.simulator.maxncf == self.simulator.options["maxncf"]
+        nose.tools.assert_equal(self.simulator.maxncf, self.simulator.options["maxncf"])
         self.simulator.maxncf = 15
-        assert self.simulator.maxncf == 15
+        nose.tools.assert_equal(self.simulator.maxncf, 15)
         
         nose.tools.assert_raises(AssimuloException, self.simulator._set_max_conv_fails, -1)
         
     @testattr(stddist = True)
     def test_max_error_tests_failures(self):
-        assert self.simulator.maxnef == self.simulator.options["maxnef"]
+        nose.tools.assert_equal(self.simulator.maxnef, self.simulator.options["maxnef"])
         self.simulator.maxnef = 15
-        assert self.simulator.maxnef == 15
-        assert self.simulator.options["maxnef"] == 15
+        nose.tools.assert_equal(self.simulator.maxnef, 15)
+        nose.tools.assert_equal(self.simulator.options["maxnef"], 15)
         
         nose.tools.assert_raises(AssimuloException, self.simulator._set_max_err_fails, -1)
         
     @testattr(stddist = True)
     def test_max_nonlinear_iterations(self):
-        assert self.simulator.maxcor == self.simulator.options["maxcor"]
+        nose.tools.assert_equal(self.simulator.maxcor, self.simulator.options["maxcor"])
         self.simulator.maxcor = 15
-        assert self.simulator.maxcor == 15
-        assert self.simulator.options["maxcor"] == 15
+        nose.tools.assert_equal(self.simulator.maxcor, 15)
+        nose.tools.assert_equal(self.simulator.options["maxcor"], 15)
         
         #nose.tools.assert_raises(AssimuloException, self.simulator._set_max_err_fails, -1)
         
@@ -241,7 +241,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         qcur = self.simulator.get_current_order()
-        assert qcur == 4
+        nose.tools.assert_equal(qcur, 4)
 
 
         
@@ -250,15 +250,15 @@ class Test_CVode:
         """
         This tests the functionality of the method __init__.
         """
-        #assert self.simulator.f == 'Test function'
-        assert self.simulator.y == 1.0
-        assert self.simulator.discr == 'BDF'
-        assert self.simulator.iter == 'Newton'
-        assert self.simulator.maxord == 5
+        # nose.tools.assert_equal(self.simulator.f, 'Test function')
+        nose.tools.assert_equal(self.simulator.y, 1.0)
+        nose.tools.assert_equal(self.simulator.discr, 'BDF')
+        nose.tools.assert_equal(self.simulator.iter, 'Newton')
+        nose.tools.assert_equal(self.simulator.maxord, 5)
         
         self.simulator.discr = 'Adams'
-        assert self.simulator.discr == 'Adams'
-        assert self.simulator.maxord == 12
+        nose.tools.assert_equal(self.simulator.discr, 'Adams')
+        nose.tools.assert_equal(self.simulator.maxord, 12)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -283,8 +283,8 @@ class Test_CVode:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -294,7 +294,7 @@ class Test_CVode:
         exp_sim = CVode(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
         
     @testattr(stddist = True)
     def test_clear_event_log(self):
@@ -319,8 +319,8 @@ class Test_CVode:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -331,16 +331,16 @@ class Test_CVode:
         exp_sim.verbosity = 10
         exp_sim(5.,100)
         
-        assert len(exp_sim.event_data) == 4
+        nose.tools.assert_equal(len(exp_sim.event_data), 4)
         
         tnext = 0.0
         nevent = 0
         
         exp_sim.reset()
-        assert len(exp_sim.event_data) == 0
+        nose.tools.assert_equal(len(exp_sim.event_data), 0)
         
         exp_sim(5.,100)
-        assert len(exp_sim.event_data) == 4
+        nose.tools.assert_equal(len(exp_sim.event_data), 4)
     
     @testattr(stddist = True)
     def test_time_limit(self):
@@ -369,9 +369,9 @@ class Test_CVode:
         nose.tools.assert_raises(Exception, self.simulator._set_discr_method, ['Test'])
         
         self.simulator.discr = 'BDF'
-        assert self.simulator.discr == 'BDF'
+        nose.tools.assert_equal(self.simulator.discr, 'BDF')
         self.simulator.discr = 'Adams'
-        assert self.simulator.discr == 'Adams'
+        nose.tools.assert_equal(self.simulator.discr, 'Adams')
     
     @testattr(stddist = True)
     def test_change_discr(self):
@@ -386,20 +386,20 @@ class Test_CVode:
         
         exp_sim.iter = "FixedPoint"
         exp_sim.simulate(1)
-        assert exp_sim.statistics["njacs"] == 0
+        nose.tools.assert_equal(exp_sim.statistics["njacs"], 0)
         exp_sim.iter = "Newton"
         exp_sim.simulate(2)
-        assert exp_sim.statistics["njacs"] > 0
+        nose.tools.assert_greater(exp_sim.statistics["njacs"], 0)
         
     @testattr(stddist = True)
     def test_change_norm(self):
         
-        assert self.simulator.options["norm"] == "WRMS"
+        nose.tools.assert_equal(self.simulator.options["norm"], "WRMS")
         self.simulator.norm = 'WRMS'
-        assert self.simulator.norm == 'WRMS'
+        nose.tools.assert_equal(self.simulator.norm, 'WRMS')
         self.simulator.norm = 'EUCLIDEAN'
-        assert self.simulator.options["norm"] == "EUCLIDEAN"
-        assert self.simulator.norm == 'EUCLIDEAN'
+        nose.tools.assert_equal(self.simulator.options["norm"], "EUCLIDEAN")
+        nose.tools.assert_equal(self.simulator.norm, 'EUCLIDEAN')
         
         f = lambda t,y: N.array([1.0])
         y0 = 4.0 #Initial conditions
@@ -432,7 +432,7 @@ class Test_CVode:
         exp_sim.iter='Newton'
         exp_sim.simulate(5.,100)
         
-        assert exp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(exp_sim.statistics["nfcnjacs"], 0)
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
         
         exp_sim.reset()
@@ -440,7 +440,7 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
 
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
-        assert exp_sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(exp_sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
@@ -458,7 +458,7 @@ class Test_CVode:
         exp_sim.iter='Newton'
         exp_sim.simulate(5.,100)
         
-        assert exp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(exp_sim.statistics["nfcnjacs"], 0)
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
         
         exp_sim.reset()
@@ -466,7 +466,7 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
 
         nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.75000143, 4)
-        assert exp_sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(exp_sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_switches(self):
@@ -485,9 +485,9 @@ class Test_CVode:
         mod.handle_event = handle_event
         
         sim = CVode(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
     
     @testattr(stddist = True)
     def test_iter_method(self):
@@ -503,9 +503,9 @@ class Test_CVode:
         nose.tools.assert_raises(Exception, self.simulator._set_iter_method, 11.1)
         
         self.simulator.iter = 'Newton'
-        assert self.simulator.iter == 'Newton'
+        nose.tools.assert_equal(self.simulator.iter, 'Newton')
         self.simulator.iter = 'FixedPoint'
-        assert self.simulator.iter == 'FixedPoint'
+        nose.tools.assert_equal(self.simulator.iter, 'FixedPoint')
     
     @testattr(stddist = True)
     def test_initial_step(self):
@@ -516,11 +516,11 @@ class Test_CVode:
         nose.tools.assert_raises(Exception, self.simulator._set_initial_step, 'Test')
         nose.tools.assert_raises(Exception, self.simulator._set_initial_step, ['Test'])
         
-        assert self.simulator.inith == 0.0
+        nose.tools.assert_equal(self.simulator.inith, 0.0)
         self.simulator.inith = 10.0
-        assert self.simulator.inith == 10.0
+        nose.tools.assert_equal(self.simulator.inith, 10.0)
         self.simulator.inith = 1
-        assert self.simulator.inith == 1.0
+        nose.tools.assert_equal(self.simulator.inith, 1.0)
     
     @testattr(stddist = True)
     def test_interpolate(self):
@@ -558,7 +558,7 @@ class Test_CVode:
         """
         f = lambda t,x: x**0.25
         def handle_result(solver,t,y):
-            assert solver.t == t
+            nose.tools.assert_equal(solver.t, t)
         
         prob = Explicit_Problem(f, [1.0])
         prob.handle_result = handle_result
@@ -578,11 +578,11 @@ class Test_CVode:
         nose.tools.assert_raises(Exception, self.simulator._set_max_ord, [1,1])
         
         self.simulator.maxord = -1
-        assert self.simulator.maxord == 1
+        nose.tools.assert_equal(self.simulator.maxord, 1)
         self.simulator.maxord = 2
-        assert self.simulator.maxord == 2
+        nose.tools.assert_equal(self.simulator.maxord, 2)
         self.simulator.maxord = 13
-        assert self.simulator.maxord == 12
+        nose.tools.assert_equal(self.simulator.maxord, 12)
         
         self.simulator.discr='BDF'
         
@@ -590,11 +590,11 @@ class Test_CVode:
         nose.tools.assert_raises(Exception, self.simulator._set_max_ord, [1,1])
         
         self.simulator.maxord = -1
-        assert self.simulator.maxord == 1
+        nose.tools.assert_equal(self.simulator.maxord, 1)
         self.simulator.maxord = 2
-        assert self.simulator.maxord == 2
+        nose.tools.assert_equal(self.simulator.maxord, 2)
         self.simulator.maxord = 6
-        assert self.simulator.maxord == 5
+        nose.tools.assert_equal(self.simulator.maxord, 5)
     
     @testattr(stddist = True)
     def test_spgmr(self):
@@ -663,28 +663,28 @@ class Test_CVode:
         """
         self.simulator.discr = "Adams"
         self.simulator.maxord = 7
-        assert self.simulator.maxord == 7
+        nose.tools.assert_equal(self.simulator.maxord, 7)
         
         self.simulator.discr = 'Adams'
-        assert self.simulator.maxord == 12
+        nose.tools.assert_equal(self.simulator.maxord, 12)
         self.simulator.discr = 'BDF'
-        assert self.simulator.maxord == 5
+        nose.tools.assert_equal(self.simulator.maxord, 5)
         self.simulator.discr = 'Adams'
-        assert self.simulator.maxord == 12
+        nose.tools.assert_equal(self.simulator.maxord, 12)
         self.simulator.maxord = 4
         self.simulator.discr = 'BDF'
-        assert self.simulator.maxord == 5
+        nose.tools.assert_equal(self.simulator.maxord, 5)
         self.simulator.discr = 'Adams'
-        assert self.simulator.maxord == 12
+        nose.tools.assert_equal(self.simulator.maxord, 12)
    
     @testattr(stddist = True)
     def test_pretype(self):
         """
         This tests the precondition option.
         """
-        assert self.simulator.precond == 'PREC_NONE'
+        nose.tools.assert_equal(self.simulator.precond, 'PREC_NONE')
         self.simulator.precond = 'prec_none'
-        assert self.simulator.precond == 'PREC_NONE'
+        nose.tools.assert_equal(self.simulator.precond, 'PREC_NONE')
         
         nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, -1.0)
         nose.tools.assert_raises(Exception, self.simulator._set_pre_cond, 'PREC_BOTH1')
@@ -694,31 +694,31 @@ class Test_CVode:
         """
         This test the maximum number of krylov subspaces.
         """
-        assert self.simulator.maxkrylov == 5
+        nose.tools.assert_equal(self.simulator.maxkrylov, 5)
         self.simulator.maxkrylov = 3
-        assert self.simulator.maxkrylov == 3
+        nose.tools.assert_equal(self.simulator.maxkrylov, 3)
         self.simulator.maxkrylov = 4.5
-        assert self.simulator.maxkrylov == 4
+        nose.tools.assert_equal(self.simulator.maxkrylov, 4)
         
         nose.tools.assert_raises(Exception, self.simulator._set_max_krylov, 'Test')
         
     @testattr(stddist = True)
     def test_stablimit(self):
-        assert self.simulator.stablimit == False
+        nose.tools.assert_false(self.simulator.stablimit)
         self.simulator.stablimit = True
-        assert self.simulator.stablimit == True
-        assert self.simulator.options["stablimit"] == True
+        nose.tools.assert_true(self.simulator.stablimit)
+        nose.tools.assert_true(self.simulator.options["stablimit"])
     
     @testattr(stddist = True)
     def test_linearsolver(self):
         """
         This test the choice of the linear solver.
         """
-        assert self.simulator.linear_solver == 'DENSE'
+        nose.tools.assert_equal(self.simulator.linear_solver, 'DENSE')
         self.simulator.linear_solver = 'dense'
-        assert self.simulator.linear_solver == 'DENSE'
+        nose.tools.assert_equal(self.simulator.linear_solver, 'DENSE')
         self.simulator.linear_solver = 'spgmr'
-        assert self.simulator.linear_solver == 'SPGMR'
+        nose.tools.assert_equal(self.simulator.linear_solver, 'SPGMR')
         
         nose.tools.assert_raises(Exception, self.simulator._set_linear_solver, 'Test')
     
@@ -761,14 +761,14 @@ class Test_CVode:
         sim = CVode(mod)
         
         sim.simulate(2., 100)
-        assert len(sim.t_sol) == 101
-        assert nsteps == sim.statistics["nsteps"]
+        nose.tools.assert_equal(len(sim.t_sol), 101)
+        nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
         
         sim = CVode(mod)
         nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t_sol) == sim.statistics["nsteps"]+1
-        assert nsteps == sim.statistics["nsteps"]
+        nose.tools.assert_equal(len(sim.t_sol), sim.statistics["nsteps"]+1)
+        nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
         
 class Test_IDA:
     
@@ -807,7 +807,7 @@ class Test_IDA:
         problem = Explicit_Problem(f,y0)
         simulator = IDA(problem)
         
-        assert simulator.yd0[0] == -simulator.y0[0]
+        nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
         
         t,y = simulator.simulate(1.0)
         
@@ -818,11 +818,11 @@ class Test_IDA:
         """
         This tests the functionality of the method __init__.
         """
-        assert self.simulator.suppress_alg == False
-        assert self.simulator.algvar[0] == 1.0
-        assert self.simulator.sw == None
-        assert self.simulator.maxsteps == 10000
-        assert self.simulator.y[0] == 1.0
+        nose.tools.assert_false(self.simulator.suppress_alg)
+        nose.tools.assert_equal(self.simulator.algvar[0], 1.0)
+        nose.tools.assert_equal(self.simulator.sw, None)
+        nose.tools.assert_equal(self.simulator.maxsteps, 10000)
+        nose.tools.assert_equal(self.simulator.y[0], 1.0)
     
     @testattr(stddist = True)
     def test_interpolate(self):
@@ -848,7 +848,7 @@ class Test_IDA:
         """
         f = lambda t,x,xd: x**0.25-xd
         def handle_result(solver, t ,y, yd):
-            assert solver.t == t
+            nose.tools.assert_equal(solver.t, t)
         
         prob = Implicit_Problem(f, [1.0],[1.0])
         prob.handle_result = handle_result
@@ -869,11 +869,11 @@ class Test_IDA:
         
         
         self.simulator.maxord = -1
-        assert self.simulator.maxord == 1
+        nose.tools.assert_equal(self.simulator.maxord, 1)
         self.simulator.maxord = 2
-        assert self.simulator.maxord == 2
+        nose.tools.assert_equal(self.simulator.maxord, 2)
         self.simulator.maxord = 6
-        assert self.simulator.maxord == 5
+        nose.tools.assert_equal(self.simulator.maxord, 5)
     
     @testattr(stddist = True)    
     def test_tout1(self):
@@ -884,22 +884,22 @@ class Test_IDA:
         nose.tools.assert_raises(Exception, self.simulator._set_tout1, [1,1])
         nose.tools.assert_raises(Exception, self.simulator._set_tout1, 'Test')
         
-        assert self.simulator.tout1 == 0.0001
+        nose.tools.assert_equal(self.simulator.tout1, 0.0001)
         self.simulator.tout1 = -0.001
-        assert self.simulator.tout1 == -0.001
+        nose.tools.assert_equal(self.simulator.tout1, -0.001)
         self.simulator.tout1 = 1
-        assert self.simulator.tout1 == 1.0
+        nose.tools.assert_equal(self.simulator.tout1, 1.0)
         
     @testattr(stddist = True)
     def test_lsoff(self):
         """
         This tests the functionality of the property lsoff.
         """
-        assert self.simulator.lsoff == False
+        nose.tools.assert_false(self.simulator.lsoff)
         self.simulator.lsoff = True
-        assert self.simulator.lsoff == True
+        nose.tools.assert_true(self.simulator.lsoff)
         self.simulator.lsoff = False
-        assert self.simulator.lsoff == False
+        nose.tools.assert_false(self.simulator.lsoff)
     
     @testattr(stddist = True)
     def test_initstep(self):
@@ -1001,14 +1001,14 @@ class Test_IDA:
         
         sim = IDA(mod)
         sim.verbosity = 10
-        assert len(sim.event_data) == 0
+        nose.tools.assert_equal(len(sim.event_data), 0)
         sim.simulate(5.0)
-        assert len(sim.event_data) > 0
+        nose.tools.assert_greater(len(sim.event_data), 0)
         
         sim.reset()
-        assert len(sim.event_data) == 0
+        nose.tools.assert_equal(len(sim.event_data), 0)
         sim.simulate(5.0)
-        assert len(sim.event_data) > 0
+        nose.tools.assert_greater(len(sim.event_data), 0)
         
     @testattr(stddist = True)    
     def test_usejac(self):
@@ -1025,7 +1025,7 @@ class Test_IDA:
         
         imp_sim.simulate(3,100)
 
-        assert imp_sim.statistics["nfcnjacs"] == 0
+        nose.tools.assert_equal(imp_sim.statistics["nfcnjacs"], 0)
         nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
         
         imp_sim.reset()
@@ -1033,7 +1033,7 @@ class Test_IDA:
         imp_sim.simulate(3.,100)
 
         nose.tools.assert_almost_equal(imp_sim.y_sol[-1][0], 45.1900000, 4)
-        assert imp_sim.statistics["nfcnjacs"] > 0
+        nose.tools.assert_greater(imp_sim.statistics["nfcnjacs"], 0)
     
     @testattr(stddist = True)
     def test_terminate_simulation(self):
@@ -1108,8 +1108,8 @@ class Test_IDA:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
@@ -1119,7 +1119,7 @@ class Test_IDA:
         exp_sim = IDA(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)    
     def test_suppress_alg(self):
@@ -1127,9 +1127,9 @@ class Test_IDA:
         This tests the functionality of the property suppress_alg.
         """
         self.simulator.suppress_alg = True
-        assert self.simulator.suppress_alg == True
+        nose.tools.assert_true(self.simulator.suppress_alg)
         self.simulator.suppress_alg = False
-        assert self.simulator.suppress_alg == False
+        nose.tools.assert_false(self.simulator.suppress_alg)
         
     @testattr(stddist = True)
     def test_make_consistency(self):
@@ -1172,9 +1172,9 @@ class Test_IDA:
         mod.handle_event = handle_event
         
         sim = IDA(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
     
     @testattr(stddist = True)
     def test_completed_step(self):
@@ -1200,14 +1200,14 @@ class Test_IDA:
         sim = IDA(mod)
         
         sim.simulate(2., 100)
-        assert len(sim.t_sol) == 101
-        assert nsteps == sim.statistics["nsteps"]
+        nose.tools.assert_equal(len(sim.t_sol), 101)
+        nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
         
         sim = IDA(mod)
         nsteps = 0
         sim.simulate(2.)
-        assert len(sim.t_sol) == sim.statistics["nsteps"] + 1
-        assert nsteps == sim.statistics["nsteps"]
+        nose.tools.assert_equal(len(sim.t_sol), sim.statistics["nsteps"] + 1)
+        nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
 
 
 
@@ -1254,8 +1254,8 @@ class Test_Sundials:
         """
         This tests the functionality of the property atol.
         """
-        assert self.simulators[1].atol == 1.0e-6
-        assert self.simulators[0].atol == 1.0e-6
+        nose.tools.assert_equal(self.simulators[1].atol, 1.0e-6)
+        nose.tools.assert_equal(self.simulators[0].atol, 1.0e-6)
         
         for i in range(len(self.simulators)):
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, -1.0)
@@ -1263,26 +1263,26 @@ class Test_Sundials:
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, "Test")
             
             self.simulators[i].atol = 1.0e-5
-            assert self.simulators[i].atol == 1.0e-5
+            nose.tools.assert_equal(self.simulators[i].atol, 1.0e-5)
             self.simulators[i].atol = 1.0
-            assert self.simulators[i].atol == 1.0
+            nose.tools.assert_equal(self.simulators[i].atol, 1.0)
             self.simulators[i].atol = 1
-            assert self.simulators[i].atol == 1.0
+            nose.tools.assert_equal(self.simulators[i].atol, 1.0)
             self.simulators[i].atol = 1001.0
-            assert self.simulators[i].atol == 1001.0
+            nose.tools.assert_equal(self.simulators[i].atol, 1001.0)
             self.simulators[i].atol = [N.array([1e-5])]
-            assert len(self.simulators[i].atol.shape) == 1
-            assert self.simulators[i].atol == 1e-5
+            nose.tools.assert_equal(len(self.simulators[i].atol.shape), 1)
+            nose.tools.assert_equal(self.simulators[i].atol, 1e-5)
             """
             self.simulators[i].Integrator.dim = 3
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, [1.0, 1.0])
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, [1.0, 1.0, -1.0])
             self.simulators[i].atol = [1.0, 1.0, 1.0]
-            assert self.simulators[i].atol == [1.0, 1.0, 1.0]
+            nose.tools.assert_equal(self.simulators[i].atol, [1.0, 1.0, 1.0])
             self.simulators[i].atol = N.array([1.0, 1.0, 1.0])
-            assert self.simulators[i].atol[0] == 1.0
+            nose.tools.assert_equal(self.simulators[i].atol[0], 1.0)
             self.simulators[i].atol = N.array([1, 5, 1.0])
-            assert self.simulators[i].atol[0] == 1.0
+            nose.tools.assert_equal(self.simulators[i].atol[0], 1.0)
             """
     
     
@@ -1297,13 +1297,13 @@ class Test_Sundials:
             nose.tools.assert_raises(Exception, self.simulators[i]._set_rtol, "Test")
             
             self.simulators[i].rtol = 1.0e-5
-            assert self.simulators[i].rtol == 1.0e-5
+            nose.tools.assert_equal(self.simulators[i].rtol, 1.0e-5)
             self.simulators[i].rtol = 1.0
-            assert self.simulators[i].rtol == 1.0
+            nose.tools.assert_equal(self.simulators[i].rtol, 1.0)
             self.simulators[i].rtol = 1001.0
-            assert self.simulators[i].rtol == 1001.0
+            nose.tools.assert_equal(self.simulators[i].rtol, 1001.0)
             self.simulators[i].rtol = 1001
-            assert self.simulators[i].rtol == 1001.0
+            nose.tools.assert_equal(self.simulators[i].rtol, 1001.0)
     
     @testattr(stddist = True)
     def test_maxh(self):
@@ -1315,11 +1315,11 @@ class Test_Sundials:
             nose.tools.assert_raises(Exception, self.simulators[i]._set_max_h, "Test")
             
             self.simulators[i].maxh = 1.0e-5
-            assert self.simulators[i].maxh == 1.0e-5
+            nose.tools.assert_equal(self.simulators[i].maxh, 1.0e-5)
             self.simulators[i].maxh = 1.0
-            assert self.simulators[i].maxh == 1.0
+            nose.tools.assert_equal(self.simulators[i].maxh, 1.0)
             self.simulators[i].maxh = 1001.0
-            assert self.simulators[i].maxh == 1001.0
+            nose.tools.assert_equal(self.simulators[i].maxh, 1001.0)
 
     @testattr(stddist = True)    
     def test_dqtype(self):
@@ -1327,17 +1327,17 @@ class Test_Sundials:
         Tests the property of dqtype.
         """
         
-        assert self.sim.dqtype == 'CENTERED' #Test the default value.
+        nose.tools.assert_equal(self.sim.dqtype, 'CENTERED') #Test the default value.
         
         self.sim.dqtype = 'FORWARD'
-        assert self.sim.dqtype == 'FORWARD'
+        nose.tools.assert_equal(self.sim.dqtype, 'FORWARD')
         self.sim.dqtype = 'CENTERED'
-        assert self.sim.dqtype == 'CENTERED'
+        nose.tools.assert_equal(self.sim.dqtype, 'CENTERED')
         
         self.sim.dqtype = 'forward'
-        assert self.sim.dqtype == 'FORWARD'
+        nose.tools.assert_equal(self.sim.dqtype, 'FORWARD')
         self.sim.dqtype = 'centered'
-        assert self.sim.dqtype == 'CENTERED'
+        nose.tools.assert_equal(self.sim.dqtype, 'CENTERED')
         
         nose.tools.assert_raises(Exception,self.sim._set_dqtype, 1)
         nose.tools.assert_raises(Exception,self.sim._set_dqtype, 'IDA_CE')
@@ -1349,12 +1349,12 @@ class Test_Sundials:
         """
         Tests the property of DQrhomax.
         """
-        assert self.sim.dqrhomax == 0.0 #Test the default value.
+        nose.tools.assert_equal(self.sim.dqrhomax, 0.0) #Test the default value.
         
         self.sim.dqrhomax = 1.0
-        assert self.sim.dqrhomax == 1.0
+        nose.tools.assert_equal(self.sim.dqrhomax, 1.0)
         self.sim.dqrhomax = 10
-        assert self.sim.dqrhomax == 10
+        nose.tools.assert_equal(self.sim.dqrhomax, 10)
         
         nose.tools.assert_raises(Exception,self.sim._set_dqrhomax, -1)
         nose.tools.assert_raises(Exception,self.sim._set_dqrhomax, 'str')
@@ -1366,30 +1366,30 @@ class Test_Sundials:
         """
         Tests the property of usesens.
         """
-        assert self.sim.usesens == True #Test the default value.
+        nose.tools.assert_true(self.sim.usesens)#Test the default value.
         self.sim.usesens = False
-        assert self.sim.usesens == False
+        nose.tools.assert_false(self.sim.usesens)
         self.sim.usesens = 0
-        assert self.sim.usesens == False
+        nose.tools.assert_false(self.sim.usesens)
         self.sim.usesens = 1
-        assert self.sim.usesens == True
+        nose.tools.assert_true(self.sim.usesens)
 
     @testattr(stddist = True)
     def test_sensmethod(self):
         """
         Tests the property of sensmethod.
         """
-        assert self.sim.sensmethod == 'STAGGERED' #Test the default value
+        nose.tools.assert_equal(self.sim.sensmethod, 'STAGGERED') #Test the default value
         
         self.sim.sensmethod = 'SIMULTANEOUS'
-        assert self.sim.sensmethod == 'SIMULTANEOUS'
+        nose.tools.assert_equal(self.sim.sensmethod, 'SIMULTANEOUS')
         self.sim.sensmethod = 'STAGGERED'
-        assert self.sim.sensmethod == 'STAGGERED'
+        nose.tools.assert_equal(self.sim.sensmethod, 'STAGGERED')
         
         self.sim.sensmethod = 'simultaneous'
-        assert self.sim.sensmethod == 'SIMULTANEOUS'
+        nose.tools.assert_equal(self.sim.sensmethod, 'SIMULTANEOUS')
         self.sim.sensmethod = 'staggered'
-        assert self.sim.sensmethod == 'STAGGERED'
+        nose.tools.assert_equal(self.sim.sensmethod, 'STAGGERED')
         
         nose.tools.assert_raises(Exception,self.sim._set_sensitivity_method, 1)
         nose.tools.assert_raises(Exception,self.sim._set_sensitivity_method, 'IDA_CE')
@@ -1401,24 +1401,24 @@ class Test_Sundials:
         """
         Tests the property of suppress_sens.
         """
-        assert self.sim.suppress_sens == False
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = False
-        assert self.sim.suppress_sens == False
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = 0
-        assert self.sim.suppress_sens == False
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = 1
-        assert self.sim.suppress_sens == True
+        nose.tools.assert_true(self.sim.suppress_sens)
     
     @testattr(stddist = True)
     def test_maxsensiter(self):
         """
         Tests the property of maxsensiter.
         """
-        assert self.sim.maxcorS == 3 #Test the default value
+        nose.tools.assert_equal(self.sim.maxcorS, 3) #Test the default value
         self.sim.maxcorS = 1
-        assert self.sim.maxcorS == 1
+        nose.tools.assert_equal(self.sim.maxcorS, 1)
         self.sim.maxcorS = 10.5
-        assert self.sim.maxcorS == 10
+        nose.tools.assert_equal(self.sim.maxcorS, 10)
         
         #nose.tools.assert_raises(Exception, self.sim._set_max_cor_S, 0)
         nose.tools.assert_raises(Exception, self.sim._set_max_cor_S, 'str')

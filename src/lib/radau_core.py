@@ -434,3 +434,41 @@ class Radau_Common(object):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
+    
+    def _get_solver(self):
+        """
+        Solver implementation used, "f" for Fortran, "c" for C
+        
+            Parameters::
+            
+                solver
+                            - Default "f"
+                            
+                            - needs to be either "f" (Fotran) or "c" (C)
+        """
+        return self.options["solver"]
+    
+    def _set_solver(self, solver):
+        try:
+            solver.lower()
+        except:
+            raise Radau_Exception("'solver' parameters needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(solver, type(solver)))
+        if solver.lower() == "f": ## Fortran
+            try:
+                from assimulo.lib import radau5 as radau5_f
+                self.radau5 = radau5_f
+                self.solver_module_imported = True
+            except:
+                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using solver = 'c' for the C based solver instead.")
+        elif solver.lower() == "c":
+            try:
+                from assimulo.lib import radau5_c_py as radau5_c
+                self.radau5 = radau5_c
+                self.solver_module_imported = True
+            except:
+                raise Radau_Exception("Failed to import the C based Radau5 solver. Try using solver = 'f' for the Fortran based solver instead.")
+        else:
+            raise Radau_Exception("Solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
+        self.options["solver"] = solver.lower()
+        
+    solver = property(_get_solver, _set_solver)

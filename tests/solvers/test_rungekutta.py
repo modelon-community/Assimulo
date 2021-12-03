@@ -67,8 +67,8 @@ class Test_Dopri5:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -78,7 +78,7 @@ class Test_Dopri5:
         exp_sim = Dopri5(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     def test_switches(self):
         """
@@ -96,9 +96,9 @@ class Test_Dopri5:
         mod.handle_event = handle_event
         
         sim = Dopri5(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
 
 class Test_RungeKutta34:
@@ -159,8 +159,8 @@ class Test_RungeKutta34:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -170,7 +170,7 @@ class Test_RungeKutta34:
         exp_sim = RungeKutta34(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)    
     def test_tolerance(self):
@@ -182,12 +182,12 @@ class Test_RungeKutta34:
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, -1)
         
         self.simulator.rtol = 1.0
-        assert self.simulator._get_rtol() == 1.0
+        nose.tools.assert_equal(self.simulator._get_rtol(), 1.0)
         self.simulator.rtol = 1
-        assert self.simulator._get_rtol() == 1
+        nose.tools.assert_equal(self.simulator._get_rtol(), 1)
         
         self.simulator.atol = 1.0
-        assert self.simulator.atol == 1.0
+        nose.tools.assert_equal(self.simulator.atol, 1.0)
         
         nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, [1.0,1.0])
 
@@ -209,9 +209,9 @@ class Test_RungeKutta34:
         mod.handle_event = handle_event
         
         sim = RungeKutta34(mod)
-        assert sim.sw[0] == True
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        assert sim.sw[0] == False
+        nose.tools.assert_false(sim.sw[0])
 
 
 class Test_RungeKutta4:
@@ -249,8 +249,8 @@ class Test_RungeKutta4:
             solver.y+= 1.0
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
-            assert event_info[0] == []
-            assert event_info[1] == True
+            nose.tools.assert_equal(event_info[0], [])
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -260,7 +260,7 @@ class Test_RungeKutta4:
         exp_sim = RungeKutta4(exp_mod)
         exp_sim(5.,100)
         
-        assert nevent == 5
+        nose.tools.assert_equal(nevent, 5)
     
     @testattr(stddist = True)
     def test_integrate(self):

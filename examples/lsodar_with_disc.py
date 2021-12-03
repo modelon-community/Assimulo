@@ -67,7 +67,6 @@ class Extended_Problem(Explicit_Problem):
         
         return N.array([event_0,event_1,event_2])
     
-    
     #Responsible for handling the events.
     def handle_event(self, solver, event_info):
         """
@@ -121,8 +120,6 @@ class Extended_Problem(Explicit_Problem):
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
-
-
 def run_example(with_plots=True):
     r"""
     Example of the use of Euler's method for a differential equation
@@ -154,15 +151,12 @@ def run_example(with_plots=True):
         P.xlabel('Time')
         P.show()
         
-    return exp_mod, exp_sim
-        
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)
     nose.tools.assert_almost_equal(y[-1][1],3.0)
     nose.tools.assert_almost_equal(y[-1][2],2.0)
+
+    return exp_mod, exp_sim
     
 if __name__=="__main__":
     mod,sim = run_example()
-    
-
-    

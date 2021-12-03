@@ -89,7 +89,7 @@ def run_example(with_plots=True):
 
     #Basic test
     x1 = y[:,0]
-    assert N.abs(x1[-1]-1.8601438) < 1e-1 #For test purpose
+    nose.tools.assert_less(N.abs(float(x1[-1]) - 1.8601438), 1e-1)
     
     return exp_mod, exp_sim
 

@@ -209,7 +209,6 @@ class Assimulo_prepare(object):
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
         # filelists
-        
         self.fileSrc     = os.listdir("src")
         self.fileLib     = os.listdir(os.path.join("src","lib"))
         self.fileSolvers = os.listdir(os.path.join("src","solvers"))
@@ -459,12 +458,13 @@ class Assimulo_prepare(object):
             
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
-    
+        
         #Cythonize main modules
         ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
                              include_path=[".","assimulo"])
-         #Cythonize Solvers
-         # Euler
+
+        #Cythonize Solvers
+        # Euler
         ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
                              include_path=[".","assimulo"])
         for el in ext_list:
@@ -493,7 +493,6 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
-                
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
@@ -507,6 +506,16 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
+
+        ## Radau
+        ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
+                              include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                              force = True)
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
+                                     os.path.join("assimulo","thirdparty","hairer"),
+                                     self.incdirs]
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
+        ext_list[-1].name = "assimulo.lib.radau5_c_py"
         
         for el in ext_list:
             #Debug
@@ -597,10 +606,8 @@ class Assimulo_prepare(object):
         else:
             L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
         
-    
         return config.todict()["ext_modules"]
-        
-
+    
 prepare=Assimulo_prepare(args, thirdparty_methods)
 curr_dir=os.getcwd()
 if not os.path.isdir("assimulo"):
