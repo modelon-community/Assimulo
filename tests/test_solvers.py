@@ -90,5 +90,3 @@ class Test_Solvers:
         t,y = solver.simulate(2,33)
         
         nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
-
-    

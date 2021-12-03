@@ -193,4 +193,3 @@ class Test_GLIMDA:
         nose.tools.assert_equal(self.sim.options["maxretry"], 10)
         
         nose.tools.assert_raises(GLIMDA_Exception, self.sim._set_maxretry, -1)
-        

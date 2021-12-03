@@ -76,9 +76,3 @@ if __name__=='__main__':
     mod={}
     for ind in index_values:
         mod[ind], sim[ind]=run_example(index=ind)
-    
-    
-                              
-                                   
-    
-        
