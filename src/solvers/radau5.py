@@ -27,8 +27,6 @@ from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.lib.radau_core import Radau_Common
 
-from assimulo.lib import radau5
-
 class Radau5Error(AssimuloException):
     """
     Defines the Radau5Error and provides the textual error message.
@@ -94,6 +92,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
+        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -110,6 +110,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
+        if not self.solver_module_imported:
+            self.solver = self.options["solver"] 
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -141,7 +143,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def interpolate(self, time):
         y = N.empty(self._leny)
         for i in range(self._leny):
-            y[i] = radau5.contr5(i+1, time, self.cont)
+            # Note: index shift to Fortan based indices
+            y[i] = self.radau5.contr5(i+1, time, self.cont)
         
         return y
         
@@ -211,7 +214,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*self.problem_info["dim"]+20)) #Work (integer) vector
+        IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -241,9 +244,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag =  radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+        t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
-        
+
         #Checking return
         if flag == 1:
             flag = ID_PY_COMPLETE
@@ -844,6 +847,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
+        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -859,6 +864,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
+        if not self.solver_module_imported:
+            self.solver = self.options["solver"]
         
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -888,13 +895,14 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def interpolate(self, time, k=0):
         y = N.empty(self._leny*2)
         for i in range(self._leny*2):
-            y[i] = radau5.contr5(i+1, time, self.cont)
+            # Note: index shift to Fortan based indices
+            y[i] = self.radau5.contr5(i+1, time, self.cont)
         if k == 0:
             return y[:self._leny]
         elif k == 1:
             return y[self._leny:2*self._leny]
         
-    def _solout(self, nrsol, told, t, y, cont, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
@@ -954,7 +962,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         MUMAS = 0 #The mass matrix is only defined on the diagonal
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*(5*((self.problem_info["dim"]*2)**2+12)+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20)) #Work (integer) vector
+        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -995,10 +1003,10 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._mass_matrix = N.array([[0]*self._leny])
         
         atol = N.append(self.atol, self.atol)
-        
-        t, y, h, iwork, flag =  radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+
+        t, y, h, iwork, flag  =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                         ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
-        
+
         #Checking return
         if flag == 1:
             flag = ID_PY_COMPLETE
@@ -1015,7 +1023,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         #self.statistics["nstepstotal"] += iwork[15]
         self.statistics["nerrfails"]     += iwork[17]
         self.statistics["nlus"]         += iwork[18]
-        
+
         return flag, self._tlist, self._ylist, self._ydlist
         
     def state_event_info(self):
