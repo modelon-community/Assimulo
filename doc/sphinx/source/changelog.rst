@@ -3,6 +3,11 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.8 ---
+    * Sundials 5.x port
+    * Improved asserts in tests
+    * Added C version of the Radau5 solver
+
 --- Assimulo-3.2.7 ---
     * Resolved deprecation warnings visible when using numpy 1.20, related to deprecation of the alias numpy.float.
     * Resolved deprecation warnings visible when creating an ndarray from ragged nested sequences.
