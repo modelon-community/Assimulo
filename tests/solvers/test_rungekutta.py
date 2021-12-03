@@ -250,7 +250,7 @@ class Test_RungeKutta4:
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
             nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_equal(event_info[1], True)
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events

@@ -390,4 +390,4 @@ class Test_Implicit_Euler:
         sim = ImplicitEuler(mod)
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0] )
+        nose.tools.assert_false(sim.sw[0])

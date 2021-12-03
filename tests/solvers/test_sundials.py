@@ -487,7 +487,7 @@ class Test_CVode:
         sim = CVode(mod)
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        nose.tools.assert_equal(sim.sw[0], False)
+        nose.tools.assert_false(sim.sw[0])
     
     @testattr(stddist = True)
     def test_iter_method(self):
@@ -704,7 +704,7 @@ class Test_CVode:
         
     @testattr(stddist = True)
     def test_stablimit(self):
-        nose.tools.assert_equal(self.simulator.stablimit, False)
+        nose.tools.assert_false(self.simulator.stablimit)
         self.simulator.stablimit = True
         nose.tools.assert_true(self.simulator.stablimit)
         nose.tools.assert_true(self.simulator.options["stablimit"])
@@ -818,7 +818,7 @@ class Test_IDA:
         """
         This tests the functionality of the method __init__.
         """
-        nose.tools.assert_equal(self.simulator.suppress_alg, False)
+        nose.tools.assert_false(self.simulator.suppress_alg)
         nose.tools.assert_equal(self.simulator.algvar[0], 1.0)
         nose.tools.assert_equal(self.simulator.sw, None)
         nose.tools.assert_equal(self.simulator.maxsteps, 10000)
@@ -895,11 +895,11 @@ class Test_IDA:
         """
         This tests the functionality of the property lsoff.
         """
-        nose.tools.assert_equal(self.simulator.lsoff, False)
+        nose.tools.assert_false(self.simulator.lsoff)
         self.simulator.lsoff = True
         nose.tools.assert_true(self.simulator.lsoff)
         self.simulator.lsoff = False
-        nose.tools.assert_equal(self.simulator.lsoff, False)
+        nose.tools.assert_false(self.simulator.lsoff)
     
     @testattr(stddist = True)
     def test_initstep(self):
@@ -1109,7 +1109,7 @@ class Test_IDA:
             global tnext
             nose.tools.assert_almost_equal(solver.t, tnext)
             nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_equal(event_info[1], True)
+            nose.tools.assert_true(event_info[1])
     
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
@@ -1129,7 +1129,7 @@ class Test_IDA:
         self.simulator.suppress_alg = True
         nose.tools.assert_true(self.simulator.suppress_alg)
         self.simulator.suppress_alg = False
-        nose.tools.assert_equal(self.simulator.suppress_alg, False)
+        nose.tools.assert_false(self.simulator.suppress_alg)
         
     @testattr(stddist = True)
     def test_make_consistency(self):
@@ -1172,9 +1172,9 @@ class Test_IDA:
         mod.handle_event = handle_event
         
         sim = IDA(mod)
-        nose.tools.assert_equal(sim.sw[0], True)
+        nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
-        nose.tools.assert_equal(sim.sw[0], False)
+        nose.tools.assert_false(sim.sw[0])
     
     @testattr(stddist = True)
     def test_completed_step(self):
@@ -1368,9 +1368,9 @@ class Test_Sundials:
         """
         nose.tools.assert_true(self.sim.usesens)#Test the default value.
         self.sim.usesens = False
-        nose.tools.assert_equal(self.sim.usesens, False)
+        nose.tools.assert_false(self.sim.usesens)
         self.sim.usesens = 0
-        nose.tools.assert_equal(self.sim.usesens, False)
+        nose.tools.assert_false(self.sim.usesens)
         self.sim.usesens = 1
         nose.tools.assert_true(self.sim.usesens)
 
@@ -1401,11 +1401,11 @@ class Test_Sundials:
         """
         Tests the property of suppress_sens.
         """
-        nose.tools.assert_equal(self.sim.suppress_sens, False)
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = False
-        nose.tools.assert_equal(self.sim.suppress_sens, False)
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = 0
-        nose.tools.assert_equal(self.sim.suppress_sens, False)
+        nose.tools.assert_false(self.sim.suppress_sens)
         self.sim.suppress_sens = 1
         nose.tools.assert_true(self.sim.suppress_sens)
     
