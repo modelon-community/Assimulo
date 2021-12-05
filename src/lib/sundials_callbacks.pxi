@@ -55,13 +55,13 @@ cdef inline N.ndarray nv2arr(N_Vector v):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
-    memcpy(x.data, v_data, n*sizeof(realtype))
+    memcpy(PyArray_DATA(x), v_data, n*sizeof(realtype))
     return x
     
 cdef inline void nv2arr_inplace(N_Vector v, N.ndarray o):
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
-    memcpy(o.data, v_data, n*sizeof(realtype))
+    memcpy(PyArray_DATA(o), v_data, n*sizeof(realtype))
     
 cdef inline void nv2mat_inplace(int Ns, N_Vector *v, N.ndarray o):
     cdef long int i,j, Nf
@@ -73,5 +73,5 @@ cdef inline void nv2mat_inplace(int Ns, N_Vector *v, N.ndarray o):
 cdef inline realtype2arr(realtype *data, int n):
     """Create new numpy array from realtype*"""
     cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
-    memcpy(x.data, data, n*sizeof(realtype))
+    memcpy(PyArray_DATA(x), data, n*sizeof(realtype))
     return x
