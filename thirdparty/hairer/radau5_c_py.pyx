@@ -53,7 +53,7 @@ cdef void c2py(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int di
     """
     Copy (double *) C vector to 1D numpy array
     """
-    memcpy(dest.data, source, dim*sizeof(double))
+    memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -61,7 +61,7 @@ cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* so
     """
     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
     """
-    memcpy(dest.data, source, dim*sizeof(double))
+    memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
 
 cdef int callback_fcn(integer* n, doublereal* x, doublereal* y_in, doublereal* y_out,
                       doublereal* rpar, integer* ipar, void* fcn_PY):
