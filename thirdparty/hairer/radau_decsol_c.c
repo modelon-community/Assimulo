@@ -32,7 +32,7 @@ static doublereal c_b93 = 9.;
 static doublereal c_b114 = .8;
 static doublereal c_b116 = .25;
 
-/* Subroutine */ int radau5_c(integer *nn, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
+/* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
 	atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, integer *mljac, integer 
 	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
@@ -40,8 +40,6 @@ static doublereal c_b116 = .25;
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *
 	idid)
 {
-	integer n = *nn;
-
     /* Local variables */
     static integer i__, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
 	    iez1, iez2, iez3;
@@ -65,7 +63,7 @@ static doublereal c_b116 = .25;
     static integer nstep;
     static doublereal tolst;
     static integer ldmas2, iescal, naccpt;
-    extern /* Subroutine */ int radcor_(integer *, FP_CB_f, void*, doublereal *, 
+    extern /* Subroutine */ int radcor_(integer, FP_CB_f, void*, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, integer *, FP_CB_jac, void*, integer *, integer *,
 	     integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *
@@ -719,7 +717,7 @@ static doublereal c_b116 = .25;
 		return 0;
     }
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_(nn, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
+    radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
 	    itol, (FP_CB_jac)jac, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas, (
 	    FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt, &
 	    quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3, &
@@ -758,7 +756,7 @@ static doublereal c_b116 = .25;
 
 /* *********************************************************** */
 
-/* Subroutine */ int radcor_(integer *nn, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
+/* Subroutine */ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
 	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, 
 	integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *mlmas, integer *
@@ -780,8 +778,6 @@ static doublereal c_b116 = .25;
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
     doublereal d__1;
-
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, l;
@@ -814,21 +810,21 @@ static doublereal c_b116 = .25;
     static doublereal qnewt, xosol, acont3;
     static logical index1, index2, index3, caljac;
     static doublereal faccon;
-    extern /* Subroutine */ int decomc_(integer *, doublereal *, integer *, 
+    extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
 	    doublereal *, integer *, integer *, integer *, integer *, integer 
 	    *, integer *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *);
     static logical calhes;
     static doublereal erracc;
     static integer mujacj;
-    extern /* Subroutine */ int decomr_(integer *, doublereal *, integer *, 
+    extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
 	    doublereal *, integer *, integer *, integer *, integer *, integer 
 	    *, integer *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, logical *, integer *);
     static logical reject;
     static doublereal facgus;
     static integer mujacp;
-    extern /* Subroutine */ int estrad_(integer *, doublereal *, integer *, 
+    extern /* Subroutine */ int estrad_(integer, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer 
 	    *, doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
 	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
@@ -838,7 +834,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
 	    doublereal *, integer *);
     static doublereal dynold, posneg;
-    extern /* Subroutine */ int slvrad_(integer *, doublereal *, integer *, 
+    extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer 
 	    *, integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
@@ -905,7 +901,7 @@ static doublereal c_b116 = .25;
     index3 = *nind3 != 0;
 	/* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
     if (*implct) {
-    	(*mas)(nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
+    	(*mas)(*nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
     }
 	/* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
@@ -1004,7 +1000,7 @@ static doublereal c_b116 = .25;
     }
     hhfac = *h__;
 	// TODO: What is this rhs eval for?
-    (*fcn)(nn, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP */
 L10:
@@ -1029,7 +1025,7 @@ L12:
 					if (j <= mm * *m2) {
 						goto L12;
 					}
-					(*fcn)(nn, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 					j = k + (mm - 1) * *m2;
 					j1 = k;
 					lbeg = max(1, j1 - *mujac) + *m1;
@@ -1054,10 +1050,10 @@ L14:
 				ysafe = y[i__];
 				delt = sqrt(*uround * max(1e-5, abs(ysafe)));
 				y[i__] = ysafe + delt;
-				(*fcn)(nn, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+				(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 				if (ipar[1] < 0) {
 					y[i__] = ysafe - delt;
-					(*fcn)(nn, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
 					if (ipar[1] < 0) {
 						y[i__] = ysafe;
 						goto L79;
@@ -1075,7 +1071,7 @@ L14:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-    	(*jac)(nn, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+    	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
     }
     caljac = TRUE_;
     calhes = TRUE_;
@@ -1085,14 +1081,14 @@ L20:
     alphn = alph / *h__;
     betan = beta / *h__;
 	// compute LU decomposition of real matrix?
-    decomr_(nn, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
+    decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 	    ijob, &calhes, &iphes[1]);
     if (ier != 0) {
 		goto L78;
     }
 	// compute LU decomposition of complex matrix?
-    decomc_(nn, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
+    decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[
 	    e2i_offset], lde1, &ip2[1], &ier, ijob);
     if (ier != 0) {
@@ -1168,7 +1164,7 @@ L40:
 		cont[i__] = y[i__] + z1[i__];
     }
     d__1 = *x + c1 * *h__;
-    (*fcn)(nn, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1177,7 +1173,7 @@ L40:
 		cont[i__] = y[i__] + z2[i__];
     }
     d__1 = *x + c2 * *h__;
-    (*fcn)(nn, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1185,7 +1181,7 @@ L40:
     for (i__ = 1; i__ <= n; ++i__) {
 		cont[i__] = y[i__] + z3[i__];
     }
-    (*fcn)(nn, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1200,7 +1196,7 @@ L40:
 		z3[i__] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
 	// TODO: Solved both linear systems at once?
-    slvrad_(nn, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
+    slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[
 	    e1_offset], &e2r[e2r_offset], &e2i[e2i_offset], lde1, &z1[1], &z2[
 	    1], &z3[1], &f1[1], &f2[1], &f3[1], &cont[1], &ip1[1], &ip2[1], &
@@ -1258,7 +1254,7 @@ L40:
     }
 	// TOOD: Is this Jacobian actually involved here?
 	/* --- ERROR ESTIMATION */
-    estrad_(nn, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
+    estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
 	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
 	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
@@ -1332,7 +1328,7 @@ L40:
 			return 0;
 		}
 		// TODO: What is this rhs eval for? Inital step-size?
-		(*fcn)(nn, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		hnew = posneg * min(abs(hnew), hmaxn);
 		hopt = hnew;
@@ -1468,12 +1464,11 @@ doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer *
 /*     END OF FUNCTION CONTR5 */
 
 /* *********************************************************** */
-/* Subroutine */ int dec_(integer *nn, integer *ndim, doublereal *a, integer *
+/* Subroutine */ int dec_(integer n, integer *ndim, doublereal *a, integer *
 	ip, integer *ier)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -1571,12 +1566,11 @@ L80:
 /* ----------------------- END OF SUBROUTINE DEC ------------------------- */
 } /* dec_ */
 
-/* Subroutine */ int sol_(integer *nn, integer *ndim, doublereal *a, 
+/* Subroutine */ int sol_(integer n, integer *ndim, doublereal *a, 
 	doublereal *b, integer *ip)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m;
@@ -1637,12 +1631,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOL ------------------------- */
 } /* sol_ */
 
-/* Subroutine */ int dech_(integer *nn, integer *ndim, doublereal *a, integer *
+/* Subroutine */ int dech_(integer n, integer *ndim, doublereal *a, integer *
 	lb, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -1744,12 +1737,11 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECH ------------------------ */
 } /* dech_ */
 
-/* Subroutine */ int solh_(integer *nn, integer *ndim, doublereal *a, integer *
+/* Subroutine */ int solh_(integer n, integer *ndim, doublereal *a, integer *
 	lb, doublereal *b, integer *ip)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m;
@@ -1812,12 +1804,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLH ------------------------ */
 } /* solh_ */
 
-/* Subroutine */ int decc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int decc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -1957,12 +1948,11 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECC ------------------------ */
 } /* decc_ */
 
-/* Subroutine */ int solc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int solc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m, kb;
@@ -2047,12 +2037,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLC ------------------------ */
 } /* solc_ */
 
-/* Subroutine */ int dechc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int dechc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *lb, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m, na;
@@ -2197,13 +2186,12 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECHC ----------------------- */
 } /* dechc_ */
 
-/* Subroutine */ int solhc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int solhc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *lb, doublereal *br, doublereal *bi, integer *
 	ip)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m, kb;
@@ -2293,12 +2281,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLHC ----------------------- */
 } /* solhc_ */
 
-/* Subroutine */ int decb_(integer *nn, integer *ndim, doublereal *a, integer *
+/* Subroutine */ int decb_(integer n, integer *ndim, doublereal *a, integer *
 	ml, integer *mu, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m;
@@ -2434,12 +2421,11 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECB ------------------------ */
 } /* decb_ */
 
-/* Subroutine */ int solb_(integer *nn, integer *ndim, doublereal *a, integer *
+/* Subroutine */ int solb_(integer n, integer *ndim, doublereal *a, integer *
 	ml, integer *mu, doublereal *b, integer *ip)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m;
@@ -2511,12 +2497,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLB ------------------------ */
 } /* solb_ */
 
-/* Subroutine */ int decbc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int decbc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *ml, integer *mu, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, m, md, jk, mm;
@@ -2698,13 +2683,12 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECBC ------------------------ */
 } /* decbc_ */
 
-/* Subroutine */ int solbc_(integer *nn, integer *ndim, doublereal *ar, 
+/* Subroutine */ int solbc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *ml, integer *mu, doublereal *br, doublereal *
 	bi, integer *ip)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, k, m, kb, md, lm;
@@ -2803,12 +2787,11 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLBC ------------------------ */
 } /* solbc_ */
 
-/* Subroutine */ int elmhes_(integer *nm, integer *nn, integer *low, integer *
+/* Subroutine */ int elmhes_(integer *nm, integer n, integer *low, integer *
 	igh, doublereal *a, integer *int__)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, m;
@@ -2941,7 +2924,7 @@ L200:
 /*     VERSION OF SEPTEMBER 18, 1995 */
 /* ****************************************** */
 
-/* Subroutine */ int decomr_(integer *nn, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
 	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *
 	e1, integer *lde1, integer *ip1, integer *ier, integer *ijob, logical 
@@ -2950,17 +2933,16 @@ L200:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, j1, ib, mm, jm1;
-    extern /* Subroutine */ int dec_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
 	    integer *, integer *);
     static doublereal sum;
-    extern /* Subroutine */ int decb_(integer *, integer *, doublereal *, 
-	    integer *, integer *, integer *, integer *), dech_(integer *, 
+    extern /* Subroutine */ int decb_(integer, integer *, doublereal *, 
+	    integer *, integer *, integer *, integer *), dech_(integer, 
 	    integer *, doublereal *, integer *, integer *, integer *), 
-	    elmhes_(integer *, integer *, integer *, integer *, doublereal *, 
+	    elmhes_(integer *, integer, integer *, integer *, doublereal *, 
 	    integer *);
 
 
@@ -3006,7 +2988,7 @@ L1:
 		}
 		e1[j + j * e1_dim1] += *fac1;
     }
-    dec_(nn, lde1, &e1[e1_offset], &ip1[1], ier);
+    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3031,7 +3013,7 @@ L45:
 			e1[i__ + j * e1_dim1] -= sum;
 		}
     }
-    dec_(nm1, lde1, &e1[e1_offset], &ip1[1], ier);
+    dec_(*nm1, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3044,7 +3026,7 @@ L2:
 		}
 		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
     }
-    decb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
+    decb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3069,7 +3051,7 @@ L46:
 			e1[i__ + linal_1.mle + j * e1_dim1] -= sum;
 		}
     }
-    decb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
+    decb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3084,7 +3066,7 @@ L3:
 			e1[i__ + j * e1_dim1] += *fac1 * fmas[i__ - j + linal_1.mbdiag + j * fmas_dim1];
 		}
     }
-    dec_(nn, lde1, &e1[e1_offset], &ip1[1], ier);
+    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3114,7 +3096,7 @@ L4:
 			e1[ib + j * e1_dim1] += *fac1 * fmas[i__ + j * fmas_dim1];
 		}
     }
-    decb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
+    decb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3142,7 +3124,7 @@ L5:
 			e1[i__ + j * e1_dim1] = fmas[i__ + j * fmas_dim1] * *fac1 - fjac[i__ + j * fjac_dim1];
 		}
     }
-    dec_(nn, lde1, &e1[e1_offset], &ip1[1], ier);
+    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3169,7 +3151,7 @@ L6:
 L7:
 /* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION */
     if (*calhes) {
-		elmhes_(ldjac, nn, &c__1, nn, &fjac[fjac_offset], &iphes[1]);
+		elmhes_(ldjac, n, &c__1, &n, &fjac[fjac_offset], &iphes[1]);
     }
     *calhes = FALSE_;
     for (j = 1; j <= n - 1; ++j) {
@@ -3182,7 +3164,7 @@ L7:
 		}
 		e1[j + j * e1_dim1] += *fac1;
     }
-    dech_(nn, lde1, &e1[e1_offset], &c__1, &ip1[1], ier);
+    dech_(n, lde1, &e1[e1_offset], &c__1, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3195,7 +3177,7 @@ L55:
 
 /* *********************************************************** */
 
-/* Subroutine */ int decomc_(integer *nn, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
 	integer *m1, integer *m2, integer *nm1, doublereal *alphn, doublereal 
 	*betan, doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
@@ -3204,21 +3186,20 @@ L55:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
 	    e2r_offset, e2i_dim1, e2i_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, j1;
     static doublereal bb;
     static integer ib, mm, jm1;
     static doublereal bet, alp;
-    extern /* Subroutine */ int decc_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int decc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *);
     static doublereal ffma, abno;
     static integer imle;
     static doublereal sumi, sumr, sums;
-    extern /* Subroutine */ int decbc_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int decbc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *), dechc_(
-	    integer *, integer *, doublereal *, doublereal *, integer *, 
+	    integer, integer *, doublereal *, doublereal *, integer *, 
 	    integer *, integer *);
 
 
@@ -3268,7 +3249,7 @@ L1:
 		e2r[j + j * e2r_dim1] += *alphn;
 		e2i[j + j * e2i_dim1] = *betan;
     }
-    decc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
+    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3302,7 +3283,7 @@ L45:
 			e2i[i__ + j * e2i_dim1] -= sumi;
 		}
     }
-    decc_(nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
+    decc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3318,7 +3299,7 @@ L2:
 		e2r[linal_1.mdiag + j * e2r_dim1] += *alphn;
 		e2i[linal_1.mdiag + j * e2i_dim1] = *betan;
     }
-    decbc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
+    decbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
 	    linal_1.mue, &ip2[1], ier);
     return 0;
 
@@ -3354,8 +3335,7 @@ L46:
 			e2i[imle + j * e2i_dim1] -= sumi;
 		}
     }
-    decbc_(nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
-	    linal_1.mue, &ip2[1], ier);
+    decbc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &linal_1.mue, &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3375,7 +3355,7 @@ L3:
 			e2i[i__ + j * e2i_dim1] = *betan * bb;
 		}
     }
-    decc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
+    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3413,7 +3393,7 @@ L4:
 			e2i[ib + j * e2i_dim1] = *betan * bb;
 		}
     }
-    decbc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
+    decbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
 	    linal_1.mue, &ip2[1], ier);
     return 0;
 
@@ -3447,7 +3427,7 @@ L5:
 			e2i[i__ + j * e2i_dim1] = bb * *betan;
 		}
     }
-    decc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
+    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3487,7 +3467,7 @@ L7:
 		e2r[j + j * e2r_dim1] += *alphn;
 		e2i[j + j * e2i_dim1] = *betan;
     }
-    dechc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &ip2[1], ier);
+    dechc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3500,7 +3480,7 @@ L55:
 
 /* *********************************************************** */
 
-/* Subroutine */ int slvrad_(integer *nn, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int slvrad_(integer n, doublereal *fjac, integer *ldjac, 
 	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
 	integer *mlmas, integer *mumas, integer *m1, integer *m2, integer *
 	nm1, doublereal *fac1, doublereal *alphn, doublereal *betan, 
@@ -3512,7 +3492,6 @@ L55:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k;
@@ -3520,20 +3499,20 @@ L55:
     static integer mm, mp, im1, jm1, mp1;
     static doublereal z2i, z3i;
     static integer jkm, mpi;
-    extern /* Subroutine */ int sol_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
     static doublereal sum1, sum2, sum3, ffja, abno;
-    extern /* Subroutine */ int solb_(integer *, integer *, doublereal *, 
-	    integer *, integer *, doublereal *, integer *), solc_(integer *, 
+    extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
+	    integer *, integer *, doublereal *, integer *), solc_(integer, 
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
-	     integer *), solh_(integer *, integer *, doublereal *, integer *, 
+	     integer *), solh_(integer, integer *, doublereal *, integer *, 
 	    doublereal *, integer *);
     static doublereal sumh, e1imp;
-    extern /* Subroutine */ int solbc_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int solbc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *, doublereal *, doublereal *, 
 	    integer *);
     static doublereal zsafe;
-    extern /* Subroutine */ int solhc_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int solhc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, doublereal *, doublereal *, integer *);
 
 
@@ -3593,8 +3572,8 @@ L1:
 		z2[i__] = z2[i__] + s2 * *alphn - s3 * *betan;
 		z3[i__] = z3[i__] + s3 * *alphn + s2 * *betan;
     }
-    sol_(nn, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
+    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
+    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3630,8 +3609,8 @@ L48:
 			}
 		}
     }
-    sol_(nm1, lde1, &e1[e1_offset], &z1[*m1 + 1], &ip1[1]);
-    solc_(nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[*m1 + 1], &z3[*m1 + 1], &ip2[1]);
+    sol_(*nm1, lde1, &e1[e1_offset], &z1[*m1 + 1], &ip1[1]);
+    solc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[*m1 + 1], &z3[*m1 + 1], &ip2[1]);
 L49:
     for (i__ = *m1; i__ >= 1; --i__) {
 		mpi = *m2 + i__;
@@ -3654,8 +3633,8 @@ L2:
 		z2[i__] = z2[i__] + s2 * *alphn - s3 * *betan;
 		z3[i__] = z3[i__] + s3 * *alphn + s2 * *betan;
     }
-    solb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
-    solbc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &linal_1.mue, &z2[1], &z3[1], &ip2[1]);
+    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
+    solbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &linal_1.mue, &z2[1], &z3[1], &ip2[1]);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3692,8 +3671,8 @@ L45:
 			}
 		}
     }
-    solb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[*m1 + 1],&ip1[1]);
-    solbc_(nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
+    solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[*m1 + 1],&ip1[1]);
+    solbc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
 	       linal_1.mue, &z2[*m1 + 1], &z3[*m1 + 1], &ip2[1]);
     goto L49;
 
@@ -3715,8 +3694,8 @@ L3:
 		z2[i__] = z2[i__] + s2 * *alphn - s3 * *betan;
 		z3[i__] = z3[i__] + s3 * *alphn + s2 * *betan;
     }
-    sol_(nn, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
+    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
+    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3769,8 +3748,8 @@ L4:
 		z2[i__] = z2[i__] + s2 * *alphn - s3 * *betan;
 		z3[i__] = z3[i__] + s3 * *alphn + s2 * *betan;
     }
-    solb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
-    solbc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
+    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
+    solbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
 	    linal_1.mue, &z2[1], &z3[1], &ip2[1]);
     return 0;
 
@@ -3792,8 +3771,8 @@ L5:
 		z2[i__] = z2[i__] + s2 * *alphn - s3 * *betan;
 		z3[i__] = z3[i__] + s3 * *alphn + s2 * *betan;
     }
-    sol_(nn, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
+    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
+    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -3867,8 +3846,8 @@ L746:
 			z3[i__] -= e1imp * z3[mp];
 		}
     }
-    solh_(nn, lde1, &e1[e1_offset], &c__1, &z1[1], &ip1[1]);
-    solhc_(nn, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &z2[1], &z3[1],&ip2[1]);
+    solh_(n, lde1, &e1[e1_offset], &c__1, &z1[1], &ip1[1]);
+    solhc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &z2[1], &z3[1],&ip2[1]);
     for (mm = 1; mm <= n - 2; ++mm) {
 		mp = n - mm;
 		mp1 = mp - 1;
@@ -3906,7 +3885,7 @@ L55:
 
 /* *********************************************************** */
 
-/* Subroutine */ int estrad_(integer *nn, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int estrad_(integer n, doublereal *fjac, integer *ldjac, 
 	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
 	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd1, 
 	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
@@ -3920,15 +3899,14 @@ L55:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset;
-	integer n = *nn;
 
     /* Local variables */
     static integer i__, j, k, mm, mp, im1;
-    extern /* Subroutine */ int sol_(integer *, integer *, doublereal *, 
+    extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
     static doublereal sum, hee1, hee2, hee3, sum1;
-    extern /* Subroutine */ int solb_(integer *, integer *, doublereal *, 
-	    integer *, integer *, doublereal *, integer *), solh_(integer *, 
+    extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
+	    integer *, integer *, doublereal *, integer *), solh_(integer, 
 	    integer *, doublereal *, integer *, doublereal *, integer *);
     static doublereal zsafe;
 
@@ -3985,7 +3963,7 @@ L1:
 		f2[i__] = hee1 * z1[i__] + hee2 * z2[i__] + hee3 * z3[i__];
 		cont[i__] = f2[i__] + y0[i__];
     }
-    sol_(nn, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
 L11:
@@ -4006,7 +3984,7 @@ L48:
 			}
 		}
     }
-    sol_(nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
+    sol_(*nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
     for (i__ = *m1; i__ >= 1; --i__) {
 		cont[i__] = (cont[i__] + cont[*m2 + i__]) / *fac1;
     }
@@ -4018,7 +3996,7 @@ L2:
 		f2[i__] = hee1 * z1[i__] + hee2 * z2[i__] + hee3 * z3[i__];
 		cont[i__] = f2[i__] + y0[i__];
     }
-    solb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
+    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
     goto L77;
 
 L12:
@@ -4039,7 +4017,7 @@ L45:
 			}
 		}
     }
-    solb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
+    solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
     for (i__ = *m1; i__ >= 1; --i__) {
 		cont[i__] = (cont[i__] + cont[*m2 + i__]) / *fac1;
     }
@@ -4058,7 +4036,7 @@ L3:
 		f2[i__] = sum;
 		cont[i__] = sum + y0[i__];
     }
-    sol_(nn, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
 L13:
@@ -4094,7 +4072,7 @@ L4:
 		f2[i__] = sum;
 		cont[i__] = sum + y0[i__];
     }
-    solb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
+    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
     goto L77;
 
 L14:
@@ -4130,7 +4108,7 @@ L5:
 		f2[i__] = sum;
 		cont[i__] = sum + y0[i__];
     }
-    sol_(nn, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
 L15:
@@ -4178,7 +4156,7 @@ L310:
 			cont[i__] -= fjac[i__ + (mp - 1) * fjac_dim1] * cont[mp];
 		}
     }
-    solh_(nn, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
+    solh_(n, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
     for (mm = 1; mm <= n - 2; ++mm) {
 		mp = n - mm;
 		for (i__ = mp + 1; i__ <= n; ++i__) {
@@ -4212,7 +4190,7 @@ L77:
 		for (i__ = 1; i__ <= n; ++i__) {
 			cont[i__] = y[i__] + cont[i__];
 		}
-		(*fcn)(nn, x, &cont[1], &f1[1], &rpar[1], &ipar[1], fcn_PY);
+		(*fcn)(n, x, &cont[1], &f1[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		for (i__ = 1; i__ <= n; ++i__) {
 			cont[i__] = f1[i__] + f2[i__];
@@ -4236,7 +4214,7 @@ L77:
 		}
 	/* ------ FULL MATRIX OPTION */
 L31:
-		sol_(nn, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+		sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
 		goto L88;
 	/* ------ FULL MATRIX OPTION, SECOND ORDER */
 L41:
@@ -4250,14 +4228,14 @@ L41:
 				}
 			}
 		}
-		sol_(nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
+		sol_(*nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
 		for (i__ = *m1; i__ >= 1; --i__) {
 			cont[i__] = (cont[i__] + cont[*m2 + i__]) / *fac1;
 		}
 		goto L88;
 	/* ------ BANDED MATRIX OPTION */
 	L32:
-		solb_(nn, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
+		solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
 		goto L88;
 	/* ------ BANDED MATRIX OPTION, SECOND ORDER */
 	L42:
@@ -4272,7 +4250,7 @@ L41:
 				}
 			}
 		}
-		solb_(nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
+		solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
 		for (i__ = *m1; i__ >= 1; --i__) {
 			cont[i__] = (cont[i__] + cont[*m2 + i__]) / *fac1;
 		}
@@ -4293,7 +4271,7 @@ L510:
 				cont[i__] -= fjac[i__ + (mp - 1) * fjac_dim1] * cont[mp];
 			}
 		}
-		solh_(nn, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
+		solh_(n, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
 		for (mm = 1; mm <= n - 2; ++mm) {
 			mp = n - mm;
 			for (i__ = mp + 1; i__ <= n; ++i__) {

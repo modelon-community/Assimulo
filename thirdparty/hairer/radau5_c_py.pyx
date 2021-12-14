@@ -63,36 +63,36 @@ cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* so
     """
     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
 
-cdef int callback_fcn(integer* n, doublereal* x, doublereal* y_in, doublereal* y_out,
+cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_out,
                       doublereal* rpar, integer* ipar, void* fcn_PY):
     """
     Internal callback function to enable call to Python based rhs function from C
     """
-    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0], dtype = np.double)
-    c2py(y_py_in, y_in, n[0])
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
+    c2py(y_py_in, y_in, n)
     res = (<object>fcn_PY)(x[0], y_py_in)
     py2c(y_out, res[0], len(res[0]))
     ipar[0] = res[1][0]
     return 0
 
-cdef int callback_jac(integer* n, doublereal* x, doublereal* y, doublereal* fjac,
+cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
                       integer* ldjac, doublereal* rpar, integer* ipar, void* jac_PY):
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
-    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0], dtype = np.double)
-    c2py(y_py_in, y, n[0])
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
+    c2py(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
     py2c_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 
-cdef int callback_mas(integer* n, doublereal* am, integer* lmas, doublereal* rpar,
+cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
                       integer* ipar, void* mas_PY):
     """
     Internal callback function to enable call to Python based mass matrix function from C
     """
-    cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n[0]), order = 'F', dtype = np.double)
-    c2py_mat_F(am_py, am, n[0]*lmas[0])
+    cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n), order = 'F', dtype = np.double)
+    c2py_mat_F(am_py, am, n*lmas[0])
     res = (<object>mas_PY)(am_py)
     py2c_matrix_flat_F(am, res, res.shape[0], res.shape[1])
     return 0
@@ -218,8 +218,13 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
+<<<<<<< HEAD
     radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                          &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, <void*> jac_PY,
+=======
+    radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+                         &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
+>>>>>>> c3dc47f (cleanup)
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid)
