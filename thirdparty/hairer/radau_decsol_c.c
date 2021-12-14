@@ -503,7 +503,7 @@ static doublereal c_b116 = .25;
 			}
 		}
     }
-	/* -------- NMAX , THE MAXIMAL NUMBER OF STEPS ----- */
+	/* -------- NMAX, THE MAXIMAL NUMBER OF STEPS ----- */
     if (iwork[2] == 0) {
 		nmax = 100000;
     } else {
@@ -513,7 +513,7 @@ static doublereal c_b116 = .25;
 			arret = TRUE_;
 		}
     }
-	/* -------- NIT    MAXIMAL NUMBER OF NEWTON ITERATIONS */
+	/* -------- NIT, MAXIMAL NUMBER OF NEWTON ITERATIONS */
     if (iwork[3] == 0) {
 		nit = 7;
     } else {
@@ -523,7 +523,7 @@ static doublereal c_b116 = .25;
 			arret = TRUE_;
 		}
     }
-	/* -------- STARTN  SWITCH FOR STARTING VALUES OF NEWTON ITERATIONS */
+	/* -------- STARTN SWITCH FOR STARTING VALUES OF NEWTON ITERATIONS */
     if (iwork[4] == 0) {
 		startn = FALSE_;
     } else {
@@ -540,7 +540,7 @@ static doublereal c_b116 = .25;
 		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %"PRId64"\t %"PRId64"\t %"PRId64"\n", nind1, nind2, nind3);
 		arret = TRUE_;
     }
-	/* -------- PRED   STEP SIZE CONTROL */
+	/* -------- PRED STEP SIZE CONTROL */
     if (iwork[8] <= 1) {
 		pred = TRUE_;
     } else {
@@ -560,7 +560,7 @@ static doublereal c_b116 = .25;
 		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %"PRId64"\t %"PRId64"\n", m1, m2);
 		arret = TRUE_;
     }
-	/* --------- SAFE     SAFETY FACTOR IN STEP SIZE PREDICTION */
+	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
 		safe = .9;
     } else {
@@ -570,7 +570,7 @@ static doublereal c_b116 = .25;
 			arret = TRUE_;
 		}
     }
-	/* ------ THET     DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
+	/* ------ THET, DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
     if (work[3] == 0.) {
 		thet = .001;
     } else {
@@ -580,7 +580,7 @@ static doublereal c_b116 = .25;
 			arret = TRUE_;
 		}
     }
-	/* --- FNEWT   STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
+	/* --- FNEWT, STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
     tolst = rtol[1];
     if (work[4] == 0.) {
 		fnewt = max(uround * 10 / tolst, min(.03, pow(tolst, c_b54)));
@@ -612,7 +612,7 @@ static doublereal c_b116 = .25;
     } else {
 		hmax = work[7];
     }
-	/* -------  FACL,FACR     PARAMETERS FOR STEP SIZE SELECTION */
+	/* -------  FACL,FACR, PARAMETERS FOR STEP SIZE SELECTION */
     if (work[8] == 0.) {
 		facl = 5.;
     } else {
@@ -633,8 +633,11 @@ static doublereal c_b116 = .25;
 	/* ---- IMPLICIT, BANDED OR NOT ? */
     implct = *imas != 0;
     jband = *mljac < nm1;
+	// TODO: Extra input parameters for sparse Jacobian
+	// TODO: Make sure other parameters are set accordingly, i.e., no mass matrix or diagonal banded mass matrix, analytical jacobian
+	// TODO: write tests for these?
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
-	/* -- JACOBIAN  AND  MATRICES E1, E2 */
+	/* -- JACOBIAN AND MATRICES E1, E2 */
     if (jband) {
 		ldjac = *mljac + *mujac + 1;
 		lde1 = *mljac + ldjac;
@@ -913,15 +916,15 @@ static doublereal c_b116 = .25;
     dd1 = -(sq6 * 7. + 13.) / 3.;
     dd2 = (sq6 * 7. - 13.) / 3.;
     dd3 = -.33333333333333331;
-    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.; // largest eigenvalue 
-    alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.; // 2nd largest, real part
-    beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.; // 2nd largest, imag part?
-    cno = alph * alph + beta * beta;
+    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.; // TODO: largest eigenvalue; gamma_hat?
+    alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.; // TODO: real part, alpha_hat?
+    beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.; // TODO: imag part, beta_hat?
+    cno = alph * alph + beta * beta; // TODO: What is this scaling?
+	// TODO: What are these values? Are these alpha, beta, gamma_hat?
     u1 = 1. / u1;
     alph /= cno;
     beta /= cno;
-	// TODO: What is this scaling with cno about?
-	// TODO: T matrix (inverse?)
+	// TODO: Obviously related to T matrix, is it the inverse?
     t11 = .091232394870892942792;
     t12 = -.14125529502095420843;
     t13 = -.030029194105147424492;
@@ -941,6 +944,7 @@ static doublereal c_b116 = .25;
     if (*m1 > 0) {
 		*ijob += 10;
     }
+	// TODO: Stepsize stuff
     posneg = copysign(1., *xend - *x);
     hmaxn = min(abs(*hmax), abs(*xend - *x));
     if (abs(*h__) <= *uround * 10.) {
@@ -979,7 +983,7 @@ static doublereal c_b116 = .25;
 			goto L179;
 		}
     }
-	// TODO: Mass matrix related indices?
+	// TODO: Mass matrix related indices? bandwidthes etc.
     linal_1.mle = *mljac;
     linal_1.mue = *mujac;
     linal_1.mbjac = *mljac + *mujac + 1;
@@ -999,7 +1003,7 @@ static doublereal c_b116 = .25;
 		}
     }
     hhfac = *h__;
-	// TODO: What is this rhs eval for?
+	// TODO: What is this rhs eval for? Initial stepsize?
     (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP */
@@ -1071,23 +1075,29 @@ L14:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
+		// TODO: Extra if for sparse Jacobian
     	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
     }
     caljac = TRUE_;
     calhes = TRUE_;
 L20:
 /* --- COMPUTE THE MATRICES E1 AND E2 AND THEIR DECOMPOSITIONS */
+	// TODO: alpha, beta, gamma
     fac1 = u1 / *h__;
     alphn = alph / *h__;
     betan = beta / *h__;
-	// compute LU decomposition of real matrix?
+	// TODO: compute LU decomposition of real matrix
+	// TODO: Pass extra parameters, callbacks, etc OR different function in sparse case?
+	// TODO: Where & how are decompositions stored here? e1?
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 	    ijob, &calhes, &iphes[1]);
     if (ier != 0) {
 		goto L78;
     }
-	// compute LU decomposition of complex matrix?
+	// TODO: compute LU decomposition of complex matrix
+	// TODO: Pass extra parameters, callbacks, etc OR different function in sparse case?
+	// TODO: Where & how are decompositions stored here? e2r = real?, e2i = imag?
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[
 	    e2i_offset], lde1, &ip2[1], &ier, ijob);
@@ -1103,6 +1113,7 @@ L30:
     if (abs(*h__) * .1 <= abs(*x) * *uround) {
 		goto L177;
     }
+	// TODO: Scaling of DAE variables?
     if (index2) {
 		for (i = *nind1 + 1; i <= *nind1 + *nind2; ++i) {
 			scal[i] /= hhfac;
@@ -1113,12 +1124,12 @@ L30:
 			scal[i] /= hhfac * hhfac;
 		}
     }
-	// TODO: increment time?
     xph = *x + *h__;
 	/* *** *** *** *** *** *** *** */
 	/*  STARTING VALUES FOR NEWTON ITERATION */
 	/* *** *** *** *** *** *** *** */
     if (first || *startn) {
+		// TODO: Initialize with zero
 		for (i = 1; i <= n; ++i) {
 			z1[i] = 0.;
 			z2[i] = 0.;
@@ -1128,6 +1139,7 @@ L30:
 			f3[i] = 0.;
 		}
     } else {
+		// TODO: Newton initial guess?
 		c3q = *h__ / hold;
 		c1q = c1 * c3q;
 		c2q = c2 * c3q;
@@ -1135,15 +1147,13 @@ L30:
 			ak1 = cont[i + n];
 			ak2 = cont[i + n2];
 			ak3 = cont[i + n3];
-			z1i = c1q * (ak1 + (c1q - conra5_1.c2m1) * (ak2 + (c1q - 
-				conra5_1.c1m1) * ak3));
-			z2i = c2q * (ak1 + (c2q - conra5_1.c2m1) * (ak2 + (c2q - 
-				conra5_1.c1m1) * ak3));
-			z3i = c3q * (ak1 + (c3q - conra5_1.c2m1) * (ak2 + (c3q - 
-				conra5_1.c1m1) * ak3));
+			z1i = c1q * (ak1 + (c1q - conra5_1.c2m1) * (ak2 + (c1q - conra5_1.c1m1) * ak3));
+			z2i = c2q * (ak1 + (c2q - conra5_1.c2m1) * (ak2 + (c2q - conra5_1.c1m1) * ak3));
+			z3i = c3q * (ak1 + (c3q - conra5_1.c2m1) * (ak2 + (c3q - conra5_1.c1m1) * ak3));
 			z1[i] = z1i;
 			z2[i] = z2i;
 			z3[i] = z3i;
+			// TODO: fi = w_i in book? Transformation to W variables?
 			f1[i] = ti11 * z1i + ti12 * z2i + ti13 * z3i;
 			f2[i] = ti21 * z1i + ti22 * z2i + ti23 * z3i;
 			f3[i] = ti31 * z1i + ti32 * z2i + ti33 * z3i;
@@ -1160,6 +1170,7 @@ L40:
 		goto L78;
     }
 	/* ---     COMPUTE THE RIGHT-HAND SIDE */
+	// TODO: Newton RHS, in Z notation, (8.2a)
     for (i = 1; i <= n; ++i) {
 		cont[i] = y[i] + z1[i];
     }
@@ -1187,6 +1198,7 @@ L40:
 		goto L79;
     }
 	/* ---     SOLVE THE LINEAR SYSTEMS */
+	// TODO: Transformation to W form?
     for (i = 1; i <= n; ++i) {
 		a1 = z1[i];
 		a2 = z2[i];
@@ -1195,7 +1207,9 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-	// TODO: Solved both linear systems at once?
+	// TODO: Solve linear systems? Separate sparse function here?
+	// TODO: RHS inputs: Extra attention to the RHS required here
+	// TODO: Solutions: z1, z2, z3
     slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[
 	    e1_offset], &e2r[e2r_offset], &e2i[e2i_offset], lde1, &z1[1], &z2[
@@ -1204,6 +1218,7 @@ L40:
     ++(*nsol);
     ++newt;
     dyno = 0.;
+	// TODO: What is this?
     for (i = 1; i <= n; ++i) {
 		dyno = dyno + (z1[i] / scal[i] * z1[i] / scal[i]) 
 		            + (z2[i] / scal[i] * z2[i] / scal[i]) 
@@ -1237,7 +1252,8 @@ L40:
 			goto L78;
 		}
     }
-    dynold = max(dyno,*uround);
+    dynold = max(dyno, *uround);
+	// TODO: What is this? Transformation back to original variables?
     for (i = 1; i <= n; ++i) {
 		f1i = f1[i] + z1[i];
 		f2i = f2[i] + z2[i];
@@ -1247,12 +1263,13 @@ L40:
 		f3[i] = f3i;
 		z1[i] = t11 * f1i + t12 * f2i + t13 * f3i;
 		z2[i] = t21 * f1i + t22 * f2i + t23 * f3i;
-		z3[i] = t31 * f1i + f2i;
+		z3[i] = t31 * f1i + f2i; // TODO: What is going on here, some factors missing?!
     }
     if (faccon * dyno > *fnewt) {
 		goto L40;
     }
-	// TOOD: Is this Jacobian actually involved here?
+	// TODO: Error estimation; does a LU solve
+	// TODO: Solve sparse system in separate function & pass solution into estrad_ function, there: Skip LU solve via flag and skip to error estimation?
 	/* --- ERROR ESTIMATION */
     estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
@@ -1315,8 +1332,8 @@ L40:
 			}
 			nsolu = n;
 			conra5_1.hsol = hold;
-			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[
-				1], &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
+			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1],
+			 		  &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
 			if (irtrn < 0) {
 				goto L179;
 			}
@@ -1327,7 +1344,6 @@ L40:
 			*idid = 1;
 			return 0;
 		}
-		// TODO: What is this rhs eval for? Inital step-size?
 		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		hnew = posneg * min(abs(hnew), hmaxn);
@@ -1402,6 +1418,9 @@ L79:
     }
     goto L10;
 /* --- FAIL EXIT */
+
+// TODO: Make sure any failures in SuperLU jump to appropriate points here and/or print relevant error messages
+// TODO: SuperLU ones convey a bit of extra information, print it before and then print these anyways?
 L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
@@ -2958,6 +2977,8 @@ L200:
     e1_dim1 = *lde1;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
+
+	// TODO: Add 2 extra cases, sparse with/without mass matrix
 
     /* Function Body */
     switch (*ijob) {
