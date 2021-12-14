@@ -40,8 +40,6 @@ static doublereal c_b116 = .25;
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *
 	idid)
 {
-    /* System generated locals */
-    doublereal d__1;
 	integer n = *nn;
 
     /* Local variables */
@@ -742,14 +740,12 @@ static doublereal c_b116 = .25;
     expm = 1. / expm;
     if (*itol == 0) {
 		quot = atol[1] / rtol[1];
-		d__1 = rtol[1] * 10.;
-		rtol[1] = pow(d__1, expm);
+		rtol[1] = pow(rtol[1] * 10., expm);
 		atol[1] = rtol[1] * quot;
     } else {
 		for (i__ = 1; i__ <= n; ++i__) {
 			quot = atol[i__] / rtol[i__];
-			d__1 = rtol[i__] * 10.;
-			rtol[i__] = pow(d__1, expm);
+			rtol[i__] = pow(rtol[i__] * 10., expm);
 			atol[i__] = rtol[i__] * quot;
 		}
     }
@@ -782,8 +778,7 @@ static doublereal c_b116 = .25;
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset, i__1, i__2,
-	     i__3;
+	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
     doublereal d__1;
 
 	integer n = *nn;
@@ -950,9 +945,8 @@ static doublereal c_b116 = .25;
     if (*m1 > 0) {
 		*ijob += 10;
     }
-    d__1 = *xend - *x;
-    posneg = copysign(1., d__1);
-    hmaxn = min(abs(*hmax), (d__1 = *xend - *x, abs(d__1)));
+    posneg = copysign(1., *xend - *x);
+    hmaxn = min(abs(*hmax), abs(*xend - *x));
     if (abs(*h__) <= *uround * 10.) {
 		*h__ = 1e-6;
     }
@@ -1001,11 +995,11 @@ static doublereal c_b116 = .25;
     n3 = n * 3;
     if (*itol == 0) {
 		for (i__ = 1; i__ <= n; ++i__) {
-			scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
+			scal[i__] = atol[1] + rtol[1] * abs(y[i__]);
 		}
     } else {
 		for (i__ = 1; i__ <= n; ++i__) {
-			scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1));
+			scal[i__] = atol[i__] + rtol[i__] * abs(y[i__]);
 		}
     }
     hhfac = *h__;
@@ -1024,14 +1018,12 @@ L10:
 		/* --- JACOBIAN IS BANDED */
 			mujacp = *mujac + 1;
 			md = min(linal_1.mbjac,*m2);
-			i__1 = *m1 / *m2 + 1;
-			for (mm = 1; mm <= i__1; ++mm) {
-				i__2 = md;
-				for (k = 1; k <= i__2; ++k) {
+			for (mm = 1; mm <= *m1 / *m2 + 1; ++mm) {
+				for (k = 1; k <= md; ++k) {
 					j = k + (mm - 1) * *m2;
 L12:
 					f1[j] = y[j];
-					f2[j] = sqrt(*uround * max(1e-5, (d__1 = y[j], abs(d__1))));
+					f2[j] = sqrt(*uround * max(1e-5, abs(y[j])));
 					y[j] += f2[j];
 					j += md;
 					if (j <= mm * *m2) {
@@ -1045,8 +1037,7 @@ L14:
 					lend = min(*m2, j1 + *mljac) + *m1;
 					y[j] = f1[j];
 					mujacj = mujacp - j1 - *m1;
-					i__3 = lend;
-					for (l = lbeg; l <= i__3; ++l) {
+					for (l = lbeg; l <= lend; ++l) {
 						fjac[l + mujacj + j * fjac_dim1] = (cont[l] - y0[l]) / f2[j];
 					}
 					j += md;
@@ -1117,14 +1108,12 @@ L30:
 		goto L177;
     }
     if (index2) {
-		i__1 = *nind1 + *nind2;
-		for (i__ = *nind1 + 1; i__ <= i__1; ++i__) {
+		for (i__ = *nind1 + 1; i__ <= *nind1 + *nind2; ++i__) {
 			scal[i__] /= hhfac;
 		}
     }
     if (index3) {
-		i__1 = *nind1 + *nind2 + *nind3;
-		for (i__ = *nind1 + *nind2 + 1; i__ <= i__1; ++i__) {
+		for (i__ = *nind1 + *nind2 + 1; i__ <= *nind1 + *nind2 + *nind3; ++i__) {
 			scal[i__] /= hhfac * hhfac;
 		}
     }
@@ -1168,8 +1157,7 @@ L30:
 	/*  LOOP FOR THE SIMPLIFIED NEWTON ITERATION */
 	/* *** *** *** *** *** *** *** */
     newt = 0;
-    d__1 = max(faccon,*uround);
-    faccon = pow(d__1, c_b114);
+    faccon = pow(max(faccon,*uround), c_b114);
     theta = abs(*thet);
 L40:
     if (newt >= *nit) {
@@ -1237,8 +1225,7 @@ L40:
 		thqold = thq;
 		if (theta < .99) {
 			faccon = theta / (1. - theta);
-			i__1 = *nit - 1 - newt;
-			dyth = faccon * dyno * pow(theta, i__1) / *fnewt;
+			dyth = faccon * dyno * pow(theta, *nit - 1 - newt) / *fnewt;
 			if (dyth >= 1.) {
 				qnewt = max(1e-4, min(20., dyth));
 				hhfac = pow(qnewt, -1. / (*nit + 4. - 1 - newt)) * .8;
@@ -1298,7 +1285,7 @@ L40:
 				hnew = *h__ / quot;
 			}
 			hacc = *h__;
-			erracc = max(.01,err);
+			erracc = max(.01, err);
 		}
 		xold = *x;
 		hold = *h__;
@@ -1316,11 +1303,11 @@ L40:
 		}
 		if (*itol == 0) {
 			for (i__ = 1; i__ <= n; ++i__) {
-				scal[i__] = atol[1] + rtol[1] * (d__1 = y[i__], abs(d__1));
+				scal[i__] = atol[1] + rtol[1] * abs(y[i__]);
 			}
 		} else {
 			for (i__ = 1; i__ <= n; ++i__) {
-				scal[i__] = atol[i__] + rtol[i__] * (d__1 = y[i__], abs(d__1));
+				scal[i__] = atol[i__] + rtol[i__] * abs(y[i__]);
 			}
 		}
 		if (*iout != 0) {
@@ -1485,8 +1472,7 @@ doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer *
 	ip, integer *ier)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1;
-    doublereal d__1, d__2;
+    integer a_dim1, a_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -1529,13 +1515,11 @@ doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer *
 		goto L70;
     }
     nm1 = n - 1;
-    i__1 = nm1;
-    for (k = 1; k <= i__1; ++k) {
+    for (k = 1; k <= nm1; ++k) {
 		kp1 = k + 1;
 		m = k;
 		for (i__ = kp1; i__ <= n; ++i__) {
-			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * 
-				a_dim1], abs(d__2))) {
+			if (abs(a[i__ + k * a_dim1]) > abs(a[m + k * a_dim1])) {
 			m = i__;
 			}
 	/* L10: */
@@ -1591,7 +1575,7 @@ L80:
 	doublereal *b, integer *ip)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__1;
+    integer a_dim1, a_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -1624,8 +1608,7 @@ L80:
 		goto L50;
     }
     nm1 = n - 1;
-    i__1 = nm1;
-    for (k = 1; k <= i__1; ++k) {
+    for (k = 1; k <= nm1; ++k) {
 		kp1 = k + 1;
 		m = ip[k];
 		t = b[m];
@@ -1659,7 +1642,6 @@ L50:
 {
     /* System generated locals */
     integer a_dim1, a_offset;
-    doublereal d__1, d__2;
 	integer n = *nn;
 
     /* Local variables */
@@ -1710,7 +1692,7 @@ L50:
 		m = k;
 		na = min(n, *lb + k);
 		for (i__ = kp1; i__ <= na; ++i__) {
-			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * a_dim1], abs(d__2))) {
+			if (abs(a[i__ + k * a_dim1]) > abs(a[m + k * a_dim1])) {
 				m = i__;
 			}
 		/* L10: */
@@ -1835,7 +1817,6 @@ L50:
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-    doublereal d__1, d__2, d__3, d__4;
 	integer n = *nn;
 
     /* Local variables */
@@ -1890,9 +1871,7 @@ L50:
 		kp1 = k + 1;
 		m = k;
 		for (i__ = kp1; i__ <= n; ++i__) {
-			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+			if (abs(ar[i__ + k * ar_dim1]) + abs(ai[i__ + k * ai_dim1]) > abs(ar[m + k * ar_dim1]) + abs(ai[m + k * ai_dim1])) {
 				m = i__;
 			}
 		/* L10: */
@@ -1967,7 +1946,7 @@ L48:
     }
 L70:
     k = n;
-    if ((d__1 = ar[n + n * ar_dim1], abs(d__1)) + (d__2 = ai[n + n * ai_dim1], abs(d__2)) == 0.) {
+    if (abs(ar[n + n * ar_dim1]) + abs(ai[n + n * ai_dim1]) == 0.) {
 		goto L80;
     }
     return 0;
@@ -2073,7 +2052,6 @@ L50:
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-    doublereal d__1, d__2, d__3, d__4;
 	integer n = *nn;
 
     /* Local variables */
@@ -2133,9 +2111,7 @@ L50:
 		m = k;
 		na = min(n, *lb + k);
 		for (i__ = kp1; i__ <= na; ++i__) {
-			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+			if (abs(ar[i__ + k * ar_dim1]) + abs(ai[i__ + k * ai_dim1]) > abs(ar[m + k * ar_dim1]) + abs(ai[m + k * ai_dim1])) {
 				m = i__;
 			}
 			/* L10: */
@@ -2210,7 +2186,7 @@ L48:
     }
 L70:
     k = n;
-    if ((d__1 = ar[n + n * ar_dim1], abs(d__1)) + (d__2 = ai[n + n * ai_dim1], abs(d__2)) == 0.) {
+    if (abs(ar[n + n * ar_dim1]) + abs(ai[n + n * ai_dim1]) == 0.) {
 		goto L80;
     }
     return 0;
@@ -2226,7 +2202,7 @@ L80:
 	ip)
 {
     /* System generated locals */
-    integer ar_dim1, ar_offset, ai_dim1, ai_offset, i__2;
+    integer ar_dim1, ar_offset, ai_dim1, ai_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -2277,8 +2253,7 @@ L80:
 		bi[m] = bi[k];
 		br[k] = tr;
 		bi[k] = ti;
-		i__2 = min(n, *lb + k);
-		for (i__ = kp1; i__ <= i__2; ++i__) {
+		for (i__ = kp1; i__ <= min(n, *lb + k); ++i__) {
 			prodr = ar[i__ + k * ar_dim1] * tr - ai[i__ + k * ai_dim1] * ti;
 			prodi = ai[i__ + k * ai_dim1] * tr + ar[i__ + k * ar_dim1] * ti;
 			br[i__] += prodr;
@@ -2322,8 +2297,7 @@ L50:
 	ml, integer *mu, integer *ip, integer *ier)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__2;
-    doublereal d__1, d__2;
+    integer a_dim1, a_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -2381,8 +2355,7 @@ L50:
 		goto L7;
     }
     for (j = *mu + 2; j <= n; ++j) {
-		i__2 = *ml;
-		for (i__ = 1; i__ <= i__2; ++i__) {
+		for (i__ = 1; i__ <= *ml; ++i__) {
 			/* L5: */
 			a[i__ + j * a_dim1] = 0.;
 		}
@@ -2394,7 +2367,7 @@ L7:
 		m = md;
 		mdl = min(*ml, n - k) + md;
 		for (i__ = md1; i__ <= mdl; ++i__) {
-			if ((d__1 = a[i__ + k * a_dim1], abs(d__1)) > (d__2 = a[m + k * a_dim1], abs(d__2))) {
+			if (abs(a[i__ + k * a_dim1]) > abs(a[m + k * a_dim1])) {
 				m = i__;
 			}
 		/* L10: */
@@ -2542,8 +2515,7 @@ L50:
 	doublereal *ai, integer *ml, integer *mu, integer *ip, integer *ier)
 {
     /* System generated locals */
-    integer ar_dim1, ar_offset, ai_dim1, ai_offset, i__2;
-    doublereal d__1, d__2, d__3, d__4;
+    integer ar_dim1, ar_offset, ai_dim1, ai_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -2610,8 +2582,7 @@ L50:
 		goto L7;
     }
     for (j = *mu + 2; j <= n; ++j) {
-		i__2 = *ml;
-		for (i__ = 1; i__ <= i__2; ++i__) {
+		for (i__ = 1; i__ <= *ml; ++i__) {
 			ar[i__ + j * ar_dim1] = 0.;
 			ai[i__ + j * ai_dim1] = 0.;
 			/* L5: */
@@ -2624,9 +2595,7 @@ L7:
 		m = md;
 		mdl = min(*ml, n - k) + md;
 		for (i__ = md1; i__ <= mdl; ++i__) {
-			if ((d__1 = ar[i__ + k * ar_dim1], abs(d__1)) + (d__2 = ai[i__ + 
-				k * ai_dim1], abs(d__2)) > (d__3 = ar[m + k * ar_dim1], 
-				abs(d__3)) + (d__4 = ai[m + k * ai_dim1], abs(d__4))) {
+			if (abs(ar[i__ + k * ar_dim1]) + abs(ai[i__ + k * ai_dim1]) > abs(ar[m + k * ar_dim1]) + abs(ai[m + k * ai_dim1])) {
 				m = i__;
 			}
 			/* L10: */
@@ -2718,7 +2687,7 @@ L55:
     }
 L70:
     k = n;
-    if ((d__1 = ar[md + n * ar_dim1], abs(d__1)) + (d__2 = ai[md + n * ai_dim1], abs(d__2)) == 0.) {
+    if (abs(ar[md + n * ar_dim1]) + abs(ai[md + n * ai_dim1]) == 0.) {
 		goto L80;
     }
     return 0;
@@ -2838,8 +2807,7 @@ L50:
 	igh, doublereal *a, integer *int__)
 {
     /* System generated locals */
-    integer a_dim1, a_offset, i__2, i__3;
-    doublereal d__1;
+    integer a_dim1, a_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -2903,9 +2871,8 @@ L50:
 		x = 0.;
 		i__ = m;
 
-		i__2 = *igh;
-		for (j = m; j <= i__2; ++j) {
-			if ((d__1 = a[j + mm1 * a_dim1], abs(d__1)) <= abs(x)) {
+		for (j = m; j <= *igh; ++j) {
+			if (abs(a[j + mm1 * a_dim1]) <= abs(x)) {
 				goto L100;
 			}
 			x = a[j + mm1 * a_dim1];
@@ -2926,8 +2893,7 @@ L100:
 			/* L110: */
 		}
 
-		i__2 = *igh;
-		for (j = 1; j <= i__2; ++j) {
+		for (j = 1; j <= *igh; ++j) {
 			y = a[j + i__ * a_dim1];
 			a[j + i__ * a_dim1] = a[j + m * a_dim1];
 			a[j + m * a_dim1] = y;
@@ -2940,8 +2906,7 @@ L130:
 		}
 		mp1 = m + 1;
 
-		i__2 = *igh;
-		for (i__ = mp1; i__ <= i__2; ++i__) {
+		for (i__ = mp1; i__ <= *igh; ++i__) {
 			y = a[i__ + mm1 * a_dim1];
 			if (y == 0.) {
 				goto L160;
@@ -2954,8 +2919,7 @@ L130:
 				a[i__ + j * a_dim1] -= y * a[m + j * a_dim1];
 			}
 
-			i__3 = *igh;
-			for (j = 1; j <= i__3; ++j) {
+			for (j = 1; j <= *igh; ++j) {
 				/* L150: */
 				a[j + m * a_dim1] += y * a[j + i__ * a_dim1];
 			}
@@ -2985,7 +2949,7 @@ L200:
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset, i__2;
+	    e1_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -3075,8 +3039,7 @@ L45:
 L2:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     for (j = 1; j <= n; ++j) {
-		i__2 = linal_1.mbjac;
-		for (i__ = 1; i__ <= i__2; ++i__) {
+		for (i__ = 1; i__ <= linal_1.mbjac; ++i__) {
 			e1[i__ + linal_1.mle + j * e1_dim1] = -fjac[i__ + j * fjac_dim1];
 		}
 		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
@@ -3956,7 +3919,7 @@ L55:
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset, i__1;
+	    e1_offset;
 	integer n = *nn;
 
     /* Local variables */
@@ -4136,7 +4099,6 @@ L4:
 
 L14:
 /* ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    i__1 = *m1;
     for (i__ = 1; i__ <= *m1; ++i__) {
 		f2[i__] = hee1 * z1[i__] + hee2 * z2[i__] + hee3 * z3[i__];
 		cont[i__] = f2[i__] + y0[i__];
