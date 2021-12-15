@@ -27,7 +27,6 @@ from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.lib.radau_core import Radau_Common, Radau_Exception
 
-## TODO: Add extra one for any sparse formatting related issues?
 class Radau5Error(AssimuloException):
     """
     Defines the Radau5Error and provides the textual error message.
@@ -112,7 +111,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        ## TODO: Write test for this one
         if self.options["linear_solver"] == "sparse":
             if self.options["solver"] == "f":
                 raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, try setting 'solver' = 'c' instead.")

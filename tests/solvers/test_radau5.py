@@ -767,7 +767,7 @@ class Test_Explicit_Fortran_Radau5:
     @testattr(stddist = True)
     def test_sparse_solver_attribute(self):
         """
-        This tests the error when trying to simulate to use the Fotran based solver with sparse linear solver setting enabled
+        This tests the error when trying to simulate using the Fotran based solver with sparse linear solver setting enabled
         """
         sim = Radau5ODE(self.mod)
         sim.solver = 'f'
@@ -1182,7 +1182,7 @@ class Test_Explicit_C_Radau5:
     @testattr(stddist = True)
     def test_solver_no_jac(self):
         """
-        This tests the error when trying enabling the use of an analytical jacobian, with none provided
+        This tests the error when trying to simulate using an analytical jacobian, with none provided
         """
         f = lambda t, y: [y]
         y0 = N.array([1.])
@@ -1213,7 +1213,7 @@ class Test_Explicit_C_Radau5:
     @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz(self):
         """
-        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz
+        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz, some caught by C code
         """
         ## TODO: Re-enable this test, once proper error catching mechanisms are in place
         # f = lambda t, y: [y]
@@ -1487,20 +1487,6 @@ class Test_Implicit_Fortran_Radau5:
         sim = Radau5DAE(self.mod)
         sim.solver = 'f'
         sim.linear_solver = 'sparse'
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
-
-    @testattr(stddist = True)
-    def test_solver_no_jac(self):
-        """
-        This tests the error when trying enabling the use of an analytical jacobian, with none provided
-        """
-        f = lambda t, y: [y]
-        y0 = N.array([1.])
-        prob = Explicit_Problem(f, y0)
-
-        sim = Radau5ODE(prob)
-        sim.solver = 'f'
-        sim.usejac = True
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
 class Test_Implicit_C_Radau5:
