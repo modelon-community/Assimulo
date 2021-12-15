@@ -764,6 +764,16 @@ class Test_Explicit_Fortran_Radau5:
 
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_sparse_solver_attribute(self):
+        """
+        This tests the error when trying to simulate to use the Fotran based solver with sparse linear solver setting enabled
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'f'
+        sim.linear_solver = 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
+
 class Test_Explicit_C_Radau5:
     """
     Tests the explicit Radau solver.
@@ -1154,6 +1164,59 @@ class Test_Explicit_C_Radau5:
 
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_sparse_solver_no_jac(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver, with no analytical jacobian provided
+        """
+        f = lambda t, y: [y]
+        y0 = N.array([1.])
+        prob = Explicit_Problem(f, y0)
+
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+        sim.linear_solver = 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_sparse_solver_no_nnz(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements
+        """
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = N.array([1.])
+        prob = Explicit_Problem(f, y0)
+        prob.jac = jac
+
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+        sim.linear_solver = 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_sparse_solver_invalid_nnz(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz
+        """
+        ## TODO: Re-enable this test, once proper error catching mechanisms are in place
+        # f = lambda t, y: [y]
+        # jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        # y0 = N.array([1.])
+
+        # for nnz in [-1, 2, None]:
+        #     prob = Explicit_Problem(f, y0)
+        #     prob.jac = jac
+        #     prob.nnz = nnz
+
+        #     sim = Radau5ODE(prob)
+        #     sim.solver = 'c'
+        #     sim.linear_solver = 'sparse'
+        #     if nnz is None:
+        #         nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
+        #     else:
+        #         nose.tools.assert_raises(Radau5Error, self.sim.simulate, 1.)
+
 class Test_Implicit_Fortran_Radau5:
     """
     Tests the implicit Radau solver.
@@ -1399,6 +1462,15 @@ class Test_Implicit_Fortran_Radau5:
 
         # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_sparse_solver_attribute(self):
+        """
+        This tests the error when trying to simulate an implicit problem with sparse linear solver setting enabled
+        """
+        sim = Radau5DAE(self.mod)
+        sim.solver = 'f'
+        sim.linear_solver = 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
 
 class Test_Implicit_C_Radau5:
     """
@@ -1427,7 +1499,7 @@ class Test_Implicit_C_Radau5:
         self.mod = Implicit_Problem(f,y0,yd0)
         self.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
             
-        #Define an explicit solver
+        #Define an implicit solver
         self.sim = Radau5DAE(self.mod) #Create a Radau5 solve
         self.sim.solver = 'c'
         self.sim_t0 = Radau5DAE(self.mod_t0)
@@ -1645,6 +1717,16 @@ class Test_Implicit_C_Radau5:
 
         # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_sparse_solver_attribute(self):
+        """
+        This tests the error when trying to simulate an implicit problem with sparse linear solver setting enabled
+        """
+        sim = Radau5DAE(self.mod)
+        sim.solver = 'c'
+        sim.linear_solver = 'sparse'
+        nose.tools.assert_raises(Radau_Exception, self.sim.simulate, 1.)
+
 
 class Test_Implicit_Radau5:
     """
@@ -1798,11 +1880,11 @@ class Test_Radau_Common:
 
         f = lambda t,y:[1.0,2.0]
 
-        #Define an Assimulo problem
+        #Define an explicit Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
         exp_mod = Explicit_Problem(f,y0)
         self.sim = Radau5ODE(exp_mod)
-    
+
     @testattr(stddist = True)    
     def test_fac1(self):
         """
