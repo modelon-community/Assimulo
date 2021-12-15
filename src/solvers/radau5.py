@@ -215,6 +215,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        if self.usejac and not hasattr(self.problem, "jac"):
+            raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         MLJAC = self.problem_info["dim"] #The jacobian is full
         MUJAC = self.problem_info["dim"] #See MLJAC
         IMAS  = 0 #The mass matrix is the identity
