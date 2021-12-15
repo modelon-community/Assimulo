@@ -880,6 +880,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
+        if self.options["linear_solver"] == "sparse":
+            raise Radau_Exception ("Sparse linear solver not supported for Radau5DAE.")
         if not self.solver_module_imported:
             self.solver = self.options["solver"]
         
