@@ -684,6 +684,7 @@ static doublereal c_b116 = .25;
 		arret = TRUE_;
     }
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
+	// TODO: Utilize this storage space for storage of sparse jacobians/systems instead?
     iez1 = 21;
     iez2 = iez1 + n;
     iez3 = iez2 + n;
@@ -1275,8 +1276,7 @@ L40:
 	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
 	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
 	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
-	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[
-	    1]);
+	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1]);
 	/* --- COMPUTATION OF HNEW */
 	/* --- WE REQUIRE .2<=HNEW/H<=8. */
     fac = min(*safe, cfac / (newt + (*nit << 1)));
