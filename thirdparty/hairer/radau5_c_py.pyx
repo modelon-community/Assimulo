@@ -114,6 +114,8 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
     c2py_d(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
+    if type(res) != np.ndarray:
+        raise AssimuloException("Error: Encountered a sparse Jacobian while expecting a dense Jacobian, type of Jacobian: {}".format(type(res)))
     py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 

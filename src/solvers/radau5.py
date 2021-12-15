@@ -243,9 +243,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if self.options["linear_solver"] == "sparse":
             IWORK[10] = 1
             try: 
-                IWORK[11] = self.problem_info["nnz"]
+                IWORK[11] = int(self.problem_info["nnz"])
             except:
-                Radau_Exception("Number of non-zero elements of sparse Jacobian not specified in problem.")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian not specified or invalid, value: {}.".format(self.problem_info["nnz"]))
         
         #Dummy methods
         mas_dummy = lambda t:x
