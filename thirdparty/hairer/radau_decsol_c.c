@@ -461,6 +461,10 @@ static doublereal c_b116 = .25;
     --rpar;
     --ipar;
 
+	// TODO: Testing
+	SuperLU_aux_d* test_superlu_d = superlu_init_d(1, 2, 4);
+	SuperLU_aux_z* test_superlu_z = superlu_init_z(1, 2, 4);
+
     /* Function Body */
     nfcn = 0;
     njac = 0;
