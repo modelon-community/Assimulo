@@ -29,6 +29,8 @@ typedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
 
 typedef struct {double r, i;} doublecomplex;
 
+// TODO: Change these to doublereal? Also in the corresponding other .h files?
+
 typedef int (*FP_CB_jac_sparse)(double, int, int*, double*, int*, int*, void*);
 typedef int (*FP_CB_assemble_sys_d)(int, double, int *, double *, int *, int *, double *, int *, int *, int, double*);
 typedef int (*FP_CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
