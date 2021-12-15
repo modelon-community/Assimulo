@@ -113,8 +113,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
         ## TODO: Write test for this one
-        if (self.options["linear_solver"] == "sparse") and (self.options["solver"] == "f"):
-            raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, try setting 'solver' = 'c' instead.")
+        if self.options["linear_solver"] == "sparse":
+            if self.options["solver"] == "f":
+                raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, try setting 'solver' = 'c' instead.")
+            if not self.usejac:
+                raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
         if not self.solver_module_imported:
             self.solver = self.options["solver"] 
             
@@ -234,6 +237,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Setting iwork options
         IWORK[1] = self.maxsteps
         IWORK[2] = self.newt
+
+        if self.options["linear_solver"] == "sparse":
+            IWORK[10] = 1
+            try: 
+                IWORK[11] = self.problem_info["nnz"]
+            except:
+                Radau_Exception("Number of non-zero elements of sparse Jacobian not specified in problem.")
         
         #Dummy methods
         mas_dummy = lambda t:x
