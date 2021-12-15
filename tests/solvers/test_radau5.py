@@ -1215,24 +1215,31 @@ class Test_Explicit_C_Radau5:
         """
         This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz, some caught by C code
         """
-        ## TODO: Re-enable this test, once proper error catching mechanisms are in place
-        # f = lambda t, y: [y]
-        # jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
-        # y0 = N.array([1.])
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = N.array([1.])
 
-        # for nnz in [-1, 2, None]:
-        #     prob = Explicit_Problem(f, y0)
-        #     prob.jac = jac
-        #     prob.nnz = nnz
+        for nnz in [-1, None, "test"]:
+            prob = Explicit_Problem(f, y0)
+            prob.jac = jac
+            prob.nnz = nnz
 
-        #     sim = Radau5ODE(prob)
-        #     sim.solver = 'c'
-        #     sim.linear_solver = 'sparse'
-        #     sim.usejac = True
-        #     if nnz is None:
-        #         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
-        #     else:
-        #         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+            sim = Radau5ODE(prob)
+            sim.solver = 'c'
+            sim.linear_solver = 'sparse'
+            sim.usejac = True
+            nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
+        for nnz in [-10, 2, 100]:
+            prob = Explicit_Problem(f, y0)
+            prob.jac = jac
+            prob.nnz = nnz
+
+            sim = Radau5ODE(prob)
+            sim.solver = 'c'
+            sim.linear_solver = 'sparse'
+            sim.usejac = True
+            nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
 class Test_Implicit_Fortran_Radau5:
     """

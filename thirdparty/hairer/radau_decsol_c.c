@@ -83,6 +83,8 @@ static doublereal c_b116 = .25;
     static logical startn;
     static doublereal uround;
 
+	static logical sparselu;
+	static integer nnz;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -637,6 +639,13 @@ static doublereal c_b116 = .25;
 		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
 		arret = TRUE_;
     }
+	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
+	sparselu = iwork[11];
+	nnz = iwork[12];
+	if ((nnz < 0) || nnz > n*n){
+		printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
+		arret = TRUE_;
+	}
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/*         COMPUTATION OF ARRAY ENTRIES */
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
