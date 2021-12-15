@@ -20,6 +20,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+import scipy.sparse as sps
 
 from numpy cimport PyArray_DATA
 

@@ -18,7 +18,6 @@
 import numpy as N
 
 from assimulo.ode import *
-from assimulo.solvers import Radau5DAE
 
 class Radau_Exception(Exception):
     pass
@@ -495,8 +494,7 @@ class Radau_Common(object):
         if linear_solver.lower() == "dense":
             pass
         elif linear_solver.lower() == "sparse":
-            if isinstance(self, Radau5DAE):
-                raise Radau_Exception ("Sparse linear solver not supported for implicit problems.")
+            pass
         else:
             raise Radau_Exception("linear_solver parameters needs to be either 'dense' or 'sparse'. Set value: {}".format(linear_solver))
         self.options["linear_solver"] = linear_solver.lower()
