@@ -34,11 +34,11 @@ static doublereal c_b116 = .25;
 
 /* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
-	atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, integer *mljac, integer 
+	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
 	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
-	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *
-	idid)
+	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_d sys_z)
 {
     /* Local variables */
     static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
@@ -46,7 +46,7 @@ static doublereal c_b116 = .25;
     static doublereal facl;
     static integer ndec, njac;
     static doublereal facr, safe;
-    static integer ijob, nfcn;
+    static integer ijob, nfcn; // ijob is identifier for type of LU decomposition used
     static logical pred;
     static doublereal hmax;
     static integer nmax;
@@ -65,25 +65,25 @@ static doublereal c_b116 = .25;
     static integer ldmas2, iescal, naccpt;
     extern /* Subroutine */ int radcor_(integer, FP_CB_f, void*, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, FP_CB_jac, void*, integer *, integer *,
-	     integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *
-	    , integer *, doublereal *, doublereal *, doublereal *, doublereal 
-	    *, doublereal *, doublereal *, integer *, integer *, logical *, 
+	    doublereal *, doublereal *, integer *, FP_CB_jac, FP_CB_jac_sparse, void*, integer *, integer *,
+	    integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *,
+	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
+	    doublereal *, doublereal *, integer *, integer *, logical *, 
 	    integer *, integer *, integer *, logical *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, logical *, logical 
-	    *, integer *, integer *, integer *, doublereal *, doublereal *, 
+	    doublereal *, integer *, integer *, integer *, logical *, logical *,
+	    integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, doublereal *, integer *, integer *, integer *, integer 
-	    *, integer *, integer *, integer *, doublereal *, integer *);
+	    integer *, doublereal *, integer *, integer *, integer *, integer *,
+		integer *, integer *, integer *, doublereal *, integer *, integer,
+		FP_CB_assemble_sys_d, FP_CB_assemble_sys_d);
     static integer nrejct;
     static logical implct;
     static integer istore;
     static logical startn;
     static doublereal uround;
 
-	static logical sparselu;
 	static integer nnz;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
@@ -639,13 +639,6 @@ static doublereal c_b116 = .25;
 		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
 		arret = TRUE_;
     }
-	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
-	sparselu = iwork[11];
-	nnz = iwork[12];
-	if ((nnz < 0) || nnz > n*n){
-		printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
-		arret = TRUE_;
-	}
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/*         COMPUTATION OF ARRAY ENTRIES */
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
@@ -702,8 +695,32 @@ static doublereal c_b116 = .25;
 		printf(" HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS WITH FULL JACOBIAN\n");
 		arret = TRUE_;
     }
+	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
+	if (iwork[11]){ // SPARSE LU
+		if (implct){
+			ijob = 9;
+		} else {
+			ijob = 8;
+		}
+		if (!(*ijac)){
+			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %"PRId64", WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
+		}
+	}
+	nnz = iwork[12];
+	if ((nnz < 0) || nnz > n*n){
+		printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
+		arret = TRUE_;
+	}
+	/* -------- SPARSE LU COMPATIBILITY CHECKS */
+	if (iwork[11] && implct){
+		if ((*mlmas != 0) || (*mumas != 0)){
+			printf("SPARSE LU OPTION (IWORK(11)) CURRENTLY ONLY COMPATIBLE WITH DIAGONAL MASS MATRICES\n");
+			printf("GIVEN BANDWIDTH OF MASS MATRIX: LOWER: %"PRId64", UPPER: %"PRId64" \n", *mlmas, *mumas);
+		}
+	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
 	// TODO: Utilize this storage space for storage of sparse jacobians/systems instead?
+	// OR: Skip this entirely if the sparse solver is used?
     iez1 = 21;
     iez2 = iez1 + n;
     iez3 = iez2 + n;
@@ -741,15 +758,17 @@ static doublereal c_b116 = .25;
     }
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
-	    itol, (FP_CB_jac)jac, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas, (
-	    FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt, &
-	    quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3, &
-	    pred, &facl, &facr, &m1, &m2, &nm1, &implct, &jband, &ldjac, &
-	    lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
-	     &work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[
-	    iejac], &work[iee1], &work[iee2r], &work[iee2i], &work[iemas], &
-	    iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn, &
-	    njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1]);
+	    itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas,
+		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
+	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
+	    &pred, &facl, &facr, &m1, &m2, &nm1, &implct, &jband, &ldjac,
+	    &lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
+		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
+		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
+	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
+	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
+		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_d)sys_z);
+	// "CATCH" negative IDID here?
     iwork[14] = nfcn;
     iwork[15] = njac;
     iwork[16] = nstep;
@@ -781,7 +800,7 @@ static doublereal c_b116 = .25;
 
 /* Subroutine */ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
-	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, void* jac_PY, integer *ijac, 
+	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
 	integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *mlmas, integer *
 	mumas, FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
@@ -795,7 +814,8 @@ static doublereal c_b116 = .25;
 	doublereal *e2r, doublereal *e2i, doublereal *fmas, integer *ip1, 
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
-	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar)
+	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar, integer nnz,
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_d sys_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -834,38 +854,61 @@ static doublereal c_b116 = .25;
     static logical index1, index2, index3, caljac;
     static doublereal faccon;
     extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *, integer *, integer 
-	    *, integer *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, integer *);
+	    doublereal *, integer *, integer *, integer *, integer *, integer *,
+	    integer *, doublereal *, doublereal *, doublereal *, 
+	    doublereal *, integer *, integer *, integer *, integer *,
+		SuperLU_aux_z *, FP_CB_assemble_sys_z, double *, int *, int *);
     static logical calhes;
     static doublereal erracc;
     static integer mujacj;
     extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *, integer *, integer 
-	    *, integer *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, logical *, integer *);
+	    doublereal *, integer *, integer *, integer *, integer *, integer *,
+	    integer *, doublereal *, doublereal *, integer *, integer *, 
+	    integer *, integer *, logical *, integer *,
+		SuperLU_aux_d *, FP_CB_assemble_sys_d, double *, int *, int *);
     static logical reject;
     static doublereal facgus;
     static integer mujacp;
     extern /* Subroutine */ int estrad_(integer, doublereal *, integer *, 
-	    integer *, integer *, doublereal *, integer *, integer *, integer 
-	    *, doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
+	    integer *, integer *, doublereal *, integer *, integer *, integer *,
+	    doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
 	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
 	    integer *, integer *, integer *, doublereal *, integer *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
-	    doublereal *, integer *);
+	    doublereal *, integer *, SuperLU_aux_d*, SuperLU_aux_d*);
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
-	    integer *, integer *, doublereal *, integer *, integer *, integer 
-	    *, integer *, integer *, integer *, doublereal *, doublereal *, 
+	    integer *, integer *, doublereal *, integer *, integer *, integer *,
+	    integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
-	     doublereal *, doublereal *, doublereal *, doublereal *, 
+	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, integer *);
+	    integer *, integer *, integer *, SuperLU_aux_d*, SuperLU_aux_d*);
     static doublereal thqold;
 
+	// sparse LU related parameters
+	// TODO: doublereal and integer instead?
+	double* jac_data;
+	int* jac_indicies, jac_indptr;
+	struct SuperLU_aux_d* slu_aux_d;
+	struct SuperLU_aux_z* slu_aux_z;
+
+	if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+		jac_data = (double*) malloc(nnz * sizeof(double)); // TODO: Use fjac for this instead?
+		jac_indicies = (int*) malloc(nnz * sizeof(int));
+		jac_indptr = (int*) malloc((n+1) * sizeof(int));
+
+		// TODO: Have specific error status/returns for SuperLU and related errors? I.e., different idid
+		if (!jac_data){ printf("Malloc of jac_data[] failed"); *idid = -1; return 0;} 
+		if (!jac_indicies){ printf("Malloc of jac_indicies[] failed"); *idid = -1; return 0;}
+		if (!jac_indptr){ printf("Malloc of jac_indptr[] failed"); *idid = -1; return 0;}
+
+		// TODO: 1 corresponds to number of processes, figure this one out and set it properly
+		slu_aux_d = superlu_init_d(1, n, nnz);
+		slu_aux_z = superlu_init_z(1, n, nnz);
+	}
 	/* ---------------------------------------------------------- */
 	/*     CORE INTEGRATOR FOR RADAU5 */
 	/*     PARAMETERS SAME AS IN RADAU5 WITH WORKSPACE ADDED */
@@ -878,6 +921,7 @@ static doublereal c_b116 = .25;
 	/* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
 
     /* Parameter adjustments */
+	// TODO: Make this part of the "work" array?
     doublereal *werr = (doublereal*) malloc(n * sizeof(doublereal));
     --cont;
     --f3;
@@ -1095,8 +1139,13 @@ L14:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-		// TODO: Extra if for sparse Jacobian
-    	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+		// TODO: Do something better than this if right here
+		if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+			// TODO: Make a unified Jacobian callback and handle things on the Cython side instead?'
+			(*jac_sparse)(n, x, &y[1], &nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+		} else { // dense jacobian
+    		(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+		}
     }
     caljac = TRUE_;
     calhes = TRUE_;
@@ -1111,7 +1160,8 @@ L20:
 	// TODO: Where & how are decompositions stored here? e1?
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 	    mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
-	    ijob, &calhes, &iphes[1]);
+	    ijob, &calhes, &iphes[1], slu_aux_d, sys_d,
+		jac_data, jac_indicies, jac_indptr);
     if (ier != 0) {
 		goto L78;
     }
@@ -1119,8 +1169,9 @@ L20:
 	// TODO: Pass extra parameters, callbacks, etc OR different function in sparse case?
 	// TODO: Where & how are decompositions stored here? e2r = real?, e2i = imag?
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[
-	    e2i_offset], lde1, &ip2[1], &ier, ijob);
+	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
+		lde1, &ip2[1], &ier, ijob, slu_aux_z, sys_z,
+		jac_data, jac_indicies, jac_indptr);
     if (ier != 0) {
 		goto L78;
     }
@@ -1234,7 +1285,7 @@ L40:
 	    ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[
 	    e1_offset], &e2r[e2r_offset], &e2i[e2i_offset], lde1, &z1[1], &z2[
 	    1], &z3[1], &f1[1], &f2[1], &f3[1], &cont[1], &ip1[1], &ip2[1], &
-	    iphes[1], &ier, ijob);
+	    iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
     ++(*nsol);
     ++newt;
     dyno = 0.;
@@ -1295,7 +1346,8 @@ L40:
 	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
 	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
 	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
-	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1]);
+	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1],
+		slu_aux_d, slu_aux_z);
 	/* --- COMPUTATION OF HNEW */
 	/* --- WE REQUIRE .2<=HNEW/H<=8. */
     fac = min(*safe, cfac / (newt + (*nit << 1)));
@@ -1465,6 +1517,9 @@ L179:
 /*      WRITE(6,979)X */
     *idid = 2;
     return 0;
+	// TODO: Clean up all SuperLU related memory properly again
+	// TODO: Possibly declare SuperLU related variables as static to avoid repeated re-initialization with events
+	// TODO: How to handle scopes for related variables etc.?
 } /* radcor_ */
 
 
@@ -2964,9 +3019,10 @@ L200:
 
 /* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
-	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *
-	e1, integer *lde1, integer *ip1, integer *ier, integer *ijob, logical 
-	*calhes, integer *iphes)
+	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *e1,
+	integer *lde1, integer *ip1, integer *ier, integer *ijob, logical *calhes,
+	integer *iphes, SuperLU_aux_d* slu_aux, FP_CB_assemble_sys_d sparse_sys_d,
+	double* jac_data, int* jac_indices, int* jac_indptr)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -2974,15 +3030,15 @@ L200:
 
     /* Local variables */
     static integer i, j, k, j1, ib, mm, jm1;
+	static doublereal sum;
     extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
 	    integer *, integer *);
-    static doublereal sum;
     extern /* Subroutine */ int decb_(integer, integer *, doublereal *, 
-	    integer *, integer *, integer *, integer *), dech_(integer, 
-	    integer *, doublereal *, integer *, integer *, integer *), 
-	    elmhes_(integer *, integer, integer *, integer *, doublereal *, 
-	    integer *);
-
+	    integer *, integer *, integer *, integer *);
+    extern /* Subroutine */ int dech_(integer, integer *, doublereal *,
+		integer *, integer *, integer *);
+    extern /* Subroutine */ int elmhes_(integer *, integer, integer *,
+	    integer *, doublereal *, integer *);
 
     /* Parameter adjustments */
     --iphes;
@@ -3008,14 +3064,16 @@ L200:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 7:  goto L7;
-		case 8:  goto L55;
-		case 9:  goto L55;
+		case 8:  goto L8;
+		case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
+		case 18:  goto L8;
+		case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -3209,6 +3267,28 @@ L7:
 
 /* ----------------------------------------------------------- */
 
+L8:
+/* ---  B=IDENTITY, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Is fac1 the correct factor here?
+// TODO: Do the extern ... definition for this function on top?
+	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_d);
+	superlu_factorize_d(slu_aux);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
+L9:
+/* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Is fac1 the correct factor here?
+// TODO: Add a warning/note here that this is not properly tested
+	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_d);
+	superlu_factorize_d(slu_aux);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
 L55:
     return 0;
 } /* decomr_ */
@@ -3219,9 +3299,10 @@ L55:
 
 /* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
-	integer *m1, integer *m2, integer *nm1, doublereal *alphn, doublereal 
-	*betan, doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
-	 integer *ier, integer *ijob)
+	integer *m1, integer *m2, integer *nm1, doublereal *alphn, doublereal *betan,
+	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
+	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux, FP_CB_assemble_sys_z sparse_sys_z,
+	double* jac_data, int* jac_indices, int* jac_indptr)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
@@ -3267,14 +3348,16 @@ L55:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 7:  goto L7;
-		case 8:  goto L55;
-		case 9:  goto L55;
+		case 8:  goto L8;
+		case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
+		case 18:  goto L8;
+		case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -3512,6 +3595,26 @@ L7:
 
 /* ----------------------------------------------------------- */
 
+L8:
+/* ---  B=IDENTITY, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Factors correct?
+	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_z);
+	superlu_factorize_z(slu_aux);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
+L9:
+/* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Add note that this is not properly tested
+	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_z);
+	superlu_factorize_z(slu_aux);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
 L55:
     return 0;
 } /* decomc_ */
@@ -3522,12 +3625,13 @@ L55:
 
 /* Subroutine */ int slvrad_(integer n, doublereal *fjac, integer *ldjac, 
 	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
-	integer *mlmas, integer *mumas, integer *m1, integer *m2, integer *
-	nm1, doublereal *fac1, doublereal *alphn, doublereal *betan, 
+	integer *mlmas, integer *mumas, integer *m1, integer *m2, integer *nm1,
+	doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *cont, integer *ip1, 
-	integer *ip2, integer *iphes, integer *ier, integer *ijob)
+	integer *ip2, integer *iphes, integer *ier, integer *ijob,
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_d* slu_aux_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -3555,6 +3659,7 @@ L55:
     extern /* Subroutine */ int solhc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, doublereal *, doublereal *, integer *);
 
+	int info_d, info_z; // returns from SuperLU calls
 
     /* Parameter adjustments */
     --iphes;
@@ -3591,14 +3696,16 @@ L55:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 7:  goto L7;
-		case 8:  goto L55;
-		case 9:  goto L55;
+		case 8:  goto L8;
+		case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L13;
 		case 15:  goto L15;
+		case 18:  goto L8;
+		case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -3917,6 +4024,49 @@ L750:
 
 /* ----------------------------------------------------------- */
 
+L8:
+/* ---  B=IDENTITY, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Is RHS setup correct?
+    for (i = 1; i <= n; ++i) {
+		s2 = -f2[i];
+		s3 = -f3[i];
+		z1[i] -= f1[i] * *fac1;
+		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
+		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
+    }
+// TODO: Handle various return options of info appropriately
+	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
+	info_z = superlu_solve_z(slu_aux_d, &z2[1], &z3[1]);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
+L9:
+/* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// TODO: Properly return any failures
+// TODO: Work in progress, is rhs correct?
+    for (i = 1; i <= n; ++i) {
+		s1 = 0.;
+		s2 = 0.;
+		s3 = 0.;
+		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
+			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
+			s1 -= bb * f1[j];
+			s2 -= bb * f2[j];
+			s3 -= bb * f3[j];
+		}
+		z1[i] += s1 * *fac1;
+		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
+		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
+    }
+// TODO: Handle various return options of info appropriately
+	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
+	info_z = superlu_solve_z(slu_aux_d, &z2[1], &z3[1]);
+    return 0;
+
+/* ----------------------------------------------------------- */
+
 L55:
     return 0;
 } /* slvrad_ */
@@ -3934,7 +4084,8 @@ L55:
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
 	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
-	doublereal *fac1, doublereal *rpar, integer *ipar)
+	doublereal *fac1, doublereal *rpar, integer *ipar,
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_d* slu_aux_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -3949,6 +4100,8 @@ L55:
 	    integer *, integer *, doublereal *, integer *), solh_(integer, 
 	    integer *, doublereal *, integer *, doublereal *, integer *);
     static doublereal zsafe;
+
+	int info_d;
 
     /* Parameter adjustments */
     --scal;
@@ -3987,14 +4140,16 @@ L55:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 7:  goto L7;
-		case 8:  goto L55;
-		case 9:  goto L55;
+		case 8:  goto L8;
+		case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
+		case 18:  goto L8;
+		case 19:  goto L9;
     }
 
 L1:
@@ -4213,6 +4368,22 @@ L440:
 		;
     }
 
+/* ---  B=IDENTITY MATRIX, SPARSE LU */
+L8:
+// TODO: Verify RHS is correct
+    for (i = 1; i <= n; ++i) {
+		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
+		cont[i] = f2[i] + y0[i];
+    }
+// TODO: add proper processing of info
+	info_d = superlu_solve_d(slu_aux_d, &cont[1]);
+	goto L77;
+/* ---  B=DIAGONAL MATRIX, SPARSE LU */
+L9:
+// TODO: Find suitable RHS, ADD CALL
+	;
+	goto L77;
+
 /* -------------------------------------- */
 
 L77:
@@ -4235,6 +4406,7 @@ L77:
 		for (i = 1; i <= n; ++i) {
 			cont[i] = f1[i] + f2[i];
 		}
+		// TODO: fix these here, L38, 39 are free?
 		switch (*ijob) {
 			case 1:  goto L31;
 			case 2:  goto L32;
@@ -4243,8 +4415,8 @@ L77:
 			case 5:  goto L31;
 			case 6:  goto L32;
 			case 7:  goto L33;
-			case 8:  goto L55;
-			case 9:  goto L55;
+			case 8:  goto L38;
+			case 9:  goto L39;
 			case 10:  goto L55;
 			case 11:  goto L41;
 			case 12:  goto L42;
@@ -4327,7 +4499,20 @@ L510:
 L640:
 			;
 		}
-		/* ----------------------------------- */
+L38:
+/* ---  B=IDENTITY, SPARSE LU */
+// TODO: Properly return any failures
+		info_d = superlu_solve_d(slu_aux_d, &cont[1]);
+    	goto L88;
+
+/* ----------------------------------------------------------- */
+
+L39:
+/* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// TODO: Properly return any failures
+    	goto L88;
+
+/* ----------------------------------------------------------- */
 L88:
 		*err = 0.;
 		for (i = 1; i <= n; ++i) {

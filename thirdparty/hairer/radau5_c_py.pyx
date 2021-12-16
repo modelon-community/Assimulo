@@ -20,26 +20,25 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
-import scipy.sparse as sps
 
 from numpy cimport PyArray_DATA
 
-from assimulo.exception import AssimuloException
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_d(double* dest, object source, int dim):
+cdef void py2c(double* dest, object source, int dim):
     """
-    Copy 1D numpy (double) array to (double *) C vector
+    Copy 1D numpy array data to (double *) C vector
     """
+    cdef double* data
     if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.float):
         source = np.ascontiguousarray(source, dtype=np.float)
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-    memcpy(dest, <double*>PyArray_DATA(source), dim*sizeof(double))
+    data = <double*>PyArray_DATA(source)
+    memcpy(dest, data, dim*sizeof(double))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
+cdef void py2c_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     """
     Copy (square) 2D numpy array (order = c) to (double *) C matrix (with Fortran-style column major ordering)
     """
@@ -50,7 +49,7 @@ cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
+cdef void c2py(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
     """
     Copy (double *) C vector to 1D numpy array
     """
@@ -58,41 +57,11 @@ cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int 
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py_d_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
+cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
     """
     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
     """
     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void py2c_z(doublecomplex* dest, object source, int dim):
-    """
-    Copy 1D numpy (double complex) array to (doublecomplex *) C vector
-    """
-    if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.complex128):
-        source = np.ascontiguousarray(source, dtype=np.float)
-    assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-    memcpy(dest, <doublecomplex*>PyArray_DATA(source), dim*sizeof(doublecomplex))
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void c2py_i(np.ndarray[int, ndim=1, mode='c'] dest, int* source, int dim):
-    """
-    Copy (int *) C vector to 1D numpy array
-    """
-    memcpy(PyArray_DATA(dest), source, dim*sizeof(int))
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void py2c_i(int* dest, object source, int dim):
-    """
-    Copy 1D numpy (int) array to (int *) C vector
-    """
-    if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.intc):
-        source = np.ascontiguousarray(source, dtype=np.intc)
-    assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-    memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
 cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_out,
                       doublereal* rpar, integer* ipar, void* fcn_PY):
@@ -100,9 +69,9 @@ cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_
     Internal callback function to enable call to Python based rhs function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
-    c2py_d(y_py_in, y_in, n)
+    c2py(y_py_in, y_in, n)
     res = (<object>fcn_PY)(x[0], y_py_in)
-    py2c_d(y_out, res[0], len(res[0]))
+    py2c(y_out, res[0], len(res[0]))
     ipar[0] = res[1][0]
     return 0
 
@@ -112,11 +81,9 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     Internal callback function to enable call to Python based Jacobian function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
-    c2py_d(y_py_in, y, n)
+    c2py(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
-    if type(res) != np.ndarray:
-        raise AssimuloException("Error: Encountered a sparse Jacobian while expecting a dense Jacobian, type of Jacobian: {}".format(type(res)))
-    py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
+    py2c_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 
 cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
@@ -125,9 +92,9 @@ cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar
     Internal callback function to enable call to Python based mass matrix function from C
     """
     cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n), order = 'F', dtype = np.double)
-    c2py_d_mat_F(am_py, am, n*lmas[0])
+    c2py_mat_F(am_py, am, n*lmas[0])
     res = (<object>mas_PY)(am_py)
-    py2c_d_matrix_flat_F(am, res, res.shape[0], res.shape[1])
+    py2c_matrix_flat_F(am, res, res.shape[0], res.shape[1])
     return 0
 
 cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
@@ -139,107 +106,15 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(nsolu[0], dtype = np.double)
     cdef np.ndarray[double, ndim=1, mode="c"]cont_py = np.empty(4*nsolu[0], dtype = np.double)
     cdef np.ndarray[double, ndim=1, mode="c"]werr_py = np.empty(nsolu[0], dtype = np.double)
-    c2py_d(y_py, y, nsolu[0])
-    c2py_d(cont_py, cont, 4*nsolu[0])
-    c2py_d(werr_py, werr, nsolu[0])
+    c2py(y_py, y, nsolu[0])
+    c2py(cont_py, cont, 4*nsolu[0])
+    c2py(werr_py, werr, nsolu[0])
 
     irtrn[0] = (<object>solout_PY)(nrsol[0], xosol[0], xsol[0],
                                    y_py, cont_py, werr_py,
                                    lrc[0], irtrn[0])
 
     return irtrn[0]
-
-cdef int callback_jac_sparse(double t, int n, int *nnz, double * data, int *indices, int *indptr, void* python_user_function):
-    ## TODO: Add docstring
-    J = (<object>python_user_function)(t)
-    if not isinstance(J, sps.csc.csc_matrix):
-        raise AssimuloException("The Jacobian must be provided as scipy.sparse.csc_matrix. Given type: {}".format(type(J)))
-
-    if J.nnz > nnz[0]:
-        raise AssimuloException("Mismatch of nnz in the jacobian, specified in problem: {}, jacobian evaluation: {}".format(nnz[0], J.nnz))
-
-    cdef np.ndarray[double, mode="c", ndim=1] data_py = J.data
-    cdef np.ndarray[int, mode="c", ndim=1] indices_py = J.indices.astype(np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] indptr_py = J.indptr.astype(np.intc)
-
-    py2c_d(data, data_py, len(J.data))
-    py2c_i(indices, indices_py, len(J.indices))
-    py2c_i(indptr, indptr_py, len(J.indptr))
-
-    nnz[0] = J.nnz
-    return 0
-
-cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
-                                  double *data_in, int *indices_in, int *indptr_in,
-                                  double *data_out, int *indices_out, int *indptr_out, 
-                                  int flag_mass, double *mass_diag):
-    ## TODO: Add docstring
-    cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
-    cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
-
-    c2py_d(data_J_py, data_in, nnz[0])
-    c2py_i(indices_J_py, indices_in, nnz[0])
-    c2py_i(indptr_J_py, indptr_in, n + 1)
-
-    # Reconstruct Jacobian
-    J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
-
-    cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
-    if flag_mass:
-        c2py_d(M_diag, mass_diag, n)
-        M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
-    else:
-        M = sps.eye(*J.shape, format = 'csc')
-
-    A = fac * M + J
-
-    cdef np.ndarray[double, mode="c", ndim=1] data_A_py = A.data
-    cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
-
-    py2c_d(data_out, data_A_py, len(A.data))
-    py2c_i(indices_out, indices_A_py, len(A.indices))
-    py2c_i(indptr_out, indptr_A_py, len(A.indptr))
-    nnz[0] = A.nnz
-
-    return 0
-
-cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
-                                  double *data_in, int *indices_in, int *indptr_in,
-                                  doublecomplex *data_out, int *indices_out, int *indptr_out,
-                                  int flag_mass, double *mass_diag):
-    ## TODO: Add docstring
-    cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
-    cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
-
-    c2py_d(data_J_py, data_in, nnz[0])
-    c2py_i(indices_J_py, indices_in, nnz[0])
-    c2py_i(indptr_J_py, indptr_in, n + 1)
-
-    # Reconstruct Jacobian
-    J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
-
-    cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
-    if flag_mass:
-        c2py_d(M_diag, mass_diag, n)
-        M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
-    else:
-        M = sps.eye(*J.shape, format = 'csc')
-
-    A = (fac_r + 1j*fac_i) * M + J
-
-    cdef np.ndarray[doublecomplex, mode="c", ndim=1] data_A_py = A.data
-    cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
-
-    py2c_z(data_out, data_A_py, len(A.data))
-    py2c_i(indices_out, indices_A_py, len(A.indices))
-    py2c_i(indptr_out, indptr_A_py, len(A.indptr))
-    nnz[0] = A.nnz
-
-    return 0
 
 cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
@@ -343,13 +218,8 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
-<<<<<<< HEAD
-    radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, <void*> jac_PY,
-=======
     radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                          &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
->>>>>>> c3dc47f (cleanup)
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid)

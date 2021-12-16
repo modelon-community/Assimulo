@@ -38,15 +38,15 @@ cdef extern from "radau_decsol_c.h":
     ## TODO: Change these to doublereal & integer?
     ctypedef struct doublecomplex:
         double r, i
-    ctypedef int (*FP_CB_jac_sparse)(double, int, int*, double*, int*, int*, void*);
+    ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, doublereal*, integer*, void*)
     ctypedef int (*FP_CB_assemble_sys_d)(int, double, int *, double *, int *, int *, double *, int *, int *, int, double*);
     ctypedef int (*FP_CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
 
     int radau5_c(integer, FP_CB_f, void*, doublereal*, doublereal*,
                  doublereal*, doublereal*, doublereal*, doublereal*,
-                 integer*, FP_CB_jac, void*, integer*, integer*, integer*,
+                 integer*, FP_CB_jac, FP_CB_jac_sparse, void*, integer*, integer*, integer*,
                  FP_CB_mas, void*, integer*, integer*, integer*, FP_CB_solout,
                  void*, integer*, doublereal*, integer*, integer*, integer*,
-                 doublereal*, integer*, integer*)
+                 doublereal*, integer*, integer*, FP_CB_assemble_sys_d, FP_CB_assemble_sys_z)
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
