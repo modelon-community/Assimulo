@@ -38,7 +38,7 @@ static doublereal c_b116 = .25;
 	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_d sys_z)
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z)
 {
     /* Local variables */
     static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
@@ -77,7 +77,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, doublereal *, integer *, integer *, integer *, integer *,
 		integer *, integer *, integer *, doublereal *, integer *, integer,
-		FP_CB_assemble_sys_d, FP_CB_assemble_sys_d);
+		FP_CB_assemble_sys_d, FP_CB_assemble_sys_z);
     static integer nrejct;
     static logical implct;
     static integer istore;
@@ -469,10 +469,6 @@ static doublereal c_b116 = .25;
     --rpar;
     --ipar;
 
-	// TODO: Testing
-	SuperLU_aux_d* test_superlu_d = superlu_init_d(1, 2, 4);
-	SuperLU_aux_z* test_superlu_z = superlu_init_z(1, 2, 4);
-
     /* Function Body */
     nfcn = 0;
     njac = 0;
@@ -767,7 +763,7 @@ static doublereal c_b116 = .25;
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
-		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_d)sys_z);
+		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_z)sys_z);
 	// "CATCH" negative IDID here?
     iwork[14] = nfcn;
     iwork[15] = njac;
@@ -815,7 +811,7 @@ static doublereal c_b116 = .25;
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar, integer nnz,
-	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_d sys_z)
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -877,7 +873,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
-	    doublereal *, integer *, SuperLU_aux_d*, SuperLU_aux_d*);
+	    doublereal *, integer *, SuperLU_aux_d*, SuperLU_aux_z*);
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer *,
@@ -885,15 +881,17 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, integer *, SuperLU_aux_d*, SuperLU_aux_d*);
+	    integer *, integer *, integer *, SuperLU_aux_d*, SuperLU_aux_z*);
     static doublereal thqold;
 
 	// sparse LU related parameters
 	// TODO: doublereal and integer instead?
-	double* jac_data;
-	int* jac_indicies, jac_indptr;
-	struct SuperLU_aux_d* slu_aux_d;
-	struct SuperLU_aux_z* slu_aux_z;
+	int jac_nnz = nnz;
+	double* jac_data = NULL;
+	int *jac_indicies = NULL;
+	int *jac_indptr = NULL;
+	struct SuperLU_aux_d* slu_aux_d = NULL;
+	struct SuperLU_aux_z* slu_aux_z = NULL;
 
 	if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
 		jac_data = (double*) malloc(nnz * sizeof(double)); // TODO: Use fjac for this instead?
@@ -1142,7 +1140,7 @@ L14:
 		// TODO: Do something better than this if right here
 		if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
 			// TODO: Make a unified Jacobian callback and handle things on the Cython side instead?'
-			(*jac_sparse)(n, x, &y[1], &nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			(*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
 		} else { // dense jacobian
     		(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
 		}
@@ -3631,7 +3629,7 @@ L55:
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *cont, integer *ip1, 
 	integer *ip2, integer *iphes, integer *ier, integer *ijob,
-	SuperLU_aux_d* slu_aux_d, SuperLU_aux_d* slu_aux_z)
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -4037,7 +4035,13 @@ L8:
     }
 // TODO: Handle various return options of info appropriately
 	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
-	info_z = superlu_solve_z(slu_aux_d, &z2[1], &z3[1]);
+	info_z = superlu_solve_z(slu_aux_z, &z2[1], &z3[1]);
+	if (info_d){
+		;
+	}
+	if (info_z){
+		;
+	}
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -4062,7 +4066,13 @@ L9:
     }
 // TODO: Handle various return options of info appropriately
 	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
-	info_z = superlu_solve_z(slu_aux_d, &z2[1], &z3[1]);
+	info_z = superlu_solve_z(slu_aux_z, &z2[1], &z3[1]);
+	if (info_d){
+		;
+	}
+	if (info_z){
+		;
+	}
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -4085,7 +4095,7 @@ L55:
 	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
 	doublereal *fac1, doublereal *rpar, integer *ipar,
-	SuperLU_aux_d* slu_aux_d, SuperLU_aux_d* slu_aux_z)
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -4377,6 +4387,9 @@ L8:
     }
 // TODO: add proper processing of info
 	info_d = superlu_solve_d(slu_aux_d, &cont[1]);
+	if (info_d){
+		; // TODO:
+	}
 	goto L77;
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
 L9:

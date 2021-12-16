@@ -43,7 +43,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
             *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
             solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
             iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-            FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_d sys_z);
+            FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
                    
