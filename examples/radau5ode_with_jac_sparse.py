@@ -22,10 +22,11 @@ from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
 
-def run_example(with_plots=True, solver = 'c'):
+def run_example(with_plots=True):
     r"""
     Example for demonstrating the use of a user supplied Jacobian (sparse).
-    Based on the SUNDIALS example cvRoberts_sps.c
+    Note that this will only work if Assimulo has been configured with
+    SuperLU. Based on the SUNDIALS example cvRoberts_sps.c
     
     ODE:
     
@@ -75,7 +76,8 @@ def run_example(with_plots=True, solver = 'c'):
     #Set the parameters
     exp_sim.atol = [1e-8,1e-14,1e-6] #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    exp_sim.solver = solver
+    exp_sim.solver = 'c'
+    exp_sim.linear_solver = "sparse"
     
     #Simulate
     t, y = exp_sim.simulate(0.4) #Simulate 0.4 seconds
@@ -97,3 +99,4 @@ def run_example(with_plots=True, solver = 'c'):
 
 if __name__=='__main__':
     mod,sim = run_example()
+    pass

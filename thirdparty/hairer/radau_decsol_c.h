@@ -37,12 +37,12 @@ typedef int (*FP_CB_assemble_sys_z)(int, double, double, int *, double *, int *,
 
 int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, FP_CB_assemble_sys_z);
 
-int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
-            y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
-            atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
-            *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
-            solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
-            iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
+int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
+            doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
+            integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
+            integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas,
+            integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
+            integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
             FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);

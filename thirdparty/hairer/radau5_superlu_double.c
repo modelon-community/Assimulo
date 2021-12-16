@@ -78,9 +78,9 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     dCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, NULL, slu_aux->n, SLU_DN, SLU_D, SLU_GE);
 
     // allocate memory for storing matrix of linear system
-    // nnz_jac + n is upper bound on storage requirement of linear system
-    slu_aux->data_sys = doubleMalloc(slu_aux->nnz_jac + slu_aux->n);
-    slu_aux->indices_sys = intMalloc(slu_aux->nnz_jac + slu_aux->n);
+    // min(nnz_jac + n, n*n) is upper bound on storage requirement of linear system
+    slu_aux->data_sys = doubleMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
+    slu_aux->indices_sys = intMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
     slu_aux->indptr_sys = intMalloc(slu_aux->n+1);
 
     if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for data_sys[].");}
