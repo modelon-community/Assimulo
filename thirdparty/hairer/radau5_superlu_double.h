@@ -4,6 +4,8 @@
 struct SuperLU_aux_d;
 typedef struct SuperLU_aux_d SuperLU_aux_d;
 
+#define min(a,b) ((a) <= (b) ? (a) : (b))
+
 typedef int (*CB_assemble_sys_d)(int, double, int *, double *, int *, int *, double *, int *, int *, int, double*);
 
 SuperLU_aux_d* superlu_init_d(int, int, int);

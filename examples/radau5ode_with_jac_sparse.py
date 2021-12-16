@@ -63,9 +63,9 @@ def run_example(with_plots=True):
         return J
     
     #Defines an Assimulo explicit problem
-    y0 = [1.0,0.0,0.0] #Initial conditions
+    y0 = [1.0, 0.0, 0.0] #Initial conditions
 
-    exp_mod = Explicit_Problem(f,y0, name = 'Example using analytic (sparse) Jacobian')
+    exp_mod = Explicit_Problem(f, y0, name = 'Example using analytic (sparse) Jacobian')
     
     exp_mod.jac = jac #Sets the Jacobian
     exp_mod.jac_nnz = 9
@@ -98,6 +98,5 @@ def run_example(with_plots=True):
 
 
 if __name__=='__main__':
-    ## TODO: re-enable tests
-    # mod,sim = run_example()
+    mod,sim = run_example()
     pass
