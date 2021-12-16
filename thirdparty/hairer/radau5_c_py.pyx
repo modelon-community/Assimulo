@@ -149,9 +149,15 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
 
     return irtrn[0]
 
-cdef int callback_jac_sparse(double t, int n, int *nnz, double * data, int *indices, int *indptr, void* python_user_function):
+cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
+                             double * data, int *indices, int *indptr,
+                             doublereal* rpar, integer* ipar,
+                             void* jac_PY):
     ## TODO: Add docstring
-    J = (<object>python_user_function)(t)
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
+    c2py_d(y_py, y, n)
+
+    J = (<object>jac_PY)(x[0], y_py)
     if not isinstance(J, sps.csc.csc_matrix):
         raise AssimuloException("The Jacobian must be provided as scipy.sparse.csc_matrix. Given type: {}".format(type(J)))
 
@@ -344,10 +350,10 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
     radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
+                         &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-                         &ipar, &idid)
+                         &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z)
     
     return x, y, h__, np.array(iwork_in, dtype = int), idid
 
