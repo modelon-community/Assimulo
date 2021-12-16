@@ -1211,9 +1211,10 @@ class Test_Explicit_C_Radau5:
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
     @testattr(stddist = True)
-    def test_sparse_solver_invalid_nnz(self):
+    def test_sparse_solver_invalid_nnz_py(self):
         """
-        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz, some caught by C code
+        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz,
+        which are to be caught on the Python side
         """
         f = lambda t, y: [y]
         jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
@@ -1222,7 +1223,7 @@ class Test_Explicit_C_Radau5:
         for nnz in [-1, None, "test"]:
             prob = Explicit_Problem(f, y0)
             prob.jac = jac
-            prob.nnz = nnz
+            prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
             sim.solver = 'c'
@@ -1230,10 +1231,20 @@ class Test_Explicit_C_Radau5:
             sim.usejac = True
             nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_sparse_solver_invalid_nnz_c(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz,
+        which are to be caught on the C side
+        """
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = N.array([1.])
+
         for nnz in [-10, 2, 100]:
             prob = Explicit_Problem(f, y0)
             prob.jac = jac
-            prob.nnz = nnz
+            prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
             sim.solver = 'c'
