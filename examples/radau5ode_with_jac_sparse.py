@@ -25,8 +25,7 @@ from assimulo.problem import Explicit_Problem
 def run_example(with_plots=True):
     r"""
     Example for demonstrating the use of a user supplied Jacobian (sparse).
-    Note that this will only work if Assimulo has been configured with
-    SuperLU. Based on the SUNDIALS example cvRoberts_sps.c
+    Based on the SUNDIALS example cvRoberts_sps.c
     
     ODE:
     
@@ -99,4 +98,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod,sim = run_example()
-    pass

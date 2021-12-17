@@ -1466,27 +1466,42 @@ L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
     *idid = -5;
-    return 0;
+	goto L181;
+    // return 0;
 L176:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("MATRIX IS REPEATEDLY SINGULAR IER= %"PRId64"\n", ier);
     *idid = -4;
-    return 0;
+	goto L181;
+    // return 0;
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("STEP SIZE TOO SMALL, H= %e", *h__);
     *idid = -3;
-    return 0;
+	goto L181;
+    // return 0;
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("MORE THAN NMAX = %"PRId64" STEPS ARE NEEDED", *nmax);
     *idid = -2;
-    return 0;
+	goto L181;
+    // return 0;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
 /*      WRITE(6,979)X */
     *idid = 2;
-    return 0;
+	goto L181;
+    // return 0;
+
+L181:
+	if (slu_aux_d){
+		superlu_finalize_d(slu_aux_d);
+	}
+	if (slu_aux_z){
+		superlu_finalize_z(slu_aux_z);
+	}
+
+	return 0;
 	// TODO: Clean up all SuperLU related memory properly again
 	// TODO: Possibly declare SuperLU related variables as static to avoid repeated re-initialization with events
 	// TODO: How to handle scopes for related variables etc.?
