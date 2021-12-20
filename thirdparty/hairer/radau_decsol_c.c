@@ -1383,7 +1383,7 @@ L40:
 		if (last) {
 			*h__ = hopt;
 			*idid = 1;
-			return 0;
+			goto L181;
 		}
 		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
@@ -1494,6 +1494,11 @@ L179:
     // return 0;
 
 L181:
+	werr++;
+	free(werr);
+	free(jac_data);
+	free(jac_indicies);
+	free(jac_indptr);
 	if (slu_aux_d){
 		superlu_finalize_d(slu_aux_d);
 	}
