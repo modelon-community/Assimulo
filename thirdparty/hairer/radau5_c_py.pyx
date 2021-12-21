@@ -219,7 +219,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
     radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
+                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid)

@@ -3,6 +3,9 @@
 Changelog
 ==========
 
+--- Assimulo-3.2.9 ---
+   * Bugfix for C version of Radau5 solver
+
 --- Assimulo-3.2.8 ---
     * Sundials 5.x port
     * Improved asserts in tests
