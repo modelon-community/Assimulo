@@ -53,7 +53,7 @@ cdef void c2py(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int di
     """
     Copy (double *) C vector to 1D numpy array
     """
-    memcpy(dest.data, source, dim*sizeof(double))
+    memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -61,7 +61,7 @@ cdef void c2py_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* so
     """
     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
     """
-    memcpy(dest.data, source, dim*sizeof(double))
+    memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
 
 cdef int callback_fcn(integer* n, doublereal* x, doublereal* y_in, doublereal* y_out,
                       doublereal* rpar, integer* ipar, void* fcn_PY):
@@ -219,7 +219,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
     radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &rtol_vec[0], &itol, callback_jac, <void*> jac_PY,
+                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid)
