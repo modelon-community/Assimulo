@@ -117,6 +117,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
 
     get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetric matrices
     slu_aux->setup_done = 1;
+    slu_aux->refact = NO; // number of elements may have changed, re-using factorization may no longer be valid?
     return 0;
 }
 
@@ -130,8 +131,8 @@ int superlu_factorize_z(SuperLU_aux_z * slu_aux){
     }
     // initialize options
     pzgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
-                slu_aux->diag_pivot_thresh, slu_aux->usepr, slu_aux->drop_tol, slu_aux->perm_c, slu_aux->perm_r,
-                slu_aux->work, slu_aux->lwork, slu_aux->A, slu_aux->AC, slu_aux->slu_options, slu_aux->Gstat);
+                 slu_aux->diag_pivot_thresh, slu_aux->usepr, slu_aux->drop_tol, slu_aux->perm_c, slu_aux->perm_r,
+                 slu_aux->work, slu_aux->lwork, slu_aux->A, slu_aux->AC, slu_aux->slu_options, slu_aux->Gstat);
     // Factorization
     pzgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info);
     slu_aux->refact = YES;

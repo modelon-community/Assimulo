@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from numpy cimport int64_t
+from numpy cimport int32_t
 
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
 cdef extern from "radau_decsol_c.h":
-    ctypedef int64_t integer
+    ctypedef int32_t integer
     ctypedef double doublereal
     
     ## FunctionPointer_CallBack
@@ -35,7 +35,8 @@ cdef extern from "radau_decsol_c.h":
                                 doublereal*, doublereal*, integer*, integer*,
                                 doublereal*, integer*, integer*, void*)
 
-    ## TODO: Change these to doublereal & integer?
+    ## TODO: Can this possibly be replaced by some Cython datastructure?
+    ## Possible conflict with r, i vs. real, imag?
     ctypedef struct doublecomplex:
         double r, i
     ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, doublereal*, integer*, void*)
