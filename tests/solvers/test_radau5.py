@@ -1218,7 +1218,7 @@ class Test_Explicit_C_Radau5:
         """
         n = 5
         f = lambda t, y: y
-        jac = lambda t, y: sp.eye(n, n, format = N.double, format = 'csc')
+        jac = lambda t, y: sp.eye(n, n, dtype = N.double, format = 'csc')
         y0 = N.array([1.]*n)
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
