@@ -815,6 +815,7 @@ static doublereal c_b116 = .25;
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
     doublereal d__1;
+	int info;
 
     /* Local variables */
     static integer i, j, k, l;
@@ -979,7 +980,7 @@ static doublereal c_b116 = .25;
     u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.;
     alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.;
     beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.;
-    cno = alph * alph + beta * beta; // TODO: What is this scaling?
+    cno = alph * alph + beta * beta;
     u1 = 1. / u1;
     alph /= cno;
     beta /= cno;
@@ -1147,17 +1148,23 @@ L20:
     fac1 = u1 / *h__;
     alphn = alph / *h__;
     betan = beta / *h__;
-    decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-	    mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
-	    ijob, &calhes, &iphes[1], slu_aux_d, sys_d,
-		jac_data, jac_indicies, jac_indptr);
+    info = decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
+	    		   mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
+	    		   ijob, &calhes, &iphes[1], slu_aux_d, sys_d,
+				   jac_data, jac_indicies, jac_indptr);
+	if (info){
+		goto L185;
+	}
     if (ier != 0) {
 		goto L78;
     }
-    decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-	    mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
-		lde1, &ip2[1], &ier, ijob, slu_aux_z, sys_z,
-		jac_data, jac_indicies, jac_indptr);
+    info = decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
+	    		   mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
+				   lde1, &ip2[1], &ier, ijob, slu_aux_z, sys_z,
+				   jac_data, jac_indicies, jac_indptr);
+	if (info){
+		goto L185;
+	}
     if (ier != 0) {
 		goto L78;
     }
@@ -1258,11 +1265,14 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-    slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
-	    ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[
-	    e1_offset], &e2r[e2r_offset], &e2i[e2i_offset], lde1, &z1[1], &z2[
-	    1], &z3[1], &f1[1], &f2[1], &f3[1], &cont[1], &ip1[1], &ip2[1], &
-	    iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
+    ier = slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
+				  ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[e1_offset],
+				  &e2r[e2r_offset], &e2i[e2i_offset], lde1,
+				  &z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &cont[1], &ip1[1], &ip2[1],
+				  &iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
+	if (ier){
+		goto L184;
+	}
     ++(*nsol);
     ++newt;
     dyno = 0.;
@@ -1315,12 +1325,15 @@ L40:
 		goto L40;
     }
 	/* --- ERROR ESTIMATION */
-    estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
-	    ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn, &y0[
-	    1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1, &z1[1], &
-	    z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], &
-	    iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1],
-		slu_aux_d, slu_aux_z);
+    ier = estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset],  
+				  ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
+				  &y0[1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1,
+				  &z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
+				  &iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1],
+				  slu_aux_d, slu_aux_z);
+	if (ier){
+		goto L184;
+	}
 	/* --- COMPUTATION OF HNEW */
 	/* --- WE REQUIRE .2<=HNEW/H<=8. */
     fac = min(*safe, cfac / (newt + (*nit << 1)));
@@ -1464,8 +1477,6 @@ L79:
     goto L10;
 /* --- FAIL EXIT */
 
-// TODO: Make sure any failures in SuperLU jump to appropriate points here and/or print relevant error messages
-// TODO: SuperLU ones convey a bit of extra information, print it before and then print these anyways?
 L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
@@ -1496,6 +1507,23 @@ L183:
 	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
 	*idid = -7;
 	goto L181;
+L184:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("UNEXPECTED FAILURE OF SUPERLU SOLVE FUNCTION CALL\n");
+	*idid = -8;
+	goto L181;
+L185:
+	if (info < 0){ // incorrect input to function call
+		goto L184;
+	}
+	if (info <= n){ // factorization singular
+		goto L78;
+	}else{
+		printf("EXIT OF RADAU5 AT X = %e \n", *x);
+		printf("SUPERLU INTERNAL FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", info - n);
+		*idid = -9;
+		goto L181;
+	}
 
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
@@ -1517,7 +1545,6 @@ L181:
 	}
 
 	return 0;
-	// TODO: Clean up all SuperLU related memory properly again
 	// TODO: Possibly declare SuperLU related variables as static to avoid repeated re-initialization with events
 	// TODO: How to handle scopes for related variables etc.?
 } /* radcor_ */
@@ -3027,6 +3054,7 @@ L200:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
 	    e1_offset;
+	int info;
 
     /* Local variables */
     static integer i, j, k, j1, ib, mm, jm1;
@@ -3267,22 +3295,18 @@ L7:
 
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
-// TODO: Properly return any failures
-// TODO: Is fac1 the correct factor here?
 	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_d);
-	superlu_factorize_d(slu_aux);
-    return 0;
+	info = superlu_factorize_d(slu_aux);
+    return info;
 
 /* ----------------------------------------------------------- */
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Properly return any failures
-// TODO: Is fac1 the correct factor here?
 // TODO: Add a warning/note here that this is not properly tested
 	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_d);
-	superlu_factorize_d(slu_aux);
-    return 0;
+	info = superlu_factorize_d(slu_aux);
+    return info;
 
 /* ----------------------------------------------------------- */
 
@@ -3304,6 +3328,7 @@ L55:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
 	    e2r_offset, e2i_dim1, e2i_offset;
+	int info;
 
     /* Local variables */
     static integer i, j, k, j1;
@@ -3594,21 +3619,18 @@ L7:
 
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
-// TODO: Properly return any failures
-// TODO: Factors correct?
 	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_z);
-	superlu_factorize_z(slu_aux);
-    return 0;
+	info = superlu_factorize_z(slu_aux);
+    return info;
 
 /* ----------------------------------------------------------- */
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Properly return any failures
 // TODO: Add note that this is not properly tested
 	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_z);
-	superlu_factorize_z(slu_aux);
-    return 0;
+	info = superlu_factorize_z(slu_aux);
+    return info;
 
 /* ----------------------------------------------------------- */
 
@@ -4023,8 +4045,6 @@ L750:
 
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
-// TODO: Properly return any failures
-// TODO: Is RHS setup correct?
     for (i = 1; i <= n; ++i) {
 		s2 = -f2[i];
 		s3 = -f3[i];
@@ -4032,14 +4052,10 @@ L8:
 		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
 		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
     }
-// TODO: Handle various return options of info appropriately
 	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
 	info_z = superlu_solve_z(slu_aux_z, &z2[1], &z3[1]);
-	if (info_d){
-		;
-	}
-	if (info_z){
-		;
+	if (info_d || info_z){
+		return -1;
 	}
     return 0;
 
@@ -4047,7 +4063,6 @@ L8:
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Properly return any failures
 // TODO: Work in progress, is rhs correct?
     for (i = 1; i <= n; ++i) {
 		s1 = 0.;
@@ -4063,14 +4078,10 @@ L9:
 		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
 		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
     }
-// TODO: Handle various return options of info appropriately
 	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
 	info_z = superlu_solve_z(slu_aux_z, &z2[1], &z3[1]);
-	if (info_d){
-		;
-	}
-	if (info_z){
-		;
+	if (info_d || info_z){
+		return -1;
 	}
     return 0;
 
@@ -4379,20 +4390,18 @@ L440:
 
 /* ---  B=IDENTITY MATRIX, SPARSE LU */
 L8:
-// TODO: Verify RHS is correct
     for (i = 1; i <= n; ++i) {
 		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
 		cont[i] = f2[i] + y0[i];
     }
-// TODO: add proper processing of info
 	info_d = superlu_solve_d(slu_aux_d, &cont[1]);
 	if (info_d){
-		; // TODO:
+		return info_d;
 	}
 	goto L77;
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
 L9:
-// TODO: Find suitable RHS, ADD CALL
+// TODO: Work in progress
 	;
 	goto L77;
 
@@ -4512,8 +4521,10 @@ L640:
 		}
 L38:
 /* ---  B=IDENTITY, SPARSE LU */
-// TODO: Properly return any failures
 		info_d = superlu_solve_d(slu_aux_d, &cont[1]);
+		if (info_d){
+			return info_d;
+		}
     	goto L88;
 
 /* ----------------------------------------------------------- */
