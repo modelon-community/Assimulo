@@ -196,7 +196,7 @@ cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
         c2py_d(M_diag, mass_diag, n)
         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
     else:
-        M = sps.eye(*J.shape, format = 'csc')
+        M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
 
     A = fac * M - J
 
@@ -232,7 +232,7 @@ cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
         c2py_d(M_diag, mass_diag, n)
         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
     else:
-        M = sps.eye(*J.shape, format = 'csc')
+        M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
 
     A = (fac_r + 1j*fac_i) * M - J
 
@@ -342,20 +342,20 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
 
     cdef integer idid = 1 ## "Successful compution"
     
-    iwork_in = np.array(iwork, dtype = np.int64)
+    iwork_in = np.array(iwork, dtype = np.int32)
     cdef np.ndarray[double, mode="c", ndim=1] y_vec = y
     cdef np.ndarray[double, mode="c", ndim=1] rtol_vec = rtol
     cdef np.ndarray[double, mode="c", ndim=1] atol_vec = atol
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
-    radau5_c_py.radau5_c(&n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, <void*> jac_PY,
+    radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z)
     
-    return x, y, h__, np.array(iwork_in, dtype = int), idid
+    return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 
 cpdef contr5(integer i__, doublereal x, np.ndarray cont):
     """

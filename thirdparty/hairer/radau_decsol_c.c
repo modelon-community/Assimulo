@@ -502,7 +502,7 @@ static doublereal c_b116 = .25;
     } else {
 		for (i = 1; i <= n; ++i) {
 			if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
-				printf("TOLERANCES (%"PRId64") ARE TOO SMALL \n", i);
+				printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
 				arret = TRUE_;
 			} else {
 				quot = atol[i] / rtol[i];
@@ -517,7 +517,7 @@ static doublereal c_b116 = .25;
     } else {
 		nmax = iwork[2];
 		if (nmax <= 0) {
-			printf("WRONG INPUT IWORK(2)= %"PRId64" \n", nmax);
+			printf("WRONG INPUT IWORK(2)= %i \n", nmax);
 			arret = TRUE_;
 		}
     }
@@ -527,7 +527,7 @@ static doublereal c_b116 = .25;
     } else {
 		nit = iwork[3];
 		if (nit <= 0) {
-			printf("CURIOUS INPUT IWORK(3)= %"PRId64" \n", nit);
+			printf("CURIOUS INPUT IWORK(3)= %i \n", nit);
 			arret = TRUE_;
 		}
     }
@@ -545,7 +545,7 @@ static doublereal c_b116 = .25;
 		nind1 = n;
     }
     if (nind1 + nind2 + nind3 != n) {
-		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %"PRId64"\t %"PRId64"\t %"PRId64"\n", nind1, nind2, nind3);
+		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %i\t %i\t %i\n", nind1, nind2, nind3);
 		arret = TRUE_;
     }
 	/* -------- PRED STEP SIZE CONTROL */
@@ -565,7 +565,7 @@ static doublereal c_b116 = .25;
 		m2 = m1;
     }
     if (m1 < 0 || m2 < 0 || m1 + m2 > n) {
-		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %"PRId64"\t %"PRId64"\n", m1, m2);
+		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %i\t %i\n", m1, m2);
 		arret = TRUE_;
     }
 	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
@@ -696,19 +696,20 @@ static doublereal c_b116 = .25;
 			ijob = 8;
 		}
 		if (!(*ijac)){
-			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %"PRId64", WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
+			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
 		}
 	}
 	nnz = iwork[12];
 	if ((nnz < 0) || nnz > n*n){
-		printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
+		// printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
+		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
 		arret = TRUE_;
 	}
 	/* -------- SPARSE LU COMPATIBILITY CHECKS */
 	if (iwork[11] && implct){
 		if ((*mlmas != 0) || (*mumas != 0)){
 			printf("SPARSE LU OPTION (IWORK(11)) CURRENTLY ONLY COMPATIBLE WITH DIAGONAL MASS MATRICES\n");
-			printf("GIVEN BANDWIDTH OF MASS MATRIX: LOWER: %"PRId64", UPPER: %"PRId64" \n", *mlmas, *mumas);
+			printf("GIVEN BANDWIDTH OF MASS MATRIX: LOWER: %i, UPPER: %i \n", *mlmas, *mumas);
 		}
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
@@ -731,7 +732,7 @@ static doublereal c_b116 = .25;
 	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
     istore = iee2i + nm1 * lde1 - 1;
     if (istore > *lwork) {
-		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %"PRId64"\n", istore);
+		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i\n", istore);
 		arret = TRUE_;
     }
 	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
@@ -741,7 +742,7 @@ static doublereal c_b116 = .25;
 	/* --------- TOTAL REQUIREMENT --------------- */
     istore = ieiph + nm1 - 1;
     if (istore > *liwork) {
-		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %"PRId64"\n", istore);
+		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %i\n", istore);
 		arret = TRUE_;
     }
 	/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
@@ -896,9 +897,9 @@ static doublereal c_b116 = .25;
 		jac_indptr = (int*) malloc((n+1) * sizeof(int));
 
 		// TODO: Have specific error status/returns for SuperLU and related errors? I.e., different idid
-		if (!jac_data){ printf("Malloc of jac_data[] failed"); *idid = -1; return 0;} 
-		if (!jac_indicies){ printf("Malloc of jac_indicies[] failed"); *idid = -1; return 0;}
-		if (!jac_indptr){ printf("Malloc of jac_indptr[] failed"); *idid = -1; return 0;}
+		if (!jac_data){ printf("Malloc of jac_data[] failed\n"); *idid = -1; return 0;} 
+		if (!jac_indicies){ printf("Malloc of jac_indicies[] failed\n"); *idid = -1; return 0;}
+		if (!jac_indptr){ printf("Malloc of jac_indptr[] failed\n"); *idid = -1; return 0;}
 
 		// TODO: 1 corresponds to number of processes, figure this one out and set it properly
 		slu_aux_d = superlu_init_d(1, n, nnz);
@@ -1384,6 +1385,7 @@ L40:
 			*h__ = hopt;
 			*idid = 1;
 			goto L181;
+			// return 0;
 		}
 		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
@@ -1467,31 +1469,26 @@ L175:
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
     *idid = -5;
 	goto L181;
-    // return 0;
 L176:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MATRIX IS REPEATEDLY SINGULAR IER= %"PRId64"\n", ier);
+	printf("MATRIX IS REPEATEDLY SINGULAR IER= %i\n", ier);
     *idid = -4;
 	goto L181;
-    // return 0;
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("STEP SIZE TOO SMALL, H= %e", *h__);
     *idid = -3;
 	goto L181;
-    // return 0;
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MORE THAN NMAX = %"PRId64" STEPS ARE NEEDED", *nmax);
+	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", *nmax);
     *idid = -2;
 	goto L181;
-    // return 0;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
 /*      WRITE(6,979)X */
     *idid = 2;
 	goto L181;
-    // return 0;
 
 L181:
 	werr++;

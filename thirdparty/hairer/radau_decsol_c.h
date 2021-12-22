@@ -12,9 +12,9 @@
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
-typedef int64_t integer;
+typedef int integer;
 typedef double doublereal;
-typedef int64_t logical;
+typedef int logical;
 
 // FP_CB = FunctionPointer_CallBack
 typedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,
