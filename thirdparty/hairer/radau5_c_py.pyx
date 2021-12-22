@@ -198,7 +198,7 @@ cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
     else:
         M = sps.eye(*J.shape, format = 'csc')
 
-    A = fac * M + J
+    A = fac * M - J
 
     cdef np.ndarray[double, mode="c", ndim=1] data_A_py = A.data
     cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
@@ -234,7 +234,7 @@ cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
     else:
         M = sps.eye(*J.shape, format = 'csc')
 
-    A = (fac_r + 1j*fac_i) * M + J
+    A = (fac_r + 1j*fac_i) * M - J
 
     cdef np.ndarray[doublecomplex, mode="c", ndim=1] data_A_py = A.data
     cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
