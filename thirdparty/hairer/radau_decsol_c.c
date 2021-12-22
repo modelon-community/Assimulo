@@ -1133,7 +1133,9 @@ L14:
 		// TODO: Do something better than this if right here
 		if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
 			// TODO: Make a unified Jacobian callback and handle things on the Cython side instead?
-			(*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			if (ier < 0){ goto L183;}
+			if (ier > 0){ goto L182;}
 		} else { // dense jacobian
     		(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
 		}
@@ -1484,6 +1486,17 @@ L178:
 	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", *nmax);
     *idid = -2;
 	goto L181;
+L182:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", nnz, ier);
+	*idid = -6;
+	goto L181;
+L183:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED FORMAT: CSC\n");
+	*idid = -7;
+	goto L181;
+
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
 /*      WRITE(6,979)X */

@@ -127,9 +127,11 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     J = (<object>jac_PY)(x[0], y_py)
     if not isinstance(J, sps.csc.csc_matrix):
         raise AssimuloException("The Jacobian must be provided as scipy.sparse.csc_matrix. Given type: {}".format(type(J)))
+        return -1
 
     if J.nnz > nnz[0]:
         raise AssimuloException("Mismatch of nnz in the jacobian, specified in problem: {}, jacobian evaluation: {}".format(nnz[0], J.nnz))
+        return J.nnz
 
     cdef np.ndarray[double, mode="c", ndim=1] data_py = J.data
     cdef np.ndarray[int, mode="c", ndim=1] indices_py = J.indices.astype(np.intc)
