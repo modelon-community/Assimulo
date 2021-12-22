@@ -1194,6 +1194,43 @@ class Test_Explicit_C_Radau5:
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
     @testattr(stddist = True)
+    def test_solver_sparse_jac_wrong_format(self):
+        """
+        This tests the error when using a sparse jacobian of the wrong format
+        """
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csr')
+        y0 = N.array([1.])
+        prob = Explicit_Problem(f, y0)
+        prob.jac = jac
+        prob.jac_nnz = 1
+
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+        sim.linear_solver = 'sparse'
+        sim.usejac = True
+        nose.tools.assert_raises(AssimuloException, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_solver_sparse_jac_nnz_too_small(self):
+        """
+        This tests the error when using a sparse jacobian with nnz larger than specified
+        """
+        n = 5
+        f = lambda t, y: y
+        jac = lambda t, y: sp.eye(n, n, format = N.double, format = 'csc')
+        y0 = N.array([1.]*n)
+        prob = Explicit_Problem(f, y0)
+        prob.jac = jac
+        prob.jac_nnz = 1
+
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+        sim.linear_solver = 'sparse'
+        sim.usejac = True
+        nose.tools.assert_raises(AssimuloException, sim.simulate, 1.)
+
+    @testattr(stddist = True)
     def test_sparse_solver_no_nnz(self):
         """
         This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements

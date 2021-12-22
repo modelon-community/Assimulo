@@ -35,7 +35,9 @@ class Radau5Error(AssimuloException):
             -2    : 'The solver took max internal steps but could not reach the next output time.',
             -3    : 'The step size became too small.',
             -4    : 'The matrix is repeatedly singular.',
-            -5    : 'Repeated unexpected step rejections.'}
+            -5    : 'Repeated unexpected step rejections.',
+            -6    : 'Failure in Jacobian evaluations, specified number of nonzero elements too small',
+            -7    : 'Jacobian given in wrong format'}
     
     def __init__(self, value, t = 0.0):
         self.value = value
