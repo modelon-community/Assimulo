@@ -1209,7 +1209,7 @@ class Test_Explicit_C_Radau5:
         sim.solver = 'c'
         sim.linear_solver = 'sparse'
         sim.usejac = True
-        nose.tools.assert_raises(AssimuloException, sim.simulate, 1.)
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
     @testattr(stddist = True)
     def test_solver_sparse_jac_nnz_too_small(self):
@@ -1228,7 +1228,7 @@ class Test_Explicit_C_Radau5:
         sim.solver = 'c'
         sim.linear_solver = 'sparse'
         sim.usejac = True
-        nose.tools.assert_raises(AssimuloException, sim.simulate, 1.)
+        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
     @testattr(stddist = True)
     def test_sparse_solver_no_nnz(self):

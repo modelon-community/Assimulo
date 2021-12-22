@@ -83,7 +83,7 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
     c2py(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
-    py2c_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
+    py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 
 cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
@@ -126,11 +126,9 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
     J = (<object>jac_PY)(x[0], y_py)
     if not isinstance(J, sps.csc.csc_matrix):
-        raise AssimuloException("The Jacobian must be provided as scipy.sparse.csc_matrix. Given type: {}".format(type(J)))
         return -1
 
     if J.nnz > nnz[0]:
-        raise AssimuloException("Mismatch of nnz in the jacobian, specified in problem: {}, jacobian evaluation: {}".format(nnz[0], J.nnz))
         return J.nnz
 
     cdef np.ndarray[double, mode="c", ndim=1] data_py = J.data
