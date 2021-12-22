@@ -116,6 +116,104 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
 
     return irtrn[0]
 
+cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
+                             double * data, int *indices, int *indptr,
+                             doublereal* rpar, integer* ipar,
+                             void* jac_PY):
+    ## TODO: Add docstring
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
+    c2py_d(y_py, y, n)
+
+    J = (<object>jac_PY)(x[0], y_py)
+    if not isinstance(J, sps.csc.csc_matrix):
+        raise AssimuloException("The Jacobian must be provided as scipy.sparse.csc_matrix. Given type: {}".format(type(J)))
+
+    if J.nnz > nnz[0]:
+        raise AssimuloException("Mismatch of nnz in the jacobian, specified in problem: {}, jacobian evaluation: {}".format(nnz[0], J.nnz))
+
+    cdef np.ndarray[double, mode="c", ndim=1] data_py = J.data
+    cdef np.ndarray[int, mode="c", ndim=1] indices_py = J.indices.astype(np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] indptr_py = J.indptr.astype(np.intc)
+
+    py2c_d(data, data_py, len(J.data))
+    py2c_i(indices, indices_py, len(J.indices))
+    py2c_i(indptr, indptr_py, len(J.indptr))
+
+    nnz[0] = J.nnz
+    return 0
+
+cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
+                                  double *data_in, int *indices_in, int *indptr_in,
+                                  double *data_out, int *indices_out, int *indptr_out, 
+                                  int flag_mass, double *mass_diag):
+    ## TODO: Add docstring
+    cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
+    cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
+
+    c2py_d(data_J_py, data_in, nnz[0])
+    c2py_i(indices_J_py, indices_in, nnz[0])
+    c2py_i(indptr_J_py, indptr_in, n + 1)
+
+    # Reconstruct Jacobian
+    J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
+
+    cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
+    if flag_mass:
+        c2py_d(M_diag, mass_diag, n)
+        M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
+    else:
+        M = sps.eye(*J.shape, format = 'csc')
+
+    A = fac * M - J
+
+    cdef np.ndarray[double, mode="c", ndim=1] data_A_py = A.data
+    cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
+
+    py2c_d(data_out, data_A_py, len(A.data))
+    py2c_i(indices_out, indices_A_py, len(A.indices))
+    py2c_i(indptr_out, indptr_A_py, len(A.indptr))
+    nnz[0] = A.nnz
+
+    return 0
+
+cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
+                                  double *data_in, int *indices_in, int *indptr_in,
+                                  doublecomplex *data_out, int *indices_out, int *indptr_out,
+                                  int flag_mass, double *mass_diag):
+    ## TODO: Add docstring
+    cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
+    cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
+
+    c2py_d(data_J_py, data_in, nnz[0])
+    c2py_i(indices_J_py, indices_in, nnz[0])
+    c2py_i(indptr_J_py, indptr_in, n + 1)
+
+    # Reconstruct Jacobian
+    J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
+
+    cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
+    if flag_mass:
+        c2py_d(M_diag, mass_diag, n)
+        M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
+    else:
+        M = sps.eye(*J.shape, format = 'csc')
+
+    A = (fac_r + 1j*fac_i) * M - J
+
+    cdef np.ndarray[doublecomplex, mode="c", ndim=1] data_A_py = A.data
+    cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
+
+    py2c_z(data_out, data_A_py, len(A.data))
+    py2c_i(indices_out, indices_A_py, len(A.indices))
+    py2c_i(indptr_out, indptr_A_py, len(A.indptr))
+    nnz[0] = A.nnz
+
+    return 0
+
 cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
              integer itol, jac_PY, integer ijac, integer mljac, integer mujac,
