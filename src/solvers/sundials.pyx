@@ -238,6 +238,10 @@ cdef class IDA(Implicit_ODE):
     cdef initialize_ida(self):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void * comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
 
         self.yTemp  = arr2nv(self.y)
         self.ydTemp = arr2nv(self.yd)
@@ -260,8 +264,11 @@ cdef class IDA(Implicit_ODE):
                         (<N_VectorContent_Serial>self.ySO[i].content).data[j] = self.yS0[i,j]
 
         if self.ida_mem == NULL: #The solver is not initialized
-        
-            self.ida_mem = SUNDIALS.IDACreate() #Create solver
+
+            IF SUNDIALS_VERSION >= (6,0,0):
+                self.ida_mem = SUNDIALS.IDACreate(ctx)
+            ELSE:
+                self.ida_mem = SUNDIALS.IDACreate() #Create solver
             if self.ida_mem == NULL:
                 raise IDAError(IDA_MEM_FAIL)
             
@@ -274,7 +281,10 @@ cdef class IDA(Implicit_ODE):
             if self.options["linear_solver"] == 'DENSE':
                 IF SUNDIALS_VERSION >= (3,0,0):
                     #Create a dense Sundials matrix
-                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                    IF SUNDIALS_VERSION >= (6,0,0):
+                        self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
+                    ELSE:
+                        self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                     #Create a dense Sundials linear solver
                     self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
                     #Attach it to IDA
@@ -690,12 +700,19 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag, self.t)
             
         return qlast
-    
+
     cpdef get_last_estimated_errors(self):
         cdef flag
         cdef N.ndarray err, pyweight, pyele
-        cdef N_Vector ele=N_VNew_Serial(self.pData.dim)
-        cdef N_Vector eweight=N_VNew_Serial(self.pData.dim)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector ele = N_VNew_Serial(self.pData.dim, ctx)
+            cdef N_Vector eweight = N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector ele = N_VNew_Serial(self.pData.dim)
+            cdef N_Vector eweight = N_VNew_Serial(self.pData.dim)
         
         flag = SUNDIALS.IDAGetErrWeights(self.ida_mem, eweight)
         if flag < 0:
@@ -722,7 +739,13 @@ cdef class IDA(Implicit_ODE):
         """
         cdef flag
         cdef N.ndarray res
-        cdef N_Vector dky=N_VNew_Serial(self.pData.dim)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector dky=N_VNew_Serial(self.pData.dim)
         
         flag = SUNDIALS.IDAGetDky(self.ida_mem, t, k, dky)
         
@@ -757,7 +780,13 @@ cdef class IDA(Implicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef flag
         cdef N.ndarray res
         
@@ -1538,8 +1567,14 @@ cdef class CVode(Explicit_ODE):
         Returns the vector of estimated local errors at the current step.
         """
         cdef int flag
-        cdef N_Vector ele=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
-        
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector ele=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector ele=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+
         flag = SUNDIALS.CVodeGetEstLocalErrors(self.cvode_mem, ele)
         if flag < 0:
             raise CVodeError(flag, self.t)
@@ -1614,7 +1649,13 @@ cdef class CVode(Explicit_ODE):
         Returns the solution error weights at the current step.
         """
         cdef int flag
-        cdef N_Vector eweight=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector eweight=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector eweight=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
         flag = SUNDIALS.CVodeGetErrWeights(self.cvode_mem, eweight)
         if flag < 0:
@@ -1682,7 +1723,11 @@ cdef class CVode(Explicit_ODE):
     cdef initialize_cvode(self):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
-        
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void * comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+
         if self.options["norm"] == "EUCLIDEAN":
             self.yTemp = arr2nv_euclidean(self.y)
         else:
@@ -1708,7 +1753,10 @@ cdef class CVode(Explicit_ODE):
             
             #Create the solver
             IF SUNDIALS_VERSION >= (4,0,0):
-                self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, ctx)
+                ELSE:
+                    self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS)
             ELSE:
                 self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, CV_NEWTON if self.options["iter"] == "Newton" else CV_FUNCTIONAL)
             if self.cvode_mem == NULL:
@@ -1722,9 +1770,15 @@ cdef class CVode(Explicit_ODE):
             #For Sundials >=4.0 the iteration scheme is set after init
             IF SUNDIALS_VERSION >= (4,0,0):
                 if self.options["iter"] == "Newton":
-                    self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp)
+                    IF SUNDIALS_VERSION >= (6,0,0):
+                        self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp, ctx)
+                    ELSE:
+                        self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp)
                 else:
-                    self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0)
+                    IF SUNDIALS_VERSION >= (6,0,0):
+                        self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0, ctx)
+                    ELSE:
+                        self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0)
                 if self.sun_nonlinearsolver == NULL:
                     raise CVodeError(CV_MEM_FAIL)
                 
@@ -1764,9 +1818,15 @@ cdef class CVode(Explicit_ODE):
                     count = self.pData.dimSens if self.options["sensmethod"] == "STAGGERED" else (self.pData.dimSens+1)
                     
                     if self.options["iter"] == "Newton":
-                        self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp)
+                        IF SUNDIALS_VERSION >= (6,0,0):
+                            self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp, ctx)
+                        ELSE:
+                            self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp)
                     else:
-                        self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0)
+                        IF SUNDIALS_VERSION >= (6,0,0):
+                            self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0, ctx)
+                        ELSE:
+                            self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0)
                     if self.sun_nonlinearsolver_sens == NULL:
                         raise CVodeError(CV_MEM_FAIL)
                         
@@ -1810,7 +1870,13 @@ cdef class CVode(Explicit_ODE):
         """
         cdef flag
         cdef N.ndarray res
-        cdef N_Vector dky=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector dky=N_VNew_Serial(self.pData.dim) #Allocates a new N_Vector
         
         flag = SUNDIALS.CVodeGetDky(self.cvode_mem, t, k, dky)
         
@@ -1846,8 +1912,13 @@ cdef class CVode(Explicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        #cdef N_Vector dkyS=N_VNew_Serial(self.pData.dimSens)
-        cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
+        ELSE:
+            cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef int flag
         cdef N.ndarray res
         
@@ -2115,12 +2186,19 @@ cdef class CVode(Explicit_ODE):
         Updates the simulation options.
         """
         cdef flag
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx
+            cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
 
         #Choose a linear solver if and only if NEWTON is choosen
         if self.options["linear_solver"] == 'DENSE' and self.options["iter"] == "Newton":
             IF SUNDIALS_VERSION >= (3,0,0):
                 #Create a dense Sundials matrix
-                self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
+                ELSE:
+                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                 #Create a dense Sundials linear solver
                 self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
                 #Attach it to CVode
@@ -2196,9 +2274,12 @@ cdef class CVode(Explicit_ODE):
             #Specify the use of CVSPGMR linear solver.
             if self.problem_info["jac_fcn_nnz"] == -1:
                 raise AssimuloException("Need to specify the number of non zero elements in the Jacobian via the option 'jac_nnz'")
-                
+
             IF SUNDIALS_VERSION >= (3,0,0):
-                self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT, ctx)
+                ELSE:
+                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
                 self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
                 flag = SUNDIALS.CVDlsSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
             ELSE:

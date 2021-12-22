@@ -22,19 +22,31 @@ import cython
 #=================
 
 cdef N_Vector N_VNewEmpty_Euclidean(long int n):
-  cdef N_Vector v = N_VNew_Serial(n)
-  v.ops.nvwrmsnorm = v.ops.nvwl2norm #Overwrite the WRMS norm to the 2-Norm
-  return v
+    IF SUNDIALS_VERSION >= (6,0,0):
+        cdef SUNDIALS.SUNContext ctx = NULL
+        cdef void * comm = NULL
+        SUNDIALS.SUNContext_Create(comm, &ctx)
+        cdef N_Vector v = N_VNew_Serial(n, ctx)
+    ELSE:
+        cdef N_Vector v = N_VNew_Serial(n)
+    v.ops.nvwrmsnorm = v.ops.nvwl2norm #Overwrite the WRMS norm to the 2-Norm
+    return v
 
 cdef inline N_Vector arr2nv(x):
     x=N.array(x)
     cdef long int n = len(x)
     cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
-    cdef N_Vector v=N_VNew_Serial(n)
+    IF SUNDIALS_VERSION >= (6,0,0):
+        cdef SUNDIALS.SUNContext ctx = NULL
+        cdef void * comm = NULL
+        SUNDIALS.SUNContext_Create(comm, &ctx)
+        cdef N_Vector v = N_VNew_Serial(n, ctx)
+    ELSE:
+        cdef N_Vector v = N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
-    
+
 cdef inline N_Vector arr2nv_euclidean(x):
     x=N.array(x)
     cdef long int n = len(x)

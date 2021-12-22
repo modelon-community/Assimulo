@@ -33,6 +33,13 @@ from numpy cimport NPY_DOUBLE, npy_intp, NPY_INT
 #External definitions from Sundials headers
 #==============================================
 
+IF SUNDIALS_VERSION >= (6,0,0):
+    cdef extern from "sundials/sundials_context.h":
+        ctypedef _SUNContext * SUNContext
+        cdef struct _SUNContext:
+            pass
+        int SUNContext_Create(void* comm, SUNContext* ctx)
+
 cdef extern from "sundials/sundials_types.h":
     ctypedef double realtype
     ctypedef bint booleantype # should be bool instead of bint, but there is a bug in Cython
@@ -60,9 +67,13 @@ cdef extern from "nvector/nvector_serial.h":
     N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w)
     void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v)
     void N_VConst_Serial(realtype c, N_Vector z)
-    N_Vector N_VNew_Serial(long int vec_length)
+    IF SUNDIALS_VERSION >= (6,0,0):
+        N_Vector N_VNew_Serial(long int vec_length, SUNContext ctx)
+    ELSE:
+        N_Vector N_VNew_Serial(long int vec_length)
     void N_VDestroy_Serial(N_Vector v)
     void N_VPrint_Serial(N_Vector v)
+
 
 IF SUNDIALS_VERSION >= (4,0,0):
     cdef extern from "sundials/sundials_nonlinearsolver.h":
@@ -144,7 +155,10 @@ IF SUNDIALS_VERSION >= (3,0,0):
             realtype *data
             sunindextype ldata
             realtype **cols
-        SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N, SUNContext ctx)
+        ELSE:
+            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N)
     cdef extern from "sunmatrix/sunmatrix_sparse.h":
         ctypedef _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse
         cdef struct _SUNMatrixContent_Sparse:
@@ -160,7 +174,10 @@ IF SUNDIALS_VERSION >= (3,0,0):
             sunindextype **colptrs
             sunindextype **colvals
             sunindextype **rowptrs
-        SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype, SUNContext ctx)
+        ELSE:
+            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype)
     cdef extern from "sunlinsol/sunlinsol_dense.h":
         SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A)
     cdef extern from "sunlinsol/sunlinsol_spgmr.h":
@@ -249,18 +266,29 @@ ELSE:
 
 IF SUNDIALS_VERSION >= (4,0,0):
     cdef extern from "cvodes/cvodes.h":
-        void* CVodeCreate(int lmm)
-        
+        IF SUNDIALS_VERSION >= (6,0,0):
+            void* CVodeCreate(int lmm, SUNContext ctx)
+        ELSE:
+            void* CVodeCreate(int lmm)
+
         int CVodeSetNonlinearSolver(void *cvode_mem, SUNNonlinearSolver NLS)
         int CVodeSetNonlinearSolverSensSim(void *cvode_mem, SUNNonlinearSolver NLS)
         int CVodeSetNonlinearSolverSensStg(void *cvode_mem, SUNNonlinearSolver NLS)
     
     cdef extern from "sunnonlinsol/sunnonlinsol_newton.h":
-        SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y)
-        SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y, SUNContext ctx)
+            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y, SUNContext ctx)
+        ELSE:
+            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y)
+            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y)
     cdef extern from "sunnonlinsol/sunnonlinsol_fixedpoint.h":
-        SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m)
-        SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m, SUNContext ctx)
+            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m, SUNContext ctx)
+        ELSE:
+            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m)
+            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m)
 ELSE:
     cdef extern from "cvodes/cvodes.h":
         void* CVodeCreate(int lmm, int iter)
@@ -444,7 +472,10 @@ cdef extern from "cvodes/cvodes_spils.h":
 
 cdef extern from "idas/idas.h":
     ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
-    void* IDACreate()
+    IF SUNDIALS_VERSION >= (6,0,0):
+        void* IDACreate(SUNContext ctx)
+    ELSE:
+        void* IDACreate()
     int IDAInit(void* ida_mem, IDAResFn res, realtype t0, N_Vector y0, N_Vector yp0)
     int IDAReInit(void* ida_mem, realtype t0, N_Vector y0, N_Vector yp0)
     void IDAFree(void **ida_mem)
@@ -593,7 +624,10 @@ cdef extern from "kinsol/kinsol.h":
     ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
     ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data)
     # initialization routines
-    void *KINCreate()
+    IF SUNDIALS_VERSION >= (6,0,0):
+        void *KINCreate(SUNContext ctx)
+    ELSE:
+        void *KINCreate()
     int KINInit(void *kinmem, KINSysFn func, N_Vector tmpl)
 
     # optional input spec. functions,

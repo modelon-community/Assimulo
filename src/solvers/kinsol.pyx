@@ -183,15 +183,21 @@ cdef class KINSOL(Algebraic):
             
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void * comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
 
         self.y_temp  = arr2nv(self.y)
         self.y_scale = arr2nv([1.0]*self.problem_info["dim"])
         self.f_scale = arr2nv([1.0]*self.problem_info["dim"])
    
         if self.kinsol_mem == NULL: #The solver is not initialized
-            
             #Create the solver
-            self.kinsol_mem = SUNDIALS.KINCreate()
+            IF SUNDIALS_VERSION >= (6,0,0):
+                self.kinsol_mem = SUNDIALS.KINCreate(ctx)
+            ELSE:
+                self.kinsol_mem = SUNDIALS.KINCreate()
             if self.kinsol_mem == NULL:
                 raise KINSOLError(KIN_MEM_NULL)
             self.pData.KIN_MEM = self.kinsol_mem
@@ -220,10 +226,17 @@ cdef class KINSOL(Algebraic):
             raise KINSOLError(flag)
             
     cpdef add_linear_solver(self):
+        IF SUNDIALS_VERSION >= (6,0,0):
+            cdef SUNDIALS.SUNContext ctx = NULL
+            cdef void * comm = NULL
+            SUNDIALS.SUNContext_Create(comm, &ctx)
         if self.options["linear_solver"] == "DENSE":
             IF SUNDIALS_VERSION >= (3,0,0):
                 #Create a dense Sundials matrix
-                self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
+                ELSE:
+                    self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                 #Create a dense Sundials linear solver
                 self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.y_temp, self.sun_matrix)
                 #Attach it to Kinsol
