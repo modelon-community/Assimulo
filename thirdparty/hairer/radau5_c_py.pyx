@@ -120,7 +120,9 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                              double * data, int *indices, int *indptr,
                              doublereal* rpar, integer* ipar,
                              void* jac_PY):
-    ## TODO: Add docstring
+    """
+    Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians
+    """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)
 
@@ -146,7 +148,9 @@ cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
                                   double *data_in, int *indices_in, int *indptr_in,
                                   double *data_out, int *indices_out, int *indptr_out, 
                                   int flag_mass, double *mass_diag):
-    ## TODO: Add docstring
+    """
+    Internal callback function for assemply of the real subsystem to factorize in the Radau5 solver
+    """
     cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
     cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
     cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
@@ -164,7 +168,7 @@ cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
     else:
         M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
-
+    # Add appropriately scaled mass/identity matrix
     A = fac * M - J
 
     cdef np.ndarray[double, mode="c", ndim=1] data_A_py = A.data
@@ -182,7 +186,9 @@ cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
                                   double *data_in, int *indices_in, int *indptr_in,
                                   doublecomplex *data_out, int *indices_out, int *indptr_out,
                                   int flag_mass, double *mass_diag):
-    ## TODO: Add docstring
+    """
+    Internal callback function for assemply of the complex subsystem to factorize in the Radau5 solver
+    """
     cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
     cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
     cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
@@ -200,7 +206,7 @@ cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
     else:
         M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
-
+    # Add appropriately scaled mass/identity matrix
     A = (fac_r + 1j*fac_i) * M - J
 
     cdef np.ndarray[doublecomplex, mode="c", ndim=1] data_A_py = A.data

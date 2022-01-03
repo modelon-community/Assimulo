@@ -25,6 +25,7 @@ struct SuperLU_aux_d{
     SuperMatrix *A, *B, *AC, *L, *U;
 };
 
+// Initialization of required data structures for SuperLU
 SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     SuperLU_aux_d *slu_aux = (SuperLU_aux_d *)malloc(sizeof(SuperLU_aux_d));
     if (!slu_aux) {SUPERLU_ABORT("Malloc failed for slu_aux.");}
@@ -62,7 +63,7 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     slu_aux->refact = NO; // NO for first time, YES for re-factorization
     slu_aux->diag_pivot_thresh = 1.0; // Default
     slu_aux->usepr = NO; // Whether the pivoting will use perm_r specified by the user, NO = it becomes output of pdgstrf function
-    slu_aux->drop_tol = 0.0; // Default, not implemented for pdgstrf, TODO: Can skip?
+    slu_aux->drop_tol = 0.0; // Default, not implemented for pdgstrf
     slu_aux->lwork = 0; // flag; work-space allocated internally
     slu_aux->work = NULL; // internal work space; not referenced due to lwork = 0
 
@@ -90,6 +91,7 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     return slu_aux;
 }
 
+// Setting up the matrix to be factorized
 int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
                     int flag_mass, double* mass_diag,
@@ -114,6 +116,7 @@ int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
     return 0;
 }
 
+// Factorize matrix
 int superlu_factorize_d(SuperLU_aux_d *slu_aux){
     int info;
     if (slu_aux->refact == YES){
@@ -132,6 +135,7 @@ int superlu_factorize_d(SuperLU_aux_d *slu_aux){
     return info;
 }
 
+// Solve linear system based on previous factorization
 int superlu_solve_d(SuperLU_aux_d *slu_aux, double *rhs){
     int info;
     DNformat *Bstore;
@@ -143,6 +147,7 @@ int superlu_solve_d(SuperLU_aux_d *slu_aux, double *rhs){
     return info;
 }
 
+// de-allocate memory
 int superlu_finalize_d(SuperLU_aux_d *slu_aux){
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);

@@ -30,6 +30,7 @@ struct SuperLU_aux_z{
 typedef int (*CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
 int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, CB_assemble_sys_z);
 
+// Initialization of required data structures for SuperLU
 SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
     SuperLU_aux_z *slu_aux = (SuperLU_aux_z *)malloc(sizeof(SuperLU_aux_z));
     if (slu_aux == NULL) SUPERLU_ABORT("Malloc failed for slu_aux.");
@@ -67,7 +68,7 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
     slu_aux->refact = NO; // NO for first time, YES for re-factorization
     slu_aux->diag_pivot_thresh = 1.0; // Default
     slu_aux->usepr = NO; // Whether the pivoting will use perm_r specified by the user, NO = it becomes output of pdgstrf function
-    slu_aux->drop_tol = 0.0; // Default, not implemented for pdgstrf, TODO: Can skip?
+    slu_aux->drop_tol = 0.0; // Default, not implemented for pdgstrf
     slu_aux->lwork = 0; // flag; work-space allocated internally
     slu_aux->work = NULL; // internal work space; not referenced due to lwork = 0
 
@@ -97,6 +98,7 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
     return slu_aux;
 }
 
+// Setting up the matrix to be factorized
 int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
                     double *data_J, int *indices_J, int *indptr_J,
                     int flag_mass, double* mass_diag,
@@ -121,6 +123,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
     return 0;
 }
 
+// Factorize matrix
 int superlu_factorize_z(SuperLU_aux_z * slu_aux){
     int info;
     if (slu_aux->refact == YES){
@@ -139,6 +142,7 @@ int superlu_factorize_z(SuperLU_aux_z * slu_aux){
     return info;
 }
 
+// Solve linear system based on previous factorization
 int superlu_solve_z(SuperLU_aux_z * slu_aux, double *rhs_r, double* rhs_i){
     int i, n, info;
     n = slu_aux->n;
@@ -157,7 +161,8 @@ int superlu_solve_z(SuperLU_aux_z * slu_aux, double *rhs_r, double* rhs_i){
     return info;
 }
 
-int superlu_finalize_z(SuperLU_aux_z * slu_aux){
+// de-allocate memory
+int superlu_finalize_z(SuperLU_aux_z *slu_aux){
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);
 
