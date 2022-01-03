@@ -38,8 +38,8 @@ class Radau5Error(AssimuloException):
             -5    : 'Repeated unexpected step rejections.',
             -6    : 'Failure in Jacobian evaluations, specified number of nonzero elements too small.',
             -7    : 'Jacobian given in wrong format.',
-            -8    : 'Internal failure of SUPERLU, wrong function call',
-            -9    : 'Internal failure of SUPERLU, likely memory allocating related.',}
+            -8    : 'Internal failure of SUPERLU, wrong function call.',
+            -9    : 'Memory allocation failure in SUPERLU.',}
     
     def __init__(self, value, t = 0.0):
         self.value = value
