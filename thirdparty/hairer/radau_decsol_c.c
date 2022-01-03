@@ -893,14 +893,14 @@ static doublereal c_b116 = .25;
 	struct SuperLU_aux_z* slu_aux_z = NULL;
 
 	if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
-		jac_data = (double*) malloc(nnz * sizeof(double)); // TODO: Use fjac for this instead?
-		jac_indicies = (int*) malloc(nnz * sizeof(int)); // TODO: Use iwork instead?
+		jac_data = (double*) malloc(nnz * sizeof(double));
+		jac_indicies = (int*) malloc(nnz * sizeof(int));
 		jac_indptr = (int*) malloc((n+1) * sizeof(int));
 
-		// TODO: Have specific error status/returns for SuperLU and related errors? I.e., different idid
-		if (!jac_data){ printf("Malloc of jac_data[] failed\n"); *idid = -1; return 0;} 
-		if (!jac_indicies){ printf("Malloc of jac_indicies[] failed\n"); *idid = -1; return 0;}
-		if (!jac_indptr){ printf("Malloc of jac_indptr[] failed\n"); *idid = -1; return 0;}
+		if ((!jac_data) || (!jac_indicies) || (!jac_indptr)){
+			*idid = -9; 
+			goto L181;
+		} 
 
 		// TODO: 1 corresponds to number of processes, figure this one out and set it properly
 		slu_aux_d = superlu_init_d(1, n, nnz);
@@ -1131,9 +1131,7 @@ L14:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-		// TODO: Do something better than this if right here
 		if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
-			// TODO: Make a unified Jacobian callback and handle things on the Cython side instead?
 			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
@@ -1149,8 +1147,8 @@ L20:
     alphn = alph / *h__;
     betan = beta / *h__;
     info = decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-	    		   mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
-	    		   ijob, &calhes, &iphes[1], slu_aux_d, sys_d,
+				   mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
+				   ijob, &calhes, &iphes[1], slu_aux_d, sys_d,
 				   jac_data, jac_indicies, jac_indptr);
 	if (info){
 		goto L185;
@@ -1159,7 +1157,7 @@ L20:
 		goto L78;
     }
     info = decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-	    		   mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
+				   mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 				   lde1, &ip2[1], &ier, ijob, slu_aux_z, sys_z,
 				   jac_data, jac_indicies, jac_indptr);
 	if (info){
@@ -1518,9 +1516,9 @@ L185:
 	}
 	if (info <= n){ // factorization singular
 		goto L78;
-	}else{
+	}else{ // memory allocation failure
 		printf("EXIT OF RADAU5 AT X = %e \n", *x);
-		printf("SUPERLU INTERNAL FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", info - n);
+		printf("SUPERLU MEMORY ALLOCATION FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", info - n);
 		*idid = -9;
 		goto L181;
 	}
@@ -3303,7 +3301,7 @@ L8:
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Add a warning/note here that this is not properly tested
+// WARNING: NOT TESTED
 	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_d);
 	info = superlu_factorize_d(slu_aux);
     return info;
@@ -3627,10 +3625,8 @@ L8:
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Add note that this is not properly tested
-	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_z);
-	info = superlu_factorize_z(slu_aux);
-    return info;
+/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
+    return 0;
 
 /* ----------------------------------------------------------- */
 
@@ -4063,26 +4059,7 @@ L8:
 
 L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Work in progress, is rhs correct?
-    for (i = 1; i <= n; ++i) {
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
-			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			s1 -= bb * f1[j];
-			s2 -= bb * f2[j];
-			s3 -= bb * f3[j];
-		}
-		z1[i] += s1 * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-	info_d = superlu_solve_d(slu_aux_d, &z1[1]);
-	info_z = superlu_solve_z(slu_aux_z, &z2[1], &z3[1]);
-	if (info_d || info_z){
-		return -1;
-	}
+/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -4400,8 +4377,8 @@ L8:
 	}
 	goto L77;
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
+/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
 L9:
-// TODO: Work in progress
 	;
 	goto L77;
 
@@ -4531,7 +4508,7 @@ L38:
 
 L39:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
-// TODO: Properly return any failures
+/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
     	goto L88;
 
 /* ----------------------------------------------------------- */
