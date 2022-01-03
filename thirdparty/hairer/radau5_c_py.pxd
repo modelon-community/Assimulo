@@ -34,9 +34,6 @@ cdef extern from "radau_decsol_c.h":
     ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
                                 doublereal*, doublereal*, integer*, integer*,
                                 doublereal*, integer*, integer*, void*)
-
-    ## TODO: Can this possibly be replaced by some Cython datastructure?
-    ## Possible conflict with r, i vs. real, imag?
     ctypedef struct doublecomplex:
         double r, i
     ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, doublereal*, integer*, void*)
