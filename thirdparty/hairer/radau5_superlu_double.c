@@ -3,7 +3,7 @@
 
 struct SuperLU_aux_d{
     int nprocs, n, nnz_jac, nnz_sys;
-    int setup_done; // flags for which memory to free in the end
+    int setup_done, fact_done; // flags for which memory to free in the end
 
     double *data_sys;
     int *indices_sys, *indptr_sys;
@@ -30,6 +30,7 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     SuperLU_aux_d *slu_aux = (SuperLU_aux_d *)malloc(sizeof(SuperLU_aux_d));
     if (!slu_aux) {SUPERLU_ABORT("Malloc failed for slu_aux.");}
     slu_aux->setup_done = 0;
+    slu_aux->fact_done = 0;
 
     slu_aux->nprocs = nprocs;
     slu_aux->nnz_jac = nnz;
@@ -119,11 +120,27 @@ int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
 // Factorize matrix
 int superlu_factorize_d(SuperLU_aux_d *slu_aux){
     int info;
-    if (slu_aux->refact == YES){
+    // clean up memory in case of re-factorization
+    if (slu_aux->fact_done){
         NCPformat *ACstore = slu_aux->AC->Store;
         SUPERLU_FREE(ACstore->colend);
         SUPERLU_FREE(ACstore->colbeg);
         SUPERLU_FREE(ACstore);
+        if (slu_aux->refact == NO){
+            SCPformat *LStore = slu_aux->L->Store;
+            SUPERLU_FREE(LStore->col_to_sup);
+            SUPERLU_FREE(LStore->sup_to_colbeg);
+            SUPERLU_FREE(LStore->sup_to_colend);
+            Destroy_SuperNode_Matrix(slu_aux->L);
+
+            NCPformat *UStore = slu_aux->U->Store;
+            SUPERLU_FREE(UStore->colend);
+            Destroy_CompCol_Matrix(slu_aux->U);
+
+            SUPERLU_FREE(slu_aux->slu_options->etree);
+            SUPERLU_FREE(slu_aux->slu_options->colcnt_h);
+            SUPERLU_FREE(slu_aux->slu_options->part_super_h);
+        }
     }
     // initialize options
     pdgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
@@ -132,6 +149,7 @@ int superlu_factorize_d(SuperLU_aux_d *slu_aux){
     // Factorization
     pdgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info);
     slu_aux->refact = YES;
+    slu_aux->fact_done = 1;
     return info;
 }
 
@@ -163,9 +181,17 @@ int superlu_finalize_d(SuperLU_aux_d *slu_aux){
         SUPERLU_FREE(slu_aux->indptr_sys);
     }
 
-    if (slu_aux->refact == YES){
+    if (slu_aux->fact_done){
+        SCPformat *LStore = slu_aux->L->Store;
+        SUPERLU_FREE(LStore->col_to_sup);
+        SUPERLU_FREE(LStore->sup_to_colbeg);
+        SUPERLU_FREE(LStore->sup_to_colend);
         Destroy_SuperNode_Matrix(slu_aux->L);
+
+        NCPformat *UStore = slu_aux->U->Store;
+        SUPERLU_FREE(UStore->colend);
         Destroy_CompCol_Matrix(slu_aux->U);
+        
         Destroy_CompCol_Permuted(slu_aux->AC);
         SUPERLU_FREE(slu_aux->slu_options->etree);
         SUPERLU_FREE(slu_aux->slu_options->colcnt_h);
@@ -179,6 +205,7 @@ int superlu_finalize_d(SuperLU_aux_d *slu_aux){
     free(slu_aux->AC);
     free(slu_aux->Gstat);
     free(slu_aux->slu_options);
+    free(slu_aux->work);
     free(slu_aux);
     return 0;
 }
