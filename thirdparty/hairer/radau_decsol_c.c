@@ -38,7 +38,7 @@ static doublereal c_b116 = .25;
 	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z)
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z, integer num_threads)
 {
     /* Local variables */
     static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
@@ -77,7 +77,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, doublereal *, integer *, integer *, integer *, integer *,
 		integer *, integer *, integer *, doublereal *, integer *, integer,
-		FP_CB_assemble_sys_d, FP_CB_assemble_sys_z);
+		FP_CB_assemble_sys_d, FP_CB_assemble_sys_z, integer);
     static integer nrejct;
     static logical implct;
     static integer istore;
@@ -761,7 +761,7 @@ static doublereal c_b116 = .25;
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
-		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_z)sys_z);
+		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_z)sys_z, num_threads);
 	// "CATCH" negative IDID here?
     iwork[14] = nfcn;
     iwork[15] = njac;
@@ -809,7 +809,7 @@ static doublereal c_b116 = .25;
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar, integer nnz,
-	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z)
+	FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z, integer num_threads)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -902,9 +902,8 @@ static doublereal c_b116 = .25;
 			goto L181;
 		} 
 
-		// TODO: 1 corresponds to number of processes, figure this one out and set it properly
-		slu_aux_d = superlu_init_d(1, n, nnz);
-		slu_aux_z = superlu_init_z(1, n, nnz);
+		slu_aux_d = superlu_init_d(num_threads, n, nnz);
+		slu_aux_z = superlu_init_z(num_threads, n, nnz);
 	}
 	/* ---------------------------------------------------------- */
 	/*     CORE INTEGRATOR FOR RADAU5 */
@@ -918,7 +917,6 @@ static doublereal c_b116 = .25;
 	/* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
 
     /* Parameter adjustments */
-	// TODO: Make this part of the "work" array?
     doublereal *werr = (doublereal*) malloc(n * sizeof(doublereal));
     --cont;
     --f3;

@@ -253,7 +253,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
              integer itol, jac_PY, integer ijac, integer mljac, integer mujac,
              mas_PY, integer imas, integer mlmas, integer mumas, solout_PY,
-             integer iout, np.ndarray work, np.ndarray iwork):
+             integer iout, np.ndarray work, np.ndarray iwork, integer num_threads):
     """
     Python interface for calling the C based Radau solver
 
@@ -320,6 +320,8 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                         - Advanced tuning parameters of Radau solver, see radau_decsol.c for details
             iwork
                         - Advanced tuning parameters of Radau solver, see radau_decsol.c for details
+            num_threads
+                        - Number of threads used for SuperLU (sparse only)
         Returns::
             
             x
@@ -355,7 +357,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                          &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                          &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-                         &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z)
+                         &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z, num_threads)
     
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 
