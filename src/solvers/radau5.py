@@ -265,8 +265,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Store the opts
         self._opts = opts
         
-        t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+        if self.options["solver"] == 'c':
+            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                       IOUT, WORK, IWORK, self.options["num_threads"])
+        else:
+            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                       IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:
@@ -1028,8 +1034,14 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = N.append(self.atol, self.atol)
 
-        t, y, h, iwork, flag  =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
-                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+        if self.options["solver"] == 'c':
+            t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+                                                       IOUT, WORK, IWORK, self.options["num_threads"])
+        else:
+            t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+                                                       IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:
