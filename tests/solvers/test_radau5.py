@@ -1250,7 +1250,7 @@ class Test_Explicit_C_Radau5:
     @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz_py(self):
         """
-        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz,
+        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz,
         which are to be caught on the Python side
         """
         f = lambda t, y: [y]
@@ -1271,7 +1271,7 @@ class Test_Explicit_C_Radau5:
     @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz_c(self):
         """
-        This tests the error when trying to simulate using the sparse linear solver, invalid inputs for nnz,
+        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz,
         which are to be caught on the C side
         """
         f = lambda t, y: [y]
