@@ -713,8 +713,6 @@ static doublereal c_b116 = .25;
 		}
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
-	// TODO: Utilize this storage space for storage of sparse jacobians/systems instead?
-	// OR: Skip this entirely if the sparse solver is used?
     iez1 = 21;
     iez2 = iez1 + n;
     iez3 = iez2 + n;
@@ -884,7 +882,6 @@ static doublereal c_b116 = .25;
     static doublereal thqold;
 
 	// sparse LU related parameters
-	// TODO: doublereal and integer instead?
 	int jac_nnz = nnz;
 	double* jac_data = NULL;
 	int *jac_indicies = NULL;
@@ -1536,8 +1533,6 @@ L181:
 	}
 
 	return 0;
-	// TODO: Possibly declare SuperLU related variables as static to avoid repeated re-initialization with events
-	// TODO: How to handle scopes for related variables etc.?
 } /* radcor_ */
 
 

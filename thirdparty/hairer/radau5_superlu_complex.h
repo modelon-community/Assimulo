@@ -1,5 +1,5 @@
-#ifndef _TEST_PROXY_2_H_
-#define _TEST_PROXY_2_H_
+#ifndef _RADAU_SUPERLU_COMPLEX_H_
+#define _RADAU_SUPERLU_COMPLEX_H_
 
 struct SuperLU_aux_z;
 typedef struct SuperLU_aux_z SuperLU_aux_z;
