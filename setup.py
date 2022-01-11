@@ -527,16 +527,16 @@ class Assimulo_prepare(object):
             #Debug
             if self.debug_flag:
                 if self.sundials_with_msvc:
-                    el.extra_compile_args = ["/DEBUG"]
-                    el.extra_link_args = ["/DEBUG"]
+                    el.extra_compile_args += ["/DEBUG"]
+                    el.extra_link_args += ["/DEBUG"]
                 else:
-                    el.extra_compile_args = ["-g","-fno-strict-aliasing"]
-                    el.extra_link_args = ["-g"]
+                    el.extra_compile_args += ["-g","-fno-strict-aliasing"]
+                    el.extra_link_args += ["-g"]
             else:
                 if self.sundials_with_msvc:
-                    el.extra_compile_args = ["/O2"]
+                    el.extra_compile_args += ["/O2"]
                 else:
-                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                    el.extra_compile_args += ["-O2", "-fno-strict-aliasing"]
             if self.platform == "mac":
                 el.extra_compile_args += ["-Wno-error=return-type"]
             if self.with_openmp:
