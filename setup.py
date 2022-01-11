@@ -511,7 +511,7 @@ class Assimulo_prepare(object):
         ## TODO: Set this up more properly, dependendent on if SuperLU is available or not
         ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
                               include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
-                              force = True)
+                              force = True, compile_time_env = {'__OPENMP': "1"})
         ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
                                      os.path.join("assimulo","thirdparty","hairer"),
                                      self.incdirs, self.SLUincdir]
@@ -519,7 +519,7 @@ class Assimulo_prepare(object):
         ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
         ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
-        ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp', 'pthread']
+        ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
 
         
         for el in ext_list:
