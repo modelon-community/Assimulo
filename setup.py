@@ -520,6 +520,7 @@ class Assimulo_prepare(object):
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
         ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
         ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
+        ext_list[-1].extra_compile_args += ["-D__OPENMP"]
 
         
         for el in ext_list:
