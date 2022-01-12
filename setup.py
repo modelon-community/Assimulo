@@ -180,8 +180,8 @@ class Assimulo_prepare(object):
             self.incdirs = ''
             self.libdirs = ''
         else:
-            self.incdirs = '/usr/local/include'
-            self.libdirs = '/usr/local/lib'            
+            self.incdirs = os.path.sep + os.path.join('usr', 'local', 'include')
+            self.libdirs = os.path.sep + os.path.join('usr', 'local', 'lib')
         
         self.assimulo_lib = os.path.join('assimulo','lib')
         
@@ -519,6 +519,8 @@ class Assimulo_prepare(object):
         ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
         ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir, self.libdirs]
+        print("LIBDIRS EXT: ", ext_list[-1].library_dirs)
+        print("LIBDIRS: ", self.libdirs)
         ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
         ext_list[-1].extra_compile_args += ["-D__OPENMP"]
         
