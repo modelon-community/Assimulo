@@ -524,7 +524,7 @@ class Assimulo_prepare(object):
             print("LIBDIRS EXT: ", ext_list[-1].library_dirs)
             print("LIBDIRS: ", self.libdirs)
             # ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
-            ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'm', 'gomp']
+            ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']
             ext_list[-1].extra_compile_args += ["-D__OPENMP"]
         else:
             ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
