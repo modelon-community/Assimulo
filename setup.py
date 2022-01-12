@@ -518,11 +518,16 @@ class Assimulo_prepare(object):
         extra_sources = ["radau_decsol_c.c", "radau5_superlu_double.c", "radau5_superlu_complex.c"]
         ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
         ext_list[-1].name = "assimulo.lib.radau5_c_py"
-        ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir, self.libdirs]
-        print("LIBDIRS EXT: ", ext_list[-1].library_dirs)
-        print("LIBDIRS: ", self.libdirs)
-        ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
-        ext_list[-1].extra_compile_args += ["-D__OPENMP"]
+        if 'win' in self.platform:
+            ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir, self.libdirs]
+            print("LIBDIRS EXT: ", ext_list[-1].library_dirs)
+            print("LIBDIRS: ", self.libdirs)
+            # ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
+            ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'm', 'gomp']
+            ext_list[-1].extra_compile_args += ["-D__OPENMP"]
+        else:
+            ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
+            ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
         
         for el in ext_list:
             #Debug
