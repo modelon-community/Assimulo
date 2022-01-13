@@ -264,6 +264,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Store the opts
         self._opts = opts
+
+        print("Radau5ODE integration from t = {} to tf = {}".format(t, tf))
+        print("solver config: solver = {}, linear_solver = {}".format(self.options["solver"], self.options["linear_solver"]))
+        print("Other: ", self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
+
         
         if self.options["solver"] == 'c':
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
