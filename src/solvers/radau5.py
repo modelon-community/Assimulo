@@ -267,7 +267,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
 
         print("Radau5ODE integration from t = {} to tf = {}".format(t, tf))
         print("solver config: solver = {}, linear_solver = {}".format(self.options["solver"], self.options["linear_solver"]))
-        print("Other: ", self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
+        print("Other: ", self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"], self.problem_info["jac_fcn_nnz"]/(self.problem_info["dim"]**2))
 
         
         if self.options["solver"] == 'c':
