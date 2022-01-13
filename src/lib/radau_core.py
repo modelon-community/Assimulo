@@ -466,7 +466,7 @@ class Radau_Common(object):
                 self.radau5 = radau5_c
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the C based Radau5 solver. Try using solver = 'f' for the Fortran based solver instead.")
+                raise Radau_Exception("Failed to import the C based Radau5 solver. Try using solver = 'f' for the Fortran based solver instead. Note that this solver requires an installation with SuperLU.")
         else:
             raise Radau_Exception("Solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
         self.options["solver"] = solver.lower()
