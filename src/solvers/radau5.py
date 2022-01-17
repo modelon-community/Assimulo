@@ -265,11 +265,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Store the opts
         self._opts = opts
 
-        print("Radau5ODE integration from t = {} to tf = {}".format(t, tf))
-        print("solver config: solver = {}, linear_solver = {}".format(self.options["solver"], self.options["linear_solver"]))
-        print("Other: ", self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"], self.problem_info["jac_fcn_nnz"]/(self.problem_info["dim"]**2))
-
-        
         if self.options["solver"] == 'c':
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
@@ -310,11 +305,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+        self.log_message('\nSolver options:\n',                                                               verbose)
+        self.log_message(' Solver                  : Radau5({})'.format(self.options["solver"]) + self._type, verbose)
+        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]),                  verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                           verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                           verbose)
+        self.log_message('',                                                                                  verbose)
         
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
