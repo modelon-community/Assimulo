@@ -84,7 +84,7 @@ static doublereal c_b116 = .25;
     static logical startn;
     static doublereal uround;
 
-	static integer nnz;
+	integer nnz;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -701,7 +701,6 @@ static doublereal c_b116 = .25;
 	}
 	nnz = iwork[12];
 	if ((nnz < 0) || nnz > n*n){
-		// printf("CURIOUS INPUT FOR WORK(12)= %"PRId64" \n", nnz);
 		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
 		arret = TRUE_;
 	}
@@ -760,7 +759,6 @@ static doublereal c_b116 = .25;
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
 		(FP_CB_assemble_sys_d)sys_d, (FP_CB_assemble_sys_z)sys_z, num_threads);
-	// "CATCH" negative IDID here?
     iwork[14] = nfcn;
     iwork[15] = njac;
     iwork[16] = nstep;
@@ -843,7 +841,6 @@ static doublereal c_b116 = .25;
     static logical first;
     static integer irtrn, nrsol, nsolu;
     static doublereal qnewt, xosol, acont3;
-    // static logical index1, index2, index3, caljac;
 	static logical index2, index3, caljac;
     static doublereal faccon;
     extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
@@ -1131,7 +1128,7 @@ L14:
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
 		} else { // dense jacobian
-    		(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+			(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
 		}
     }
     caljac = TRUE_;
@@ -1387,7 +1384,6 @@ L40:
 			*h__ = hopt;
 			*idid = 1;
 			goto L181;
-			// return 0;
 		}
 		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
 		++(*nfcn);
@@ -1500,7 +1496,6 @@ L184:
 	*idid = -8;
 	goto L181;
 L185:
-	printf("L185, n = %i, ier = %i \n", n, ier);
 	if (ier < 0){ // incorrect input to function call
 		goto L184;
 	}
