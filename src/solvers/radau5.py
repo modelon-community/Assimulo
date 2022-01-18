@@ -305,12 +305,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                                               verbose)
-        self.log_message(' Solver                  : Radau5({})'.format(self.options["solver"]) + self._type, verbose)
-        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]),                  verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                           verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                           verbose)
-        self.log_message('',                                                                                  verbose)
+        self.log_message('\nSolver options:\n',                                                                verbose)
+        self.log_message(' Solver                  : Radau5({}) '.format(self.options["solver"]) + self._type, verbose)
+        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]),                   verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                            verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                            verbose)
+        self.log_message('',                                                                                   verbose)
         
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
