@@ -697,6 +697,7 @@ static doublereal c_b116 = .25;
 		}
 		if (!(*ijac)){
 			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
+			arret = TRUE_;
 		}
 	}
 	nnz = iwork[12];
@@ -706,9 +707,10 @@ static doublereal c_b116 = .25;
 	}
 	/* -------- SPARSE LU COMPATIBILITY CHECKS */
 	if (iwork[11] && implct){
-		if ((*mlmas != 0) || (*mumas != 0)){
+		if (*mlmas || *mumas){
 			printf("SPARSE LU OPTION (IWORK(11)) CURRENTLY ONLY COMPATIBLE WITH DIAGONAL MASS MATRICES\n");
 			printf("GIVEN BANDWIDTH OF MASS MATRIX: LOWER: %i, UPPER: %i \n", *mlmas, *mumas);
+			arret = TRUE_;
 		}
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */

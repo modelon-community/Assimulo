@@ -771,7 +771,7 @@ class Test_Explicit_Fortran_Radau5:
         """
         sim = Radau5ODE(self.mod)
         sim.solver = 'f'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
 class Test_Explicit_C_Radau5:
@@ -1175,7 +1175,7 @@ class Test_Explicit_C_Radau5:
 
     #     sim = Radau5ODE(prob)
     #     sim.solver = 'c'
-    #     sim.linear_solver = 'sparse'
+    #     sim.linear_solver = 'SPARSE'
     #     sim.usejac = False
     #     nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
@@ -1207,7 +1207,7 @@ class Test_Explicit_C_Radau5:
 
         sim = Radau5ODE(prob)
         sim.solver = 'c'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         sim.usejac = True
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
@@ -1226,7 +1226,7 @@ class Test_Explicit_C_Radau5:
 
         sim = Radau5ODE(prob)
         sim.solver = 'c'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         sim.usejac = True
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
@@ -1243,7 +1243,7 @@ class Test_Explicit_C_Radau5:
 
         sim = Radau5ODE(prob)
         sim.solver = 'c'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         sim.usejac = True
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
@@ -1264,7 +1264,7 @@ class Test_Explicit_C_Radau5:
 
             sim = Radau5ODE(prob)
             sim.solver = 'c'
-            sim.linear_solver = 'sparse'
+            sim.linear_solver = 'SPARSE'
             sim.usejac = True
             nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
@@ -1285,7 +1285,7 @@ class Test_Explicit_C_Radau5:
 
             sim = Radau5ODE(prob)
             sim.solver = 'c'
-            sim.linear_solver = 'sparse'
+            sim.linear_solver = 'SPARSE'
             sim.usejac = True
             nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
@@ -1541,7 +1541,7 @@ class Test_Implicit_Fortran_Radau5:
         """
         sim = Radau5DAE(self.mod)
         sim.solver = 'f'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
 class Test_Implicit_C_Radau5:
@@ -1796,7 +1796,7 @@ class Test_Implicit_C_Radau5:
         """
         sim = Radau5DAE(self.mod)
         sim.solver = 'c'
-        sim.linear_solver = 'sparse'
+        sim.linear_solver = 'SPARSE'
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
 
@@ -2122,17 +2122,13 @@ class Test_Radau_Common:
         This tests the functionality of the property linear_solver.
         """
         self.sim.linear_solver = 'dense'
-        assert self.sim.linear_solver == 'dense'
+        nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
         self.sim.linear_solver = 'sparse'
-        assert self.sim.linear_solver == 'sparse'
+        nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
         self.sim.linear_solver = 'DENSE'
-        assert self.sim.linear_solver == 'dense'
+        nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
         self.sim.linear_solver = 'SPARSE'
-        assert self.sim.linear_solver == 'sparse'
-        self.sim.linear_solver = 'dEnSe'
-        assert self.sim.linear_solver == 'dense'
-        self.sim.linear_solver = 'spArSe'
-        assert self.sim.linear_solver == 'sparse'
+        nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'default')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'GMRES')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 0)
