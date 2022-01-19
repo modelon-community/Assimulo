@@ -1164,20 +1164,20 @@ class Test_Explicit_C_Radau5:
 
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
-    @testattr(stddist = True)
-    def test_sparse_solver_jac_disabled(self):
-        """
-        This tests the error when trying to simulate using the sparse linear solver, with no analytical jacobian provided
-        """
-        f = lambda t, y: [y]
-        y0 = N.array([1.])
-        prob = Explicit_Problem(f, y0)
+    # @testattr(stddist = True)
+    # def test_sparse_solver_jac_disabled(self):
+    #     """
+    #     This tests the error when trying to simulate using the sparse linear solver, with no analytical jacobian provided
+    #     """
+    #     f = lambda t, y: [y]
+    #     y0 = N.array([1.])
+    #     prob = Explicit_Problem(f, y0)
 
-        sim = Radau5ODE(prob)
-        sim.solver = 'c'
-        sim.linear_solver = 'sparse'
-        sim.usejac = False
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+    #     sim = Radau5ODE(prob)
+    #     sim.solver = 'c'
+    #     sim.linear_solver = 'sparse'
+    #     sim.usejac = False
+    #     nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
     @testattr(stddist = True)
     def test_solver_no_jac(self):
