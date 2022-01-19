@@ -97,7 +97,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
-        self.options["linear_solver"] = "dense" #Using dense or sparse linear solver in Newton iteration
+        self.options["linear_solver"] = "DENSE" #Using dense or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
@@ -115,12 +115,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        if self.options["linear_solver"] == "sparse":
+        if self.options["linear_solver"] == "SPARSE":
             if self.options["solver"] == "f":
                 raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, try setting 'solver' = 'c' instead.")
             if not self.usejac:
                 # raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
-                self.linear_solver = "dense"
+                self.linear_solver = "DENSE"
         if not self.solver_module_imported:
             self.solver = self.options["solver"] 
             
@@ -210,7 +210,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         jac = self.problem.jac(t,y)
         
-        if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "dense"):
+        if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
             jac = jac.toarray()
         
         return jac
@@ -243,7 +243,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         IWORK[1] = self.maxsteps
         IWORK[2] = self.newt
 
-        if self.options["linear_solver"] == "sparse":
+        if self.options["linear_solver"] == "SPARSE":
             IWORK[10] = 1
             if self.problem_info["jac_fcn_nnz"] == -1: ## Default
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian not set")
@@ -877,7 +877,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
-        self.options["linear_solver"] = "dense" #Using dense or sparse linear solver in Newton iteration
+        self.options["linear_solver"] = "DENSE" #Using DENSE or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
@@ -894,7 +894,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        if self.options["linear_solver"] == "sparse":
+        if self.options["linear_solver"] == "SPARSE":
             raise Radau_Exception ("Sparse linear solver not supported for Radau5DAE.")
         if not self.solver_module_imported:
             self.solver = self.options["solver"]
