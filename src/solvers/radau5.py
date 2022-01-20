@@ -117,7 +117,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #    self.statistics[k] = 0
         if self.options["linear_solver"] == "SPARSE":
             if self.options["solver"] == "f":
-                raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, try setting 'solver' = 'c' instead.")
+                raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, instead use 'solver' = 'c' or 'linear_solver' = 'DENSE'.")
             if not self.usejac:
                 # raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
                 self.linear_solver = "DENSE"
