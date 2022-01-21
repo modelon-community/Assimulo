@@ -1278,7 +1278,7 @@ class Test_Explicit_C_Radau5:
         jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = N.array([1.])
 
-        for nnz in [-10, 2, 100]:
+        for nnz in [-10, 5, 100]:
             prob = Explicit_Problem(f, y0)
             prob.jac = jac
             prob.jac_nnz = nnz
