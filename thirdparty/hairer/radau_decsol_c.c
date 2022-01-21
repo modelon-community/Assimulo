@@ -701,7 +701,8 @@ static doublereal c_b116 = .25;
 		}
 	}
 	nnz = iwork[12];
-	if ((nnz < 0) || nnz > n*n){
+	// if ((nnz < 0) || nnz > n*n){
+	if (nnz < 0){
 		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
 		arret = TRUE_;
 	}
