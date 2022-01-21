@@ -387,7 +387,7 @@ static doublereal c_b116 = .25;
 				CURRENTLY ONLY COMPATIBLE WITH B = I OR DIAGONAL B, I.E. 
 				MLMAS = MUMAS = 0 */
 
-/*    IWORK(12) NUMBER OF NON-ZERO ENTRIES IN THE JACOBIAN (RESP. UPPER BOUND)*/
+/*    IWORK(12) UPPER BOUND ON NUMBER OF NON-ZERO ENTRIES IN THE JACOBIAN*/
 
 /* ---------- */
 
@@ -701,8 +701,7 @@ static doublereal c_b116 = .25;
 		}
 	}
 	nnz = iwork[12];
-	// if ((nnz < 0) || nnz > n*n){
-	if (nnz < 0){
+	if ((nnz < 0) || (nnz > (n*n + n))){
 		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
 		arret = TRUE_;
 	}
