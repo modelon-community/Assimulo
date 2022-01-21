@@ -120,6 +120,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, instead use 'solver' = 'c' or 'linear_solver' = 'DENSE'.")
             if not self.usejac:
                 # raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
+                print("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 self.linear_solver = "DENSE"
         if not self.solver_module_imported:
             self.solver = self.options["solver"] 
