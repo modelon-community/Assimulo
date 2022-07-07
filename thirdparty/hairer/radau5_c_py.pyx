@@ -175,10 +175,10 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     missing = [] ## list of diagonal entries that are missing
     ## iterate over columns
     for i in range(n):
-        indptr_base = indptr[i]
+        indptr_base = jac_indptr_py[i]
         ## take slice of indices
-        for j in range(indptr[i+1] - indptr[i]):
-            if i == indices[indptr_base + j]: ## diagonal index found in indices
+        for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
+            if i == jac_indices_py[indptr_base + j]: ## diagonal index found in indices
                 break
         else: ## loop done, diagonal index not found
             missing.append(i)
@@ -195,8 +195,8 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     ## CSC format of Jacobian needs to be updated
 
     cdef np.ndarray[double, mode="c", ndim=1] jac_data_py_new = np.empty(nnz[0] + len(missing), dtype = np.double)
-    cdef np.ndarray[double, mode="c", ndim=1] jac_indices_py_new = np.empty(nnz[0] + len(missing), dtype = np.intc)
-    cdef np.ndarray[double, mode="c", ndim=1] jac_indptr_py_new = np.empty(n + 1, dtype = np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py_new = np.empty(nnz[0] + len(missing), dtype = np.intc)
+    cdef np.ndarray[int, mode="c", ndim=1] jac_indptr_py_new = np.empty(n + 1, dtype = np.intc)
     jac_indptr_py_new[0] = 0 ## always starts with 0
 
     cdef int idx_data_indices_next = 0
@@ -205,12 +205,12 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
     ## iterate though all columns
     for i in range(n):
-        intptr_base = indptr[i] ## for current column
+        intptr_base = jac_indptr_py[i] ## for current column
         if i in missing:
             indptr_incr += 1 ## increment indptr increment
             missing_added = False
             ## iterate through old column
-            for j in range(indptr[i+1] - indptr[i]):
+            for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
                 ## insert diagonal entry if larger than current index
                 if not missing_added:
                     if j > i: ## correct position found
@@ -228,12 +228,12 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                 idx_data_indices_next += 1
         else: ## column already contains diagonal entry
             ## simple loop to add old column
-            for j in range(indptr[i+1] - indptr[i]):
+            for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
                 jac_indices_py_new[idx_data_indices_next] = jac_indices_py[intptr_base + j]
                 jac_data_py_new[idx_data_indices_next] = jac_data_py[intptr_base + j]
                 idx_data_indices_next += 1
         ## add old inptr entry, possibly increment by earlier added entries
-        jac_indptr_py_new[i+1] = indptr[i+1] + indptr_incr
+        jac_indptr_py_new[i+1] = jac_indptr_py[i+1] + indptr_incr
 
     py2c_d(data, jac_data_py_new, len(J.data) + len(missing))
     py2c_i(indices, jac_indices_py_new, len(J.indices) + len(missing))

@@ -39,14 +39,14 @@ eproblem.state_events = estate_events
 
 class Test_Solvers:
     
-    @testattr(stddist = True)
-    def test_radau5dae_state_events_c(self):
-        solver = Radau5DAE(problem)
-        solver.solver = 'c'
+    # @testattr(stddist = True)
+    # def test_radau5dae_state_events_c(self):
+    #     solver = Radau5DAE(problem)
+    #     solver.solver = 'c'
         
-        t,y,yd = solver.simulate(2,33)
+    #     t,y,yd = solver.simulate(2,33)
         
-        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+    #     nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
 
     @testattr(stddist = True)
     def test_radau5dae_state_events_f(self):

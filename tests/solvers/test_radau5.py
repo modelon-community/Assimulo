@@ -1581,223 +1581,230 @@ class Test_Implicit_C_Radau5:
         self.sim.atol = 1e-4 #Default 1e-6
         self.sim.rtol = 1e-4 #Default 1e-6
         self.sim.inith = 1.e-4 #Initial step-size
-    
+
     @testattr(stddist = True)
-    def test_nbr_fcn_evals_due_to_jac(self):
+    def test_not_supported(self):
+        """Test that an error is raised since Radau5DAE does not support the C based linear solver."""
         sim = Radau5DAE(self.mod)
         sim.solver = 'c'
-        
-        sim.usejac = False
-        sim.simulate(1)
-        
-        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
-    
-    @testattr(stddist = True)
-    def test_simulate_explicit(self):
-        """
-        Test a simulation of an explicit problem using Radau5DAE.
-        """
-        f = lambda t,y:N.array(-y)
-        y0 = [1.0]
-        
-        problem = Explicit_Problem(f,y0)
-        simulator = Radau5DAE(problem)
-        simulator.solver = 'c'
-        
-        nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
-        
-        t,y = simulator.simulate(1.0)
-        
-        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
-    
-    @testattr(stddist = True)
-    def test_time_event(self):
-        f = lambda t,y,yd: y-yd
-        global tnext
-        global nevent
-        tnext = 0.0
-        nevent = 0
-        def time_events(t,y,yd,sw):
-            global tnext,nevent
-            events = [1.0, 2.0, 2.5, 3.0]
-            for ev in events:
-                if t < ev:
-                    tnext = ev
-                    break
-                else:
-                    tnext = None
-            nevent += 1
-            return tnext
-            
-        def handle_event(solver, event_info):
-            #solver.y+= 1.0
-            global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
-    
-        exp_mod = Implicit_Problem(f,0.0,0.0)
-        exp_mod.time_events = time_events
-        exp_mod.handle_event = handle_event
-        
-        #CVode
-        exp_sim = Radau5DAE(exp_mod)
-        exp_sim.solver = 'c'
-        exp_sim.verbosity = 0
-        exp_sim(5.,100)
-        
-        nose.tools.assert_equal(nevent, 5)
-    
-    @testattr(stddist = True)
-    def test_init(self):
-        """
-        This tests the functionality of Radau5 Implicit Init.
-        """
-        #Test both y0 in problem and not.
-
-        sim = Radau5DAE(self.mod)
-        sim.solver = 'c'
-        
-        nose.tools.assert_equal(sim._leny, 2)
-    
-    @testattr(stddist = True)
-    def test_thet(self):
-        """
-        This tests a negative value of thet.
-        """
-        self.sim.thet = -1
-        self.sim.simulate(.5) #Simulate 2 seconds
-
-        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
-        
-    @testattr(stddist = True)    
-    def test_simulation(self):
-        """
-        Test a simulation of the van der Pol equations (1).
-        """
-        #Simulate
-        self.sim.simulate(2.) #Simulate 2 seconds
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706272, 3)
-        
-        self.sim.reset()
-        
-        self.sim.report_continuously = True
-        
-        #Simulate
-        self.sim.simulate(2.) #Simulate 2 seconds
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706166, 3)
-        
-        self.sim_t0.simulate(3.)
-        nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim_t0.t_sol[-1], 3.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim_t0.y_sol[-1][0], 1.7061680350, 4)
-    
-    @testattr(stddist = True)    
-    def test_simulation_ncp(self):
-        """
-        Test a simulation with ncp.
-        """
-        self.sim.report_continuously = True
-        
-        self.sim.simulate(1.0, 200) #Simulate 1 second
-        nose.tools.assert_equal(len(self.sim.t_sol), 201)
-        
-        self.sim.reset()
-        self.sim.report_continuously = False
-        
-        self.sim.simulate(1.0, 200) #Simulate 1 second
-        nose.tools.assert_equal(len(self.sim.t_sol), 201)
-    
-    @testattr(stddist = True)
-    def test_maxh(self):
-        """
-        Tests implicit radau with maxh.
-        """
-        self.sim.maxh = 0.01
-        self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
-        
-        
-    @testattr(stddist = True)
-    def test_switches(self):
-        """
-        This tests that the switches are actually turned when override.
-        """
-        res = lambda t,x,xd,sw: N.array([1.0 - xd])
-        state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
-        def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
-        
-        mod = Implicit_Problem(res,[0.0], [1.0])
-        mod.sw0 = [True]
-
-        mod.state_events = state_events
-        mod.handle_event = handle_event
-        
-        sim = Radau5DAE(mod)
-        sim.solver = 'c'
-        nose.tools.assert_true(sim.sw[0])
-        sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
-
-    @testattr(stddist = True)
-    def test_nmax_steps(self):
-        """
-        This tests the error upon exceeding a set maximum number of steps
-        """
-        sim = Radau5DAE(self.mod)
-        sim.solver = 'c'
-
-        sim.maxh = 1.e-1
-        sim.maxsteps = 9
-
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
-
-    @testattr(stddist = True)
-    def test_step_size_too_small(self):
-        """
-        This tests the error for too small step-sizes
-        """
-        f = lambda t, y, yd: -y
-        y0 = N.array([1.])
-        yd0 = N.array([0.])
-
-        prob = Implicit_Problem(f, y0, yd0)
-
-        sim = Radau5DAE(prob)
-        sim.solver = 'c'
-
-        sim.atol = 1.e10
-        sim.rtol = 1.e10
-
-        sim.inith = 1.e-1
-        sim.maxh = 1.e-1
-        
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
-
-    @testattr(stddist = True)
-    def test_repeated_unexpected_step_rejections(self):
-        """
-        This tests the error for repeated unexpected step rejections
-        """
-        pass
-        # def f(t, y, yd):
-        #     raise N.linalg.LinAlgError()
-        # prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
-        # sim = Radau5DAE(prob)
-        # sim.solver = 'c'
-
-        # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
-
-    @testattr(stddist = True)
-    def test_sparse_solver_attribute(self):
-        """
-        This tests the error when trying to simulate an implicit problem with sparse linear solver setting enabled
-        """
-        sim = Radau5DAE(self.mod)
-        sim.solver = 'c'
-        sim.linear_solver = 'SPARSE'
         nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+    
+    # @testattr(stddist = True)
+    # def test_nbr_fcn_evals_due_to_jac(self):
+    #     sim = Radau5DAE(self.mod)
+    #     sim.solver = 'c'
+        
+    #     sim.usejac = False
+    #     sim.simulate(1)
+        
+    #     nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
+    
+    # @testattr(stddist = True)
+    # def test_simulate_explicit(self):
+    #     """
+    #     Test a simulation of an explicit problem using Radau5DAE.
+    #     """
+    #     f = lambda t,y:N.array(-y)
+    #     y0 = [1.0]
+        
+    #     problem = Explicit_Problem(f,y0)
+    #     simulator = Radau5DAE(problem)
+    #     simulator.solver = 'c'
+        
+    #     nose.tools.assert_equal(simulator.yd0[0], -simulator.y0[0])
+        
+    #     t,y = simulator.simulate(1.0)
+        
+    #     nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
+    
+    # @testattr(stddist = True)
+    # def test_time_event(self):
+    #     f = lambda t,y,yd: y-yd
+    #     global tnext
+    #     global nevent
+    #     tnext = 0.0
+    #     nevent = 0
+    #     def time_events(t,y,yd,sw):
+    #         global tnext,nevent
+    #         events = [1.0, 2.0, 2.5, 3.0]
+    #         for ev in events:
+    #             if t < ev:
+    #                 tnext = ev
+    #                 break
+    #             else:
+    #                 tnext = None
+    #         nevent += 1
+    #         return tnext
+            
+    #     def handle_event(solver, event_info):
+    #         #solver.y+= 1.0
+    #         global tnext
+    #         nose.tools.assert_almost_equal(solver.t, tnext)
+    #         nose.tools.assert_equal(event_info[0], [])
+    #         nose.tools.assert_true(event_info[1])
+    
+    #     exp_mod = Implicit_Problem(f,0.0,0.0)
+    #     exp_mod.time_events = time_events
+    #     exp_mod.handle_event = handle_event
+        
+    #     #CVode
+    #     exp_sim = Radau5DAE(exp_mod)
+    #     exp_sim.solver = 'c'
+    #     exp_sim.verbosity = 0
+    #     exp_sim(5.,100)
+        
+    #     nose.tools.assert_equal(nevent, 5)
+    
+    # @testattr(stddist = True)
+    # def test_init(self):
+    #     """
+    #     This tests the functionality of Radau5 Implicit Init.
+    #     """
+    #     #Test both y0 in problem and not.
+
+    #     sim = Radau5DAE(self.mod)
+    #     sim.solver = 'c'
+        
+    #     nose.tools.assert_equal(sim._leny, 2)
+    
+    # @testattr(stddist = True)
+    # def test_thet(self):
+    #     """
+    #     This tests a negative value of thet.
+    #     """
+    #     self.sim.thet = -1
+    #     self.sim.simulate(.5) #Simulate 2 seconds
+
+    #     nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
+        
+    # @testattr(stddist = True)    
+    # def test_simulation(self):
+    #     """
+    #     Test a simulation of the van der Pol equations (1).
+    #     """
+    #     #Simulate
+    #     self.sim.simulate(2.) #Simulate 2 seconds
+    #     nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706272, 3)
+        
+    #     self.sim.reset()
+        
+    #     self.sim.report_continuously = True
+        
+    #     #Simulate
+    #     self.sim.simulate(2.) #Simulate 2 seconds
+    #     nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706166, 3)
+        
+    #     self.sim_t0.simulate(3.)
+    #     nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
+    #     nose.tools.assert_almost_equal(self.sim_t0.t_sol[-1], 3.0000000, 4)
+    #     nose.tools.assert_almost_equal(self.sim_t0.y_sol[-1][0], 1.7061680350, 4)
+    
+    # @testattr(stddist = True)    
+    # def test_simulation_ncp(self):
+    #     """
+    #     Test a simulation with ncp.
+    #     """
+    #     self.sim.report_continuously = True
+        
+    #     self.sim.simulate(1.0, 200) #Simulate 1 second
+    #     nose.tools.assert_equal(len(self.sim.t_sol), 201)
+        
+    #     self.sim.reset()
+    #     self.sim.report_continuously = False
+        
+    #     self.sim.simulate(1.0, 200) #Simulate 1 second
+    #     nose.tools.assert_equal(len(self.sim.t_sol), 201)
+    
+    # @testattr(stddist = True)
+    # def test_maxh(self):
+    #     """
+    #     Tests implicit radau with maxh.
+    #     """
+    #     self.sim.maxh = 0.01
+    #     self.sim.simulate(0.5)
+    #     nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
+        
+        
+    # @testattr(stddist = True)
+    # def test_switches(self):
+    #     """
+    #     This tests that the switches are actually turned when override.
+    #     """
+    #     res = lambda t,x,xd,sw: N.array([1.0 - xd])
+    #     state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
+    #     def handle_event(solver, event_info):
+    #         solver.sw = [False] #Override the switches to point to another instance
+        
+    #     mod = Implicit_Problem(res,[0.0], [1.0])
+    #     mod.sw0 = [True]
+
+    #     mod.state_events = state_events
+    #     mod.handle_event = handle_event
+        
+    #     sim = Radau5DAE(mod)
+    #     sim.solver = 'c'
+    #     nose.tools.assert_true(sim.sw[0])
+    #     sim.simulate(3)
+    #     nose.tools.assert_false(sim.sw[0])
+
+    # @testattr(stddist = True)
+    # def test_nmax_steps(self):
+    #     """
+    #     This tests the error upon exceeding a set maximum number of steps
+    #     """
+    #     sim = Radau5DAE(self.mod)
+    #     sim.solver = 'c'
+
+    #     sim.maxh = 1.e-1
+    #     sim.maxsteps = 9
+
+    #     nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    # @testattr(stddist = True)
+    # def test_step_size_too_small(self):
+    #     """
+    #     This tests the error for too small step-sizes
+    #     """
+    #     f = lambda t, y, yd: -y
+    #     y0 = N.array([1.])
+    #     yd0 = N.array([0.])
+
+    #     prob = Implicit_Problem(f, y0, yd0)
+
+    #     sim = Radau5DAE(prob)
+    #     sim.solver = 'c'
+
+    #     sim.atol = 1.e10
+    #     sim.rtol = 1.e10
+
+    #     sim.inith = 1.e-1
+    #     sim.maxh = 1.e-1
+        
+    #     nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+    # @testattr(stddist = True)
+    # def test_repeated_unexpected_step_rejections(self):
+    #     """
+    #     This tests the error for repeated unexpected step rejections
+    #     """
+    #     pass
+    #     # def f(t, y, yd):
+    #     #     raise N.linalg.LinAlgError()
+    #     # prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
+    #     # sim = Radau5DAE(prob)
+    #     # sim.solver = 'c'
+
+    #     # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    # @testattr(stddist = True)
+    # def test_sparse_solver_attribute(self):
+    #     """
+    #     This tests the error when trying to simulate an implicit problem with sparse linear solver setting enabled
+    #     """
+    #     sim = Radau5DAE(self.mod)
+    #     sim.solver = 'c'
+    #     sim.linear_solver = 'SPARSE'
+    #     nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
 
 
 class Test_Implicit_Radau5:

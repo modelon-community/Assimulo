@@ -877,7 +877,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.options["solver"]   = "f" #internal solver; "f" for fortran, "c" for c based code
         self.options["linear_solver"] = "DENSE" #Using DENSE or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
@@ -896,7 +896,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
         if self.options["linear_solver"] == "SPARSE":
-            raise Radau_Exception ("Sparse linear solver not supported for Radau5DAE.")
+            raise Radau_Exception("Sparse linear solver not supported for Radau5DAE.")
         if not self.solver_module_imported:
             self.solver = self.options["solver"]
         
@@ -1038,9 +1038,10 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         atol = N.append(self.atol, self.atol)
 
         if self.options["solver"] == 'c':
-            t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
-                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
-                                                       IOUT, WORK, IWORK, self.options["num_threads"])
+            raise Radau_Exception("Radau5DAE does not support 'linear_solver' = 'c', use 'linear_solver' = 'f' instead")
+            # t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+            #                                            ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+            #                                            IOUT, WORK, IWORK, self.options["num_threads"])
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,

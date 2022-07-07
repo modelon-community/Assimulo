@@ -490,13 +490,13 @@ class Radau_Common(object):
         try:
             linear_solver.upper()
         except:
-            raise Radau_Exception("linear_solver parameters needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver)))
+            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver)))
         if linear_solver.upper() == "DENSE":
             pass
         elif linear_solver.upper() == "SPARSE":
             pass
         else:
-            raise Radau_Exception("linear_solver parameters needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver))
+            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver))
         self.options["linear_solver"] = linear_solver.upper()
         
     linear_solver = property(_get_linear_solver, _set_linear_solver)
