@@ -2,7 +2,8 @@
 #include "radau5_superlu_complex.h"
 
 struct SuperLU_aux_z{
-    int nprocs, n, nnz_jac, nnz_sys;
+    // int nprocs, n, nnz_jac, nnz_sys;
+    int nprocs, n, nnz_jac;
     int setup_done, fact_done; // flags for which memory to free in the end
 
     doublecomplex *data_sys;
@@ -27,9 +28,10 @@ struct SuperLU_aux_z{
     SuperMatrix *A, *B, *AC, *L, *U;
 };
 
-typedef int (*CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
+// typedef int (*CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
 // int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, CB_assemble_sys_z, int);
-int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, int);
+// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, int);
+// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int);
 
 // Initialization of required data structures for SuperLU
 SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
@@ -105,9 +107,12 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
 //                     double *data_J, int *indices_J, int *indptr_J,
 //                     int flag_mass, double* mass_diag,
 //                     CB_assemble_sys_z CB_sys, int fresh_jacobian){
+// int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
+//                     double *data_J, int *indices_J, int *indptr_J,
+//                     int flag_mass, double* mass_diag, int fresh_jacobian){
 int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
                     double *data_J, int *indices_J, int *indptr_J,
-                    int flag_mass, double* mass_diag, int fresh_jacobian){
+                    int fresh_jacobian){
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
 

@@ -2,7 +2,8 @@
 #include "radau5_superlu_double.h"
 
 struct SuperLU_aux_d{
-    int nprocs, n, nnz_jac, nnz_sys;
+    // int nprocs, n, nnz_jac, nnz_sys;
+    int nprocs, n, nnz_jac;
     int setup_done, fact_done; // flags for which memory to free in the end
 
     double *data_sys;
@@ -99,7 +100,8 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
 //                     CB_assemble_sys_d CB_sys, int fresh_jacobian){
 int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
-                    int flag_mass, double* mass_diag, int fresh_jacobian){
+                    // int flag_mass, double* mass_diag, int fresh_jacobian){
+                    int fresh_jacobian){
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
 

@@ -38,7 +38,8 @@ static doublereal c_b116 = .25;
 /* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
 	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
-	*mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
+	// *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
+	*mujac, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
 	integer num_threads)
@@ -69,7 +70,8 @@ static doublereal c_b116 = .25;
     extern /* Subroutine */ int radcor_(integer, FP_CB_f, void*, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, integer *, FP_CB_jac, FP_CB_jac_sparse, void*, integer *, integer *,
-	    integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *,
+	    // integer *, FP_CB_mas, void*, integer *, integer *, FP_CB_solout, void*, integer *, integer *,
+		integer *, integer *, integer *, FP_CB_solout, void*, integer *, integer *,
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
 	    doublereal *, doublereal *, integer *, integer *, logical *, 
 	    integer *, integer *, integer *, logical *, doublereal *, 
@@ -695,7 +697,8 @@ static doublereal c_b116 = .25;
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
 		if (implct){
-			ijob = 9;
+			printf("SPARSE LU DECOMPOSITION IS NOT SUPPORTED FOR IMPLICIT ODES\n");
+			arret = TRUE_;
 		} else {
 			ijob = 8;
 		}
@@ -755,7 +758,8 @@ static doublereal c_b116 = .25;
     }
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
-	    itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas,
+	    // itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, (FP_CB_mas)mas, mas_PY, mlmas, mumas,
+		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, mlmas, mumas,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
 	    &pred, &facl, &facr, &m1, &m2, &nm1, &implct, &jband, &ldjac,
@@ -798,7 +802,8 @@ static doublereal c_b116 = .25;
 /* Subroutine */ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
 	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-	integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *mlmas, integer *
+	// integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *mlmas, integer *
+	integer *mljac, integer *mujac, integer *mlmas, integer *
 	mumas, FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
@@ -900,7 +905,8 @@ static doublereal c_b116 = .25;
 	static struct SuperLU_aux_d* slu_aux_d;
 	static struct SuperLU_aux_z* slu_aux_z;
 
-	if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+	// if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+	if (*ijob == 8){ // Sparse LU
 		/*
 		nnz + n = upper bound for number of non-zero elements
 		This is required since we automatically update the CSC format during jacobian evaluation as to include the diagonal
@@ -982,9 +988,9 @@ static doublereal c_b116 = .25;
     index2 = *nind2 != 0;
     index3 = *nind3 != 0;
 	/* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
-    if (*implct) {
-    	(*mas)(*nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
-    }
+    // if (*implct) {
+    // 	(*mas)(*nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
+    // }
 	/* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
     c1 = (4. - sq6) / 10.;
@@ -1149,7 +1155,8 @@ L14:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-		if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+		// if ((*ijob)%10 == 8 || (*ijob)%10 == 9){ // Sparse LU
+		if (*ijob == 8){ // Sparse LU
 			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
@@ -1556,8 +1563,8 @@ L179:
 /* --- EXIT OF RADCOR */
 L181:
 	werr++;
-	free(werr);
-	if (*x == 10){
+	free(werr); // TODO: should werr be static?
+	if (*x == 10){ // TODO: remove this 
 		free(jac_data);
 		free(jac_indicies);
 		free(jac_indptr);
@@ -3114,15 +3121,15 @@ L200:
 		case 6:  goto L6;
 		case 7:  goto L7;
 		case 8:  goto L8;
-		case 9:  goto L9;
+		// case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
-		case 18:  goto L8;
-		case 19:  goto L9;
+		// case 18:  goto L8;
+		// case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -3319,19 +3326,20 @@ L7:
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	// superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_d, fresh_jacobian);
-	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 0, NULL, fresh_jacobian);
+	// superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 0, NULL, fresh_jacobian);
+	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian);
 	*ier = superlu_factorize_d(slu_aux);
     return 0;
 
 /* ----------------------------------------------------------- */
 
-L9:
+// L9:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
 // WARNING: NOT TESTED
 	// superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], sparse_sys_d);
-	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], fresh_jacobian);
-	*ier = superlu_factorize_d(slu_aux);
-    return 0;
+	// superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, 1, &fmas[1], fresh_jacobian);
+	// *ier = superlu_factorize_d(slu_aux);
+    // return 0;
 
 /* ----------------------------------------------------------- */
 
@@ -3396,15 +3404,15 @@ L55:
 		case 6:  goto L6;
 		case 7:  goto L7;
 		case 8:  goto L8;
-		case 9:  goto L9;
+		// case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
-		case 18:  goto L8;
-		case 19:  goto L9;
+		// case 18:  goto L8;
+		// case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -3645,16 +3653,17 @@ L7:
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	// superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 0, NULL, sparse_sys_z, fresh_jacobian);
-	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 0, NULL, fresh_jacobian);
+	// superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, 0, NULL, fresh_jacobian);
+	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian);
 	*ier = superlu_factorize_z(slu_aux);
     return 0;
 
 /* ----------------------------------------------------------- */
 
-L9:
-/* ---  B=DIAGONAL MATRIX, SPARSE LU */
-/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
-    return 0;
+// L9:
+// /* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// /* ---  THIS OPTION IS NOT YET IMPLEMENTED */
+//     return 0;
 
 /* ----------------------------------------------------------- */
 
@@ -3738,15 +3747,15 @@ L55:
 		case 6:  goto L6;
 		case 7:  goto L7;
 		case 8:  goto L8;
-		case 9:  goto L9;
+		// case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L13;
 		case 15:  goto L15;
-		case 18:  goto L8;
-		case 19:  goto L9;
+		// case 18:  goto L8;
+		// case 19:  goto L9;
     }
 
 /* ----------------------------------------------------------- */
@@ -4083,10 +4092,10 @@ L8:
 
 /* ----------------------------------------------------------- */
 
-L9:
-/* ---  B=DIAGONAL MATRIX, SPARSE LU */
-/* ---  THIS OPTION IS NOT YET IMPLEMENTED */
-    return 0;
+// L9:
+// /* ---  B=DIAGONAL MATRIX, SPARSE LU */
+// /* ---  THIS OPTION IS NOT YET IMPLEMENTED */
+//     return 0;
 
 /* ----------------------------------------------------------- */
 
@@ -4162,15 +4171,15 @@ L55:
 		case 6:  goto L6;
 		case 7:  goto L7;
 		case 8:  goto L8;
-		case 9:  goto L9;
+		// case 9:  goto L9;
 		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
 		case 14:  goto L14;
 		case 15:  goto L15;
-		case 18:  goto L8;
-		case 19:  goto L9;
+		// case 18:  goto L8;
+		// case 19:  goto L9;
     }
 
 L1:
@@ -4402,9 +4411,9 @@ L8:
 	goto L77;
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
 /* ---  THIS OPTION IS NOT YET IMPLEMENTED */
-L9:
-	;
-	goto L77;
+// L9:
+// 	;
+// 	goto L77;
 
 /* -------------------------------------- */
 
@@ -4437,7 +4446,7 @@ L77:
 			case 6:  goto L32;
 			case 7:  goto L33;
 			case 8:  goto L38;
-			case 9:  goto L39;
+			// case 9:  goto L39;
 			case 10:  goto L55;
 			case 11:  goto L41;
 			case 12:  goto L42;
@@ -4530,10 +4539,10 @@ L38:
 
 /* ----------------------------------------------------------- */
 
-L39:
+// L39:
 /* ---  B=DIAGONAL MATRIX, SPARSE LU */
 /* ---  THIS OPTION IS NOT YET IMPLEMENTED */
-    	goto L88;
+    	// goto L88;
 
 /* ----------------------------------------------------------- */
 L88:

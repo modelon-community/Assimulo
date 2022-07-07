@@ -54,13 +54,13 @@ cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int 
     """
     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
     
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void c2py_d_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
-    """
-    Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
-    """
-    memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# cdef void c2py_d_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
+#     """
+#     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
+#     """
+#     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
 
 # @cython.boundscheck(False)
 # @cython.wraparound(False)
@@ -115,16 +115,16 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 
-cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
-                      integer* ipar, void* mas_PY):
-    """
-    Internal callback function to enable call to Python based mass matrix function from C
-    """
-    cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n), order = 'F', dtype = np.double)
-    c2py_d_mat_F(am_py, am, n*lmas[0])
-    res = (<object>mas_PY)(am_py)
-    py2c_d_matrix_flat_F(am, res, res.shape[0], res.shape[1])
-    return 0
+# cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
+#                       integer* ipar, void* mas_PY):
+#     """
+#     Internal callback function to enable call to Python based mass matrix function from C
+#     """
+#     cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n), order = 'F', dtype = np.double)
+#     c2py_d_mat_F(am_py, am, n*lmas[0])
+#     res = (<object>mas_PY)(am_py)
+#     py2c_d_matrix_flat_F(am, res, res.shape[0], res.shape[1])
+#     return 0
 
 cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
                          doublereal* cont, doublereal* werr, integer* lrc, integer* nsolu,
@@ -426,9 +426,14 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     #                      &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
     #                      callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
     #                      &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z, num_threads)
+    # radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+    #                      &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
+    #                      &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
+    #                      callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
+    #                      &ipar, &idid, num_threads)
     radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                          &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                         &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
+                         &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                          &ipar, &idid, num_threads)
     
