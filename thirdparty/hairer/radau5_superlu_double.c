@@ -93,27 +93,64 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
 }
 
 // Setting up the matrix to be factorized
+// int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
+//                     double *data_J, int *indices_J, int *indptr_J,
+//                     int flag_mass, double* mass_diag,
+//                     CB_assemble_sys_d CB_sys, int fresh_jacobian){
 int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
-                    int flag_mass, double* mass_diag,
-                    CB_assemble_sys_d CB_sys){
+                    int flag_mass, double* mass_diag, int fresh_jacobian){
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
 
-    slu_aux->nnz_sys = slu_aux->nnz_jac;
+    // slu_aux->nnz_sys = slu_aux->nnz_jac;
     // Set up matrix for linear system
-    CB_sys(slu_aux->n, scale, &(slu_aux->nnz_sys),
-           data_J, indices_J, indptr_J,
-           slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
-           flag_mass, mass_diag);
+    // TODO: Add scaled matrix right here
+    // CB_sys(slu_aux->n, scale, &(slu_aux->nnz_sys),
+    //        data_J, indices_J, indptr_J,
+    //        slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
+    //        flag_mass, mass_diag);
 
-    dCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_sys,
+    int current_idx = 0;
+    int i, j;
+
+    // Copy jacobian data to slu_aux structure & scale diagonal
+    for(i = 0; i < slu_aux->n + 1; i++){
+        slu_aux->indptr_sys[i] = indptr_J[i];
+    }
+
+    for(i = 0; i < slu_aux->nnz_jac; i++){
+        slu_aux->indices_sys[i] = indices_J[i];
+    }
+
+    // Copy values to slu_aux structure & scale diagonal
+    for (i = 0; i < slu_aux-> n; i++){
+        for (j = indptr_J[i]; j < indptr_J[i+1]; j++){
+            slu_aux->data_sys[current_idx] = data_J[current_idx];
+            if (i == indices_J[current_idx]){
+                slu_aux->data_sys[current_idx] = slu_aux->data_sys[current_idx] + scale;
+            }
+            current_idx++;
+        }
+    }
+
+    dCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_jac,
                            slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
                            SLU_NC, SLU_D, SLU_GE);
 
-    get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetric matrices
+    // dCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_sys,
+    //                        slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
+    //                        SLU_NC, SLU_D, SLU_GE);
+
+    if (fresh_jacobian){
+        get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
+        slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
+    }else{
+        slu_aux->refact = YES; // same jacobian structure, re-factorization 
+        // get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
+        // slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
+    }
     slu_aux->setup_done = 1;
-    slu_aux->refact = NO; // number of elements may have changed, re-using factorization may no longer be valid?
     return 0;
 }
 
@@ -140,6 +177,8 @@ int superlu_factorize_d(SuperLU_aux_d *slu_aux){
             SUPERLU_FREE(slu_aux->slu_options->etree);
             SUPERLU_FREE(slu_aux->slu_options->colcnt_h);
             SUPERLU_FREE(slu_aux->slu_options->part_super_h);
+        }else{ // slu_aux->refact == YES
+            ;
         }
     }
     // initialize options

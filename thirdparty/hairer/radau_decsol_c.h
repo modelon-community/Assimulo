@@ -29,18 +29,26 @@ typedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
 
 typedef struct {double r, i;} doublecomplex;
 typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, doublereal*, integer*, void*);
-typedef int (*FP_CB_assemble_sys_d)(int, double, int *, double *, int *, int *, double *, int *, int *, int, double*);
-typedef int (*FP_CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
+// typedef int (*FP_CB_assemble_sys_d)(int, double, int *, double *, int *, int *, double *, int *, int *, int, double*);
+// typedef int (*FP_CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
 
-int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, FP_CB_assemble_sys_z);
+// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, FP_CB_assemble_sys_z);
+int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, int);
 
+// int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
+//             doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
+//             integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
+//             integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas,
+//             integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
+//             integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
+//             FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z, integer);
 int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
             integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
             integer *mljac, integer *mujac, FP_CB_mas mas, void* mas_PY, integer *imas, integer *mlmas,
             integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-            FP_CB_assemble_sys_d sys_d, FP_CB_assemble_sys_z sys_z, integer);
+            integer num_threads);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
                    
