@@ -21,8 +21,6 @@ from assimulo.exception import *
 from assimulo.examples import *
 
 class Test_Examples:
-    
-    
     @testattr(stddist = True)
     def test_cvode_with_jac_sparse(self):
         try:
@@ -34,9 +32,9 @@ class Test_Examples:
     def test_ida_with_user_defined_handle_result(self):
         ida_with_user_defined_handle_result.run_example(with_plots=False)
     
-    @testattr(stddist = True)
-    def test_radau5dae_time_events_c(self):
-        radau5dae_time_events.run_example(with_plots=False,solver='c')
+    # @testattr(stddist = True)
+    # def test_radau5dae_time_events_c(self):
+    #     radau5dae_time_events.run_example(with_plots=False,solver='c')
         
     @testattr(stddist = True)
     def test_radau5dae_time_events_f(self):
@@ -159,9 +157,9 @@ class Test_Examples:
     def test_radau5ode_with_jac_sparse_c(self):
         radau5ode_with_jac_sparse.run_example(with_plots=False)
 
-    @testattr(stddist = True)
-    def test_radau5dae_vanderpol_c(self):
-        radau5dae_vanderpol.run_example(with_plots=False,solver='c')
+    # @testattr(stddist = True)
+    # def test_radau5dae_vanderpol_c(self):
+    #     radau5dae_vanderpol.run_example(with_plots=False,solver='c')
 
     @testattr(stddist = True)
     def test_radau5dae_vanderpol_f(self):
