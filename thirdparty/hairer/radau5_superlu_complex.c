@@ -2,7 +2,6 @@
 #include "radau5_superlu_complex.h"
 
 struct SuperLU_aux_z{
-    // int nprocs, n, nnz_jac, nnz_sys;
     int nprocs, n, nnz_jac;
     int setup_done, fact_done; // flags for which memory to free in the end
 
@@ -27,11 +26,6 @@ struct SuperLU_aux_z{
 
     SuperMatrix *A, *B, *AC, *L, *U;
 };
-
-// typedef int (*CB_assemble_sys_z)(int, double, double, int *, double *, int *, int *, doublecomplex *, int *, int *, int, double*);
-// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, CB_assemble_sys_z, int);
-// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int, double*, int);
-// int superlu_setup_z(SuperLU_aux_z *, double, double, double *, int *, int *, int);
 
 // Initialization of required data structures for SuperLU
 SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
@@ -103,24 +97,16 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
 }
 
 // Setting up the matrix to be factorized
-// int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
-//                     double *data_J, int *indices_J, int *indptr_J,
-//                     int flag_mass, double* mass_diag,
-//                     CB_assemble_sys_z CB_sys, int fresh_jacobian){
-// int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
-//                     double *data_J, int *indices_J, int *indptr_J,
-//                     int flag_mass, double* mass_diag, int fresh_jacobian){
 int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
                     double *data_J, int *indices_J, int *indptr_J,
                     int fresh_jacobian){
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
 
-    // slu_aux->nnz_sys = slu_aux->nnz_jac;
-
     int current_idx = 0;
     int i, j;
 
+    // build system matrix (scale_r + i*scale_i) * I - JAC
     // Copy jacobian data to slu_aux structure & scale diagonal
     for(i = 0; i < slu_aux->n + 1; i++){
         slu_aux->indptr_sys[i] = indptr_J[i];
@@ -143,14 +129,6 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
         }
     }
     
-    // Set up matrix for linear system
-    // TODO: add scaled diagonal
-    // CB_sys(slu_aux->n, scale_r, scale_i, &(slu_aux->nnz_sys),
-    //        data_J, indices_J, indptr_J,
-    //        slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
-    //        flag_mass, mass_diag);
-    
-    // zCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_sys,
     zCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_jac,
                            slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
                            SLU_NC, SLU_Z, SLU_GE);
@@ -159,9 +137,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
         get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
         slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
     }else{
-        // slu_aux->refact = YES; // same jacobian structure, re-factorization 
-        get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
-        slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
+        slu_aux->refact = YES; // same jacobian structure, re-factorization 
     }
     slu_aux->setup_done = 1;
     return 0;
@@ -191,9 +167,6 @@ int superlu_factorize_z(SuperLU_aux_z * slu_aux){
             SUPERLU_FREE(slu_aux->slu_options->colcnt_h);
             SUPERLU_FREE(slu_aux->slu_options->part_super_h);
         }
-        // else{ // slu_aux->refact == YES
-        //     ;
-        // }
     }
     // initialize options
     pzgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,

@@ -54,33 +54,6 @@ cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int 
     """
     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
     
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# cdef void c2py_d_mat_F(np.ndarray[double, ndim=2, mode='fortran'] dest, double* source, int dim):
-#     """
-#     Copy (double *) C matrix (Fotran-style column major ordering) to 2D numpy array
-#     """
-#     memcpy(PyArray_DATA(dest), source, dim*sizeof(double))
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# cdef void py2c_z(doublecomplex* dest, object source, int dim):
-#     """
-#     Copy 1D numpy (double complex) array to (doublecomplex *) C vector
-#     """
-#     if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.complex128):
-#         source = np.ascontiguousarray(source, dtype=np.float)
-#     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-#     memcpy(dest, <doublecomplex*>PyArray_DATA(source), dim*sizeof(doublecomplex))
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# cdef void c2py_i(np.ndarray[int, ndim=1, mode='c'] dest, int* source, int dim):
-#     """
-#     Copy (int *) C vector to 1D numpy array
-#     """
-#     memcpy(PyArray_DATA(dest), source, dim*sizeof(int))
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void py2c_i(int* dest, object source, int dim):
@@ -114,17 +87,6 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     res = (<object>jac_PY)(x[0], y_py_in)
     py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
-
-# cdef int callback_mas(integer n, doublereal* am, integer* lmas, doublereal* rpar,
-#                       integer* ipar, void* mas_PY):
-#     """
-#     Internal callback function to enable call to Python based mass matrix function from C
-#     """
-#     cdef np.ndarray[double, mode="fortran", ndim=2]am_py = np.empty((lmas[0], n), order = 'F', dtype = np.double)
-#     c2py_d_mat_F(am_py, am, n*lmas[0])
-#     res = (<object>mas_PY)(am_py)
-#     py2c_d_matrix_flat_F(am, res, res.shape[0], res.shape[1])
-#     return 0
 
 cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
                          doublereal* cont, doublereal* werr, integer* lrc, integer* nsolu,
@@ -241,82 +203,6 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     nnz[0] = J.nnz + len(missing)
     return 0
 
-# cdef int assemble_sparse_system_d(int n, double fac, int *nnz,
-#                                   double *data_in, int *indices_in, int *indptr_in,
-#                                   double *data_out, int *indices_out, int *indptr_out, 
-#                                   int flag_mass, double *mass_diag):
-#     """
-#     Internal callback function for assembly of the real subsystem to factorize in the Radau5 solver
-#     """
-#     cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
-#     cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
-#     cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
-
-#     c2py_d(data_J_py, data_in, nnz[0])
-#     c2py_i(indices_J_py, indices_in, nnz[0])
-#     c2py_i(indptr_J_py, indptr_in, n + 1)
-
-#     # Reconstruct Jacobian
-#     J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
-
-#     cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
-#     if flag_mass:
-#         c2py_d(M_diag, mass_diag, n)
-#         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
-#     else:
-#         M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
-#     # Add appropriately scaled mass/identity matrix
-#     A = fac * M - J
-
-#     cdef np.ndarray[double, mode="c", ndim=1] data_A_py = A.data
-#     cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
-#     cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
-
-#     py2c_d(data_out, data_A_py, len(A.data))
-#     py2c_i(indices_out, indices_A_py, len(A.indices))
-#     py2c_i(indptr_out, indptr_A_py, len(A.indptr))
-#     nnz[0] = A.nnz
-
-#     return 0
-
-# cdef int assemble_sparse_system_z(int n, double fac_r, double fac_i, int *nnz,
-#                                   double *data_in, int *indices_in, int *indptr_in,
-#                                   doublecomplex *data_out, int *indices_out, int *indptr_out,
-#                                   int flag_mass, double *mass_diag):
-#     """
-#     Internal callback function for assembly of the complex subsystem to factorize in the Radau5 solver
-#     """
-#     cdef np.ndarray[double, mode="c", ndim=1] data_J_py = np.empty(nnz[0], dtype = np.double)
-#     cdef np.ndarray[int, mode="c", ndim=1] indices_J_py = np.empty(nnz[0], dtype = np.intc)
-#     cdef np.ndarray[int, mode="c", ndim=1] indptr_J_py = np.empty(n + 1, dtype = np.intc)
-
-#     c2py_d(data_J_py, data_in, nnz[0])
-#     c2py_i(indices_J_py, indices_in, nnz[0])
-#     c2py_i(indptr_J_py, indptr_in, n + 1)
-
-#     # Reconstruct Jacobian
-#     J = sps.csc_matrix((data_J_py, indices_J_py, indptr_J_py), shape = (n, n))
-
-#     cdef np.ndarray[double, mode="c", ndim=1] M_diag = np.empty(n, dtype = np.double)
-#     if flag_mass:
-#         c2py_d(M_diag, mass_diag, n)
-#         M = sps.diags(M_diag, offsets = 0, shape = J.shape, format = 'csc')
-#     else:
-#         M = sps.eye(*J.shape, k = 0, dtype = np.double, format = 'csc')
-#     # Add appropriately scaled mass/identity matrix
-#     A = (fac_r + 1j*fac_i) * M - J
-
-#     cdef np.ndarray[doublecomplex, mode="c", ndim=1] data_A_py = A.data
-#     cdef np.ndarray[int, mode="c", ndim=1] indices_A_py = A.indices.astype(np.intc)
-#     cdef np.ndarray[int, mode="c", ndim=1] indptr_A_py = A.indptr.astype(np.intc)
-
-#     py2c_z(data_out, data_A_py, len(A.data))
-#     py2c_i(indices_out, indices_A_py, len(A.indices))
-#     py2c_i(indptr_out, indptr_A_py, len(A.indptr))
-#     nnz[0] = A.nnz
-
-#     return 0
-
 cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
              integer itol, jac_PY, integer ijac, integer mljac, integer mujac,
@@ -421,16 +307,6 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
     
-    # radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-    #                      &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-    #                      &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
-    #                      callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-    #                      &ipar, &idid, assemble_sparse_system_d, assemble_sparse_system_z, num_threads)
-    # radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-    #                      &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-    #                      &ijac, &mljac, &mujac, callback_mas, <void*> mas_PY, &imas, &mlmas, &mumas,
-    #                      callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-    #                      &ipar, &idid, num_threads)
     radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                          &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                          &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
