@@ -128,7 +128,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     if J.nnz > nnz[0]:
         return J.nnz
 
-    cdef np.ndarray[double, mode="c", ndim=1] jac_data_py = J.data
+    cdef np.ndarray[double, mode="c", ndim=1] jac_data_py = J.data.astype(np.double)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py = J.indices.astype(np.intc)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indptr_py = J.indptr.astype(np.intc)
 
@@ -149,7 +149,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
         ## copy data to output structures
         py2c_d(data, jac_data_py, len(J.data))
         py2c_i(indices, jac_indices_py, len(J.indices))
-        py2c_i(indptr, jac_indptr_py, len(J.indptr))
+        py2c_i(indptr, jac_indptr_py, n + 1)
         nnz[0] = J.nnz
         return 0
     ## else: ## some diagonal entries are missing
@@ -172,10 +172,11 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
             indptr_incr += 1 ## increment indptr increment
             missing_added = False
             ## iterate through old column
+            j = 0 ## required, since range(0) in next line would cause issue later on
             for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
                 ## insert diagonal entry if larger than current index
                 if not missing_added:
-                    if j > i: ## correct position found
+                    if jac_indices_py[intptr_base + j] > i: ## correct position found
                         jac_indices_py_new[idx_data_indices_next] = i
                         jac_data_py_new[idx_data_indices_next] = 0
                         idx_data_indices_next += 1
@@ -311,7 +312,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                          &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                          &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
                          callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-                         &ipar, &idid, num_threads)
+                         &ipar, &idid, num_threads, 0)
     
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 
@@ -336,3 +337,11 @@ cpdef contr5(integer i__, doublereal x, np.ndarray cont):
     cdef integer lrc = len(cont)
     cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
     return radau5_c_py.contr5_c(&i__, &x, &cont_vec[0], &lrc)
+
+cpdef finalize_radau():
+    radau5_c_py.radau5_c(1, callback_fcn, NULL, NULL, NULL, NULL,
+                            NULL, NULL, NULL, NULL, callback_jac, callback_jac_sparse, NULL,
+                            NULL, NULL, NULL, NULL, NULL, NULL,
+                            callback_solout, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                            NULL, NULL, 0, 1)
+    return 0
