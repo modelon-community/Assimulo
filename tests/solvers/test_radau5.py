@@ -1289,6 +1289,35 @@ class Test_Explicit_C_Radau5:
             sim.usejac = True
             nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    def test_sparse_solver_jacobian(self):
+        """Testing sparse solver to not produce segmentation faults for Jacobian."""
+        ## Take trivial problem with somewhat arbitrary jacobians
+        ## Test that functions for internal processing of jacobian do not produces segfaults
+        jacobians = [
+            (lambda t, y: sp.csc_matrix(N.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 9), 
+            (lambda t, y: sp.csc_matrix(N.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0.]])), 6),
+            (lambda t, y: sp.csc_matrix(N.array([[0., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 8),
+            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [0., 1., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [1., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [0., 0., 0.], [0., 1., 0.]])), 1),
+            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 1.], [0., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sp.csc_matrix(N.array([[1., 0., 0.], [0., 0., 0.], [0., 0., 0.]])), 1),
+        ]
+
+        for i, (jac, nnz) in enumerate(jacobians):
+            f = lambda t, y: y
+            y0 = 1.*N.ones(3)
+            prob = Explicit_Problem(f, y0)
+            prob.jac = jac
+            prob.jac_nnz = nnz
+
+            sim = Radau5ODE(prob)
+            sim.solver = 'c'
+            sim.linear_solver = 'SPARSE'
+            sim.usejac = True
+
+            nose.tools.ok_(sim.simulate(1.), msg = f"Jacobian #{i} failed: {jac(0, 0)}")
+
 class Test_Implicit_Fortran_Radau5:
     """
     Tests the implicit Radau solver.

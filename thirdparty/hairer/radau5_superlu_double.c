@@ -95,9 +95,12 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
 // Setting up the matrix to be factorized
 int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
-                    int fresh_jacobian){
+                    int fresh_jacobian, int jac_nnz){
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
+
+    // number of non-zero elements maz have changed during recent jacobian evaluation
+    slu_aux -> nnz_jac = jac_nnz;
 
     int current_idx = 0;
     int i, j;

@@ -282,6 +282,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         elif flag == 2:
             flag = ID_PY_EVENT
         else:
+            self.finalize()
             raise Radau5Error(flag, t)
         
         #Retrieving statistics
@@ -313,7 +314,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                            verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                            verbose)
         self.log_message('',                                                                                   verbose)
-        
+
+    def finalize(self):
+        """
+        Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
+        """
+        if self.options["solver"] == 'c':
+            self.radau5.finalize_radau()
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
     """

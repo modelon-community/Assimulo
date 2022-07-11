@@ -35,7 +35,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             integer *mljac, integer *mujac, integer *imas, integer *mlmas,
             integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-            integer num_threads);
+            integer num_threads, int finalize);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
                    

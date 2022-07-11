@@ -34,7 +34,7 @@ static doublereal c_b116 = .25;
 	*mujac, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-	integer num_threads)
+	integer num_threads, int finalize)
 {
     /* Local variables */
     static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
@@ -73,12 +73,27 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, doublereal *, integer *, integer *, integer *, integer *,
 		integer *, integer *, integer *, doublereal *, integer *, integer,
-		integer);
+		integer, int);
     static integer nrejct;
     static logical implct;
     static integer istore;
     static logical startn;
     static doublereal uround;
+
+	if (finalize == 1){ // fast forward to radcor_ to de-allocate SuperLU memory
+		radcor_(1, (FP_CB_f)fcn, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+			NULL, (FP_CB_jac)jac, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			(FP_CB_solout)solout, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,
+			0, 1);
+		return 0;
+	}
 
 	integer nnz;
 /* ---------------------------------------------------------- */
@@ -757,7 +772,7 @@ static doublereal c_b116 = .25;
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
-		num_threads);
+		num_threads, 0);
     iwork[14] = nfcn;
     iwork[15] = njac;
     iwork[16] = nstep;
@@ -804,7 +819,7 @@ static doublereal c_b116 = .25;
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar, integer nnz,
-	integer num_threads)
+	integer num_threads, int finalize)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -846,7 +861,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *,
-		SuperLU_aux_z *, double *, int *, int *, int);
+		SuperLU_aux_z *, double *, int *, int *, int, int);
     static logical calhes;
     static doublereal erracc;
     static integer mujacj;
@@ -854,7 +869,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, logical *, integer *,
-		SuperLU_aux_d *, double *, int *, int *, int);
+		SuperLU_aux_d *, double *, int *, int *, int, int);
     static logical reject;
     static doublereal facgus;
     static integer mujacp;
@@ -882,13 +897,31 @@ static doublereal c_b116 = .25;
 	int fresh_jacobian = 0;
 
 	// sparse LU related parameters
-	int jac_nnz = nnz;
+	int jac_nnz_base = nnz;
+	int jac_nnz_actual = jac_nnz_base;
 	static double* jac_data;
 	static int *jac_indicies;
 	static int *jac_indptr;
 	static struct SuperLU_aux_d* slu_aux_d;
 	static struct SuperLU_aux_z* slu_aux_z;
 
+	if (finalize == 1){ // implicitly assumes *ijob == 8
+		free(jac_data);
+		free(jac_indicies);
+		free(jac_indptr);
+		if (slu_aux_d){
+			superlu_finalize_d(slu_aux_d);
+		}
+		if (slu_aux_z){
+			superlu_finalize_z(slu_aux_z);
+		}
+		jac_data = NULL;
+		jac_indicies = NULL;
+		jac_indptr = NULL;
+		slu_aux_d = NULL;
+		slu_aux_z = NULL;
+		return 0;
+	}
 	if (*ijob == 8){ // Sparse LU
 		/*
 		nnz + n = upper bound for number of non-zero elements
@@ -904,10 +937,10 @@ static doublereal c_b116 = .25;
 			jac_indptr = (int*) malloc((n+1) * sizeof(int));
 		}
 		if (!slu_aux_d){
-			slu_aux_d = superlu_init_d(num_threads, n, nnz);
+			slu_aux_d = superlu_init_d(num_threads, n, nnz + n);
 		}
 		if (!slu_aux_z){
-			slu_aux_z = superlu_init_z(num_threads, n, nnz);
+			slu_aux_z = superlu_init_z(num_threads, n, nnz + n);
 		}
 		if ((!jac_data) || (!jac_indicies) || (!jac_indptr) || (!slu_aux_d) || (!slu_aux_z)){ // Malloc failed
 			*idid = -9; 
@@ -1139,7 +1172,8 @@ L14:
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
 		if (*ijob == 8){ // Sparse LU
-			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			jac_nnz_actual = jac_nnz_base;
+			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
 			fresh_jacobian = 1;
@@ -1157,14 +1191,14 @@ L20:
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 			mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 			ijob, &calhes, &iphes[1], slu_aux_d,
-			jac_data, jac_indicies, jac_indptr, fresh_jacobian);
+			jac_data, jac_indicies, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 			mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 			lde1, &ip2[1], &ier, ijob, slu_aux_z,
-			jac_data, jac_indicies, jac_indptr, fresh_jacobian);
+			jac_data, jac_indicies, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
@@ -1544,17 +1578,23 @@ L179:
 L181:
 	werr++;
 	free(werr); // TODO: should werr be static?
-	if (*x == 10){ // TODO: remove this 
-		free(jac_data);
-		free(jac_indicies);
-		free(jac_indptr);
-		if (slu_aux_d){
-			superlu_finalize_d(slu_aux_d);
-		}
-		if (slu_aux_z){
-			superlu_finalize_z(slu_aux_z);
-		}
-	}
+	// if (*x == 10){ // TODO: remove this 
+		// free(jac_data);
+		// free(jac_indicies);
+		// free(jac_indptr);
+		// if (slu_aux_d){
+		// 	superlu_finalize_d(slu_aux_d);
+		// }
+		// if (slu_aux_z){
+		// 	superlu_finalize_z(slu_aux_z);
+		// }
+
+		// jac_data = NULL;
+		// jac_indicies = NULL;
+		// jac_indptr = NULL;
+		// slu_aux_d = NULL;
+		// slu_aux_z = NULL;
+	// }
 
 	return 0;
 } /* radcor_ */
@@ -3059,7 +3099,7 @@ L200:
 	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *e1,
 	integer *lde1, integer *ip1, integer *ier, integer *ijob, logical *calhes,
 	integer *iphes, SuperLU_aux_d* slu_aux,
-	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian)
+	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -3301,7 +3341,7 @@ L7:
 
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
-	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian);
+	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
 	*ier = superlu_factorize_d(slu_aux);
     return 0;
 
@@ -3320,7 +3360,7 @@ L55:
 	integer *m1, integer *m2, integer *nm1, doublereal *alphn, doublereal *betan,
 	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
-	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian)
+	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
@@ -3612,7 +3652,7 @@ L7:
 
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
-	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian);
+	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
 	*ier = superlu_factorize_z(slu_aux);
     return 0;
 

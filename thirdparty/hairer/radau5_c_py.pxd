@@ -41,6 +41,6 @@ cdef extern from "radau_decsol_c.h":
                  integer*, FP_CB_jac, FP_CB_jac_sparse, void*, integer*, integer*, integer*,
                  integer*, integer*, integer*, FP_CB_solout,
                  void*, integer*, doublereal*, integer*, integer*, integer*,
-                 doublereal*, integer*, integer*, integer)
+                 doublereal*, integer*, integer*, integer, integer)
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
