@@ -35,8 +35,12 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             integer *mljac, integer *mujac, integer *imas, integer *mlmas,
             integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-            integer num_threads, int finalize);
+            double* jac_data, int* jac_indices, int* jac_indptr,
+	        SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
+
+int radau_sparse_aux_init(double**, int**, int**, int, int);
+int radau_sparse_aux_finalize(double**, int**, int**);
                    
 #endif

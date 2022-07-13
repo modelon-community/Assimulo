@@ -17,11 +17,21 @@
 
 import numpy as N
 import scipy as S
-import scipy.linalg as LIN
 import scipy.sparse as sp
 
-from assimulo.exception import *
-from assimulo.ode import *
+from assimulo.exception import (
+    AssimuloException,
+    Explicit_ODE_Exception,
+    Implicit_ODE_Exception,
+     AssimuloRecoverableError
+)
+from assimulo.ode import (
+    NORMAL,
+    ID_PY_OK,
+    ID_PY_EVENT,
+    ID_PY_COMPLETE,
+    SCREAM
+)
 
 from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
@@ -122,6 +132,21 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 # raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
                 print("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 self.linear_solver = "DENSE"
+                return
+
+            if not isinstance(self.problem_info["jac_fcn_nnz"], int):
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be an integer, received: {}.".format(self.problem_info["jac_fcn_nnz"]))
+            if self.problem_info["jac_fcn_nnz"] <= 0:
+                if self.problem_info["jac_fcn_nnz"] == -1: ## Default
+                    raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive.")
+            if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2:
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must infeasible, must be smaller than the problem dimension squared.")
+            
+            ## initialize necessary superLU datastructures
+            self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
+            self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
+
         if not self.solver_module_imported:
             self.solver = self.options["solver"] 
             
@@ -227,7 +252,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
+        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+13*self.problem_info["dim"]+20)) #Work (double) vector
         IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
@@ -244,15 +269,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         IWORK[1] = self.maxsteps
         IWORK[2] = self.newt
 
-        if self.options["linear_solver"] == "SPARSE":
-            IWORK[10] = 1
-            if self.problem_info["jac_fcn_nnz"] == -1: ## Default
-                raise Radau_Exception("Number of non-zero elements of sparse Jacobian not set")
-            try: 
-                IWORK[11] = int(self.problem_info["jac_fcn_nnz"])
-            except:
-                raise Radau_Exception("Number of non-zero elements of sparse Jacobian invalid, value: {}.".format(self.problem_info["jac_fcn_nnz"]))
-        
         #Dummy methods
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
@@ -262,15 +278,21 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.set_problem_data()
             self._tlist = []
             self._ylist = []
-            
         
         #Store the opts
         self._opts = opts
 
         if self.options["solver"] == 'c':
-            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
-                                                       IOUT, WORK, IWORK, self.options["num_threads"])
+            if self.options["linear_solver"] == "SPARSE":
+                IWORK[10] = 1
+                IWORK[11] = self.problem_info["jac_fcn_nnz"]
+                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                           IOUT, WORK, IWORK, self.RadauSuperLUaux)
+            else:
+                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                           IOUT, WORK, IWORK, self.radau5.RadauSuperLUaux())
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
@@ -319,8 +341,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
         """
-        if self.options["solver"] == 'c':
-            self.radau5.finalize_radau()
+        if hasattr(self, 'RadauSuperLUaux'):
+            flag = self.RadauSuperLUaux.finalize()
+            if flag != 0:
+                Radau_Exception("Failure in freeing memory of SuperLU datastructures.")
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
     """
@@ -1046,9 +1070,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
 
         if self.options["solver"] == 'c':
             raise Radau_Exception("Radau5DAE does not support 'linear_solver' = 'c', use 'linear_solver' = 'f' instead")
-            # t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
-            #                                            ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
-            #                                            IOUT, WORK, IWORK, self.options["num_threads"])
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,

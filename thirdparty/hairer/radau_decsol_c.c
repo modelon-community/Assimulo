@@ -34,9 +34,11 @@ static doublereal c_b116 = .25;
 	*mujac, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-	integer num_threads, int finalize)
+	double* jac_data, int* jac_indices, int* jac_indptr,
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* Local variables */
+	static integer iewerr;
     static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
 	    iez1, iez2, iez3;
     static doublereal facl;
@@ -72,28 +74,14 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, doublereal *, integer *, integer *, integer *, integer *,
-		integer *, integer *, integer *, doublereal *, integer *, integer,
-		integer, int);
+		integer *, integer *, integer *, doublereal *, integer *, doublereal *, integer,
+		double*, int*, int*,
+		SuperLU_aux_d*, SuperLU_aux_z*);
     static integer nrejct;
     static logical implct;
     static integer istore;
     static logical startn;
     static doublereal uround;
-
-	if (finalize == 1){ // fast forward to radcor_ to de-allocate SuperLU memory
-		radcor_(1, (FP_CB_f)fcn, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-			NULL, (FP_CB_jac)jac, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			(FP_CB_solout)solout, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0,
-			0, 1);
-		return 0;
-	}
 
 	integer nnz;
 /* ---------------------------------------------------------- */
@@ -266,7 +254,7 @@ static doublereal c_b116 = .25;
 /*                 WORK(21),..,WORK(LWORK) SERVE AS WORKING SPACE */
 /*                 FOR ALL VECTORS AND MATRICES. */
 /*                 "LWORK" MUST BE AT LEAST */
-/*                             N*(LJAC+LMAS+3*LE+12)+20 */
+/*                             N*(LJAC+LMAS+3*LE+13)+20 */
 /*                 WHERE */
 /*                    LJAC=N              IF MLJAC=N (FULL JACOBIAN) */
 /*                    LJAC=MLJAC+MUJAC+1  IF MLJAC<N (BANDED JAC.) */
@@ -281,9 +269,9 @@ static doublereal c_b116 = .25;
 /*                 IN THE USUAL CASE WHERE THE JACOBIAN IS FULL AND THE */
 /*                 MASS-MATRIX IS THE INDENTITY (IMAS=0), THE MINIMUM */
 /*                 STORAGE REQUIREMENT IS */
-/*                             LWORK = 4*N*N+12*N+20. */
+/*                             LWORK = 4*N*N+13*N+20. */
 /*                 IF IWORK(9)=M1>0 THEN "LWORK" MUST BE AT LEAST */
-/*                          N*(LJAC+12)+(N-M1)*(LMAS+3*LE)+20 */
+/*                          N*(LJAC+13)+(N-M1)*(LMAS+3*LE)+20 */
 /*                 WHERE IN THE DEFINITIONS OF LJAC, LMAS AND LE THE */
 /*                 NUMBER N CAN BE REPLACED BY N-M1. */
 
@@ -726,7 +714,8 @@ static doublereal c_b116 = .25;
 		}
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
-    iez1 = 21;
+	iewerr = 21;
+    iez1 = iewerr + n;
     iez2 = iez1 + n;
     iez3 = iez2 + n;
     iey0 = iez3 + n;
@@ -771,8 +760,9 @@ static doublereal c_b116 = .25;
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
-	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1], nnz,
-		num_threads, 0);
+	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1],
+		&work[iewerr], // entry point for werr
+		nnz, jac_data, jac_indices, jac_indptr, slu_aux_d, slu_aux_z);
     iwork[14] = nfcn;
     iwork[15] = njac;
     iwork[16] = nstep;
@@ -818,8 +808,10 @@ static doublereal c_b116 = .25;
 	doublereal *e2r, doublereal *e2i, doublereal *fmas, integer *ip1, 
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
-	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar, integer nnz,
-	integer num_threads, int finalize)
+	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar,
+	doublereal *werr, integer nnz,
+	double* jac_data, int* jac_indices, int* jac_indptr,
+	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -881,7 +873,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
-	    doublereal *, integer *, SuperLU_aux_d*, SuperLU_aux_z*, integer *);
+	    doublereal *, integer *, SuperLU_aux_d*, integer *);
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer *,
@@ -899,54 +891,6 @@ static doublereal c_b116 = .25;
 	// sparse LU related parameters
 	int jac_nnz_base = nnz;
 	int jac_nnz_actual = jac_nnz_base;
-	static double* jac_data;
-	static int *jac_indicies;
-	static int *jac_indptr;
-	static struct SuperLU_aux_d* slu_aux_d;
-	static struct SuperLU_aux_z* slu_aux_z;
-
-	if (finalize == 1){ // implicitly assumes *ijob == 8
-		free(jac_data);
-		free(jac_indicies);
-		free(jac_indptr);
-		if (slu_aux_d){
-			superlu_finalize_d(slu_aux_d);
-		}
-		if (slu_aux_z){
-			superlu_finalize_z(slu_aux_z);
-		}
-		jac_data = NULL;
-		jac_indicies = NULL;
-		jac_indptr = NULL;
-		slu_aux_d = NULL;
-		slu_aux_z = NULL;
-		return 0;
-	}
-	if (*ijob == 8){ // Sparse LU
-		/*
-		nnz + n = upper bound for number of non-zero elements
-		This is required since we automatically update the CSC format during jacobian evaluation as to include the diagonal
-		*/
-		if (!jac_data){
-			jac_data = (double*) malloc((nnz + n) * sizeof(double));
-		}
-		if (!jac_indicies){
-			jac_indicies = (int*) malloc((nnz + n) * sizeof(int));
-		}
-		if (!jac_indptr){
-			jac_indptr = (int*) malloc((n+1) * sizeof(int));
-		}
-		if (!slu_aux_d){
-			slu_aux_d = superlu_init_d(num_threads, n, nnz + n);
-		}
-		if (!slu_aux_z){
-			slu_aux_z = superlu_init_z(num_threads, n, nnz + n);
-		}
-		if ((!jac_data) || (!jac_indicies) || (!jac_indptr) || (!slu_aux_d) || (!slu_aux_z)){ // Malloc failed
-			*idid = -9; 
-			goto L181;
-		} 
-	}
 	/* ---------------------------------------------------------- */
 	/*     CORE INTEGRATOR FOR RADAU5 */
 	/*     PARAMETERS SAME AS IN RADAU5 WITH WORKSPACE ADDED */
@@ -959,7 +903,6 @@ static doublereal c_b116 = .25;
 	/* --------- DUPLIFY N FOR COMMON BLOCK CONT ----- */
 
     /* Parameter adjustments */
-    doublereal *werr = (doublereal*) malloc(n * sizeof(doublereal));
     --cont;
     --f3;
     --f2;
@@ -1173,7 +1116,7 @@ L14:
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
 		if (*ijob == 8){ // Sparse LU
 			jac_nnz_actual = jac_nnz_base;
-			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indicies, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indices, jac_indptr, &rpar[1], &ipar[1], jac_PY);
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
 			fresh_jacobian = 1;
@@ -1191,14 +1134,14 @@ L20:
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 			mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 			ijob, &calhes, &iphes[1], slu_aux_d,
-			jac_data, jac_indicies, jac_indptr, fresh_jacobian, jac_nnz_actual);
+			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 			mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 			lde1, &ip2[1], &ier, ijob, slu_aux_z,
-			jac_data, jac_indicies, jac_indptr, fresh_jacobian, jac_nnz_actual);
+			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
@@ -1367,7 +1310,7 @@ L40:
 			&y0[1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
 			&iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1],
-			slu_aux_d, slu_aux_z, &ier);
+			slu_aux_d, &ier);
 	if (ier){
 		goto L184;
 	}
@@ -1576,26 +1519,6 @@ L179:
 
 /* --- EXIT OF RADCOR */
 L181:
-	werr++;
-	free(werr); // TODO: should werr be static?
-	// if (*x == 10){ // TODO: remove this 
-		// free(jac_data);
-		// free(jac_indicies);
-		// free(jac_indptr);
-		// if (slu_aux_d){
-		// 	superlu_finalize_d(slu_aux_d);
-		// }
-		// if (slu_aux_z){
-		// 	superlu_finalize_z(slu_aux_z);
-		// }
-
-		// jac_data = NULL;
-		// jac_indicies = NULL;
-		// jac_indptr = NULL;
-		// slu_aux_d = NULL;
-		// slu_aux_z = NULL;
-	// }
-
 	return 0;
 } /* radcor_ */
 
@@ -1604,8 +1527,7 @@ L181:
 
 /* *********************************************************** */
 
-doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *
-	lrc)
+doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 {
     /* System generated locals */
     doublereal ret_val;
@@ -4098,7 +4020,7 @@ L55:
 	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
 	doublereal *fac1, doublereal *rpar, integer *ipar,
-	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z, integer *ier)
+	SuperLU_aux_d* slu_aux_d, integer *ier)
 {
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
@@ -4524,3 +4446,18 @@ L88:
 L55:
     return 0;
 } /* estrad_ */
+
+
+int radau_sparse_aux_init(double** jac_data, int** jac_indices, int** jac_indptr, int nnz, int n){
+	*jac_data = (double*)malloc((nnz + n)*sizeof(double));
+	*jac_indices = (int*)malloc((nnz + n)*sizeof(int));
+	*jac_indptr = (int*)malloc((n + 1)*sizeof(int));
+	return 0;
+}
+
+int radau_sparse_aux_finalize(double** jac_data, int** jac_indices, int** jac_indptr){
+	free(*jac_data);
+	free(*jac_indices);
+	free(*jac_indptr);
+	return 0;
+}
