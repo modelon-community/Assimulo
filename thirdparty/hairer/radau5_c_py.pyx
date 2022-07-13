@@ -124,7 +124,6 @@ cdef class RadauSuperLUaux:
         self.superLU_aux_struct_z = superlu_init_z(nprocs, n, nnz)
 
         radau_sparse_aux_init(&self.jac_data, &self.jac_indicies, &self.jac_indptr, nnz, n)
-        self.initialized = 1
         return 0
 
     cpdef int finalize(self):
