@@ -108,6 +108,34 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
 
     return irtrn[0]
 
+cdef class RadauSuperLUaux:
+    """Auxiliary data structure to have the memory ownership of internal
+    and auxiliary superLU data structures available on the highest possible level.
+    """
+    cdef SuperLU_aux_d* superLU_aux_struct_d # real
+    cdef SuperLU_aux_z* superLU_aux_struct_z # complex
+    ## data storage of sparse jacobian
+    cdef double* jac_data
+    cdef int* jac_indicies
+    cdef int* jac_indptr
+    
+    cpdef int initialize(self, int nprocs, int n, int nnz):
+        self.superLU_aux_struct_d = superlu_init_d(nprocs, n, nnz)
+        self.superLU_aux_struct_z = superlu_init_z(nprocs, n, nnz)
+
+        radau_sparse_aux_init(&self.jac_data, &self.jac_indicies, &self.jac_indptr, nnz, n)
+        self.initialized = 1
+        return 0
+
+    cpdef int finalize(self):
+        radau_sparse_aux_finalize(&self.jac_data, &self.jac_indicies, &self.jac_indptr)
+        cdef int ret
+        ret = superlu_finalize_d(self.superLU_aux_struct_d)
+        if ret != 0:
+            return ret
+        ret = superlu_finalize_z(self.superLU_aux_struct_z)
+        return ret
+
 cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                              double * data, int *indices, int *indptr,
                              doublereal* rpar, integer* ipar,
@@ -209,7 +237,8 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
              integer itol, jac_PY, integer ijac, integer mljac, integer mujac,
              mas_PY, integer imas, integer mlmas, integer mumas, solout_PY,
-             integer iout, np.ndarray work, np.ndarray iwork, integer num_threads):
+             integer iout, np.ndarray work, np.ndarray iwork,
+             RadauSuperLUaux aux_class):
     """
     Python interface for calling the C based Radau solver
 
@@ -276,8 +305,8 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                         - Advanced tuning parameters of Radau solver, see radau_decsol.c for details
             iwork
                         - Advanced tuning parameters of Radau solver, see radau_decsol.c for details
-            num_threads
-                        - Number of threads used for SuperLU (sparse only)
+            aux_class
+                        - instance of RadauSuperLUaux, needs to be initialized via aux_class.initialize for SPARSE solver
         Returns::
             
             x
@@ -308,12 +337,22 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] atol_vec = atol
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
-    
-    radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                         &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
-                         callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
-                         &ipar, &idid, num_threads, 0)
+
+    if iwork[10]: ## sparse
+        radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+                            &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
+                            &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
+                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
+                            &ipar, &idid,
+                            aux_class.jac_data, aux_class.jac_indicies, aux_class.jac_indptr,
+                            aux_class.superLU_aux_struct_d, aux_class.superLU_aux_struct_z)
+    else: ## Dense
+        radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+                            &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
+                            &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
+                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
+                            &ipar, &idid,
+                            NULL, NULL, NULL, NULL, NULL)
     
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 
@@ -338,11 +377,3 @@ cpdef contr5(integer i__, doublereal x, np.ndarray cont):
     cdef integer lrc = len(cont)
     cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
     return radau5_c_py.contr5_c(&i__, &x, &cont_vec[0], &lrc)
-
-cpdef finalize_radau():
-    radau5_c_py.radau5_c(1, callback_fcn, NULL, NULL, NULL, NULL,
-                            NULL, NULL, NULL, NULL, callback_jac, callback_jac_sparse, NULL,
-                            NULL, NULL, NULL, NULL, NULL, NULL,
-                            callback_solout, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                            NULL, NULL, 0, 1)
-    return 0

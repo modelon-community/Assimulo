@@ -29,7 +29,7 @@ struct SuperLU_aux_z{
 
 // Initialization of required data structures for SuperLU
 SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
-    SuperLU_aux_z *slu_aux = (SuperLU_aux_z *)malloc(sizeof(SuperLU_aux_z));
+    SuperLU_aux_z* slu_aux = (SuperLU_aux_z*)malloc(sizeof(SuperLU_aux_z));
     if (slu_aux == NULL) SUPERLU_ABORT("Malloc failed for slu_aux.");
     slu_aux->setup_done = 0;
     slu_aux->fact_done = 0;
@@ -147,7 +147,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
 }
 
 // Factorize matrix
-int superlu_factorize_z(SuperLU_aux_z * slu_aux){
+int superlu_factorize_z(SuperLU_aux_z* slu_aux){
     int info;
     // clean up memory in case of re-factorization
     if (slu_aux->fact_done){
@@ -183,7 +183,7 @@ int superlu_factorize_z(SuperLU_aux_z * slu_aux){
 }
 
 // Solve linear system based on previous factorization
-int superlu_solve_z(SuperLU_aux_z * slu_aux, double *rhs_r, double* rhs_i){
+int superlu_solve_z(SuperLU_aux_z* slu_aux, double *rhs_r, double* rhs_i){
     int i, n, info;
     n = slu_aux->n;
 
@@ -202,7 +202,7 @@ int superlu_solve_z(SuperLU_aux_z * slu_aux, double *rhs_r, double* rhs_i){
 }
 
 // de-allocate memory
-int superlu_finalize_z(SuperLU_aux_z *slu_aux){
+int superlu_finalize_z(SuperLU_aux_z* slu_aux){
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);
 
