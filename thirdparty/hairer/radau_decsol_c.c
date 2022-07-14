@@ -705,14 +705,6 @@ static doublereal c_b116 = .25;
 		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
 		arret = TRUE_;
 	}
-	/* -------- SPARSE LU COMPATIBILITY CHECKS */
-	if (iwork[11] && implct){
-		if (*mlmas || *mumas){
-			printf("SPARSE LU OPTION (IWORK(11)) CURRENTLY ONLY COMPATIBLE WITH DIAGONAL MASS MATRICES\n");
-			printf("GIVEN BANDWIDTH OF MASS MATRIX: LOWER: %i, UPPER: %i \n", *mlmas, *mumas);
-			arret = TRUE_;
-		}
-	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
 	iewerr = 21;
     iez1 = iewerr + n;
@@ -946,10 +938,6 @@ static doublereal c_b116 = .25;
     // index1 = *nind1 != 0;
     index2 = *nind2 != 0;
     index3 = *nind3 != 0;
-	/* ------- COMPUTE MASS MATRIX FOR IMPLICIT CASE ---------- */
-    // if (*implct) {
-    // 	(*mas)(*nm1, &fmas[fmas_offset], ldmas, &rpar[1], &ipar[1], mas_PY);
-    // }
 	/* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
     c1 = (4. - sq6) / 10.;
