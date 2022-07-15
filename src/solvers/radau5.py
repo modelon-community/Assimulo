@@ -140,7 +140,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 if self.problem_info["jac_fcn_nnz"] == -1: ## Default
                     raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
-            if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2:
+            if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must infeasible, must be smaller than the problem dimension squared.")
             
             ## initialize necessary superLU datastructures
