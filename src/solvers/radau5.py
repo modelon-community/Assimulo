@@ -127,9 +127,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #    self.statistics[k] = 0
         if self.options["linear_solver"] == "SPARSE":
             if self.options["solver"] == "f":
-                raise Radau_Exception("Sparse Linear solver not supported for Fotran based solver, instead use 'solver' = 'c' or 'linear_solver' = 'DENSE'.")
+                raise Radau_Exception("Sparse Linear solver not supported for Fortran based solver, instead use 'solver' = 'c' or 'linear_solver' = 'DENSE'.")
             if not self.usejac:
-                # raise Radau_Exception("Sparse Linear solver not compatible with numerically computed Jacobians. Provide a sparse Jacobian or instead use 'linear_solver' = 'dense'.")
+                raise Radau_Exception("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 print("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 self.linear_solver = "DENSE"
                 return
@@ -139,7 +139,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if self.problem_info["jac_fcn_nnz"] <= 0:
                 if self.problem_info["jac_fcn_nnz"] == -1: ## Default
                     raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
-                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive.")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must infeasible, must be smaller than the problem dimension squared.")
             

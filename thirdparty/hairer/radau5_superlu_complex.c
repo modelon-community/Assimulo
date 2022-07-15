@@ -173,6 +173,7 @@ int superlu_factorize_z(SuperLU_aux_z* slu_aux){
 
 // Solve linear system based on previous factorization
 int superlu_solve_z(SuperLU_aux_z* slu_aux, double *rhs_r, double* rhs_i){
+    printf("SPARSE SPARSE solve");
     int i, n, info;
     n = slu_aux->n;
 
