@@ -86,12 +86,7 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
     // allocate memory for storing matrix of linear system
     // min(nnz_jac + n, n*n) is upper bound on storage requirement of linear system
     slu_aux->data_sys = doublecomplexMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
-    slu_aux->indices_sys = intMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
-    slu_aux->indptr_sys = intMalloc(slu_aux->n+1);
-
     if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for data_sys[].");}
-    if (!slu_aux->indices_sys) {SUPERLU_ABORT("Malloc fails for indices_sys[].");}
-    if (!slu_aux->indptr_sys)  {SUPERLU_ABORT("Malloc fails for indptr_sys[].");}
 
     return slu_aux;
 }
@@ -111,13 +106,8 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
 
     // build system matrix (scale_r + i*scale_i) * I - JAC
     // Copy jacobian data to slu_aux structure & scale diagonal
-    for(i = 0; i < slu_aux->n + 1; i++){
-        slu_aux->indptr_sys[i] = indptr_J[i];
-    }
-
-    for(i = 0; i < slu_aux->nnz_jac; i++){
-        slu_aux->indices_sys[i] = indices_J[i];
-    }
+    slu_aux->indices_sys = indices_J;
+    slu_aux->indptr_sys = indptr_J;
 
     // Copy values to slu_aux structure & scale diagonal
     for (i = 0; i < slu_aux-> n; i++){
@@ -210,12 +200,9 @@ int superlu_finalize_z(SuperLU_aux_z* slu_aux){
     StatFree(slu_aux->Gstat);
 
     if (slu_aux->setup_done){
-        Destroy_CompCol_Matrix(slu_aux->A);
-    }else{
-        SUPERLU_FREE(slu_aux->data_sys);
-        SUPERLU_FREE(slu_aux->indices_sys);
-        SUPERLU_FREE(slu_aux->indptr_sys);
+        free(slu_aux->A->Store);
     }
+    SUPERLU_FREE(slu_aux->data_sys);
 
     if (slu_aux->fact_done){
         SCPformat *LStore = slu_aux->L->Store;
