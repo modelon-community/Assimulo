@@ -109,7 +109,6 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
     slu_aux->indices_sys = indices_J;
     slu_aux->indptr_sys = indptr_J;
 
-    // Copy values to slu_aux structure & scale diagonal
     for (i = 0; i < slu_aux-> n; i++){
         for (j = indptr_J[i]; j < indptr_J[i+1]; j++){
             slu_aux->data_sys[current_idx].r = data_J[current_idx];
