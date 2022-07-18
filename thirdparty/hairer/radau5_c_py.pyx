@@ -20,25 +20,24 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+import scipy.sparse as sps
 
 from numpy cimport PyArray_DATA
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c(double* dest, object source, int dim):
+cdef void py2c_d(double* dest, object source, int dim):
     """
-    Copy 1D numpy array data to (double *) C vector
+    Copy 1D numpy (double) array to (double *) C vector
     """
-    cdef double* data
     if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.float):
         source = np.ascontiguousarray(source, dtype=np.float)
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-    data = <double*>PyArray_DATA(source)
-    memcpy(dest, data, dim*sizeof(double))
+    memcpy(dest, <double*>PyArray_DATA(source), dim*sizeof(double))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_matrix_flat_F(double* dest, object source, int nrow, int ncol):
+cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     """
     Copy (square) 2D numpy array (order = c) to (double *) C matrix (with Fortran-style column major ordering)
     """
@@ -49,7 +48,7 @@ cdef void py2c_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
+cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
     """
     Copy (double *) C vector to 1D numpy array
     """
@@ -72,9 +71,9 @@ cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_
     Internal callback function to enable call to Python based rhs function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
-    c2py(y_py_in, y_in, n)
+    c2py_d(y_py_in, y_in, n)
     res = (<object>fcn_PY)(x[0], y_py_in)
-    py2c(y_out, res[0], len(res[0]))
+    py2c_d(y_out, res[0], len(res[0]))
     ipar[0] = res[1][0]
     return 0
 
@@ -84,7 +83,7 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     Internal callback function to enable call to Python based Jacobian function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
-    c2py(y_py_in, y, n)
+    c2py_d(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
     py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
@@ -98,9 +97,9 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(nsolu[0], dtype = np.double)
     cdef np.ndarray[double, ndim=1, mode="c"]cont_py = np.empty(4*nsolu[0], dtype = np.double)
     cdef np.ndarray[double, ndim=1, mode="c"]werr_py = np.empty(nsolu[0], dtype = np.double)
-    c2py(y_py, y, nsolu[0])
-    c2py(cont_py, cont, 4*nsolu[0])
-    c2py(werr_py, werr, nsolu[0])
+    c2py_d(y_py, y, nsolu[0])
+    c2py_d(cont_py, cont, 4*nsolu[0])
+    c2py_d(werr_py, werr, nsolu[0])
 
     irtrn[0] = (<object>solout_PY)(nrsol[0], xosol[0], xsol[0],
                                    y_py, cont_py, werr_py,
