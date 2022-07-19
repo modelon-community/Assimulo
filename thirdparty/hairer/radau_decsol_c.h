@@ -20,7 +20,7 @@ typedef int logical;
 typedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,
                        doublereal*, integer*, void*);
 typedef int (*FP_CB_jac)(integer, doublereal*, doublereal*, doublereal*,
-                         integer*, doublereal*, integer*, void*);
+                         doublereal*, integer*, void*);
 typedef int (*FP_CB_mas)(integer, doublereal*, integer*, doublereal*,
                          integer*, void*);
 typedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,

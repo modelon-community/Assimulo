@@ -38,7 +38,7 @@ cdef extern from "radau_decsol_c.h":
     ctypedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,
                             doublereal*, integer*, void*)
     ctypedef int (*FP_CB_jac)(integer, doublereal*, doublereal*, doublereal*,
-                            integer*, doublereal*, integer*, void*)
+                              doublereal*, integer*, void*)
     ctypedef int (*FP_CB_mas)(integer, doublereal*, integer*, doublereal*,
                             integer*, void*)
     ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,

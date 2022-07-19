@@ -468,6 +468,8 @@ static doublereal c_b116 = .25;
     --rpar;
     --ipar;
 
+	*imas = 0; // always assume Mass matrix = identity
+
     /* Function Body */
     nfcn = 0;
     njac = 0;
@@ -638,7 +640,8 @@ static doublereal c_b116 = .25;
 	/*         COMPUTATION OF ARRAY ENTRIES */
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/* ---- IMPLICIT, BANDED OR NOT ? */
-    implct = *imas != 0;
+    // implct = *imas != 0;
+	implct = 0;
     jband = *mljac < nm1;
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
 	/* -- JACOBIAN AND MATRICES E1, E2 */
@@ -1109,7 +1112,7 @@ L14:
 			if (ier > 0){ goto L182;}
 			fresh_jacobian = 1;
 		} else { // dense jacobian
-			(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+			(*jac)(n, x, &y[1], &fjac[fjac_offset], &rpar[1], &ipar[1], jac_PY);
 		}
     }
     caljac = TRUE_;

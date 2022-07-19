@@ -78,7 +78,7 @@ cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_
     return 0
 
 cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
-                      integer* ldjac, doublereal* rpar, integer* ipar, void* jac_PY):
+                      doublereal* rpar, integer* ipar, void* jac_PY):
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
