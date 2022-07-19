@@ -35,21 +35,19 @@ cdef extern from "radau_decsol_c.h":
     ctypedef double doublereal
     
     ## FunctionPointer_CallBack
-    ctypedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,
-                            integer*, void*)
-    ctypedef int (*FP_CB_jac)(integer, doublereal*, doublereal*, doublereal*,
-                              integer*, void*)
+    ctypedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*, void*)
+    ctypedef int (*FP_CB_jac)(integer, doublereal*, doublereal*, doublereal*, void*)
     ctypedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
                                 doublereal*, doublereal*, integer*, integer*,
-                                integer*, integer*, void*)
-    ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, integer*, void*)
+                                integer*, void*)
+    ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*)
 
     int radau5_c(integer, FP_CB_f, void*, doublereal*, doublereal*,
                  doublereal*, doublereal*, doublereal*, doublereal*,
                  integer*, FP_CB_jac, FP_CB_jac_sparse, void*, integer*, integer*, integer*,
                  integer*, integer*, integer*, FP_CB_solout,
                  void*, integer*, doublereal*, integer*, integer*, integer*,
-                 integer*, integer*,
+                 integer*,
                  double*, int*, int*,
 	             SuperLU_aux_d*, SuperLU_aux_z*)
 

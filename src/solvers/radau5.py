@@ -180,7 +180,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def interpolate(self, time):
         y = N.empty(self._leny)
         for i in range(self._leny):
-            # Note: index shift to Fortan based indices
+            # Note: index shift to Fortran based indices
             y[i] = self.radau5.contr5(i+1, time, self.cont)
         
         return y
