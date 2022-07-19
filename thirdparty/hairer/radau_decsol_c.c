@@ -436,9 +436,9 @@ static doublereal c_b116 = .25;
 /*   IWORK(17)  NACCPT  NUMBER OF ACCEPTED STEPS */
 /*   IWORK(18)  NREJCT  NUMBER OF REJECTED STEPS (DUE TO ERROR TEST), */
 /*                      (STEP REJECTIONS IN THE FIRST STEP ARE NOT COUNTED) */
-/*   IWORK(19)  NDEC    NUMBER OF LU-DECOMPOSITIONS OF BOTH MATRICES */
-/*   IWORK(20)  NSOL    NUMBER OF FORWARD-BACKWARD SUBSTITUTIONS, OF BOTH */
-/*                      SYSTEMS; THE NSTEP FORWARD-BACKWARD SUBSTITUTIONS, */
+/*   IWORK(19)  NDEC    NUMBER OF LU-DECOMPOSITIONS OF JACBOIAN MATRICES */
+/*   IWORK(20)  NSOL    NUMBER OF FORWARD-BACKWARD SUBSTITUTIONS */
+/*                      THE NSTEP FORWARD-BACKWARD SUBSTITUTIONS, */
 /*                      NEEDED FOR STEP SIZE SELECTION, ARE NOT COUNTED */
 /* ----------------------------------------------------------------------- */
 /* *** *** *** *** *** *** *** *** *** *** *** *** *** */
@@ -838,18 +838,19 @@ static doublereal c_b116 = .25;
     static doublereal facgus;
     static integer mujacp;
     extern /* Subroutine */ int estrad_(integer, doublereal *, integer *, 
-	    integer *, integer *, doublereal *, integer *, integer *, integer *,
+	    doublereal *, integer *, integer *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
 	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
-	    integer *, integer *, integer *, doublereal *, integer *, 
+	    doublereal *, integer *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
+	    doublereal *, doublereal *, logical *, logical *,
 	    SuperLU_aux_d*, integer *);
+		
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
-	    integer *, integer *, doublereal *, integer *, integer *, integer *,
-	    integer *, integer *, integer *, doublereal *, doublereal *, 
+	    doublereal *, integer *, integer *, integer *,
+	    doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, integer *, integer *, 
@@ -1210,8 +1211,8 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-    slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
-			ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[e1_offset],
+    slvrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], 
+			ldmas, mlmas, mumas, &fac1, &alphn, &betan, &e1[e1_offset],
 			&e2r[e2r_offset], &e2i[e2i_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
 			&iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
@@ -1270,11 +1271,11 @@ L40:
 		goto L40;
     }
 	/* --- ERROR ESTIMATION */
-    estrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset],  
+    estrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset],  
 			ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
-			&y0[1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1,
+			&y0[1], &y[1], ijob, x, &e1[e1_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
-			&iphes[1], &scal[1], &err, &first, &reject, &fac1,
+			&iphes[1], &scal[1], &err, &first, &reject,
 			slu_aux_d, &ier);
 	if (ier){
 		goto L184;
@@ -1688,179 +1689,6 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOL ------------------------- */
 } /* sol_ */
 
-/* Subroutine */ int dech_(integer n, integer *ndim, doublereal *a, integer *
-	lb, integer *ip, integer *ier)
-{
-    /* System generated locals */
-    integer a_dim1, a_offset;
-
-    /* Local variables */
-    static integer i, j, k, m;
-    static doublereal t;
-    static integer na, nm1, kp1;
-
-/* VERSION REAL DOUBLE PRECISION */
-/* ----------------------------------------------------------------------- */
-/*  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION OF A HESSENBERG */
-/*  MATRIX WITH LOWER BANDWIDTH LB */
-/*  INPUT.. */
-/*     N = ORDER OF MATRIX A. */
-/*     NDIM = DECLARED DIMENSION OF ARRAY  A . */
-/*     A = MATRIX TO BE TRIANGULARIZED. */
-/*     LB = LOWER BANDWIDTH OF A (DIAGONAL IS NOT COUNTED, LB.GE.1). */
-/*  OUTPUT.. */
-/*     A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U . */
-/*     A(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L. */
-/*     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW. */
-/*     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O . */
-/*     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE */
-/*           SINGULAR AT STAGE K. */
-/*  USE  SOLH  TO OBTAIN SOLUTION OF LINEAR SYSTEM. */
-/*  DETERM(A) = IP(N)*A(1,1)*A(2,2)*...*A(N,N). */
-/*  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO. */
-
-/*  REFERENCE.. */
-/*     THIS IS A SLIGHT MODIFICATION OF */
-/*     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER, */
-/*     C.A.C.M. 15 (1972), P. 274. */
-/* ----------------------------------------------------------------------- */
-    /* Parameter adjustments */
-    --ip;
-    a_dim1 = *ndim;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-
-    /* Function Body */
-    *ier = 0;
-    ip[n] = 1;
-    if (n == 1) {
-		goto L70;
-    }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
-		kp1 = k + 1;
-		m = k;
-		na = min(n, *lb + k);
-		for (i = kp1; i <= na; ++i) {
-			if (abs(a[i + k * a_dim1]) > abs(a[m + k * a_dim1])) {
-				m = i;
-			}
-		/* L10: */
-		}
-		ip[k] = m;
-		t = a[m + k * a_dim1];
-		if (m == k) {
-			goto L20;
-		}
-		ip[n] = -ip[n];
-		a[m + k * a_dim1] = a[k + k * a_dim1];
-		a[k + k * a_dim1] = t;
-L20:
-		if (t == 0.) {
-			goto L80;
-		}
-		t = 1. / t;
-		for (i = kp1; i <= na; ++i) {
-			/* L30: */
-			a[i + k * a_dim1] = -a[i + k * a_dim1] * t;
-		}
-		for (j = kp1; j <= n; ++j) {
-			t = a[m + j * a_dim1];
-			a[m + j * a_dim1] = a[k + j * a_dim1];
-			a[k + j * a_dim1] = t;
-			if (t == 0.) {
-				goto L45;
-			}
-			for (i = kp1; i <= na; ++i) {
-				/* L40: */
-				a[i + j * a_dim1] += a[i + k * a_dim1] * t;
-			}
-L45:
-	/* L50: */
-			;
-		}
-	/* L60: */
-    }
-L70:
-    k = n;
-    if (a[n + n * a_dim1] == 0.) {
-		goto L80;
-    }
-    return 0;
-L80:
-    *ier = k;
-    ip[n] = 0;
-    return 0;
-/* ----------------------- END OF SUBROUTINE DECH ------------------------ */
-} /* dech_ */
-
-/* Subroutine */ int solh_(integer n, integer *ndim, doublereal *a, integer *
-	lb, doublereal *b, integer *ip)
-{
-    /* System generated locals */
-    integer a_dim1, a_offset;
-
-    /* Local variables */
-    static integer i, k, m;
-    static doublereal t;
-    static integer kb, na, km1, nm1, kp1;
-
-/* VERSION REAL DOUBLE PRECISION */
-/* ----------------------------------------------------------------------- */
-/*  SOLUTION OF LINEAR SYSTEM, A*X = B . */
-/*  INPUT.. */
-/*    N = ORDER OF MATRIX A. */
-/*    NDIM = DECLARED DIMENSION OF ARRAY  A . */
-/*    A = TRIANGULARIZED MATRIX OBTAINED FROM DECH. */
-/*    LB = LOWER BANDWIDTH OF A. */
-/*    B = RIGHT HAND SIDE VECTOR. */
-/*    IP = PIVOT VECTOR OBTAINED FROM DEC. */
-/*  DO NOT USE IF DECH HAS SET IER .NE. 0. */
-/*  OUTPUT.. */
-/*    B = SOLUTION VECTOR, X . */
-/* ----------------------------------------------------------------------- */
-    /* Parameter adjustments */
-    --ip;
-    --b;
-    a_dim1 = *ndim;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-
-    /* Function Body */
-    if (n == 1) {
-		goto L50;
-    }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
-		kp1 = k + 1;
-		m = ip[k];
-		t = b[m];
-		b[m] = b[k];
-		b[k] = t;
-		na = min(n, *lb + k);
-		for (i = kp1; i <= na; ++i) {
-			/* L10: */
-			b[i] += a[i + k * a_dim1] * t;
-		}
-		/* L20: */
-    }
-    for (kb = 1; kb <= nm1; ++kb) {
-		km1 = n - kb;
-		k = km1 + 1;
-		b[k] /= a[k + k * a_dim1];
-		t = -b[k];
-		for (i = 1; i <= km1; ++i) {
-			/* L30: */
-			b[i] += a[i + k * a_dim1] * t;
-		}
-		/* L40: */
-    }
-L50:
-    b[1] /= a[a_dim1 + 1];
-    return 0;
-/* ----------------------- END OF SUBROUTINE SOLH ------------------------ */
-} /* solh_ */
-
 /* Subroutine */ int decc_(integer n, integer *ndim, doublereal *ar, 
 	doublereal *ai, integer *ip, integer *ier)
 {
@@ -2093,250 +1921,6 @@ L50:
     return 0;
 /* ----------------------- END OF SUBROUTINE SOLC ------------------------ */
 } /* solc_ */
-
-/* Subroutine */ int dechc_(integer n, integer *ndim, doublereal *ar, 
-	doublereal *ai, integer *lb, integer *ip, integer *ier)
-{
-    /* System generated locals */
-    integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-
-    /* Local variables */
-    static integer i, j, k, m, na;
-    static doublereal ti, tr;
-    static integer nm1, kp1;
-    static doublereal den, prodi, prodr;
-
-/* VERSION COMPLEX DOUBLE PRECISION */
-/* ----------------------------------------------------------------------- */
-/*  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION */
-/*  ------ MODIFICATION FOR COMPLEX MATRICES -------- */
-/*  INPUT.. */
-/*     N = ORDER OF MATRIX. */
-/*     NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI . */
-/*     (AR, AI) = MATRIX TO BE TRIANGULARIZED. */
-/*  OUTPUT.. */
-/*     AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART. */
-/*     AI(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; IMAGINARY PART. */
-/*     AR(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L. */
-/*                                                    REAL PART. */
-/*     AI(I,J), I.GT.J = MULTIPLIERS = LOWER TRIANGULAR FACTOR, I - L. */
-/*                                                    IMAGINARY PART. */
-/*     LB = LOWER BANDWIDTH OF A (DIAGONAL NOT COUNTED), LB.GE.1. */
-/*     IP(K), K.LT.N = INDEX OF K-TH PIVOT ROW. */
-/*     IP(N) = (-1)**(NUMBER OF INTERCHANGES) OR O . */
-/*     IER = 0 IF MATRIX A IS NONSINGULAR, OR K IF FOUND TO BE */
-/*           SINGULAR AT STAGE K. */
-/*  USE  SOL  TO OBTAIN SOLUTION OF LINEAR SYSTEM. */
-/*  IF IP(N)=O, A IS SINGULAR, SOL WILL DIVIDE BY ZERO. */
-
-/*  REFERENCE.. */
-/*     C. B. MOLER, ALGORITHM 423, LINEAR EQUATION SOLVER, */
-/*     C.A.C.M. 15 (1972), P. 274. */
-/* ----------------------------------------------------------------------- */
-    /* Parameter adjustments */
-    --ip;
-    ai_dim1 = *ndim;
-    ai_offset = 1 + ai_dim1;
-    ai -= ai_offset;
-    ar_dim1 = *ndim;
-    ar_offset = 1 + ar_dim1;
-    ar -= ar_offset;
-
-    /* Function Body */
-    *ier = 0;
-    ip[n] = 1;
-    if (*lb == 0) {
-		goto L70;
-    }
-    if (n == 1) {
-		goto L70;
-    }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
-		kp1 = k + 1;
-		m = k;
-		na = min(n, *lb + k);
-		for (i = kp1; i <= na; ++i) {
-			if (abs(ar[i + k * ar_dim1]) + abs(ai[i + k * ai_dim1]) > abs(ar[m + k * ar_dim1]) + abs(ai[m + k * ai_dim1])) {
-				m = i;
-			}
-			/* L10: */
-		}
-		ip[k] = m;
-		tr = ar[m + k * ar_dim1];
-		ti = ai[m + k * ai_dim1];
-		if (m == k) {
-			goto L20;
-		}
-		ip[n] = -ip[n];
-		ar[m + k * ar_dim1] = ar[k + k * ar_dim1];
-		ai[m + k * ai_dim1] = ai[k + k * ai_dim1];
-		ar[k + k * ar_dim1] = tr;
-		ai[k + k * ai_dim1] = ti;
-L20:
-		if (abs(tr) + abs(ti) == 0.) {
-			goto L80;
-		}
-		den = tr * tr + ti * ti;
-		tr /= den;
-		ti = -ti / den;
-		for (i = kp1; i <= na; ++i) {
-			prodr = ar[i + k * ar_dim1] * tr - ai[i + k * ai_dim1] * ti;
-			prodi = ai[i + k * ai_dim1] * tr + ar[i + k * ar_dim1] * ti;
-			ar[i + k * ar_dim1] = -prodr;
-			ai[i + k * ai_dim1] = -prodi;
-			/* L30: */
-		}
-		for (j = kp1; j <= n; ++j) {
-			tr = ar[m + j * ar_dim1];
-			ti = ai[m + j * ai_dim1];
-			ar[m + j * ar_dim1] = ar[k + j * ar_dim1];
-			ai[m + j * ai_dim1] = ai[k + j * ai_dim1];
-			ar[k + j * ar_dim1] = tr;
-			ai[k + j * ai_dim1] = ti;
-			if (abs(tr) + abs(ti) == 0.) {
-				goto L48;
-			}
-			if (ti == 0.) {
-				for (i = kp1; i <= na; ++i) {
-					prodr = ar[i + k * ar_dim1] * tr;
-					prodi = ai[i + k * ai_dim1] * tr;
-					ar[i + j * ar_dim1] += prodr;
-					ai[i + j * ai_dim1] += prodi;
-					/* L40: */
-				}
-				goto L48;
-			}
-			if (tr == 0.) {
-				for (i = kp1; i <= na; ++i) {
-					prodr = -ai[i + k * ai_dim1] * ti;
-					prodi = ar[i + k * ar_dim1] * ti;
-					ar[i + j * ar_dim1] += prodr;
-					ai[i + j * ai_dim1] += prodi;
-					/* L45: */
-				}
-				goto L48;
-			}
-			for (i = kp1; i <= na; ++i) {
-				prodr = ar[i + k * ar_dim1] * tr - ai[i + k * ai_dim1] * ti;
-				prodi = ai[i + k * ai_dim1] * tr + ar[i + k * ar_dim1] * ti;
-				ar[i + j * ar_dim1] += prodr;
-				ai[i + j * ai_dim1] += prodi;
-				/* L47: */
-			}
-L48:
-	/* L50: */
-			;
-		}
-	/* L60: */
-    }
-L70:
-    k = n;
-    if (abs(ar[n + n * ar_dim1]) + abs(ai[n + n * ai_dim1]) == 0.) {
-		goto L80;
-    }
-    return 0;
-L80:
-    *ier = k;
-    ip[n] = 0;
-    return 0;
-/* ----------------------- END OF SUBROUTINE DECHC ----------------------- */
-} /* dechc_ */
-
-/* Subroutine */ int solhc_(integer n, integer *ndim, doublereal *ar, 
-	doublereal *ai, integer *lb, doublereal *br, doublereal *bi, integer *
-	ip)
-{
-    /* System generated locals */
-    integer ar_dim1, ar_offset, ai_dim1, ai_offset;
-
-    /* Local variables */
-    static integer i, k, m, kb;
-    static doublereal ti, tr;
-    static integer km1, nm1, kp1;
-    static doublereal den, prodi, prodr;
-
-/* VERSION COMPLEX DOUBLE PRECISION */
-/* ----------------------------------------------------------------------- */
-/*  SOLUTION OF LINEAR SYSTEM, A*X = B . */
-/*  INPUT.. */
-/*    N = ORDER OF MATRIX. */
-/*    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI. */
-/*    (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC. */
-/*    (BR,BI) = RIGHT HAND SIDE VECTOR. */
-/*    LB = LOWER BANDWIDTH OF A. */
-/*    IP = PIVOT VECTOR OBTAINED FROM DEC. */
-/*  DO NOT USE IF DEC HAS SET IER .NE. 0. */
-/*  OUTPUT.. */
-/*    (BR,BI) = SOLUTION VECTOR, X . */
-/* ----------------------------------------------------------------------- */
-    /* Parameter adjustments */
-    --ip;
-    --bi;
-    --br;
-    ai_dim1 = *ndim;
-    ai_offset = 1 + ai_dim1;
-    ai -= ai_offset;
-    ar_dim1 = *ndim;
-    ar_offset = 1 + ar_dim1;
-    ar -= ar_offset;
-
-    /* Function Body */
-    if (n == 1) {
-		goto L50;
-    }
-    nm1 = n - 1;
-    if (*lb == 0) {
-		goto L25;
-    }
-    for (k = 1; k <= nm1; ++k) {
-		kp1 = k + 1;
-		m = ip[k];
-		tr = br[m];
-		ti = bi[m];
-		br[m] = br[k];
-		bi[m] = bi[k];
-		br[k] = tr;
-		bi[k] = ti;
-		for (i = kp1; i <= min(n, *lb + k); ++i) {
-			prodr = ar[i + k * ar_dim1] * tr - ai[i + k * ai_dim1] * ti;
-			prodi = ai[i + k * ai_dim1] * tr + ar[i + k * ar_dim1] * ti;
-			br[i] += prodr;
-			bi[i] += prodi;
-			/* L10: */
-		}
-		/* L20: */
-    }
-L25:
-    for (kb = 1; kb <= nm1; ++kb) {
-		km1 = n - kb;
-		k = km1 + 1;
-		den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
-			* ai[k + k * ai_dim1];
-		prodr = br[k] * ar[k + k * ar_dim1] + bi[k] * ai[k + k * ai_dim1];
-		prodi = bi[k] * ar[k + k * ar_dim1] - br[k] * ai[k + k * ai_dim1];
-		br[k] = prodr / den;
-		bi[k] = prodi / den;
-		tr = -br[k];
-		ti = -bi[k];
-		for (i = 1; i <= km1; ++i) {
-			prodr = ar[i + k * ar_dim1] * tr - ai[i + k * ai_dim1] * ti;
-			prodi = ai[i + k * ai_dim1] * tr + ar[i + k * ar_dim1] * ti;
-			br[i] += prodr;
-			bi[i] += prodi;
-			/* L30: */
-		}
-		/* L40: */
-    }
-L50:
-    den = ar[ar_dim1 + 1] * ar[ar_dim1 + 1] + ai[ai_dim1 + 1] * ai[ai_dim1 + 1];
-    prodr = br[1] * ar[ar_dim1 + 1] + bi[1] * ai[ai_dim1 + 1];
-    prodi = bi[1] * ar[ar_dim1 + 1] - br[1] * ai[ai_dim1 + 1];
-    br[1] = prodr / den;
-    bi[1] = prodi / den;
-    return 0;
-/* ----------------------- END OF SUBROUTINE SOLHC ----------------------- */
-} /* solhc_ */
 
 /* Subroutine */ int decb_(integer n, integer *ndim, doublereal *a, integer *
 	ml, integer *mu, integer *ip, integer *ier)
@@ -2866,8 +2450,6 @@ L50:
 	    integer *, integer *);
     extern /* Subroutine */ int decb_(integer, integer *, doublereal *, 
 	    integer *, integer *, integer *, integer *);
-    extern /* Subroutine */ int dech_(integer, integer *, doublereal *,
-		integer *, integer *, integer *);
 
     /* Parameter adjustments */
     --iphes;
@@ -2891,7 +2473,6 @@ L50:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 8:  goto L8;
-		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
@@ -3076,9 +2657,6 @@ L8:
     return 0;
 
 /* ----------------------------------------------------------- */
-
-L55:
-    return 0;
 } /* decomr_ */
 
 /*     END OF SUBROUTINE DECOMR */
@@ -3107,9 +2685,7 @@ L55:
     static integer imle;
     static doublereal sumi, sumr, sums;
     extern /* Subroutine */ int decbc_(integer, integer *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, integer *), dechc_(
-	    integer, integer *, doublereal *, doublereal *, integer *, 
-	    integer *, integer *);
+	    doublereal *, integer *, integer *, integer *, integer *);
 
 
     /* Parameter adjustments */
@@ -3134,9 +2710,7 @@ L55:
 		case 3:  goto L3;
 		case 4:  goto L4;
 		case 5:  goto L5;
-		case 6:  goto L6;
 		case 8:  goto L8;
-		case 10:  goto L55;
 		case 11:  goto L11;
 		case 12:  goto L12;
 		case 13:  goto L13;
@@ -3352,13 +2926,6 @@ L15:
 
 /* ----------------------------------------------------------- */
 
-L6:
-/* ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX */
-/* ---  THIS OPTION IS NOT PROVIDED */
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
@@ -3366,9 +2933,6 @@ L8:
     return 0;
 
 /* ----------------------------------------------------------- */
-
-L55:
-    return 0;
 } /* decomc_ */
 
 /*     END OF SUBROUTINE DECOMC */
@@ -3376,8 +2940,8 @@ L55:
 /* *********************************************************** */
 
 /* Subroutine */ int slvrad_(integer n, doublereal *fjac, integer *ldjac, 
-	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
-	integer *mlmas, integer *mumas, integer *m1, integer *m2, integer *nm1,
+	doublereal *fmas, integer *ldmas, 
+	integer *mlmas, integer *mumas,
 	doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
@@ -3390,26 +2954,17 @@ L55:
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
 
     /* Local variables */
-    static integer i, j, k;
+    static integer i, j;
     static doublereal s1, s2, s3, bb;
-    static integer mm, im1, jm1;
-    static doublereal z2i, z3i;
-    static integer jkm, mpi;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
-    static doublereal sum1, sum2, sum3, ffja, abno;
     extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
 	    integer *, integer *, doublereal *, integer *), solc_(integer, 
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
-	     integer *), solh_(integer, integer *, doublereal *, integer *, 
-	    doublereal *, integer *);
-    static doublereal sumh;
+	    integer *);
     extern /* Subroutine */ int solbc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *, doublereal *, doublereal *, 
 	    integer *);
-    extern /* Subroutine */ int solhc_(integer, integer *, doublereal *, 
-	    doublereal *, integer *, doublereal *, doublereal *, integer *);
-
     /* Parameter adjustments */
     --iphes;
     --f3;
@@ -3443,14 +2998,7 @@ L55:
 		case 3:  goto L3;
 		case 4:  goto L4;
 		case 5:  goto L5;
-		case 6:  goto L6;
 		case 8:  goto L8;
-		case 10:  goto L55;
-		case 11:  goto L11;
-		case 12:  goto L12;
-		case 13:  goto L13;
-		case 14:  goto L13;
-		case 15:  goto L15;
     }
 
 /* ----------------------------------------------------------- */
@@ -3470,52 +3018,6 @@ L1:
 
 /* ----------------------------------------------------------- */
 
-L11:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= n; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-L48:
-    abno = *alphn * *alphn + *betan * *betan;
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		sum1 = 0.;
-		sum2 = 0.;
-		sum3 = 0.;
-		for (k = mm - 1; k >= 0; --k) {
-			jkm = j + k * *m2;
-			sum1 = (z1[jkm] + sum1) / *fac1;
-			sumh = (z2[jkm] + sum2) / abno;
-			sum3 = (z3[jkm] + sum3) / abno;
-			sum2 = sumh * *alphn + sum3 * *betan;
-			sum3 = sum3 * *alphn - sumh * *betan;
-			for (i = 1; i <= *nm1; ++i) {
-				im1 = i + *m1;
-				z1[im1] += fjac[i + jkm * fjac_dim1] * sum1;
-				z2[im1] += fjac[i + jkm * fjac_dim1] * sum2;
-				z3[im1] += fjac[i + jkm * fjac_dim1] * sum3;
-			}
-		}
-    }
-    sol_(*nm1, lde1, &e1[e1_offset], &z1[*m1 + 1], &ip1[1]);
-    solc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[*m1 + 1], &z3[*m1 + 1], &ip2[1]);
-L49:
-    for (i = *m1; i >= 1; --i) {
-		mpi = *m2 + i;
-		z1[i] = (z1[i] + z1[mpi]) / *fac1;
-		z2i = z2[i] + z2[mpi];
-		z3i = z3[i] + z3[mpi];
-		z3[i] = (z3i * *alphn - z2i * *betan) / abno;
-		z2[i] = (z2i * *alphn + z3i * *betan) / abno;
-    }
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L2:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     for (i = 1; i <= n; ++i) {
@@ -3528,45 +3030,6 @@ L2:
     solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
     solbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &linal_1.mue, &z2[1], &z3[1], &ip2[1]);
     return 0;
-
-/* ----------------------------------------------------------- */
-
-L12:
-/* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (i = 1; i <= n; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-L45:
-    abno = *alphn * *alphn + *betan * *betan;
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		sum1 = 0.;
-		sum2 = 0.;
-		sum3 = 0.;
-		for (k = mm - 1; k >= 0; --k) {
-			jkm = j + k * *m2;
-			sum1 = (z1[jkm] + sum1) / *fac1;
-			sumh = (z2[jkm] + sum2) / abno;
-			sum3 = (z3[jkm] + sum3) / abno;
-			sum2 = sumh * *alphn + sum3 * *betan;
-			sum3 = sum3 * *alphn - sumh * *betan;
-			for (i = max(1, j - *mujac); i <= min(*nm1, j + *mljac); ++i) {
-				im1 = i + *m1;
-				ffja = fjac[i + *mujac + 1 - j + jkm * fjac_dim1];
-				z1[im1] += ffja * sum1;
-				z2[im1] += ffja * sum2;
-				z3[im1] += ffja * sum3;
-			}
-		}
-    }
-    solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[*m1 + 1],&ip1[1]);
-    solbc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
-	       linal_1.mue, &z2[*m1 + 1], &z3[*m1 + 1], &ip2[1]);
-    goto L49;
 
 /* ----------------------------------------------------------- */
 
@@ -3589,38 +3052,6 @@ L3:
     sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
     solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
     return 0;
-
-/* ----------------------------------------------------------- */
-
-L13:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= *m1; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    for (i = 1; i <= *nm1; ++i) {
-		im1 = i + *m1;
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = max(1, i - *mlmas); j <= min(*nm1, i + *mumas); ++j) {
-			jm1 = j + *m1;
-			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			s1 -= bb * f1[jm1];
-			s2 -= bb * f2[jm1];
-			s3 -= bb * f3[jm1];
-		}
-		z1[im1] += s1 * *fac1;
-		z2[im1] = z2[im1] + s2 * *alphn - s3 * *betan;
-		z3[im1] = z3[im1] + s3 * *alphn + s2 * *betan;
-    }
-    if (*ijob == 14) {
-		goto L45;
-    }
-    goto L48;
 
 /* ----------------------------------------------------------- */
 
@@ -3669,42 +3100,6 @@ L5:
 
 /* ----------------------------------------------------------- */
 
-L15:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= *m1; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    for (i = 1; i <= *nm1; ++i) {
-		im1 = i + *m1;
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = 1; j <= *nm1; ++j) {
-			jm1 = j + *m1;
-			bb = fmas[i + j * fmas_dim1];
-			s1 -= bb * f1[jm1];
-			s2 -= bb * f2[jm1];
-			s3 -= bb * f3[jm1];
-		}
-		z1[im1] += s1 * *fac1;
-		z2[im1] = z2[im1] + s2 * *alphn - s3 * *betan;
-		z3[im1] = z3[im1] + s3 * *alphn + s2 * *betan;
-    }
-    goto L48;
-
-/* ----------------------------------------------------------- */
-
-L6:
-/* ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX */
-/* ---  THIS OPTION IS NOT PROVIDED */
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
     for (i = 1; i <= n; ++i) {
@@ -3722,9 +3117,6 @@ L8:
     return 0;
 
 /* ----------------------------------------------------------- */
-
-L55:
-    return 0;
 } /* slvrad_ */
 
 /*     END OF SUBROUTINE SLVRAD */
@@ -3732,29 +3124,26 @@ L55:
 /* *********************************************************** */
 
 /* Subroutine */ int estrad_(integer n, doublereal *fjac, integer *ldjac, 
-	integer *mljac, integer *mujac, doublereal *fmas, integer *ldmas, 
+	doublereal *fmas, integer *ldmas, 
 	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd1, 
 	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
-	*y0, doublereal *y, integer *ijob, doublereal *x, integer *m1, 
-	integer *m2, integer *nm1, doublereal *e1, integer *lde1, doublereal *
+	*y0, doublereal *y, integer *ijob, doublereal *x,
+	doublereal *e1, integer *lde1, doublereal *
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
 	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
-	doublereal *fac1,
 	SuperLU_aux_d* slu_aux_d, integer *ier)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset;
+    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, e1_offset;
 
     /* Local variables */
-    static integer i, j, k, mm, im1;
+    static integer i, j;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
-    static doublereal sum, hee1, hee2, hee3, sum1;
+    static doublereal sum, hee1, hee2, hee3;
     extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
-	    integer *, integer *, doublereal *, integer *), solh_(integer, 
-	    integer *, doublereal *, integer *, doublereal *, integer *);
+	    integer *, integer *, doublereal *, integer *);
 
     /* Parameter adjustments */
     --scal;
@@ -3789,14 +3178,7 @@ L55:
 		case 3:  goto L3;
 		case 4:  goto L4;
 		case 5:  goto L5;
-		case 6:  goto L6;
 		case 8:  goto L8;
-		case 10:  goto L55;
-		case 11:  goto L11;
-		case 12:  goto L12;
-		case 13:  goto L13;
-		case 14:  goto L14;
-		case 15:  goto L15;
     }
 
 L1:
@@ -3808,30 +3190,6 @@ L1:
     sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
-L11:
-/* ------  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= n; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-L48:
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		sum1 = 0.;
-		for (k = mm - 1; k >= 0; --k) {
-			sum1 = (cont[j + k * *m2] + sum1) / *fac1;
-			for (i = 1; i <= *nm1; ++i) {
-				im1 = i + *m1;
-				cont[im1] += fjac[i + (j + k * *m2) * fjac_dim1] * sum1;
-			}
-		}
-    }
-    sol_(*nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
-    for (i = *m1; i >= 1; --i) {
-		cont[i] = (cont[i] + cont[*m2 + i]) / *fac1;
-    }
-    goto L77;
-
 L2:
 /* ------  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     for (i = 1; i <= n; ++i) {
@@ -3839,30 +3197,6 @@ L2:
 		cont[i] = f2[i] + y0[i];
     }
     solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
-    goto L77;
-
-L12:
-/* ------  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (i = 1; i <= n; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-L45:
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		sum1 = 0.;
-		for (k = mm - 1; k >= 0; --k) {
-			sum1 = (cont[j + k * *m2] + sum1) / *fac1;
-			for (i = max(1, j - *mujac); i <= min(*nm1, j + *mljac); ++i) {
-				im1 = i + *m1;
-				cont[im1] += fjac[i + *mujac + 1 - j + (j + k * *m2) * fjac_dim1] * sum1;
-			}
-		}
-    }
-    solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
-    for (i = *m1; i >= 1; --i) {
-		cont[i] = (cont[i] + cont[*m2 + i]) / *fac1;
-    }
     goto L77;
 
 L3:
@@ -3881,26 +3215,6 @@ L3:
     sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
-L13:
-/* ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= *m1; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-    for (i = *m1 + 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= *nm1; ++i) {
-		sum = 0.;
-		for (j = max(1, i - *mlmas); j <= min(*nm1, i + *mumas); ++j) {
-			sum += fmas[i - j + linal_1.mbdiag + j * fmas_dim1] * f1[j + *m1];
-		}
-		im1 = i + *m1;
-		f2[im1] = sum;
-		cont[im1] = sum + y0[im1];
-    }
-    goto L48;
-
 L4:
 /* ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
     for (i = 1; i <= n; ++i) {
@@ -3917,26 +3231,6 @@ L4:
     solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
     goto L77;
 
-L14:
-/* ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (i = 1; i <= *m1; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-    for (i = *m1 + 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= *nm1; ++i) {
-		sum = 0.;
-		for (j = max(1, i - *mlmas); j <= min(*nm1, i + *mumas); ++j) {
-			sum += fmas[i - j + linal_1.mbdiag + j * fmas_dim1] * f1[j + *m1];
-		}
-		im1 = i + *m1;
-		f2[im1] = sum;
-		cont[im1] = sum + y0[im1];
-    }
-    goto L45;
-
 L5:
 /* ------  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
     for (i = 1; i <= n; ++i) {
@@ -3952,31 +3246,6 @@ L5:
     }
     sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
-
-L15:
-/* ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (i = 1; i <= *m1; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-    for (i = *m1 + 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= *nm1; ++i) {
-		sum = 0.;
-		for (j = 1; j <= *nm1; ++j) {
-			sum += fmas[i + j * fmas_dim1] * f1[j + *m1];
-		}
-		im1 = i + *m1;
-		f2[im1] = sum;
-		cont[im1] = sum + y0[im1];
-    }
-    goto L48;
-
-L6:
-/* ------  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX */
-/* ------  THIS OPTION IS NOT PROVIDED */
-    return 0;
 
 /* ---  B=IDENTITY MATRIX, SPARSE LU */
 L8:
@@ -4018,67 +3287,23 @@ L77:
 			case 3:  goto L31;
 			case 4:  goto L32;
 			case 5:  goto L31;
-			case 6:  goto L32;
 			case 8:  goto L38;
-			// case 9:  goto L39;
-			case 10:  goto L55;
-			case 11:  goto L41;
-			case 12:  goto L42;
-			case 13:  goto L41;
-			case 14:  goto L42;
-			case 15:  goto L41;
 		}
 	/* ------ FULL MATRIX OPTION */
 L31:
-		sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
-		goto L88;
-	/* ------ FULL MATRIX OPTION, SECOND ORDER */
-L41:
-		for (j = 1; j <= *m2; ++j) {
-			sum1 = 0.;
-			for (k = mm - 1; k >= 0; --k) {
-				sum1 = (cont[j + k * *m2] + sum1) / *fac1;
-				for (i = 1; i <= *nm1; ++i) {
-					im1 = i + *m1;
-					cont[im1] += fjac[i + (j + k * *m2) * fjac_dim1] * sum1;
-				}
-			}
-		}
-		sol_(*nm1, lde1, &e1[e1_offset], &cont[*m1 + 1], &ip1[1]);
-		for (i = *m1; i >= 1; --i) {
-			cont[i] = (cont[i] + cont[*m2 + i]) / *fac1;
-		}
-		goto L88;
+	sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+	goto L88;
 	/* ------ BANDED MATRIX OPTION */
-	L32:
-		solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
-		goto L88;
-	/* ------ BANDED MATRIX OPTION, SECOND ORDER */
-	L42:
-		for (j = 1; j <= *m2; ++j) {
-			sum1 = 0.;
-			for (k = mm - 1; k >= 0; --k) {
-				sum1 = (cont[j + k * *m2] + sum1) / *fac1;
-				for (i = max(1, j - *mujac); i <= min(*nm1, j + *mljac); ++i) {
-					im1 = i + *m1;
-					cont[im1] += fjac[i + *mujac + 1 - j + (j + k * *m2) * 
-						fjac_dim1] * sum1;
-				}
-			}
-		}
-		solb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[*m1 + 1], &ip1[1]);
-		for (i = *m1; i >= 1; --i) {
-			cont[i] = (cont[i] + cont[*m2 + i]) / *fac1;
-		}
-		goto L88;
-
+L32:
+	solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
+	goto L88;
 L38:
 /* ---  B=IDENTITY, SPARSE LU */
-		*ier = superlu_solve_d(slu_aux_d, &cont[1]);
-		if (*ier){
-			return 0;
-		}
-    	goto L88;
+	*ier = superlu_solve_d(slu_aux_d, &cont[1]);
+	if (*ier){
+		return 0;
+	}
+	goto L88;
 
 /* ----------------------------------------------------------- */
 L88:
@@ -4091,8 +3316,6 @@ L88:
     }
     return 0;
 /* ----------------------------------------------------------- */
-L55:
-    return 0;
 } /* estrad_ */
 
 
