@@ -66,7 +66,7 @@ cdef void py2c_i(int* dest, object source, int dim):
     memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
 cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_out,
-                      doublereal* rpar, integer* ipar, void* fcn_PY):
+                      integer* ipar, void* fcn_PY):
     """
     Internal callback function to enable call to Python based rhs function from C
     """
@@ -78,7 +78,7 @@ cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_
     return 0
 
 cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
-                      doublereal* rpar, integer* ipar, void* jac_PY):
+                      integer* ipar, void* jac_PY):
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
@@ -90,7 +90,7 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
 
 cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
                          doublereal* cont, doublereal* werr, integer* lrc, integer* nsolu,
-                         doublereal* rpar, integer* ipar, integer* irtrn, void* solout_PY):
+                         integer* ipar, integer* irtrn, void* solout_PY):
     """
     Internal callback function to enable call to Python based solution output function from C
     """
@@ -136,7 +136,7 @@ cdef class RadauSuperLUaux:
 
 cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                              double * data, int *indices, int *indptr,
-                             doublereal* rpar, integer* ipar,
+                             integer* ipar,
                              void* jac_PY):
     """
     Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians.
@@ -324,7 +324,6 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef integer liwork = len(iwork)
     
     # UNUSED: optional parameters used for communication between fcn, jac, mas, solout
-    cdef doublereal rpar = 0
     cdef integer ipar = 0
 
     cdef integer idid = 1 ## "Successful compution"
@@ -340,7 +339,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
-                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
+                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                             &ipar, &idid,
                             aux_class.jac_data, aux_class.jac_indicies, aux_class.jac_indptr,
                             aux_class.superLU_aux_struct_d, aux_class.superLU_aux_struct_z)
@@ -348,7 +347,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
-                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
+                            callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                             &ipar, &idid,
                             NULL, NULL, NULL, NULL, NULL)
     

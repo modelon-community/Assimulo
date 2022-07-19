@@ -33,7 +33,7 @@ static doublereal c_b116 = .25;
 	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
 	*mujac, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
-	iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
+	iwork, integer *liwork, integer *ipar, integer *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
@@ -74,7 +74,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    integer *, doublereal *, integer *, integer *, integer *, integer *,
-		integer *, integer *, integer *, doublereal *, integer *, doublereal *, integer,
+		integer *, integer *, integer *, integer *, doublereal *, integer,
 		double*, int*, int*,
 		SuperLU_aux_d*, SuperLU_aux_z*);
     static integer nrejct;
@@ -115,10 +115,10 @@ static doublereal c_b116 = .25;
 
 /*     FCN         NAME (EXTERNAL) OF SUBROUTINE COMPUTING THE */
 /*                 VALUE OF F(X,Y): */
-/*                    SUBROUTINE FCN(N,X,Y,F,RPAR,IPAR) */
+/*                    SUBROUTINE FCN(N,X,Y,F,IPAR) */
 /*                    DOUBLE PRECISION X,Y(N),F(N) */
 /*                    F(1)=...   ETC. */
-/*                 RPAR, IPAR (SEE BELOW) */
+/*                 IPAR (SEE BELOW) */
 
 /*     X           INITIAL X-VALUE */
 
@@ -148,7 +148,7 @@ static doublereal c_b116 = .25;
 /*                 (THIS ROUTINE IS ONLY CALLED IF IJAC=1; SUPPLY */
 /*                 A DUMMY SUBROUTINE IN THE CASE IJAC=0). */
 /*                 FOR IJAC=1, THIS SUBROUTINE MUST HAVE THE FORM */
-/*                    SUBROUTINE JAC(N,X,Y,DFY,LDFY,RPAR,IPAR) */
+/*                    SUBROUTINE JAC(N,X,Y,DFY,LDFY,IPAR) */
 /*                    DOUBLE PRECISION X,Y(N),DFY(LDFY,N) */
 /*                    DFY(1,1)= ... */
 /*                 LDFY, THE COLUMN-LENGTH OF THE ARRAY, IS */
@@ -187,7 +187,7 @@ static doublereal c_b116 = .25;
 /*                 MATRIX AND NEEDS NOT TO BE DEFINED; */
 /*                 SUPPLY A DUMMY SUBROUTINE IN THIS CASE. */
 /*                 IF IMAS=1, THE SUBROUTINE MAS IS OF THE FORM */
-/*                    SUBROUTINE MAS(N,AM,LMAS,RPAR,IPAR) */
+/*                    SUBROUTINE MAS(N,AM,LMAS,IPAR) */
 /*                    DOUBLE PRECISION AM(LMAS,N) */
 /*                    AM(1,1)= .... */
 /*                    IF (MLMAS.EQ.N) THE MASS-MATRIX IS STORED */
@@ -221,7 +221,7 @@ static doublereal c_b116 = .25;
 /*                 SUPPLY A DUMMY SUBROUTINE IF IOUT=0. */
 /*                 IT MUST HAVE THE FORM */
 /*                    SUBROUTINE SOLOUT (NR,XOLD,X,Y,CONT,LRC,N, */
-/*                                       RPAR,IPAR,IRTRN) */
+/*                                       IPAR,IRTRN) */
 /*                    DOUBLE PRECISION X,Y(N),CONT(LRC) */
 /*                    .... */
 /*                 SOLOUT FURNISHES THE SOLUTION "Y" AT THE NR-TH */
@@ -286,7 +286,7 @@ static doublereal c_b116 = .25;
 
 /*     LIWORK      DECLARED LENGTH OF ARRAY "IWORK". */
 
-/*     RPAR, IPAR  REAL AND INTEGER PARAMETERS (OR PARAMETER ARRAYS) WHICH */
+/*     IPAR        INTEGER PARAMETERS (OR PARAMETER ARRAYS) WHICH */
 /*                 CAN BE USED FOR COMMUNICATION BETWEEN YOUR CALLING */
 /*                 PROGRAM AND THE FCN, JAC, MAS, SOLOUT SUBROUTINES. */
 
@@ -465,7 +465,6 @@ static doublereal c_b116 = .25;
     --atol;
     --work;
     --iwork;
-    --rpar;
     --ipar;
 
 	*imas = 0; // always assume Mass matrix = identity
@@ -755,7 +754,7 @@ static doublereal c_b116 = .25;
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
-	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &rpar[1], &ipar[1],
+	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol, &ipar[1],
 		&work[iewerr], // entry point for werr
 		nnz, jac_data, jac_indices, jac_indptr, slu_aux_d, slu_aux_z);
     iwork[14] = nfcn;
@@ -803,7 +802,7 @@ static doublereal c_b116 = .25;
 	doublereal *e2r, doublereal *e2i, doublereal *fmas, integer *ip1, 
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
-	integer *ndec, integer *nsol, doublereal *rpar, integer *ipar,
+	integer *ndec, integer *nsol, integer *ipar,
 	doublereal *werr, integer nnz,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
@@ -868,7 +867,7 @@ static doublereal c_b116 = .25;
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
 	    doublereal *, doublereal *, logical *, logical *, doublereal *, 
-	    doublereal *, integer *, SuperLU_aux_d*, integer *);
+	    integer *, SuperLU_aux_d*, integer *);
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
 	    integer *, integer *, doublereal *, integer *, integer *, integer *,
@@ -929,7 +928,6 @@ static doublereal c_b116 = .25;
     fmas_dim1 = *ldmas;
     fmas_offset = 1 + fmas_dim1;
     fmas -= fmas_offset;
-    --rpar;
     --ipar;
 
     /* Function Body */
@@ -1010,7 +1008,7 @@ static doublereal c_b116 = .25;
 		nsolu = n;
 		conra5_1.hsol = hold;
 		(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
-			lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
+			lrc, &nsolu, &ipar[1], &irtrn, solout_PY);
 		if (irtrn < 0) {
 			goto L179;
 		}
@@ -1034,7 +1032,7 @@ static doublereal c_b116 = .25;
 		}
     }
     hhfac = *h__;
-    (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, x, &y[1], &y0[1], &ipar[1], fcn_PY);
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP/REPEAT STEP WITH FRESH JACOBIAN */
 L10:
@@ -1059,7 +1057,7 @@ L12:
 					if (j <= mm * *m2) {
 						goto L12;
 					}
-					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					(*fcn)(n, x, &y[1], &cont[1], &ipar[1], fcn_PY);
 					j = k + (mm - 1) * *m2;
 					j1 = k;
 					lbeg = max(1, j1 - *mujac) + *m1;
@@ -1084,10 +1082,10 @@ L14:
 				ysafe = y[i];
 				delt = sqrt(*uround * max(1e-5, abs(ysafe)));
 				y[i] = ysafe + delt;
-				(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+				(*fcn)(n, x, &y[1], &cont[1], &ipar[1], fcn_PY);
 				if (ipar[1] < 0) {
 					y[i] = ysafe - delt;
-					(*fcn)(n, x, &y[1], &cont[1], &rpar[1], &ipar[1], fcn_PY);
+					(*fcn)(n, x, &y[1], &cont[1], &ipar[1], fcn_PY);
 					if (ipar[1] < 0) {
 						y[i] = ysafe;
 						goto L79;
@@ -1107,12 +1105,12 @@ L14:
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
 		if (*ijob == 8){ // Sparse LU
 			jac_nnz_actual = jac_nnz_base;
-			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indices, jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indices, jac_indptr, &ipar[1], jac_PY);
 			if (ier < 0){ goto L183;}
 			if (ier > 0){ goto L182;}
 			fresh_jacobian = 1;
 		} else { // dense jacobian
-			(*jac)(n, x, &y[1], &fjac[fjac_offset], &rpar[1], &ipar[1], jac_PY);
+			(*jac)(n, x, &y[1], &fjac[fjac_offset], &ipar[1], jac_PY);
 		}
     }
     caljac = TRUE_;
@@ -1205,7 +1203,7 @@ L40:
 		cont[i] = y[i] + z1[i];
     }
     d__1 = *x + c1 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &d__1, &cont[1], &z1[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1214,7 +1212,7 @@ L40:
 		cont[i] = y[i] + z2[i];
     }
     d__1 = *x + c2 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &d__1, &cont[1], &z2[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1222,7 +1220,7 @@ L40:
     for (i = 1; i <= n; ++i) {
 		cont[i] = y[i] + z3[i];
     }
-    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
+    (*fcn)(n, &xph, &cont[1], &z3[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1300,7 +1298,7 @@ L40:
 			ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
 			&y0[1], &y[1], ijob, x, m1, m2, nm1, &e1[e1_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
-			&iphes[1], &scal[1], &err, &first, &reject, &fac1, &rpar[1], &ipar[1],
+			&iphes[1], &scal[1], &err, &first, &reject, &fac1, &ipar[1],
 			slu_aux_d, &ier);
 	if (ier){
 		goto L184;
@@ -1361,7 +1359,7 @@ L40:
 			nsolu = n;
 			conra5_1.hsol = hold;
 			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1],
-			 		  &lrc, &nsolu, &rpar[1], &ipar[1], &irtrn, solout_PY);
+			 		  &lrc, &nsolu, &ipar[1], &irtrn, solout_PY);
 			if (irtrn < 0) {
 				goto L179;
 			}
@@ -1372,7 +1370,7 @@ L40:
 			*idid = 1;
 			goto L181;
 		}
-		(*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+		(*fcn)(n, x, &y[1], &y0[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		hnew = posneg * min(abs(hnew), hmaxn);
 		hopt = hnew;
@@ -4010,7 +4008,7 @@ L55:
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
 	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
-	doublereal *fac1, doublereal *rpar, integer *ipar,
+	doublereal *fac1, integer *ipar,
 	SuperLU_aux_d* slu_aux_d, integer *ier)
 {
     /* System generated locals */
@@ -4049,7 +4047,6 @@ L55:
     e1_dim1 = *lde1;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
-    --rpar;
     --ipar;
 
     /* Function Body */
@@ -4318,7 +4315,7 @@ L77:
 		for (i = 1; i <= n; ++i) {
 			cont[i] = y[i] + cont[i];
 		}
-		(*fcn)(n, x, &cont[1], &f1[1], &rpar[1], &ipar[1], fcn_PY);
+		(*fcn)(n, x, &cont[1], &f1[1], &ipar[1], fcn_PY);
 		++(*nfcn);
 		for (i = 1; i <= n; ++i) {
 			cont[i] = f1[i] + f2[i];
