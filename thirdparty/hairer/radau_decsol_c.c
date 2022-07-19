@@ -20,7 +20,6 @@ struct linal_{
 
 /* Table of constant values */
 
-static integer c__1 = 1;
 static doublereal c_b54 = .5;
 static doublereal c_b91 = 81.;
 static doublereal c_b92 = .33333333333333331;
@@ -68,7 +67,7 @@ static doublereal c_b116 = .25;
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
 	    doublereal *, doublereal *, integer *, integer *, logical *, 
 	    integer *, integer *, integer *, logical *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, logical *, logical *,
+	    doublereal *, integer *, integer *, integer *, logical *,
 	    integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
@@ -293,12 +292,6 @@ static doublereal c_b116 = .25;
 /*              WELL. THEY MAY BE DEFINED BY SETTING WORK(1),... */
 /*              AS WELL AS IWORK(1),... DIFFERENT FROM ZERO. */
 /*              FOR ZERO INPUT, THE CODE CHOOSES DEFAULT VALUES: */
-
-/*    IWORK(1)  IF IWORK(1).NE.0, THE CODE TRANSFORMS THE JACOBIAN */
-/*              MATRIX TO HESSENBERG FORM. THIS IS PARTICULARLY */
-/*              ADVANTAGEOUS FOR LARGE SYSTEMS WITH FULL JACOBIAN. */
-/*              IT DOES NOT WORK FOR BANDED JACOBIAN (MLJAC<N) */
-/*              AND NOT FOR IMPLICIT SYSTEMS (IMAS=1). */
 
 /*    IWORK(2)  THIS IS THE MAXIMAL NUMBER OF ALLOWED STEPS. */
 /*              THE DEFAULT VALUE (FOR IWORK(2)=0) IS 100000. */
@@ -672,17 +665,9 @@ static doublereal c_b116 = .25;
 			ijob = 2;
 		} else {
 			ijob = 1;
-			if (n > 2 && iwork[1] != 0) {
-				ijob = 7;
-			}
 		}
     }
     ldmas2 = max(1,ldmas);
-	/* ------ HESSENBERG OPTION ONLY FOR EXPLICIT EQU. WITH FULL JACOBIAN */
-    if ((implct || jband) && ijob == 7) {
-		printf(" HESSENBERG OPTION ONLY FOR EXPLICIT EQUATIONS WITH FULL JACOBIAN\n");
-		arret = TRUE_;
-    }
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
 		if (implct){
@@ -743,7 +728,7 @@ static doublereal c_b116 = .25;
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, mlmas, mumas,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
-	    &pred, &facl, &facr, &m1, &m2, &nm1, &implct, &jband, &ldjac,
+	    &pred, &facl, &facr, &m1, &m2, &nm1, &jband, &ldjac,
 	    &lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
@@ -789,7 +774,7 @@ static doublereal c_b116 = .25;
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
 	 logical *pred, doublereal *facl, doublereal *facr, integer *m1, 
-	integer *m2, integer *nm1, logical *implct, logical *banded, integer *
+	integer *m2, integer *nm1, logical *banded, integer *
 	ldjac, integer *lde1, integer *ldmas, doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
@@ -842,13 +827,12 @@ static doublereal c_b116 = .25;
 	    integer *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *,
 		SuperLU_aux_z *, double *, int *, int *, int, int);
-    static logical calhes;
     static doublereal erracc;
     static integer mujacj;
     extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
 	    doublereal *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, logical *, integer *,
+	    integer *, integer *, integer *,
 		SuperLU_aux_d *, double *, int *, int *, int, int);
     static logical reject;
     static doublereal facgus;
@@ -868,7 +852,7 @@ static doublereal c_b116 = .25;
 	    integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
+	    doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, integer *, SuperLU_aux_d*, SuperLU_aux_z*);
     static doublereal thqold;
 
@@ -1107,7 +1091,6 @@ L14:
 		}
     }
     caljac = TRUE_;
-    calhes = TRUE_;
 /* --- COMPUTE THE MATRICES E1 AND E2 AND THEIR DECOMPOSITIONS */
 L20:
     fac1 = u1 / *h__;
@@ -1115,7 +1098,7 @@ L20:
     betan = beta / *h__;
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
 			mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
-			ijob, &calhes, &iphes[1], slu_aux_d,
+			ijob, &iphes[1], slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
@@ -1230,7 +1213,7 @@ L40:
     slvrad_(n, &fjac[fjac_offset], ldjac, mljac, mujac, &fmas[fmas_offset], 
 			ldmas, mlmas, mumas, m1, m2, nm1, &fac1, &alphn, &betan, &e1[e1_offset],
 			&e2r[e2r_offset], &e2i[e2i_offset], lde1,
-			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &cont[1], &ip1[1], &ip2[1],
+			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
 			&iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
 	if (ier){
 		goto L184;
@@ -2861,139 +2844,6 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOLBC ------------------------ */
 } /* solbc_ */
 
-/* Subroutine */ int elmhes_(integer *nm, integer n, integer *low, integer *
-	igh, doublereal *a, integer *int__)
-{
-    /* System generated locals */
-    integer a_dim1, a_offset;
-
-    /* Local variables */
-    static integer i, j, m;
-    static doublereal x, y;
-    static integer la, mm1, kp1, mp1;
-
-/*     this subroutine is a translation of the algol procedure elmhes, */
-/*     num. math. 12, 349-368(1968) by martin and wilkinson. */
-/*     handbook for auto. comp., vol.ii-linear algebra, 339-358(1971). */
-
-/*     given a real general matrix, this subroutine */
-/*     reduces a submatrix situated in rows and columns */
-/*     low through igh to upper hessenberg form by */
-/*     stabilized elementary similarity transformations. */
-
-/*     on input: */
-
-/*      nm must be set to the row dimension of two-dimensional */
-/*        array parameters as declared in the calling program */
-/*        dimension statement; */
-
-/*      n is the order of the matrix; */
-
-/*      low and igh are integers determined by the balancing */
-/*        subroutine  balanc.      if  balanc  has not been used, */
-/*        set low=1, igh=n; */
-
-/*      a contains the input matrix. */
-
-/*     on output: */
-
-/*      a contains the hessenberg matrix.  the multipliers */
-/*        which were used in the reduction are stored in the */
-/*        remaining triangle under the hessenberg matrix; */
-
-/*      int contains information on the rows and columns */
-/*        interchanged in the reduction. */
-/*        only elements low through igh are used. */
-
-/*     questions and comments should be directed to b. s. garbow, */
-/*     applied mathematics division, argonne national laboratory */
-
-/*     ------------------------------------------------------------------ */
-
-    /* Parameter adjustments */
-    a_dim1 = *nm;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
-    --int__;
-
-    /* Function Body */
-    la = *igh - 1;
-    kp1 = *low + 1;
-    if (la < kp1) {
-		goto L200;
-    }
-
-    for (m = kp1; m <= la; ++m) {
-		mm1 = m - 1;
-		x = 0.;
-		i = m;
-
-		for (j = m; j <= *igh; ++j) {
-			if (abs(a[j + mm1 * a_dim1]) <= abs(x)) {
-				goto L100;
-			}
-			x = a[j + mm1 * a_dim1];
-			i = j;
-L100:
-			;
-		}
-
-		int__[m] = i;
-		if (i == m) {
-			goto L130;
-		}
-		/*    :::::::::: interchange rows and columns of a :::::::::: */
-		for (j = mm1; j <= n; ++j) {
-			y = a[i + j * a_dim1];
-			a[i + j * a_dim1] = a[m + j * a_dim1];
-			a[m + j * a_dim1] = y;
-			/* L110: */
-		}
-
-		for (j = 1; j <= *igh; ++j) {
-			y = a[j + i * a_dim1];
-			a[j + i * a_dim1] = a[j + m * a_dim1];
-			a[j + m * a_dim1] = y;
-			/* L120: */
-		}
-		/*    :::::::::: end interchange :::::::::: */
-L130:
-		if (x == 0.) {
-			goto L180;
-		}
-		mp1 = m + 1;
-
-		for (i = mp1; i <= *igh; ++i) {
-			y = a[i + mm1 * a_dim1];
-			if (y == 0.) {
-				goto L160;
-			}
-			y /= x;
-			a[i + mm1 * a_dim1] = y;
-
-			for (j = m; j <= n; ++j) {
-				/* L140: */
-				a[i + j * a_dim1] -= y * a[m + j * a_dim1];
-			}
-
-			for (j = 1; j <= *igh; ++j) {
-				/* L150: */
-				a[j + m * a_dim1] += y * a[j + i * a_dim1];
-			}
-
-L160:
-			;
-		}
-
-L180:
-		;
-    }
-
-L200:
-    return 0;
-/*    :::::::::: last card of elmhes :::::::::: */
-} /* elmhes_ */
-
 /* ****************************************** */
 /*     VERSION OF SEPTEMBER 18, 1995 */
 /* ****************************************** */
@@ -3001,7 +2851,7 @@ L200:
 /* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
 	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *e1,
-	integer *lde1, integer *ip1, integer *ier, integer *ijob, logical *calhes,
+	integer *lde1, integer *ip1, integer *ier, integer *ijob,
 	integer *iphes, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
@@ -3010,7 +2860,7 @@ L200:
 	    e1_offset;
 
     /* Local variables */
-    static integer i, j, k, j1, ib, mm, jm1;
+    static integer i, j, k, ib, mm, jm1;
 	static doublereal sum;
     extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
 	    integer *, integer *);
@@ -3018,8 +2868,6 @@ L200:
 	    integer *, integer *, integer *, integer *);
     extern /* Subroutine */ int dech_(integer, integer *, doublereal *,
 		integer *, integer *, integer *);
-    extern /* Subroutine */ int elmhes_(integer *, integer, integer *,
-	    integer *, doublereal *, integer *);
 
     /* Parameter adjustments */
     --iphes;
@@ -3042,7 +2890,6 @@ L200:
 		case 4:  goto L4;
 		case 5:  goto L5;
 		case 6:  goto L6;
-		case 7:  goto L7;
 		case 8:  goto L8;
 		case 10:  goto L55;
 		case 11:  goto L11;
@@ -3222,27 +3069,6 @@ L6:
 
 /* ----------------------------------------------------------- */
 
-L7:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION */
-    if (*calhes) {
-		elmhes_(ldjac, n, &c__1, &n, &fjac[fjac_offset], &iphes[1]);
-    }
-    *calhes = FALSE_;
-    for (j = 1; j <= n - 1; ++j) {
-		j1 = j + 1;
-		e1[j1 + j * e1_dim1] = -fjac[j1 + j * fjac_dim1];
-    }
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= j; ++i) {
-			e1[i + j * e1_dim1] = -fjac[i + j * fjac_dim1];
-		}
-		e1[j + j * e1_dim1] += *fac1;
-    }
-    dech_(n, lde1, &e1[e1_offset], &c__1, &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
@@ -3271,7 +3097,7 @@ L55:
 	    e2r_offset, e2i_dim1, e2i_offset;
 
     /* Local variables */
-    static integer i, j, k, j1;
+    static integer i, j, k;
     static doublereal bb;
     static integer ib, mm, jm1;
     static doublereal bet, alp;
@@ -3309,7 +3135,6 @@ L55:
 		case 4:  goto L4;
 		case 5:  goto L5;
 		case 6:  goto L6;
-		case 7:  goto L7;
 		case 8:  goto L8;
 		case 10:  goto L55;
 		case 11:  goto L11;
@@ -3534,26 +3359,6 @@ L6:
 
 /* ----------------------------------------------------------- */
 
-L7:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION */
-    for (j = 1; j <= n - 1; ++j) {
-		j1 = j + 1;
-		e2r[j1 + j * e2r_dim1] = -fjac[j1 + j * fjac_dim1];
-		e2i[j1 + j * e2i_dim1] = 0.;
-    }
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= j; ++i) {
-			e2i[i + j * e2i_dim1] = 0.;
-			e2r[i + j * e2r_dim1] = -fjac[i + j * fjac_dim1];
-		}
-		e2r[j + j * e2r_dim1] += *alphn;
-		e2i[j + j * e2i_dim1] = *betan;
-    }
-    dechc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
@@ -3576,7 +3381,7 @@ L55:
 	doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
-	doublereal *f2, doublereal *f3, doublereal *cont, integer *ip1, 
+	doublereal *f2, doublereal *f3, integer *ip1, 
 	integer *ip2, integer *iphes, integer *ier, integer *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
@@ -3587,7 +3392,7 @@ L55:
     /* Local variables */
     static integer i, j, k;
     static doublereal s1, s2, s3, bb;
-    static integer mm, mp, im1, jm1, mp1;
+    static integer mm, im1, jm1;
     static doublereal z2i, z3i;
     static integer jkm, mpi;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
@@ -3598,11 +3403,10 @@ L55:
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
 	     integer *), solh_(integer, integer *, doublereal *, integer *, 
 	    doublereal *, integer *);
-    static doublereal sumh, e1imp;
+    static doublereal sumh;
     extern /* Subroutine */ int solbc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *, doublereal *, doublereal *, 
 	    integer *);
-    static doublereal zsafe;
     extern /* Subroutine */ int solhc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, doublereal *, doublereal *, integer *);
 
@@ -3640,7 +3444,6 @@ L55:
 		case 4:  goto L4;
 		case 5:  goto L5;
 		case 6:  goto L6;
-		case 7:  goto L7;
 		case 8:  goto L8;
 		case 10:  goto L55;
 		case 11:  goto L11;
@@ -3902,70 +3705,6 @@ L6:
 
 /* ----------------------------------------------------------- */
 
-L7:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION */
-    for (i = 1; i <= n; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    for (mm = n - 2; mm >= 1; --mm) {
-		mp = n - mm;
-		mp1 = mp - 1;
-		i = iphes[mp];
-		if (i == mp) {
-			goto L746;
-		}
-		zsafe = z1[mp];
-		z1[mp] = z1[i];
-		z1[i] = zsafe;
-		zsafe = z2[mp];
-		z2[mp] = z2[i];
-		z2[i] = zsafe;
-		zsafe = z3[mp];
-		z3[mp] = z3[i];
-		z3[i] = zsafe;
-L746:
-		for (i = mp + 1; i <= n; ++i) {
-			e1imp = fjac[i + mp1 * fjac_dim1];
-			z1[i] -= e1imp * z1[mp];
-			z2[i] -= e1imp * z2[mp];
-			z3[i] -= e1imp * z3[mp];
-		}
-    }
-    solh_(n, lde1, &e1[e1_offset], &c__1, &z1[1], &ip1[1]);
-    solhc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &c__1, &z2[1], &z3[1],&ip2[1]);
-    for (mm = 1; mm <= n - 2; ++mm) {
-		mp = n - mm;
-		mp1 = mp - 1;
-		for (i = mp + 1; i <= n; ++i) {
-			e1imp = fjac[i + mp1 * fjac_dim1];
-			z1[i] += e1imp * z1[mp];
-			z2[i] += e1imp * z2[mp];
-			z3[i] += e1imp * z3[mp];
-		}
-		i = iphes[mp];
-		if (i == mp) {
-			goto L750;
-		}
-		zsafe = z1[mp];
-		z1[mp] = z1[i];
-		z1[i] = zsafe;
-		zsafe = z2[mp];
-		z2[mp] = z2[i];
-		z2[i] = zsafe;
-		zsafe = z3[mp];
-		z3[mp] = z3[i];
-		z3[i] = zsafe;
-L750:
-		;
-    }
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
     for (i = 1; i <= n; ++i) {
@@ -4009,14 +3748,13 @@ L55:
 	    e1_offset;
 
     /* Local variables */
-    static integer i, j, k, mm, mp, im1;
+    static integer i, j, k, mm, im1;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
     static doublereal sum, hee1, hee2, hee3, sum1;
     extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
 	    integer *, integer *, doublereal *, integer *), solh_(integer, 
 	    integer *, doublereal *, integer *, doublereal *, integer *);
-    static doublereal zsafe;
 
     /* Parameter adjustments */
     --scal;
@@ -4052,7 +3790,6 @@ L55:
 		case 4:  goto L4;
 		case 5:  goto L5;
 		case 6:  goto L6;
-		case 7:  goto L7;
 		case 8:  goto L8;
 		case 10:  goto L55;
 		case 11:  goto L11;
@@ -4241,43 +3978,6 @@ L6:
 /* ------  THIS OPTION IS NOT PROVIDED */
     return 0;
 
-L7:
-/* ------  B=IDENTITY, JACOBIAN A FULL MATRIX, HESSENBERG-OPTION */
-    for (i = 1; i <= n; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-    for (mm = n - 2; mm >= 1; --mm) {
-		mp = n - mm;
-		i = iphes[mp];
-		if (i == mp) {
-			goto L310;
-		}
-		zsafe = cont[mp];
-		cont[mp] = cont[i];
-		cont[i] = zsafe;
-L310:
-		for (i = mp + 1; i <= n; ++i) {
-			cont[i] -= fjac[i + (mp - 1) * fjac_dim1] * cont[mp];
-		}
-    }
-    solh_(n, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
-    for (mm = 1; mm <= n - 2; ++mm) {
-		mp = n - mm;
-		for (i = mp + 1; i <= n; ++i) {
-			cont[i] += fjac[i + (mp - 1) * fjac_dim1] * cont[mp];
-		}
-		i = iphes[mp];
-		if (i == mp) {
-			goto L440;
-		}
-		zsafe = cont[mp];
-		cont[mp] = cont[i];
-		cont[i] = zsafe;
-L440:
-		;
-    }
-
 /* ---  B=IDENTITY MATRIX, SPARSE LU */
 L8:
     for (i = 1; i <= n; ++i) {
@@ -4319,7 +4019,6 @@ L77:
 			case 4:  goto L32;
 			case 5:  goto L31;
 			case 6:  goto L32;
-			case 7:  goto L33;
 			case 8:  goto L38;
 			// case 9:  goto L39;
 			case 10:  goto L55;
@@ -4372,38 +4071,7 @@ L41:
 			cont[i] = (cont[i] + cont[*m2 + i]) / *fac1;
 		}
 		goto L88;
-		/* ------ HESSENBERG MATRIX OPTION */
-L33:
-		for (mm = n - 2; mm >= 1; --mm) {
-			mp = n - mm;
-			i = iphes[mp];
-			if (i == mp) {
-				goto L510;
-			}
-			zsafe = cont[mp];
-			cont[mp] = cont[i];
-			cont[i] = zsafe;
-L510:
-			for (i = mp + 1; i <= n; ++i) {
-				cont[i] -= fjac[i + (mp - 1) * fjac_dim1] * cont[mp];
-			}
-		}
-		solh_(n, lde1, &e1[e1_offset], &c__1, &cont[1], &ip1[1]);
-		for (mm = 1; mm <= n - 2; ++mm) {
-			mp = n - mm;
-			for (i = mp + 1; i <= n; ++i) {
-				cont[i] += fjac[i + (mp - 1) * fjac_dim1] * cont[mp];
-			}
-			i = iphes[mp];
-			if (i == mp) {
-				goto L640;
-			}
-			zsafe = cont[mp];
-			cont[mp] = cont[i];
-			cont[i] = zsafe;
-L640:
-			;
-		}
+
 L38:
 /* ---  B=IDENTITY, SPARSE LU */
 		*ier = superlu_solve_d(slu_aux_d, &cont[1]);
