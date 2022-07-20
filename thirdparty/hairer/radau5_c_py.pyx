@@ -230,7 +230,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
              doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
              integer itol, jac_PY, integer ijac, integer mljac, integer mujac,
-             mas_PY, integer mlmas, integer mumas, solout_PY,
+             solout_PY,
              integer iout, np.ndarray work, np.ndarray iwork,
              RadauSuperLUaux aux_class):
     """
@@ -268,14 +268,6 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                           0 <= mljac < len(y): Size of non-zero lower diagonal bandwidth
             mujac
                         - Compare 'mljac', size of non-zero upper diagonal bandwidth, ignored if mljac == len(y)
-            mas_PY
-                        - Mass matrix function mas_PY(am)
-            mlmas
-                        - Switch for banded structure of Mass matrix, supposed to fulfill mlmas <= mljac
-                          mlmas == len(y): Full matrix Gauss-elimination
-                          0 <= mlmas < len(y): Size of non-zero lower diagonal bandwidth
-            mumas
-                        - Compare 'mumax', size of non-zero upper diagonal bandwidth, ignored if mlmas == len(y), supposed to fulfill mumas <= mujac
             solout_PY
                         - Callback function for logging solution of time-integration:
                           solout_PY(nrsol, told, t, y, cont, werr, lrc, irtrn)
@@ -327,7 +319,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     if iwork[10]: ## sparse
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                            &ijac, &mljac, &mujac, &mlmas, &mumas,
+                            &ijac, &mljac, &mujac,
                             callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                             &idid,
                             aux_class.jac_data, aux_class.jac_indicies, aux_class.jac_indptr,
@@ -335,7 +327,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     else: ## Dense
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                            &ijac, &mljac, &mujac, &mlmas, &mumas,
+                            &ijac, &mljac, &mujac,
                             callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                             &idid,
                             NULL, NULL, NULL, NULL, NULL)

@@ -27,8 +27,8 @@ typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*
 int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
             integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
-            integer *mljac, integer *mujac, integer *mlmas,
-            integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
+            integer *mljac, integer *mujac,
+            FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, integer *idid,
             double* jac_data, int* jac_indices, int* jac_indptr,
 	        SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
@@ -36,8 +36,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
 int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
 	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-	integer *mljac, integer *mujac, integer *mlmas, integer *
-	mumas, FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
+	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,

@@ -287,11 +287,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 IWORK[10] = 1
                 IWORK[11] = self.problem_info["jac_fcn_nnz"]
                 t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, MLMAS, MUMAS, self._solout,
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._solout,
                                                            IOUT, WORK, IWORK, self.RadauSuperLUaux)
             else:
                 t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, MLMAS, MUMAS, self._solout,
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._solout,
                                                            IOUT, WORK, IWORK, self.radau5.RadauSuperLUaux())
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 

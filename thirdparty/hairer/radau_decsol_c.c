@@ -14,10 +14,6 @@ struct conra5_{
     doublereal xsol, hsol, c2m1, c1m1;
 } conra5_1;
 
-struct linal_{
-    integer mle, mue, mbjac, mbb, mdiag, mdiff, mbdiag;
-} linal_1;
-
 /* Table of constant values */
 
 static doublereal c_b54 = .5;
@@ -30,7 +26,7 @@ static doublereal c_b116 = .25;
 /* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
 	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
-	*mujac, integer *mlmas, integer *mumas, FP_CB_solout 
+	*mujac, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, integer *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
@@ -158,43 +154,6 @@ static doublereal c_b116 = .25;
 /*                 ZERO DIAGONALS ABOVE THE MAIN DIAGONAL). */
 /*                 NEED NOT BE DEFINED IF MLJAC=N. */
 
-/*     ----   MAS,IMAS,MLMAS, AND MUMAS HAVE ANALOG MEANINGS      ----- */
-/*     ----   FOR THE "MASS MATRIX" (THE MATRIX "M" OF SECTION IV.8): - */
-
-/*     MAS         NAME (EXTERNAL) OF SUBROUTINE COMPUTING THE MASS- */
-/*                 MATRIX M. */
-/*                 IF IMAS=0, THIS MATRIX IS ASSUMED TO BE THE IDENTITY */
-/*                 MATRIX AND NEEDS NOT TO BE DEFINED; */
-/*                 SUPPLY A DUMMY SUBROUTINE IN THIS CASE. */
-/*                 IF IMAS=1, THE SUBROUTINE MAS IS OF THE FORM */
-/*                    SUBROUTINE MAS(N,AM,LMAS) */
-/*                    DOUBLE PRECISION AM(LMAS,N) */
-/*                    AM(1,1)= .... */
-/*                    IF (MLMAS.EQ.N) THE MASS-MATRIX IS STORED */
-/*                    AS FULL MATRIX LIKE */
-/*                         AM(I,J) = M(I,J) */
-/*                    ELSE, THE MATRIX IS TAKEN AS BANDED AND STORED */
-/*                    DIAGONAL-WISE AS */
-/*                         AM(I-J+MUMAS+1,J) = M(I,J). */
-
-/*     IMAS       GIVES INFORMATION ON THE MASS-MATRIX: */
-/*                    IMAS=0: M IS SUPPOSED TO BE THE IDENTITY */
-/*                       MATRIX, MAS IS NEVER CALLED. */
-/*                    IMAS=1: MASS-MATRIX  IS SUPPLIED. */
-
-/*     MLMAS       SWITCH FOR THE BANDED STRUCTURE OF THE MASS-MATRIX: */
-/*                    MLMAS=N: THE FULL MATRIX CASE. THE LINEAR */
-/*                       ALGEBRA IS DONE BY FULL-MATRIX GAUSS-ELIMINATION. */
-/*                    0<=MLMAS<N: MLMAS IS THE LOWER BANDWITH OF THE */
-/*                       MATRIX (>= NUMBER OF NON-ZERO DIAGONALS BELOW */
-/*                       THE MAIN DIAGONAL). */
-/*                 MLMAS IS SUPPOSED TO BE .LE. MLJAC. */
-
-/*     MUMAS       UPPER BANDWITH OF MASS-MATRIX (>= NUMBER OF NON- */
-/*                 ZERO DIAGONALS ABOVE THE MAIN DIAGONAL). */
-/*                 NEED NOT BE DEFINED IF MLMAS=N. */
-/*                 MUMAS IS SUPPOSED TO BE .LE. MUJAC. */
-
 /*     SOLOUT      NAME (EXTERNAL) OF SUBROUTINE PROVIDING THE */
 /*                 NUMERICAL SOLUTION DURING INTEGRATION. */
 /*                 IF IOUT=1, IT IS CALLED AFTER EVERY SUCCESSFUL STEP. */
@@ -234,14 +193,10 @@ static doublereal c_b116 = .25;
 /*                 WORK(21),..,WORK(LWORK) SERVE AS WORKING SPACE */
 /*                 FOR ALL VECTORS AND MATRICES. */
 /*                 "LWORK" MUST BE AT LEAST */
-/*                             N*(LJAC+LMAS+3*LE+13)+20 */
+/*                             N*(LJAC+3*LE+13)+20 */
 /*                 WHERE */
 /*                    LJAC=N              IF MLJAC=N (FULL JACOBIAN) */
 /*                    LJAC=MLJAC+MUJAC+1  IF MLJAC<N (BANDED JAC.) */
-/*                 AND */
-/*                    LMAS=0              IF IMAS=0 */
-/*                    LMAS=N              IF IMAS=1 AND MLMAS=N (FULL) */
-/*                    LMAS=MLMAS+MUMAS+1  IF MLMAS<N (BANDED MASS-M.) */
 /*                 AND */
 /*                    LE=N               IF MLJAC=N (FULL JACOBIAN) */
 /*                    LE=2*MLJAC+MUJAC+1 IF MLJAC<N (BANDED JAC.) */
@@ -308,9 +263,7 @@ static doublereal c_b116 = .25;
 /*              FOR SIMPLE PROBLEMS, THE CHOICE IWORK(8).EQ.2 PRODUCES */
 /*              OFTEN SLIGHTLY FASTER RUNS */
 
-/*    IWORK(11) SWITCH FOR USAGE OF SPARSE LINEAR SOLVER (SUPERLU),
-				CURRENTLY ONLY COMPATIBLE WITH B = I OR DIAGONAL B, I.E. 
-				MLMAS = MUMAS = 0 */
+/*    IWORK(11) SWITCH FOR USAGE OF SPARSE LINEAR SOLVER (SUPERLU) */
 
 /*    IWORK(12) UPPER BOUND ON NUMBER OF NON-ZERO ENTRIES IN THE JACOBIAN*/
 
@@ -612,7 +565,7 @@ static doublereal c_b116 = .25;
     }
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
-		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, mlmas, mumas,
+		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
 	    &pred, &facl, &facr, &m1, &ldjac,
@@ -655,8 +608,7 @@ static doublereal c_b116 = .25;
 /* Subroutine */ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *
 	rtol, doublereal *atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-	integer *mljac, integer *mujac, integer *mlmas, integer *
-	mumas, FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
+	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
@@ -839,13 +791,6 @@ static doublereal c_b116 = .25;
 			goto L179;
 		}
     }
-    linal_1.mle = *mljac;
-    linal_1.mue = *mujac;
-    linal_1.mbjac = *mljac + *mujac + 1;
-    linal_1.mbb = *mlmas + *mumas + 1;
-    linal_1.mdiag = linal_1.mle + linal_1.mue + 1;
-    linal_1.mdiff = linal_1.mle + linal_1.mue - *mumas;
-    linal_1.mbdiag = *mumas + 1;
     n2 = n << 1;
     n3 = n * 3;
     if (*itol == 0) {
