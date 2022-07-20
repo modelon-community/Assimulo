@@ -67,7 +67,7 @@ static doublereal c_b116 = .25;
 	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
 	    doublereal *, doublereal *, integer *, integer *, logical *, 
 	    integer *, integer *, integer *, logical *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, logical *,
+	    doublereal *, integer *, integer *, logical *,
 	    integer *, integer *, integer *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
@@ -268,10 +268,6 @@ static doublereal c_b116 = .25;
 /*                 MASS-MATRIX IS THE INDENTITY (IMAS=0), THE MINIMUM */
 /*                 STORAGE REQUIREMENT IS */
 /*                             LWORK = 4*N*N+13*N+20. */
-/*                 IF IWORK(9)=M1>0 THEN "LWORK" MUST BE AT LEAST */
-/*                          N*(LJAC+13)+(N-M1)*(LMAS+3*LE)+20 */
-/*                 WHERE IN THE DEFINITIONS OF LJAC, LMAS AND LE THE */
-/*                 NUMBER N CAN BE REPLACED BY N-M1. */
 
 /*     LWORK       DECLARED LENGTH OF ARRAY "WORK". */
 
@@ -330,45 +326,6 @@ static doublereal c_b116 = .25;
 /*              THE CHOICE IWORK(8).EQ.1 SEEMS TO PRODUCE SAFER RESULTS; */
 /*              FOR SIMPLE PROBLEMS, THE CHOICE IWORK(8).EQ.2 PRODUCES */
 /*              OFTEN SLIGHTLY FASTER RUNS */
-
-/*       IF THE DIFFERENTIAL SYSTEM HAS THE SPECIAL STRUCTURE THAT */
-/*            Y(I)' = Y(I+M2)   FOR  I=1,...,M1, */
-/*       WITH M1 A MULTIPLE OF M2, A SUBSTANTIAL GAIN IN COMPUTERTIME */
-/*       CAN BE ACHIEVED BY SETTING THE PARAMETERS IWORK(9) AND IWORK(10). */
-/*       E.G., FOR SECOND ORDER SYSTEMS P'=V, V'=G(P,V), WHERE P AND V ARE */
-/*       VECTORS OF DIMENSION N/2, ONE HAS TO PUT M1=M2=N/2. */
-/*       FOR M1>0 SOME OF THE INPUT PARAMETERS HAVE DIFFERENT MEANINGS: */
-/*       - JAC: ONLY THE ELEMENTS OF THE NON-TRIVIAL PART OF THE */
-/*              JACOBIAN HAVE TO BE STORED */
-/*              IF (MLJAC.EQ.N-M1) THE JACOBIAN IS SUPPOSED TO BE FULL */
-/*                 DFY(I,J) = PARTIAL F(I+M1) / PARTIAL Y(J) */
-/*                FOR I=1,N-M1 AND J=1,N. */
-/*              ELSE, THE JACOBIAN IS BANDED ( M1 = M2 * MM ) */
-/*                 DFY(I-J+MUJAC+1,J+K*M2) = PARTIAL F(I+M1) / PARTIAL Y(J+K*M2) */
-/*                FOR I=1,MLJAC+MUJAC+1 AND J=1,M2 AND K=0,MM. */
-/*       - MLJAC: MLJAC=N-M1: IF THE NON-TRIVIAL PART OF THE JACOBIAN IS FULL */
-/*                0<=MLJAC<N-M1: IF THE (MM+1) SUBMATRICES (FOR K=0,MM) */
-/*                     PARTIAL F(I+M1) / PARTIAL Y(J+K*M2),  I,J=1,M2 */
-/*                    ARE BANDED, MLJAC IS THE MAXIMAL LOWER BANDWIDTH */
-/*                    OF THESE MM+1 SUBMATRICES */
-/*       - MUJAC: MAXIMAL UPPER BANDWIDTH OF THESE MM+1 SUBMATRICES */
-/*                NEED NOT BE DEFINED IF MLJAC=N-M1 */
-/*       - MAS: IF IMAS=0 THIS MATRIX IS ASSUMED TO BE THE IDENTITY AND */
-/*              NEED NOT BE DEFINED. SUPPLY A DUMMY SUBROUTINE IN THIS CASE. */
-/*              IT IS ASSUMED THAT ONLY THE ELEMENTS OF RIGHT LOWER BLOCK OF */
-/*              DIMENSION N-M1 DIFFER FROM THAT OF THE IDENTITY MATRIX. */
-/*              IF (MLMAS.EQ.N-M1) THIS SUBMATRIX IS SUPPOSED TO BE FULL */
-/*                 AM(I,J) = M(I+M1,J+M1)     FOR I=1,N-M1 AND J=1,N-M1. */
-/*              ELSE, THE MASS MATRIX IS BANDED */
-/*                 AM(I-J+MUMAS+1,J) = M(I+M1,J+M1) */
-/*       - MLMAS: MLMAS=N-M1: IF THE NON-TRIVIAL PART OF M IS FULL */
-/*                0<=MLMAS<N-M1: LOWER BANDWIDTH OF THE MASS MATRIX */
-/*       - MUMAS: UPPER BANDWIDTH OF THE MASS MATRIX */
-/*                NEED NOT BE DEFINED IF MLMAS=N-M1 */
-
-/*    IWORK(9)  THE VALUE OF M1.  DEFAULT M1=0. */
-
-/*    IWORK(10) THE VALUE OF M2.  DEFAULT M2=M1. */
 
 /*    IWORK(11) SWITCH FOR USAGE OF SPARSE LINEAR SOLVER (SUPERLU),
 				CURRENTLY ONLY COMPATIBLE WITH B = I OR DIAGONAL B, I.E. 
@@ -542,19 +499,9 @@ static doublereal c_b116 = .25;
 		pred = FALSE_;
     }
 	/* -------- PARAMETER FOR SECOND ORDER EQUATIONS */
-    m1 = iwork[9];
-    m2 = iwork[10];
-    nm1 = n - m1;
-    if (m1 == 0) {
-		m2 = n;
-    }
-    if (m2 == 0) {
-		m2 = m1;
-    }
-    if (m1 < 0 || m2 < 0 || m1 + m2 > n) {
-		printf("CURIOUS INPUT FOR IWORK(9,10)= \t %i\t %i\n", m1, m2);
-		arret = TRUE_;
-    }
+    m1 = 0;
+    nm1 = n;
+	m2 = n;
 	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
 		safe = .9;
@@ -728,7 +675,7 @@ static doublereal c_b116 = .25;
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, mlmas, mumas,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
-	    &pred, &facl, &facr, &m1, &m2, &nm1, &jband, &ldjac,
+	    &pred, &facl, &facr, &m1, &m2, &jband, &ldjac,
 	    &lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
@@ -774,7 +721,7 @@ static doublereal c_b116 = .25;
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
 	 logical *pred, doublereal *facl, doublereal *facr, integer *m1, 
-	integer *m2, integer *nm1, logical *banded, integer *
+	integer *m2, logical *banded, integer *
 	ldjac, integer *lde1, integer *ldmas, doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
@@ -823,15 +770,15 @@ static doublereal c_b116 = .25;
 	static logical index2, index3, caljac;
     static doublereal faccon;
     extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *, integer *, integer *,
-	    integer *, doublereal *, doublereal *, doublereal *, 
+	    doublereal *, integer *, integer *, integer *,
+		doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *,
 		SuperLU_aux_z *, double *, int *, int *, int, int);
     static doublereal erracc;
     static integer mujacj;
     extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *, integer *, integer *,
-	    integer *, doublereal *, doublereal *, integer *, integer *, 
+	    doublereal *, integer *, integer *, integer *,
+		doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, integer *,
 		SuperLU_aux_d *, double *, int *, int *, int, int);
     static logical reject;
@@ -950,9 +897,7 @@ static doublereal c_b116 = .25;
     ti31 = -.50287263494578687595;
     ti32 = 2.5719269498556054292;
     ti33 = -.59603920482822492497;
-    if (*m1 > 0) {
-		*ijob += 10;
-    }
+
     posneg = copysign(1., *xend - *x);
     hmaxn = min(abs(*hmax), abs(*xend - *x));
     if (abs(*h__) <= *uround * 10.) {
@@ -1098,14 +1043,14 @@ L20:
     alphn = alph / *h__;
     betan = beta / *h__;
     decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-			mumas, m1, m2, nm1, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
+			mumas, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 			ijob, &iphes[1], slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
     decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-			mumas, m1, m2, nm1, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
+			mumas, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 			lde1, &ip2[1], &ier, ijob, slu_aux_z,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
@@ -2434,7 +2379,7 @@ L50:
 
 /* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
-	integer *m1, integer *m2, integer *nm1, doublereal *fac1, doublereal *e1,
+	doublereal *fac1, doublereal *e1,
 	integer *lde1, integer *ip1, integer *ier, integer *ijob,
 	integer *iphes, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
@@ -2444,8 +2389,7 @@ L50:
 	    e1_offset;
 
     /* Local variables */
-    static integer i, j, k, ib, mm, jm1;
-	static doublereal sum;
+    static integer i, j, ib;
     extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
 	    integer *, integer *);
     extern /* Subroutine */ int decb_(integer, integer *, doublereal *, 
@@ -2473,11 +2417,6 @@ L50:
 		case 5:  goto L5;
 		case 6:  goto L6;
 		case 8:  goto L8;
-		case 11:  goto L11;
-		case 12:  goto L12;
-		case 13:  goto L13;
-		case 14:  goto L14;
-		case 15:  goto L15;
     }
 
 /* ----------------------------------------------------------- */
@@ -2495,31 +2434,6 @@ L1:
 
 /* ----------------------------------------------------------- */
 
-L11:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e1[i + j * e1_dim1] = -fjac[i + jm1 * fjac_dim1];
-		}
-		e1[j + j * e1_dim1] += *fac1;
-    }
-L45:
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		for (i = 1; i <= *nm1; ++i) {
-			sum = 0.;
-			for (k = 0; k <= mm - 1; ++k) {
-				sum = (sum + fjac[i + (j + k * *m2) * fjac_dim1]) / *fac1;
-			}
-			e1[i + j * e1_dim1] -= sum;
-		}
-    }
-    dec_(*nm1, lde1, &e1[e1_offset], &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L2:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2529,31 +2443,6 @@ L2:
 		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
     }
     decb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L12:
-/* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			e1[i + linal_1.mle + j * e1_dim1] = -fjac[i + jm1 * fjac_dim1];
-		}
-		e1[linal_1.mdiag + j * e1_dim1] += *fac1;
-    }
-L46:
-    mm = *m1 / *m2;
-    for (j = 1; j <= *m2; ++j) {
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			sum = 0.;
-			for (k = 0; k <= mm - 1; ++k) {
-				sum = (sum + fjac[i + (j + k * *m2) * fjac_dim1]) / *fac1;
-			}
-			e1[i + linal_1.mle + j * e1_dim1] -= sum;
-		}
-    }
-    decb_(*nm1, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -2573,20 +2462,6 @@ L3:
 
 /* ----------------------------------------------------------- */
 
-L13:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e1[i + j * e1_dim1] = -fjac[i + jm1 * fjac_dim1];
-		}
-		for (i = max(1, j - *mumas); i <= min(*nm1, j + *mlmas); ++i) {
-			e1[i + j * e1_dim1] += *fac1 * fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-		}
-    }
-    goto L45;
-/* ----------------------------------------------------------- */
-
 L4:
 /* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2603,22 +2478,6 @@ L4:
 
 /* ----------------------------------------------------------- */
 
-L14:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			e1[i + linal_1.mle + j * e1_dim1] = -fjac[i + jm1 * fjac_dim1];
-		}
-		for (i = 1; i <= linal_1.mbb; ++i) {
-			ib = i + linal_1.mdiff;
-			e1[ib + j * e1_dim1] += *fac1 * fmas[i + j * fmas_dim1];
-		}
-    }
-    goto L46;
-
-/* ----------------------------------------------------------- */
-
 L5:
 /* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2628,18 +2487,6 @@ L5:
     }
     dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
     return 0;
-
-/* ----------------------------------------------------------- */
-
-L15:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e1[i + j * e1_dim1] = fmas[i + j * fmas_dim1] * *fac1 - fjac[i + jm1 * fjac_dim1];
-		}
-    }
-    goto L45;
 
 /* ----------------------------------------------------------- */
 
@@ -2665,7 +2512,7 @@ L8:
 
 /* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
-	integer *m1, integer *m2, integer *nm1, doublereal *alphn, doublereal *betan,
+	doublereal *alphn, doublereal *betan,
 	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
@@ -2675,18 +2522,14 @@ L8:
 	    e2r_offset, e2i_dim1, e2i_offset;
 
     /* Local variables */
-    static integer i, j, k;
+    static integer i, j;
     static doublereal bb;
-    static integer ib, mm, jm1;
-    static doublereal bet, alp;
+    static integer ib;
     extern /* Subroutine */ int decc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *);
-    static doublereal ffma, abno;
     static integer imle;
-    static doublereal sumi, sumr, sums;
     extern /* Subroutine */ int decbc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *);
-
 
     /* Parameter adjustments */
     fjac_dim1 = *ldjac;
@@ -2711,11 +2554,6 @@ L8:
 		case 4:  goto L4;
 		case 5:  goto L5;
 		case 8:  goto L8;
-		case 11:  goto L11;
-		case 12:  goto L12;
-		case 13:  goto L13;
-		case 14:  goto L14;
-		case 15:  goto L15;
     }
 
 /* ----------------------------------------------------------- */
@@ -2735,40 +2573,6 @@ L1:
 
 /* ----------------------------------------------------------- */
 
-L11:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e2r[i + j * e2r_dim1] = -fjac[i + jm1 * fjac_dim1];
-			e2i[i + j * e2i_dim1] = 0.;
-		}
-		e2r[j + j * e2r_dim1] += *alphn;
-		e2i[j + j * e2i_dim1] = *betan;
-    }
-L45:
-    mm = *m1 / *m2;
-    abno = *alphn * *alphn + *betan * *betan;
-    alp = *alphn / abno;
-    bet = *betan / abno;
-    for (j = 1; j <= *m2; ++j) {
-		for (i = 1; i <= *nm1; ++i) {
-			sumr = 0.;
-			sumi = 0.;
-			for (k = 0; k <= mm - 1; ++k) {
-				sums = sumr + fjac[i + (j + k * *m2) * fjac_dim1];
-				sumr = sums * alp + sumi * bet;
-				sumi = sumi * alp - sums * bet;
-			}
-			e2r[i + j * e2r_dim1] -= sumr;
-			e2i[i + j * e2i_dim1] -= sumi;
-		}
-    }
-    decc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L2:
 /* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2782,41 +2586,6 @@ L2:
     }
     decbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
 	    linal_1.mue, &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L12:
-/* ---  B=IDENTITY, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			e2r[i + linal_1.mle + j * e2r_dim1] = -fjac[i + jm1 * fjac_dim1];
-			e2i[i + linal_1.mle + j * e2i_dim1] = 0.;
-		}
-		e2r[linal_1.mdiag + j * e2r_dim1] += *alphn;
-		e2i[linal_1.mdiag + j * e2i_dim1] += *betan;
-    }
-L46:
-    mm = *m1 / *m2;
-    abno = *alphn * *alphn + *betan * *betan;
-    alp = *alphn / abno;
-    bet = *betan / abno;
-    for (j = 1; j <= *m2; ++j) {
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			sumr = 0.;
-			sumi = 0.;
-			for (k = 0; k <= mm - 1; ++k) {
-				sums = sumr + fjac[i + (j + k * *m2) * fjac_dim1];
-				sumr = sums * alp + sumi * bet;
-				sumi = sumi * alp - sums * bet;
-			}
-			imle = i + linal_1.mle;
-			e2r[imle + j * e2r_dim1] -= sumr;
-			e2i[imle + j * e2i_dim1] -= sumi;
-		}
-    }
-    decbc_(*nm1, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &linal_1.mue, &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -2841,24 +2610,6 @@ L3:
 
 /* ----------------------------------------------------------- */
 
-L13:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e2r[i + j * e2r_dim1] = -fjac[i + jm1 * fjac_dim1];
-			e2i[i + j * e2i_dim1] = 0.;
-		}
-		for (i = max(1, j - *mumas); i <= min(*nm1, j + *mlmas); ++i) {
-			ffma = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			e2r[i + j * e2r_dim1] += *alphn * ffma;
-			e2i[i + j * e2i_dim1] += *betan * ffma;
-		}
-    }
-    goto L45;
-
-/* ----------------------------------------------------------- */
-
 L4:
 /* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2880,25 +2631,6 @@ L4:
 
 /* ----------------------------------------------------------- */
 
-L14:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			e2r[i + linal_1.mle + j * e2r_dim1] = -fjac[i + jm1 * fjac_dim1];
-			e2i[i + linal_1.mle + j * e2i_dim1] = 0.;
-		}
-		for (i = 1; i <= linal_1.mbb; ++i) {
-			ib = i + linal_1.mdiff;
-			ffma = fmas[i + j * fmas_dim1];
-			e2r[ib + j * e2r_dim1] += *alphn * ffma;
-			e2i[ib + j * e2i_dim1] += *betan * ffma;
-		}
-    }
-    goto L46;
-
-/* ----------------------------------------------------------- */
-
 L5:
 /* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
     for (j = 1; j <= n; ++j) {
@@ -2910,19 +2642,6 @@ L5:
     }
     decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
-
-/* ----------------------------------------------------------- */
-
-L15:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX, SECOND ORDER */
-    for (j = 1; j <= *nm1; ++j) {
-		jm1 = j + *m1;
-		for (i = 1; i <= *nm1; ++i) {
-			e2r[i + j * e2r_dim1] = *alphn * fmas[i + j * fmas_dim1] - fjac[i + jm1 * fjac_dim1];
-			e2i[i + j * e2i_dim1] = *betan * fmas[i + j * fmas_dim1];
-		}
-    }
-    goto L45;
 
 /* ----------------------------------------------------------- */
 
