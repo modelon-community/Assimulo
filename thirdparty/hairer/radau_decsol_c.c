@@ -59,7 +59,7 @@ static doublereal c_b116 = .25;
     static doublereal fnewt;
     static integer nstep;
     static doublereal tolst;
-    static integer ldmas2, iescal, naccpt;
+    static integer iescal, naccpt;
     static integer nrejct;
     static integer istore;
     static logical startn;
@@ -572,7 +572,6 @@ static doublereal c_b116 = .25;
 	} else {
 		ijob = 1;
 	}
-    ldmas2 = max(1,ldmas);
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
 		ijob = 8;
@@ -629,9 +628,9 @@ static doublereal c_b116 = .25;
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
 	    &pred, &facl, &facr, &m1, &m2, &jband, &ldjac,
-	    &lde1, &ldmas2, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
+	    &lde1, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
-		&work[iee1], &work[iee2r], &work[iee2i], &work[iemas],
+		&work[iee1], &work[iee2r], &work[iee2i],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
 		&work[iewerr], // entry point for werr
@@ -675,10 +674,10 @@ static doublereal c_b116 = .25;
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
 	 logical *pred, doublereal *facl, doublereal *facr, integer *m1, 
 	integer *m2, logical *banded, integer *
-	ldjac, integer *lde1, integer *ldmas, doublereal *z1, doublereal *z2, 
+	ldjac, integer *lde1, doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
-	doublereal *e2r, doublereal *e2i, doublereal *fmas, integer *ip1, 
+	doublereal *e2r, doublereal *e2i, integer *ip1, 
 	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol,
@@ -687,7 +686,7 @@ static doublereal c_b116 = .25;
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
+    integer fjac_dim1, fjac_offset, e1_dim1, 
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
     doublereal d__1;
 
@@ -777,9 +776,6 @@ static doublereal c_b116 = .25;
     e1_dim1 = *lde1;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
-    fmas_dim1 = *ldmas;
-    fmas_offset = 1 + fmas_dim1;
-    fmas -= fmas_offset;
 
     /* Function Body */
     conra5_1.nn = n;
@@ -968,14 +964,14 @@ L20:
     fac1 = u1 / *h__;
     alphn = alph / *h__;
     betan = beta / *h__;
-    decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas,
+    decomr_(n, &fjac[fjac_offset], ldjac,
 			&fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 			ijob, &iphes[1], slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
-    decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, 
+    decomc_(n, &fjac[fjac_offset], ldjac, 
 			&alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 			lde1, &ip2[1], &ier, ijob, slu_aux_z,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
@@ -1082,8 +1078,7 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-    slvrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], 
-			ldmas, &fac1, &alphn, &betan, &e1[e1_offset],
+    slvrad_(n, &fac1, &alphn, &betan, &e1[e1_offset],
 			&e2r[e2r_offset], &e2i[e2i_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
 			&iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
@@ -1142,11 +1137,10 @@ L40:
 		goto L40;
     }
 	/* --- ERROR ESTIMATION */
-    estrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset],  
-			ldmas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
+    estrad_(n, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
 			&y0[1], &y[1], ijob, x, &e1[e1_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
-			&iphes[1], &scal[1], &err, &first, &reject,
+			&scal[1], &err, &first, &reject,
 			slu_aux_d, &ier);
 	if (ier){
 		goto L184;
@@ -1798,15 +1792,13 @@ L50:
 /* ****************************************** */
 
 /* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas,
 	doublereal *fac1, doublereal *e1,
 	integer *lde1, integer *ip1, integer *ier, integer *ijob,
 	integer *iphes, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset;
+    integer fjac_dim1, fjac_offset, e1_dim1, e1_offset;
 
     /* Local variables */
     static integer i, j;
@@ -1817,9 +1809,6 @@ L50:
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
     --ip1;
-    fmas_dim1 = *ldmas;
-    fmas_offset = 1 + fmas_dim1;
-    fmas -= fmas_offset;
     e1_dim1 = *lde1;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
@@ -1859,14 +1848,13 @@ L8:
 /* *********************************************************** */
 
 /* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas,
 	doublereal *alphn, doublereal *betan,
 	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
+    integer fjac_dim1, fjac_offset, e2r_dim1, 
 	    e2r_offset, e2i_dim1, e2i_offset;
     /* Local variables */
     static integer i, j;
@@ -1876,9 +1864,6 @@ L8:
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
     --ip2;
-    fmas_dim1 = *ldmas;
-    fmas_offset = 1 + fmas_dim1;
-    fmas -= fmas_offset;
     e2i_dim1 = *lde1;
     e2i_offset = 1 + e2i_dim1;
     e2i -= e2i_offset;
@@ -1922,8 +1907,7 @@ L8:
 
 /* *********************************************************** */
 
-/* Subroutine */ int slvrad_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas, 
+/* Subroutine */ int slvrad_(integer n,
 	doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
@@ -1932,8 +1916,7 @@ L8:
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, 
-	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
+    integer e1_dim1, e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
 
     /* Local variables */
     static integer i;
@@ -1946,14 +1929,8 @@ L8:
     --z3;
     --z2;
     --z1;
-    fjac_dim1 = *ldjac;
-    fjac_offset = 1 + fjac_dim1;
-    fjac -= fjac_offset;
     --ip2;
     --ip1;
-    fmas_dim1 = *ldmas;
-    fmas_offset = 1 + fmas_dim1;
-    fmas -= fmas_offset;
     e2i_dim1 = *lde1;
     e2i_offset = 1 + e2i_dim1;
     e2i -= e2i_offset;
@@ -2010,19 +1987,18 @@ L8:
 
 /* *********************************************************** */
 
-/* Subroutine */ int estrad_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas, 
+/* Subroutine */ int estrad_(integer n,
 	doublereal *h__, doublereal *dd1, 
 	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
 	*y0, doublereal *y, integer *ijob, doublereal *x,
 	doublereal *e1, integer *lde1, doublereal *
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
-	werr, doublereal *f1, doublereal *f2, integer *ip1, integer *iphes, 
+	werr, doublereal *f1, doublereal *f2, integer *ip1,
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
 	SuperLU_aux_d* slu_aux_d, integer *ier)
 {
     /* System generated locals */
-    integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, e1_offset;
+    integer e1_dim1, e1_offset;
 
     /* Local variables */
     static integer i;
@@ -2030,7 +2006,6 @@ L8:
 
     /* Parameter adjustments */
     --scal;
-    --iphes;
     --f2;
     --f1;
     --werr;
@@ -2040,13 +2015,7 @@ L8:
     --z1;
     --y;
     --y0;
-    fjac_dim1 = *ldjac;
-    fjac_offset = 1 + fjac_dim1;
-    fjac -= fjac_offset;
     --ip1;
-    fmas_dim1 = *ldmas;
-    fmas_offset = 1 + fmas_dim1;
-    fmas -= fmas_offset;
     e1_dim1 = *lde1;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
