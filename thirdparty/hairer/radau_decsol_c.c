@@ -30,7 +30,7 @@ static doublereal c_b116 = .25;
 /* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
 	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
-	*mujac, integer *imas, integer *mlmas, integer *mumas, FP_CB_solout 
+	*mujac, integer *mlmas, integer *mumas, FP_CB_solout 
 	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
 	iwork, integer *liwork, integer *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
@@ -77,7 +77,6 @@ static doublereal c_b116 = .25;
 		double*, int*, int*,
 		SuperLU_aux_d*, SuperLU_aux_z*);
     static integer nrejct;
-    static logical implct;
     static integer istore;
     static logical startn;
     static doublereal uround;
@@ -264,9 +263,8 @@ static doublereal c_b116 = .25;
 /*                    LE=N               IF MLJAC=N (FULL JACOBIAN) */
 /*                    LE=2*MLJAC+MUJAC+1 IF MLJAC<N (BANDED JAC.) */
 
-/*                 IN THE USUAL CASE WHERE THE JACOBIAN IS FULL AND THE */
-/*                 MASS-MATRIX IS THE INDENTITY (IMAS=0), THE MINIMUM */
-/*                 STORAGE REQUIREMENT IS */
+/*                 IN THE USUAL CASE WHERE THE JACOBIAN IS FULL */
+/*				   THE MINIMUM STORAGE REQUIREMENT IS */
 /*                             LWORK = 4*N*N+13*N+20. */
 
 /*     LWORK       DECLARED LENGTH OF ARRAY "WORK". */
@@ -410,8 +408,6 @@ static doublereal c_b116 = .25;
     --atol;
     --work;
     --iwork;
-
-	*imas = 0; // always assume Mass matrix = identity
 
     /* Function Body */
     nfcn = 0;
@@ -572,9 +568,7 @@ static doublereal c_b116 = .25;
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/*         COMPUTATION OF ARRAY ENTRIES */
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
-	/* ---- IMPLICIT, BANDED OR NOT ? */
-    // implct = *imas != 0;
-	implct = 0;
+	/* ---- BANDED OR NOT ? */
     jband = *mljac < nm1;
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
 	/* -- JACOBIAN AND MATRICES E1, E2 */
@@ -587,42 +581,17 @@ static doublereal c_b116 = .25;
 		ldjac = nm1;
 		lde1 = nm1;
     }
-	/* -- MASS MATRIX */
-    if (implct) {
-		if (*mlmas != nm1) {
-			ldmas = *mlmas + *mumas + 1;
-			if (jband) {
-				ijob = 4;
-			} else {
-				ijob = 3;
-			}
-		} else {
-			*mumas = nm1;
-			ldmas = nm1;
-			ijob = 5;
-		}
-	/* ------ BANDWITH OF "MAS" NOT SMALLER THAN BANDWITH OF "JAC" */
-		if (*mlmas > *mljac || *mumas > *mujac) {
-			printf("BANDWITH OF \"MAS\" NOT SMALLER THAN BANDWITH OF \"JAC\"\n");
-			arret = TRUE_;
-		}
-    } else {
-		ldmas = 0;
-		if (jband) {
-			ijob = 2;
-		} else {
-			ijob = 1;
-		}
-    }
+	// TODO: Leftover else case from implicit = False
+	ldmas = 0;
+	if (jband) {
+		ijob = 2;
+	} else {
+		ijob = 1;
+	}
     ldmas2 = max(1,ldmas);
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
-		if (implct){
-			printf("SPARSE LU DECOMPOSITION IS NOT SUPPORTED FOR IMPLICIT ODES\n");
-			arret = TRUE_;
-		} else {
-			ijob = 8;
-		}
+		ijob = 8;
 		if (!(*ijac)){
 			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
 			arret = TRUE_;
@@ -770,14 +739,14 @@ static doublereal c_b116 = .25;
 	static logical index2, index3, caljac;
     static doublereal faccon;
     extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *,
+	    doublereal *, integer *,
 		doublereal *, doublereal *, doublereal *, 
 	    doublereal *, integer *, integer *, integer *, integer *,
 		SuperLU_aux_z *, double *, int *, int *, int, int);
     static doublereal erracc;
     static integer mujacj;
     extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *,
+	    doublereal *, integer *,
 		doublereal *, doublereal *, integer *, integer *, 
 	    integer *, integer *, integer *,
 		SuperLU_aux_d *, double *, int *, int *, int, int);
@@ -785,7 +754,7 @@ static doublereal c_b116 = .25;
     static doublereal facgus;
     static integer mujacp;
     extern /* Subroutine */ int estrad_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *,
+	    doublereal *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
 	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
 	    doublereal *, integer *, 
@@ -796,7 +765,7 @@ static doublereal c_b116 = .25;
 		
     static doublereal dynold, posneg;
     extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
-	    doublereal *, integer *, integer *, integer *,
+	    doublereal *, integer *,
 	    doublereal *, doublereal *, 
 	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
 	    doublereal *, doublereal *, doublereal *, doublereal *, 
@@ -1042,15 +1011,15 @@ L20:
     fac1 = u1 / *h__;
     alphn = alph / *h__;
     betan = beta / *h__;
-    decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-			mumas, &fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
+    decomr_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas,
+			&fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
 			ijob, &iphes[1], slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
-    decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, mlmas, 
-			mumas, &alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
+    decomc_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], ldmas, 
+			&alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
 			lde1, &ip2[1], &ier, ijob, slu_aux_z,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
@@ -1157,7 +1126,7 @@ L40:
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
     slvrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset], 
-			ldmas, mlmas, mumas, &fac1, &alphn, &betan, &e1[e1_offset],
+			ldmas, &fac1, &alphn, &betan, &e1[e1_offset],
 			&e2r[e2r_offset], &e2i[e2i_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
 			&iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
@@ -1217,7 +1186,7 @@ L40:
     }
 	/* --- ERROR ESTIMATION */
     estrad_(n, &fjac[fjac_offset], ldjac, &fmas[fmas_offset],  
-			ldmas, mlmas, mumas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
+			ldmas, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
 			&y0[1], &y[1], ijob, x, &e1[e1_offset], lde1,
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
 			&iphes[1], &scal[1], &err, &first, &reject,
@@ -2378,7 +2347,7 @@ L50:
 /* ****************************************** */
 
 /* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
+	doublereal *fmas, integer *ldmas,
 	doublereal *fac1, doublereal *e1,
 	integer *lde1, integer *ip1, integer *ier, integer *ijob,
 	integer *iphes, SuperLU_aux_d* slu_aux,
@@ -2389,7 +2358,7 @@ L50:
 	    e1_offset;
 
     /* Local variables */
-    static integer i, j, ib;
+    static integer i, j;
     extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
 	    integer *, integer *);
     extern /* Subroutine */ int decb_(integer, integer *, doublereal *, 
@@ -2412,10 +2381,6 @@ L50:
     switch (*ijob) {
 		case 1:  goto L1;
 		case 2:  goto L2;
-		case 3:  goto L3;
-		case 4:  goto L4;
-		case 5:  goto L5;
-		case 6:  goto L6;
 		case 8:  goto L8;
     }
 
@@ -2447,56 +2412,6 @@ L2:
 
 /* ----------------------------------------------------------- */
 
-L3:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			e1[i + j * e1_dim1] = -fjac[i + j * fjac_dim1];
-		}
-		for (i = max(1, j - *mumas); i <= min(n, j + *mlmas); ++i) {
-			e1[i + j * e1_dim1] += *fac1 * fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-		}
-    }
-    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L4:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			e1[i + linal_1.mle + j * e1_dim1] = -fjac[i + j * fjac_dim1];
-		}
-		for (i = 1; i <= linal_1.mbb; ++i) {
-			ib = i + linal_1.mdiff;
-			e1[ib + j * e1_dim1] += *fac1 * fmas[i + j * fmas_dim1];
-		}
-    }
-    decb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L5:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			e1[i + j * e1_dim1] = fmas[i + j * fmas_dim1] * *fac1 - fjac[i + j * fjac_dim1];
-		}
-    }
-    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L6:
-/* ---  B IS A FULL MATRIX, JACOBIAN A BANDED MATRIX */
-/* ---  THIS OPTION IS NOT PROVIDED */
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
@@ -2511,7 +2426,7 @@ L8:
 /* *********************************************************** */
 
 /* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
-	doublereal *fmas, integer *ldmas, integer *mlmas, integer *mumas, 
+	doublereal *fmas, integer *ldmas,
 	doublereal *alphn, doublereal *betan,
 	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
@@ -2523,8 +2438,6 @@ L8:
 
     /* Local variables */
     static integer i, j;
-    static doublereal bb;
-    static integer ib;
     extern /* Subroutine */ int decc_(integer, integer *, doublereal *, 
 	    doublereal *, integer *, integer *);
     static integer imle;
@@ -2550,9 +2463,6 @@ L8:
     switch (*ijob) {
 		case 1:  goto L1;
 		case 2:  goto L2;
-		case 3:  goto L3;
-		case 4:  goto L4;
-		case 5:  goto L5;
 		case 8:  goto L8;
     }
 
@@ -2590,61 +2500,6 @@ L2:
 
 /* ----------------------------------------------------------- */
 
-L3:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			e2r[i + j * e2r_dim1] = -fjac[i + j * fjac_dim1];
-			e2i[i + j * e2i_dim1] = 0.;
-		}
-    }
-    for (j = 1; j <= n; ++j) {
-		for (i = max(1, j - *mumas); i <= min(n, j + *mlmas); ++i) {
-			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			e2r[i + j * e2r_dim1] += *alphn * bb;
-			e2i[i + j * e2i_dim1] = *betan * bb;
-		}
-    }
-    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L4:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= linal_1.mbjac; ++i) {
-			imle = i + linal_1.mle;
-			e2r[imle + j * e2r_dim1] = -fjac[i + j * fjac_dim1];
-			e2i[imle + j * e2i_dim1] = 0.;
-		}
-		for (i = max(1, *mumas + 2 - j); i <= min(linal_1.mbb, *mumas + 1 - j + n); ++i) {
-			ib = i + linal_1.mdiff;
-			bb = fmas[i + j * fmas_dim1];
-			e2r[ib + j * e2r_dim1] += *alphn * bb;
-			e2i[ib + j * e2i_dim1] = *betan * bb;
-		}
-    }
-    decbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
-	    linal_1.mue, &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L5:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			bb = fmas[i + j * fmas_dim1];
-			e2r[i + j * e2r_dim1] = bb * *alphn - fjac[i + j * fjac_dim1];
-			e2i[i + j * e2i_dim1] = bb * *betan;
-		}
-    }
-    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
 	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
@@ -2660,7 +2515,6 @@ L8:
 
 /* Subroutine */ int slvrad_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, 
-	integer *mlmas, integer *mumas,
 	doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
@@ -2673,8 +2527,8 @@ L8:
 	    e1_offset, e2r_dim1, e2r_offset, e2i_dim1, e2i_offset;
 
     /* Local variables */
-    static integer i, j;
-    static doublereal s1, s2, s3, bb;
+    static integer i;
+    static doublereal s2, s3;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
     extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
@@ -2714,9 +2568,6 @@ L8:
     switch (*ijob) {
 		case 1:  goto L1;
 		case 2:  goto L2;
-		case 3:  goto L3;
-		case 4:  goto L4;
-		case 5:  goto L5;
 		case 8:  goto L8;
     }
 
@@ -2752,73 +2603,6 @@ L2:
 
 /* ----------------------------------------------------------- */
 
-L3:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX */
-    for (i = 1; i <= n; ++i) {
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
-			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			s1 -= bb * f1[j];
-			s2 -= bb * f2[j];
-			s3 -= bb * f3[j];
-		}
-		z1[i] += s1 * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L4:
-/* ---  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
-    for (i = 1; i <= n; ++i) {
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
-			bb = fmas[i - j + linal_1.mbdiag + j * fmas_dim1];
-			s1 -= bb * f1[j];
-			s2 -= bb * f2[j];
-			s3 -= bb * f3[j];
-		}
-		z1[i] += s1 * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &z1[1], &ip1[1]);
-    solbc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &linal_1.mle, &
-	    linal_1.mue, &z2[1], &z3[1], &ip2[1]);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L5:
-/* ---  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
-    for (i = 1; i <= n; ++i) {
-		s1 = 0.;
-		s2 = 0.;
-		s3 = 0.;
-		for (j = 1; j <= n; ++j) {
-			bb = fmas[i + j * fmas_dim1];
-			s1 -= bb * f1[j];
-			s2 -= bb * f2[j];
-			s3 -= bb * f3[j];
-		}
-		z1[i] += s1 * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
 L8:
 /* ---  B=IDENTITY, SPARSE LU */
     for (i = 1; i <= n; ++i) {
@@ -2844,7 +2628,7 @@ L8:
 
 /* Subroutine */ int estrad_(integer n, doublereal *fjac, integer *ldjac, 
 	doublereal *fmas, integer *ldmas, 
-	integer *mlmas, integer *mumas, doublereal *h__, doublereal *dd1, 
+	doublereal *h__, doublereal *dd1, 
 	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
 	*y0, doublereal *y, integer *ijob, doublereal *x,
 	doublereal *e1, integer *lde1, doublereal *
@@ -2857,10 +2641,10 @@ L8:
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e1_dim1, e1_offset;
 
     /* Local variables */
-    static integer i, j;
+    static integer i;
     extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
 	    doublereal *, integer *);
-    static doublereal sum, hee1, hee2, hee3;
+    static doublereal hee1, hee2, hee3;
     extern /* Subroutine */ int solb_(integer, integer *, doublereal *, 
 	    integer *, integer *, doublereal *, integer *);
 
@@ -2894,9 +2678,6 @@ L8:
     switch (*ijob) {
 		case 1:  goto L1;
 		case 2:  goto L2;
-		case 3:  goto L3;
-		case 4:  goto L4;
-		case 5:  goto L5;
 		case 8:  goto L8;
     }
 
@@ -2916,54 +2697,6 @@ L2:
 		cont[i] = f2[i] + y0[i];
     }
     solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
-    goto L77;
-
-L3:
-/* ------  B IS A BANDED MATRIX, JACOBIAN A FULL MATRIX */
-    for (i = 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= n; ++i) {
-		sum = 0.;
-		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
-			sum += fmas[i - j + linal_1.mbdiag + j * fmas_dim1] * f1[j];
-		}
-		f2[i] = sum;
-		cont[i] = sum + y0[i];
-    }
-    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
-    goto L77;
-
-L4:
-/* ------  B IS A BANDED MATRIX, JACOBIAN A BANDED MATRIX */
-    for (i = 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= n; ++i) {
-		sum = 0.;
-		for (j = max(1, i - *mlmas); j <= min(n, i + *mumas); ++j) {
-			sum += fmas[i - j + linal_1.mbdiag + j * fmas_dim1] * f1[j];
-		}
-		f2[i] = sum;
-		cont[i] = sum + y0[i];
-    }
-    solb_(n, lde1, &e1[e1_offset], &linal_1.mle, &linal_1.mue, &cont[1], &ip1[1]);
-    goto L77;
-
-L5:
-/* ------  B IS A FULL MATRIX, JACOBIAN A FULL MATRIX */
-    for (i = 1; i <= n; ++i) {
-		f1[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-    }
-    for (i = 1; i <= n; ++i) {
-		sum = 0.;
-		for (j = 1; j <= n; ++j) {
-			sum += fmas[i + j * fmas_dim1] * f1[j];
-		}
-		f2[i] = sum;
-		cont[i] = sum + y0[i];
-    }
-    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
 /* ---  B=IDENTITY MATRIX, SPARSE LU */
@@ -3003,9 +2736,6 @@ L77:
 		switch (*ijob) {
 			case 1:  goto L31;
 			case 2:  goto L32;
-			case 3:  goto L31;
-			case 4:  goto L32;
-			case 5:  goto L31;
 			case 8:  goto L38;
 		}
 	/* ------ FULL MATRIX OPTION */
