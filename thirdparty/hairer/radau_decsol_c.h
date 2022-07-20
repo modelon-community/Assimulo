@@ -27,7 +27,6 @@ typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*
 int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
             integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
-            integer *mljac, integer *mujac,
             FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, integer *idid,
             double* jac_data, int* jac_indices, int* jac_indptr,

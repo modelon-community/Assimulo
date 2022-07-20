@@ -23,12 +23,12 @@ static doublereal c_b93 = 9.;
 static doublereal c_b114 = .8;
 static doublereal c_b116 = .25;
 
-/* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
-	y, doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *
-	atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, integer *mljac, integer 
-	*mujac, FP_CB_solout 
-	solout, void* solout_PY, integer *iout, doublereal *work, integer *lwork, integer *
-	iwork, integer *liwork, integer *idid,
+/* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
+	doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
+	integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
+	FP_CB_solout solout,
+	void* solout_PY, integer *iout, doublereal *work, integer *lwork, 
+	integer *iwork, integer *liwork, integer *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
@@ -129,30 +129,11 @@ static doublereal c_b116 = .25;
 /*                    DFY(1,1)= ... */
 /*                 LDFY, THE COLUMN-LENGTH OF THE ARRAY, IS */
 /*                 FURNISHED BY THE CALLING PROGRAM. */
-/*                 IF (MLJAC.EQ.N) THE JACOBIAN IS SUPPOSED TO */
-/*                    BE FULL AND THE PARTIAL DERIVATIVES ARE */
-/*                    STORED IN DFY AS */
-/*                       DFY(I,J) = PARTIAL F(I) / PARTIAL Y(J) */
-/*                 ELSE, THE JACOBIAN IS TAKEN AS BANDED AND */
-/*                    THE PARTIAL DERIVATIVES ARE STORED */
-/*                    DIAGONAL-WISE AS */
-/*                       DFY(I-J+MUJAC+1,J) = PARTIAL F(I) / PARTIAL Y(J). */
 
 /*     IJAC        SWITCH FOR THE COMPUTATION OF THE JACOBIAN: */
 /*                    IJAC=0: JACOBIAN IS COMPUTED INTERNALLY BY FINITE */
 /*                       DIFFERENCES, SUBROUTINE "JAC" IS NEVER CALLED. */
 /*                    IJAC=1: JACOBIAN IS SUPPLIED BY SUBROUTINE JAC. */
-
-/*     MLJAC       SWITCH FOR THE BANDED STRUCTURE OF THE JACOBIAN: */
-/*                    MLJAC=N: JACOBIAN IS A FULL MATRIX. THE LINEAR */
-/*                       ALGEBRA IS DONE BY FULL-MATRIX GAUSS-ELIMINATION. */
-/*                    0<=MLJAC<N: MLJAC IS THE LOWER BANDWITH OF JACOBIAN */
-/*                       MATRIX (>= NUMBER OF NON-ZERO DIAGONALS BELOW */
-/*                       THE MAIN DIAGONAL). */
-
-/*     MUJAC       UPPER BANDWITH OF JACOBIAN  MATRIX (>= NUMBER OF NON- */
-/*                 ZERO DIAGONALS ABOVE THE MAIN DIAGONAL). */
-/*                 NEED NOT BE DEFINED IF MLJAC=N. */
 
 /*     SOLOUT      NAME (EXTERNAL) OF SUBROUTINE PROVIDING THE */
 /*                 NUMERICAL SOLUTION DURING INTEGRATION. */
@@ -196,10 +177,8 @@ static doublereal c_b116 = .25;
 /*                             N*(LJAC+3*LE+13)+20 */
 /*                 WHERE */
 /*                    LJAC=N              IF MLJAC=N (FULL JACOBIAN) */
-/*                    LJAC=MLJAC+MUJAC+1  IF MLJAC<N (BANDED JAC.) */
 /*                 AND */
 /*                    LE=N               IF MLJAC=N (FULL JACOBIAN) */
-/*                    LE=2*MLJAC+MUJAC+1 IF MLJAC<N (BANDED JAC.) */
 
 /*                 IN THE USUAL CASE WHERE THE JACOBIAN IS FULL */
 /*				   THE MINIMUM STORAGE REQUIREMENT IS */
@@ -506,8 +485,6 @@ static doublereal c_b116 = .25;
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
 	/* -- JACOBIAN AND MATRICES E1, E2 */
 	// TODO: Leftover from banded == False
-	*mljac = nm1;
-	*mujac = nm1;
 	ldjac = nm1;
 	lde1 = nm1;
 	// TODO: Leftover else case from implicit = False
