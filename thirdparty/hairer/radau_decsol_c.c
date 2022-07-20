@@ -46,7 +46,7 @@ static doublereal c_b116 = .25;
     static doublereal thet, expm;
     static integer nsol;
     static doublereal quot;
-    static integer iee2i, iee2r, ieip1, ieip2, nind1, nind2, nind3;
+    static integer iee2i, iee2r, ieip1, ieip2;
     static doublereal quot1, quot2;
     static integer iejac, ldjac;
     static integer iecon, iemas, ldmas, ieiph;
@@ -177,7 +177,6 @@ static doublereal c_b116 = .25;
 /*                             N*(LJAC+3*LE+13)+20 */
 /*                 WHERE */
 /*                    LJAC=N              IF MLJAC=N (FULL JACOBIAN) */
-/*                 AND */
 /*                    LE=N               IF MLJAC=N (FULL JACOBIAN) */
 
 /*                 IN THE USUAL CASE WHERE THE JACOBIAN IS FULL */
@@ -218,21 +217,6 @@ static doublereal c_b116 = .25;
 /*              DIFFICULTIES WITH CONVERGENCE (THIS IS THE CASE WHEN */
 /*              NSTEP IS LARGER THAN NACCPT + NREJCT; SEE OUTPUT PARAM.). */
 /*              DEFAULT IS IWORK(4)=0. */
-
-/*       THE FOLLOWING 3 PARAMETERS ARE IMPORTANT FOR */
-/*       DIFFERENTIAL-ALGEBRAIC SYSTEMS OF INDEX > 1. */
-/*       THE FUNCTION-SUBROUTINE SHOULD BE WRITTEN SUCH THAT */
-/*       THE INDEX 1,2,3 VARIABLES APPEAR IN THIS ORDER. */
-/*       IN ESTIMATING THE ERROR THE INDEX 2 VARIABLES ARE */
-/*       MULTIPLIED BY H, THE INDEX 3 VARIABLES BY H**2. */
-
-/*    IWORK(5)  DIMENSION OF THE INDEX 1 VARIABLES (MUST BE > 0). FOR */
-/*              ODE'S THIS EQUALS THE DIMENSION OF THE SYSTEM. */
-/*              DEFAULT IWORK(5)=N. */
-
-/*    IWORK(6)  DIMENSION OF THE INDEX 2 VARIABLES. DEFAULT IWORK(6)=0. */
-
-/*    IWORK(7)  DIMENSION OF THE INDEX 3 VARIABLES. DEFAULT IWORK(7)=0. */
 
 /*    IWORK(8)  SWITCH FOR STEP SIZE STRATEGY */
 /*              IF IWORK(8).EQ.1  MOD. PREDICTIVE CONTROLLER (GUSTAFSSON) */
@@ -392,17 +376,6 @@ static doublereal c_b116 = .25;
     } else {
 		startn = TRUE_;
     }
-	/* -------- PARAMETER FOR DIFFERENTIAL-ALGEBRAIC COMPONENTS */
-    nind1 = iwork[5];
-    nind2 = iwork[6];
-    nind3 = iwork[7];
-    if (nind1 == 0) {
-		nind1 = n;
-    }
-    if (nind1 + nind2 + nind3 != n) {
-		printf("CURIOUS INPUT FOR IWORK(5,6,7)= \t %i\t %i\t %i\n", nind1, nind2, nind3);
-		arret = TRUE_;
-    }
 	/* -------- PRED STEP SIZE CONTROL */
     if (iwork[8] <= 1) {
 		pred = TRUE_;
@@ -544,7 +517,7 @@ static doublereal c_b116 = .25;
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
-	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
+	    &quot1, &quot2, &nit, &ijob, &startn,
 	    &pred, &facl, &facr, &m1, &ldjac,
 	    &lde1, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
@@ -588,7 +561,7 @@ static doublereal c_b116 = .25;
 	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
-	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
+	ijob, logical *startn,
 	logical *pred, doublereal *facl, doublereal *facr, integer *m1, integer *ldjac,
 	integer *lde1, doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
@@ -631,7 +604,7 @@ static doublereal c_b116 = .25;
     static logical first;
     static integer irtrn, nrsol, nsolu;
     static doublereal qnewt, xosol, acont3;
-	static logical index2, index3, caljac;
+	static logical caljac;
     static doublereal faccon;
     static doublereal erracc;
     static logical reject;
@@ -692,10 +665,6 @@ static doublereal c_b116 = .25;
     conra5_1.nn2 = n << 1;
     conra5_1.nn3 = n * 3;
     lrc = n << 2;
-	/* -------- CHECK THE INDEX OF THE PROBLEM ----- */
-    // index1 = *nind1 != 0;
-    index2 = *nind2 != 0;
-    index3 = *nind3 != 0;
 	/* ---------- CONSTANTS --------- */
     sq6 = sqrt(6.);
     c1 = (4. - sq6) / 10.;
@@ -855,16 +824,6 @@ L30:
     }
     if (abs(*h__) * .1 <= abs(*x) * *uround) {
 		goto L177;
-    }
-    if (index2) {
-		for (i = *nind1 + 1; i <= *nind1 + *nind2; ++i) {
-			scal[i] /= hhfac;
-		}
-    }
-    if (index3) {
-		for (i = *nind1 + *nind2 + 1; i <= *nind1 + *nind2 + *nind3; ++i) {
-			scal[i] /= hhfac * hhfac;
-		}
     }
     xph = *x + *h__;
 	/* *** *** *** *** *** *** *** */

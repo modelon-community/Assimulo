@@ -38,7 +38,7 @@ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
-	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
+	ijob, logical *startn,
 	logical *pred, doublereal *facl, doublereal *facr, integer *m1, 
 	integer *ldjac,
 	integer *lde1, doublereal *z1, doublereal *z2, 
