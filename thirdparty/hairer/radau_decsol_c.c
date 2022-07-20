@@ -34,7 +34,7 @@ static doublereal c_b116 = .25;
 {
     /* Local variables */
 	static integer iewerr;
-    static integer i, m1, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
+    static integer i, nit, iee1, ief1, ief2, ief3, iey0, 
 	    iez1, iez2, iez3;
     static doublereal facl;
     static integer ndec, njac;
@@ -48,8 +48,8 @@ static doublereal c_b116 = .25;
     static doublereal quot;
     static integer iee2i, iee2r, ieip1, ieip2;
     static doublereal quot1, quot2;
-    static integer iejac, ldjac;
-    static integer iecon, iemas, ldmas, ieiph;
+    static integer iejac;
+    static integer iecon, ieiph;
     static logical arret;
     static doublereal fnewt;
     static integer nstep;
@@ -382,9 +382,6 @@ static doublereal c_b116 = .25;
     } else {
 		pred = FALSE_;
     }
-	/* -------- PARAMETER FOR SECOND ORDER EQUATIONS */
-    m1 = 0;
-    nm1 = n;
 	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
 		safe = .9;
@@ -457,12 +454,7 @@ static doublereal c_b116 = .25;
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
 	/* -- JACOBIAN AND MATRICES E1, E2 */
-	// TODO: Leftover from banded == False
-	ldjac = nm1;
-	lde1 = nm1;
-	// TODO: Leftover else case from implicit = False
-	ldmas = 0;
-	ijob = 1;
+	ijob = 1; // Default: Dense jacobian LU
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
 		ijob = 8;
@@ -488,22 +480,21 @@ static doublereal c_b116 = .25;
     ief3 = ief2 + n;
     iecon = ief3 + n;
     iejac = iecon + (n << 2);
-    iemas = iejac + n * ldjac;
-    iee1 = iemas + nm1 * ldmas;
-    iee2r = iee1 + nm1 * lde1;
-    iee2i = iee2r + nm1 * lde1;
+    iee1 = iejac + n * n;
+    iee2r = iee1 + n * n;
+    iee2i = iee2r + n * n;
 	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
-    istore = iee2i + nm1 * lde1 - 1;
+    istore = iee2i + n * n - 1;
     if (istore > *lwork) {
 		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i\n", istore);
 		arret = TRUE_;
     }
 	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
     ieip1 = 21;
-    ieip2 = ieip1 + nm1;
-    ieiph = ieip2 + nm1;
+    ieip2 = ieip1 + n;
+    ieiph = ieip2 + n;
 	/* --------- TOTAL REQUIREMENT --------------- */
-    istore = ieiph + nm1 - 1;
+    istore = ieiph + n - 1;
     if (istore > *liwork) {
 		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %i\n", istore);
 		arret = TRUE_;
@@ -518,8 +509,8 @@ static doublereal c_b116 = .25;
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn,
-	    &pred, &facl, &facr, &m1, &ldjac,
-	    &lde1, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
+	    &pred, &facl, &facr,
+	    &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i],
 	    &iwork[ieip1], &iwork[ieip2], &iwork[ieiph], &work[iecon], &nfcn,
@@ -562,8 +553,8 @@ static doublereal c_b116 = .25;
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn,
-	logical *pred, doublereal *facl, doublereal *facr, integer *m1, integer *ldjac,
-	integer *lde1, doublereal *z1, doublereal *z2, 
+	logical *pred, doublereal *facl, doublereal *facr,
+	doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
 	doublereal *e2r, doublereal *e2i, integer *ip1, 
@@ -647,16 +638,16 @@ static doublereal c_b116 = .25;
     --ip2;
     --ip1;
     --werr;
-    fjac_dim1 = *ldjac;
+    fjac_dim1 = n;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
-    e2i_dim1 = *lde1;
+    e2i_dim1 = n;
     e2i_offset = 1 + e2i_dim1;
     e2i -= e2i_offset;
-    e2r_dim1 = *lde1;
+    e2r_dim1 = n;
     e2r_offset = 1 + e2r_dim1;
     e2r -= e2r_offset;
-    e1_dim1 = *lde1;
+    e1_dim1 = n;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
 
@@ -772,12 +763,12 @@ L10:
 					y[i] = ysafe;
 					goto L79;
 				}
-				for (j = *m1 + 1; j <= n; ++j) {
-					fjac[j - *m1 + i * fjac_dim1] = (y0[j] - cont[j]) / delt;
+				for (j = 1; j <= n; ++j) {
+					fjac[j + i * fjac_dim1] = (y0[j] - cont[j]) / delt;
 				}
 			} else {
-				for (j = *m1 + 1; j <= n; ++j) {
-					fjac[j - *m1 + i * fjac_dim1] = (cont[j] - y0[j]) / delt;
+				for (j =  1; j <= n; ++j) {
+					fjac[j + i * fjac_dim1] = (cont[j] - y0[j]) / delt;
 				}
 			}
 			y[i] = ysafe;
@@ -800,16 +791,16 @@ L20:
     fac1 = u1 / *h__;
     alphn = alph / *h__;
     betan = beta / *h__;
-    decomr_(n, &fjac[fjac_offset], ldjac,
-			&fac1, &e1[e1_offset], lde1, &ip1[1], &ier, 
+    decomr_(n, &fjac[fjac_offset],
+			&fac1, &e1[e1_offset], &ip1[1], &ier, 
 			ijob, &iphes[1], slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
     }
-    decomc_(n, &fjac[fjac_offset], ldjac, 
+    decomc_(n, &fjac[fjac_offset],
 			&alphn, &betan, &e2r[e2r_offset], &e2i[e2i_offset],
-			lde1, &ip2[1], &ier, ijob, slu_aux_z,
+			&ip2[1], &ier, ijob, slu_aux_z,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
@@ -905,7 +896,7 @@ L40:
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
     slvrad_(n, &fac1, &alphn, &betan, &e1[e1_offset],
-			&e2r[e2r_offset], &e2i[e2i_offset], lde1,
+			&e2r[e2r_offset], &e2i[e2i_offset],
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
 			&iphes[1], &ier, ijob, slu_aux_d, slu_aux_z);
 	if (ier){
@@ -964,7 +955,7 @@ L40:
     }
 	/* --- ERROR ESTIMATION */
     estrad_(n, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
-			&y0[1], &y[1], ijob, x, &e1[e1_offset], lde1,
+			&y0[1], &y[1], ijob, x, &e1[e1_offset],
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
 			&scal[1], &err, &first, &reject,
 			slu_aux_d, &ier);
@@ -1213,8 +1204,7 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 /*     END OF FUNCTION CONTR5 */
 
 /* *********************************************************** */
-/* Subroutine */ int dec_(integer n, integer *ndim, doublereal *a, integer *
-	ip, integer *ier)
+/* Subroutine */ int dec_(integer n, doublereal *a, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
@@ -1222,14 +1212,13 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
     /* Local variables */
     static integer i, j, k, m;
     static doublereal t;
-    static integer nm1, kp1;
+    static integer kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
 /*  MATRIX TRIANGULARIZATION BY GAUSSIAN ELIMINATION. */
 /*  INPUT.. */
 /*     N = ORDER OF MATRIX. */
-/*     NDIM = DECLARED DIMENSION OF ARRAY  A . */
 /*     A = MATRIX TO BE TRIANGULARIZED. */
 /*  OUTPUT.. */
 /*     A(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U . */
@@ -1248,7 +1237,7 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 /* ----------------------------------------------------------------------- */
     /* Parameter adjustments */
     --ip;
-    a_dim1 = *ndim;
+    a_dim1 = n;
     a_offset = 1 + a_dim1;
     a -= a_offset;
 
@@ -1258,8 +1247,7 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
     if (n == 1) {
 		goto L70;
     }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
+    for (k = 1; k <= n - 1; ++k) {
 		kp1 = k + 1;
 		m = k;
 		for (i = kp1; i <= n; ++i) {
@@ -1315,8 +1303,7 @@ L80:
 /* ----------------------- END OF SUBROUTINE DEC ------------------------- */
 } /* dec_ */
 
-/* Subroutine */ int sol_(integer n, integer *ndim, doublereal *a, 
-	doublereal *b, integer *ip)
+/* Subroutine */ int sol_(integer n, doublereal *a, doublereal *b, integer *ip)
 {
     /* System generated locals */
     integer a_dim1, a_offset;
@@ -1324,14 +1311,13 @@ L80:
     /* Local variables */
     static integer i, k, m;
     static doublereal t;
-    static integer kb, km1, nm1, kp1;
+    static integer kb, km1, kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
 /*  SOLUTION OF LINEAR SYSTEM, A*X = B . */
 /*  INPUT.. */
 /*    N = ORDER OF MATRIX. */
-/*    NDIM = DECLARED DIMENSION OF ARRAY  A . */
 /*    A = TRIANGULARIZED MATRIX OBTAINED FROM DEC. */
 /*    B = RIGHT HAND SIDE VECTOR. */
 /*    IP = PIVOT VECTOR OBTAINED FROM DEC. */
@@ -1342,7 +1328,7 @@ L80:
     /* Parameter adjustments */
     --ip;
     --b;
-    a_dim1 = *ndim;
+    a_dim1 = n;
     a_offset = 1 + a_dim1;
     a -= a_offset;
 
@@ -1350,8 +1336,7 @@ L80:
     if (n == 1) {
 		goto L50;
     }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
+    for (k = 1; k <= n - 1; ++k) {
 		kp1 = k + 1;
 		m = ip[k];
 		t = b[m];
@@ -1363,7 +1348,7 @@ L80:
 		}
 		/* L20: */
     }
-    for (kb = 1; kb <= nm1; ++kb) {
+    for (kb = 1; kb <= n - 1; ++kb) {
 		km1 = n - kb;
 		k = km1 + 1;
 		b[k] /= a[k + k * a_dim1];
@@ -1380,8 +1365,7 @@ L50:
 /* ----------------------- END OF SUBROUTINE SOL ------------------------- */
 } /* sol_ */
 
-/* Subroutine */ int decc_(integer n, integer *ndim, doublereal *ar, 
-	doublereal *ai, integer *ip, integer *ier)
+/* Subroutine */ int decc_(integer n, doublereal *ar, doublereal *ai, integer *ip, integer *ier)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
@@ -1389,7 +1373,7 @@ L50:
     /* Local variables */
     static integer i, j, k, m;
     static doublereal ti, tr;
-    static integer nm1, kp1;
+    static integer kp1;
     static doublereal den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
@@ -1398,7 +1382,6 @@ L50:
 /*  ------ MODIFICATION FOR COMPLEX MATRICES -------- */
 /*  INPUT.. */
 /*     N = ORDER OF MATRIX. */
-/*     NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI . */
 /*     (AR, AI) = MATRIX TO BE TRIANGULARIZED. */
 /*  OUTPUT.. */
 /*     AR(I,J), I.LE.J = UPPER TRIANGULAR FACTOR, U ; REAL PART. */
@@ -1420,10 +1403,10 @@ L50:
 /* ----------------------------------------------------------------------- */
     /* Parameter adjustments */
     --ip;
-    ai_dim1 = *ndim;
+    ai_dim1 = n;
     ai_offset = 1 + ai_dim1;
     ai -= ai_offset;
-    ar_dim1 = *ndim;
+    ar_dim1 = n;
     ar_offset = 1 + ar_dim1;
     ar -= ar_offset;
 
@@ -1433,8 +1416,7 @@ L50:
     if (n == 1) {
 		goto L70;
     }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
+    for (k = 1; k <= n - 1; ++k) {
 		kp1 = k + 1;
 		m = k;
 		for (i = kp1; i <= n; ++i) {
@@ -1524,8 +1506,7 @@ L80:
 /* ----------------------- END OF SUBROUTINE DECC ------------------------ */
 } /* decc_ */
 
-/* Subroutine */ int solc_(integer n, integer *ndim, doublereal *ar, 
-	doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
+/* Subroutine */ int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
 {
     /* System generated locals */
     integer ar_dim1, ar_offset, ai_dim1, ai_offset;
@@ -1533,7 +1514,7 @@ L80:
     /* Local variables */
     static integer i, k, m, kb;
     static doublereal ti, tr;
-    static integer km1, nm1, kp1;
+    static integer km1, kp1;
     static doublereal den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
@@ -1541,7 +1522,6 @@ L80:
 /*  SOLUTION OF LINEAR SYSTEM, A*X = B . */
 /*  INPUT.. */
 /*    N = ORDER OF MATRIX. */
-/*    NDIM = DECLARED DIMENSION OF ARRAYS  AR AND AI. */
 /*    (AR,AI) = TRIANGULARIZED MATRIX OBTAINED FROM DEC. */
 /*    (BR,BI) = RIGHT HAND SIDE VECTOR. */
 /*    IP = PIVOT VECTOR OBTAINED FROM DEC. */
@@ -1553,10 +1533,10 @@ L80:
     --ip;
     --bi;
     --br;
-    ai_dim1 = *ndim;
+    ai_dim1 = n;
     ai_offset = 1 + ai_dim1;
     ai -= ai_offset;
-    ar_dim1 = *ndim;
+    ar_dim1 = n;
     ar_offset = 1 + ar_dim1;
     ar -= ar_offset;
 
@@ -1564,8 +1544,7 @@ L80:
     if (n == 1) {
 		goto L50;
     }
-    nm1 = n - 1;
-    for (k = 1; k <= nm1; ++k) {
+    for (k = 1; k <= n - 1; ++k) {
 		kp1 = k + 1;
 		m = ip[k];
 		tr = br[m];
@@ -1583,7 +1562,7 @@ L80:
 		}
 		/* L20: */
     }
-    for (kb = 1; kb <= nm1; ++kb) {
+    for (kb = 1; kb <= n - 1; ++kb) {
 		km1 = n - kb;
 		k = km1 + 1;
 		den = ar[k + k * ar_dim1] * ar[k + k * ar_dim1] + ai[k + k * ai_dim1] 
@@ -1617,9 +1596,9 @@ L50:
 /*     VERSION OF SEPTEMBER 18, 1995 */
 /* ****************************************** */
 
-/* Subroutine */ int decomr_(integer n, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int decomr_(integer n, doublereal *fjac,
 	doublereal *fac1, doublereal *e1,
-	integer *lde1, integer *ip1, integer *ier, integer *ijob,
+	integer *ip1, integer *ier, integer *ijob,
 	integer *iphes, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
@@ -1631,11 +1610,11 @@ L50:
 
     /* Parameter adjustments */
     --iphes;
-    fjac_dim1 = *ldjac;
+    fjac_dim1 = n;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
     --ip1;
-    e1_dim1 = *lde1;
+    e1_dim1 = n;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
 
@@ -1655,7 +1634,7 @@ L1:
 		}
 		e1[j + j * e1_dim1] += *fac1;
     }
-    dec_(n, lde1, &e1[e1_offset], &ip1[1], ier);
+    dec_(n, &e1[e1_offset], &ip1[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -1673,9 +1652,9 @@ L8:
 
 /* *********************************************************** */
 
-/* Subroutine */ int decomc_(integer n, doublereal *fjac, integer *ldjac, 
+/* Subroutine */ int decomc_(integer n, doublereal *fjac,
 	doublereal *alphn, doublereal *betan,
-	doublereal *e2r, doublereal *e2i, integer *lde1, integer *ip2,
+	doublereal *e2r, doublereal *e2i, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
@@ -1686,14 +1665,14 @@ L8:
     static integer i, j;
 
     /* Parameter adjustments */
-    fjac_dim1 = *ldjac;
+    fjac_dim1 = n;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
     --ip2;
-    e2i_dim1 = *lde1;
+    e2i_dim1 = n;
     e2i_offset = 1 + e2i_dim1;
     e2i -= e2i_offset;
-    e2r_dim1 = *lde1;
+    e2r_dim1 = n;
     e2r_offset = 1 + e2r_dim1;
     e2r -= e2r_offset;
 
@@ -1715,7 +1694,7 @@ L1:
 		e2r[j + j * e2r_dim1] += *alphn;
 		e2i[j + j * e2i_dim1] = *betan;
     }
-    decc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
+    decc_(n, &e2r[e2r_offset], &e2i[e2i_offset], &ip2[1], ier);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -1735,7 +1714,7 @@ L8:
 
 /* Subroutine */ int slvrad_(integer n,
 	doublereal *fac1, doublereal *alphn, doublereal *betan, 
-	doublereal *e1, doublereal *e2r, doublereal *e2i, integer *lde1, 
+	doublereal *e1, doublereal *e2r, doublereal *e2i, 
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
 	doublereal *f2, doublereal *f3, integer *ip1, 
 	integer *ip2, integer *iphes, integer *ier, integer *ijob,
@@ -1757,13 +1736,13 @@ L8:
     --z1;
     --ip2;
     --ip1;
-    e2i_dim1 = *lde1;
+    e2i_dim1 = n;
     e2i_offset = 1 + e2i_dim1;
     e2i -= e2i_offset;
-    e2r_dim1 = *lde1;
+    e2r_dim1 = n;
     e2r_offset = 1 + e2r_dim1;
     e2r -= e2r_offset;
-    e1_dim1 = *lde1;
+    e1_dim1 = n;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
 
@@ -1784,8 +1763,8 @@ L1:
 		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
 		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
     }
-    sol_(n, lde1, &e1[e1_offset], &z1[1], &ip1[1]);
-    solc_(n, lde1, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
+    sol_(n, &e1[e1_offset], &z1[1], &ip1[1]);
+    solc_(n, &e2r[e2r_offset], &e2i[e2i_offset], &z2[1], &z3[1], &ip2[1]);
     return 0;
 
 /* ----------------------------------------------------------- */
@@ -1817,7 +1796,7 @@ L8:
 	doublereal *h__, doublereal *dd1, 
 	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal 
 	*y0, doublereal *y, integer *ijob, doublereal *x,
-	doublereal *e1, integer *lde1, doublereal *
+	doublereal *e1, doublereal *
 	z1, doublereal *z2, doublereal *z3, doublereal *cont, doublereal *
 	werr, doublereal *f1, doublereal *f2, integer *ip1,
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
@@ -1842,7 +1821,7 @@ L8:
     --y;
     --y0;
     --ip1;
-    e1_dim1 = *lde1;
+    e1_dim1 = n;
     e1_offset = 1 + e1_dim1;
     e1 -= e1_offset;
 
@@ -1861,7 +1840,7 @@ L1:
 		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
 		cont[i] = f2[i] + y0[i];
     }
-    sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+    sol_(n, &e1[e1_offset], &cont[1], &ip1[1]);
     goto L77;
 
 /* ---  B=IDENTITY MATRIX, SPARSE LU */
@@ -1904,7 +1883,7 @@ L77:
 		}
 	/* ------ FULL MATRIX OPTION */
 L31:
-	sol_(n, lde1, &e1[e1_offset], &cont[1], &ip1[1]);
+	sol_(n, &e1[e1_offset], &cont[1], &ip1[1]);
 	goto L88;
 L38:
 /* ---  B=IDENTITY, SPARSE LU */
