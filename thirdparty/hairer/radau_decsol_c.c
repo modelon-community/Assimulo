@@ -60,22 +60,6 @@ static doublereal c_b116 = .25;
     static integer nstep;
     static doublereal tolst;
     static integer ldmas2, iescal, naccpt;
-    extern /* Subroutine */ int radcor_(integer, FP_CB_f, void*, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, FP_CB_jac, FP_CB_jac_sparse, void*, integer *, integer *,
-		integer *, integer *, integer *, FP_CB_solout, void*, integer *, integer *,
-	    integer *, doublereal *, doublereal *, doublereal *, doublereal *,
-	    doublereal *, doublereal *, integer *, integer *, logical *, 
-	    integer *, integer *, integer *, logical *, doublereal *, 
-	    doublereal *, integer *, integer *, logical *,
-	    integer *, integer *, integer *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    integer *, doublereal *, integer *, integer *, integer *, integer *,
-		integer *, integer *, integer *, doublereal *, integer,
-		double*, int*, int*,
-		SuperLU_aux_d*, SuperLU_aux_z*);
     static integer nrejct;
     static integer istore;
     static logical startn;
@@ -738,39 +722,12 @@ static doublereal c_b116 = .25;
     static doublereal qnewt, xosol, acont3;
 	static logical index2, index3, caljac;
     static doublereal faccon;
-    extern /* Subroutine */ int decomc_(integer, doublereal *, integer *, 
-	    doublereal *, integer *,
-		doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, integer *,
-		SuperLU_aux_z *, double *, int *, int *, int, int);
     static doublereal erracc;
     static integer mujacj;
-    extern /* Subroutine */ int decomr_(integer, doublereal *, integer *, 
-	    doublereal *, integer *,
-		doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, integer *,
-		SuperLU_aux_d *, double *, int *, int *, int, int);
     static logical reject;
     static doublereal facgus;
     static integer mujacp;
-    extern /* Subroutine */ int estrad_(integer, doublereal *, integer *, 
-	    doublereal *, integer *,
-	    doublereal *, doublereal *, doublereal *, doublereal *, FP_CB_f, void*, 
-	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
-	    doublereal *, integer *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    doublereal *, doublereal *, logical *, logical *,
-	    SuperLU_aux_d*, integer *);
-		
     static doublereal dynold, posneg;
-    extern /* Subroutine */ int slvrad_(integer, doublereal *, integer *, 
-	    doublereal *, integer *,
-	    doublereal *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, integer *, 
-	    integer *, integer *, integer *, SuperLU_aux_d*, SuperLU_aux_z*);
     static doublereal thqold;
 
 	// flag if current jacobian is fresh
@@ -1853,8 +1810,6 @@ L50:
 
     /* Local variables */
     static integer i, j;
-    extern /* Subroutine */ int dec_(integer, integer *, doublereal *, 
-	    integer *, integer *);
 
     /* Parameter adjustments */
     --iphes;
@@ -1913,11 +1868,8 @@ L8:
     /* System generated locals */
     integer fjac_dim1, fjac_offset, fmas_dim1, fmas_offset, e2r_dim1, 
 	    e2r_offset, e2i_dim1, e2i_offset;
-
     /* Local variables */
     static integer i, j;
-    extern /* Subroutine */ int decc_(integer, integer *, doublereal *, 
-	    doublereal *, integer *, integer *);
 
     /* Parameter adjustments */
     fjac_dim1 = *ldjac;
@@ -1986,10 +1938,6 @@ L8:
     /* Local variables */
     static integer i;
     static doublereal s2, s3;
-    extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
-	    doublereal *, integer *);
-    extern /* Subroutine */ int solc_(integer, integer *, doublereal *, 
-		doublereal *, doublereal *, doublereal *, integer *);
     /* Parameter adjustments */
     --iphes;
     --f3;
@@ -2078,8 +2026,6 @@ L8:
 
     /* Local variables */
     static integer i;
-    extern /* Subroutine */ int sol_(integer, integer *, doublereal *, 
-	    doublereal *, integer *);
     static doublereal hee1, hee2, hee3;
 
     /* Parameter adjustments */
