@@ -38,7 +38,7 @@ static doublereal c_b116 = .25;
 {
     /* Local variables */
 	static integer iewerr;
-    static integer i, m1, m2, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
+    static integer i, m1, nm1, nit, iee1, ief1, lde1, ief2, ief3, iey0, 
 	    iez1, iez2, iez3;
     static doublereal facl;
     static integer ndec, njac;
@@ -53,7 +53,6 @@ static doublereal c_b116 = .25;
     static integer iee2i, iee2r, ieip1, ieip2, nind1, nind2, nind3;
     static doublereal quot1, quot2;
     static integer iejac, ldjac;
-    static logical jband;
     static integer iecon, iemas, ldmas, ieiph;
     static logical arret;
     static doublereal fnewt;
@@ -481,7 +480,6 @@ static doublereal c_b116 = .25;
 	/* -------- PARAMETER FOR SECOND ORDER EQUATIONS */
     m1 = 0;
     nm1 = n;
-	m2 = n;
 	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
 		safe = .9;
@@ -552,26 +550,16 @@ static doublereal c_b116 = .25;
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
 	/*         COMPUTATION OF ARRAY ENTRIES */
 	/* *** *** *** *** *** *** *** *** *** *** *** *** *** */
-	/* ---- BANDED OR NOT ? */
-    jband = *mljac < nm1;
 	/* -------- COMPUTATION OF THE ROW-DIMENSIONS OF THE 2-ARRAYS --- */
 	/* -- JACOBIAN AND MATRICES E1, E2 */
-    if (jband) {
-		ldjac = *mljac + *mujac + 1;
-		lde1 = *mljac + ldjac;
-    } else {
-		*mljac = nm1;
-		*mujac = nm1;
-		ldjac = nm1;
-		lde1 = nm1;
-    }
+	// TODO: Leftover from banded == False
+	*mljac = nm1;
+	*mujac = nm1;
+	ldjac = nm1;
+	lde1 = nm1;
 	// TODO: Leftover else case from implicit = False
 	ldmas = 0;
-	if (jband) {
-		ijob = 2;
-	} else {
-		ijob = 1;
-	}
+	ijob = 1;
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
 		ijob = 8;
@@ -627,7 +615,7 @@ static doublereal c_b116 = .25;
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac, mljac, mujac, mlmas, mumas,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 	    &quot1, &quot2, &nit, &ijob, &startn, &nind1, &nind2, &nind3,
-	    &pred, &facl, &facr, &m1, &m2, &jband, &ldjac,
+	    &pred, &facl, &facr, &m1, &ldjac,
 	    &lde1, &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
 		&work[iee1], &work[iee2r], &work[iee2i],
@@ -672,9 +660,8 @@ static doublereal c_b116 = .25;
 	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *
 	fnewt, doublereal *quot1, doublereal *quot2, integer *nit, integer *
 	ijob, logical *startn, integer *nind1, integer *nind2, integer *nind3,
-	 logical *pred, doublereal *facl, doublereal *facr, integer *m1, 
-	integer *m2, logical *banded, integer *
-	ldjac, integer *lde1, doublereal *z1, doublereal *z2, 
+	logical *pred, doublereal *facl, doublereal *facr, integer *m1, integer *ldjac,
+	integer *lde1, doublereal *z1, doublereal *z2, 
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
 	doublereal *e2r, doublereal *e2i, integer *ip1, 
@@ -691,24 +678,20 @@ static doublereal c_b116 = .25;
     doublereal d__1;
 
     /* Local variables */
-    static integer i, j, k, l;
+    static integer i, j;
     static doublereal a1, a2, c1, c2, a3;
-    static integer j1, n2, n3;
+    static integer n2, n3;
     static doublereal u1;
     static integer nunexpect;
     static doublereal ak;
-    static integer md;
     static doublereal t11, t12, t13, t21, t22, t23, t31;
-    static integer mm;
     static doublereal qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
 	    c2q, c3q, z1i, z2i, z3i, sq6, fac, ti11, cno;
     static integer lrc;
     static doublereal ti12, ti13, ti21, ti22, ti23, ti31, ti32, ti33;
     static integer ier;
     static doublereal xph, thq, err, fac1, cfac, hacc, c1mc2, beta;
-    static integer lbeg;
     static doublereal alph, hold;
-    static integer lend;
     static doublereal delt, hnew;
     static logical last;
     static doublereal hopt, xold;
@@ -722,10 +705,8 @@ static doublereal c_b116 = .25;
 	static logical index2, index3, caljac;
     static doublereal faccon;
     static doublereal erracc;
-    static integer mujacj;
     static logical reject;
     static doublereal facgus;
-    static integer mujacp;
     static doublereal dynold, posneg;
     static doublereal thqold;
 
@@ -887,64 +868,28 @@ L10:
     ++(*njac);
     if (*ijac == 0) {
 		/* --- COMPUTE JACOBIAN MATRIX NUMERICALLY */
-		if (*banded) {
-		/* --- JACOBIAN IS BANDED */
-			mujacp = *mujac + 1;
-			md = min(linal_1.mbjac,*m2);
-			for (mm = 1; mm <= *m1 / *m2 + 1; ++mm) {
-				for (k = 1; k <= md; ++k) {
-					j = k + (mm - 1) * *m2;
-L12:
-					f1[j] = y[j];
-					f2[j] = sqrt(*uround * max(1e-5, abs(y[j])));
-					y[j] += f2[j];
-					j += md;
-					if (j <= mm * *m2) {
-						goto L12;
-					}
-					(*fcn)(n, x, &y[1], &cont[1], fcn_PY);
-					j = k + (mm - 1) * *m2;
-					j1 = k;
-					lbeg = max(1, j1 - *mujac) + *m1;
-L14:
-					lend = min(*m2, j1 + *mljac) + *m1;
-					y[j] = f1[j];
-					mujacj = mujacp - j1 - *m1;
-					for (l = lbeg; l <= lend; ++l) {
-						fjac[l + mujacj + j * fjac_dim1] = (cont[l] - y0[l]) / f2[j];
-					}
-					j += md;
-					j1 += md;
-					lbeg = lend + 1;
-					if (j <= mm * *m2) {
-						goto L14;
-					}
-				}
-			}
-		} else {
-			/* --- JACOBIAN IS FULL */
-			for (i = 1; i <= n; ++i) {
-				ysafe = y[i];
-				delt = sqrt(*uround * max(1e-5, abs(ysafe)));
-				y[i] = ysafe + delt;
-				ier = (*fcn)(n, x, &y[1], &cont[1], fcn_PY);
+		/* --- JACOBIAN IS FULL */
+		for (i = 1; i <= n; ++i) {
+			ysafe = y[i];
+			delt = sqrt(*uround * max(1e-5, abs(ysafe)));
+			y[i] = ysafe + delt;
+			ier = (*fcn)(n, x, &y[1], &cont[1], fcn_PY);
+			if (ier < 0) {
+				y[i] = ysafe - delt;
+				ier =  (*fcn)(n, x, &y[1], &cont[1], fcn_PY);
 				if (ier < 0) {
-					y[i] = ysafe - delt;
-					ier =  (*fcn)(n, x, &y[1], &cont[1], fcn_PY);
-					if (ier < 0) {
-						y[i] = ysafe;
-						goto L79;
-					}
-					for (j = *m1 + 1; j <= n; ++j) {
-						fjac[j - *m1 + i * fjac_dim1] = (y0[j] - cont[j]) / delt;
-					}
-				} else {
-					for (j = *m1 + 1; j <= n; ++j) {
-						fjac[j - *m1 + i * fjac_dim1] = (cont[j] - y0[j]) / delt;
-					}
+					y[i] = ysafe;
+					goto L79;
 				}
-				y[i] = ysafe;
+				for (j = *m1 + 1; j <= n; ++j) {
+					fjac[j - *m1 + i * fjac_dim1] = (y0[j] - cont[j]) / delt;
+				}
+			} else {
+				for (j = *m1 + 1; j <= n; ++j) {
+					fjac[j - *m1 + i * fjac_dim1] = (cont[j] - y0[j]) / delt;
+				}
 			}
+			y[i] = ysafe;
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
