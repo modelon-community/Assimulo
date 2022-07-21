@@ -44,7 +44,7 @@ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *
 	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
 	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
 	doublereal *e2r, doublereal *e2i, integer *ip1, 
-	integer *ip2, integer *iphes, doublereal *cont, integer *nfcn, 
+	integer *ip2, doublereal *cont, integer *nfcn, 
 	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
 	integer *ndec, integer *nsol,
 	doublereal *werr, integer nnz,
@@ -62,7 +62,7 @@ int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal 
 int decomr_(integer n, doublereal *fjac,
 	doublereal *fac1, doublereal *e1,
 	integer *ip1, integer *ier, integer *ijob,
-	integer *iphes, SuperLU_aux_d* slu_aux,
+	SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz);
 int decomc_(integer n, doublereal *fjac, 
 	doublereal *alphn, doublereal *betan,
@@ -74,7 +74,7 @@ int slvrad_(integer n, doublereal *fac1, doublereal *alphn, doublereal *betan,
 	doublereal *e1, doublereal *e2r, doublereal *e2i,
 	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
 	doublereal *f2, doublereal *f3, integer *ip1, 
-	integer *ip2, integer *iphes, integer *ier, integer *ijob,
+	integer *ip2, integer *ier, integer *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
 
 int estrad_(integer n,
