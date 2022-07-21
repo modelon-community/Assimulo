@@ -8,84 +8,80 @@
 #define TRUE_ (1)
 #define FALSE_ (0)
 #define abs(x) ((x) >= 0 ? (x) : -(x))
-#define dabs(x) (doublereal)abs(x)
+#define dabs(x) (double)abs(x)
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
-typedef int integer;
-typedef double doublereal;
-typedef int logical;
-
 // FP_CB = FunctionPointer_CallBack
-typedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*, void*);
-typedef int (*FP_CB_jac)(integer, doublereal*, doublereal*, doublereal*, void*);
-typedef int (*FP_CB_solout)(integer*, doublereal*, doublereal*, doublereal*,
-                            doublereal*, doublereal*, integer*, integer*,
-                            integer*, void*);
+typedef int (*FP_CB_f)(int, double*, double*, double*, void*);
+typedef int (*FP_CB_jac)(int, double*, double*, double*, void*);
+typedef int (*FP_CB_solout)(int*, double*, double*, double*,
+                            double*, double*, int*, int*,
+                            int*, void*);
 typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*);
 
-int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
-			 doublereal *x, doublereal *y, doublereal *xend, doublereal *h__,
-			 doublereal *rtol, doublereal *atol, integer *itol,
-			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
-			 FP_CB_solout solout, void* solout_PY, integer *iout,
-			 doublereal *work, integer *lwork, integer *iwork, integer *liwork, integer *idid,
+int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
+			 double *x, double *y, double *xend, double *h__,
+			 double *rtol, double *atol, int *itol,
+			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac,
+			 FP_CB_solout solout, void* solout_PY, int *iout,
+			 double *work, int *lwork, int *iwork, int *liwork, int *idid,
 			 double* jac_data, int* jac_indices, int* jac_indptr,
 			 SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
 
-int radcor_(integer n, FP_CB_f fcn, void* fcn_PY,
-			doublereal *x, doublereal *y, doublereal *xend, doublereal *hmax, doublereal *h__,
-			doublereal *rtol, doublereal *atol, integer *itol,
-			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-			FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid,
-			integer *nmax, doublereal *uround, doublereal *safe, doublereal *thet,
-			doublereal *fnewt, doublereal *quot1, doublereal *quot2, integer *nit,
-			integer *ijob, logical *startn, logical *pred,
-			doublereal *facl, doublereal *facr,
-			doublereal *z1, doublereal *z2, doublereal *z3,
-			doublereal *y0, doublereal *scal,
-			doublereal *f1, doublereal *f2, doublereal *f3,
-			doublereal *fjac, doublereal *e1, doublereal *e2r, doublereal *e2i,
-			integer *ip1, integer *ip2, doublereal *cont,
-			integer *nfcn, integer *njac, integer *nstep, integer *naccpt,
-			integer *nrejct, integer *ndec, integer *nsol,
-			doublereal *werr, integer nnz,
+int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
+			double *x, double *y, double *xend, double *hmax, double *h__,
+			double *rtol, double *atol, int *itol,
+			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, 
+			FP_CB_solout solout, void* solout_PY, int *iout, int *idid,
+			int *nmax, double *uround, double *safe, double *thet,
+			double *fnewt, double *quot1, double *quot2, int *nit,
+			int *ijob, int *startn, int *pred,
+			double *facl, double *facr,
+			double *z1, double *z2, double *z3,
+			double *y0, double *scal,
+			double *f1, double *f2, double *f3,
+			double *fjac, double *e1, double *e2r, double *e2i,
+			int *ip1, int *ip2, double *cont,
+			int *nfcn, int *njac, int *nstep, int *naccpt,
+			int *nrejct, int *ndec, int *nsol,
+			double *werr, int nnz,
 			double* jac_data, int* jac_indices, int* jac_indptr,
 			SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
 
-doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
+double contr5_c(int *i__, double *x, double *cont, int * lrc);
 
-int dec_(integer n, doublereal *a, integer *ip, integer *ier);
-int sol_(integer n, doublereal *a, doublereal *b, integer *ip);
+int dec_(int n, double *a, int *ip, int *ier);
+int sol_(int n, double *a, double *b, int *ip);
 
-int decc_(integer n, doublereal *ar, doublereal *ai, integer *ip, integer *ier);
-int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal *bi, integer *ip);
+int decc_(int n, double *ar, double *ai, int *ip, int *ier);
+int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip);
 
-int decomr_(integer n, doublereal *fjac,doublereal *fac1, doublereal *e1,
-	integer *ip1, integer *ier, integer *ijob, SuperLU_aux_d* slu_aux,
+int decomr_(int n, double *fjac,double *fac1, double *e1,
+	int *ip1, int *ier, int *ijob, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz);
-int decomc_(integer n, doublereal *fjac, doublereal *alphn, doublereal *betan,
-	doublereal *e2r, doublereal *e2i, integer *ip2,
-	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
+int decomc_(int n, double *fjac, double *alphn, double *betan,
+	double *e2r, double *e2i, int *ip2,
+	int *ier, int *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz);
 
-int slvrad_(integer n, doublereal *fac1, doublereal *alphn, doublereal *betan, 
-	doublereal *e1, doublereal *e2r, doublereal *e2i, 
-	doublereal *z1, doublereal *z2, doublereal *z3,
-	doublereal *f1, doublereal *f2, doublereal *f3,
-	integer *ip1, integer *ip2, integer *ier, integer *ijob,
+int slvrad_(int n, double *fac1, double *alphn, double *betan, 
+	double *e1, double *e2r, double *e2i, 
+	double *z1, double *z2, double *z3,
+	double *f1, double *f2, double *f3,
+	int *ip1, int *ip2, int *ier, int *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
 
-int estrad_(integer n, doublereal *h__,
-	doublereal *dd1, doublereal *dd2, doublereal *dd3,
-	FP_CB_f fcn, void* fcn_PY, integer *nfcn,
-	doublereal *y0, doublereal *y, integer *ijob,
-	doublereal *x,doublereal *e1,
-	doublereal *z1, doublereal *z2, doublereal *z3,
-	doublereal *cont, doublereal *werr,
-	doublereal *f1, doublereal *f2, integer *ip1,
-	doublereal *scal, doublereal *err, logical *first, logical *reject, 
-	SuperLU_aux_d* slu_aux_d, integer *ier);
+int estrad_(int n, double *h__,
+	double *dd1, double *dd2, double *dd3,
+	FP_CB_f fcn, void* fcn_PY, int *nfcn,
+	double *y0, double *y, int *ijob,
+	double *x,double *e1,
+	double *z1, double *z2, double *z3,
+	double *cont, double *werr,
+	double *f1, double *f2, int *ip1,
+	double *scal, double *err, int *first, int *reject, 
+	SuperLU_aux_d* slu_aux_d, int *ier);
 
 int radau_sparse_aux_init(double**, int**, int**, int, int);
 int radau_sparse_aux_finalize(double**, int**, int**);

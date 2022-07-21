@@ -1,5 +1,5 @@
 // based on f2c (version 20100827) translation of radau_decsol.f.
-// Note: Due to this, matrices (doublereal*) are stored in Fortran-style column major format
+// Note: Due to this, matrices (double*) are stored in Fortran-style column major format
 // Also: This is the source of some odd looking pointer incrementation constructs
 
 #include <stdlib.h>
@@ -10,55 +10,55 @@
 
 /* Common Block Declarations */
 struct conra5_{
-    integer nn, nn2, nn3, nn4;
-    doublereal xsol, hsol, c2m1, c1m1;
+    int nn, nn2, nn3, nn4;
+    double xsol, hsol, c2m1, c1m1;
 } conra5_1;
 
 /* Table of constant values */
 
-static doublereal c_b54 = .5;
-static doublereal c_b91 = 81.;
-static doublereal c_b92 = .33333333333333331;
-static doublereal c_b93 = 9.;
-static doublereal c_b114 = .8;
-static doublereal c_b116 = .25;
+static double c_b54 = .5;
+static double c_b91 = 81.;
+static double c_b92 = .33333333333333331;
+static double c_b93 = 9.;
+static double c_b114 = .8;
+static double c_b116 = .25;
 
-int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
-	doublereal *x, doublereal *y, doublereal *xend, doublereal *h__,
-	doublereal *rtol, doublereal *atol, integer *itol,
-	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
-	FP_CB_solout solout, void* solout_PY, integer *iout,
-	doublereal *work, integer *lwork, integer *iwork, integer *liwork, integer *idid,
+int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
+	double *x, double *y, double *xend, double *h__,
+	double *rtol, double *atol, int *itol,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac,
+	FP_CB_solout solout, void* solout_PY, int *iout,
+	double *work, int *lwork, int *iwork, int *liwork, int *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-	static integer iewerr;
-    static integer i, nit, iee1, ief1, ief2, ief3, iey0, iez1, iez2, iez3;
-    static doublereal facl;
-    static integer ndec, njac;
-    static doublereal facr, safe;
-    static integer ijob, nfcn; // ijob is identifier for type of LU decomposition used
-    static logical pred;
-    static doublereal hmax;
-    static integer nmax;
-    static doublereal thet, expm;
-    static integer nsol;
-    static doublereal quot;
-    static integer iee2i, iee2r, ieip1, ieip2;
-    static doublereal quot1, quot2;
-    static integer iejac;
-    static integer iecon;
-    static logical arret;
-    static doublereal fnewt;
-    static integer nstep;
-    static doublereal tolst;
-    static integer iescal, naccpt;
-    static integer nrejct;
-    static integer istore;
-    static logical startn;
-    static doublereal uround;
+	static int iewerr;
+    static int i, nit, iee1, ief1, ief2, ief3, iey0, iez1, iez2, iez3;
+    static double facl;
+    static int ndec, njac;
+    static double facr, safe;
+    static int ijob, nfcn; // ijob is identifier for type of LU decomposition used
+    static int pred;
+    static double hmax;
+    static int nmax;
+    static double thet, expm;
+    static int nsol;
+    static double quot;
+    static int iee2i, iee2r, ieip1, ieip2;
+    static double quot1, quot2;
+    static int iejac;
+    static int iecon;
+    static int arret;
+    static double fnewt;
+    static int nstep;
+    static double tolst;
+    static int iescal, naccpt;
+    static int nrejct;
+    static int istore;
+    static int startn;
+    static double uround;
 
-	integer nnz;
+	int nnz;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -175,7 +175,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
 
 /*     LWORK       DECLARED LENGTH OF ARRAY "WORK". */
 
-/*     IWORK       INTEGER WORKING SPACE OF LENGTH "LIWORK". */
+/*     IWORK       int WORKING SPACE OF LENGTH "LIWORK". */
 /*                 IWORK(1),IWORK(2),...,IWORK(20) SERVE AS PARAMETERS */
 /*                 FOR THE CODE. FOR STANDARD USE, SET IWORK(1),.., */
 /*                 IWORK(20) TO ZERO BEFORE CALLING. */
@@ -479,7 +479,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
 		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i\n", istore);
 		arret = TRUE_;
     }
-	/* ------- ENTRY POINTS FOR INTEGER WORKSPACE ----- */
+	/* ------- ENTRY POINTS FOR int WORKSPACE ----- */
     ieip1 = 21;
     ieip2 = ieip1 + n;
 	/* --------- TOTAL REQUIREMENT --------------- */
@@ -530,59 +530,59 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
 } /* radau5_ */
 
 
-int radcor_(integer n, FP_CB_f fcn, void* fcn_PY,
-	doublereal *x, doublereal *y, doublereal *xend, doublereal *hmax, doublereal *h__,
-	doublereal *rtol, doublereal *atol, integer *itol,
-	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid,
-	integer *nmax, doublereal *uround, doublereal *safe, doublereal *thet,
-	doublereal *fnewt, doublereal *quot1, doublereal *quot2, integer *nit,
-	integer *ijob, logical *startn, logical *pred,
-	doublereal *facl, doublereal *facr,
-	doublereal *z1, doublereal *z2, doublereal *z3,
-	doublereal *y0, doublereal *scal,
-	doublereal *f1, doublereal *f2, doublereal *f3,
-	doublereal *fjac, doublereal *e1, doublereal *e2r, doublereal *e2i,
-	integer *ip1, integer *ip2, doublereal *cont,
-	integer *nfcn, integer *njac, integer *nstep, integer *naccpt,
-	integer *nrejct, integer *ndec, integer *nsol,
-	doublereal *werr, integer nnz,
+int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
+	double *x, double *y, double *xend, double *hmax, double *h__,
+	double *rtol, double *atol, int *itol,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, 
+	FP_CB_solout solout, void* solout_PY, int *iout, int *idid,
+	int *nmax, double *uround, double *safe, double *thet,
+	double *fnewt, double *quot1, double *quot2, int *nit,
+	int *ijob, int *startn, int *pred,
+	double *facl, double *facr,
+	double *z1, double *z2, double *z3,
+	double *y0, double *scal,
+	double *f1, double *f2, double *f3,
+	double *fjac, double *e1, double *e2r, double *e2i,
+	int *ip1, int *ip2, double *cont,
+	int *nfcn, int *njac, int *nstep, int *naccpt,
+	int *nrejct, int *ndec, int *nsol,
+	double *werr, int nnz,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-    doublereal d__1;
+    double d__1;
 
-    static integer i, j;
-    static doublereal a1, a2, c1, c2, a3;
-    static integer n2, n3;
-    static doublereal u1;
-    static integer nunexpect;
-    static doublereal ak;
-    static doublereal t11, t12, t13, t21, t22, t23, t31;
-    static doublereal qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
+    static int i, j;
+    static double a1, a2, c1, c2, a3;
+    static int n2, n3;
+    static double u1;
+    static int nunexpect;
+    static double ak;
+    static double t11, t12, t13, t21, t22, t23, t31;
+    static double qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
 	    c2q, c3q, z1i, z2i, z3i, sq6, fac, ti11, cno;
-    static integer lrc;
-    static doublereal ti12, ti13, ti21, ti22, ti23, ti31, ti32, ti33;
-    static integer ier;
-    static doublereal xph, thq, err, fac1, cfac, hacc, c1mc2, beta;
-    static doublereal alph, hold;
-    static doublereal delt, hnew;
-    static logical last;
-    static doublereal hopt, xold;
-    static integer newt;
-    static doublereal dyno, dyth, quot, hhfac, betan, alphn, theta, 
+    static int lrc;
+    static double ti12, ti13, ti21, ti22, ti23, ti31, ti32, ti33;
+    static int ier;
+    static double xph, thq, err, fac1, cfac, hacc, c1mc2, beta;
+    static double alph, hold;
+    static double delt, hnew;
+    static int last;
+    static double hopt, xold;
+    static int newt;
+    static double dyno, dyth, quot, hhfac, betan, alphn, theta, 
 	    ysafe, hmaxn;
-    static integer nsing;
-    static logical first;
-    static integer irtrn, nrsol, nsolu;
-    static doublereal qnewt, xosol, acont3;
-	static logical caljac;
-    static doublereal faccon;
-    static doublereal erracc;
-    static logical reject;
-    static doublereal facgus;
-    static doublereal dynold, posneg;
-    static doublereal thqold;
+    static int nsing;
+    static int first;
+    static int irtrn, nrsol, nsolu;
+    static double qnewt, xosol, acont3;
+	static int caljac;
+    static double faccon;
+    static double erracc;
+    static int reject;
+    static double facgus;
+    static double dynold, posneg;
+    static double thqold;
 
 	// flag if current jacobian is fresh
 	// old jacobians allow re-use of certain parts in (sparse) LU factorization
@@ -1140,10 +1140,10 @@ L181:
 } /* radcor_ */
 
 
-doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
+double contr5_c(int *i, double *x, double *cont, int *lrc)
 {
-    doublereal ret_val;
-    static doublereal s;
+    double ret_val;
+    static double s;
 
 /* ---------------------------------------------------------- */
 /*     THIS FUNCTION CAN BE USED FOR CONINUOUS OUTPUT. IT PROVIDES AN */
@@ -1161,11 +1161,11 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 } /* contr5_ */
 
 
-int dec_(integer n, doublereal *a, integer *ip, integer *ier)
+int dec_(int n, double *a, int *ip, int *ier)
 {
-    static integer i, j, k, m;
-    static doublereal t;
-    static integer kp1;
+    static int i, j, k, m;
+    static double t;
+    static int kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1248,11 +1248,11 @@ L80:
 } /* dec_ */
 
 
-int sol_(integer n, doublereal *a, doublereal *b, integer *ip)
+int sol_(int n, double *a, double *b, int *ip)
 {
-    static integer i, k, m;
-    static doublereal t;
-    static integer kb, km1, kp1;
+    static int i, k, m;
+    static double t;
+    static int kb, km1, kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1299,12 +1299,12 @@ L50:
 } /* sol_ */
 
 
-int decc_(integer n, doublereal *ar, doublereal *ai, integer *ip, integer *ier)
+int decc_(int n, double *ar, double *ai, int *ip, int *ier)
 {
-    static integer i, j, k, m;
-    static doublereal ti, tr;
-    static integer kp1;
-    static doublereal den, prodi, prodr;
+    static int i, j, k, m;
+    static double ti, tr;
+    static int kp1;
+    static double den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1423,12 +1423,12 @@ L80:
 } /* decc_ */
 
 
-int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
+int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip)
 {
-    static integer i, k, m, kb;
-    static doublereal ti, tr;
-    static integer km1, kp1;
-    static doublereal den, prodi, prodr;
+    static int i, k, m, kb;
+    static double ti, tr;
+    static int km1, kp1;
+    static double den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1497,11 +1497,11 @@ L50:
 } /* solc_ */
 
 
-int decomr_(integer n, doublereal *fjac,doublereal *fac1, doublereal *e1,
-	integer *ip1, integer *ier, integer *ijob, SuperLU_aux_d* slu_aux,
+int decomr_(int n, double *fjac,double *fac1, double *e1,
+	int *ip1, int *ier, int *ijob, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
-    static integer i, j;
+    static int i, j;
 
     switch (*ijob) {
 		case 1: // DENSE
@@ -1522,12 +1522,12 @@ int decomr_(integer n, doublereal *fjac,doublereal *fac1, doublereal *e1,
 } /* decomr_ */
 
 
-int decomc_(integer n, doublereal *fjac, doublereal *alphn, doublereal *betan,
-	doublereal *e2r, doublereal *e2i, integer *ip2,
-	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
+int decomc_(int n, double *fjac, double *alphn, double *betan,
+	double *e2r, double *e2i, int *ip2,
+	int *ier, int *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
-    static integer i, j;
+    static int i, j;
 
     switch (*ijob) {
 		case 1: // DENSE
@@ -1550,15 +1550,15 @@ int decomc_(integer n, doublereal *fjac, doublereal *alphn, doublereal *betan,
 } /* decomc_ */
 
 
-int slvrad_(integer n, doublereal *fac1, doublereal *alphn, doublereal *betan, 
-	doublereal *e1, doublereal *e2r, doublereal *e2i, 
-	doublereal *z1, doublereal *z2, doublereal *z3,
-	doublereal *f1, doublereal *f2, doublereal *f3,
-	integer *ip1, integer *ip2, integer *ier, integer *ijob,
+int slvrad_(int n, double *fac1, double *alphn, double *betan, 
+	double *e1, double *e2r, double *e2i, 
+	double *z1, double *z2, double *z3,
+	double *f1, double *f2, double *f3,
+	int *ip1, int *ip2, int *ier, int *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-    static integer i;
-    static doublereal s2, s3;
+    static int i;
+    static double s2, s3;
 
     for (i = 0; i < n; ++i) {
 		s2 = -f2[i];
@@ -1585,19 +1585,19 @@ int slvrad_(integer n, doublereal *fac1, doublereal *alphn, doublereal *betan,
 } /* slvrad_ */
 
 
-int estrad_(integer n, doublereal *h__,
-	doublereal *dd1, doublereal *dd2, doublereal *dd3,
-	FP_CB_f fcn, void* fcn_PY, integer *nfcn,
-	doublereal *y0, doublereal *y, integer *ijob,
-	doublereal *x,doublereal *e1,
-	doublereal *z1, doublereal *z2, doublereal *z3,
-	doublereal *cont, doublereal *werr,
-	doublereal *f1, doublereal *f2, integer *ip1,
-	doublereal *scal, doublereal *err, logical *first, logical *reject, 
-	SuperLU_aux_d* slu_aux_d, integer *ier)
+int estrad_(int n, double *h__,
+	double *dd1, double *dd2, double *dd3,
+	FP_CB_f fcn, void* fcn_PY, int *nfcn,
+	double *y0, double *y, int *ijob,
+	double *x,double *e1,
+	double *z1, double *z2, double *z3,
+	double *cont, double *werr,
+	double *f1, double *f2, int *ip1,
+	double *scal, double *err, int *first, int *reject, 
+	SuperLU_aux_d* slu_aux_d, int *ier)
 {
-    static integer i;
-    static doublereal hee1, hee2, hee3;
+    static int i;
+    static double hee1, hee2, hee3;
 
     hee1 = *dd1 / *h__;
     hee2 = *dd2 / *h__;

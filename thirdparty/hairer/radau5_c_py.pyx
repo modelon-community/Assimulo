@@ -65,7 +65,7 @@ cdef void py2c_i(int* dest, object source, int dim):
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
-cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_out, void* fcn_PY):
+cdef int callback_fcn(int n, double* x, double* y_in, double* y_out, void* fcn_PY):
     """
     Internal callback function to enable call to Python based rhs function from C
     """
@@ -75,7 +75,7 @@ cdef int callback_fcn(integer n, doublereal* x, doublereal* y_in, doublereal* y_
     py2c_d(y_out, res[0], len(res[0]))
     return res[1][0]
 
-cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac, void* jac_PY):
+cdef int callback_jac(int n, double* x, double* y, double* fjac, void* jac_PY):
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
@@ -85,9 +85,9 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
     return 0
 
-cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
-                         doublereal* cont, doublereal* werr, integer* lrc, integer* nsolu,
-                         integer* irtrn, void* solout_PY):
+cdef int callback_solout(int* nrsol, double* xosol, double* xsol, double* y,
+                         double* cont, double* werr, int* lrc, int* nsolu,
+                         int* irtrn, void* solout_PY):
     """
     Internal callback function to enable call to Python based solution output function from C
     """
@@ -227,10 +227,10 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     nnz[0] = J.nnz + len(missing)
     return 0
 
-cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
-             doublereal xend, doublereal h__, np.ndarray rtol, np.ndarray atol,
-             integer itol, jac_PY, integer ijac, solout_PY,
-             integer iout, np.ndarray work, np.ndarray iwork,
+cpdef radau5(fcn_PY, double x, np.ndarray y,
+             double xend, double h__, np.ndarray rtol, np.ndarray atol,
+             int itol, jac_PY, int ijac, solout_PY,
+             int iout, np.ndarray work, np.ndarray iwork,
              RadauSuperLUaux aux_class):
     """
     Python interface for calling the C based Radau solver
@@ -296,18 +296,18 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                         - Return flag, see radau_decsol.c for details (1 == Successful computation)
     """
     # array lengthes, required for C call
-    cdef integer n = len(y)
-    cdef integer lwork = len(work)
-    cdef integer liwork = len(iwork)
+    cdef int n = len(y)
+    cdef int lwork = len(work)
+    cdef int liwork = len(iwork)
     
-    cdef integer idid = 1 ## "Successful compution"
+    cdef int idid = 1 ## "Successful compution"
     
     iwork_in = np.array(iwork, dtype = np.int32)
     cdef np.ndarray[double, mode="c", ndim=1] y_vec = y
     cdef np.ndarray[double, mode="c", ndim=1] rtol_vec = rtol
     cdef np.ndarray[double, mode="c", ndim=1] atol_vec = atol
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
-    cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
+    cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
     if iwork[10]: ## sparse
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
@@ -323,7 +323,7 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 
-cpdef contr5(integer i__, doublereal x, np.ndarray cont):
+cpdef contr5(int i__, double x, np.ndarray cont):
     """
         Python interface for calling the C based interpolation function using dense output
         Returns 'i'-th component at time 'x'. IMPORTANT: This function uses index 1 based notation.
@@ -341,6 +341,6 @@ cpdef contr5(integer i__, doublereal x, np.ndarray cont):
                         - See function description
 
     """
-    cdef integer lrc = len(cont)
+    cdef int lrc = len(cont)
     cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
     return radau5_c_py.contr5_c(&i__, &x, &cont_vec[0], &lrc)
