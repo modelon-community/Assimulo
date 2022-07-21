@@ -1539,37 +1539,24 @@ L50:
 	SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
-    /* Local variables */
     static integer i, j;
 
-    /* Function Body */
     switch (*ijob) {
-		case 1:  goto L1;
-		case 8:  goto L8;
+		case 1: // DENSE
+			for (j = 1; j <= n; ++j) {
+				for (i = 1; i <= n; ++i) {
+					e1[i + j * n] = -fjac[i + j * n];
+				}
+				e1[j + j * n] += *fac1;
+			}
+			dec_(n, e1, ip1, ier);
+			break;
+		case 8: // SPARSE
+			superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
+			*ier = superlu_factorize_d(slu_aux);
+			break;
     }
-
-/* ----------------------------------------------------------- */
-
-L1:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			e1[i + j * n] = -fjac[i + j * n];
-		}
-		e1[j + j * n] += *fac1;
-    }
-    dec_(n, e1, ip1, ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L8:
-/* ---  B=IDENTITY, SPARSE LU */
-	superlu_setup_d(slu_aux, *fac1, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
-	*ier = superlu_factorize_d(slu_aux);
-    return 0;
-
-/* ----------------------------------------------------------- */
+	return 0;
 } /* decomr_ */
 
 /*     END OF SUBROUTINE DECOMR */
@@ -1582,39 +1569,26 @@ L8:
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
-    /* Local variables */
     static integer i, j;
 
-    /* Function Body */
     switch (*ijob) {
-		case 1:  goto L1;
-		case 8:  goto L8;
+		case 1: // DENSE
+			for (j = 1; j <= n; ++j) {
+				for (i = 1; i <= n; ++i) {
+					e2r[i + j * n] = -fjac[i + j * n];
+					e2i[i + j * n] = 0.;
+				}
+				e2r[j + j * n] += *alphn;
+				e2i[j + j * n] = *betan;
+			}
+			decc_(n, e2r, e2i, ip2, ier);
+			break;
+		case 8: 
+			superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
+			*ier = superlu_factorize_z(slu_aux);
+			break;
     }
-
-/* ----------------------------------------------------------- */
-
-L1:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX */
-    for (j = 1; j <= n; ++j) {
-		for (i = 1; i <= n; ++i) {
-			e2r[i + j * n] = -fjac[i + j * n];
-			e2i[i + j * n] = 0.;
-		}
-		e2r[j + j * n] += *alphn;
-		e2i[j + j * n] = *betan;
-    }
-    decc_(n, e2r, e2i, ip2, ier);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L8:
-/* ---  B=IDENTITY, SPARSE LU */
-	superlu_setup_z(slu_aux, *alphn, *betan, jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz);
-	*ier = superlu_factorize_z(slu_aux);
-    return 0;
-
-/* ----------------------------------------------------------- */
+	return 0;
 } /* decomc_ */
 
 /*     END OF SUBROUTINE DECOMC */
@@ -1629,50 +1603,31 @@ L8:
 	integer *ip2, integer *ier, integer *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-    /* Local variables */
     static integer i;
     static doublereal s2, s3;
 
-    /* Function Body */
+    for (i = 0; i < n; ++i) {
+		s2 = -f2[i];
+		s3 = -f3[i];
+		z1[i] -= f1[i] * *fac1;
+		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
+		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
+    }
+
     switch (*ijob) {
-		case 1:  goto L1;
-		case 8:  goto L8;
+		case 1: // DENSE
+		    sol_(n, e1, z1, ip1);
+    		solc_(n, e2r, e2i, z2, z3, ip2);
+			break;
+		case 8:  // SPARSE
+			*ier = superlu_solve_d(slu_aux_d, z1);
+			if (*ier) {
+				return 0;
+			}
+			*ier = superlu_solve_z(slu_aux_z, z2, z3);
+			break;
     }
-
-/* ----------------------------------------------------------- */
-
-L1:
-/* ---  B=IDENTITY, JACOBIAN A FULL MATRIX */
-    for (i = 0; i < n; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-    sol_(n, e1, z1, ip1);
-    solc_(n, e2r, e2i, z2, z3, ip2);
-    return 0;
-
-/* ----------------------------------------------------------- */
-
-L8:
-/* ---  B=IDENTITY, SPARSE LU */
-    for (i = 0; i < n; ++i) {
-		s2 = -f2[i];
-		s3 = -f3[i];
-		z1[i] -= f1[i] * *fac1;
-		z2[i] = z2[i] + s2 * *alphn - s3 * *betan;
-		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
-    }
-	*ier = superlu_solve_d(slu_aux_d, z1);
-	if (*ier) {
-		return 0;
-	}
-	*ier = superlu_solve_z(slu_aux_z, z2, z3);
-    return 0;
-
-/* ----------------------------------------------------------- */
+	return 0;
 } /* slvrad_ */
 
 /*     END OF SUBROUTINE SLVRAD */
@@ -1689,43 +1644,30 @@ L8:
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
 	SuperLU_aux_d* slu_aux_d, integer *ier)
 {
-    /* Local variables */
     static integer i;
     static doublereal hee1, hee2, hee3;
 
-    /* Function Body */
     hee1 = *dd1 / *h__;
     hee2 = *dd2 / *h__;
     hee3 = *dd3 / *h__;
-    switch (*ijob) {
-		case 1:  goto L1;
-		case 8:  goto L8;
-    }
 
-L1:
-/* ------  B=IDENTITY, JACOBIAN A FULL MATRIX */
-    for (i = 0; i < n; ++i) {
+	for (i = 0; i < n; ++i) {
 		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
 		cont[i] = f2[i] + y0[i];
-    }
-    sol_(n, e1, cont, ip1);
-    goto L77;
-
-/* ---  B=IDENTITY MATRIX, SPARSE LU */
-L8:
-    for (i = 0; i < n; ++i) {
-		f2[i] = hee1 * z1[i] + hee2 * z2[i] + hee3 * z3[i];
-		cont[i] = f2[i] + y0[i];
-    }
-	*ier = superlu_solve_d(slu_aux_d, cont);
-	if (*ier){
-		return 0;
 	}
-	goto L77;
 
-/* -------------------------------------- */
+    switch (*ijob) {
+		case 1:  // DENSE
+			sol_(n, e1, cont, ip1);
+			break;
+		case 8: // SPARSE
+			*ier = superlu_solve_d(slu_aux_d, cont);
+			if (*ier){
+				return 0;
+			}
+			break;
+    }
 
-L77:
     *err = 0.;
     for (i = 0; i < n; ++i) {
 		werr[i] = cont[i] / scal[i];
@@ -1746,23 +1688,17 @@ L77:
 			cont[i] = f1[i] + f2[i];
 		}
 		switch (*ijob) {
-			case 1:  goto L31;
-			case 8:  goto L38;
+			case 1: // DENSE
+				sol_(n, e1, cont, ip1);
+				break;
+			case 8:  // SPARSE
+				*ier = superlu_solve_d(slu_aux_d, cont);
+				if (*ier){
+					return 0;
+				}
+				break;
 		}
-	/* ------ FULL MATRIX OPTION */
-L31:
-	sol_(n, e1, cont, ip1);
-	goto L88;
-L38:
-/* ---  B=IDENTITY, SPARSE LU */
-	*ier = superlu_solve_d(slu_aux_d, cont);
-	if (*ier){
-		return 0;
-	}
-	goto L88;
 
-/* ----------------------------------------------------------- */
-L88:
 		*err = 0.;
 		for (i = 0; i < n; ++i) {
 			werr[i] = cont[i] / scal[i];
