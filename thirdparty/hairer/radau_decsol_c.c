@@ -1,5 +1,6 @@
 // based on f2c (version 20100827) translation of radau_decsol.f.
 // Note: Due to this, matrices (doublereal*) are stored in Fortran-style column major format
+// Also: This is the source of some odd looking pointer incrementation constructs
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,7 +9,6 @@
 #include <inttypes.h>
 
 /* Common Block Declarations */
-
 struct conra5_{
     integer nn, nn2, nn3, nn4;
     doublereal xsol, hsol, c2m1, c1m1;
@@ -23,19 +23,17 @@ static doublereal c_b93 = 9.;
 static doublereal c_b114 = .8;
 static doublereal c_b116 = .25;
 
-/* Subroutine */ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
-	doublereal *xend, doublereal *h__, doublereal *rtol, doublereal *atol,
-	integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
-	FP_CB_solout solout,
-	void* solout_PY, integer *iout, doublereal *work, integer *lwork, 
-	integer *iwork, integer *liwork, integer *idid,
+int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY,
+	doublereal *x, doublereal *y, doublereal *xend, doublereal *h__,
+	doublereal *rtol, doublereal *atol, integer *itol,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac,
+	FP_CB_solout solout, void* solout_PY, integer *iout,
+	doublereal *work, integer *lwork, integer *iwork, integer *liwork, integer *idid,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-    /* Local variables */
 	static integer iewerr;
-    static integer i, nit, iee1, ief1, ief2, ief3, iey0, 
-	    iez1, iez2, iez3;
+    static integer i, nit, iee1, ief1, ief2, ief3, iey0, iez1, iez2, iez3;
     static doublereal facl;
     static integer ndec, njac;
     static doublereal facr, safe;
@@ -528,37 +526,32 @@ static doublereal c_b116 = .25;
 			atol[i] = rtol[i] * quot;
 		}
     }
-	/* ----------- RETURN ----------- */
     return 0;
 } /* radau5_ */
 
 
-/*     END OF SUBROUTINE RADAU5 */
-
-/* *********************************************************** */
-
-/* Subroutine */ int radcor_(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
-	doublereal *xend, doublereal *hmax, doublereal *h__, doublereal *rtol,
-	doublereal *atol, integer *itol, FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
-	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid, integer *nmax, 
-	doublereal *uround, doublereal *safe, doublereal *thet, doublereal *fnewt,
-	doublereal *quot1, doublereal *quot2, integer *nit, integer *ijob, logical *startn,
-	logical *pred, doublereal *facl, doublereal *facr,
-	doublereal *z1, doublereal *z2, 
-	doublereal *z3, doublereal *y0, doublereal *scal, doublereal *f1, 
-	doublereal *f2, doublereal *f3, doublereal *fjac, doublereal *e1, 
-	doublereal *e2r, doublereal *e2i, integer *ip1, 
-	integer *ip2, doublereal *cont, integer *nfcn, 
-	integer *njac, integer *nstep, integer *naccpt, integer *nrejct, 
-	integer *ndec, integer *nsol,
+int radcor_(integer n, FP_CB_f fcn, void* fcn_PY,
+	doublereal *x, doublereal *y, doublereal *xend, doublereal *hmax, doublereal *h__,
+	doublereal *rtol, doublereal *atol, integer *itol,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, integer *ijac, 
+	FP_CB_solout solout, void* solout_PY, integer *iout, integer *idid,
+	integer *nmax, doublereal *uround, doublereal *safe, doublereal *thet,
+	doublereal *fnewt, doublereal *quot1, doublereal *quot2, integer *nit,
+	integer *ijob, logical *startn, logical *pred,
+	doublereal *facl, doublereal *facr,
+	doublereal *z1, doublereal *z2, doublereal *z3,
+	doublereal *y0, doublereal *scal,
+	doublereal *f1, doublereal *f2, doublereal *f3,
+	doublereal *fjac, doublereal *e1, doublereal *e2r, doublereal *e2i,
+	integer *ip1, integer *ip2, doublereal *cont,
+	integer *nfcn, integer *njac, integer *nstep, integer *naccpt,
+	integer *nrejct, integer *ndec, integer *nsol,
 	doublereal *werr, integer nnz,
 	double* jac_data, int* jac_indices, int* jac_indptr,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
-    /* System generated locals */
     doublereal d__1;
 
-    /* Local variables */
     static integer i, j;
     static doublereal a1, a2, c1, c2, a3;
     static integer n2, n3;
@@ -622,8 +615,6 @@ static doublereal c_b116 = .25;
     --y;
     --rtol;
     --atol;
-    --ip2;
-    --ip1;
     --werr;
     fjac -= 1 + n;
     e2i -= 1 + n;
@@ -771,7 +762,7 @@ L20:
     alphn = alph / *h__;
     betan = beta / *h__;
     decomr_(n, fjac,
-			&fac1, e1, &ip1[1], &ier, 
+			&fac1, e1, ip1, &ier, 
 			ijob, slu_aux_d,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
@@ -779,7 +770,7 @@ L20:
     }
     decomc_(n, fjac,
 			&alphn, &betan, e2r, e2i,
-			&ip2[1], &ier, ijob, slu_aux_z,
+			ip2, &ier, ijob, slu_aux_z,
 			jac_data, jac_indices, jac_indptr, fresh_jacobian, jac_nnz_actual);
     if (ier) {
 		goto L185;
@@ -876,7 +867,7 @@ L40:
     }
     slvrad_(n, &fac1, &alphn, &betan, &e1[1 + n],
 			&e2r[1 + n], &e2i[1 + n],
-			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], &ip1[1], &ip2[1],
+			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], ip1, ip2,
 			&ier, ijob, slu_aux_d, slu_aux_z);
 	if (ier){
 		goto L184;
@@ -935,7 +926,7 @@ L40:
 	/* --- ERROR ESTIMATION */
     estrad_(n, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
 			&y0[1], &y[1], ijob, x, &e1[1 + n],
-			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], &ip1[1], 
+			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], ip1, 
 			&scal[1], &err, &first, &reject,
 			slu_aux_d, &ier);
 	if (ier){
@@ -1149,16 +1140,9 @@ L181:
 } /* radcor_ */
 
 
-/*     END OF SUBROUTINE RADCOR */
-
-/* *********************************************************** */
-
 doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 {
-    /* System generated locals */
     doublereal ret_val;
-
-    /* Local variables */
     static doublereal s;
 
 /* ---------------------------------------------------------- */
@@ -1170,7 +1154,6 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
     /* Parameter adjustments */
     --cont;
 
-    /* Function Body */
     s = (*x - conra5_1.xsol) / conra5_1.hsol;
     ret_val = cont[*i] + s * (cont[*i + conra5_1.nn] + (s - conra5_1.c2m1)
 	     * (cont[*i + conra5_1.nn2] + (s - conra5_1.c1m1) * cont[*i + conra5_1.nn3]));
@@ -1178,12 +1161,8 @@ doublereal contr5_c(integer *i, doublereal *x, doublereal *cont, integer *lrc)
 } /* contr5_ */
 
 
-/*     END OF FUNCTION CONTR5 */
-
-/* *********************************************************** */
-/* Subroutine */ int dec_(integer n, doublereal *a, integer *ip, integer *ier)
+int dec_(integer n, doublereal *a, integer *ip, integer *ier)
 {
-    /* Local variables */
     static integer i, j, k, m;
     static doublereal t;
     static integer kp1;
@@ -1266,12 +1245,11 @@ L80:
     *ier = k;
     ip[n] = 0;
     return 0;
-/* ----------------------- END OF SUBROUTINE DEC ------------------------- */
 } /* dec_ */
 
-/* Subroutine */ int sol_(integer n, doublereal *a, doublereal *b, integer *ip)
+
+int sol_(integer n, doublereal *a, doublereal *b, integer *ip)
 {
-    /* Local variables */
     static integer i, k, m;
     static doublereal t;
     static integer kb, km1, kp1;
@@ -1293,7 +1271,6 @@ L80:
     --b;
     a -= 1 + n;
 
-    /* Function Body */
     if (n == 1) {
 		goto L50;
     }
@@ -1319,12 +1296,11 @@ L80:
 L50:
     b[1] /= a[n + 1];
     return 0;
-/* ----------------------- END OF SUBROUTINE SOL ------------------------- */
 } /* sol_ */
 
-/* Subroutine */ int decc_(integer n, doublereal *ar, doublereal *ai, integer *ip, integer *ier)
+
+int decc_(integer n, doublereal *ar, doublereal *ai, integer *ip, integer *ier)
 {
-    /* Local variables */
     static integer i, j, k, m;
     static doublereal ti, tr;
     static integer kp1;
@@ -1371,7 +1347,6 @@ L50:
 			if (abs(ar[i + k * n]) + abs(ai[i + k * n]) > abs(ar[m + k * n]) + abs(ai[m + k * n])) {
 				m = i;
 			}
-		/* L10: */
 		}
 		ip[k] = m;
 		tr = ar[m + k * n];
@@ -1396,7 +1371,6 @@ L20:
 			prodi = ai[i + k * n] * tr + ar[i + k * n] * ti;
 			ar[i + k * n] = -prodr;
 			ai[i + k * n] = -prodi;
-		/* L30: */
 		}
 		for (j = kp1; j <= n; ++j) {
 			tr = ar[m + j * n];
@@ -1414,7 +1388,6 @@ L20:
 					prodi = ai[i + k * n] * tr;
 					ar[i + j * n] += prodr;
 					ai[i + j * n] += prodi;
-				/* L40: */
 				}
 				goto L48;
 			}
@@ -1424,7 +1397,6 @@ L20:
 					prodi = ar[i + k * n] * ti;
 					ar[i + j * n] += prodr;
 					ai[i + j * n] += prodi;
-					/* L45: */
 				}
 				goto L48;
 			}
@@ -1433,13 +1405,10 @@ L20:
 				prodi = ai[i + k * n] * tr + ar[i + k * n] * ti;
 				ar[i + j * n] += prodr;
 				ai[i + j * n] += prodi;
-				/* L47: */	
 			}
 L48:
-	/* L50: */
 			;
 		}
-	/* L60: */
     }
 L70:
     k = n;
@@ -1451,12 +1420,11 @@ L80:
     *ier = k;
     ip[n] = 0;
     return 0;
-/* ----------------------- END OF SUBROUTINE DECC ------------------------ */
 } /* decc_ */
 
-/* Subroutine */ int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
+
+int solc_(integer n, doublereal *ar, doublereal *ai, doublereal *br, doublereal *bi, integer *ip)
 {
-    /* Local variables */
     static integer i, k, m, kb;
     static doublereal ti, tr;
     static integer km1, kp1;
@@ -1526,17 +1494,11 @@ L50:
     br[1] = prodr / den;
     bi[1] = prodi / den;
     return 0;
-/* ----------------------- END OF SUBROUTINE SOLC ------------------------ */
 } /* solc_ */
 
-/* ****************************************** */
-/*     VERSION OF SEPTEMBER 18, 1995 */
-/* ****************************************** */
 
-/* Subroutine */ int decomr_(integer n, doublereal *fjac,
-	doublereal *fac1, doublereal *e1,
-	integer *ip1, integer *ier, integer *ijob,
-	SuperLU_aux_d* slu_aux,
+int decomr_(integer n, doublereal *fjac,doublereal *fac1, doublereal *e1,
+	integer *ip1, integer *ier, integer *ijob, SuperLU_aux_d* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
 {
     static integer i, j;
@@ -1559,12 +1521,8 @@ L50:
 	return 0;
 } /* decomr_ */
 
-/*     END OF SUBROUTINE DECOMR */
 
-/* *********************************************************** */
-
-/* Subroutine */ int decomc_(integer n, doublereal *fjac,
-	doublereal *alphn, doublereal *betan,
+int decomc_(integer n, doublereal *fjac, doublereal *alphn, doublereal *betan,
 	doublereal *e2r, doublereal *e2i, integer *ip2,
 	integer *ier, integer *ijob, SuperLU_aux_z* slu_aux,
 	double* jac_data, int* jac_indices, int* jac_indptr, int fresh_jacobian, int jac_nnz)
@@ -1591,16 +1549,12 @@ L50:
 	return 0;
 } /* decomc_ */
 
-/*     END OF SUBROUTINE DECOMC */
 
-/* *********************************************************** */
-
-/* Subroutine */ int slvrad_(integer n,
-	doublereal *fac1, doublereal *alphn, doublereal *betan, 
+int slvrad_(integer n, doublereal *fac1, doublereal *alphn, doublereal *betan, 
 	doublereal *e1, doublereal *e2r, doublereal *e2i, 
-	doublereal *z1, doublereal *z2, doublereal *z3, doublereal *f1, 
-	doublereal *f2, doublereal *f3, integer *ip1, 
-	integer *ip2, integer *ier, integer *ijob,
+	doublereal *z1, doublereal *z2, doublereal *z3,
+	doublereal *f1, doublereal *f2, doublereal *f3,
+	integer *ip1, integer *ip2, integer *ier, integer *ijob,
 	SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z)
 {
     static integer i;
@@ -1630,16 +1584,14 @@ L50:
 	return 0;
 } /* slvrad_ */
 
-/*     END OF SUBROUTINE SLVRAD */
 
-/* *********************************************************** */
-
-/* Subroutine */ int estrad_(integer n,
-	doublereal *h__, doublereal *dd1, 
-	doublereal *dd2, doublereal *dd3, FP_CB_f fcn, void* fcn_PY, integer *nfcn, doublereal *y0,
-	doublereal *y, integer *ijob, doublereal *x,
-	doublereal *e1, doublereal *z1,
-	doublereal *z2, doublereal *z3, doublereal *cont, doublereal *werr,
+int estrad_(integer n, doublereal *h__,
+	doublereal *dd1, doublereal *dd2, doublereal *dd3,
+	FP_CB_f fcn, void* fcn_PY, integer *nfcn,
+	doublereal *y0, doublereal *y, integer *ijob,
+	doublereal *x,doublereal *e1,
+	doublereal *z1, doublereal *z2, doublereal *z3,
+	doublereal *cont, doublereal *werr,
 	doublereal *f1, doublereal *f2, integer *ip1,
 	doublereal *scal, doublereal *err, logical *first, logical *reject, 
 	SuperLU_aux_d* slu_aux_d, integer *ier)
@@ -1707,7 +1659,6 @@ L50:
 		*err = max(sqrt(*err / n), 1e-10);
     }
     return 0;
-/* ----------------------------------------------------------- */
 } /* estrad_ */
 
 

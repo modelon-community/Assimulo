@@ -42,14 +42,14 @@ cdef extern from "radau_decsol_c.h":
                                 integer*, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*)
 
-    int radau5_c(integer, FP_CB_f, void*, doublereal*, doublereal*,
-                 doublereal*, doublereal*, doublereal*, doublereal*,
-                 integer*, FP_CB_jac, FP_CB_jac_sparse, void*, integer*,
-                 FP_CB_solout,
-                 void*, integer*, doublereal*, integer*, integer*, integer*,
-                 integer*,
-                 double*, int*, int*,
-	             SuperLU_aux_d*, SuperLU_aux_z*)
+    int radau5_c(integer, FP_CB_f, void*,
+			 doublereal*, doublereal*, doublereal*, doublereal*,
+			 doublereal*, doublereal*, integer*,
+			 FP_CB_jac, FP_CB_jac_sparse, void*, integer*,
+			 FP_CB_solout, void*, integer*,
+			 doublereal*, integer*, integer*, integer*, integer*,
+			 double*, int*, int*,
+			 SuperLU_aux_d*, SuperLU_aux_z*)
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
 
