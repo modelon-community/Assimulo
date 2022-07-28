@@ -29,9 +29,11 @@ which pass to the problem class constructor. Then create your solver, set the at
 For more information about Assimulo, documentation tutorial etc, visit 
 http://www.jmodelica.org/assimulo
 
-
 INSTALL
 See the INSTALL file or the installation page on http://www.jmodelica.org/assimulo.
+
+CONTRIBUTING
+For information about contributing, see https://github.com/modelon/contributing.
 
 CONTACT
 Homepage: http://www.jmodelica.org/assimulo
