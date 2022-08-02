@@ -132,7 +132,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if self.options["solver"] == "f":
                 raise Radau_Exception("Sparse Linear solver not supported for Fortran based solver, instead use 'solver' = 'c' or 'linear_solver' = 'DENSE'.")
             if not self.usejac:
-                raise Radau_Exception("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 print("SWITCHING TO DENSE LINEAR SOLVER DUE TO MISSING JACOBIAN")
                 self.linear_solver = "DENSE"
                 return

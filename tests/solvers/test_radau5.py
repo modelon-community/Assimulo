@@ -1908,7 +1908,7 @@ class Test_Radau_Common:
         self.sim.solver = 'F'
         nose.tools.assert_equal(self.sim.solver, 'f')
         self.sim.solver = 'C'
-        assert self.sim.solver == 'c'
+        nose.tools.assert_equal(self.sim.solver, 'c')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, 'Python')
         nose.tools.assert_raises(Radau_Exception, self.sim._set_solver, True)
 
