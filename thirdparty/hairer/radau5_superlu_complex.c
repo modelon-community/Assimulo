@@ -111,7 +111,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
 
     for (i = 0; i < slu_aux-> n; i++){
         for (j = indptr_J[i]; j < indptr_J[i+1]; j++){
-            slu_aux->data_sys[current_idx].r = data_J[current_idx];
+            slu_aux->data_sys[current_idx].r = -data_J[current_idx];
             slu_aux->data_sys[current_idx].i = 0;
             if (i == indices_J[current_idx]){
                 slu_aux->data_sys[current_idx].r = slu_aux->data_sys[current_idx].r + scale_r;
