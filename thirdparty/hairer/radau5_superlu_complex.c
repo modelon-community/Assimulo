@@ -121,13 +121,14 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
         }
     }
     
+    // copy pointers to relevant data arrays to slu_aux->A
     zCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_jac,
                            slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
                            SLU_NC, SLU_Z, SLU_GE);
 
     if (fresh_jacobian){
         get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
-        slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
+        slu_aux->refact = NO; // new jacobian, do new factorization
     }else{
         slu_aux->refact = YES; // same jacobian structure, re-factorization 
     }
