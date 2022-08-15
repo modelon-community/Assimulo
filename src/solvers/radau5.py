@@ -119,6 +119,34 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._type = '(explicit)'
         self._event_info = None
         self._werr = N.zeros(self._leny)
+
+    def _get_linear_solver(self):
+        """
+        Which type of linear solver to use, "DENSE" or "SPARSE"
+        
+            Parameters::
+            
+                linear_solver
+                                - Default "DENSE"
+                            
+                                - needs to be either "DENSE" or "SPARSE"
+        """
+        return self.options["linear_solver"]
+
+    def _set_linear_solver(self, linear_solver):
+        try:
+            linear_solver.upper()
+        except:
+            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver)))
+        if linear_solver.upper() == "DENSE":
+            pass
+        elif linear_solver.upper() == "SPARSE":
+            pass
+        else:
+            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver))
+        self.options["linear_solver"] = linear_solver.upper()
+        
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
         
     def initialize(self):
         #Reset statistics
@@ -908,7 +936,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["solver"]   = "f" #internal solver; "f" for fortran, "c" for c based code
-        self.options["linear_solver"] = "DENSE" #Using DENSE or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
@@ -925,8 +952,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        if self.options["linear_solver"] == "SPARSE":
-            raise Radau_Exception("Sparse linear solver not supported for Radau5DAE.")
         if not self.solver_module_imported:
             self.solver = self.options["solver"]
         
