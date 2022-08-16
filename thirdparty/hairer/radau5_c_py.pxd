@@ -33,6 +33,8 @@ cdef extern from "radau5_superlu_complex.h":
 cdef extern from "radau_decsol_c.h":
     ctypedef int32_t integer
     ctypedef double doublereal
+
+    int CB_JAC_SPARSE_INVALID_FORMAT
     
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,

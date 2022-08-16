@@ -1105,8 +1105,9 @@ L14:
 		if (*ijob == 8){ // Sparse LU
 			jac_nnz_actual = jac_nnz_base;
 			ier = (*jac_sparse)(n, x, &y[1], &jac_nnz_actual, jac_data, jac_indices, jac_indptr, &rpar[1], &ipar[1], jac_PY);
-			if (ier < 0){ goto L183;}
-			if (ier > 0){ goto L182;}
+			if (ier != 0){
+				goto L182;
+			}
 			fresh_jacobian = 1;
 		} else { // dense jacobian
 			(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
@@ -1467,17 +1468,16 @@ L178:
 	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", *nmax);
     *idid = -2;
 	goto L181;
-/* --- FAIL EXIT, NNZ IN SPARSE JACOBIAN TOO SMALL*/
+/* --- FAILURE EXIT, ERROR IN SPARSE JACOBIAN CALLBACK*/
 L182:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", nnz, ier);
-	*idid = -6;
-	goto L181;
-/* --- FAIL EXIT, SPARSE JACOBIAN WRONG FORMAT*/
-L183:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
-	*idid = -7;
+	if (ier == CB_JAC_SPARSE_INVALID_FORMAT){
+		printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
+		*idid = -7;
+	}else{
+		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", nnz, -(ier + 1));
+		*idid = -6;
+	}
 	goto L181;
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:

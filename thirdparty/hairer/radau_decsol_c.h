@@ -11,6 +11,8 @@
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
+#define CB_JAC_SPARSE_INVALID_FORMAT (-1)
+
 typedef int integer;
 typedef double doublereal;
 typedef int logical;

@@ -27,6 +27,8 @@ from assimulo.lib.radau_core import Radau_Exception, Radau_Common
 import scipy.sparse as sp
 import numpy as N
 
+float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
+
 class Extended_Problem(Explicit_Problem):
     
     #Sets the initial conditions directly into the problem
@@ -371,9 +373,11 @@ class Test_Explicit_Radau5_Py:
         steps3 = self.sim.statistics["nsteps"]
         
         nose.tools.assert_equal(steps3, steps2)
-        
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
 
+        err_msg = f"atol must be of length one or same as the dimension of the problem."
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.atol = [1e-6,1e-6,1e-6]
+        
 class Test_Explicit_Fortran_Radau5:
     """
     Tests the explicit Radau solver.
@@ -698,7 +702,9 @@ class Test_Explicit_Fortran_Radau5:
         
         nose.tools.assert_equal(steps3, steps2)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
+        err_msg = f"atol must be of length one or same as the dimension of the problem."
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.atol = [1e-6,1e-6,1e-6]
         
     @testattr(stddist = True)
     def test_switches(self):
@@ -732,7 +738,9 @@ class Test_Explicit_Fortran_Radau5:
         sim.maxh = 1.e-1
         sim.maxsteps = 9
 
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        err_msg = f"The solver took max internal steps but could not reach the next output time."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_step_size_too_small(self):
@@ -748,7 +756,9 @@ class Test_Explicit_Fortran_Radau5:
         sim.inith = 1.e-1
         sim.maxh = 1.e-1
         
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+        err_msg = f"The step size became too small. At time {float_regex}."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1. + 1.e-16)
 
     @testattr(stddist = True)
     def test_repeated_unexpected_step_rejections(self):
@@ -762,17 +772,22 @@ class Test_Explicit_Fortran_Radau5:
         sim = Radau5ODE(prob)
         sim.implementation = 'f'
 
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        err_msg = f'Repeated unexpected step rejections.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_sparse_solver_attribute(self):
         """
-        This tests the error when trying to simulate using the Fotran based solver with sparse linear solver setting enabled
+        This tests the error when trying to simulate using the Fortran based solver with sparse linear solver setting enabled
         """
         sim = Radau5ODE(self.mod)
         sim.implementation = 'f'
         sim.linear_solver = 'SPARSE'
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
+        err_msg = f"Sparse Linear solver not supported for Fortran based implementation, instead use 'implementation' = 'c' or 'linear_solver' = 'DENSE'."
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_linear_solver(self):
@@ -787,9 +802,16 @@ class Test_Explicit_Fortran_Radau5:
         nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
         self.sim.linear_solver = 'SPARSE'
         nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'default')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'GMRES')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 0)
+
+        err_msg = "linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('default')):
+            self.sim.linear_solver = 'default'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('GMRES')):
+            self.sim.linear_solver = 'GMRES'
+
+        err_msg = "linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('0', "<class 'int'>")):
+            self.sim.linear_solver = 0
 
     @testattr(stddist = True)
     def test_implementation(self):
@@ -804,9 +826,14 @@ class Test_Explicit_Fortran_Radau5:
         nose.tools.assert_equal(self.sim.implementation, 'f')
         self.sim.implementation = 'c'
         nose.tools.assert_equal(self.sim.implementation, 'c')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_implementation, 'Python')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_implementation, True)
 
+        err_msg = "'implementation' parameter needs to be either 'f' or 'c'. Set value: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('Python')):
+            self.sim.implementation = 'Python'
+        err_msg = "'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('True', "<class 'bool'>")):
+            self.sim.implementation = True
+        
 class Test_Explicit_C_Radau5:
     """
     Tests the explicit Radau solver.
@@ -1130,7 +1157,9 @@ class Test_Explicit_C_Radau5:
         
         nose.tools.assert_equal(steps3, steps2)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_atol, [1e-6,1e-6,1e-6])
+        err_msg = f"atol must be of length one or same as the dimension of the problem."
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.atol = [1e-6,1e-6,1e-6]
         
     @testattr(stddist = True)
     def test_switches(self):
@@ -1165,7 +1194,9 @@ class Test_Explicit_C_Radau5:
         sim.maxh = 1.e-1
         sim.maxsteps = 9
 
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        err_msg = f"The solver took max internal steps but could not reach the next output time."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_step_size_too_small(self):
@@ -1180,8 +1211,10 @@ class Test_Explicit_C_Radau5:
 
         sim.inith = 1.e-1
         sim.maxh = 1.e-1
-        
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+
+        err_msg = f"The step size became too small. At time {float_regex}."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1. + 1.e-16)
 
     @testattr(stddist = True)
     def test_repeated_unexpected_step_rejections(self):
@@ -1195,7 +1228,9 @@ class Test_Explicit_C_Radau5:
         sim = Radau5ODE(prob)
         sim.implementation = 'c'
 
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        err_msg = f'Repeated unexpected step rejections.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     # @testattr(stddist = True)
     # def test_sparse_solver_jac_disabled(self):
@@ -1224,7 +1259,10 @@ class Test_Explicit_C_Radau5:
         sim = Radau5ODE(prob)
         sim.implementation = 'c'
         sim.usejac = True
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
+        err_msg = "Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function."
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_solver_sparse_jac_wrong_format(self):
@@ -1242,7 +1280,10 @@ class Test_Explicit_C_Radau5:
         sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+        err_msg = 'Sparse Jacobian given in wrong format, expects CSC format.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_solver_sparse_jac_nnz_too_small(self):
@@ -1261,7 +1302,10 @@ class Test_Explicit_C_Radau5:
         sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+        err_msg = 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_sparse_solver_no_nnz(self):
@@ -1278,18 +1322,21 @@ class Test_Explicit_C_Radau5:
         sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
+        err_msg = "Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
-    def test_sparse_solver_invalid_nnz(self):
+    def test_sparse_solver_invalid_nnz_type(self):
         """
-        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz.
+        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; wrong type.
         """
         f = lambda t, y: [y]
         jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = N.array([1.])
 
-        for nnz in [-1, None, "test", -10, 5, 100]:
+        for nnz in [None, "test"]:
             prob = Explicit_Problem(f, y0)
             prob.jac = jac
             prob.jac_nnz = nnz
@@ -1298,7 +1345,56 @@ class Test_Explicit_C_Radau5:
             sim.implementation = 'c'
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
-            nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
+            err_msg = "Number of non-zero elements of sparse Jacobian must be an integer, received: {}."
+            with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format(nnz)):
+                sim.simulate(1.)
+
+    @testattr(stddist = True)
+    def test_sparse_solver_invalid_nnz_negative(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; negative.
+        """
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = N.array([1.])
+
+        for nnz in [-2, -10]:
+            prob = Explicit_Problem(f, y0)
+            prob.jac = jac
+            prob.jac_nnz = nnz
+
+            sim = Radau5ODE(prob)
+            sim.implementation = 'c'
+            sim.linear_solver = 'SPARSE'
+            sim.usejac = True
+
+            err_msg = "Number of non-zero elements of sparse Jacobian must be positive, given value = {}."
+            with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format(nnz)):
+                sim.simulate(1.)
+
+    @testattr(stddist = True)
+    def test_sparse_solver_invalid_nnz_too_large(self):
+        """
+        This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; too_large.
+        """
+        f = lambda t, y: [y]
+        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = N.array([1.])
+
+        for nnz in [5, 100]:
+            prob = Explicit_Problem(f, y0)
+            prob.jac = jac
+            prob.jac_nnz = nnz
+
+            sim = Radau5ODE(prob)
+            sim.implementation = 'c'
+            sim.linear_solver = 'SPARSE'
+            sim.usejac = True
+
+            err_msg = "Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared."
+            with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+                sim.simulate(1.)
 
     def test_sparse_solver_jacobian(self):
         """Testing sparse solver to not produce segmentation faults for Jacobian."""
@@ -1342,9 +1438,16 @@ class Test_Explicit_C_Radau5:
         nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
         self.sim.linear_solver = 'SPARSE'
         nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'default')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 'GMRES')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_linear_solver, 0)
+
+        err_msg = "linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('default')):
+            self.sim.linear_solver = 'default'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('GMRES')):
+            self.sim.linear_solver = 'GMRES'
+
+        err_msg = "linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('0', "<class 'int'>")):
+            self.sim.linear_solver = 0
 
     @testattr(stddist = True)
     def test_implementation(self):
@@ -1359,8 +1462,13 @@ class Test_Explicit_C_Radau5:
         nose.tools.assert_equal(self.sim.implementation, 'f')
         self.sim.implementation = 'c'
         nose.tools.assert_equal(self.sim.implementation, 'c')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_implementation, 'Python')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_implementation, True)
+
+        err_msg = "'implementation' parameter needs to be either 'f' or 'c'. Set value: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('Python')):
+            self.sim.implementation = 'Python'
+        err_msg = "'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}"
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('True', "<class 'bool'>")):
+            self.sim.implementation = True
 
 class Test_Implicit_Radau5:
     """
@@ -1564,7 +1672,9 @@ class Test_Implicit_Radau5:
         sim.maxh = 1.e-1
         sim.maxsteps = 9
 
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        err_msg = f"The solver took max internal steps but could not reach the next output time."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
     @testattr(stddist = True)
     def test_step_size_too_small(self):
@@ -1585,7 +1695,9 @@ class Test_Implicit_Radau5:
         sim.inith = 1.e-1
         sim.maxh = 1.e-1
         
-        nose.tools.assert_raises(Radau5Error, sim.simulate, 1. + 1.e-16)
+        err_msg = f"The step size became too small. At time {float_regex}."
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1. + 1.e-16)
 
     @testattr(stddist = True)
     def test_repeated_unexpected_step_rejections(self):
@@ -1598,7 +1710,9 @@ class Test_Implicit_Radau5:
         # prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
         # sim = Radau5DAE(prob)
 
-        # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+        # err_msg = f'Repeated unexpected step rejections.'
+        # with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+        #     sim.simulate(1.)
 
 class Test_Implicit_Radau5_Py:
     """
@@ -1766,9 +1880,12 @@ class Test_Radau_Common:
         nose.tools.assert_equal(self.sim.fac1, 0.01)
         self.sim.fac1 = 0.001
         nose.tools.assert_equal(self.sim.fac1, 0.001)
-        
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fac1, [-1.0])
+
+        err_msg = 'The attribute fac1 must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fac1 = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fac1 = [-1.0]
     
     @testattr(stddist = True)
     def test_fac2(self):
@@ -1780,8 +1897,11 @@ class Test_Radau_Common:
         self.sim.fac2 = 0.001
         nose.tools.assert_equal(self.sim.fac2, 0.001)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fac2, [-1.0])
+        err_msg = 'The attribute fac2 must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fac2 = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fac2 = [-1.0]
     
     @testattr(stddist = True)
     def test_fnewt(self):
@@ -1793,8 +1913,11 @@ class Test_Radau_Common:
         self.sim.fnewt = 0.001
         nose.tools.assert_equal(self.sim.fnewt, 0.001)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_fnewt, [-1.0])
+        err_msg = 'The attribute fnewt must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fnewt = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.fnewt = [-1.0]
     
     @testattr(stddist = True)
     def test_h(self):
@@ -1815,10 +1938,13 @@ class Test_Radau_Common:
         nose.tools.assert_equal(self.sim.inith, 0.01)
         self.sim.inith = 0.001
         nose.tools.assert_equal(self.sim.inith, 0.001)
+
+        err_msg = 'The initial step must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.inith = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.inith = [-1.0]
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_initial_step, [-1.0])
-    
     @testattr(stddist = True)
     def test_newt(self):
         """
@@ -1830,10 +1956,13 @@ class Test_Radau_Common:
         nose.tools.assert_equal(self.sim.newt, 10)
         self.sim.newt = 9.8
         nose.tools.assert_equal(self.sim.newt, 9)
+
+        err_msg = 'The attribute newt must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.newt = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.newt = [-1.0]
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_newt, [-1.0])
-    
     @testattr(stddist = True)
     def test_quot1(self):
         """
@@ -1843,9 +1972,12 @@ class Test_Radau_Common:
         nose.tools.assert_equal(self.sim.quot1, 0.01)
         self.sim.quot1 = 0.001
         nose.tools.assert_equal(self.sim.quot1, 0.001)
-        
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_quot1, [-1.0])
+
+        err_msg = 'The attribute quot1 must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.quot1 = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.quot1 = [-1.0]
     
     @testattr(stddist = True)    
     def test_quot2(self):
@@ -1857,8 +1989,11 @@ class Test_Radau_Common:
         self.sim.quot2 = 0.001
         nose.tools.assert_equal(self.sim.quot2, 0.001)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_quot2, [-1.0])
+        err_msg = 'The attribute quot2 must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.quot2 = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.quot2 = [-1.0]
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -1869,10 +2004,13 @@ class Test_Radau_Common:
         nose.tools.assert_equal(self.sim.safe, 0.01)
         self.sim.safe = 0.001
         nose.tools.assert_equal(self.sim.safe, 0.001)
+
+        err_msg = 'The attribute safe must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.safe = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.safe = [-1.0]
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_safe, [-1.0])
-    
     @testattr(stddist = True)
     def test_thet(self):
         """
@@ -1883,8 +2021,11 @@ class Test_Radau_Common:
         self.sim.thet = 0.001
         nose.tools.assert_equal(self.sim.thet, 0.001)
         
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, 'Test')
-        nose.tools.assert_raises(Radau_Exception, self.sim._set_thet, [-1.0])
+        err_msg = 'The attribute thet must be an integer or float.'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.safe = 'Test'
+        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
+            self.sim.safe = [-1.0]
     
     @testattr(stddist = True)
     def test_usejac(self):

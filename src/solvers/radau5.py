@@ -47,7 +47,7 @@ class Radau5Error(AssimuloException):
             -4    : 'The matrix is repeatedly singular.',
             -5    : 'Repeated unexpected step rejections.',
             -6    : 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.',
-            -7    : 'Jacobian given in wrong format.',
+            -7    : 'Sparse Jacobian given in wrong format, expects CSC format.',
             -8    : 'Unexpected internal function call failure of SUPERLU.',
             -9    : 'Memory allocation failure in SUPERLU.'}
     
@@ -137,13 +137,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         try:
             linear_solver.upper()
         except:
-            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver)))
+            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver))) from None
         if linear_solver.upper() == "DENSE":
             pass
         elif linear_solver.upper() == "SPARSE":
             pass
         else:
-            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver))
+            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver)) from None
         self.options["linear_solver"] = linear_solver.upper()
         
     linear_solver = property(_get_linear_solver, _set_linear_solver)
@@ -165,23 +165,23 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         try:
             implementation.lower()
         except:
-            raise Radau_Exception("'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(implementation, type(implementation)))
+            raise Radau_Exception("'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(implementation, type(implementation))) from None
         if implementation.lower() == "f": ## Fortran
             try:
                 from assimulo.lib import radau5 as radau5_f
                 self.radau5 = radau5_f
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.")
+                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
         elif implementation.lower() == "c":
             try:
                 from assimulo.lib import radau5_c_py as radau5_c
                 self.radau5 = radau5_c
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Try using 'implementation' = 'f' for the Fortran based solver instead. Note that this solver requires an installation with SuperLU.")
+                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Try using 'implementation' = 'f' for the Fortran based solver instead. Note that this solver requires an installation with SuperLU.") from None
         else:
-            raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation))
+            raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation)) from None
         self.options["implementation"] = implementation.lower()
         
     implementation = property(_get_implementation, _set_implementation)
@@ -192,7 +192,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
         if not self.solver_module_imported:
-            self.implementation = self.options["implementation"] 
+            self.implementation = self.options["implementation"]
+
+        if self.usejac and not hasattr(self.problem, "jac"):
+            raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         
         if self.options["linear_solver"] == "SPARSE":
             if self.options["implementation"] == "f":
@@ -209,7 +212,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
-                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must infeasible, must be smaller than the problem dimension squared.")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
             
             ## initialize necessary superLU datastructures
             self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
@@ -309,8 +312,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
-        if self.usejac and not hasattr(self.problem, "jac"):
-            raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         MLJAC = self.problem_info["dim"] #The jacobian is full
         MUJAC = self.problem_info["dim"] #See MLJAC
         IMAS  = 0 #The mass matrix is the identity

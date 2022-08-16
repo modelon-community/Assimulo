@@ -150,10 +150,10 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
     J = (<object>jac_PY)(x[0], y_py)
     if not isinstance(J, sps.csc.csc_matrix):
-        return -1
+        return CB_JAC_SPARSE_INVALID_FORMAT
 
     if J.nnz > nnz[0]:
-        return J.nnz
+        return -(J.nnz + 1)
 
     cdef np.ndarray[double, mode="c", ndim=1] jac_data_py = J.data.astype(np.double)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py = J.indices.astype(np.intc)

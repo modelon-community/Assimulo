@@ -85,7 +85,7 @@ class Radau_Common(object):
         try:
             self.options["newt"] = int(newt)
         except (ValueError, TypeError):
-            raise Radau_Exception('The newt must be an integer or float.')
+            raise Radau_Exception('The attribute newt must be an integer or float.')
 		
     def _get_newt(self):
         """
@@ -109,7 +109,7 @@ class Radau_Common(object):
         try:
             self.options["fnewt"] = float(fnewt)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fnewt must be an integer or float.')
+            raise Radau_Exception('The attribute fnewt must be an integer or float.')
         
     def _get_fnewt(self):
         """
@@ -134,7 +134,7 @@ class Radau_Common(object):
         try:
             self.options["safe"] = float(safe)
         except (ValueError, TypeError):
-            raise Radau_Exception('The safe must be an integer or float.')
+            raise Radau_Exception('The attribute safe must be an integer or float.')
 
     def _get_safe(self):
         """
@@ -158,7 +158,7 @@ class Radau_Common(object):
         try:
             self.options["thet"] = float(thet)
         except (ValueError, TypeError):
-            raise Radau_Exception('The thet must be an integer or float.')
+            raise Radau_Exception('The attribute thet must be an integer or float.')
         
     def _get_thet(self):
         """
@@ -236,7 +236,7 @@ class Radau_Common(object):
         try:
             self.options["quot1"] = float(quot1)
         except (ValueError, TypeError):
-            raise Radau_Exception('The quot1 must be an integer or float.')
+            raise Radau_Exception('The attribute quot1 must be an integer or float.')
     
     def _get_quot1(self):
         """
@@ -261,7 +261,7 @@ class Radau_Common(object):
         try:
             self.options["quot2"] = float(quot2)
         except (ValueError, TypeError):
-            raise Radau_Exception('The quot2 must be an integer or float.')
+            raise Radau_Exception('The attribute quot2 must be an integer or float.')
     
     def _get_quot2(self):
         """
@@ -286,7 +286,7 @@ class Radau_Common(object):
         try:
             self.options["fac1"] = float(fac1)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fac1 must be an integer or float.')
+            raise Radau_Exception('The attribute fac1 must be an integer or float.')
             
     def _get_fac1(self):
         """
@@ -311,7 +311,7 @@ class Radau_Common(object):
         try:
             self.options["fac2"] = float(fac2)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fac2 must be an integer or float.')
+            raise Radau_Exception('The attribute fac2 must be an integer or float.')
         
     def _get_fac2(self):
         """
