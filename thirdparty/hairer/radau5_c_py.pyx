@@ -108,30 +108,16 @@ cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, do
     return irtrn[0]
 
 cdef class RadauSuperLUaux:
-    """Auxiliary data structure to have the memory ownership of internal
-    and auxiliary superLU data structures available on the highest possible level.
-    """
-    cdef SuperLU_aux_d* superLU_aux_struct_d # real
-    cdef SuperLU_aux_z* superLU_aux_struct_z # complex
-    ## data storage of sparse jacobian
-    cdef double* jac_data
-    cdef int* jac_indicies
-    cdef int* jac_indptr
+    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
+    cdef Radau_SuperLU_aux* radau_slu_aux
     
     cpdef int initialize(self, int nprocs, int n, int nnz):
-        self.superLU_aux_struct_d = superlu_init_d(nprocs, n, nnz)
-        self.superLU_aux_struct_z = superlu_init_z(nprocs, n, nnz)
-
-        radau_sparse_aux_init(&self.jac_data, &self.jac_indicies, &self.jac_indptr, nnz, n)
+        self.radau_slu_aux = radau_superlu_aux_setup(n, nnz, nprocs)
         return 0
 
     cpdef int finalize(self):
-        radau_sparse_aux_finalize(&self.jac_data, &self.jac_indicies, &self.jac_indptr)
         cdef int ret
-        ret = superlu_finalize_d(self.superLU_aux_struct_d)
-        if ret != 0:
-            return ret
-        ret = superlu_finalize_z(self.superLU_aux_struct_z)
+        ret = radau_superlu_aux_finalize(self.radau_slu_aux)
         return ret
 
 cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
@@ -342,15 +328,14 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
                             callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                             &ipar, &idid,
-                            aux_class.jac_data, aux_class.jac_indicies, aux_class.jac_indptr,
-                            aux_class.superLU_aux_struct_d, aux_class.superLU_aux_struct_z)
+                            aux_class.radau_slu_aux)
     else: ## Dense
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
                             callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                             &ipar, &idid,
-                            NULL, NULL, NULL, NULL, NULL)
+                            NULL)
     
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 

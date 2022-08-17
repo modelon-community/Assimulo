@@ -2023,9 +2023,9 @@ class Test_Radau_Common:
         
         err_msg = 'The attribute thet must be an integer or float.'
         with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
-            self.sim.safe = 'Test'
+            self.sim.thet = 'Test'
         with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
-            self.sim.safe = [-1.0]
+            self.sim.thet = [-1.0]
     
     @testattr(stddist = True)
     def test_usejac(self):

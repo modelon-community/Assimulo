@@ -20,19 +20,10 @@ from numpy cimport int32_t
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
-cdef extern from "radau5_superlu_double.h":
-    ctypedef struct SuperLU_aux_d
-    SuperLU_aux_d* superlu_init_d(int, int, int)
-    int superlu_finalize_d(SuperLU_aux_d*)
-
-cdef extern from "radau5_superlu_complex.h":
-    ctypedef struct SuperLU_aux_z
-    SuperLU_aux_z* superlu_init_z(int, int, int)
-    int superlu_finalize_z(SuperLU_aux_z*)
-
 cdef extern from "radau_decsol_c.h":
     ctypedef int32_t integer
     ctypedef double doublereal
+    ctypedef struct Radau_SuperLU_aux
 
     int CB_JAC_SPARSE_INVALID_FORMAT
     
@@ -54,10 +45,9 @@ cdef extern from "radau_decsol_c.h":
                  integer*, integer*, integer*, FP_CB_solout,
                  void*, integer*, doublereal*, integer*, integer*, integer*,
                  doublereal*, integer*, integer*,
-                 double*, int*, int*,
-	             SuperLU_aux_d*, SuperLU_aux_z*)
+                 Radau_SuperLU_aux*)
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
 
-    int radau_sparse_aux_init(double**, int**, int**, int, int);
-    int radau_sparse_aux_finalize(double**, int**, int**);
+    Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int);
+    int radau_superlu_aux_finalize(Radau_SuperLU_aux*);

@@ -17,6 +17,22 @@ typedef int integer;
 typedef double doublereal;
 typedef int logical;
 
+struct Radau_SuperLU_aux{
+    int n, nnz, nprocs; 
+
+    int fresh_jacobian;
+    int nnz_actual;
+
+    // Jacobian data 
+    double *jac_data;
+    int *jac_indices;
+    int *jac_indptr;
+
+    SuperLU_aux_d *slu_aux_d;
+    SuperLU_aux_z *slu_aux_z;
+};
+typedef struct Radau_SuperLU_aux Radau_SuperLU_aux;
+
 // FP_CB = FunctionPointer_CallBack
 typedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,
                        doublereal*, integer*, void*);
@@ -36,12 +52,11 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
             integer *mljac, integer *mujac, integer *imas, integer *mlmas,
             integer *mumas, FP_CB_solout solout, void* solout_PY, integer *iout, doublereal *work,
             integer *lwork, integer *iwork, integer *liwork, doublereal *rpar, integer *ipar, integer *idid,
-            double* jac_data, int* jac_indices, int* jac_indptr,
-	        SuperLU_aux_d* slu_aux_d, SuperLU_aux_z* slu_aux_z);
+            Radau_SuperLU_aux* slu_aux);
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
 
-int radau_sparse_aux_init(double**, int**, int**, int, int);
-int radau_sparse_aux_finalize(double**, int**, int**);
-                   
+Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int);
+int radau_superlu_aux_finalize(Radau_SuperLU_aux*);
+
 #endif
