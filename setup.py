@@ -516,7 +516,7 @@ class Assimulo_prepare(object):
             ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
                                         os.path.join("assimulo","thirdparty","hairer"),
                                         self.incdirs, self.SLUincdir]
-            extra_sources = ["radau_decsol_c.c", "radau5_superlu_double.c", "radau5_superlu_complex.c"]
+            extra_sources = ["radau_decsol_c.c", "radau5_superlu_double.c", "radau5_superlu_complex.c", "superlu_util.c"]
             ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
             ext_list[-1].name = "assimulo.lib.radau5_c_py"
             if 'win' in self.platform:

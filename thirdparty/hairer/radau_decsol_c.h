@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "radau5_superlu_double.h"
 #include "radau5_superlu_complex.h"
+#include "superlu_util.h"
 
 #define TRUE_ (1)
 #define FALSE_ (0)

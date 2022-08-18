@@ -1096,6 +1096,10 @@ L14:
 			if (ier != 0){
 				goto L182;
 			}
+			ier = sparse_csc_add_diagonal(n, &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr);
+			if (ier != 0){
+				goto L183;
+			}
 			radau_slu_aux->fresh_jacobian = 1;
 		} else { // dense jacobian
 			(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
@@ -1466,6 +1470,11 @@ L182:
 		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ier + 1));
 		*idid = -6;
 	}
+	goto L181;
+L183:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("UNEXPECTED MALLOC FAILURE\n");
+	*idid = -9;
 	goto L181;
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:

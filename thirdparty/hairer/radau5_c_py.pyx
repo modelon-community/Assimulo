@@ -124,13 +124,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                              double * data, int *indices, int *indptr,
                              doublereal* rpar, integer* ipar,
                              void* jac_PY):
-    """
-    Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians.
-
-    Checks if jacobian includes the diagonal.
-    If not, it adds corresponding zeroes in the CSC format.
-    This is since the resulting system matrix will add values on the diagonal.
-    """
+    """Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians."""
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)
 
@@ -145,76 +139,11 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py = J.indices.astype(np.intc)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indptr_py = J.indptr.astype(np.intc)
 
-    ## Check if any diagonal entries are missing in Jacobian
-
-    missing = [] ## list of diagonal entries that are missing
-    ## iterate over columns
-    for i in range(n):
-        indptr_base = jac_indptr_py[i]
-        ## take slice of indices
-        for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
-            if i == jac_indices_py[indptr_base + j]: ## diagonal index found in indices
-                break
-        else: ## loop done, diagonal index not found
-            missing.append(i)
-
-    if not missing: ## i.e., not empty
-        ## copy data to output structures
-        py2c_d(data, jac_data_py, len(J.data))
-        py2c_i(indices, jac_indices_py, len(J.indices))
-        py2c_i(indptr, jac_indptr_py, n + 1)
-        nnz[0] = J.nnz
-        return 0
-    ## else: ## some diagonal entries are missing
-    ## else skipped since cdefs not allowed in blocks
-    ## CSC format of Jacobian needs to be updated
-
-    cdef np.ndarray[double, mode="c", ndim=1] jac_data_py_new = np.empty(nnz[0] + len(missing), dtype = np.double)
-    cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py_new = np.empty(nnz[0] + len(missing), dtype = np.intc)
-    cdef np.ndarray[int, mode="c", ndim=1] jac_indptr_py_new = np.empty(n + 1, dtype = np.intc)
-    jac_indptr_py_new[0] = 0 ## always starts with 0
-
-    cdef int idx_data_indices_next = 0
-    cdef int indptr_incr = 0 ## increment of indptr from previous diagonal insertions
-    cdef int intptr_base = 0
-
-    ## iterate though all columns
-    for i in range(n):
-        intptr_base = jac_indptr_py[i] ## for current column
-        if i in missing:
-            indptr_incr += 1 ## increment indptr increment
-            missing_added = False
-            ## iterate through old column
-            j = 0 ## required, since range(0) in next line would cause issue later on
-            for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
-                ## insert diagonal entry if larger than current index
-                if not missing_added:
-                    if jac_indices_py[intptr_base + j] > i: ## correct position found
-                        jac_indices_py_new[idx_data_indices_next] = i
-                        jac_data_py_new[idx_data_indices_next] = 0
-                        idx_data_indices_next += 1
-                        missing_added = True
-                ## add back old column index
-                jac_indices_py_new[idx_data_indices_next] = jac_indices_py[intptr_base + j]
-                jac_data_py_new[idx_data_indices_next] = jac_data_py[intptr_base + j]
-                idx_data_indices_next += 1
-            if not missing_added: ## column loop done, but diagonal entry not yet added
-                jac_indices_py_new[idx_data_indices_next] = i
-                jac_data_py_new[idx_data_indices_next] = 0
-                idx_data_indices_next += 1
-        else: ## column already contains diagonal entry
-            ## simple loop to add old column
-            for j in range(jac_indptr_py[i+1] - jac_indptr_py[i]):
-                jac_indices_py_new[idx_data_indices_next] = jac_indices_py[intptr_base + j]
-                jac_data_py_new[idx_data_indices_next] = jac_data_py[intptr_base + j]
-                idx_data_indices_next += 1
-        ## add old inptr entry, possibly increment by earlier added entries
-        jac_indptr_py_new[i+1] = jac_indptr_py[i+1] + indptr_incr
-
-    py2c_d(data, jac_data_py_new, len(J.data) + len(missing))
-    py2c_i(indices, jac_indices_py_new, len(J.indices) + len(missing))
-    py2c_i(indptr, jac_indptr_py_new, len(J.indptr))
-    nnz[0] = J.nnz + len(missing)
+    ## copy data to output structures
+    nnz[0] = J.nnz
+    py2c_d(data, jac_data_py, nnz[0])
+    py2c_i(indices, jac_indices_py, nnz[0])
+    py2c_i(indptr, jac_indptr_py, n + 1)
     return 0
 
 cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
