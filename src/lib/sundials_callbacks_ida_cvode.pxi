@@ -122,8 +122,8 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc.csc_matrix):
-                jac = sparse.csc.csc_matrix(jac)
+            if not isinstance(jac, sparse.csc_matrix):
+                jac = sparse.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -187,8 +187,8 @@ ELSE:
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc.csc_matrix):
-                jac = sparse.csc.csc_matrix(jac)
+            if not isinstance(jac, sparse.csc_matrix):
+                jac = sparse.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -249,7 +249,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         
-        if isinstance(jac, sparse.csc.csc_matrix):
+        if isinstance(jac, sparse.csc_matrix):
             for j in range(Neq):
                 col_i = Jacobian.cols[j]
                 for i in range(jac.indptr[j], jac.indptr[j+1]):
@@ -299,7 +299,7 @@ ELSE:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
                 
-        if isinstance(jac, sparse.csc.csc_matrix):
+        if isinstance(jac, sparse.csc_matrix):
             for j in range(Neq):
                 col_i = DENSE_COL(Jacobian, j)
                 for i in range(jac.indptr[j], jac.indptr[j+1]):
@@ -801,4 +801,3 @@ cdef class ProblemData:
         self.work_y = N.empty(self.dim)
         self.work_yd = N.empty(self.dim)
         self.work_ys = N.empty((self.dim, self.dimSens))
-        

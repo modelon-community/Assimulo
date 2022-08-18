@@ -72,7 +72,7 @@ class ProblemAlgebraic(object):
                         numpy array of same size as x0
                 
                 Returns:
-                    A scipy.sparse.csc.csc_matrix representing the Jacobian
+                    A scipy.sparse.csc_matrix representing the Jacobian
                     
             def get_constraints(self)
                 Used to get the constraints of the problem
