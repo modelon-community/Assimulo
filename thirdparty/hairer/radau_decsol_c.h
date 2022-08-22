@@ -10,6 +10,9 @@
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
+#define RADAU_CALLBACK_ERROR_RECOVERABLE -1
+#define RADAU_CALLBACK_ERROR_NONRECOVERABLE -2
+
 typedef int64_t integer;
 typedef double doublereal;
 typedef int64_t logical;

@@ -83,7 +83,10 @@ cdef int callback_jac(integer* n, doublereal* x, doublereal* y, doublereal* fjac
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n[0], dtype = np.double)
     c2py(y_py_in, y, n[0])
     res = (<object>jac_PY)(x[0], y_py_in)
-    py2c_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
+    ipar[0] = res[1][0]
+    if ipar[0] != 0:
+        return 0
+    py2c_matrix_flat_F(fjac, res[0], res[0].shape[0], res[0].shape[1])
     return 0
 
 cdef int callback_mas(integer* n, doublereal* am, integer* lmas, doublereal* rpar,

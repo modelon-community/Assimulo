@@ -1022,6 +1022,9 @@ static doublereal c_b116 = .25;
     }
     hhfac = *h__;
     (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+	if (ipar[1] < 0){
+		goto L79;
+	}
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP */
 L10:
@@ -1107,6 +1110,9 @@ L14:
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
     	(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+		if (ipar[1] < 0){
+			goto L79;
+		}
     }
     caljac = TRUE_;
     calhes = TRUE_;
@@ -1202,7 +1208,7 @@ L40:
 		cont[i__] = y[i__] + z1[i__];
     }
     d__1 = *x + c1 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1212,7 +1218,7 @@ L40:
 		cont[i__] = y[i__] + z2[i__];
     }
     d__1 = *x + c2 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1221,7 +1227,7 @@ L40:
     for (i__ = 1; i__ <= i__1; ++i__) {
 		cont[i__] = y[i__] + z3[i__];
     }
-    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1457,18 +1463,26 @@ L78:
     }
     goto L10;
 L79:
-    ++nunexpect;
-    if (nunexpect >= 10) {
-		goto L175;
-    }
-    *h__ *= .5;
-    hhfac = .5;
-    reject = TRUE_;
-    last = FALSE_;
-    if (caljac) {
-		goto L20;
-    }
-    goto L10;
+	switch(ipar[1]){
+		case RADAU_CALLBACK_ERROR_RECOVERABLE:
+			++nunexpect;
+			if (nunexpect >= 10) {
+				goto L175;
+			}
+			*h__ *= .5;
+			hhfac = .5;
+			reject = TRUE_;
+			last = FALSE_;
+			if (caljac) {
+				goto L20;
+			}
+			goto L10;
+			break;
+
+		case RADAU_CALLBACK_ERROR_NONRECOVERABLE:
+			goto L186;
+			break;
+	}
 /* --- FAIL EXIT */
 L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
@@ -1482,14 +1496,19 @@ L176:
     return 0;
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("STEP SIZE TOO SMALL, H= %e", *h__);
+	printf("STEP SIZE TOO SMALL, H= %e\n", *h__);
     *idid = -3;
     return 0;
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MORE THAN NMAX = %"PRId64" STEPS ARE NEEDED", *nmax);
+	printf("MORE THAN NMAX = %"PRId64" STEPS ARE NEEDED\n", *nmax);
     *idid = -2;
     return 0;
+L186:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("UNRECOVERABLE EXCEPTION ENCOUNTERED IN PROBLEM CALLBACK\n");
+	*idid = -10;
+	return 0;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
 /*      WRITE(6,979)X */

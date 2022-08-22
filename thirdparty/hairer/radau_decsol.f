@@ -856,6 +856,9 @@ C --- JACOBIAN IS FULL
       ELSE
 C --- COMPUTE JACOBIAN MATRIX ANALYTICALLY
          CALL JAC(N,X,Y,FJAC,LDJAC,RPAR,IPAR)
+         IF (IPAR(1).LT.0) THEN
+            GOTO 79
+         END IF
       END IF
       CALJAC=.TRUE.
       CALHES=.TRUE.
@@ -1120,14 +1123,22 @@ C --- UNEXPECTED STEP-REJECTION
       IF (CALJAC) GOTO 20
       GOTO 10
   79  CONTINUE
-      NUNEXPECT=NUNEXPECT+1
-      IF (NUNEXPECT.GE.10) GOTO 175
-      H=H*0.5D0 
-      HHFAC=0.5D0
-      REJECT=.TRUE.
-      LAST=.FALSE.
-      IF (CALJAC) GOTO 20
-      GOTO 10
+      IF (IPAR(1).EQ.-1) THEN
+         NUNEXPECT=NUNEXPECT+1
+         IF (NUNEXPECT.GE.10) GOTO 175
+         H=H*0.5D0 
+         HHFAC=0.5D0
+         REJECT=.TRUE.
+         LAST=.FALSE.
+         IF (CALJAC) GOTO 20
+         GOTO 10
+      END IF
+      IF (IPAR(1).EQ.-2) THEN
+         WRITE(6,979)X  
+         WRITE(6,*) ' UNRECOVERABLE EXCEPTION IN PROBLEM CALLBACK'
+         IDID=-10
+         RETURN
+      END IF
 C --- FAIL EXIT
  175  CONTINUE
       WRITE(6,979)X   
