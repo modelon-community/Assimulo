@@ -172,14 +172,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 self.radau5 = radau5_f
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
+                raise Radau_Exception("Failed to import the Fortran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
         elif implementation.lower() == "c":
             try:
                 from assimulo.lib import radau5_c_py as radau5_c
                 self.radau5 = radau5_c
                 self.solver_module_imported = True
             except:
-                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Try using 'implementation' = 'f' for the Fortran based solver instead. Note that this solver requires an installation with SuperLU.") from None
+                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Note that this solver requires an installation with SuperLU. Try using 'implementation' = 'f' for the Fortran based solver instead.") from None
         else:
             raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation)) from None
         self.options["implementation"] = implementation.lower()
