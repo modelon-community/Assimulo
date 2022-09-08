@@ -24,7 +24,7 @@ from assimulo.exception import (
     AssimuloException,
     Explicit_ODE_Exception,
     Implicit_ODE_Exception,
-     AssimuloRecoverableError
+    AssimuloRecoverableError
 )
 from assimulo.ode import (
     NORMAL,

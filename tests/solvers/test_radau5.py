@@ -30,6 +30,10 @@ import numpy as np
 import re
 
 class KeyboardInterruptAux:
+    """Auxiliary class for creating problems (both explicit and implicit) 
+    that simulate a Keyboardinterrupt (Ctrl + c) in the rhs f or jacobian.
+    
+    Set 'fcn' or 'jac' to True to enable KeyboardInterrupt Exceptions in f or jac."""
     def __init__(self, dim, fcn = False, jac = False, fcn_n = 5):
         self.dim = dim
         self.fcn_raise = fcn
@@ -796,7 +800,7 @@ class Test_Explicit_Fortran_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + Fortran + explicit problem."""
 
         y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
@@ -810,7 +814,7 @@ class Test_Explicit_Fortran_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_jac(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + Fortran + explicit problem."""
 
         y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), jac = True)
@@ -1217,7 +1221,7 @@ class Test_Explicit_C_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
 
         y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
@@ -1231,7 +1235,7 @@ class Test_Explicit_C_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_jac(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
 
         y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), jac = True)
@@ -1493,7 +1497,7 @@ class Test_Implicit_Fortran_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + Fortran + implicit problem."""
 
         y0 = np.array([1., 1.])
         yd = np.array([0., 0.])
@@ -1754,7 +1758,7 @@ class Test_Implicit_C_Radau5:
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts terminate the simulation."""
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
 
         y0 = np.array([1., 1.])
         yd = np.array([0., 0.])
