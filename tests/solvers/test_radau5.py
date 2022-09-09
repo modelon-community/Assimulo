@@ -26,6 +26,40 @@ from assimulo.problem import Implicit_Problem
 from assimulo.exception import *
 from assimulo.lib.radau_core import Radau_Exception, Radau_Common
 import scipy.sparse as sp
+import numpy as np
+import re
+
+class KeyboardInterruptAux:
+    """Auxiliary class for creating problems (both explicit and implicit) 
+    that simulate a Keyboardinterrupt (Ctrl + c) in the rhs f or jacobian.
+    
+    Set 'fcn' or 'jac' to True to enable KeyboardInterrupt Exceptions in f or jac."""
+    def __init__(self, dim, fcn = False, jac = False, fcn_n = 5):
+        self.dim = dim
+        self.fcn_raise = fcn
+        self.fcn_n = fcn_n
+        self.jac_raise = jac
+        self.n = 0
+
+    def f(self, t, y):
+        self.n += 1
+        if self.fcn_raise and (self.n % self.fcn_n == 0):
+            raise KeyboardInterrupt()
+        else:
+            return -y
+
+    def f_impl(self, t, y, yd):
+        self.n += 1
+        if self.fcn_raise and (self.n % self.fcn_n == 0):
+            raise KeyboardInterrupt()
+        else:
+            return -y
+        
+    def jac(self, t, y):
+        if self.jac_raise:
+            raise KeyboardInterrupt()
+        else:
+            return -np.eye(self.dim)
 
 class Extended_Problem(Explicit_Problem):
     
@@ -764,6 +798,37 @@ class Test_Explicit_Fortran_Radau5:
 
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_fcn(self):
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + Fortran + explicit problem."""
+
+        y0 = np.array([1., 1.])
+        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
+        prob = Explicit_Problem(aux.f, y0)
+        sim = Radau5ODE(prob)
+        sim.solver = 'f'
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
+
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_jac(self):
+        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + Fortran + explicit problem."""
+
+        y0 = np.array([1., 1.])
+        aux = KeyboardInterruptAux(dim = len(y0), jac = True)
+        prob = Explicit_Problem(aux.f, y0)
+        prob.jac = aux.jac
+        sim = Radau5ODE(prob)
+        sim.usejac = True
+        sim.solver = 'f'
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
+
+
 class Test_Explicit_C_Radau5:
     """
     Tests the explicit Radau solver.
@@ -1154,6 +1219,37 @@ class Test_Explicit_C_Radau5:
 
         nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
 
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_fcn(self):
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
+
+        y0 = np.array([1., 1.])
+        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
+        prob = Explicit_Problem(aux.f, y0)
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
+
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_jac(self):
+        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
+
+        y0 = np.array([1., 1.])
+        aux = KeyboardInterruptAux(dim = len(y0), jac = True)
+        prob = Explicit_Problem(aux.f, y0)
+        prob.jac = aux.jac
+        sim = Radau5ODE(prob)
+        sim.solver = 'c'
+        sim.usejac = True
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
+
+
 class Test_Implicit_Fortran_Radau5:
     """
     Tests the implicit Radau solver.
@@ -1398,6 +1494,21 @@ class Test_Implicit_Fortran_Radau5:
         # sim.solver = 'f'
 
         # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_fcn(self):
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + Fortran + implicit problem."""
+
+        y0 = np.array([1., 1.])
+        yd = np.array([0., 0.])
+        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
+        prob = Implicit_Problem(aux.f_impl, y0, yd)
+        sim = Radau5DAE(prob)
+        sim.solver = 'f'
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
 
 
 class Test_Implicit_C_Radau5:
@@ -1644,6 +1755,21 @@ class Test_Implicit_C_Radau5:
         # sim.solver = 'c'
 
         # nose.tools.assert_raises(Radau5Error, sim.simulate, 1.)
+
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_fcn(self):
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
+
+        y0 = np.array([1., 1.])
+        yd = np.array([0., 0.])
+        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
+        prob = Implicit_Problem(aux.f_impl, y0, yd)
+        sim = Radau5DAE(prob)
+        sim.solver = 'c'
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
 
 
 class Test_Implicit_Radau5:

@@ -2,6 +2,7 @@
 
 --- Assimulo-3.2.10 ---
     * Sundials 6.x port
+    * Radau5ODE and Radau5DAE now correctly terminate from unrecoverable errors in right-hand side and Jacobian calls.
 
 --- Assimulo-3.2.9 ---
     * Bugfix for C version of Radau5 solver
