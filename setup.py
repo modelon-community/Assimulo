@@ -326,12 +326,17 @@ class Assimulo_prepare(object):
         self.with_SLU = True
         sundials_msg='SUNDIALS will not be compiled with support for SuperLU'
         
-        if self.SLUdir != "":    
-            self.SLUincdir = os.path.join(self.SLUdir,'SRC')
-            if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
-                self.SLUincdir = os.path.join(self.SLUdir,'include')
-            self.SLUlibdir = os.path.join(self.SLUdir,'lib')
-            if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
+        if self.SLUdir != "":
+            incdirs = [os.path.join(self.SLUdir, 'SRC'),
+                      os.path.join(self.SLUdir, 'include'),
+                      os.path.join(self.SLUdir, 'include', 'superlu')]
+            self.SLUincdir = None
+            for incdir in incdirs:
+                if os.path.exists(os.path.join(incdir, 'supermatrix.h')):
+                    self.SLUincdir = incdir
+                    break
+            self.SLUlibdir = os.path.join(self.SLUdir, 'lib')
+            if self.SLUincdir is None:
                 self.with_SLU = False
                 L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
                 L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
