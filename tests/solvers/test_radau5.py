@@ -723,6 +723,7 @@ class Test_Explicit_Fortran_Radau5:
         mod.handle_event = handle_event
         
         sim = Radau5ODE(mod)
+        sim.implementation = 'f'
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
@@ -1308,6 +1309,26 @@ class Test_Explicit_C_Radau5:
             sim.simulate(1.)
 
     @testattr(stddist = True)
+    def test_solver_sparse_jac_nnz_zero(self):
+        """
+        This tests that using a sparse jacobian with nnz = 0 is valid.
+        """
+        n = 5
+        f = lambda t, y: [0.]*n
+        jac = lambda t, y: sp.csc_matrix((n, n), dtype = N.double)
+        y0 = N.array([1.]*n)
+        prob = Explicit_Problem(f, y0)
+        prob.jac = jac
+        prob.jac_nnz = 0
+
+        sim = Radau5ODE(prob)
+        sim.implementation = 'c'
+        sim.linear_solver = 'SPARSE'
+        sim.usejac = True
+
+        sim.simulate(1.)
+
+    @testattr(stddist = True)
     def test_sparse_solver_no_nnz(self):
         """
         This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements
@@ -1323,7 +1344,7 @@ class Test_Explicit_C_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = "Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?"
+        err_msg = "Number of non-zero elements of sparse Jacobian must be non-negative. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?"
         with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
             sim.simulate(1.)
 
@@ -1369,7 +1390,7 @@ class Test_Explicit_C_Radau5:
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
-            err_msg = "Number of non-zero elements of sparse Jacobian must be positive, given value = {}."
+            err_msg = "Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}."
             with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format(nnz)):
                 sim.simulate(1.)
 

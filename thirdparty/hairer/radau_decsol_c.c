@@ -383,9 +383,6 @@ static doublereal c_b116 = .25;
 /*    IWORK(11) SWITCH FOR USAGE OF SPARSE LINEAR SOLVER (SUPERLU),
 				CURRENTLY ONLY COMPATIBLE WITH B = I OR DIAGONAL B, I.E. 
 				MLMAS = MUMAS = 0 */
-
-/*    IWORK(12) UPPER BOUND ON NUMBER OF NON-ZERO ENTRIES IN THE JACOBIAN*/
-
 /* ---------- */
 
 /*    WORK(1)   UROUND, THE ROUNDING UNIT, DEFAULT 1.D-16. */
@@ -687,21 +684,15 @@ static doublereal c_b116 = .25;
     }
 	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
 	if (iwork[11]){ // SPARSE LU
+		ijob = 8;
 		if (implct){
 			printf("SPARSE LU DECOMPOSITION IS NOT SUPPORTED FOR IMPLICIT ODES\n");
 			arret = TRUE_;
-		} else {
-			ijob = 8;
 		}
 		if (!(*ijac)){
 			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
 			arret = TRUE_;
 		}
-	}
-	nnz = iwork[12];
-	if ((nnz < 0) || (nnz > (n*n + n))){
-		printf("CURIOUS INPUT FOR WORK(12)= %i \n", nnz);
-		arret = TRUE_;
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
 	iewerr = 21;
@@ -4430,8 +4421,16 @@ L55:
     return 0;
 } /* estrad_ */
 
-Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs){
+Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs, int* info){
 	Radau_SuperLU_aux *radau_slu_aux = malloc(sizeof(Radau_SuperLU_aux));
+	*info = 0;
+
+	if (n < 1)     { *info = RADAU_SUPERLU_INVALID_INPUT_N;}
+	if (nnz < 0)   { *info = RADAU_SUPERLU_INVALID_INPUT_NNZ;}
+	if (nnz > n*n) { *info = RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE;}
+	if (nprocs < 1){ *info = RADAU_SUPERLU_INVALID_INPUT_NPROC;}
+	if (*info < 0) { return radau_slu_aux;}
+
 	radau_slu_aux->n = n;
 	radau_slu_aux->nnz = nnz;
 	radau_slu_aux->nprocs = nprocs;

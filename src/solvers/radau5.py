@@ -207,16 +207,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
 
             if not isinstance(self.problem_info["jac_fcn_nnz"], int):
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be an integer, received: {}.".format(self.problem_info["jac_fcn_nnz"]))
-            if self.problem_info["jac_fcn_nnz"] <= 0:
+            if self.problem_info["jac_fcn_nnz"] < 0:
                 if self.problem_info["jac_fcn_nnz"] == -1: ## Default
-                    raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
-                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be positive, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
+                    raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
             
             ## initialize necessary superLU datastructures
             self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
-            self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
+            ret_flag = self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
+            if ret_flag:
+                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure, error code = {}.".format(ret_flag))
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -351,7 +353,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if self.options["implementation"] == 'c':
             if self.options["linear_solver"] == "SPARSE":
                 IWORK[10] = 1
-                IWORK[11] = self.problem_info["jac_fcn_nnz"]
                 t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                            ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
                                                            IOUT, WORK, IWORK, self.RadauSuperLUaux)

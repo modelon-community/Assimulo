@@ -12,7 +12,12 @@
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
-#define CB_JAC_SPARSE_INVALID_FORMAT (-1)
+#define CB_JAC_SPARSE_INVALID_FORMAT -1
+
+#define RADAU_SUPERLU_INVALID_INPUT_N             -1
+#define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
+#define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
+#define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
 
 typedef int integer;
 typedef double doublereal;
@@ -57,7 +62,7 @@ int radau5_c(integer n, FP_CB_f fcn, void* fcn_PY, doublereal *x, doublereal *y,
 
 doublereal contr5_c(integer *i__, doublereal *x, doublereal *cont, integer * lrc);
 
-Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int);
+Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int, int*);
 int radau_superlu_aux_finalize(Radau_SuperLU_aux*);
 
 #endif

@@ -49,5 +49,5 @@ cdef extern from "radau_decsol_c.h":
 
     doublereal contr5_c(integer*, doublereal*, doublereal*, integer*)
 
-    Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int);
+    Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int, int*);
     int radau_superlu_aux_finalize(Radau_SuperLU_aux*);

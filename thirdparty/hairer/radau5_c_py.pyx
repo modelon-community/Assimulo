@@ -112,8 +112,9 @@ cdef class RadauSuperLUaux:
     cdef Radau_SuperLU_aux* radau_slu_aux
     
     cpdef int initialize(self, int nprocs, int n, int nnz):
-        self.radau_slu_aux = radau_superlu_aux_setup(n, nnz, nprocs)
-        return 0
+        cdef int ret;
+        self.radau_slu_aux = radau_superlu_aux_setup(n, nnz, nprocs, &ret)
+        return ret
 
     cpdef int finalize(self):
         cdef int ret

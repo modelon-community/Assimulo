@@ -123,12 +123,12 @@ class Extended_Problem(Explicit_Problem):
 
 
 
-def run_example(with_plots=True,solver='c'):
+def run_example(with_plots=True,implementation='c'):
     #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
 
     exp_sim = Radau5ODE(exp_mod) #Create the solver
-    exp_sim.solver = solver
+    exp_sim.implementation = implementation
     
     exp_sim.verbosity = 0
     exp_sim.report_continuously = True
