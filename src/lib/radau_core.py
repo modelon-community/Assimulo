@@ -54,7 +54,6 @@ class Radau_Common(object):
         self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
-        
     
     def plot_stepsize(self):
         """

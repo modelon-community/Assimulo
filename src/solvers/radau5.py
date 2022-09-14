@@ -23,7 +23,7 @@ from assimulo.exception import (
     AssimuloException,
     Explicit_ODE_Exception,
     Implicit_ODE_Exception,
-     AssimuloRecoverableError
+    AssimuloRecoverableError
 )
 from assimulo.ode import (
     NORMAL,
@@ -49,7 +49,9 @@ class Radau5Error(AssimuloException):
             -6    : 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.',
             -7    : 'Sparse Jacobian given in wrong format, expects CSC format.',
             -8    : 'Unexpected internal function call failure of SUPERLU.',
-            -9    : 'Memory allocation failure in SUPERLU.'}
+            -9    : 'Memory allocation failure in SUPERLU.',
+            -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).',
+            }
     
     def __init__(self, value, t = 0.0):
         self.value = value
@@ -228,9 +230,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 ret = 0
                 try:
                     rhs = self.problem.rhs(t, y, self.sw)
-                except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                    return rhs, [ret]
+                except BaseException as E:
                     rhs = y.copy()
-                    ret = -1 #Recoverable error
+                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                        ret = -1 #Recoverable error
+                    else:
+                        ret = -2 #Non-recoverable
                 return rhs, [ret]
             self.f = f
             self.event_func = event_func
@@ -241,9 +247,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 ret = 0
                 try:
                     rhs = self.problem.rhs(t, y)
-                except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+                except BaseException as E:
                     rhs = y.copy()
-                    ret = -1 #Recoverable error
+                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                        ret = -1 #Recoverable error
+                    else:
+                        ret = -2 #Non-recoverable
                 return rhs, [ret]
             self.f = f
     
@@ -304,12 +313,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         Calculates the Jacobian, either by an approximation or by the user
         defined (jac specified in the problem class).
         """
-        jac = self.problem.jac(t,y)
-        
-        if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
-            jac = jac.toarray()
-        
-        return jac
+        ret = 0
+        try:
+            jac = self.problem.jac(t,y)
+            if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
+                jac = jac.toarray()
+        except BaseException as E:
+            jac = N.eye(len(y))
+            if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                ret = -1 #Recoverable error
+            else:
+                ret = -2 #Non-recoverable
+        return jac, [ret]
             
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
@@ -372,7 +387,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             flag = ID_PY_EVENT
         else:
             self.finalize()
-            raise Radau5Error(flag, t)
+            raise Radau5Error(flag, t) from None
         
         #Retrieving statistics
         self.statistics["nsteps"]      += iwork[16]
@@ -984,6 +999,22 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(implicit)'
         self._event_info = None
+
+    def _get_implementation(self):
+        return 'f'
+    
+    def _set_implementation(self, implementation):
+        raise Radau_Exception("Radau5DAE does not support setting the 'implementation' attribute, since it only supports the Fortran implementation of Radau5.")
+        
+    implementation = property(_get_implementation, _set_implementation)
+
+    def _get_linear_solver(self):
+        return 'DENSE'
+
+    def _set_linear_solver(self, linear_solver):
+        raise Radau_Exception("Radau5DAE does not support setting the 'linear_solver' attribute, since it only supports the DENSE linear solver in Fortran implementation of Radau5.")
+        
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
         
     def initialize(self):
         #Reset statistics
@@ -1005,9 +1036,16 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 def event_func(t, y, yd):
                     return self.problem.state_events(t, y, self.sw)
             def f(t, y):
-                leny = self._leny
                 ret = 0
-                res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
+                try:
+                    leny = self._leny
+                    res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
+                except BaseException as E:
+                    res = y[:leny].copy()
+                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                        ret = -1 #Recoverable error
+                    else:
+                        ret = -2 #Non-recoverable
                 return N.append(y[leny:2*leny],res), [ret]
             self._f = f
             self.event_func = event_func
@@ -1015,9 +1053,16 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             self.g_old = self.event_func(self.t, self.y, self.yd)
         else:
             def f(t, y):
-                leny = self._leny
                 ret = 0
-                res = self.problem.res(t, y[:leny], y[leny:2*leny])
+                try:
+                    leny = self._leny
+                    res = self.problem.res(t, y[:leny], y[leny:2*leny])
+                except BaseException as E:
+                    res = y[:leny].copy()
+                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                        ret = -1 #Recoverable error
+                    else:
+                        ret = -2 #Non-recoverable
                 return N.append(y[leny:2*leny],res), [ret]
             self._f = f
     

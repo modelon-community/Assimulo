@@ -3,7 +3,7 @@
 Changelog
 ==========
 
---- Assimulo-3.3.0 ---
+--- Assimulo-3.2.10 ---
     * Added support for sparse LU decompositons (via SuperLU) in Radau5 solver. 
       This is only available with the C version of the Radau5 solver.
 

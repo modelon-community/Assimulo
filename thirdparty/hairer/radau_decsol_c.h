@@ -12,12 +12,16 @@
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 
-#define CB_JAC_SPARSE_INVALID_FORMAT -1
-
 #define RADAU_SUPERLU_INVALID_INPUT_N             -1
 #define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
 #define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
 #define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
+
+#define RADAU_CALLBACK_ERROR_RECOVERABLE        -1
+#define RADAU_CALLBACK_ERROR_NONRECOVERABLE     -2
+#define RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT -3
+// this one always has to have the smaller number among all RADAU_CALLBACK_ERROR_x
+#define RADAU_CALLBACK_ERROR_INVALID_NNZ        -10
 
 typedef int integer;
 typedef double doublereal;

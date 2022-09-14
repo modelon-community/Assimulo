@@ -40,7 +40,7 @@ python module radcor__user__routines
             !integer, optional,check(shape(fjac,0)==ldjac),depend(fjac),intent(hide) :: ldjac=shape(fjac,0)
             integer, optional,check(len(y)==ldjac),depend(y),intent(hide) :: ldjac=len(y)
             double precision dimension(1),intent(hide) :: rpar
-            integer dimension(1),intent(hide) :: ipar
+            integer dimension(1),intent(out) :: ipar
         end subroutine jac
     end interface radcor_user_interface
 end python module radcor__user__routines

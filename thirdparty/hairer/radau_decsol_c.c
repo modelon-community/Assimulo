@@ -80,8 +80,6 @@ static doublereal c_b116 = .25;
     static integer istore;
     static logical startn;
     static doublereal uround;
-
-	integer nnz;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -1011,6 +1009,9 @@ static doublereal c_b116 = .25;
     }
     hhfac = *h__;
     (*fcn)(n, x, &y[1], &y0[1], &rpar[1], &ipar[1], fcn_PY);
+	if (ipar[1] < 0){
+		goto L79;
+	}
     ++(*nfcn);
 /* --- BASIC INTEGRATION STEP/REPEAT STEP WITH FRESH JACOBIAN */
 L10:
@@ -1083,9 +1084,9 @@ L14:
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
 		if (*ijob == 8){ // Sparse LU
 			radau_slu_aux->nnz_actual = radau_slu_aux->nnz;
-			ier = (*jac_sparse)(n, x, &y[1], &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, &rpar[1], &ipar[1], jac_PY);
-			if (ier != 0){
-				goto L182;
+			(*jac_sparse)(n, x, &y[1], &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, &rpar[1], &ipar[1], jac_PY);
+			if (ipar[1] < 0){
+				goto L79;
 			}
 			ier = sparse_csc_add_diagonal(n, &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr);
 			if (ier != 0){
@@ -1094,6 +1095,9 @@ L14:
 			radau_slu_aux->fresh_jacobian = 1;
 		} else { // dense jacobian
 			(*jac)(n, x, &y[1], &fjac[fjac_offset], ldjac, &rpar[1], &ipar[1], jac_PY);
+			if (ipar[1] < 0){
+				goto L79;
+			}
 		}
     }
     caljac = TRUE_;
@@ -1186,7 +1190,7 @@ L40:
 		cont[i] = y[i] + z1[i];
     }
     d__1 = *x + c1 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &d__1, &cont[1], &z1[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1195,7 +1199,7 @@ L40:
 		cont[i] = y[i] + z2[i];
     }
     d__1 = *x + c2 * *h__;
-    (*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &d__1, &cont[1], &z2[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1203,7 +1207,7 @@ L40:
     for (i = 1; i <= n; ++i) {
 		cont[i] = y[i] + z3[i];
     }
-    (*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
+	(*fcn)(n, &xph, &cont[1], &z3[1], &rpar[1], &ipar[1], fcn_PY);
     ++(*nfcn);
     if (ipar[1] < 0) {
 		goto L79;
@@ -1415,19 +1419,37 @@ L78:
     goto L10;
 /* --- UNEXPECTED STEP-REJECTION */
 L79:
-    ++nunexpect;
-    if (nunexpect >= 10) {
-		goto L175;
-    }
-    *h__ *= .5;
-    hhfac = .5;
-    reject = TRUE_;
-    last = FALSE_;
-    if (caljac) {
-		goto L20;
-    }
-    goto L10;
-/* --- FAIL EXIT, REPEATED UNEXPECTED STEP REJECTIONS*/
+	if (ipar[1] < RADAU_CALLBACK_ERROR_INVALID_NNZ){
+		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ipar[1] - RADAU_CALLBACK_ERROR_INVALID_NNZ));
+		*idid = -6;
+		goto L181;
+	}
+
+	switch(ipar[1]){
+		case RADAU_CALLBACK_ERROR_RECOVERABLE:
+			++nunexpect;
+			if (nunexpect >= 10) {
+				goto L175;
+			}
+			*h__ *= .5;
+			hhfac = .5;
+			reject = TRUE_;
+			last = FALSE_;
+			if (caljac) {
+				goto L20;
+			}
+			goto L10;
+			break;
+
+		case RADAU_CALLBACK_ERROR_NONRECOVERABLE:
+			goto L186;
+			break;
+
+		case RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT:
+			goto L182;
+			break;
+	}
+/* --- FAIL EXIT */
 L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
@@ -1442,7 +1464,7 @@ L176:
 /* --- FAIL EXIT, STEP SIZE TOO SMALL*/
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("STEP SIZE TOO SMALL, H= %e", *h__);
+	printf("STEP SIZE TOO SMALL, H= %e\n", *h__);
     *idid = -3;
 	goto L181;
 /* --- FAIL EXIT, NMAX EXCEEDED*/
@@ -1454,13 +1476,8 @@ L178:
 /* --- FAILURE EXIT, ERROR IN SPARSE JACOBIAN CALLBACK*/
 L182:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	if (ier == CB_JAC_SPARSE_INVALID_FORMAT){
-		printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
-		*idid = -7;
-	}else{
-		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ier + 1));
-		*idid = -6;
-	}
+	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
+	*idid = -7;
 	goto L181;
 L183:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
@@ -1486,7 +1503,12 @@ L185:
 		*idid = -9;
 		goto L181;
 	}
-
+/* --- FAIL EXIT, UNRECOVERABLE EXCEPTION IN FCN OR JAC CALLBACK*/
+L186:
+	printf("EXIT OF RADAU5 AT X = %e \n", *x);
+	printf("UNRECOVERABLE EXCEPTION ENCOUNTERED IN PROBLEM CALLBACK\n");
+	*idid = -10;
+	return 0;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
 /*      WRITE(6,979)X */

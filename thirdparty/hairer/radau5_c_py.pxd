@@ -25,7 +25,10 @@ cdef extern from "radau_decsol_c.h":
     ctypedef double doublereal
     ctypedef struct Radau_SuperLU_aux
 
-    int CB_JAC_SPARSE_INVALID_FORMAT
+    int RADAU_CALLBACK_ERROR_RECOVERABLE
+    int RADAU_CALLBACK_ERROR_NONRECOVERABLE
+    int RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT
+    int RADAU_CALLBACK_ERROR_INVALID_NNZ
     
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(integer, doublereal*, doublereal*, doublereal*,

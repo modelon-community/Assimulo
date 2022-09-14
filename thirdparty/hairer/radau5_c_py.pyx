@@ -85,7 +85,10 @@ cdef int callback_jac(integer n, doublereal* x, doublereal* y, doublereal* fjac,
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
     c2py_d(y_py_in, y, n)
     res = (<object>jac_PY)(x[0], y_py_in)
-    py2c_d_matrix_flat_F(fjac, res, res.shape[0], res.shape[1])
+    ipar[0] = res[1][0]
+    if ipar[0] != 0:
+        return 0
+    py2c_d_matrix_flat_F(fjac, res[0], res[0].shape[0], res[0].shape[1])
     return 0
 
 cdef int callback_solout(integer* nrsol, doublereal* xosol, doublereal* xsol, doublereal* y,
@@ -129,12 +132,20 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)
 
-    J = (<object>jac_PY)(x[0], y_py)
+    res = (<object>jac_PY)(x[0], y_py)
+
+    ipar[0] = res[1][0] ## return value from Python callback
+    if ipar[0] != 0:
+        return 0
+    J = res[0]
+
     if not isinstance(J, sps.csc.csc_matrix):
-        return CB_JAC_SPARSE_INVALID_FORMAT
+        ipar[0] = RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT
+        return 0
 
     if J.nnz > nnz[0]:
-        return -(J.nnz + 1)
+        ipar[0] = RADAU_CALLBACK_ERROR_INVALID_NNZ - J.nnz
+        return 0
 
     cdef np.ndarray[double, mode="c", ndim=1] jac_data_py = J.data.astype(np.double)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py = J.indices.astype(np.intc)
