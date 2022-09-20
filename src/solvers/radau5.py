@@ -139,12 +139,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         try:
             linear_solver.upper()
         except:
-            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver))) from None
-        if linear_solver.upper() == "DENSE":
-            pass
-        elif linear_solver.upper() == "SPARSE":
-            pass
-        else:
+            raise Radau_Exception("'linear_solver' parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver))) from None
+        if linear_solver.upper() not in ["DENSE", "SPARSE"]:
             raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver)) from None
         self.options["linear_solver"] = linear_solver.upper()
         
@@ -1025,7 +1021,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             from assimulo.lib import radau5 as radau5_f
             self.radau5 = radau5_f
         except:
-            raise Radau_Exception("Failed to import the Fotran based Radau5 solver implementation.")
+            raise Radau_Exception("Failed to import the Fortran based Radau5 solver implementation.")
         
     def set_problem_data(self):
         if self.problem_info["state_events"]:
