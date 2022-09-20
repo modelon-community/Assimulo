@@ -263,14 +263,14 @@ cpdef radau5(fcn_PY, doublereal x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[integer, mode="c", ndim=1] iwork_vec = iwork_in
 
-    if iwork[10]: ## sparse
+    if iwork[10]: ## sparse linear solver flag, see radau_decsol_c.c
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,
                             callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork, &rpar,
                             &ipar, &idid,
                             aux_class.radau_slu_aux)
-    else: ## Dense
+    else: ## Dense linear solver
         radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                             &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                             &ijac, &mljac, &mujac, &imas, &mlmas, &mumas,

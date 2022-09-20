@@ -136,12 +136,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                             
                                 - needs to be either "DENSE" or "SPARSE"
         """
+        
         try:
-            linear_solver.upper()
-        except:
+            linear_solver_upper = linear_solver.upper()
+        except Exception:
             raise Radau_Exception("'linear_solver' parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver))) from None
-        if linear_solver.upper() not in ["DENSE", "SPARSE"]:
-            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver)) from None
+        if linear_solver_upper not in ["DENSE", "SPARSE"]:
+            raise Radau_Exception("'linear_solver' parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver)) from None
         self.options["linear_solver"] = linear_solver.upper()
         
     linear_solver = property(_get_linear_solver, _set_linear_solver)
@@ -161,26 +162,26 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                             - needs to be either "f" (Fotran) or "c" (C)
         """
         try:
-            implementation.lower()
-        except:
+            implementation_lower = implementation.lower()
+        except Exception:
             raise Radau_Exception("'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(implementation, type(implementation))) from None
-        if implementation.lower() == "f": ## Fortran
+        if implementation_lower == "f": ## Fortran
             try:
                 from assimulo.lib import radau5 as radau5_f
                 self.radau5 = radau5_f
                 self.solver_module_imported = True
-            except:
+            except Exception:
                 raise Radau_Exception("Failed to import the Fortran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
-        elif implementation.lower() == "c":
+        elif implementation_lower == "c":
             try:
                 from assimulo.lib import radau5_c_py as radau5_c
                 self.radau5 = radau5_c
                 self.solver_module_imported = True
-            except:
+            except Exception:
                 raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Note that this solver requires an installation with SuperLU. Try using 'implementation' = 'f' for the Fortran based solver instead.") from None
         else:
             raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation)) from None
-        self.options["implementation"] = implementation.lower()
+        self.options["implementation"] = implementation_lower
         
     implementation = property(_get_implementation, _set_implementation)
         
@@ -1020,7 +1021,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         try:
             from assimulo.lib import radau5 as radau5_f
             self.radau5 = radau5_f
-        except:
+        except Exception:
             raise Radau_Exception("Failed to import the Fortran based Radau5 solver implementation.")
         
     def set_problem_data(self):

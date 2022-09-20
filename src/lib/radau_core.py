@@ -108,7 +108,7 @@ class Radau_Common(object):
         try:
             self.options["fnewt"] = float(fnewt)
         except (ValueError, TypeError):
-            raise Radau_Exception("The attribute 'newt' must be an integer or float.")
+            raise Radau_Exception("The attribute 'fnewt' must be an integer or float.")
         
     def _get_fnewt(self):
         """
