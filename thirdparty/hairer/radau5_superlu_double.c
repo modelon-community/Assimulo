@@ -28,7 +28,7 @@ struct SuperLU_aux_d{
 // Initialization of required data structures for SuperLU
 SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     SuperLU_aux_d *slu_aux = (SuperLU_aux_d *)malloc(sizeof(SuperLU_aux_d));
-    if (!slu_aux) {SUPERLU_ABORT("Malloc failed for slu_aux.");}
+    if (!slu_aux) {SUPERLU_ABORT("Malloc failed for double slu_aux.");}
     slu_aux->setup_done = 0;
     slu_aux->fact_done = 0;
 
@@ -45,18 +45,18 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     slu_aux->L =  (SuperMatrix *)malloc(sizeof(SuperMatrix));
     slu_aux->U =  (SuperMatrix *)malloc(sizeof(SuperMatrix));
 
-    if (!slu_aux->A)  {SUPERLU_ABORT("Malloc failed for A.");}
-    if (!slu_aux->B)  {SUPERLU_ABORT("Malloc failed for B.");}
-    if (!slu_aux->AC) {SUPERLU_ABORT("Malloc failed for AC.");}
-    if (!slu_aux->L)  {SUPERLU_ABORT("Malloc failed for L.");}
-    if (!slu_aux->U)  {SUPERLU_ABORT("Malloc failed for U.");}
+    if (!slu_aux->A)  {SUPERLU_ABORT("Malloc failed for double A.");}
+    if (!slu_aux->B)  {SUPERLU_ABORT("Malloc failed for double B.");}
+    if (!slu_aux->AC) {SUPERLU_ABORT("Malloc failed for double AC.");}
+    if (!slu_aux->L)  {SUPERLU_ABORT("Malloc failed for double L.");}
+    if (!slu_aux->U)  {SUPERLU_ABORT("Malloc failed for double U.");}
     slu_aux->A->Store = NULL;
 
     slu_aux->Gstat = (Gstat_t *)malloc(sizeof(Gstat_t));
     slu_aux->slu_options = (superlumt_options_t *)malloc(sizeof(superlumt_options_t));
 
-    if (!slu_aux->Gstat) {SUPERLU_ABORT("Malloc failed for Gstat.");}
-    if (!slu_aux->slu_options) {SUPERLU_ABORT("Malloc failed for slu_options.");}
+    if (!slu_aux->Gstat) {SUPERLU_ABORT("Malloc failed for double Gstat.");}
+    if (!slu_aux->slu_options) {SUPERLU_ABORT("Malloc failed for double slu_options.");}
 
     slu_aux->fact = DOFACT; // if factorized matrix is being supplied, if not: how to factorize
     // other option: EQUIBRILATE: Scale row/colums to unit norm; good if matrix is poorly scaled?
@@ -74,15 +74,15 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
     slu_aux->perm_r = intMalloc(slu_aux->n);
     slu_aux->perm_c = intMalloc(slu_aux->n);
 
-    if (!slu_aux->perm_r) {SUPERLU_ABORT("Malloc failed for perm_r[].");}
-    if (!slu_aux->perm_c) {SUPERLU_ABORT("Malloc failed for perm_c[].");}
+    if (!slu_aux->perm_r) {SUPERLU_ABORT("Malloc failed for double perm_r[].");}
+    if (!slu_aux->perm_c) {SUPERLU_ABORT("Malloc failed for double perm_c[].");}
 
     dCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, NULL, slu_aux->n, SLU_DN, SLU_D, SLU_GE);
 
     // allocate memory for storing matrix of linear system
     // min(nnz_jac + n, n*n) is upper bound on storage requirement of linear system
     slu_aux->data_sys = doubleMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
-    if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for data_sys[].");}
+    if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for double data_sys[].");}
 
     return slu_aux;
 }
@@ -121,7 +121,7 @@ int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
 
     if (fresh_jacobian){
         get_perm_c(3, slu_aux->A, slu_aux->perm_c); // 3 = approximate minimum degree for unsymmetrical matrices
-        slu_aux->refact = NO; // new jacobian -> number of elements may have changed, re-using factorization may no longer be valid
+        slu_aux->refact = NO; // new jacobian, do new factorization
     }else{
         slu_aux->refact = YES; // same jacobian structure, re-factorization 
     }

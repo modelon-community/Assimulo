@@ -29,6 +29,14 @@ cdef extern from "radau5_superlu_complex.h":
     int superlu_finalize_z(SuperLU_aux_z*)
 
 cdef extern from "radau_decsol_c.h":
+    ctypedef struct Radau_SuperLU_aux
+
+    int RADAU_CALLBACK_OK
+    int RADAU_CALLBACK_ERROR_RECOVERABLE
+    int RADAU_CALLBACK_ERROR_NONRECOVERABLE
+    int RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT
+    int RADAU_CALLBACK_ERROR_INVALID_NNZ
+
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(int, double*, double*, double*, void*)
     ctypedef int (*FP_CB_jac)(int, double*, double*, double*, void*)
@@ -43,10 +51,9 @@ cdef extern from "radau_decsol_c.h":
 			 FP_CB_jac, FP_CB_jac_sparse, void*, int*,
 			 FP_CB_solout, void*, int*,
 			 double*, int*, int*, int*, int*,
-			 double*, int*, int*,
-			 SuperLU_aux_d*, SuperLU_aux_z*)
+			 Radau_SuperLU_aux*)
 
     double contr5_c(int*, double*, double*, int*)
 
-    int radau_sparse_aux_init(double**, int**, int**, int, int);
-    int radau_sparse_aux_finalize(double**, int**, int**);
+    Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int, int*);
+    int radau_superlu_aux_finalize(Radau_SuperLU_aux*);

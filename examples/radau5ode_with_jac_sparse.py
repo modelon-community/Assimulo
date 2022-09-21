@@ -75,7 +75,7 @@ def run_example(with_plots=True):
     #Set the parameters
     exp_sim.atol = [1e-8,1e-14,1e-6] #Default 1e-6
     exp_sim.rtol = 1e-4 #Default 1e-6
-    exp_sim.solver = 'c'
+    exp_sim.implementation = 'c'
     exp_sim.linear_solver = 'sparse'
     
     #Simulate

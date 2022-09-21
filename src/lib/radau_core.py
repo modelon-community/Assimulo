@@ -54,7 +54,6 @@ class Radau_Common(object):
         self.log_message(' Tolerances (absolute)   : ' + str(self.options["atol"]),  verbose)
         self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
         self.log_message('',                                                         verbose)
-        
     
     def plot_stepsize(self):
         """
@@ -85,7 +84,7 @@ class Radau_Common(object):
         try:
             self.options["newt"] = int(newt)
         except (ValueError, TypeError):
-            raise Radau_Exception('The newt must be an integer or float.')
+            raise Radau_Exception("The attribute 'newt' must be an integer or float.")
 		
     def _get_newt(self):
         """
@@ -109,7 +108,7 @@ class Radau_Common(object):
         try:
             self.options["fnewt"] = float(fnewt)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fnewt must be an integer or float.')
+            raise Radau_Exception("The attribute 'fnewt' must be an integer or float.")
         
     def _get_fnewt(self):
         """
@@ -134,7 +133,7 @@ class Radau_Common(object):
         try:
             self.options["safe"] = float(safe)
         except (ValueError, TypeError):
-            raise Radau_Exception('The safe must be an integer or float.')
+            raise Radau_Exception("The attribute 'safe' must be an integer or float.")
 
     def _get_safe(self):
         """
@@ -158,7 +157,7 @@ class Radau_Common(object):
         try:
             self.options["thet"] = float(thet)
         except (ValueError, TypeError):
-            raise Radau_Exception('The thet must be an integer or float.')
+            raise Radau_Exception("The attribute 'thet' must be an integer or float.")
         
     def _get_thet(self):
         """
@@ -236,7 +235,7 @@ class Radau_Common(object):
         try:
             self.options["quot1"] = float(quot1)
         except (ValueError, TypeError):
-            raise Radau_Exception('The quot1 must be an integer or float.')
+            raise Radau_Exception("The attribute 'quot1' must be an integer or float.")
     
     def _get_quot1(self):
         """
@@ -261,7 +260,7 @@ class Radau_Common(object):
         try:
             self.options["quot2"] = float(quot2)
         except (ValueError, TypeError):
-            raise Radau_Exception('The quot2 must be an integer or float.')
+            raise Radau_Exception("The attribute 'quot2' must be an integer or float.")
     
     def _get_quot2(self):
         """
@@ -286,7 +285,7 @@ class Radau_Common(object):
         try:
             self.options["fac1"] = float(fac1)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fac1 must be an integer or float.')
+            raise Radau_Exception("The attribute 'fac1' must be an integer or float.")
             
     def _get_fac1(self):
         """
@@ -311,7 +310,7 @@ class Radau_Common(object):
         try:
             self.options["fac2"] = float(fac2)
         except (ValueError, TypeError):
-            raise Radau_Exception('The fac2 must be an integer or float.')
+            raise Radau_Exception("The attribute 'fac2' must be an integer or float.")
         
     def _get_fac2(self):
         """
@@ -434,69 +433,3 @@ class Radau_Common(object):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
-    
-    def _get_solver(self):
-        """
-        Solver implementation used, "f" for Fortran, "c" for C
-        
-            Parameters::
-            
-                solver
-                            - Default "f"
-                            
-                            - needs to be either "f" (Fotran) or "c" (C)
-        """
-        return self.options["solver"]
-    
-    def _set_solver(self, solver):
-        try:
-            solver.lower()
-        except:
-            raise Radau_Exception("'solver' parameters needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(solver, type(solver)))
-        if solver.lower() == "f": ## Fortran
-            try:
-                from assimulo.lib import radau5 as radau5_f
-                self.radau5 = radau5_f
-                self.solver_module_imported = True
-            except:
-                raise Radau_Exception("Failed to import the Fotran based Radau5 solver. Try using solver = 'c' for the C based solver instead.")
-        elif solver.lower() == "c":
-            try:
-                from assimulo.lib import radau5_c_py as radau5_c
-                self.radau5 = radau5_c
-                self.solver_module_imported = True
-            except:
-                raise Radau_Exception("Failed to import the C based Radau5 solver. Try using solver = 'f' for the Fortran based solver instead. Note that this solver requires an installation with SuperLU.")
-        else:
-            raise Radau_Exception("Solver parameters needs to be either 'f' or 'c'. Set value: {}".format(solver))
-        self.options["solver"] = solver.lower()
-        
-    solver = property(_get_solver, _set_solver)
-
-    def _get_linear_solver(self):
-        """
-        Which type of linear solver to use, "DENSE" or "SPARSE"
-        
-            Parameters::
-            
-                linear_solver
-                                - Default "DENSE"
-                            
-                                - needs to be either "DENSE" or "SPARSE"
-        """
-        return self.options["linear_solver"]
-
-    def _set_linear_solver(self, linear_solver):
-        try:
-            linear_solver.upper()
-        except:
-            raise Radau_Exception("linear_solver parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver)))
-        if linear_solver.upper() == "DENSE":
-            pass
-        elif linear_solver.upper() == "SPARSE":
-            pass
-        else:
-            raise Radau_Exception("linear_solver parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver))
-        self.options["linear_solver"] = linear_solver.upper()
-        
-    linear_solver = property(_get_linear_solver, _set_linear_solver)

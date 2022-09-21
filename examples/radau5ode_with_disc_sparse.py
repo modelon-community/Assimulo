@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Modelon AB
+# Copyright (C) 2022 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -134,7 +134,7 @@ def run_example(with_plots=True):
     exp_mod = Extended_Problem() #Create the problem
 
     exp_sim = Radau5ODE(exp_mod) #Create the solver
-    exp_sim.solver = 'c'
+    exp_sim.implementation = 'c'
     exp_sim.linear_solver = 'sparse'
 
     
