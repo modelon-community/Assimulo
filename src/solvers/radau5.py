@@ -17,7 +17,6 @@
 
 import numpy as N
 import scipy as S
-import scipy.linalg as LIN
 import scipy.sparse as sp
 
 from assimulo.exception import (
@@ -36,7 +35,7 @@ from assimulo.ode import (
 
 from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
-from assimulo.lib.radau_core import Radau_Common
+from assimulo.lib.radau_core import Radau_Common, Radau_Exception
 
 class Radau5Error(AssimuloException):
     """
@@ -47,6 +46,10 @@ class Radau5Error(AssimuloException):
             -3    : 'The step size became too small.',
             -4    : 'The matrix is repeatedly singular.',
             -5    : 'Repeated unexpected step rejections.',
+            -6    : 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.',
+            -7    : 'Sparse Jacobian given in wrong format, expects CSC format.',
+            -8    : 'Unexpected internal function call failure of SUPERLU.',
+            -9    : 'Memory allocation failure in SUPERLU.',
             -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).',
             }
     
@@ -105,7 +108,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
+        self.options["implementation"]   = "c" #internal solver implementation; "f" for fortran, "c" for c based code
+        self.options["linear_solver"] = "DENSE" #Using dense or sparse linear solver in Newton iteration
         self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
@@ -117,6 +121,69 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._type = '(explicit)'
         self._event_info = None
         self._werr = N.zeros(self._leny)
+
+    def _get_linear_solver(self):
+        return self.options["linear_solver"]
+
+    def _set_linear_solver(self, linear_solver):
+        """
+        Which type of linear solver to use, "DENSE" or "SPARSE"
+        
+            Parameters::
+            
+                linear_solver
+                                - Default "DENSE"
+                            
+                                - needs to be either "DENSE" or "SPARSE"
+        """
+        
+        try:
+            linear_solver_upper = linear_solver.upper()
+        except Exception:
+            raise Radau_Exception("'linear_solver' parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}".format(linear_solver, type(linear_solver))) from None
+        if linear_solver_upper not in ["DENSE", "SPARSE"]:
+            raise Radau_Exception("'linear_solver' parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}".format(linear_solver)) from None
+        self.options["linear_solver"] = linear_solver.upper()
+        
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
+
+    def _get_implementation(self):
+        return self.options["implementation"]
+    
+    def _set_implementation(self, implementation):
+        """
+        Solver implementation used, "f" for Fortran, "c" for C
+        
+            Parameters::
+            
+                implementation
+                            - Default "f"
+                            
+                            - needs to be either "f" (Fotran) or "c" (C)
+        """
+        try:
+            implementation_lower = implementation.lower()
+        except Exception:
+            raise Radau_Exception("'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(implementation, type(implementation))) from None
+        if implementation_lower == "f": ## Fortran
+            try:
+                from assimulo.lib import radau5 as radau5_f
+                self.radau5 = radau5_f
+                self.solver_module_imported = True
+            except Exception:
+                raise Radau_Exception("Failed to import the Fortran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
+        elif implementation_lower == "c":
+            try:
+                from assimulo.lib import radau5_c_py as radau5_c
+                self.radau5 = radau5_c
+                self.solver_module_imported = True
+            except Exception:
+                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Note that this solver requires an installation with SuperLU. Try using 'implementation' = 'f' for the Fortran based solver instead.") from None
+        else:
+            raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation)) from None
+        self.options["implementation"] = implementation_lower
+        
+    implementation = property(_get_implementation, _set_implementation)
         
     def initialize(self):
         #Reset statistics
@@ -124,7 +191,33 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
         if not self.solver_module_imported:
-            self.solver = self.options["solver"] 
+            self.implementation = self.options["implementation"]
+
+        if self.usejac and not hasattr(self.problem, "jac"):
+            raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
+        
+        if self.options["linear_solver"] == "SPARSE":
+            if self.options["implementation"] == "f":
+                raise Radau_Exception("Sparse Linear solver not supported for Fortran based implementation, instead use 'implementation' = 'c' or 'linear_solver' = 'DENSE'.")
+            if not self.usejac:
+                self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", NORMAL)
+                self.linear_solver = "DENSE"
+                return
+
+            if not isinstance(self.problem_info["jac_fcn_nnz"], int):
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be an integer, received: {}.".format(self.problem_info["jac_fcn_nnz"]))
+            if self.problem_info["jac_fcn_nnz"] < 0:
+                if self.problem_info["jac_fcn_nnz"] == -1: ## Default
+                    raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?")
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
+            if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
+                raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
+            
+            ## initialize necessary superLU datastructures
+            self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
+            ret_flag = self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
+            if ret_flag:
+                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure, error code = {}.".format(ret_flag))
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -183,7 +276,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
-            #Convert to Fortram indicator.
+            #Convert to Fortran indicator.
             if flag == ID_PY_EVENT: irtrn = -1
             
         if self._opts["report_continuously"]:
@@ -220,7 +313,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         ret = 0
         try:
             jac = self.problem.jac(t,y)
-            if isinstance(jac, sp.csc_matrix):
+            if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
                 jac = jac.toarray()
         except BaseException as E:
             jac = N.eye(len(y))
@@ -239,7 +332,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+12*self.problem_info["dim"]+20)) #Work (double) vector
+        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+13*self.problem_info["dim"]+20)) #Work (double) vector
         IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
         
         #Setting work options
@@ -255,7 +348,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #Setting iwork options
         IWORK[1] = self.maxsteps
         IWORK[2] = self.newt
-        
+
         #Dummy methods
         mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
@@ -265,13 +358,24 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.set_problem_data()
             self._tlist = []
             self._ylist = []
-            
         
         #Store the opts
         self._opts = opts
-        
-        t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+
+        if self.options["implementation"] == 'c':
+            if self.options["linear_solver"] == "SPARSE":
+                IWORK[10] = 1
+                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                           IOUT, WORK, IWORK, self.RadauSuperLUaux)
+            else:
+                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                           IOUT, WORK, IWORK, self.radau5.RadauSuperLUaux())
+        else:
+            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
+                                                       IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:
@@ -279,6 +383,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         elif flag == 2:
             flag = ID_PY_EVENT
         else:
+            self.finalize()
             raise Radau5Error(flag, t) from None
         
         #Retrieving statistics
@@ -304,12 +409,21 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
-        
+        self.log_message('\nSolver options:\n',                                                                verbose)
+        self.log_message(' Solver                  : Radau5({}) '.format(self.options["implementation"]) + self._type, verbose)
+        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]),                   verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                            verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                            verbose)
+        self.log_message('',                                                                                   verbose)
+
+    def finalize(self):
+        """
+        Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
+        """
+        if hasattr(self, 'RadauSuperLUaux'):
+            flag = self.RadauSuperLUaux.finalize()
+            if flag != 0:
+                Radau_Exception("Failure in freeing memory of SuperLU datastructures.")
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
     """
@@ -873,8 +987,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["solver"]   = "c" #internal solver; "f" for fortran, "c" for c based code
-        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -884,14 +996,33 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(implicit)'
         self._event_info = None
+
+    def _get_implementation(self):
+        return 'f'
+    
+    def _set_implementation(self, implementation):
+        raise Radau_Exception("Radau5DAE does not support setting the 'implementation' attribute, since it only supports the Fortran implementation of Radau5.")
+        
+    implementation = property(_get_implementation, _set_implementation)
+
+    def _get_linear_solver(self):
+        return 'DENSE'
+
+    def _set_linear_solver(self, linear_solver):
+        raise Radau_Exception("Radau5DAE does not support setting the 'linear_solver' attribute, since it only supports the DENSE linear solver in Fortran implementation of Radau5.")
+        
+    linear_solver = property(_get_linear_solver, _set_linear_solver)
         
     def initialize(self):
         #Reset statistics
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        if not self.solver_module_imported:
-            self.solver = self.options["solver"]
+        try:
+            from assimulo.lib import radau5 as radau5_f
+            self.radau5 = radau5_f
+        except Exception:
+            raise Radau_Exception("Failed to import the Fortran based Radau5 solver implementation.")
         
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -1044,8 +1175,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = N.append(self.atol, self.atol)
 
-        t, y, h, iwork, flag  =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
-                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout, IOUT, WORK, IWORK)
+        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+                                                    ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+                                                    IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:

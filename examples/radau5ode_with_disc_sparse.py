@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Modelon AB
+# Copyright (C) 2022 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
+import scipy.sparse as sp
 import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
@@ -51,6 +52,11 @@ class Extended_Problem(Explicit_Problem):
         yd_2 = 0.0
 
         return N.array([yd_0,yd_1,yd_2])
+
+    def jac(self, t, y):
+        return sp.csc_matrix((len(y), len(y)), dtype = 'float')
+
+    jac_nnz = 0
 
     #Sets a name to our function
     name = 'ODE with discontinuities and a function with consistency problem'
@@ -123,12 +129,14 @@ class Extended_Problem(Explicit_Problem):
 
 
 
-def run_example(with_plots=True,implementation='c'):
+def run_example(with_plots=True):
     #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
 
     exp_sim = Radau5ODE(exp_mod) #Create the solver
-    exp_sim.implementation = implementation
+    exp_sim.implementation = 'c'
+    exp_sim.linear_solver = 'sparse'
+
     
     exp_sim.verbosity = 0
     exp_sim.report_continuously = True

@@ -147,6 +147,7 @@ class Assimulo_prepare(object):
         self.thirdparty_methods  = thirdparty_methods
         self.with_openmp = args[0].with_openmp
         self.sundials_with_msvc = False
+        self.msvcSLU = False
 
         if self.sundials_with_superlu is not None:
             L.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
@@ -180,8 +181,8 @@ class Assimulo_prepare(object):
             self.incdirs = ''
             self.libdirs = ''
         else:
-            self.incdirs = '/usr/local/include'
-            self.libdirs = '/usr/local/lib'            
+            self.incdirs = os.path.sep + os.path.join('usr', 'local', 'include')
+            self.libdirs = os.path.sep + os.path.join('usr', 'local', 'lib')
         
         self.assimulo_lib = os.path.join('assimulo','lib')
         
@@ -508,29 +509,40 @@ class Assimulo_prepare(object):
                 ext_list[-1].libraries.extend(self.superLUFiles)
 
         ## Radau
-        ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
-                              include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
-                              force = True)
-        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
-                                     os.path.join("assimulo","thirdparty","hairer"),
-                                     self.incdirs]
-        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer","radau_decsol_c.c")]
-        ext_list[-1].name = "assimulo.lib.radau5_c_py"
+        if self.with_SLU:
+            ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
+                                include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                                force = True)
+            ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
+                                        os.path.join("assimulo","thirdparty","hairer"),
+                                        self.incdirs, self.SLUincdir]
+            extra_sources = ["radau_decsol_c.c", "radau5_superlu_double.c", "radau5_superlu_complex.c", "superlu_util.c"]
+            ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
+            ext_list[-1].name = "assimulo.lib.radau5_c_py"
+            if 'win' in self.platform:
+                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.libdirs]
+                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']
+                ext_list[-1].extra_compile_args += ["-D__OPENMP"]
+            else:
+                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
+                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
+        else:
+            L.warning("Radau5 C solver will not be supported due to SuperLU not being supplied.")
         
         for el in ext_list:
             #Debug
             if self.debug_flag:
                 if self.sundials_with_msvc:
-                    el.extra_compile_args = ["/DEBUG"]
-                    el.extra_link_args = ["/DEBUG"]
+                    el.extra_compile_args += ["/DEBUG"]
+                    el.extra_link_args += ["/DEBUG"]
                 else:
-                    el.extra_compile_args = ["-g","-fno-strict-aliasing"]
-                    el.extra_link_args = ["-g"]
+                    el.extra_compile_args += ["-g","-fno-strict-aliasing"]
+                    el.extra_link_args += ["-g"]
             else:
                 if self.sundials_with_msvc:
-                    el.extra_compile_args = ["/O2"]
+                    el.extra_compile_args += ["/O2"]
                 else:
-                    el.extra_compile_args = ["-O2", "-fno-strict-aliasing"]
+                    el.extra_compile_args += ["-O2", "-fno-strict-aliasing"]
             if self.platform == "mac":
                 el.extra_compile_args += ["-Wno-error=return-type"]
             if self.with_openmp:

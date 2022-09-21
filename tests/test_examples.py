@@ -21,8 +21,6 @@ from assimulo.exception import *
 from assimulo.examples import *
 
 class Test_Examples:
-    
-    
     @testattr(stddist = True)
     def test_cvode_with_jac_sparse(self):
         try:
@@ -35,12 +33,8 @@ class Test_Examples:
         ida_with_user_defined_handle_result.run_example(with_plots=False)
     
     @testattr(stddist = True)
-    def test_radau5dae_time_events_c(self):
-        radau5dae_time_events.run_example(with_plots=False,solver='c')
-        
-    @testattr(stddist = True)
     def test_radau5dae_time_events_f(self):
-        radau5dae_time_events.run_example(with_plots=False,solver='f')
+        radau5dae_time_events.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_kinsol_basic(self):
@@ -141,35 +135,31 @@ class Test_Examples:
         
     @testattr(stddist = True)
     def test_radau5ode_vanderpol_c(self):
-        radau5ode_vanderpol.run_example(with_plots=False,solver='c')
+        radau5ode_vanderpol.run_example(with_plots=False,implementation='c')
     
     @testattr(stddist = True)
     def test_radau5ode_vanderpol_f(self):
-        radau5ode_vanderpol.run_example(with_plots=False,solver='f')
+        radau5ode_vanderpol.run_example(with_plots=False,implementation='f')
         
     @testattr(stddist = True)
     def test_radau5ode_with_disc_c(self):
-        radau5ode_with_disc.run_example(with_plots=False,solver='c')
+        radau5ode_with_disc.run_example(with_plots=False,implementation='c')
 
     @testattr(stddist = True)
     def test_radau5ode_with_disc_f(self):
-        radau5ode_with_disc.run_example(with_plots=False,solver='c')
+        radau5ode_with_disc.run_example(with_plots=False,implementation='c')
+
+    @testattr(stddist = True)
+    def test_radau5ode_with_disc_sparse(self):
+        radau5ode_with_disc_sparse.run_example(with_plots=False)
 
     @testattr(stddist = True)
     def test_radau5ode_with_jac_sparse_c(self):
-        radau5ode_with_jac_sparse.run_example(with_plots=False,solver='c')
-
-    @testattr(stddist = True)
-    def test_radau5ode_with_jac_sparse_f(self):
-        radau5ode_with_jac_sparse.run_example(with_plots=False,solver='f')
-        
-    @testattr(stddist = True)
-    def test_radau5dae_vanderpol_c(self):
-        radau5dae_vanderpol.run_example(with_plots=False,solver='c')
+        radau5ode_with_jac_sparse.run_example(with_plots=False)
 
     @testattr(stddist = True)
     def test_radau5dae_vanderpol_f(self):
-        radau5dae_vanderpol.run_example(with_plots=False,solver='f')
+        radau5dae_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_dopri5_basic(self):
