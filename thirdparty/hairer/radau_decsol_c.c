@@ -25,7 +25,7 @@ static double c_b116 = .25;
 int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 	double *x, double *y, double *xend, double *h__,
 	double *rtol, double *atol, int *itol,
-	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, int sparse_LU,
 	FP_CB_solout solout, void* solout_PY, int *iout,
 	double *work, int *lwork, int *iwork, int *liwork, int *idid,
 	Radau_SuperLU_aux* radau_slu_aux)
@@ -35,7 +35,6 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     static double facl;
     static int ndec, njac;
     static double facr, safe;
-	static int sparse_jac;
     static int nfcn;
     static int pred;
     static double hmax;
@@ -439,14 +438,9 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
 		arret = TRUE_;
     }
-	sparse_jac = FALSE_; // Default: Dense jacobian LU
-	/* -------- SPARSE LU DECOMPOSITION OPTIONS */
-	if (iwork[11]){ // SPARSE LU
-		sparse_jac = TRUE_;
-		if (!(*ijac)){
-			printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
-			arret = TRUE_;
-		}
+	if (sparse_LU && !(*ijac)){
+		printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
+		arret = TRUE_;
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
 	iewerr = 21;
@@ -487,7 +481,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
 		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
-	    &quot1, &quot2, &nit, sparse_jac, &startn,
+	    &quot1, &quot2, &nit, sparse_LU, &startn,
 	    &pred, &facl, &facr,
 	    &work[iez1], &work[iez2], &work[iez3], &work[iey0],
 		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
@@ -527,7 +521,7 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
 	FP_CB_solout solout, void* solout_PY, int *iout, int *idid,
 	int *nmax, double *uround, double *safe, double *thet,
 	double *fnewt, double *quot1, double *quot2, int *nit,
-	int sparse_jac, int *startn, int *pred,
+	int sparse_LU, int *startn, int *pred,
 	double *facl, double *facr,
 	double *z1, double *z2, double *z3,
 	double *y0, double *scal,
@@ -727,7 +721,7 @@ L10:
 		}
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
-		if (sparse_jac){
+		if (sparse_LU){
 			radau_slu_aux->nnz_actual = radau_slu_aux->nnz;
 			ier = (*jac_sparse)(n, x, &y[1], &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, jac_PY);
 			if (ier != RADAU_CALLBACK_OK){
@@ -753,17 +747,17 @@ L20:
     betan = beta / *h__;
     decomr_(n, fjac,
 			&fac1, e1, ip1, &ier, 
-			sparse_jac, radau_slu_aux);
+			sparse_LU, radau_slu_aux);
     if (ier != 0) {
 		goto L185;
     }
     decomc_(n, fjac,
 			&alphn, &betan, e2r, e2i,
-			ip2, &ier, sparse_jac, radau_slu_aux);
+			ip2, &ier, sparse_LU, radau_slu_aux);
     if (ier != 0) {
 		goto L185;
     }
-	if (sparse_jac){
+	if (sparse_LU){
 		radau_slu_aux->fresh_jacobian = 0; // has once been used to create a decomposition now
 	}
     ++(*ndec);
@@ -858,7 +852,7 @@ L40:
     ier = slvrad_(n, &fac1, &alphn, &betan, &e1[1 + n],
 			&e2r[1 + n], &e2i[1 + n],
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], ip1, ip2,
-			sparse_jac, radau_slu_aux);
+			sparse_LU, radau_slu_aux);
 	if (ier != 0){
 		goto L184;
 	}
@@ -915,7 +909,7 @@ L40:
     }
 	/* --- ERROR ESTIMATION */
     estrad_(n, h__, &dd1, &dd2, &dd3, (FP_CB_f) fcn, fcn_PY, nfcn,
-			&y0[1], &y[1], sparse_jac, x, &e1[1 + n],
+			&y0[1], &y[1], sparse_LU, x, &e1[1 + n],
 			&z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], ip1, 
 			&scal[1], &err, &first, &reject,
 			radau_slu_aux, &ier);
@@ -1510,11 +1504,11 @@ L50:
 
 
 int decomr_(int n, double *fjac,double *fac1, double *e1,
-	int *ip1, int *ier, int sparse_jac, Radau_SuperLU_aux *radau_slu_aux)
+	int *ip1, int *ier, int sparse_LU, Radau_SuperLU_aux *radau_slu_aux)
 {
     static int i, j;
 
-	if(sparse_jac){
+	if(sparse_LU){
 		superlu_setup_d(radau_slu_aux->slu_aux_d, *fac1, radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, radau_slu_aux->fresh_jacobian, radau_slu_aux->nnz_actual);
 		*ier = superlu_factorize_d(radau_slu_aux->slu_aux_d);
 	}else{
@@ -1532,11 +1526,11 @@ int decomr_(int n, double *fjac,double *fac1, double *e1,
 
 int decomc_(int n, double *fjac, double *alphn, double *betan,
 	double *e2r, double *e2i, int *ip2,
-	int *ier, int sparse_jac, Radau_SuperLU_aux *radau_slu_aux)
+	int *ier, int sparse_LU, Radau_SuperLU_aux *radau_slu_aux)
 {
     static int i, j;
 
-	if (sparse_jac){
+	if (sparse_LU){
 		superlu_setup_z(radau_slu_aux->slu_aux_z, *alphn, *betan, radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, radau_slu_aux->fresh_jacobian, radau_slu_aux->nnz_actual);
 		*ier = superlu_factorize_z(radau_slu_aux->slu_aux_z);
 	}else{
@@ -1558,7 +1552,7 @@ int slvrad_(int n, double *fac1, double *alphn, double *betan,
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
 	double *f1, double *f2, double *f3,
-	int *ip1, int *ip2, int sparse_jac,
+	int *ip1, int *ip2, int sparse_LU,
 	Radau_SuperLU_aux* radau_slu_aux)
 {
     static int i;
@@ -1573,7 +1567,7 @@ int slvrad_(int n, double *fac1, double *alphn, double *betan,
 		z3[i] = z3[i] + s3 * *alphn + s2 * *betan;
     }
 
-	if (sparse_jac){
+	if (sparse_LU){
 		ier = superlu_solve_d(radau_slu_aux->slu_aux_d, z1);
 		if (ier != 0) {
 			return ier;
@@ -1590,7 +1584,7 @@ int slvrad_(int n, double *fac1, double *alphn, double *betan,
 int estrad_(int n, double *h__,
 	double *dd1, double *dd2, double *dd3,
 	FP_CB_f fcn, void* fcn_PY, int *nfcn,
-	double *y0, double *y, int sparse_jac,
+	double *y0, double *y, int sparse_LU,
 	double *x,double *e1,
 	double *z1, double *z2, double *z3,
 	double *cont, double *werr,
@@ -1610,7 +1604,7 @@ int estrad_(int n, double *h__,
 		cont[i] = f2[i] + y0[i];
 	}
 
-	if (sparse_jac){
+	if (sparse_LU){
 		*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
 		if (*ier){
 			return 0;
@@ -1639,7 +1633,7 @@ int estrad_(int n, double *h__,
 			cont[i] = f1[i] + f2[i];
 		}
 
-		if (sparse_jac){
+		if (sparse_LU){
 			*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
 			if (*ier){
 				return 0;

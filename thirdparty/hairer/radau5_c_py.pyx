@@ -156,7 +156,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
 cpdef radau5(fcn_PY, double x, np.ndarray y,
              double xend, double h__, np.ndarray rtol, np.ndarray atol,
-             int itol, jac_PY, int ijac, solout_PY,
+             int itol, jac_PY, int ijac, int sparse_LU, solout_PY,
              int iout, np.ndarray work, np.ndarray iwork,
              RadauSuperLUaux aux_class):
     """
@@ -188,6 +188,12 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                         - Switch for Jacobian computation:
                           ijac == 0: C based finite differences
                           ijac == 1: Calls supplied 'jac_PY' function 
+
+            sparse_LU
+                        - Switch for sparse/dense LU decompositions:
+                          sparse_LU == 0: Dense LU
+                          sparse_LU == 1: Sparse LU
+
             solout_PY
                         - Callback function for logging solution of time-integration:
                           solout_PY(nrsol, told, t, y, cont, werr, lrc, irtrn)
@@ -236,16 +242,10 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
-    if iwork[10]: ## sparse linear solver flag, see radau_decsol_c.c
-        radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                            &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                            &ijac, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
-                            &idid, aux_class.radau_slu_aux)
-    else: ## Dense
-        radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                            &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                            &ijac, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
-                            &idid, NULL)
+    radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+                        &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
+                        &ijac, sparse_LU, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
+                        &idid, aux_class.radau_slu_aux if sparse_LU else NULL)
 
     return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
 

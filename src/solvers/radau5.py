@@ -365,15 +365,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._opts = opts
 
         if self.options["implementation"] == 'c':
-            if self.options["linear_solver"] == "SPARSE":
-                IWORK[10] = 1
-                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, self._solout,
-                                                           IOUT, WORK, IWORK, self.RadauSuperLUaux)
-            else:
-                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, self._solout,
-                                                           IOUT, WORK, IWORK, self.radau5.RadauSuperLUaux())
+            sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
+            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                        ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
+                                                        IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux())
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,

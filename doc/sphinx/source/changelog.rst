@@ -6,6 +6,7 @@ Changelog
 --- Assimulo-3.2.10 ---
     * Added support for sparse LU decompositons (via SuperLU) in Radau5 solver. 
       This is only available with the C version of the Radau5 solver.
+    * Removed unused functionality from Radau5 C implementation: DAEs, 2nd order eq, banded matrix structures.
 
 --- Assimulo-3.2.9 ---
    * Bugfix for C version of Radau5 solver

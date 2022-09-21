@@ -48,7 +48,7 @@ cdef extern from "radau_decsol_c.h":
     int radau5_c(int, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*, int*,
-			 FP_CB_jac, FP_CB_jac_sparse, void*, int*,
+			 FP_CB_jac, FP_CB_jac_sparse, void*, int*, int,
 			 FP_CB_solout, void*, int*,
 			 double*, int*, int*, int*, int*,
 			 Radau_SuperLU_aux*)
