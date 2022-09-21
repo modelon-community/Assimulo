@@ -63,7 +63,7 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
 			FP_CB_solout solout, void* solout_PY, int *iout, int *idid,
 			int *nmax, double *uround, double *safe, double *thet,
 			double *fnewt, double *quot1, double *quot2, int *nit,
-			int *ijob, int *startn, int *pred,
+			int sparse_jac, int *startn, int *pred,
 			double *facl, double *facr,
 			double *z1, double *z2, double *z3,
 			double *y0, double *scal,
@@ -83,22 +83,22 @@ int decc_(int n, double *ar, double *ai, int *ip, int *ier);
 int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip);
 
 int decomr_(int n, double *fjac,double *fac1, double *e1,
-	int *ip1, int *ier, int *ijob, Radau_SuperLU_aux *radau_slu_aux);
+	int *ip1, int *ier, int sparse_jac, Radau_SuperLU_aux *radau_slu_aux);
 int decomc_(int n, double *fjac, double *alphn, double *betan,
 	double *e2r, double *e2i, int *ip2,
-	int *ier, int *ijob, Radau_SuperLU_aux *radau_slu_aux);
+	int *ier, int sparse_jac, Radau_SuperLU_aux *radau_slu_aux);
 
 int slvrad_(int n, double *fac1, double *alphn, double *betan, 
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
 	double *f1, double *f2, double *f3,
-	int *ip1, int *ip2, int *ijob,
+	int *ip1, int *ip2, int sparse_jac,
 	Radau_SuperLU_aux *radau_slu_aux);
 
 int estrad_(int n, double *h__,
 	double *dd1, double *dd2, double *dd3,
 	FP_CB_f fcn, void* fcn_PY, int *nfcn,
-	double *y0, double *y, int *ijob,
+	double *y0, double *y, int sparse_jac,
 	double *x,double *e1,
 	double *z1, double *z2, double *z3,
 	double *cont, double *werr,
