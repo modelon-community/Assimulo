@@ -11,6 +11,7 @@
 #define abs(x) ((x) >= 0 ? (x) : -(x))
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define max(a,b) ((a) >= (b) ? (a) : (b))
+#define copysign(a,b) (((a < 0 && b > 0) || (a > 0 && b < 0)) ? (-a) : (a))
 
 #define RADAU_SUPERLU_INVALID_INPUT_N             -1
 #define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
@@ -21,7 +22,7 @@
 #define RADAU_CALLBACK_ERROR_RECOVERABLE        -1
 #define RADAU_CALLBACK_ERROR_NONRECOVERABLE     -2
 #define RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT -3
-// this one always has to have the smaller number among all RADAU_CALLBACK_ERROR_x
+/* this one always has to have the smaller number among all RADAU_CALLBACK_ERROR_x */
 #define RADAU_CALLBACK_ERROR_INVALID_NNZ        -10
 
 struct Radau_SuperLU_aux{
@@ -30,7 +31,7 @@ struct Radau_SuperLU_aux{
     int fresh_jacobian;
     int nnz_actual;
 
-    // Jacobian data 
+    /* Jacobian data */
     double *jac_data;
     int *jac_indices;
     int *jac_indptr;
@@ -40,7 +41,7 @@ struct Radau_SuperLU_aux{
 };
 typedef struct Radau_SuperLU_aux Radau_SuperLU_aux;
 
-// FP_CB = FunctionPointer_CallBack
+/* FP_CB = FunctionPointer_CallBack */
 typedef int (*FP_CB_f)(int, double*, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double*, double*, double*, void*);
 typedef int (*FP_CB_solout)(int*, double*, double*, double*,

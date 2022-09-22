@@ -1,6 +1,6 @@
-// based on f2c (version 20100827) translation of radau_decsol.f.
-// Note: Due to this, matrices (double*) are stored in Fortran-style column major format
-// Also: This is the source of some odd looking pointer increments
+/* based on f2c (version 20100827) translation of radau_decsol.f. */
+/* Note: Due to this, matrices (double*) are stored in Fortran-style column major format */
+/* Also: This is the source of some odd looking pointer increments */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -488,7 +488,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		&work[iee1], &work[iee2r], &work[iee2i],
 	    &iwork[ieip1], &iwork[ieip2], &work[iecon], &nfcn,
 	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
-		&work[iewerr], // entry point for werr
+		&work[iewerr], /* entry point for werr */
 		radau_slu_aux);
     iwork[14] = nfcn;
     iwork[15] = njac;
@@ -758,7 +758,7 @@ L20:
 		goto L185;
     }
 	if (sparse_LU){
-		radau_slu_aux->fresh_jacobian = 0; // has once been used to create a decomposition now
+		radau_slu_aux->fresh_jacobian = 0; /* has once been used to create a decomposition now */
 	}
     ++(*ndec);
 /* --- COMPUTE STEPSIZE */
@@ -1118,12 +1118,12 @@ L184:
 	goto L181;
 /* --- FAIL EXIT, OTHER SUPERLU FAILURE*/
 L185:
-	if (ier < 0){ // incorrect input to function call
+	if (ier < 0){ /* incorrect input to function call */
 		goto L184;
 	}
-	if (ier <= n){ // factorization singular
+	if (ier <= n){ /* factorization singular */
 		goto L78;
-	}else{ // memory allocation failure
+	}else{ /* memory allocation failure */
 		printf("EXIT OF RADAU5 AT X = %e \n", *x);
 		printf("SUPERLU MEMORY ALLOCATION FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", ier - n);
 		*idid = -9;
@@ -1670,12 +1670,12 @@ Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs, int* info
 	radau_slu_aux->nnz_actual = nnz;
 	radau_slu_aux->fresh_jacobian = 0;
 
-	// allocate memory for sparse Jacobian structure
+	/* allocate memory for sparse Jacobian structure */
 	radau_slu_aux->jac_data = (double*)malloc((nnz + n)*sizeof(double));
 	radau_slu_aux->jac_indices = (int*)malloc((nnz + n)*sizeof(int));
 	radau_slu_aux->jac_indptr = (int*)malloc((n + 1)*sizeof(int));
 
-	// Create auxiliary superLU structures
+	/* Create auxiliary superLU structures */
 	radau_slu_aux->slu_aux_d = superlu_init_d(nprocs, n, nnz);
 	radau_slu_aux->slu_aux_z = superlu_init_z(nprocs, n, nnz);
 
