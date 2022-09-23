@@ -433,4 +433,3 @@ class Radau_Common(object):
         self.options["maxsteps"] = max_steps
     
     maxsteps = property(_get_maxsteps, _set_maxsteps)
-    

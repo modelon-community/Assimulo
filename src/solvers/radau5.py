@@ -256,7 +256,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def interpolate(self, time):
         y = N.empty(self._leny)
         for i in range(self._leny):
-            # Note: index shift to Fortan based indices
+            # Note: index shift to Fortran based indices
             y[i] = self.radau5.contr5(i+1, time, self.cont)
         
         return y
@@ -326,6 +326,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
+        if self.usejac and not hasattr(self.problem, "jac"):
+            raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         MLJAC = self.problem_info["dim"] #The jacobian is full
         MUJAC = self.problem_info["dim"] #See MLJAC
         IMAS  = 0 #The mass matrix is the identity
@@ -363,15 +365,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._opts = opts
 
         if self.options["implementation"] == 'c':
-            if self.options["linear_solver"] == "SPARSE":
-                IWORK[10] = 1
-                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
-                                                           IOUT, WORK, IWORK, self.RadauSuperLUaux)
-            else:
-                t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                           ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
-                                                           IOUT, WORK, IWORK, self.radau5.RadauSuperLUaux())
+            sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
+            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                        ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
+                                                        IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux())
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,

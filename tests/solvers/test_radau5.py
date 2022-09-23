@@ -26,6 +26,7 @@ from assimulo.exception import *
 from assimulo.lib.radau_core import Radau_Exception, Radau_Common
 import scipy.sparse as sp
 import numpy as N
+
 import re
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
@@ -897,6 +898,16 @@ class Test_Explicit_Fortran_Radau5:
             sim.simulate(1.)
 
 
+    @testattr(stddist = True)
+    def test_sparse_solver_attribute(self):
+        """
+        This tests the error when trying to simulate using the Fotran based solver with sparse linear solver setting enabled
+        """
+        sim = Radau5ODE(self.mod)
+        sim.solver = 'f'
+        sim.linear_solver = 'SPARSE'
+        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
+
 class Test_Explicit_C_Radau5:
     """
     Tests the explicit Radau solver.
@@ -1631,7 +1642,7 @@ class Test_Implicit_Radau5:
         self.mod = Implicit_Problem(f,y0,yd0)
         self.mod_t0 = Implicit_Problem(f,y0,yd0,1.0)
             
-        #Define an explicit solver
+        #Define an implicit solver
         self.sim = Radau5DAE(self.mod) #Create a Radau5 solve
         self.sim_t0 = Radau5DAE(self.mod_t0)
         
@@ -1727,14 +1738,14 @@ class Test_Implicit_Radau5:
         exp_mod = Implicit_Problem(f,0.0,0.0)
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
-        
+
         #CVode
         exp_sim = Radau5DAE(exp_mod)
         exp_sim.verbosity = 0
         exp_sim(5.,100)
-        
+
         nose.tools.assert_equal(nevent, 5)
-    
+
     @testattr(stddist = True)
     def test_init(self):
         """
@@ -1753,9 +1764,8 @@ class Test_Implicit_Radau5:
         """
         self.sim.thet = -1
         self.sim.simulate(.5) #Simulate 2 seconds
-
         nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
-        
+
     @testattr(stddist = True)    
     def test_simulation(self):
         """
@@ -1764,36 +1774,37 @@ class Test_Implicit_Radau5:
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706272, 3)
-        
+
         self.sim.reset()
-        
+
         self.sim.report_continuously = True
-        
+
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.706166, 3)
-        
+
         self.sim_t0.simulate(3.)
         nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
         nose.tools.assert_almost_equal(self.sim_t0.t_sol[-1], 3.0000000, 4)
         nose.tools.assert_almost_equal(self.sim_t0.y_sol[-1][0], 1.7061680350, 4)
-    
+
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
         """
         self.sim.report_continuously = True
-        
+
         self.sim.simulate(1.0, 200) #Simulate 1 second
         nose.tools.assert_equal(len(self.sim.t_sol), 201)
-        
+
         self.sim.reset()
         self.sim.report_continuously = False
-        
+
         self.sim.simulate(1.0, 200) #Simulate 1 second
         nose.tools.assert_equal(len(self.sim.t_sol), 201)
-    
+
+
     @testattr(stddist = True)
     def test_maxh(self):
         """
