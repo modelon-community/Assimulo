@@ -3,9 +3,13 @@
 Changelog
 ==========
 
---- Assimulo-3.2.10 ---
+--- Assimulo-3.3 ---
+    * Sundials 6.x port
+    * Radau5ODE and Radau5DAE now correctly terminate from unrecoverable errors in right-hand side and Jacobian calls.
     * Added support for sparse LU decompositons (via SuperLU) in Radau5 solver. 
       This is only available with the C version of the Radau5 solver.
+    * Changed attribute name Radau5ODE.solver to Radau5ODE.implementation.
+      Removed support for Radau5DAE.implementation = 'c'
     * Removed unused functionality from Radau5 C implementation: DAEs, 2nd order eq, banded matrix structures.
 
 --- Assimulo-3.2.9 ---
