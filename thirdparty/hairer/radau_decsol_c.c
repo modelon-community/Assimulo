@@ -116,11 +116,9 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 /*                 (THIS ROUTINE IS ONLY CALLED IF IJAC=1; SUPPLY */
 /*                 A DUMMY SUBROUTINE IN THE CASE IJAC=0). */
 /*                 FOR IJAC=1, THIS SUBROUTINE MUST HAVE THE FORM */
-/*                    SUBROUTINE JAC(N,X,Y,DFY,LDFY) */
-/*                    DOUBLE PRECISION X,Y(N),DFY(LDFY,N) */
+/*                    SUBROUTINE JAC(N,X,Y,DFY) */
+/*                    DOUBLE PRECISION X,Y(N),DFY(N,N) */
 /*                    DFY(1,1)= ... */
-/*                 LDFY, THE COLUMN-LENGTH OF THE ARRAY, IS */
-/*                 FURNISHED BY THE CALLING PROGRAM. */
 
 /*     IJAC        SWITCH FOR THE COMPUTATION OF THE JACOBIAN: */
 /*                    IJAC=0: JACOBIAN IS COMPUTED INTERNALLY BY FINITE */
@@ -279,7 +277,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 /*   IWORK(17)  NACCPT  NUMBER OF ACCEPTED STEPS */
 /*   IWORK(18)  NREJCT  NUMBER OF REJECTED STEPS (DUE TO ERROR TEST), */
 /*                      (STEP REJECTIONS IN THE FIRST STEP ARE NOT COUNTED) */
-/*   IWORK(19)  NDEC    NUMBER OF LU-DECOMPOSITIONS OF JACBOIAN MATRICES */
+/*   IWORK(19)  NDEC    NUMBER OF LU-DECOMPOSITIONS OF JACOBIAN MATRICES */
 /*   IWORK(20)  NSOL    NUMBER OF FORWARD-BACKWARD SUBSTITUTIONS */
 /*                      THE NSTEP FORWARD-BACKWARD SUBSTITUTIONS, */
 /*                      NEEDED FOR STEP SIZE SELECTION, ARE NOT COUNTED */
