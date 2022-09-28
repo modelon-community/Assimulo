@@ -233,7 +233,8 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef int lwork = len(work)
     cdef int liwork = len(iwork)
     
-    cdef int idid = 1 ## "Successful compution"
+    cdef int ret
+    cdef int idid = 1
     
     iwork_in = np.array(iwork, dtype = np.int32)
     cdef np.ndarray[double, mode="c", ndim=1] y_vec = y
@@ -242,12 +243,12 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
-    radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+    ret = radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                         &ijac, sparse_LU, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                         &idid, aux_class.radau_slu_aux if sparse_LU else NULL)
 
-    return x, y, h__, np.array(iwork_in, dtype = np.int32), idid
+    return x, y, h__, np.array(iwork_in, dtype = np.int32), ret
 
 cpdef contr5(int i__, double x, np.ndarray cont):
     """

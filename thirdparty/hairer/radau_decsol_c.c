@@ -46,7 +46,6 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     static double quot1, quot2;
     static int iejac;
     static int iecon;
-    static int arret;
     static double fnewt;
     static int nstep;
     static double tolst;
@@ -55,6 +54,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     static int istore;
     static int startn;
     static double uround;
+	int radcor_ret = 0;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -253,6 +253,8 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 /* ----------------------------------------------------------------------- */
 
 /*     OUTPUT PARAMETERS */
+/*     RETURN FLAGS, SEE HEADER FILE*/
+
 /*     ----------------- */
 /*     X           X-VALUE FOR WHICH THE SOLUTION HAS BEEN COMPUTED */
 /*                 (AFTER SUCCESSFUL RETURN X=XEND). */
@@ -261,13 +263,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 
 /*     H           PREDICTED STEP SIZE OF THE LAST ACCEPTED STEP */
 
-/*     IDID        REPORTS ON SUCCESSFULNESS UPON RETURN: */
-/*                   IDID= 1  COMPUTATION SUCCESSFUL, */
-/*                   IDID= 2  COMPUT. SUCCESSFUL (INTERRUPTED BY SOLOUT) */
-/*                   IDID=-1  INPUT IS NOT CONSISTENT, */
-/*                   IDID=-2  LARGER NMAX IS NEEDED, */
-/*                   IDID=-3  STEP SIZE BECOMES TOO SMALL, */
-/*                   IDID=-4  MATRIX IS REPEATEDLY SINGULAR. */
+/*     IDID        IF RETURN == RADAU_SUCCESS_SOLOUT_INTERRUPT, IDID = RETURN FLAG FROM SOLOUT CALLBACK */
 
 /*   IWORK(14)  NFCN    NUMBER OF FUNCTION EVALUATIONS (THOSE FOR NUMERICAL */
 /*                      EVALUATION OF THE JACOBIAN ARE NOT COUNTED) */
@@ -303,7 +299,6 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     nrejct = 0;
     ndec = 0;
     nsol = 0;
-    arret = FALSE_;
 	/* -------- UROUND   SMALLEST NUMBER SATISFYING 1.0D0+UROUND>1.0D0 */
     if (work[1] == 0.) {
 		uround = 1e-16;
@@ -311,7 +306,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		uround = work[1];
 		if (uround <= 1e-19 || uround >= 1.) {
 			printf(" COEFFICIENTS HAVE 20 DIGITS, UROUND= \t %e \n", uround);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* -------- CHECK AND CHANGE THE TOLERANCES */
@@ -319,7 +314,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     if (*itol == 0) {
 		if (atol[1] <= 0. || rtol[1] <= uround * 10.) {
 			printf(" TOLERANCES ARE TOO SMALL \n");
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		} else {
 			quot = atol[1] / rtol[1];
 			rtol[1] = pow(rtol[1], expm) * .1;
@@ -329,7 +324,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		for (i = 1; i <= n; ++i) {
 			if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
 				printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
-				arret = TRUE_;
+				return RADAU_ERROR_INCONSISTENT_INPUT;
 			} else {
 				quot = atol[i] / rtol[i];
 				rtol[i] = pow(rtol[i], expm) * .1;
@@ -344,7 +339,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		nmax = iwork[2];
 		if (nmax <= 0) {
 			printf("WRONG INPUT IWORK(2)= %i \n", nmax);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* -------- NIT, MAXIMAL NUMBER OF NEWTON ITERATIONS */
@@ -354,7 +349,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		nit = iwork[3];
 		if (nit <= 0) {
 			printf("CURIOUS INPUT IWORK(3)= %i \n", nit);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* -------- STARTN SWITCH FOR STARTING VALUES OF NEWTON ITERATIONS */
@@ -376,7 +371,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		safe = work[2];
 		if (safe <= .001 || safe >= 1.) {
 			printf("CURIOUS INPUT FOR WORK(2)= %f \n", safe);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* ------ THET, DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
@@ -386,7 +381,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		thet = work[3];
 		if (thet >= 1.) {
 			printf("CURIOUS INPUT FOR WORK(3)= %f \n", thet);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* --- FNEWT, STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
@@ -397,7 +392,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		fnewt = work[4];
 		if (fnewt <= uround / tolst) {
 			printf("CURIOUS INPUT FOR WORK(4)= %f \n", fnewt);
-			arret = TRUE_;
+			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
     }
 	/* --- QUOT1 AND QUOT2: IF QUOT1 < HNEW/HOLD < QUOT2, STEP SIZE = CONST. */
@@ -413,7 +408,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     }
     if (quot1 > 1. || quot2 < 1.) {
 		printf("CURIOUS INPUT FOR WORK(5, 6)= %f \t %f \n", quot1, quot2);
-		arret = TRUE_;
+		return RADAU_ERROR_INCONSISTENT_INPUT;
     }
 	/* -------- MAXIMAL STEP SIZE */
     if (work[7] == 0.) {
@@ -434,11 +429,11 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     }
     if (facl < 1. || facr > 1.) {
 		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
-		arret = TRUE_;
+		return RADAU_ERROR_INCONSISTENT_INPUT;
     }
 	if (sparse_LU && !(*ijac)){
 		printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
-		arret = TRUE_;
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}
 	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
 	iewerr = 21;
@@ -459,7 +454,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     istore = iee2i + n * n - 1;
     if (istore > *lwork) {
 		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i\n", istore);
-		arret = TRUE_;
+		return RADAU_ERROR_INCONSISTENT_INPUT;
     }
 	/* ------- ENTRY POINTS FOR int WORKSPACE ----- */
     ieip1 = 21;
@@ -468,26 +463,23 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     istore = ieip2 + n - 1;
     if (istore > *liwork) {
 		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %i\n", istore);
-		arret = TRUE_;
+		return RADAU_ERROR_INCONSISTENT_INPUT;
     }
-	/* ------ WHEN A FAIL HAS OCCURED, WE RETURN WITH IDID=-1 */
-    if (arret) {
-		*idid = -1;
-		return 0;
-    }
+	/* POSSIBLE ADDITIONAL RETURN FLAG */
+	*idid = 0;
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
-		itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
-		(FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
-	    &quot1, &quot2, &nit, sparse_LU, &startn,
-	    &pred, &facl, &facr,
-	    &work[iez1], &work[iez2], &work[iez3], &work[iey0],
-		&work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
-		&work[iee1], &work[iee2r], &work[iee2i],
-	    &iwork[ieip1], &iwork[ieip2], &work[iecon], &nfcn,
-	    &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
-		&work[iewerr], /* entry point for werr */
-		radau_slu_aux);
+    radcor_ret = radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
+						 itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
+						 (FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
+						 &quot1, &quot2, &nit, sparse_LU, &startn,
+						 &pred, &facl, &facr,
+						 &work[iez1], &work[iez2], &work[iez3], &work[iey0],
+						 &work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
+						 &work[iee1], &work[iee2r], &work[iee2i],
+						 &iwork[ieip1], &iwork[ieip2], &work[iecon], &nfcn,
+						 &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
+						 &work[iewerr], /* entry point for werr */
+						 radau_slu_aux);
     iwork[14] = nfcn;
     iwork[15] = njac;
     iwork[16] = nstep;
@@ -508,7 +500,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 			atol[i] = rtol[i] * quot;
 		}
     }
-    return 0;
+	return radcor_ret;
 } /* radau5_ */
 
 
@@ -653,7 +645,6 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
     nunexpect = 0;
     xold = *x;
     if (*iout != 0) {
-		irtrn = 1;
 		nrsol = 1;
 		xosol = xold;
 		conra5_1.xsol = *x;
@@ -663,8 +654,10 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
 		}
 		nsolu = n;
 		conra5_1.hsol = hold;
+
+		irtrn = 0;
 		(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
-			lrc, &nsolu, &irtrn, solout_PY);
+				  lrc, &nsolu, &irtrn, solout_PY);
 		if (irtrn < 0) {
 			goto L179;
 		}
@@ -969,8 +962,10 @@ L40:
 			}
 			nsolu = n;
 			conra5_1.hsol = hold;
-			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1],
-			 		  &lrc, &nsolu, &irtrn, solout_PY);
+
+			irtrn = 0;
+			(*solout)(&nrsol, &xosol, &conra5_1.xsol, &y[1], &cont[1], &werr[1], &
+								lrc, &nsolu, &irtrn, solout_PY);
 			if (irtrn < 0) {
 				goto L179;
 			}
@@ -978,8 +973,7 @@ L40:
 		caljac = FALSE_;
 		if (last) {
 			*h__ = hopt;
-			*idid = 1;
-			goto L181;
+			return RADAU_SUCCESS;
 		}
 		(*fcn)(n, x, &y[1], &y0[1], fcn_PY);
 		++(*nfcn);
@@ -1045,8 +1039,7 @@ L78:
 L79:
 	if (ier < RADAU_CALLBACK_ERROR_INVALID_NNZ){
 		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ier - RADAU_CALLBACK_ERROR_INVALID_NNZ));
-		*idid = -6;
-		goto L181;
+		return RADAU_ERROR_NNZ_TOO_SMALL;
 	}
 
 	switch(ier){
@@ -1077,43 +1070,36 @@ L79:
 L175:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
-    *idid = -5;
-	goto L181;
+	return RADAU_ERROR_REP_STEP_REJECT;
 /* --- FAIL EXIT, REPEATED SINGULAR JACOBIAN*/
 L176:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("MATRIX IS REPEATEDLY SINGULAR IER= %i\n", ier);
-    *idid = -4;
-	goto L181;
+	return RADAU_ERROR_JAC_SINGULAR;
 /* --- FAIL EXIT, STEP SIZE TOO SMALL*/
 L177:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("STEP SIZE TOO SMALL, H= %e\n", *h__);
-    *idid = -3;
-	goto L181;
+	return RADAU_ERROR_STEPSIZE_TOO_SMALL;
 /* --- FAIL EXIT, NMAX EXCEEDED*/
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", *nmax);
-    *idid = -2;
-	goto L181;
+	return RADAU_ERROR_NMAX_TOO_SMALL;
 /* --- FAILURE EXIT, ERROR IN SPARSE JACOBIAN CALLBACK*/
 L182:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
-	*idid = -7;
-	goto L181;
+	return RADAU_ERROR_WRONG_SPARSE_JAC_FORMAT;
 L183:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("UNEXPECTED MALLOC FAILURE\n");
-	*idid = -9;
-	goto L181;
+	return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("UNEXPECTED FAILURE OF SUPERLU FUNCTION CALL, ier = %i \n", ier);
-	*idid = -8;
-	goto L181;
+	return RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE;
 /* --- FAIL EXIT, OTHER SUPERLU FAILURE*/
 L185:
 	if (ier < 0){ /* incorrect input to function call */
@@ -1124,23 +1110,17 @@ L185:
 	}else{ /* memory allocation failure */
 		printf("EXIT OF RADAU5 AT X = %e \n", *x);
 		printf("SUPERLU MEMORY ALLOCATION FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", ier - n);
-		*idid = -9;
-		goto L181;
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 	}
 /* --- FAIL EXIT, UNRECOVERABLE EXCEPTION IN FCN OR JAC CALLBACK*/
 L186:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("UNRECOVERABLE EXCEPTION ENCOUNTERED IN PROBLEM CALLBACK\n");
-	*idid = -10;
-	return 0;
+	return RADAU_ERROR_UNRECOVERABLE_CALLBACK_ERROR;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
-    *idid = 2;
-	goto L181;
-
-/* --- EXIT OF RADCOR */
-L181:
-	return 0;
+    *idid = irtrn; /* return from solout callback */
+	return RADAU_SUCCESS_SOLOUT_INTERRUPT;
 } /* radcor_ */
 
 
