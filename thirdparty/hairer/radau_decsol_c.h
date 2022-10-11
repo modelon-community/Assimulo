@@ -7,9 +7,9 @@
 
 #define TRUE_ (1)
 #define FALSE_ (0)
-#define abs(x) ((x) >= 0 ? (x) : -(x))
-#define min(a,b) ((a) <= (b) ? (a) : (b))
-#define max(a,b) ((a) >= (b) ? (a) : (b))
+#define radau5_abs(x) ((x) >= 0 ? (x) : -(x))
+#define radau_min(a,b) ((a) <= (b) ? (a) : (b))
+#define radau_max(a,b) ((a) >= (b) ? (a) : (b))
 #define copysign(a,b) (((a < 0 && b > 0) || (a > 0 && b < 0)) ? (-a) : (a))
 
 /* Radau return flags */

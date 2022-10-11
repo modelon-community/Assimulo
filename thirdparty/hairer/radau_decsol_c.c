@@ -387,7 +387,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 	/* --- FNEWT, STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
     tolst = rtol[1];
     if (work[4] == 0.) {
-		fnewt = max(uround * 10 / tolst, min(.03, pow(tolst, c_b54)));
+		fnewt = radau_max(uround * 10 / tolst, radau_min(.03, pow(tolst, c_b54)));
     } else {
 		fnewt = work[4];
 		if (fnewt <= uround / tolst) {
@@ -624,11 +624,11 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
     ti32 = 2.5719269498556054292;
     ti33 = -.59603920482822492497;
     posneg = copysign(1., *xend - *x);
-    hmaxn = min(abs(*hmax), abs(*xend - *x));
-    if (abs(*h__) <= *uround * 10.) {
+    hmaxn = radau_min(radau5_abs(*hmax), radau5_abs(*xend - *x));
+    if (radau5_abs(*h__) <= *uround * 10.) {
 		*h__ = 1e-6;
     }
-    *h__ = min(abs(*h__), hmaxn);
+    *h__ = radau_min(radau5_abs(*h__), hmaxn);
     *h__ = copysign(*h__, posneg);
     hold = *h__;
     reject = FALSE_;
@@ -666,11 +666,11 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
     n3 = n * 3;
     if (*itol == 0) {
 		for (i = 1; i <= n; ++i) {
-			scal[i] = atol[1] + rtol[1] * abs(y[i]);
+			scal[i] = atol[1] + rtol[1] * radau5_abs(y[i]);
 		}
     } else {
 		for (i = 1; i <= n; ++i) {
-			scal[i] = atol[i] + rtol[i] * abs(y[i]);
+			scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
 		}
     }
     hhfac = *h__;
@@ -690,7 +690,7 @@ L10:
 		/* --- JACOBIAN IS FULL */
 		for (i = 1; i <= n; ++i) {
 			ysafe = y[i];
-			delt = sqrt(*uround * max(1e-5, abs(ysafe)));
+			delt = sqrt(*uround * radau_max(1e-5, radau5_abs(ysafe)));
 			y[i] = ysafe + delt;
 			ier = (*fcn)(n, x, &y[1], &cont[1], fcn_PY);
 			if (ier != RADAU_CALLBACK_OK) {
@@ -758,7 +758,7 @@ L30:
     if (*nstep > *nmax) {
 		goto L178;
     }
-    if (abs(*h__) * .1 <= abs(*x) * *uround) {
+    if (radau5_abs(*h__) * .1 <= radau5_abs(*x) * *uround) {
 		goto L177;
     }
     xph = *x + *h__;
@@ -797,8 +797,8 @@ L30:
 	/*  LOOP FOR THE SIMPLIFIED NEWTON ITERATION */
 	/* *** *** *** *** *** *** *** */
     newt = 0;
-    faccon = pow(max(faccon,*uround), c_b114);
-    theta = abs(*thet);
+    faccon = pow(radau_max(faccon,*uround), c_b114);
+    theta = radau5_abs(*thet);
 	/* --- NEWTON */
 L40:
     if (newt >= *nit) {
@@ -869,7 +869,7 @@ L40:
 			faccon = theta / (1. - theta);
 			dyth = faccon * dyno * pow(theta, *nit - 1 - newt) / *fnewt;
 			if (dyth >= 1.) {
-				qnewt = max(1e-4, min(20., dyth));
+				qnewt = radau_max(1e-4, radau_min(20., dyth));
 				hhfac = pow(qnewt, -1. / (*nit + 4. - 1 - newt)) * .8;
 				*h__ = hhfac * *h__;
 				reject = TRUE_;
@@ -883,7 +883,7 @@ L40:
 			goto L78;
 		}
     }
-    dynold = max(dyno, *uround);
+    dynold = radau_max(dyno, *uround);
     for (i = 1; i <= n; ++i) {
 		f1i = f1[i] + z1[i];
 		f2i = f2[i] + z2[i];
@@ -909,8 +909,8 @@ L40:
 	}
 	/* --- COMPUTATION OF HNEW */
 	/* --- WE REQUIRE .2<=HNEW/H<=8. */
-    fac = min(*safe, cfac / (newt + (*nit << 1)));
-    quot = max(*facr ,min(*facl, pow(err, c_b116) / fac));
+    fac = radau_min(*safe, cfac / (newt + (*nit << 1)));
+    quot = radau_max(*facr ,radau_min(*facl, pow(err, c_b116) / fac));
     hnew = *h__ / quot;
 	/* *** *** *** *** *** *** *** */
 	/*  IS THE ERROR SMALL ENOUGH ? */
@@ -923,12 +923,12 @@ L40:
 			/*       --- PREDICTIVE CONTROLLER OF GUSTAFSSON */
 			if (*naccpt > 1) {
 				facgus = hacc / *h__ * pow(err * err / erracc, c_b116) / *safe;
-				facgus = max(*facr, min(*facl, facgus));
-				quot = max(quot,facgus);
+				facgus = radau_max(*facr, radau_min(*facl, facgus));
+				quot = radau_max(quot,facgus);
 				hnew = *h__ / quot;
 			}
 			hacc = *h__;
-			erracc = max(.01, err);
+			erracc = radau_max(.01, err);
 		}
 		xold = *x;
 		hold = *h__;
@@ -946,11 +946,11 @@ L40:
 		}
 		if (*itol == 0) {
 			for (i = 1; i <= n; ++i) {
-				scal[i] = atol[1] + rtol[1] * abs(y[i]);
+				scal[i] = atol[1] + rtol[1] * radau5_abs(y[i]);
 			}
 		} else {
 			for (i = 1; i <= n; ++i) {
-				scal[i] = atol[i] + rtol[i] * abs(y[i]);
+				scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
 			}
 		}
 		if (*iout != 0) {
@@ -977,11 +977,11 @@ L40:
 		}
 		(*fcn)(n, x, &y[1], &y0[1], fcn_PY);
 		++(*nfcn);
-		hnew = posneg * min(abs(hnew), hmaxn);
+		hnew = posneg * radau_min(radau5_abs(hnew), hmaxn);
 		hopt = hnew;
-		hopt = min(*h__,hnew);
+		hopt = radau_min(*h__,hnew);
 		if (reject) {
-			hnew = posneg * min(abs(hnew), abs(*h__));
+			hnew = posneg * radau_min(radau5_abs(hnew), radau5_abs(*h__));
 		}
 		reject = FALSE_;
 		if ((*x + hnew / *quot1 - *xend) * posneg >= 0.) {
@@ -1185,7 +1185,7 @@ int dec_(int n, double *a, int *ip, int *ier)
 		kp1 = k + 1;
 		m = k;
 		for (i = kp1; i <= n; ++i) {
-			if (abs(a[i + k * n]) > abs(a[m + k * n])) {
+			if (radau5_abs(a[i + k * n]) > radau5_abs(a[m + k * n])) {
 			m = i;
 			}
 		}
@@ -1328,7 +1328,7 @@ int decc_(int n, double *ar, double *ai, int *ip, int *ier)
 		kp1 = k + 1;
 		m = k;
 		for (i = kp1; i <= n; ++i) {
-			if (abs(ar[i + k * n]) + abs(ai[i + k * n]) > abs(ar[m + k * n]) + abs(ai[m + k * n])) {
+			if (radau5_abs(ar[i + k * n]) + radau5_abs(ai[i + k * n]) > radau5_abs(ar[m + k * n]) + radau5_abs(ai[m + k * n])) {
 				m = i;
 			}
 		}
@@ -1344,7 +1344,7 @@ int decc_(int n, double *ar, double *ai, int *ip, int *ier)
 		ar[k + k * n] = tr;
 		ai[k + k * n] = ti;
 L20:
-		if (abs(tr) + abs(ti) == 0.) {
+		if (radau5_abs(tr) + radau5_abs(ti) == 0.) {
 			goto L80;
 		}
 		den = tr * tr + ti * ti;
@@ -1363,7 +1363,7 @@ L20:
 			ai[m + j * n] = ai[k + j * n];
 			ar[k + j * n] = tr;
 			ai[k + j * n] = ti;
-			if (abs(tr) + abs(ti) == 0.) {
+			if (radau5_abs(tr) + radau5_abs(ti) == 0.) {
 				goto L48;
 			}
 			if (ti == 0.) {
@@ -1396,7 +1396,7 @@ L48:
     }
 L70:
     k = n;
-    if (abs(ar[n + n * n]) + abs(ai[n + n * n]) == 0.) {
+    if (radau5_abs(ar[n + n * n]) + radau5_abs(ai[n + n * n]) == 0.) {
 		goto L80;
     }
     return 0;
@@ -1596,7 +1596,7 @@ int estrad_(int n, double *h__,
 		werr[i] = cont[i] / scal[i];
 		*err += werr[i] * werr[i];
     }
-    *err = max(sqrt(*err / n), 1e-10);
+    *err = radau_max(sqrt(*err / n), 1e-10);
 
     if (*err < 1.) {
 		return 0;
@@ -1625,7 +1625,7 @@ int estrad_(int n, double *h__,
 			werr[i] = cont[i] / scal[i];
 			*err += werr[i] * werr[i];
 		}
-		*err = max(sqrt(*err / n), 1e-10);
+		*err = radau_max(sqrt(*err / n), 1e-10);
     }
     return 0;
 } /* estrad_ */
