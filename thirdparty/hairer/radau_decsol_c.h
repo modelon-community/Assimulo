@@ -1,17 +1,30 @@
 #ifndef RADAU_DECSOL_C_H
 #define RADAU_DECSOL_C_H
 
-#include <stdint.h>
 #include "radau5_superlu_double.h"
 #include "radau5_superlu_complex.h"
 #include "superlu_util.h"
 
 #define TRUE_ (1)
 #define FALSE_ (0)
-#define abs(x) ((x) >= 0 ? (x) : -(x))
-#define min(a,b) ((a) <= (b) ? (a) : (b))
-#define max(a,b) ((a) >= (b) ? (a) : (b))
+#define radau5_abs(x) ((x) >= 0 ? (x) : -(x))
+#define radau_min(a,b) ((a) <= (b) ? (a) : (b))
+#define radau_max(a,b) ((a) >= (b) ? (a) : (b))
 #define copysign(a,b) (((a < 0 && b > 0) || (a > 0 && b < 0)) ? (-a) : (a))
+
+/* Radau return flags */
+#define RADAU_SUCCESS                                1
+#define RADAU_SUCCESS_SOLOUT_INTERRUPT               2 
+#define RADAU_ERROR_INCONSISTENT_INPUT              -1
+#define RADAU_ERROR_NMAX_TOO_SMALL                  -2
+#define RADAU_ERROR_STEPSIZE_TOO_SMALL              -3
+#define RADAU_ERROR_JAC_SINGULAR                    -4
+#define RADAU_ERROR_REP_STEP_REJECT                 -5
+#define RADAU_ERROR_NNZ_TOO_SMALL                   -6
+#define RADAU_ERROR_WRONG_SPARSE_JAC_FORMAT         -7
+#define RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE      -8
+#define RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE       -9
+#define RADAU_ERROR_UNRECOVERABLE_CALLBACK_ERROR    -10
 
 #define RADAU_SUPERLU_INVALID_INPUT_N             -1
 #define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
