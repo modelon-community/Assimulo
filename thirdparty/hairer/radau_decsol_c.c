@@ -1120,6 +1120,7 @@ double contr5_c(int *i, double *x, double *cont, int *lrc)
 {
     double ret_val;
     static double s;
+	if(*lrc){;}; /* TODO: Remove; only here to remove "unused" warning */
 
 /* ---------------------------------------------------------- */
 /*     THIS FUNCTION CAN BE USED FOR CONINUOUS OUTPUT. IT PROVIDES AN */

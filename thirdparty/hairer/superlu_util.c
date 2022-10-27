@@ -4,8 +4,11 @@ int sparse_csc_add_diagonal(int n, int* nnz, double* jac_data, int* jac_indices,
     /* Takes a sparse (CSC) matrix and adds empty diagonal entries, if not already present. */
     /* Works under the assumption that corresponding arrays have sufficient memory allocated. */
     int i, j, diag_found, diag_added, indptr_incr, intptr_base, idx_data;
+    double *jac_data_original;
+    int *jac_indices_original, *jac_indptr_original;
 
     /* Quick version: Scan through jacobian and see if any diagonal entries are missing */
+    diag_found = 0;
     for(i = 0; i < n; i++){
         diag_found = 0;
         intptr_base = jac_indptr[i];
@@ -27,9 +30,9 @@ int sparse_csc_add_diagonal(int n, int* nnz, double* jac_data, int* jac_indices,
     /* else: diagonal needs to be added */
     
     /* Copy over original jacobian data; inputs also serve as outputs */
-    double* jac_data_original = (double*) malloc(*nnz * sizeof(double));
-    int* jac_indices_original = (int*) malloc(*nnz * sizeof(int));
-    int* jac_indptr_original = (int*) malloc((n + 1) * sizeof(int));
+    jac_data_original = (double*) malloc(*nnz * sizeof(double));
+    jac_indices_original = (int*) malloc(*nnz * sizeof(int));
+    jac_indptr_original = (int*) malloc((n + 1) * sizeof(int));
 
     if ((!jac_data_original) || (!jac_indices_original) || (!jac_indptr)) {
         return MALLOC_FAILURE;
