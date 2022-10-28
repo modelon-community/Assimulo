@@ -134,7 +134,6 @@ def run_example(with_plots=True):
     exp_mod = Extended_Problem() #Create the problem
 
     exp_sim = Radau5ODE(exp_mod) #Create the solver
-    exp_sim.implementation = 'c'
     exp_sim.linear_solver = 'sparse'
 
     

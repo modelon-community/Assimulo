@@ -135,19 +135,19 @@ class Test_Examples:
         
     @testattr(stddist = True)
     def test_radau5ode_vanderpol_c(self):
-        radau5ode_vanderpol.run_example(with_plots=False,implementation='c')
+        radau5ode_vanderpol.run_example(with_plots=False)
     
     @testattr(stddist = True)
     def test_radau5ode_vanderpol_f(self):
-        radau5ode_vanderpol.run_example(with_plots=False,implementation='f')
+        radau5ode_vanderpol.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_radau5ode_with_disc_c(self):
-        radau5ode_with_disc.run_example(with_plots=False,implementation='c')
+        radau5ode_with_disc.run_example(with_plots=False)
 
     @testattr(stddist = True)
     def test_radau5ode_with_disc_f(self):
-        radau5ode_with_disc.run_example(with_plots=False,implementation='c')
+        radau5ode_with_disc.run_example(with_plots=False)
 
     @testattr(stddist = True)
     def test_radau5ode_with_disc_sparse(self):
