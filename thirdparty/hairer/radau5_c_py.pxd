@@ -30,6 +30,7 @@ cdef extern from "radau5_superlu_complex.h":
 
 cdef extern from "radau_decsol_c.h":
     ctypedef struct Radau_SuperLU_aux
+    ctypedef struct radau_mem_t
 
     int RADAU_CALLBACK_OK
     int RADAU_CALLBACK_ERROR_RECOVERABLE
@@ -45,7 +46,10 @@ cdef extern from "radau_decsol_c.h":
                                 int*, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*)
 
-    int radau5_c(int, FP_CB_f, void*,
+    void *setup_radau_mem(int n)
+    void free_radau_mem(void **radau_mem)
+
+    int radau5_c(void*, int, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*, int*,
 			 FP_CB_jac, FP_CB_jac_sparse, void*, int*, int,

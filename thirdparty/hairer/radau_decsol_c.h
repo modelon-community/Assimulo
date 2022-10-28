@@ -38,6 +38,8 @@
 /* this one always has to have the smaller number among all RADAU_CALLBACK_ERROR_x */
 #define RADAU_CALLBACK_ERROR_INVALID_NNZ        -10
 
+#define RADAU_OK 0
+
 struct Radau_SuperLU_aux{
     int n, nnz, nprocs; 
 
@@ -54,6 +56,25 @@ struct Radau_SuperLU_aux{
 };
 typedef struct Radau_SuperLU_aux Radau_SuperLU_aux;
 
+struct radau_mem_t{
+	double *work; /* base work parameters; TODO */
+	double *werr; /* local error estimate*/
+	double *z1, *z2, *z3;
+	double *y0;
+	double *scal;
+	double *f1, *f2, *f3;
+	double *con; /* interpolation?*/
+	double *jac;
+	double *e1, *e2r, *e2i; /* LU factorizations*/
+
+	int *iwork; /* base iwork parameters; TODO */
+	int *ip1, *ip2; /* LU pivots */
+};
+typedef struct radau_mem_t radau_mem_t;
+
+void *setup_radau_mem(int n);
+void free_radau_mem(void **radau_mem);
+
 /* FP_CB = FunctionPointer_CallBack */
 typedef int (*FP_CB_f)(int, double*, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double*, double*, double*, void*);
@@ -62,7 +83,7 @@ typedef int (*FP_CB_solout)(int*, double*, double*, double*,
                             int*, void*);
 typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*);
 
-int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
+int radau5_c(void* radau_mem, int n, FP_CB_f fcn, void* fcn_PY,
 			 double *x, double *y, double *xend, double *h__,
 			 double *rtol, double *atol, int *itol,
 			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, int sparse_LU,
@@ -70,7 +91,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 			 double *work, int *lwork, int *iwork, int *liwork, int *idid,
 			 Radau_SuperLU_aux *radau_slu_aux);
 
-int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
+int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_PY,
 			double *x, double *y, double *xend, double *hmax, double *h__,
 			double *rtol, double *atol, int *itol,
 			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac,

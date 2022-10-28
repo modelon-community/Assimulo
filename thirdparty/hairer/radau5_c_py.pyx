@@ -125,6 +125,18 @@ cdef class RadauSuperLUaux:
         ret = radau_superlu_aux_finalize(self.radau_slu_aux)
         return ret
 
+cdef class RadauMemory:
+    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
+    cdef void* rmem
+
+    cpdef int initialize(self, int n):
+        self.rmem = setup_radau_mem(n)
+        return 1
+
+    cpdef int finalize(self):
+        free_radau_mem(&self.rmem)
+        return 1
+
 cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,
                              void* jac_PY):
@@ -158,7 +170,7 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
              double xend, double h__, np.ndarray rtol, np.ndarray atol,
              int itol, jac_PY, int ijac, int sparse_LU, solout_PY,
              int iout, np.ndarray work, np.ndarray iwork,
-             RadauSuperLUaux aux_class):
+             RadauSuperLUaux aux_class, RadauMemory rad_memory):
     """
     Python interface for calling the C based Radau solver
 
@@ -243,7 +255,7 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
-    ret = radau5_c_py.radau5_c(n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+    ret = radau5_c_py.radau5_c(rad_memory.rmem, n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                         &ijac, sparse_LU, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                         &idid, aux_class.radau_slu_aux if sparse_LU else NULL)

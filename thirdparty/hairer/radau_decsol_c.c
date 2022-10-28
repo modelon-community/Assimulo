@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "radau_decsol_c.h"
-#include <inttypes.h>
 
 /* Common Block Declarations */
 struct conra5_{
@@ -15,14 +14,33 @@ struct conra5_{
 } conra5_1;
 
 /* Table of constant values */
-static double c_b54 = .5;
-static double c_b91 = 81.;
-static double c_b92 = .33333333333333331;
-static double c_b93 = 9.;
-static double c_b114 = .8;
-static double c_b116 = .25;
+#define c_b54 .5
+#define c_b91 81.
+#define c_b92 .33333333333333331
+#define c_b93 9.
+#define c_b114 .8
+#define c_b116 .25
 
-int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
+/* Butcher array related constants */
+#define t11 .091232394870892942792
+#define t12 -.14125529502095420843
+#define t13 -.030029194105147424492
+#define t21 .24171793270710701896
+#define t22 .20412935229379993199
+#define t23 .38294211275726193779
+#define t31 .96604818261509293619
+
+#define ti11 4.325579890063155351
+#define ti12 .33919925181580986954
+#define ti13 .54177053993587487119
+#define ti21 -4.1787185915519047273
+#define ti22 -.32768282076106238708
+#define ti23 .47662355450055045196
+#define ti31 -.50287263494578687595
+#define ti32 2.5719269498556054292
+#define ti33 -.59603920482822492497
+
+int radau5_c(void* radau_mem, int n, FP_CB_f fcn, void* fcn_PY,
 	double *x, double *y, double *xend, double *h__,
 	double *rtol, double *atol, int *itol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, int sparse_LU,
@@ -30,8 +48,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 	double *work, int *lwork, int *iwork, int *liwork, int *idid,
 	Radau_SuperLU_aux* radau_slu_aux)
 {
-	static int iewerr;
-    static int i, nit, iee1, ief1, ief2, ief3, iey0, iez1, iez2, iez3;
+    static int i, nit;
     static double facl;
     static int ndec, njac;
     static double facr, safe;
@@ -42,19 +59,16 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
     static double thet, expm;
     static int nsol;
     static double quot;
-    static int iee2i, iee2r, ieip1, ieip2;
     static double quot1, quot2;
-    static int iejac;
-    static int iecon;
     static double fnewt;
     static int nstep;
     static double tolst;
-    static int iescal, naccpt;
+    static int naccpt;
     static int nrejct;
-    static int istore;
     static int startn;
     static double uround;
 	int radcor_ret = 0;
+	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -276,6 +290,11 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 /* *** *** *** *** *** *** *** */
 /*        SETTING THE PARAMETERS */
 /* *** *** *** *** *** *** *** */
+	if (!radau_mem){
+		printf(" RADAU_MEM not setup properly\n");
+		return RADAU_ERROR_INCONSISTENT_INPUT;
+	}
+
     /* Parameter adjustments */
     --y;
     --rtol;
@@ -427,50 +446,20 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 		printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
 		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}
-	/* ------- PREPARE THE ENTRY-POINTS FOR THE ARRAYS IN WORK ----- */
-	iewerr = 21;
-    iez1 = iewerr + n;
-    iez2 = iez1 + n;
-    iez3 = iez2 + n;
-    iey0 = iez3 + n;
-    iescal = iey0 + n;
-    ief1 = iescal + n;
-    ief2 = ief1 + n;
-    ief3 = ief2 + n;
-    iecon = ief3 + n;
-    iejac = iecon + (n << 2);
-    iee1 = iejac + n * n;
-    iee2r = iee1 + n * n;
-    iee2i = iee2r + n * n;
-	/* ------ TOTAL STORAGE REQUIREMENT ----------- */
-    istore = iee2i + n * n - 1;
-    if (istore > *lwork) {
-		printf("INSUFFICIENT STORAGE FOR WORK, MIN. LWORK= %i\n", istore);
-		return RADAU_ERROR_INCONSISTENT_INPUT;
-    }
-	/* ------- ENTRY POINTS FOR int WORKSPACE ----- */
-    ieip1 = 21;
-    ieip2 = ieip1 + n;
-	/* --------- TOTAL REQUIREMENT --------------- */
-    istore = ieip2 + n - 1;
-    if (istore > *liwork) {
-		printf("INSUFF. STORAGE FOR IWORK, MIN. LIWORK= %i\n", istore);
-		return RADAU_ERROR_INCONSISTENT_INPUT;
-    }
 	/* POSSIBLE ADDITIONAL RETURN FLAG */
 	*idid = 0;
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_ret = radcor_(n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
+    radcor_ret = radcor_(rmem, n, (FP_CB_f)fcn, fcn_PY, x, &y[1], xend, &hmax, h__, &rtol[1], &atol[1], 
 						 itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 						 (FP_CB_solout)solout, solout_PY, iout, idid, &nmax, &uround, &safe, &thet, &fnewt,
 						 &quot1, &quot2, &nit, sparse_LU, &startn,
 						 &pred, &facl, &facr,
-						 &work[iez1], &work[iez2], &work[iez3], &work[iey0],
-						 &work[iescal], &work[ief1], &work[ief2], &work[ief3], &work[iejac],
-						 &work[iee1], &work[iee2r], &work[iee2i],
-						 &iwork[ieip1], &iwork[ieip2], &work[iecon], &nfcn,
-						 &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
-						 &work[iewerr], /* entry point for werr */
+						 rmem->z1, rmem->z2, rmem->z3, rmem->y0,
+						 rmem->scal, rmem->f1, rmem->f2, rmem->f3,
+						 rmem->jac, rmem->e1, rmem->e2r, rmem->e2i, 
+						 rmem->ip1, rmem->ip2, rmem->con,
+						 &nfcn, &njac, &nstep, &naccpt, &nrejct, &ndec, &nsol,
+						 rmem->werr,
 						 radau_slu_aux);
     iwork[14] = nfcn;
     iwork[15] = njac;
@@ -496,7 +485,7 @@ int radau5_c(int n, FP_CB_f fcn, void* fcn_PY,
 } /* radau5_ */
 
 
-int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
+int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_PY,
 	double *x, double *y, double *xend, double *hmax, double *h__,
 	double *rtol, double *atol, int *itol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, 
@@ -522,11 +511,9 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
     static double u1;
     static int nunexpect;
     static double ak;
-    static double t11, t12, t13, t21, t22, t23, t31;
     static double qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
-	    c2q, c3q, z1i, z2i, z3i, sq6, fac, ti11, cno;
+	    c2q, c3q, z1i, z2i, z3i, sq6, fac, cno;
     static int lrc;
-    static double ti12, ti13, ti21, ti22, ti23, ti31, ti32, ti33;
     static int ier;
     static double xph, thq, err, fac1, cfac, hacc, c1mc2, beta;
     static double alph, hold;
@@ -592,29 +579,12 @@ int radcor_(int n, FP_CB_f fcn, void* fcn_PY,
     dd1 = -(sq6 * 7. + 13.) / 3.;
     dd2 = (sq6 * 7. - 13.) / 3.;
     dd3 = -.33333333333333331;
-    u1 = (pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.;
+    u1 = 1./((pow(c_b91, c_b92) + 6. - pow(c_b93, c_b92)) / 30.);
     alph = (12. - pow(c_b91, c_b92) + pow(c_b93, c_b92)) / 60.;
     beta = (pow(c_b91, c_b92) + pow(c_b93, c_b92)) * sqrt(3.) / 60.;
     cno = alph * alph + beta * beta;
-    u1 = 1. / u1;
     alph /= cno;
     beta /= cno;
-    t11 = .091232394870892942792;
-    t12 = -.14125529502095420843;
-    t13 = -.030029194105147424492;
-    t21 = .24171793270710701896;
-    t22 = .20412935229379993199;
-    t23 = .38294211275726193779;
-    t31 = .96604818261509293619;
-    ti11 = 4.325579890063155351;
-    ti12 = .33919925181580986954;
-    ti13 = .54177053993587487119;
-    ti21 = -4.1787185915519047273;
-    ti22 = -.32768282076106238708;
-    ti23 = .47662355450055045196;
-    ti31 = -.50287263494578687595;
-    ti32 = 2.5719269498556054292;
-    ti33 = -.59603920482822492497;
     posneg = copysign(1., *xend - *x);
     hmaxn = radau_min(radau5_abs(*hmax), radau5_abs(*xend - *x));
     if (radau5_abs(*h__) <= *uround * 10.) {
@@ -1663,4 +1633,79 @@ int radau_superlu_aux_finalize(Radau_SuperLU_aux *radau_slu_aux){
 
 	free(radau_slu_aux);
 	return 0;
+}
+
+void *setup_radau_mem(int n){
+	radau_mem_t *rmem;
+	int n_sq = n*n;
+	
+	if (n < 1){return NULL;} /* sanity check */
+
+	rmem = (radau_mem_t*)malloc(sizeof(radau_mem_t));
+	if (!rmem){return NULL;}
+
+	rmem->work = (double*)malloc(20*sizeof(double)); /* TODO */
+	rmem->werr = (double*)malloc(n*sizeof(double));
+	rmem->z1 = (double*)malloc(n*sizeof(double));
+	rmem->z2 = (double*)malloc(n*sizeof(double));
+	rmem->z3 = (double*)malloc(n*sizeof(double));
+	rmem->y0 = (double*)malloc(n*sizeof(double));
+	rmem->scal = (double*)malloc(n*sizeof(double));
+	rmem->f1 = (double*)malloc(n*sizeof(double));
+	rmem->f2 = (double*)malloc(n*sizeof(double));
+	rmem->f3 = (double*)malloc(n*sizeof(double));
+	rmem->con = (double*)malloc(4*n*sizeof(double));
+
+	if(!rmem->work || !rmem->werr || !rmem->z1 || !rmem->z3 || !rmem->y0 || !rmem->scal || !rmem->f1 || !rmem->f2 || !rmem->f3 || !rmem->con){
+		return NULL;
+	}
+
+	rmem->jac = (double*)malloc(n_sq*sizeof(double));
+	rmem->e1 = (double*)malloc(n_sq*sizeof(double));
+	rmem->e2r = (double*)malloc(n_sq*sizeof(double));
+	rmem->e2i = (double*)malloc(n_sq*sizeof(double));
+
+	if(!rmem->jac || !rmem->e1 || !rmem->e2r || !rmem->e2i ){
+		return NULL;
+	}
+
+	rmem->iwork = (int*)malloc(20*sizeof(int)); /* TODO */
+	rmem->ip1 = (int*)malloc(n*sizeof(int));
+	rmem->ip2 = (int*)malloc(n*sizeof(int));
+
+	if(!rmem->iwork || !rmem->ip1 || !rmem->ip2){
+		return NULL;
+	}
+
+	return (void*)rmem;
+}
+
+void free_radau_mem(void **radau_mem){
+	radau_mem_t *rmem = (radau_mem_t*) *radau_mem;
+	if(!rmem){
+		return;
+	}
+
+	free(rmem->work);
+	free(rmem->werr);
+	free(rmem->z1);
+	free(rmem->z2);
+	free(rmem->z3);
+	free(rmem->y0);
+	free(rmem->scal);
+	free(rmem->f1);
+	free(rmem->f2);
+	free(rmem->f3);
+	free(rmem->con);
+
+	free(rmem->jac);
+	free(rmem->e1);
+	free(rmem->e2r);
+	free(rmem->e2i);
+
+	free(rmem->iwork);
+	free(rmem->ip1);
+	free(rmem->ip2);
+
+	free(rmem);
 }

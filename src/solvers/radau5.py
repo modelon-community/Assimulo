@@ -193,6 +193,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if not self.solver_module_imported:
             self.implementation = self.options["implementation"]
 
+        if self.implementation == 'c':
+            self.rad_memory = self.radau5.RadauMemory()
+            self.rad_memory.initialize(self.problem_info["dim"])
+
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         
@@ -334,8 +338,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+13*self.problem_info["dim"]+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
+        if self.implementation == 'f':
+            WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+13*self.problem_info["dim"]+20)) #Work (double) vector
+            IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
+        else:
+            WORK  = N.array([0.0]*20) #Work (double) vector
+            IWORK = N.array([0]*20,dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -368,7 +376,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                         ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
-                                                        IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux())
+                                                        IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux(),
+                                                        self.rad_memory)
         else:
             t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                        ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
@@ -417,6 +426,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
         """
+        if hasattr(self, 'radau_mem'):
+            self.radau_mem.finalize()
+
         if hasattr(self, 'RadauSuperLUaux'):
             flag = self.RadauSuperLUaux.finalize()
             if flag != 0:
