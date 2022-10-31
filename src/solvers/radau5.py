@@ -164,8 +164,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
         try:
-            from assimulo.lib import radau5_c_py as radau5_c
-            self.radau5 = radau5_c
+            from assimulo.lib import radau5ode as radau5ode_c
+            self.radau5 = radau5ode_c
         except Exception:
             raise Radau_Exception("Failed to import the Radau5 solver.") from None
 
@@ -305,11 +305,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
-        MLJAC = self.problem_info["dim"] #The jacobian is full
-        MUJAC = self.problem_info["dim"] #See MLJAC
-        IMAS  = 0 #The mass matrix is the identity
-        MLMAS = self.problem_info["dim"] #The mass matrix is full
-        MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*20) #Work (double) vector
         IWORK = N.array([0]*20,dtype=N.intc) #Work (integer) vector

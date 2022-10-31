@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "radau_decsol_c.h"
+#include "radau5_c.h"
 
 /* Common Block Declarations */
 struct conra5_{

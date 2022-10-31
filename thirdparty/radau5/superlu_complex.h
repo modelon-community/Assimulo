@@ -1,5 +1,5 @@
-#ifndef _RADAU_SUPERLU_COMPLEX_H_
-#define _RADAU_SUPERLU_COMPLEX_H_
+#ifndef _SUPERLU_COMPLEX_H_
+#define _SUPERLU_COMPLEX_H_
 
 struct SuperLU_aux_z;
 typedef struct SuperLU_aux_z SuperLU_aux_z;

@@ -1,14 +1,12 @@
-#include "slu_mt_zdefs.h"
-#include "radau5_superlu_complex.h"
+#include "slu_mt_ddefs.h"
+#include "superlu_double.h"
 
-struct SuperLU_aux_z{
+struct SuperLU_aux_d{
     int nprocs, n, nnz_jac;
     int setup_done, fact_done; /* flags for which memory to free in the end */
 
-    doublecomplex *data_sys;
+    double *data_sys;
     int *indices_sys, *indptr_sys;
-
-    doublecomplex *rhs;
 
     int panel_size, relax; /* System specific tuning parameters */
     fact_t fact; /* if factorized matrix is being supplied, if not: how to factorize */
@@ -28,9 +26,9 @@ struct SuperLU_aux_z{
 };
 
 /* Initialization of required data structures for SuperLU */
-SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
-    SuperLU_aux_z* slu_aux = (SuperLU_aux_z*)malloc(sizeof(SuperLU_aux_z));
-    if (slu_aux == NULL) SUPERLU_ABORT("Malloc failed for doublecomplex slu_aux.");
+SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
+    SuperLU_aux_d *slu_aux = (SuperLU_aux_d *)malloc(sizeof(SuperLU_aux_d));
+    if (!slu_aux) {SUPERLU_ABORT("Malloc failed for double slu_aux.");}
     slu_aux->setup_done = 0;
     slu_aux->fact_done = 0;
 
@@ -47,18 +45,18 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
     slu_aux->L =  (SuperMatrix *)malloc(sizeof(SuperMatrix));
     slu_aux->U =  (SuperMatrix *)malloc(sizeof(SuperMatrix));
 
-    if (!slu_aux->A)  {SUPERLU_ABORT("Malloc failed for doublecomplex A.");}
-    if (!slu_aux->B)  {SUPERLU_ABORT("Malloc failed for doublecomplex B.");}
-    if (!slu_aux->AC) {SUPERLU_ABORT("Malloc failed for doublecomplex AC.");}
-    if (!slu_aux->L)  {SUPERLU_ABORT("Malloc failed for doublecomplex L.");}
-    if (!slu_aux->U)  {SUPERLU_ABORT("Malloc failed for doublecomplex U.");}
+    if (!slu_aux->A)  {SUPERLU_ABORT("Malloc failed for double A.");}
+    if (!slu_aux->B)  {SUPERLU_ABORT("Malloc failed for double B.");}
+    if (!slu_aux->AC) {SUPERLU_ABORT("Malloc failed for double AC.");}
+    if (!slu_aux->L)  {SUPERLU_ABORT("Malloc failed for double L.");}
+    if (!slu_aux->U)  {SUPERLU_ABORT("Malloc failed for double U.");}
     slu_aux->A->Store = NULL;
 
     slu_aux->Gstat = (Gstat_t *)malloc(sizeof(Gstat_t));
     slu_aux->slu_options = (superlumt_options_t *)malloc(sizeof(superlumt_options_t));
 
-    if (!slu_aux->Gstat) {SUPERLU_ABORT("Malloc failed for doublecomplex Gstat.");}
-    if (!slu_aux->slu_options) {SUPERLU_ABORT("Malloc failed for doublecomplex slu_options.");}
+    if (!slu_aux->Gstat) {SUPERLU_ABORT("Malloc failed for double Gstat.");}
+    if (!slu_aux->slu_options) {SUPERLU_ABORT("Malloc failed for double slu_options.");}
 
     slu_aux->fact = DOFACT; /* if factorized matrix is being supplied, if not: how to factorize */
     /* other option: EQUIBRILATE: Scale row/colums to unit norm; good if matrix is poorly scaled? */
@@ -75,24 +73,22 @@ SuperLU_aux_z* superlu_init_z(int nprocs, int n, int nnz){
 
     slu_aux->perm_r = intMalloc(slu_aux->n);
     slu_aux->perm_c = intMalloc(slu_aux->n);
-    slu_aux->rhs = doublecomplexMalloc(slu_aux->n);
 
-    if (!slu_aux->perm_r) {SUPERLU_ABORT("Malloc failed for doublecomplex perm_r[].");}
-    if (!slu_aux->perm_c) {SUPERLU_ABORT("Malloc failed for doublecomplex perm_c[].");}
-    if (!slu_aux->rhs)    {SUPERLU_ABORT("Malloc failed for doublecomplex rhs[].");}
+    if (!slu_aux->perm_r) {SUPERLU_ABORT("Malloc failed for double perm_r[].");}
+    if (!slu_aux->perm_c) {SUPERLU_ABORT("Malloc failed for double perm_c[].");}
 
-    zCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, slu_aux->rhs, slu_aux->n, SLU_DN, SLU_Z, SLU_GE);
+    dCreate_Dense_Matrix(slu_aux->B, slu_aux->n, 1, NULL, slu_aux->n, SLU_DN, SLU_D, SLU_GE);
 
     /* allocate memory for storing matrix of linear system */
     /* min(nnz_jac + n, n*n) is upper bound on storage requirement of linear system */
-    slu_aux->data_sys = doublecomplexMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
-    if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for doublecomplex data_sys[].");}
+    slu_aux->data_sys = doubleMalloc(min(slu_aux->nnz_jac + slu_aux->n, n*n));
+    if (!slu_aux->data_sys)    {SUPERLU_ABORT("Malloc fails for double data_sys[].");}
 
     return slu_aux;
 }
 
 /* Setting up the matrix to be factorized */
-int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
+int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
                     int fresh_jacobian, int jac_nnz){
     int i, j, current_idx;
@@ -103,27 +99,24 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
     slu_aux -> nnz_jac = jac_nnz;
 
     current_idx = 0;
-
-    /* build system matrix (scale_r + i*scale_i) * I - JAC */
-    /* Copy jacobian data to slu_aux structure & scale diagonal */
+    /* build system matrix scale * I - JAC */
+    /* Copy jacobian data to slu_aux struct */
     slu_aux->indices_sys = indices_J;
     slu_aux->indptr_sys = indptr_J;
 
     for (i = 0; i < slu_aux-> n; i++){
         for (j = indptr_J[i]; j < indptr_J[i+1]; j++){
-            slu_aux->data_sys[current_idx].r = -data_J[current_idx];
-            slu_aux->data_sys[current_idx].i = 0;
+            slu_aux->data_sys[current_idx] = -data_J[current_idx];
             if (i == indices_J[current_idx]){
-                slu_aux->data_sys[current_idx].r = slu_aux->data_sys[current_idx].r + scale_r;
-                slu_aux->data_sys[current_idx].i = scale_i;
+                slu_aux->data_sys[current_idx] = slu_aux->data_sys[current_idx] + scale;
             }
             current_idx++;
         }
     }
-    
-    zCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_jac,
+
+    dCreate_CompCol_Matrix(slu_aux->A, slu_aux->n, slu_aux->n, slu_aux->nnz_jac,
                            slu_aux->data_sys, slu_aux->indices_sys, slu_aux->indptr_sys,
-                           SLU_NC, SLU_Z, SLU_GE);
+                           SLU_NC, SLU_D, SLU_GE);
 
     if (fresh_jacobian){
         get_perm_c(3, slu_aux->A, slu_aux->perm_c); /* 3 = approximate minimum degree for unsymmetrical matrices */
@@ -136,7 +129,7 @@ int superlu_setup_z(SuperLU_aux_z *slu_aux, double scale_r, double scale_i,
 }
 
 /* Factorize matrix */
-int superlu_factorize_z(SuperLU_aux_z* slu_aux){
+int superlu_factorize_d(SuperLU_aux_d *slu_aux){
     int info;
     /* clean up memory in case of re-factorization */
     if (slu_aux->fact_done){
@@ -162,37 +155,30 @@ int superlu_factorize_z(SuperLU_aux_z* slu_aux){
         }
     }
     /* initialize options */
-    pzgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
+    pdgstrf_init(slu_aux->nprocs, slu_aux->fact, slu_aux->trans, slu_aux->refact, slu_aux->panel_size, slu_aux->relax,
                  slu_aux->diag_pivot_thresh, slu_aux->usepr, slu_aux->drop_tol, slu_aux->perm_c, slu_aux->perm_r,
                  slu_aux->work, slu_aux->lwork, slu_aux->A, slu_aux->AC, slu_aux->slu_options, slu_aux->Gstat);
     /* Factorization */
-    pzgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info);
+    pdgstrf(slu_aux->slu_options, slu_aux->AC, slu_aux->perm_r, slu_aux->L, slu_aux->U, slu_aux->Gstat, &info);
     slu_aux->refact = YES;
     slu_aux->fact_done = 1;
     return info;
 }
 
 /* Solve linear system based on previous factorization */
-int superlu_solve_z(SuperLU_aux_z* slu_aux, double *rhs_r, double* rhs_i){
-    int i, n, info;
-    n = slu_aux->n;
+int superlu_solve_d(SuperLU_aux_d *slu_aux, double *rhs){
+    int info;
+    DNformat *Bstore;
 
-    for(i = 0; i < n; i++){ /* copy to complex data structure */
-        slu_aux->rhs[i].r = rhs_r[i];
-        slu_aux->rhs[i].i = rhs_i[i];
-    }
+    Bstore = (DNformat *) slu_aux->B->Store;
+    Bstore->nzval = rhs;
     /* Solve */
-    zgstrs(slu_aux->trans, slu_aux->L, slu_aux->U, slu_aux->perm_r, slu_aux->perm_c, slu_aux->B, slu_aux->Gstat, &info);
-
-    for(i = 0; i < n; i++){ /* copy back to real data structures */
-        rhs_r[i] = slu_aux->rhs[i].r;
-        rhs_i[i] = slu_aux->rhs[i].i;
-    }
+    dgstrs(slu_aux->trans, slu_aux->L, slu_aux->U, slu_aux->perm_r, slu_aux->perm_c, slu_aux->B, slu_aux->Gstat, &info);
     return info;
 }
 
 /* de-allocate memory */
-int superlu_finalize_z(SuperLU_aux_z* slu_aux){
+int superlu_finalize_d(SuperLU_aux_d *slu_aux){
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);
 
@@ -207,7 +193,7 @@ int superlu_finalize_z(SuperLU_aux_z* slu_aux){
     if (slu_aux->fact_done){
         SCPformat *LStore = slu_aux->L->Store;
         NCPformat *UStore = slu_aux->U->Store;
-        
+            
         SUPERLU_FREE(LStore->col_to_sup);
         SUPERLU_FREE(LStore->sup_to_colbeg);
         SUPERLU_FREE(LStore->sup_to_colend);
@@ -229,7 +215,6 @@ int superlu_finalize_z(SuperLU_aux_z* slu_aux){
     free(slu_aux->AC);
     free(slu_aux->Gstat);
     free(slu_aux->slu_options);
-    free(slu_aux->rhs);
     free(slu_aux->work);
     free(slu_aux);
     return 0;

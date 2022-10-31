@@ -94,7 +94,7 @@ if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[
 
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
-thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3"] 
+thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3","radau5"] 
 
 class Assimulo_prepare(object):
 # helper functions
@@ -508,17 +508,17 @@ class Assimulo_prepare(object):
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
 
-        ## Radau
+        ## Radau5
         if self.with_SLU:
-            ext_list += cythonize([os.path.join("assimulo","thirdparty","hairer","radau5_c_py.pyx")],
+            ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
                                 include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
                                 force = True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
-                                        os.path.join("assimulo","thirdparty","hairer"),
+                                        os.path.join("assimulo","thirdparty","radau5"),
                                         self.incdirs, self.SLUincdir]
-            extra_sources = ["radau_decsol_c.c", "radau5_superlu_double.c", "radau5_superlu_complex.c", "superlu_util.c"]
-            ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","hairer", file) for file in extra_sources]
-            ext_list[-1].name = "assimulo.lib.radau5_c_py"
+            extra_sources = ["radau5_c.c", "superlu_double.c", "superlu_complex.c", "superlu_util.c"]
+            ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","radau5", file) for file in extra_sources]
+            ext_list[-1].name = "assimulo.lib.radau5ode"
             if 'win' in self.platform:
                 ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.libdirs]
                 ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']

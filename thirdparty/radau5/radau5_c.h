@@ -1,8 +1,8 @@
-#ifndef RADAU_DECSOL_C_H
-#define RADAU_DECSOL_C_H
+#ifndef RADAU5_C_H
+#define RADAU5_C_H
 
-#include "radau5_superlu_double.h"
-#include "radau5_superlu_complex.h"
+#include "superlu_double.h"
+#include "superlu_complex.h"
 #include "superlu_util.h"
 
 #define TRUE_ (1)

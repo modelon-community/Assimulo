@@ -18,17 +18,17 @@
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
-cdef extern from "radau5_superlu_double.h":
+cdef extern from "superlu_double.h":
     ctypedef struct SuperLU_aux_d
     SuperLU_aux_d* superlu_init_d(int, int, int)
     int superlu_finalize_d(SuperLU_aux_d*)
 
-cdef extern from "radau5_superlu_complex.h":
+cdef extern from "superlu_complex.h":
     ctypedef struct SuperLU_aux_z
     SuperLU_aux_z* superlu_init_z(int, int, int)
     int superlu_finalize_z(SuperLU_aux_z*)
 
-cdef extern from "radau_decsol_c.h":
+cdef extern from "radau5_c.h":
     ctypedef struct Radau_SuperLU_aux
     ctypedef struct radau_mem_t
 

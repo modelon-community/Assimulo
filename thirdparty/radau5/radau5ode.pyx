@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-cimport radau5_c_py
+cimport radau5ode # .pxd
 cimport cython
 
 import numpy as np
@@ -255,7 +255,7 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
     cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
-    ret = radau5_c_py.radau5_c(rad_memory.rmem, n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+    ret = radau5ode.radau5_c(rad_memory.rmem, n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
                         &ijac, sparse_LU, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
                         &idid, aux_class.radau_slu_aux if sparse_LU else NULL)
@@ -282,4 +282,4 @@ cpdef contr5(int i__, double x, np.ndarray cont):
     """
     cdef int lrc = len(cont)
     cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
-    return radau5_c_py.contr5_c(&i__, &x, &cont_vec[0], &lrc)
+    return radau5ode.contr5_c(&i__, &x, &cont_vec[0], &lrc)
