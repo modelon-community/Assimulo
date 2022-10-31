@@ -565,13 +565,14 @@ class Assimulo_prepare(object):
         Adds the Fortran extensions using Numpy's distutils extension.
         """
         extra_link_flags = self.static_link_gfortran + self.static_link_gcc + self.flag_32bit + self.extra_fortran_link_flags
-        extra_compile_flags = self.flag_32bit + self.extra_c_flags + self.extra_fortran_compile_flags
-        
+        extra_compile_flags = self.flag_32bit + self.extra_c_flags
+        extra_fortran_compile_flags = self.flag_32bit + self.extra_fortran_compile_flags
+
         config = np.distutils.misc_util.Configuration()
         extraargs={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:]}
-                  
-        extraargs['extra_f77_compile_args'] = extra_compile_flags[:]
-        extraargs['extra_f90_compile_args'] = extra_compile_flags[:]
+
+        extraargs['extra_f77_compile_args'] = extra_fortran_compile_flags[:]
+        extraargs['extra_f90_compile_args'] = extra_fortran_compile_flags[:]
     
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
@@ -595,7 +596,7 @@ class Assimulo_prepare(object):
         config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
     
         dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
-        dasp3_f77_compile_flags += extra_compile_flags
+        dasp3_f77_compile_flags += extra_fortran_compile_flags
         
         #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1
         dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
@@ -603,14 +604,14 @@ class Assimulo_prepare(object):
         config.add_extension('assimulo.lib.dasp3dp',
                               sources= src,
                               include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
-                              extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_compile_flags[:])
+                              extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_fortran_compile_flags[:])
     
         #GLIMDA
         glimda_list = ['glimda_complete.f','glimda_complete.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
         if self.with_BLAS and self.with_LAPACK:
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', self.BLASname]}
-            extraargs_glimda["extra_f77_compile_args"] = extra_compile_flags[:]
+            extraargs_glimda["extra_f77_compile_args"] = extra_fortran_compile_flags[:]
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA
         elif self.with_MKL: #assuming windows and Intel fortran compiler
