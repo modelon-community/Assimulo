@@ -192,7 +192,10 @@ int superlu_solve_z(SuperLU_aux_z* slu_aux, double *rhs_r, double* rhs_i){
 }
 
 /* de-allocate memory */
-int superlu_finalize_z(SuperLU_aux_z* slu_aux){
+void superlu_finalize_z(SuperLU_aux_z* slu_aux){
+    if (!slu_aux){
+        return;
+    }
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);
 
@@ -232,5 +235,4 @@ int superlu_finalize_z(SuperLU_aux_z* slu_aux){
     free(slu_aux->rhs);
     free(slu_aux->work);
     free(slu_aux);
-    return 0;
 }

@@ -18,16 +18,6 @@
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
-cdef extern from "superlu_double.h":
-    ctypedef struct SuperLU_aux_d
-    SuperLU_aux_d* superlu_init_d(int, int, int)
-    int superlu_finalize_d(SuperLU_aux_d*)
-
-cdef extern from "superlu_complex.h":
-    ctypedef struct SuperLU_aux_z
-    SuperLU_aux_z* superlu_init_z(int, int, int)
-    int superlu_finalize_z(SuperLU_aux_z*)
-
 cdef extern from "radau5_c.h":
     ctypedef struct Radau_SuperLU_aux
     ctypedef struct radau_mem_t
@@ -46,18 +36,15 @@ cdef extern from "radau5_c.h":
                                 int*, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*)
 
-    void *setup_radau_mem(int n)
-    void free_radau_mem(void **radau_mem)
+    int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
 
     int radau5_c(void*, int, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*, int*,
 			 FP_CB_jac, FP_CB_jac_sparse, void*, int*, int,
 			 FP_CB_solout, void*, int*,
-			 double*, int*, int*, int*, int*,
-			 Radau_SuperLU_aux*)
+			 double*, int*, int*, int*, int*)
 
     double contr5_c(int*, double*, double*, int*)
 
-    Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int, int*);
-    int radau_superlu_aux_finalize(Radau_SuperLU_aux*);
+    void free_radau_mem(void **radau_mem)

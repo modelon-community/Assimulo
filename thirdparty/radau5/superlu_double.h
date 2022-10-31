@@ -10,6 +10,6 @@ SuperLU_aux_d* superlu_init_d(int, int, int);
 int superlu_setup_d(SuperLU_aux_d*, double, double *, int *, int *, int, int);
 int superlu_factorize_d(SuperLU_aux_d*);
 int superlu_solve_d(SuperLU_aux_d*, double *);
-int superlu_finalize_d(SuperLU_aux_d*);
+void superlu_finalize_d(SuperLU_aux_d*);
 
 #endif

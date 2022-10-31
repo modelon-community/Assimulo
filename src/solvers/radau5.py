@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from importlib.resources import read_text
 import numpy as N
 import scipy as S
 import scipy.sparse as sp
@@ -169,9 +170,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         except Exception:
             raise Radau_Exception("Failed to import the Radau5 solver.") from None
 
-        self.rad_memory = self.radau5.RadauMemory()
-        self.rad_memory.initialize(self.problem_info["dim"])
-
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         
@@ -179,8 +177,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if not self.usejac:
                 self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", LOUD)
                 self.linear_solver = "DENSE"
-                return
 
+        ## sanity checks on sparse solver inputs
+        if self.options["linear_solver"] == "SPARSE":
             if not isinstance(self.problem_info["jac_fcn_nnz"], int):
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be an integer, received: {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] < 0:
@@ -189,12 +188,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
-            
-            ## initialize necessary superLU datastructures
-            self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
-            ret_flag = self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
-            if ret_flag:
-                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure. Is SUPERLU installed? Error code = {}.".format(ret_flag))
+
+        self.rad_memory = self.radau5.RadauMemory()
+        sparseLU = int(self.options["linear_solver"] == "SPARSE")
+        ret = self.rad_memory.initialize(self.problem_info["dim"], sparseLU, self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
+        if ret < 0:
+            raise Radau_Exception("Failed to initialize RadauSuperLUaux structure. Is SUPERLU installed? Error code = {}.".format(ret))
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -339,8 +338,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
         t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                     ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
-                                                    IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux(),
-                                                    self.rad_memory)
+                                                    IOUT, WORK, IWORK, self.rad_memory)
 
         #Checking return
         if flag == 1:
@@ -383,15 +381,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
 
     def finalize(self):
         """
-        Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
+        Called after simulation is done, de-allocate memory internally to the called C solver.
         """
-        if hasattr(self, 'radau_mem'):
-            self.radau_mem.finalize()
-
-        if hasattr(self, 'RadauSuperLUaux'):
-            flag = self.RadauSuperLUaux.finalize()
-            if flag != 0:
-                Radau_Exception("Failure in freeing memory of SuperLU datastructures.")
+        self.rad_memory.finalize()
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
     """
