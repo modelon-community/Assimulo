@@ -1,9 +1,11 @@
-#ifndef RADAU5_C_H
-#define RADAU5_C_H
+#ifndef _RADAU5_C_H
+#define _RADAU5_C_H
 
+#ifdef __RADAU5_WITH_SUPERLU
 #include "superlu_double.h"
 #include "superlu_complex.h"
 #include "superlu_util.h"
+#endif /*__RADAU5_WITH_SUPERLU*/
 
 #define TRUE_ (1)
 #define FALSE_ (0)
@@ -26,10 +28,7 @@
 #define RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE       -9
 #define RADAU_ERROR_UNRECOVERABLE_CALLBACK_ERROR    -10
 
-#define RADAU_SUPERLU_INVALID_INPUT_N             -1
-#define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
-#define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
-#define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
+#define RADAU_ERROR_SUPERLU_NOT_ENABLED             -100
 
 #define RADAU_CALLBACK_OK                        0
 #define RADAU_CALLBACK_ERROR_RECOVERABLE        -1
@@ -40,6 +39,7 @@
 
 #define RADAU_OK 0
 
+#ifdef __RADAU5_WITH_SUPERLU
 struct Radau_SuperLU_aux{
     int n, nnz, nprocs; 
 
@@ -55,6 +55,9 @@ struct Radau_SuperLU_aux{
     SuperLU_aux_z *slu_aux_z;
 };
 typedef struct Radau_SuperLU_aux Radau_SuperLU_aux;
+#else /*__RADAU5_WITH_SUPERLU*/
+typedef void Radau_SuperLU_aux;
+#endif /*__RADAU5_WITH_SUPERLU*/
 
 struct radau_mem_t{
 	double *work; /* base work parameters; TODO */
@@ -141,7 +144,12 @@ int estrad_(int n, double *h__,
 	double *scal, double *err, int *first, int *reject, 
 	Radau_SuperLU_aux *radau_slu_aux, int *ier);
 
+#define RADAU_SUPERLU_INVALID_INPUT_N             -1
+#define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
+#define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
+#define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
+
 Radau_SuperLU_aux* radau_superlu_aux_setup(int, int, int, int*);
 int radau_superlu_aux_finalize(Radau_SuperLU_aux*);
 
-#endif
+#endif /*_RADAU5_C_H*/

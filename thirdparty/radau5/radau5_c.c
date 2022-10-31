@@ -291,8 +291,17 @@ int radau5_c(void* radau_mem, int n, FP_CB_f fcn, void* fcn_PY,
 /*        SETTING THE PARAMETERS */
 /* *** *** *** *** *** *** *** */
 	if (!radau_mem){
-		printf(" RADAU_MEM not setup properly\n");
+		printf("RADAU_MEM not setup properly.\n");
 		return RADAU_ERROR_INCONSISTENT_INPUT;
+	}
+
+	if (sparse_LU){
+		#ifndef __RADAU5_WITH_SUPERLU
+			printf("SUPERLU support not enabled.\n");
+			return RADAU_ERROR_SUPERLU_NOT_ENABLED;
+		#else /*__RADAU5_WITH_SUPERLU*/
+			;
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}
 
     /* Parameter adjustments */
@@ -675,6 +684,7 @@ L10:
     } else {
 		/* --- COMPUTE JACOBIAN MATRIX ANALYTICALLY */
 		if (sparse_LU){
+			#ifdef __RADAU5_WITH_SUPERLU
 			radau_slu_aux->nnz_actual = radau_slu_aux->nnz;
 			ier = (*jac_sparse)(n, x, &y[1], &(radau_slu_aux->nnz_actual), radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, jac_PY);
 			if (ier != RADAU_CALLBACK_OK){
@@ -685,6 +695,7 @@ L10:
 				goto L183;
 			}
 			radau_slu_aux->fresh_jacobian = 1;
+			#endif /*__RADAU5_WITH_SUPERLU*/
 		} else {
 			ier = (*jac)(n, x, &y[1], &fjac[1 + n], jac_PY);
 			if (ier != RADAU_CALLBACK_OK){
@@ -711,7 +722,9 @@ L20:
 		goto L185;
     }
 	if (sparse_LU){
-		radau_slu_aux->fresh_jacobian = 0; /* has once been used to create a decomposition now */
+		#ifdef __RADAU5_WITH_SUPERLU
+			radau_slu_aux->fresh_jacobian = 0; /* has once been used to create a decomposition now */
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}
     ++(*ndec);
 /* --- COMPUTE STEPSIZE */
@@ -1000,7 +1013,9 @@ L78:
 /* --- UNEXPECTED STEP-REJECTION */
 L79:
 	if (ier < RADAU_CALLBACK_ERROR_INVALID_NNZ){
-		printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ier - RADAU_CALLBACK_ERROR_INVALID_NNZ));
+		#ifdef __RADAU5_WITH_SUPERLU
+			printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", radau_slu_aux->nnz, -(ier - RADAU_CALLBACK_ERROR_INVALID_NNZ));
+		#endif /*__RADAU5_WITH_SUPERLU*/
 		return RADAU_ERROR_NNZ_TOO_SMALL;
 	}
 
@@ -1053,10 +1068,12 @@ L182:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
 	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
 	return RADAU_ERROR_WRONG_SPARSE_JAC_FORMAT;
-L183:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("UNEXPECTED MALLOC FAILURE\n");
-	return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
+#ifdef __RADAU5_WITH_SUPERLU /* TODO */
+	L183:
+		printf("EXIT OF RADAU5 AT X = %e \n", *x);
+		printf("UNEXPECTED MALLOC FAILURE\n");
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
+#endif /*__RADAU5_WITH_SUPERLU*/
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
@@ -1450,8 +1467,10 @@ int decomr_(int n, double *fjac,double *fac1, double *e1,
     static int i, j;
 
 	if(sparse_LU){
-		superlu_setup_d(radau_slu_aux->slu_aux_d, *fac1, radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, radau_slu_aux->fresh_jacobian, radau_slu_aux->nnz_actual);
-		*ier = superlu_factorize_d(radau_slu_aux->slu_aux_d);
+		#ifdef __RADAU5_WITH_SUPERLU
+			superlu_setup_d(radau_slu_aux->slu_aux_d, *fac1, radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, radau_slu_aux->fresh_jacobian, radau_slu_aux->nnz_actual);
+			*ier = superlu_factorize_d(radau_slu_aux->slu_aux_d);
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
 		for (j = 1; j <= n; ++j) {
 			for (i = 1; i <= n; ++i) {
@@ -1472,8 +1491,10 @@ int decomc_(int n, double *fjac, double *alphn, double *betan,
     static int i, j;
 
 	if (sparse_LU){
+		#ifdef __RADAU5_WITH_SUPERLU
 		superlu_setup_z(radau_slu_aux->slu_aux_z, *alphn, *betan, radau_slu_aux->jac_data, radau_slu_aux->jac_indices, radau_slu_aux->jac_indptr, radau_slu_aux->fresh_jacobian, radau_slu_aux->nnz_actual);
 		*ier = superlu_factorize_z(radau_slu_aux->slu_aux_z);
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
 		for (j = 1; j <= n; ++j) {
 			for (i = 1; i <= n; ++i) {
@@ -1509,11 +1530,13 @@ int slvrad_(int n, double *fac1, double *alphn, double *betan,
     }
 
 	if (sparse_LU){
-		ier = superlu_solve_d(radau_slu_aux->slu_aux_d, z1);
-		if (ier != 0) {
-			return ier;
-		}
-		ier = superlu_solve_z(radau_slu_aux->slu_aux_z, z2, z3);
+		#ifdef __RADAU5_WITH_SUPERLU
+			ier = superlu_solve_d(radau_slu_aux->slu_aux_d, z1);
+			if (ier != 0) {
+				return ier;
+			}
+			ier = superlu_solve_z(radau_slu_aux->slu_aux_z, z2, z3);
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
 		sol_(n, e1, z1, ip1);
     	solc_(n, e2r, e2i, z2, z3, ip2);
@@ -1546,10 +1569,12 @@ int estrad_(int n, double *h__,
 	}
 
 	if (sparse_LU){
-		*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
-		if (*ier){
-			return 0;
-		}
+		#ifdef __RADAU5_WITH_SUPERLU
+			*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
+			if (*ier){
+				return 0;
+			}
+		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
 		sol_(n, e1, cont, ip1);
 	}
@@ -1575,10 +1600,12 @@ int estrad_(int n, double *h__,
 		}
 
 		if (sparse_LU){
-			*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
-			if (*ier){
-				return 0;
-			}
+			#ifdef __RADAU5_WITH_SUPERLU
+				*ier = superlu_solve_d(radau_slu_aux->slu_aux_d, cont);
+				if (*ier){
+					return 0;
+				}
+			#endif /*__RADAU5_WITH_SUPERLU*/
 		}else{
 			sol_(n, e1, cont, ip1);
 		}
@@ -1593,7 +1620,7 @@ int estrad_(int n, double *h__,
     return 0;
 } /* estrad_ */
 
-
+#ifdef __RADAU5_WITH_SUPERLU
 Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs, int* info){
 	Radau_SuperLU_aux *radau_slu_aux = malloc(sizeof(Radau_SuperLU_aux));
 	*info = 0;
@@ -1622,7 +1649,14 @@ Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs, int* info
 
 	return radau_slu_aux;
 }
+#else
+Radau_SuperLU_aux* radau_superlu_aux_setup(int n, int nnz, int nprocs, int* info){
+	*info = RADAU_ERROR_SUPERLU_NOT_ENABLED;
+	return NULL;
+}
+#endif /*__RADAU5_WITH_SUPERLU*/
 
+#ifdef __RADAU5_WITH_SUPERLU
 int radau_superlu_aux_finalize(Radau_SuperLU_aux *radau_slu_aux){
 	free(radau_slu_aux->jac_data);
 	free(radau_slu_aux->jac_indices);
@@ -1634,6 +1668,11 @@ int radau_superlu_aux_finalize(Radau_SuperLU_aux *radau_slu_aux){
 	free(radau_slu_aux);
 	return 0;
 }
+#else
+int radau_superlu_aux_finalize(Radau_SuperLU_aux *radau_slu_aux){
+	return 0;
+}
+#endif /*__RADAU5_WITH_SUPERLU*/
 
 void *setup_radau_mem(int n){
 	radau_mem_t *rmem;

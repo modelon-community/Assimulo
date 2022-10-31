@@ -177,7 +177,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.options["linear_solver"] == "SPARSE":
             if not self.usejac:
-                self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", NORMAL)
+                self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", LOUD)
                 self.linear_solver = "DENSE"
                 return
 
@@ -194,7 +194,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
             ret_flag = self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
             if ret_flag:
-                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure, error code = {}.".format(ret_flag))
+                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure. Is SUPERLU installed? Error code = {}.".format(ret_flag))
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:

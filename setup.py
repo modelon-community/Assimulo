@@ -325,7 +325,7 @@ class Assimulo_prepare(object):
         Check if SuperLU package installed
         """
         self.with_SLU = True
-        sundials_msg='SUNDIALS will not be compiled with support for SuperLU'
+        slu_missing_msg='SUNDIALS&Radau5 will not be compiled with support for SuperLU.'
         
         if self.SLUdir != "":    
             self.SLUincdir = os.path.join(self.SLUdir,'SRC')
@@ -337,7 +337,7 @@ class Assimulo_prepare(object):
                 L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
                 L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
                 L.debug("usage: --superlu-home path")
-                L.debug(sundials_msg+'.')
+                L.debug(slu_missing_msg)
             else:
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
@@ -366,7 +366,7 @@ class Assimulo_prepare(object):
             
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
-            L.debug("No path to SuperLU supplied, SUNDIALS will not be compiled with support for SuperLU.")
+            L.debug("No path to SuperLU supplied, SUNDIALS&Radau5 will not be compiled with support for SuperLU.")
             L.debug("usage: --superlu-home=path")
             L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
             self.with_SLU = False
@@ -509,25 +509,31 @@ class Assimulo_prepare(object):
                 ext_list[-1].libraries.extend(self.superLUFiles)
 
         ## Radau5
+        ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
+                            include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                            force = True)
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
+                                    os.path.join("assimulo","thirdparty","radau5"),
+                                    self.incdirs]
+        extra_sources = ["radau5_c.c"]
         if self.with_SLU:
-            ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
-                                include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
-                                force = True)
-            ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
-                                        os.path.join("assimulo","thirdparty","radau5"),
-                                        self.incdirs, self.SLUincdir]
-            extra_sources = ["radau5_c.c", "superlu_double.c", "superlu_complex.c", "superlu_util.c"]
-            ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","radau5", file) for file in extra_sources]
-            ext_list[-1].name = "assimulo.lib.radau5ode"
+            ext_list[-1].include_dirs += [self.SLUincdir]
+            extra_sources += ["superlu_double.c", "superlu_complex.c", "superlu_util.c"]
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","radau5", file) for file in extra_sources]
+        ext_list[-1].name = "assimulo.lib.radau5ode"
+
+        if self.with_SLU:
             if 'win' in self.platform:
                 ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.libdirs]
                 ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']
-                ext_list[-1].extra_compile_args += ["-D__OPENMP"]
+                ext_list[-1].extra_compile_args += ["-D__OPENMP", "-D__RADAU5_WITH_SUPERLU"]
             else:
                 ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
                 ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
+                ext_list[-1].extra_compile_args = ["-D__RADAU5_WITH_SUPERLU"]
         else:
-            L.warning("Radau5 C solver will not be supported due to SuperLU not being supplied.")
+            if 'win' not in self.platform:
+                ext_list[-1].libraries = ['m']
         
         for el in ext_list:
             #Debug
