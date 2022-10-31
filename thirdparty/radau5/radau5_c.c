@@ -154,25 +154,25 @@ int radau5_c(void* radau_mem, int n, FP_CB_f fcn, void* fcn_PY,
 	FP_CB_solout solout, void* solout_PY, int *iout,
 	double *work, int *lwork, int *iwork, int *liwork, int *idid)
 {
-    static int i, nit;
-    static double facl;
-    static int ndec, njac;
-    static double facr, safe;
-    static int nfcn;
-    static int pred;
-    static double hmax;
-    static int nmax;
-    static double thet, expm;
-    static int nsol;
-    static double quot;
-    static double quot1, quot2;
-    static double fnewt;
-    static int nstep;
-    static double tolst;
-    static int naccpt;
-    static int nrejct;
-    static int startn;
-    static double uround;
+    int i, nit;
+    double facl;
+    int ndec, njac;
+    double facr, safe;
+    int nfcn;
+    int pred;
+    double hmax;
+    int nmax;
+    double thet, expm;
+    int nsol;
+    double quot;
+    double quot1, quot2;
+    double fnewt;
+    int nstep;
+    double tolst;
+    int naccpt;
+    int nrejct;
+    int startn;
+    double uround;
 	int radcor_ret = 0;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 /* ---------------------------------------------------------- */
@@ -609,36 +609,35 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_PY,
 	double *werr)
 {
     double d__1;
-
-    static int i, j;
-    static double a1, a2, c1, c2, a3;
-    static int n2, n3;
-    static double u1;
-    static int nunexpect;
-    static double ak;
-    static double qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
+    int i, j;
+    double a1, a2, c1, c2, a3;
+    int n2, n3;
+    double u1;
+    int nunexpect;
+    double ak;
+    double qt, dd1, dd2, dd3, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
 	    c2q, c3q, z1i, z2i, z3i, sq6, fac, cno;
-    static int lrc;
-    static int ier;
-    static double xph, thq, err, fac1, cfac, hacc, c1mc2, beta;
-    static double alph, hold;
-    static double delt, hnew;
-    static int last;
-    static double hopt, xold;
-    static int newt;
-    static double dyno, dyth, quot, hhfac, betan, alphn, theta, 
-	    ysafe, hmaxn;
-    static int nsing;
-    static int first;
-    static int irtrn, nrsol, nsolu;
-    static double qnewt, xosol, acont3;
+    int lrc;
+    int ier;
+    double xph, thq, err, fac1, cfac, c1mc2, beta;
+    double alph, hold;
+    double delt, hnew;
+    int last;
+    double hopt, xold;
+    int newt;
+    double dyno, dyth, quot, hhfac, betan, alphn, theta, ysafe, hmaxn;
+    int nsing;
+    int first;
+    int irtrn, nrsol, nsolu;
+    double qnewt, xosol, acont3;
+    double faccon;
+    int reject;
+    double facgus;
+    double posneg;
+
+	/* TODO: replace static variables */
+	static double hacc, dynold, erracc, thqold;
 	static int caljac;
-    static double faccon;
-    static double erracc;
-    static int reject;
-    static double facgus;
-    static double dynold, posneg;
-    static double thqold;
 	/* ---------------------------------------------------------- */
 	/*     CORE INTEGRATOR FOR RADAU5 */
 	/*     PARAMETERS SAME AS IN RADAU5 WITH WORKSPACE ADDED */
@@ -1201,7 +1200,7 @@ L179:
 double contr5_c(int *i, double *x, double *cont, int *lrc)
 {
     double ret_val;
-    static double s;
+    double s;
 	if(*lrc){;}; /* TODO: Remove; only here to remove "unused" warning */
 
 /* ---------------------------------------------------------- */
@@ -1222,9 +1221,9 @@ double contr5_c(int *i, double *x, double *cont, int *lrc)
 
 int dec_(int n, double *a, int *ip, int *ier)
 {
-    static int i, j, k, m;
-    static double t;
-    static int kp1;
+    int i, j, k, m;
+    double t;
+    int kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1309,9 +1308,9 @@ L80:
 
 int sol_(int n, double *a, double *b, int *ip)
 {
-    static int i, k, m;
-    static double t;
-    static int kb, km1, kp1;
+    int i, k, m;
+    double t;
+    int kb, km1, kp1;
 
 /* VERSION REAL DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1360,10 +1359,10 @@ L50:
 
 int decc_(int n, double *ar, double *ai, int *ip, int *ier)
 {
-    static int i, j, k, m;
-    static double ti, tr;
-    static int kp1;
-    static double den, prodi, prodr;
+    int i, j, k, m;
+    double ti, tr;
+    int kp1;
+    double den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1484,10 +1483,10 @@ L80:
 
 int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip)
 {
-    static int i, k, m, kb;
-    static double ti, tr;
-    static int km1, kp1;
-    static double den, prodi, prodr;
+    int i, k, m, kb;
+    double ti, tr;
+    int km1, kp1;
+    double den, prodi, prodr;
 
 /* VERSION COMPLEX DOUBLE PRECISION */
 /* ----------------------------------------------------------------------- */
@@ -1559,7 +1558,7 @@ L50:
 int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac,double *fac1, double *e1,
 	int *ip1, int *ier, int sparse_LU)
 {
-    static int i, j;
+    int i, j;
 
 	if(sparse_LU){
 		#ifdef __RADAU5_WITH_SUPERLU
@@ -1583,7 +1582,7 @@ int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double *alphn, double
 	double *e2r, double *e2i, int *ip2,
 	int *ier, int sparse_LU)
 {
-    static int i, j;
+    int i, j;
 
 	if (sparse_LU){
 		#ifdef __RADAU5_WITH_SUPERLU
@@ -1611,8 +1610,8 @@ int slvrad_(radau_mem_t *rmem, int n, double *fac1, double *alphn, double *betan
 	double *f1, double *f2, double *f3,
 	int *ip1, int *ip2, int sparse_LU)
 {
-    static int i;
-    static double s2, s3;
+    int i;
+    double s2, s3;
 	int ier = 0;
 
     for (i = 0; i < n; ++i) {
@@ -1649,8 +1648,8 @@ int estrad_(radau_mem_t *rmem, int n, double *h__,
 	double *f1, double *f2, int *ip1,
 	double *scal, double *err, int *first, int *reject, int *ier)
 {
-    static int i;
-    static double hee1, hee2, hee3;
+    int i;
+    double hee1, hee2, hee3;
 
     hee1 = *dd1 / *h__;
     hee2 = *dd2 / *h__;
