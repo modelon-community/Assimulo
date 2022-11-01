@@ -194,6 +194,11 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         ret = self.rad_memory.initialize(self.problem_info["dim"], sparseLU, self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
         if ret < 0:
             raise Radau_Exception("Failed to initialize RadauSuperLUaux structure. Is SUPERLU installed? Error code = {}.".format(ret))
+        # set parameters
+        ret = self.rad_memory.set_nmax(self.maxsteps)
+        if ret < 0: raise Radau5Error(ret)
+        ret = self.rad_memory.set_nmax_newton(self.newt)
+        if ret < 0: raise Radau5Error(ret)
             
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -306,7 +311,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         IOUT  = 1 #solout is called after every step
         WORK  = N.array([0.0]*20) #Work (double) vector
-        IWORK = N.array([0]*20,dtype=N.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -318,12 +322,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         WORK[7] = self.fac1
         WORK[8] = self.fac2
         
-        #Setting iwork options
-        IWORK[1] = self.maxsteps
-        IWORK[2] = self.newt
-
         #Dummy methods
-        mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
         
         #Check for initialization
@@ -334,11 +333,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-
-        sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
-        t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                    ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
-                                                    IOUT, WORK, IWORK, self.rad_memory)
+        self.rad_memory.reset_stats()
+        t, y, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                         ITOL, jac_dummy, IJAC, self._solout,
+                                         IOUT, WORK, self.rad_memory)
 
         #Checking return
         if flag == 1:
@@ -350,13 +348,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             raise Radau5Error(flag, t) from None
         
         #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcns"]        += iwork[13]
-        self.statistics["njacs"]        += iwork[14]
-        self.statistics["nfcnjacs"]    += (iwork[14]*self.problem_info["dim"] if not self.usejac else 0)
+        nfcns, njacs, _, nsteps, nerrfails, nlus, _ = self.rad_memory.get_stats()
+        self.statistics["nsteps"]      += nsteps
+        self.statistics["nfcns"]        += nfcns
+        self.statistics["njacs"]        += njacs
+        self.statistics["nfcnjacs"]    += (njacs*self.problem_info["dim"] if not self.usejac else 0)
         #self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["nerrfails"]     += iwork[17]
-        self.statistics["nlus"]         += iwork[18]
+        self.statistics["nerrfails"]     += nerrfails
+        self.statistics["nlus"]         += nlus
         
         return flag, self._tlist, self._ylist
     

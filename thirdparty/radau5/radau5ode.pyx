@@ -116,7 +116,33 @@ cdef class RadauMemory:
     cdef void* rmem
 
     cpdef int initialize(self, int n, int superLU, int nprocs, int nnz):
-        return setup_radau_mem(n, superLU, nprocs, nnz, &self.rmem)
+        """
+        n = problem size
+        superLU = 0 || 1, flag if using superLU
+        nprocs = number of processors/threads in superLU
+        nnz = number of non-zero elements with sparse LU
+        """
+        return radau5ode.setup_radau_mem(n, superLU, nprocs, nnz, &self.rmem)
+
+    cpdef int set_nmax(self, int val):
+        return radau5ode.radau_set_para_nmax(self.rmem, val)
+
+    cpdef int set_nmax_newton(self, int val):
+        return radau5ode.radau_set_para_nmax_newton(self.rmem, val)
+
+    cpdef int reset_stats(self):
+        """
+        Reset logged stats in Radau5
+        """
+        return radau5ode.reset_radau_stats(self.rmem)
+
+    cpdef list get_stats(self):
+        """
+        Return runtime stats logged in Radau5.
+        """
+        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
+        radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
+        return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
 
     cpdef void finalize(self):
         free_radau_mem(&self.rmem)
@@ -152,8 +178,8 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
 cpdef radau5(fcn_PY, double x, np.ndarray y,
              double xend, double h__, np.ndarray rtol, np.ndarray atol,
-             int itol, jac_PY, int ijac, int sparse_LU, solout_PY,
-             int iout, np.ndarray work, np.ndarray iwork,
+             int itol, jac_PY, int ijac, solout_PY,
+             int iout, np.ndarray work,
              RadauMemory rad_memory):
     """
     Python interface for calling the C based Radau solver
@@ -184,12 +210,6 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                         - Switch for Jacobian computation:
                           ijac == 0: C based finite differences
                           ijac == 1: Calls supplied 'jac_PY' function 
-
-            sparse_LU
-                        - Switch for sparse/dense LU decompositions:
-                          sparse_LU == 0: Dense LU
-                          sparse_LU == 1: Sparse LU
-
             solout_PY
                         - Callback function for logging solution of time-integration:
                           solout_PY(nrsol, told, t, y, cont, werr, lrc, irtrn)
@@ -207,8 +227,6 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                           iout == 1: solout_PY is called after each successful time-integration step
             work
                         - Advanced tuning parameters of Radau solver, see radau5_c.c for details
-            iwork
-                        - Advanced tuning parameters of Radau solver, see radau5_c.c for details
             rad_memory
                         - instance of RadauMemory, needs to be initialized via RadauMemory.initialize
         Returns::
@@ -217,34 +235,22 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                         - Final time for which a solution has been computed, x == xend, if succesful
             y
                         - Final solution
-            h__
-                        - Prediced size of last accepted step
-            iwork
-                        - Statistics about number of function calls etc, see radau_decsol.c for details
             idid
                         - Return flag, see radau_decsol.c for details (1 == Successful computation)
     """
-    # array lengthes, required for C call
-    cdef int n = len(y)
-    cdef int lwork = len(work)
-    cdef int liwork = len(iwork)
-    
     cdef int ret
     cdef int idid = 1
     
-    iwork_in = np.array(iwork, dtype = np.int32)
     cdef np.ndarray[double, mode="c", ndim=1] y_vec = y
     cdef np.ndarray[double, mode="c", ndim=1] rtol_vec = rtol
     cdef np.ndarray[double, mode="c", ndim=1] atol_vec = atol
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
-    cdef np.ndarray[int, mode="c", ndim=1] iwork_vec = iwork_in
 
-    ret = radau5ode.radau5_c(rad_memory.rmem, n, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
+    ret = radau5ode.radau5_c(rad_memory.rmem, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                         &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
-                        &ijac, sparse_LU, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &lwork, &iwork_vec[0], &liwork,
-                        &idid)
+                        &ijac, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &idid)
 
-    return x, y, h__, np.array(iwork_in, dtype = np.int32), ret
+    return x, y, ret
 
 cpdef contr5(int i__, double x, np.ndarray cont):
     """
