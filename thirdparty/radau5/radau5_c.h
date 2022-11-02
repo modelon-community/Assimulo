@@ -171,8 +171,7 @@ int radau_set_para_step_size_safety(void *radau_mem, double val);
 /* FP_CB = FunctionPointer_CallBack */
 typedef int (*FP_CB_f)(int, double, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
-typedef int (*FP_CB_solout)(int, double, double, double*,
-                            double*, int*, int*, void*);
+typedef int (*FP_CB_solout)(int, double, double, double*, double*, int*, int*, void*);
 typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
 
 int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,

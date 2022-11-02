@@ -30,9 +30,7 @@ cdef extern from "radau5_c.h":
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
     ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
-    ctypedef int (*FP_CB_solout)(int, double, double, double*,
-                                double*, double*, int*, int*,
-                                int*, void*)
+    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int*, int*, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
 
     int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
