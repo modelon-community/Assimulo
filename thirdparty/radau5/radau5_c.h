@@ -46,7 +46,9 @@
 
 /* Struct for linear solver related memory info */
 struct radau_linsol_mem_t{
-	int n, fresh_jacobian, sparseLU;
+	int n; /* problem size */
+	int LU_with_fresh_jac; /* flag to superLU, if jacobian is fresh */
+	int sparseLU; /* flag if using sparse solver */
 	double *jac; /* both dense and sparse */
 
 	/* DENSE */
@@ -100,9 +102,7 @@ struct radau_parameters_t{
 
 	/* INTERNAL PARAMETERS */
 
-	/* flag if computed jacobian is fresh */
-	/* various fallbacks react on this */
-	int jac_is_fresh;
+	int jac_is_fresh; /* flag if computed jacobian is fresh, used in fallbacks */
 	double h_old; /* previous step-size, used in predictive controller */
 	double dynold; /* newton related parameter */
 	double erracc; /* bound in predictive controller */
@@ -120,9 +120,10 @@ struct radau_math_const_t{
 	double c1, c2, c1mc2;
 	double dd1, dd2, dd3;
 	double u1, alph, beta;
+
+	double c1m1, c2m1;
 };
 typedef struct radau_math_const_t radau_math_const_t;
-
 struct radau_mem_t{
 	int n; /* problem size */
 
@@ -132,7 +133,7 @@ struct radau_mem_t{
 	double *y0;
 	double *scal;
 	double *f1, *f2, *f3; /* newton rhs */
-	double *con; /* interpolation*/
+	double *cont; /* interpolation*/
 
 	/* derived mathematical constants */
 	radau_math_const_t *mconst;
@@ -145,6 +146,10 @@ struct radau_mem_t{
 
 	/* solver statistics */
 	radau_stats_t *stats;
+
+	/* dense output */
+	double xsol;  /* latest solution point */
+	double hsol;  /* latest successful stepsize */
 };
 typedef struct radau_mem_t radau_mem_t;
 
@@ -164,25 +169,24 @@ int radau_set_para_pred_step_control(void *radau_mem, int val);
 int radau_set_para_step_size_safety(void *radau_mem, double val);
 
 /* FP_CB = FunctionPointer_CallBack */
-typedef int (*FP_CB_f)(int, double*, double*, double*, void*);
-typedef int (*FP_CB_jac)(int, double*, double*, double*, void*);
-typedef int (*FP_CB_solout)(int*, double*, double*, double*,
-                            double*, double*, int*, int*,
-                            int*, void*);
-typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*);
+typedef int (*FP_CB_f)(int, double, double*, double*, void*);
+typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
+typedef int (*FP_CB_solout)(int, double, double, double*,
+                            double*, int*, int*, void*);
+typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
 
-int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_PY,
+int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 			 double *x, double *y, double *xend, double *h__,
 			 double *rtol, double *atol,
-			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_PY, int *ijac,
-			 FP_CB_solout solout, void *solout_PY, int *iout,
+			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac,
+			 FP_CB_solout solout, void *solout_EXT, int *iout,
 			 double *work, int *idid);
 
-int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_PY,
+int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 			double *x, double *y, double *xend, double *hmax, double *h__,
 			double *rtol, double *atol,
-			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_PY, int *ijac,
-			FP_CB_solout solout, void *solout_PY, int *iout, int *idid,
+			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac,
+			FP_CB_solout solout, void *solout_EXT, int *iout, int *idid,
 			double *uround, double *thet,
 			double *fnewt, double *quot1, double *quot2,
 			double *facl, double *facr,
@@ -193,7 +197,8 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_PY,
 			int *ip1, int *ip2, double *cont,
 			double *werr);
 
-double contr5_c(int i, double x, double *cont);
+int radau_get_cont_output_single(void *radau_mem, int i, double x, double *out);
+int radau_get_cont_output(void *radau_mem, double x, double *out);
 
 int dec_(int n, double *a, int *ip, int *ier);
 int sol_(int n, double *a, double *b, int *ip);
@@ -201,12 +206,12 @@ int sol_(int n, double *a, double *b, int *ip);
 int decc_(int n, double *ar, double *ai, int *ip, int *ier);
 int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip);
 
-int decomr_(radau_linsol_mem_t *mem, int n, double *fjac, double *fac1, double *e1,
+int decomr_(radau_linsol_mem_t *mem, int n, double *fjac, double fac1, double *e1,
 	int *ip1, int *ier);
-int decomc_(radau_linsol_mem_t *mem, int n, double *fjac, double *alphn, double *betan,
+int decomc_(radau_linsol_mem_t *mem, int n, double *fjac, double alphn, double betan,
 	double *e2r, double *e2i, int *ip2, int *ier);
 
-int slvrad_(radau_mem_t *rmem, int n, double *fac1, double *alphn, double *betan, 
+int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
 	double *f1, double *f2, double *f3,
@@ -214,13 +219,13 @@ int slvrad_(radau_mem_t *rmem, int n, double *fac1, double *alphn, double *betan
 
 int estrad_(radau_mem_t *rmem, int n, double h,
 	double dd1, double dd2, double dd3,
-	FP_CB_f fcn, void *fcn_PY,
+	FP_CB_f fcn, void *fcn_EXT,
 	double *y0, double *y,
-	double *x,double *e1,
+	double x,double *e1,
 	double *z1, double *z2, double *z3,
 	double *cont, double *werr,
 	double *f1, double *f2, int *ip1,
-	double *err, int *first, int *reject);
+	double *err, int first, int reject);
 
 void free_radau_mem(void **radau_mem);
 void free_radau_linsol_mem(radau_linsol_mem_t **mem);

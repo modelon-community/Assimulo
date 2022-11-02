@@ -238,10 +238,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     
     def interpolate(self, time):
         y = N.empty(self._leny)
-        for i in range(self._leny):
-            # Note: index shift to Fortran based indices
-            y[i] = self.radau5.contr5(i, time, self.cont)
-        
+        self.rad_memory.interpolate(time, y)
         return y
         
     def get_weighted_local_errors(self):
@@ -250,11 +247,10 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         return N.abs(self._werr)
     
-    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, werr, irtrn):
         """
         This method is called after every successful step taken by Radau5
         """
-        self.cont = cont #Saved to be used by the interpolation function.
         self._werr = werr
         
         if self.problem_info["state_events"]:

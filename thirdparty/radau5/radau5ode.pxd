@@ -28,12 +28,12 @@ cdef extern from "radau5_c.h":
     int RADAU_CALLBACK_ERROR_INVALID_NNZ
 
     ## FunctionPointer_CallBack
-    ctypedef int (*FP_CB_f)(int, double*, double*, double*, void*)
-    ctypedef int (*FP_CB_jac)(int, double*, double*, double*, void*)
-    ctypedef int (*FP_CB_solout)(int*, double*, double*, double*,
+    ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
+    ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
+    ctypedef int (*FP_CB_solout)(int, double, double, double*,
                                 double*, double*, int*, int*,
                                 int*, void*)
-    ctypedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*, void*)
+    ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
 
     int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
 
@@ -52,6 +52,6 @@ cdef extern from "radau5_c.h":
 			 FP_CB_solout, void*, int*,
 			 double*, int*)
 
-    double contr5_c(int, double, double*)
+    int radau_get_cont_output(void *radau_mem, double x, double *out)
 
     void free_radau_mem(void **radau_mem)

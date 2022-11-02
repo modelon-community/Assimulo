@@ -24,6 +24,51 @@ import scipy.sparse as sps
 
 from numpy cimport PyArray_DATA
 
+cdef class RadauMemory:
+    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
+    cdef void* rmem
+    cdef int n
+
+    cpdef int initialize(self, int n, int superLU, int nprocs, int nnz):
+        """
+        n = problem size
+        superLU = 0 || 1, flag if using superLU
+        nprocs = number of processors/threads in superLU
+        nnz = number of non-zero elements with sparse LU
+        """
+        self.n = n
+        return radau5ode.setup_radau_mem(n, superLU, nprocs, nnz, &self.rmem)
+
+    cpdef int set_nmax(self, int val):
+        return radau5ode.radau_set_para_nmax(self.rmem, val)
+
+    cpdef int set_nmax_newton(self, int val):
+        return radau5ode.radau_set_para_nmax_newton(self.rmem, val)
+
+    cpdef int set_step_size_safety(self, double val):
+        return radau5ode.radau_set_para_step_size_safety(self.rmem, val)
+
+    cpdef int reset_internal(self):
+        """
+        Reset internal memory and stats in Radau5
+        """
+        return radau5ode.reset_radau_internal_mem(self.rmem)
+
+    cpdef int interpolate(self, double t, np.ndarray output_array):
+        cdef np.ndarray[double, ndim=1, mode="c"]output_array_c = output_array
+        return radau5ode.radau_get_cont_output(self.rmem, t, &output_array_c[0])
+
+    cpdef list get_stats(self):
+        """
+        Return runtime stats logged in Radau5.
+        """
+        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
+        radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
+        return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
+
+    cpdef void finalize(self):
+        free_radau_mem(&self.rmem)
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void py2c_d(double* dest, object source, int dim):
@@ -65,26 +110,26 @@ cdef void py2c_i(int* dest, object source, int dim):
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
-cdef int callback_fcn(int n, double* x, double* y_in, double* y_out, void* fcn_PY):
+cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY):
     """
     Internal callback function to enable call to Python based rhs function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
     c2py_d(y_py_in, y_in, n)
-    rhs, ret = (<object>fcn_PY)(x[0], y_py_in)
+    rhs, ret = (<object>fcn_PY)(x, y_py_in)
 
     py2c_d(y_out, rhs, len(rhs))
 
     # RADAU_CALLBACK_OK || RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
     return ret[0] 
 
-cdef int callback_jac(int n, double* x, double* y, double* fjac, void* jac_PY):
+cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py_in = np.empty(n, dtype = np.double)
     c2py_d(y_py_in, y, n)
-    J, ret = (<object>jac_PY)(x[0], y_py_in)
+    J, ret = (<object>jac_PY)(x, y_py_in)
 
     if ret[0]:
         return ret[0] # RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
@@ -92,72 +137,28 @@ cdef int callback_jac(int n, double* x, double* y, double* fjac, void* jac_PY):
     py2c_d_matrix_flat_F(fjac, J, J.shape[0], J.shape[1])
     return RADAU_CALLBACK_OK
 
-cdef int callback_solout(int* nrsol, double* xosol, double* xsol, double* y,
-                         double* cont, double* werr, int* lrc, int* nsolu,
-                         int* irtrn, void* solout_PY):
+cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
+                         double* werr, int* nsolu, int* irtrn, void* solout_PY):
     """
     Internal callback function to enable call to Python based solution output function from C
     """
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(nsolu[0], dtype = np.double)
-    cdef np.ndarray[double, ndim=1, mode="c"]cont_py = np.empty(4*nsolu[0], dtype = np.double)
     cdef np.ndarray[double, ndim=1, mode="c"]werr_py = np.empty(nsolu[0], dtype = np.double)
     c2py_d(y_py, y, nsolu[0])
-    c2py_d(cont_py, cont, 4*nsolu[0])
     c2py_d(werr_py, werr, nsolu[0])
 
-    irtrn[0] = (<object>solout_PY)(nrsol[0], xosol[0], xsol[0],
-                                   y_py, cont_py, werr_py,
-                                   lrc[0], irtrn[0])
+    irtrn[0] = (<object>solout_PY)(nrsol, xosol, xsol, y_py, werr_py, irtrn[0])
 
     return irtrn[0]
 
-cdef class RadauMemory:
-    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
-    cdef void* rmem
-
-    cpdef int initialize(self, int n, int superLU, int nprocs, int nnz):
-        """
-        n = problem size
-        superLU = 0 || 1, flag if using superLU
-        nprocs = number of processors/threads in superLU
-        nnz = number of non-zero elements with sparse LU
-        """
-        return radau5ode.setup_radau_mem(n, superLU, nprocs, nnz, &self.rmem)
-
-    cpdef int set_nmax(self, int val):
-        return radau5ode.radau_set_para_nmax(self.rmem, val)
-
-    cpdef int set_nmax_newton(self, int val):
-        return radau5ode.radau_set_para_nmax_newton(self.rmem, val)
-
-    cpdef int set_step_size_safety(self, double val):
-        return radau5ode.radau_set_para_step_size_safety(self.rmem, val)
-
-    cpdef int reset_internal(self):
-        """
-        Reset internal memory and stats in Radau5
-        """
-        return radau5ode.reset_radau_internal_mem(self.rmem)
-
-    cpdef list get_stats(self):
-        """
-        Return runtime stats logged in Radau5.
-        """
-        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
-        radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
-        return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
-
-    cpdef void finalize(self):
-        free_radau_mem(&self.rmem)
-
-cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
+cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,
                              void* jac_PY):
     """Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians."""
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)
 
-    J, ret = (<object>jac_PY)(x[0], y_py)
+    J, ret = (<object>jac_PY)(x, y_py)
 
     if ret[0]:
         return ret[0] # RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
@@ -250,24 +251,3 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                         &ijac, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &idid)
 
     return x, y, ret
-
-cpdef contr5(int i, double x, np.ndarray cont):
-    """
-        Python interface for calling the C based interpolation function using dense output
-        Returns 'i'-th component (index 0 based) at time 'x'.
-
-            Parameters::
-
-                i
-                        - Which component to compute the solution for.
-                x
-                        - time-point at which the solution is requested. Needs to be within the time-interval defined by the last successful step.
-                cont
-                        - 'cont' input parameter to 'solout_PY' callback in 'radau5' function
-            
-            Returns::
-                        - See function description
-
-    """
-    cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
-    return radau5ode.contr5_c(i, x, &cont_vec[0])
