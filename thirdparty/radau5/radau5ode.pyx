@@ -133,11 +133,11 @@ cdef class RadauMemory:
     cpdef int set_step_size_safety(self, double val):
         return radau5ode.radau_set_para_step_size_safety(self.rmem, val)
 
-    cpdef int reset_stats(self):
+    cpdef int reset_internal(self):
         """
-        Reset logged stats in Radau5
+        Reset internal memory and stats in Radau5
         """
-        return radau5ode.reset_radau_stats(self.rmem)
+        return radau5ode.reset_radau_internal_mem(self.rmem)
 
     cpdef list get_stats(self):
         """

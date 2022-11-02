@@ -37,7 +37,7 @@ cdef extern from "radau5_c.h":
 
     int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
 
-    int reset_radau_stats(void* mem)
+    int reset_radau_internal_mem(void *radau_mem)
     int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves)
 
     int radau_set_para_nmax(void *radau_mem, int val)

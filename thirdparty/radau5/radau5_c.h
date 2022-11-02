@@ -66,7 +66,7 @@ typedef struct radau_linsol_mem_t radau_linsol_mem_t;
 /* structure for statistics logged when running Radau5 */
 struct radau_stats_t{
 	int nfcn; /* number of rhs function evals */
-	int njac; /* jac evals */
+	int njac; /* jacobian evaluations */
 	int nsteps; /* steps */
 	int naccpt; /* accepted steps */
 	int nreject; /* rejected steps */
@@ -97,6 +97,18 @@ struct radau_parameters_t{
 	int pred_step_control;
 
 	double step_size_safety; /* safety factor for stepsize control */
+
+	/* INTERNAL PARAMETERS */
+
+	/* flag if computed jacobian is fresh */
+	/* various fallbacks react on this */
+	int jac_is_fresh;
+	double h_old; /* previous step-size, used in predictive controller */
+	double dynold; /* newton related parameter */
+	double erracc; /* bound in predictive controller */
+	double thqold; /* newton related parameter */
+
+	int new_jac_req; /* flag if new jacobian is required */
 };
 typedef struct radau_parameters_t radau_parameters_t;
 
@@ -137,6 +149,7 @@ struct radau_mem_t{
 typedef struct radau_mem_t radau_mem_t;
 
 int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out);
+int reset_radau_internal_mem(void *radau_mem); /* reset internal radau_mem, affects internal parameters & stats */ 
 int setup_radau_linsol_mem(int n, int sparseLU, int nprocs, int nnz, radau_linsol_mem_t **mem_out);
 
 int reset_radau_stats(void *radau_mem);

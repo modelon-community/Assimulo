@@ -334,7 +334,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-        self.rad_memory.reset_stats()
+        self.rad_memory.reset_internal()
         t, y, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                          jac_dummy, IJAC, self._solout, IOUT, WORK, self.rad_memory)
 
@@ -348,14 +348,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             raise Radau5Error(flag, t) from None
         
         #Retrieving statistics
-        nfcns, njacs, _, nsteps, nerrfails, nlus, _ = self.rad_memory.get_stats()
+        nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
         self.statistics["nsteps"]      += nsteps
         self.statistics["nfcns"]        += nfcns
         self.statistics["njacs"]        += njacs
         self.statistics["nfcnjacs"]    += (njacs*self.problem_info["dim"] if not self.usejac else 0)
         #self.statistics["nstepstotal"] += iwork[15]
         self.statistics["nerrfails"]     += nerrfails
-        self.statistics["nlus"]         += nlus
+        self.statistics["nlus"]         += nLU
         
         return flag, self._tlist, self._ylist
     
