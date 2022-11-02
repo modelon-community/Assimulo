@@ -241,7 +241,7 @@ int radau_set_para_pred_step_control(void* radau_mem, int val){
 
 int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
 	double *x, double *y, double *xend, double *h__,
-	double *rtol, double *atol, int *itol,
+	double *rtol, double *atol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac,
 	FP_CB_solout solout, void* solout_PY, int *iout,
 	double *work, int *idid)
@@ -303,14 +303,6 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
 
 /*     RTOL,ATOL   RELATIVE AND ABSOLUTE ERROR TOLERANCES. THEY */
 /*                 CAN BE BOTH SCALARS OR ELSE BOTH VECTORS OF LENGTH N. */
-
-/*     ITOL        SWITCH FOR RTOL AND ATOL: */
-/*                   ITOL=0: BOTH RTOL AND ATOL ARE SCALARS. */
-/*                     THE CODE KEEPS, ROUGHLY, THE LOCAL ERROR OF */
-/*                     Y(I) BELOW RTOL*ABS(Y(I))+ATOL */
-/*                   ITOL=1: BOTH RTOL AND ATOL ARE VECTORS. */
-/*                     THE CODE KEEPS THE LOCAL ERROR OF Y(I) BELOW */
-/*                     RTOL(I)*ABS(Y(I))+ATOL(I). */
 
 /*     JAC         NAME (EXTERNAL) OF THE SUBROUTINE WHICH COMPUTES */
 /*                 THE PARTIAL DERIVATIVES OF F(X,Y) WITH RESPECT TO Y */
@@ -421,7 +413,7 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
 /* *** *** *** *** *** *** *** */
 	if (!radau_mem){
 		printf("RADAU_MEM not setup properly.\n");
-		return RADAU_ERROR_INCONSISTENT_INPUT;
+		return RADAU_PARA_RADAU_MEM_NULL;
 	}
 
     /* Parameter adjustments */
@@ -439,27 +431,16 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
     }
 	/* -------- CHECK AND CHANGE THE TOLERANCES */
     expm = .66666666666666663;
-    if (*itol == 0) {
-		if (atol[0] <= 0. || rtol[0] <= uround * 10.) {
-			printf(" TOLERANCES ARE TOO SMALL \n");
+	for (i = 0; i < rmem->n; ++i) {
+		if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
+			printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		} else {
-			quot = atol[0] / rtol[0];
-			rtol[0] = pow(rtol[0], expm) * .1;
-			atol[0] = rtol[0] * quot;
+			quot = atol[i] / rtol[i];
+			rtol[i] = pow(rtol[i], expm) * .1;
+			atol[i] = rtol[i] * quot;
 		}
-    } else {
-		for (i = 0; i < rmem->n; ++i) {
-			if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
-				printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
-				return RADAU_ERROR_INCONSISTENT_INPUT;
-			} else {
-				quot = atol[i] / rtol[i];
-				rtol[i] = pow(rtol[i], expm) * .1;
-				atol[i] = rtol[i] * quot;
-			}
-		}
-    }
+	}
 	/* --------- SAFE, SAFETY FACTOR IN STEP SIZE PREDICTION */
     if (work[2] == 0.) {
 		safe = .9;
@@ -535,7 +516,7 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
 	*idid = 0;
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
     radcor_ret = radcor_(rmem, rmem->n, (FP_CB_f)fcn, fcn_PY, x, y, xend, &hmax, h__, rtol, atol, 
-						 itol, (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
+						 (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_PY, ijac,
 						 (FP_CB_solout)solout, solout_PY, iout, idid, &uround, &safe, &thet, &fnewt,
 						 &quot1, &quot2,
 						 &facl, &facr,
@@ -546,24 +527,18 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_PY,
 						 rmem->werr);
 	/* -------- RESTORE TOLERANCES */
     expm = 1. / expm;
-    if (*itol == 0) {
-		quot = atol[0] / rtol[0];
-		rtol[0] = pow(rtol[0] * 10., expm);
-		atol[0] = rtol[0] * quot;
-    } else {
-		for (i = 0; i < rmem->n; ++i) {
-			quot = atol[i] / rtol[i];
-			rtol[i] = pow(rtol[i] * 10., expm);
-			atol[i] = rtol[i] * quot;
-		}
-    }
+	for (i = 0; i < rmem->n; ++i) {
+		quot = atol[i] / rtol[i];
+		rtol[i] = pow(rtol[i] * 10., expm);
+		atol[i] = rtol[i] * quot;
+	}
 	return radcor_ret;
 } /* radau5_ */
 
 
 int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_PY,
 	double *x, double *y, double *xend, double *hmax, double *h__,
-	double *rtol, double *atol, int *itol,
+	double *rtol, double *atol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_PY, int *ijac, 
 	FP_CB_solout solout, void* solout_PY, int *iout, int *idid,
 	double *uround, double *safe, double *thet,
@@ -699,15 +674,9 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_PY,
     }
     n2 = n << 1;
     n3 = n * 3;
-    if (*itol == 0) {
-		for (i = 1; i <= n; ++i) {
-			scal[i] = atol[1] + rtol[1] * radau5_abs(y[i]);
-		}
-    } else {
-		for (i = 1; i <= n; ++i) {
-			scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
-		}
-    }
+	for (i = 1; i <= n; ++i) {
+		scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
+	}
     hhfac = *h__;
     ier = (*fcn)(n, x, &y[1], &y0[1], fcn_PY);
 	rmem->stats->nfcn++;
@@ -979,14 +948,8 @@ L40:
 			cont[i + n2] = (ak - cont[i + n]) / conra5_1.c1m1;
 			cont[i + n3] = cont[i + n2] - acont3;
 		}
-		if (*itol == 0) {
-			for (i = 1; i <= n; ++i) {
-				scal[i] = atol[1] + rtol[1] * radau5_abs(y[i]);
-			}
-		} else {
-			for (i = 1; i <= n; ++i) {
-				scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
-			}
+		for (i = 1; i <= n; ++i) {
+			scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
 		}
 		if (*iout != 0) {
 			nrsol = rmem->stats->naccpt + 1;

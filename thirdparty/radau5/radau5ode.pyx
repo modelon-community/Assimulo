@@ -178,7 +178,7 @@ cdef int callback_jac_sparse(int n, double *x, double *y, int *nnz,
 
 cpdef radau5(fcn_PY, double x, np.ndarray y,
              double xend, double h__, np.ndarray rtol, np.ndarray atol,
-             int itol, jac_PY, int ijac, solout_PY,
+             jac_PY, int ijac, solout_PY,
              int iout, np.ndarray work,
              RadauMemory rad_memory):
     """
@@ -200,10 +200,6 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
                         - Array (len == len(y)) or scalar, Relative error tolerance in step-size control
             atol
                         - Array (len == len(y)) or scalar, Absolute error tolerance in step-size control
-            itol
-                        - Switch for rtol and atol:
-                          itol == 0: Both are scalars
-                          itol == 1: Both are vectors
             jac_PY
                         - Jacobian function jac(x, y), where 'x' is time
             ijac
@@ -247,7 +243,7 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
     cdef np.ndarray[double, mode="c", ndim=1] work_vec = work
 
     ret = radau5ode.radau5_c(rad_memory.rmem, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
-                        &h__, &rtol_vec[0], &atol_vec[0], &itol, callback_jac, callback_jac_sparse, <void*> jac_PY,
+                        &h__, &rtol_vec[0], &atol_vec[0], callback_jac, callback_jac_sparse, <void*> jac_PY,
                         &ijac, callback_solout, <void*>solout_PY, &iout, &work_vec[0], &idid)
 
     return x, y, ret

@@ -305,7 +305,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         return jac, [ret]
             
     def integrate(self, t, y, tf, opts):
-        ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
@@ -335,8 +334,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._opts = opts
         self.rad_memory.reset_stats()
         t, y, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                         ITOL, jac_dummy, IJAC, self._solout,
-                                         IOUT, WORK, self.rad_memory)
+                                         jac_dummy, IJAC, self._solout, IOUT, WORK, self.rad_memory)
 
         #Checking return
         if flag == 1:

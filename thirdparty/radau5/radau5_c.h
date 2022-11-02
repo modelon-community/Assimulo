@@ -86,6 +86,10 @@ typedef struct radau_stats_t radau_stats_t;
 
 /* structure for parameters, both internal and input, for Radau5 */
 struct radau_parameters_t{
+	int use_jac_external; /* switch for internal/external jacobian */
+	int callback_enabled; /* switch for calling callback function after each successful step */
+	int atol_as_vec; /* switch if atol is a vector or scalar */
+
 	int nmax; /* maximum number of timesteps */
 	int nmax_newton; /* maximum number of newton iterations */
 
@@ -144,14 +148,14 @@ typedef int (*FP_CB_jac_sparse)(int, double*, double*, int*, double*, int*, int*
 
 int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_PY,
 			 double *x, double *y, double *xend, double *h__,
-			 double *rtol, double *atol, int *itol,
+			 double *rtol, double *atol,
 			 FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_PY, int *ijac,
 			 FP_CB_solout solout, void *solout_PY, int *iout,
 			 double *work, int *idid);
 
 int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_PY,
 			double *x, double *y, double *xend, double *hmax, double *h__,
-			double *rtol, double *atol, int *itol,
+			double *rtol, double *atol,
 			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_PY, int *ijac,
 			FP_CB_solout solout, void *solout_PY, int *iout, int *idid,
 			double *uround, double *safe, double *thet,
