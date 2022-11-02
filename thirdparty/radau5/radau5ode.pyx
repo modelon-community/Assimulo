@@ -130,6 +130,9 @@ cdef class RadauMemory:
     cpdef int set_nmax_newton(self, int val):
         return radau5ode.radau_set_para_nmax_newton(self.rmem, val)
 
+    cpdef int set_step_size_safety(self, double val):
+        return radau5ode.radau_set_para_step_size_safety(self.rmem, val)
+
     cpdef int reset_stats(self):
         """
         Reset logged stats in Radau5
@@ -248,15 +251,15 @@ cpdef radau5(fcn_PY, double x, np.ndarray y,
 
     return x, y, ret
 
-cpdef contr5(int i__, double x, np.ndarray cont):
+cpdef contr5(int i, double x, np.ndarray cont):
     """
         Python interface for calling the C based interpolation function using dense output
-        Returns 'i'-th component at time 'x'. IMPORTANT: This function uses index 1 based notation.
+        Returns 'i'-th component (index 0 based) at time 'x'.
 
             Parameters::
 
                 i
-                        - Which component to compute the solution for. IMPORTANT: starting index is 1, not 0
+                        - Which component to compute the solution for.
                 x
                         - time-point at which the solution is requested. Needs to be within the time-interval defined by the last successful step.
                 cont
@@ -266,6 +269,5 @@ cpdef contr5(int i__, double x, np.ndarray cont):
                         - See function description
 
     """
-    cdef int lrc = len(cont)
     cdef np.ndarray[double, mode="c", ndim=1] cont_vec = cont
-    return radau5ode.contr5_c(&i__, &x, &cont_vec[0], &lrc)
+    return radau5ode.contr5_c(i, x, &cont_vec[0])

@@ -43,6 +43,8 @@ cdef extern from "radau5_c.h":
     int radau_set_para_nmax(void *radau_mem, int val)
     int radau_set_para_nmax_newton(void *radau_mem, int val)
 
+    int radau_set_para_step_size_safety(void *radau_mem, double val)
+
     int radau5_c(void*, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*,
@@ -50,6 +52,6 @@ cdef extern from "radau5_c.h":
 			 FP_CB_solout, void*, int*,
 			 double*, int*)
 
-    double contr5_c(int*, double*, double*, int*)
+    double contr5_c(int, double, double*)
 
     void free_radau_mem(void **radau_mem)

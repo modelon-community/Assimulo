@@ -7,13 +7,6 @@
 #include "superlu_util.h"
 #endif /*__RADAU5_WITH_SUPERLU*/
 
-#define TRUE_ (1)
-#define FALSE_ (0)
-#define radau5_abs(x) ((x) >= 0 ? (x) : -(x))
-#define radau_min(a,b) ((a) <= (b) ? (a) : (b))
-#define radau_max(a,b) ((a) >= (b) ? (a) : (b))
-#define copysign(a,b) (((a < 0 && b > 0) || (a > 0 && b < 0)) ? (-a) : (a))
-
 /* Radau return flags */
 #define RADAU_OK 0 
 
@@ -102,8 +95,21 @@ struct radau_parameters_t{
 	/* pred_step_control != 0; : CLASSICAL STEP SIZE CONTROL */
 	/* = 0 is considered safer, while != 0 may often yield slightly faster runs for simple problems*/
 	int pred_step_control;
+
+	double step_size_safety; /* safety factor for stepsize control */
 };
 typedef struct radau_parameters_t radau_parameters_t;
+
+/* structure of (computed) mathematical constants inside Radau5 */
+struct radau_math_const_t{
+	double expm;
+	double expm_inv;
+
+	double c1, c2, c1mc2;
+	double dd1, dd2, dd3;
+	double u1, alph, beta;
+};
+typedef struct radau_math_const_t radau_math_const_t;
 
 struct radau_mem_t{
 	int n; /* problem size */
@@ -116,6 +122,10 @@ struct radau_mem_t{
 	double *f1, *f2, *f3; /* newton rhs */
 	double *con; /* interpolation*/
 
+	/* derived mathematical constants */
+	radau_math_const_t *mconst;
+
+	/* linear solver related data */
 	radau_linsol_mem_t *lin_sol;
 
 	/* parameters relevant for solver control */
@@ -138,6 +148,8 @@ int radau_set_para_nmax_newton(void *radau_mem, int val);
 int radau_set_para_newton_startn(void *radau_mem, int val);
 int radau_set_para_pred_step_control(void *radau_mem, int val);
 
+int radau_set_para_step_size_safety(void *radau_mem, double val);
+
 /* FP_CB = FunctionPointer_CallBack */
 typedef int (*FP_CB_f)(int, double*, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double*, double*, double*, void*);
@@ -158,7 +170,7 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_PY,
 			double *rtol, double *atol,
 			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_PY, int *ijac,
 			FP_CB_solout solout, void *solout_PY, int *iout, int *idid,
-			double *uround, double *safe, double *thet,
+			double *uround, double *thet,
 			double *fnewt, double *quot1, double *quot2,
 			double *facl, double *facr,
 			double *z1, double *z2, double *z3,
@@ -168,7 +180,7 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_PY,
 			int *ip1, int *ip2, double *cont,
 			double *werr);
 
-double contr5_c(int *i__, double *x, double *cont, int * lrc);
+double contr5_c(int i, double x, double *cont);
 
 int dec_(int n, double *a, int *ip, int *ier);
 int sol_(int n, double *a, double *b, int *ip);
@@ -187,8 +199,8 @@ int slvrad_(radau_mem_t *rmem, int n, double *fac1, double *alphn, double *betan
 	double *f1, double *f2, double *f3,
 	int *ip1, int *ip2);
 
-int estrad_(radau_mem_t *rmem, int n, double *h__,
-	double *dd1, double *dd2, double *dd3,
+int estrad_(radau_mem_t *rmem, int n, double h,
+	double dd1, double dd2, double dd3,
 	FP_CB_f fcn, void *fcn_PY,
 	double *y0, double *y,
 	double *x,double *e1,

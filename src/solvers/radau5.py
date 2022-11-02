@@ -199,7 +199,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if ret < 0: raise Radau5Error(ret)
         ret = self.rad_memory.set_nmax_newton(self.newt)
         if ret < 0: raise Radau5Error(ret)
-            
+        ret = self.rad_memory.set_step_size_safety(self.safe)
+        if ret < 0: raise Radau5Error(ret)
+
     def set_problem_data(self):
         if self.problem_info["state_events"]:
             def event_func(t, y):
@@ -238,7 +240,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         y = N.empty(self._leny)
         for i in range(self._leny):
             # Note: index shift to Fortran based indices
-            y[i] = self.radau5.contr5(i+1, time, self.cont)
+            y[i] = self.radau5.contr5(i, time, self.cont)
         
         return y
         
