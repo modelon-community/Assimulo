@@ -2,10 +2,15 @@
 /* Note: Due to this, matrices (double*) are stored in Fortran-style column major format */
 /* Also: This is the source of some odd looking pointer increments */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "radau5_c.h"
+
+#ifdef __RADAU5_WITH_SUPERLU
+#include "superlu_double.h"
+#include "superlu_complex.h"
+#include "superlu_util.h"
+#endif /*__RADAU5_WITH_SUPERLU*/
 
 #define TRUE_ (1)
 #define FALSE_ (0)
@@ -33,298 +38,21 @@
 #define ti32 2.5719269498556054292
 #define ti33 -.59603920482822492497
 
-/* setting up various computed mathematical constants used */
-static void setup_math_consts(radau_math_const_t* mconst){
-	double sq6 = sqrt(6.);
-	double p1 = pow(81., .33333333333333331);
-	double p2 = pow(9, .33333333333333331);
-	double cno;
+/* other magical numbers */
+#define expm .66666666666666663
 
-	mconst->c1 = (4. - sq6) / 10.;
-    mconst->c2 = (sq6 + 4.) / 10.;
-
-    mconst->c1mc2 = mconst->c1 - mconst->c2;
-	mconst->c1m1 = mconst->c1 - 1;
-	mconst->c2m1 = mconst->c2 - 1;
-
-    mconst->dd1 = -(sq6 * 7. + 13.) / 3.;
-    mconst->dd2 = (sq6 * 7. - 13.) / 3.;
-    mconst->dd3 = -.33333333333333331;
-
-    mconst->u1 = 1./((p1 + 6. - p2) / 30.);
-    mconst->alph = (12. - p1 + p2) / 60.;
-    mconst->beta = (p1 + p2) * sqrt(3.) / 60.;
-    cno = mconst->alph * mconst->alph + mconst->beta * mconst->beta;
-    mconst->alph /= cno;
-    mconst->beta /= cno;
-}
-
-/* set default values for internal parameters */
-static void set_radau_para_default_internal(radau_parameters_t* mem){
-	/* internal parameters */
-	mem->jac_is_fresh = FALSE_;
-	mem->h_old = 0.; /* will be set in code */
-	mem->dynold = 0.;
-	mem->erracc = .01;
-	mem->thqold = 0;
-
-	mem->new_jac_req = TRUE_; /* by default: require new Jacobian  */
-}
-
-int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
-	radau_mem_t *rmem;
-	int ret = RADAU_OK;
-	
-	/* input sanity checks */
-	if (n < 1){return RADAU_SETUP_INVALID_INPUT;}
-	rmem = (radau_mem_t*)malloc(sizeof(radau_mem_t));
-	if (!rmem){return RADAU_SETUP_MALLOC_FAILURE;}
-
-	rmem->n = n; /* problem size */
-
-	rmem->work = (double*)malloc(20*sizeof(double)); /* TODO */
-	rmem->werr = (double*)malloc(n*sizeof(double));
-	rmem->z1 = (double*)malloc(n*sizeof(double));
-	rmem->z2 = (double*)malloc(n*sizeof(double));
-	rmem->z3 = (double*)malloc(n*sizeof(double));
-	rmem->y0 = (double*)malloc(n*sizeof(double));
-	rmem->scal = (double*)malloc(n*sizeof(double));
-	rmem->f1 = (double*)malloc(n*sizeof(double));
-	rmem->f2 = (double*)malloc(n*sizeof(double));
-	rmem->f3 = (double*)malloc(n*sizeof(double));
-	rmem->cont = (double*)malloc(4*n*sizeof(double));
-
-	rmem->rtol = (double*)malloc(n*sizeof(double));
-	rmem->atol = (double*)malloc(n*sizeof(double));
-
-	if(!rmem->work || !rmem->werr || !rmem->z1 || !rmem->z3 || !rmem->y0 || !rmem->scal || !rmem->f1 || !rmem->f2 || !rmem->f3 || !rmem->cont){
-		return RADAU_SETUP_MALLOC_FAILURE;
-	}
-
-	/* maths constants */
-	rmem->mconst = (radau_math_const_t*)malloc(sizeof(radau_math_const_t));
-	if(!rmem->mconst){ return RADAU_SETUP_MALLOC_FAILURE;}
-	setup_math_consts(rmem->mconst);
-
-	/* Setup linear solver */
-	ret = setup_radau_linsol_mem(n, sparseLU, nprocs, nnz, &rmem->lin_sol);
-	if (ret < 0){ return ret;}
-
-	/* Setup stats */
-	rmem->stats = (radau_stats_t*)malloc(sizeof(radau_stats_t));
-	if(!rmem->stats){ return RADAU_SETUP_MALLOC_FAILURE;}
-	/* reset - here: initialize - stats*/
-	ret = reset_radau_stats((void*)rmem);
-	if (ret < 0){ return ret;}
-
-	/* Setup parameters, by default values */
-	ret = setup_radau_para_default(&rmem->para);
-	if (ret < 0){ return ret;}
-
-	/* dense output */
-	rmem->xsol = 0;  /* latest solution point */
-	rmem->hsol = 0;  /* latest successful stepsize */
-
-	*mem_out = (void*)rmem;
-	return RADAU_OK;
-}
-
-int reset_radau_internal_mem(void *radau_mem){
-	int ret;
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	ret = reset_radau_stats(radau_mem);
-	if (ret < 0){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	set_radau_para_default_internal(rmem->para);
-
-	return RADAU_OK;
-}
-
-
-int setup_radau_linsol_mem(int n, int sparseLU, int nprocs, int nnz, radau_linsol_mem_t **mem_out){
-	radau_linsol_mem_t *mem = (radau_linsol_mem_t*)malloc(sizeof(radau_linsol_mem_t));
-	int n_sq = n*n;
-
-	/* input sanity check */
-	if (n < 1){return RADAU_SETUP_INVALID_INPUT;}
-
-	mem->n = n;
-	mem->sparseLU = sparseLU;
-
-	/* initialize all pointers with NULL, since we do not use all */
-	mem->jac = NULL;
-	mem->e1 = NULL;
-	mem->e2r = NULL;
-	mem->e2i = NULL;
-	mem->ip1 = NULL;
-	mem->ip2 = NULL;
-	mem->jac_indices = NULL;
-	mem->jac_indptr = NULL;
-
-	mem->slu_aux_d = NULL;
-	mem->slu_aux_z = NULL;
-	
-	if(sparseLU){
-		#ifdef __RADAU5_WITH_SUPERLU
-			if ((nnz < 0) || (nnz > n_sq) || (nprocs < 1)) {return RADAU_SETUP_INVALID_INPUT;}
-			mem->nnz = nnz;
-			mem->nnz_actual = nnz;
-			mem->nproc = nprocs;
-			mem->LU_with_fresh_jac = FALSE_;
-
-			/* allocate memory for sparse Jacobian structure */
-			mem->jac = (double*)malloc((nnz + n)*sizeof(double));
-			mem->jac_indices = (int*)malloc((nnz + n)*sizeof(int));
-			mem->jac_indptr = (int*)malloc((n + 1)*sizeof(int));
-
-			/* Create auxiliary superLU structures */
-			mem->slu_aux_d = (void*)superlu_init_d(nprocs, n, nnz);
-			mem->slu_aux_z = (void*)superlu_init_z(nprocs, n, nnz);
-			if(!mem->jac || !mem->jac_indices || !mem->jac_indptr || !mem->slu_aux_d || !mem->slu_aux_z){
-				return RADAU_SETUP_MALLOC_FAILURE;
-			}
-		#else
-			return RADAU_SETUP_SUPERLU_NOT_ENABLED;
-		#endif /*__RADAU5_WITH_SUPERLU*/
-
-	}else{ /* DENSE */
-		mem->jac = (double*)malloc(n_sq*sizeof(double));
-		mem->e1 = (double*)malloc(n_sq*sizeof(double));
-		mem->e2r = (double*)malloc(n_sq*sizeof(double));
-		mem->e2i = (double*)malloc(n_sq*sizeof(double));
-
-		mem->ip1 = (int*)malloc(n*sizeof(int));
-		mem->ip2 = (int*)malloc(n*sizeof(int));
-
-		if(!mem->jac || !mem->e1 || !mem->e2r || !mem->e2i || !mem->ip1 || !mem->ip2){
-			return RADAU_SETUP_MALLOC_FAILURE;
-		}
-	}
-	*mem_out = mem;
-	return RADAU_OK;
-}
-
-
-int reset_radau_stats(void* radau_mem){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	rmem->stats->nfcn = 0;
-	rmem->stats->njac = 0;
-	rmem->stats->nsteps = 0;
-	rmem->stats->naccpt = 0;
-	rmem->stats->nreject = 0;
-	rmem->stats->ludecomps = 0;
-	rmem->stats->lusolves = 0;
-
-	return RADAU_OK;
-}
-
-/* returns all runtime stats */
-int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	*nfcn = rmem->stats->nfcn;
-	*njac = rmem->stats->njac;
-	*nsteps = rmem->stats->nsteps;
-	*naccpt = rmem->stats->naccpt;
-	*nreject = rmem->stats->nreject;
-	*ludecomps = rmem->stats->ludecomps;
-	*lusolves = rmem->stats->lusolves;
-
-	return RADAU_OK;
-}
-
-int setup_radau_para_default(radau_parameters_t **mem_out){
-	radau_parameters_t *mem = (radau_parameters_t*)malloc(sizeof(radau_parameters_t));
-	if(!mem){ return RADAU_SETUP_MALLOC_FAILURE;}
-
-	/* external parameters */
-	mem->nmax = 100000;
-	mem->nmax_newton = 7;
-
-	mem->newton_start_zero= FALSE_;
-	mem->pred_step_control = TRUE_;
-
-	mem->step_size_safety = .9;
-
-	set_radau_para_default_internal(mem);
-
-	*mem_out = mem;
-	return RADAU_OK;
-}
-
-/* Set nmax parameter; maximal number of steps */
-int radau_set_para_nmax(void* radau_mem, int val){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	if (val <= 0){
-		return RADAU_PARA_INCONSISTENT_INPUT;
-	}else{
-		rmem->para->nmax = val;
-	}
-	return RADAU_OK;
-}
-
-/* Set nmax_newton parameter; maximal number of newton steps */
-int radau_set_para_nmax_newton(void* radau_mem, int val){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	if (val <= 0){
-		return RADAU_PARA_INCONSISTENT_INPUT;
-	}else{
-		rmem->para->nmax_newton = val;
-	}
-	return RADAU_OK;
-}
-
-/* Set newton_start_zero parameter; newton starting strategy */
-int radau_set_para_newton_start_zero(void* radau_mem, int val){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	rmem->para->newton_start_zero = (val != 0) ? TRUE_ : FALSE_;
-	return RADAU_OK;
-}
-
-/* Set pred_step_control parameter; step size control strategy */
-int radau_set_para_pred_step_control(void* radau_mem, int val){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	rmem->para->pred_step_control = (val != 0) ? TRUE_ : FALSE_;
-	return RADAU_OK;
-}
-
-int radau_set_para_step_size_safety(void *radau_mem, double val){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-
-	if (val <= .001 || val >= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
-	}else{
-		rmem->para->step_size_safety = val;
-	}
-	return RADAU_OK;
-}
-
-int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
+int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	double *x, double *y, double *xend, double *h__,
 	double *rtol, double *atol,
-	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_EXT, int *ijac,
-	FP_CB_solout solout, void* solout_EXT, int *iout,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac,
+	FP_CB_solout solout, void *solout_EXT, int *iout,
 	double *work, int *idid)
 {
     int i;
     double facl;
     double facr;
     double hmax;
-    double thet, expm;
+    double thet;
     double quot;
     double quot1, quot2;
     double fnewt;
@@ -334,7 +62,7 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
-/*     SYSTEM OF FIRST 0RDER ORDINARY DIFFERENTIAL EQUATIONS */
+/*     SYSTEM OF FIRST ORDER ORDINARY DIFFERENTIAL EQUATIONS */
 /*                     Y'=F(X,Y). */
 /*     THE METHOD USED IS AN IMPLICIT RUNGE-KUTTA METHOD (RADAU IIA) */
 /*     OF ORDER 5 WITH STEP SIZE CONTROL AND CONTINUOUS OUTPUT. */
@@ -485,7 +213,6 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 		}
     }
 	/* -------- CHECK AND CHANGE THE TOLERANCES */
-    expm = .66666666666666663;
 	for (i = 0; i < rmem->n; ++i) {
 		if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
 			printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
@@ -567,17 +294,16 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 						 rmem->z1, rmem->z2, rmem->z3, rmem->y0,
 						 rmem->scal, rmem->f1, rmem->f2, rmem->f3,
 						 rmem->lin_sol->jac, rmem->lin_sol->e1, rmem->lin_sol->e2r, rmem->lin_sol->e2i, 
-						 rmem->lin_sol->ip1, rmem->lin_sol->ip2, rmem->cont,
-						 rmem->werr);
+						 rmem->cont, rmem->werr);
 	return radcor_ret;
 } /* radau5_ */
 
 
-int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_EXT,
+int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 	double *x, double *y, double *xend, double *hmax, double *h__,
 	double *rtol, double *atol,
-	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void* jac_EXT, int *ijac, 
-	FP_CB_solout solout, void* solout_EXT, int *iout, int *idid,
+	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac, 
+	FP_CB_solout solout, void *solout_EXT, int *iout, int *idid,
 	double *uround, double *thet,
 	double *fnewt, double *quot1, double *quot2,
 	double *facl, double *facr,
@@ -585,8 +311,7 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void* fcn_EXT,
 	double *y0, double *scal,
 	double *f1, double *f2, double *f3,
 	double *fjac, double *e1, double *e2r, double *e2i,
-	int *ip1, int *ip2, double *cont,
-	double *werr)
+	double *cont, double *werr)
 {
 	int ret = RADAU_OK;
     int i, j;
@@ -725,13 +450,13 @@ L10:
 /* --- COMPUTE THE MATRICES E1 AND E2 AND THEIR DECOMPOSITIONS */
 L20:
     fac1 = rmem->mconst->u1 / *h__;
-    decomr_(rmem->lin_sol, n, fjac, fac1, e1, ip1, &ier);
+    decomr_(rmem->lin_sol, n, fjac, fac1, e1, &ier);
     if (ier != 0) {
 		goto L185;
     }
 	alphn = rmem->mconst->alph / *h__;
     betan = rmem->mconst->beta / *h__;
-    decomc_(rmem->lin_sol, n, fjac, alphn, betan, e2r, e2i, ip2, &ier);
+    decomc_(rmem->lin_sol, n, fjac, alphn, betan, e2r, e2i, &ier);
     if (ier != 0) {
 		goto L185;
     }
@@ -829,7 +554,7 @@ L40:
     }
     ier = slvrad_(rmem, n, fac1, alphn, betan, &e1[1 + n],
 			&e2r[1 + n], &e2i[1 + n],
-			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1], ip1, ip2);
+			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1]);
 	if (ier != 0){
 		goto L184;
 	}
@@ -887,13 +612,13 @@ L40:
 	/* --- ERROR ESTIMATION */
     ret = estrad_(rmem, n, *h__, rmem->mconst->dd1, rmem->mconst->dd2, rmem->mconst->dd3, (FP_CB_f) fcn, fcn_EXT,
 				   &y0[1], &y[1], *x, &e1[1 + n],
-				   &z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1], ip1, 
+				   &z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1],
 				   &err, first, reject);
 	if (ret < 0){
 		goto L184;
 	}
 	/* --- COMPUTATION OF HNEW */
-	/* --- WE REQUIRE .2<=HNEW/H<=8. */
+	/* --- WE REQUIRE facl<=HNEW/H<=facr */
     fac = radau_min(rmem->para->step_size_safety, cfac / (newt + (rmem->para->nmax_newton << 1)));
     quot = radau_max(*facr ,radau_min(*facl, pow(err, .25) / fac));
     hnew = *h__ / quot;
@@ -1473,8 +1198,7 @@ L50:
 } /* solc_ */
 
 
-int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *e1,
-	int *ip1, int *ier)
+int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *e1, int *ier)
 {
     int i, j;
 
@@ -1490,14 +1214,14 @@ int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *
 			}
 			e1[j + j * n] += fac1;
 		}
-		dec_(n, e1, ip1, ier);
+		dec_(n, e1, lmem->ip1, ier);
 	}
 	return RADAU_OK;
 } /* decomr_ */
 
 
 int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double betan,
-	double *e2r, double *e2i, int *ip2, int *ier)
+	double *e2r, double *e2i, int *ier)
 {
     int i, j;
 
@@ -1515,7 +1239,7 @@ int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double 
 			e2r[j + j * n] += alphn;
 			e2i[j + j * n] = betan;
 		}
-		decc_(n, e2r, e2i, ip2, ier);
+		decc_(n, e2r, e2i, lmem->ip2, ier);
 	}
 	return RADAU_OK;
 } /* decomc_ */
@@ -1524,8 +1248,7 @@ int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double 
 int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
-	double *f1, double *f2, double *f3,
-	int *ip1, int *ip2)
+	double *f1, double *f2, double *f3)
 {
     int i;
     double s2, s3;
@@ -1546,8 +1269,8 @@ int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan,
 			ret = superlu_solve_z((SuperLU_aux_z*)rmem->lin_sol->slu_aux_z, z2, z3);
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
-		sol_(n, e1, z1, ip1);
-    	solc_(n, e2r, e2i, z2, z3, ip2);
+		sol_(n, e1, z1, rmem->lin_sol->ip1);
+    	solc_(n, e2r, e2i, z2, z3, rmem->lin_sol->ip2);
 	}
 	rmem->stats->lusolves++; /* increment factorization counter */
 	return ret;
@@ -1556,12 +1279,12 @@ int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan,
 
 int estrad_(radau_mem_t *rmem, int n, double h,
 	double dd1, double dd2, double dd3,
-	FP_CB_f fcn, void* fcn_EXT,
+	FP_CB_f fcn, void *fcn_EXT,
 	double *y0, double *y,
 	double x, double *e1,
 	double *z1, double *z2, double *z3,
 	double *cont, double *werr,
-	double *f1, double *f2, int *ip1,
+	double *f1, double *f2,
 	double *err, int first, int reject)
 {
     int i;
@@ -1583,7 +1306,7 @@ int estrad_(radau_mem_t *rmem, int n, double h,
 			}
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
-		sol_(n, e1, cont, ip1);
+		sol_(n, e1, cont, rmem->lin_sol->ip1);
 	}
 
     *err = 0.;
@@ -1614,7 +1337,7 @@ int estrad_(radau_mem_t *rmem, int n, double h,
 				}
 			#endif /*__RADAU5_WITH_SUPERLU*/
 		}else{
-			sol_(n, e1, cont, ip1);
+			sol_(n, e1, cont, rmem->lin_sol->ip1);
 		}
 
 		*err = 0.;
@@ -1627,66 +1350,3 @@ int estrad_(radau_mem_t *rmem, int n, double h,
     return ret;
 } /* estrad_ */
 
-
-void free_radau_mem(void **radau_mem){
-	radau_mem_t *rmem = (radau_mem_t*) *radau_mem;
-	if(!rmem){ return;}
-	free(rmem->work);
-	free(rmem->werr);
-	free(rmem->z1);
-	free(rmem->z2);
-	free(rmem->z3);
-	free(rmem->y0);
-	free(rmem->scal);
-	free(rmem->f1);
-	free(rmem->f2);
-	free(rmem->f3);
-	free(rmem->cont);
-
-	free(rmem->rtol);
-	free(rmem->atol);
-
-	free(rmem->mconst);
-	free_radau_linsol_mem(&rmem->lin_sol);
-	free_radau_stats_mem(&rmem->stats);
-	free_radau_parameters_mem(&rmem->para);
-
-	free(rmem);
-}
-
-
-void free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem){
-	radau_linsol_mem_t *mem = (radau_linsol_mem_t*) *lin_sol_mem;
-	if(!mem){ return;}
-
-	free(mem->jac);
-	free(mem->e1);
-	free(mem->e2r);
-	free(mem->e2i);
-	free(mem->ip1);
-	free(mem->ip2);
-
-	free(mem->jac_indices);
-	free(mem->jac_indptr);
-
-	#ifdef __RADAU5_WITH_SUPERLU
-		superlu_finalize_d((SuperLU_aux_d*)mem->slu_aux_d);
-		superlu_finalize_z((SuperLU_aux_z*)mem->slu_aux_z);
-	#endif /* __RADAU5_WITH_SUPERLU */
-
-	free(mem);
-}
-
-void free_radau_stats_mem(radau_stats_t **stats_mem){
-	radau_stats_t *mem = (radau_stats_t*) *stats_mem;
-	if(!mem){ return;}
-
-	free(mem);
-}
-
-void free_radau_parameters_mem(radau_parameters_t **para_mem){
-	radau_parameters_t *mem = (radau_parameters_t*) *para_mem;
-	if(!mem){ return;}
-
-	free(mem);
-}

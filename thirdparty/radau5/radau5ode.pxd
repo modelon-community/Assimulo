@@ -18,21 +18,14 @@
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)
 
-cdef extern from "radau5_c.h":
-    ctypedef struct radau_mem_t
-
+cdef extern from "radau5_impl.h":
     int RADAU_CALLBACK_OK
     int RADAU_CALLBACK_ERROR_RECOVERABLE
     int RADAU_CALLBACK_ERROR_NONRECOVERABLE
     int RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT
     int RADAU_CALLBACK_ERROR_INVALID_NNZ
 
-    ## FunctionPointer_CallBack
-    ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
-    ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
-    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int*, int*, void*)
-    ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
-
+cdef extern from "radau5_io.h":
     int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
 
     int reset_radau_internal_mem(void *radau_mem)
@@ -43,6 +36,15 @@ cdef extern from "radau5_c.h":
 
     int radau_set_para_step_size_safety(void *radau_mem, double val)
 
+    void free_radau_mem(void **radau_mem)
+
+cdef extern from "radau5_c.h":
+    ## FunctionPointer_CallBack
+    ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
+    ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
+    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int*, int*, void*)
+    ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
+
     int radau5_c(void*, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*,
@@ -51,5 +53,3 @@ cdef extern from "radau5_c.h":
 			 double*, int*)
 
     int radau_get_cont_output(void *radau_mem, double x, double *out)
-
-    void free_radau_mem(void **radau_mem)
