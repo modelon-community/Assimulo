@@ -135,6 +135,8 @@ struct radau_mem_t{
 	double *f1, *f2, *f3; /* newton rhs */
 	double *cont; /* interpolation*/
 
+	double *rtol, *atol; /* internal rtol and atol vectors */
+
 	/* derived mathematical constants */
 	radau_math_const_t *mconst;
 

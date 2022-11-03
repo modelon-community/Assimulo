@@ -94,6 +94,9 @@ int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 	rmem->f3 = (double*)malloc(n*sizeof(double));
 	rmem->cont = (double*)malloc(4*n*sizeof(double));
 
+	rmem->rtol = (double*)malloc(n*sizeof(double));
+	rmem->atol = (double*)malloc(n*sizeof(double));
+
 	if(!rmem->work || !rmem->werr || !rmem->z1 || !rmem->z3 || !rmem->y0 || !rmem->scal || !rmem->f1 || !rmem->f2 || !rmem->f3 || !rmem->cont){
 		return RADAU_SETUP_MALLOC_FAILURE;
 	}
@@ -372,8 +375,7 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 /*                 THIS CHOICE IS NOT VERY IMPORTANT, THE STEP SIZE IS */
 /*                 QUICKLY ADAPTED. (IF H=0.D0, THE CODE PUTS H=1.D-6). */
 
-/*     RTOL,ATOL   RELATIVE AND ABSOLUTE ERROR TOLERANCES. THEY */
-/*                 CAN BE BOTH SCALARS OR ELSE BOTH VECTORS OF LENGTH N. */
+/*     RTOL,ATOL   RELATIVE AND ABSOLUTE ERROR TOLERANCES. VECTORS OF LENGTH N. */
 
 /*     JAC         NAME (EXTERNAL) OF THE SUBROUTINE WHICH COMPUTES */
 /*                 THE PARTIAL DERIVATIVES OF F(X,Y) WITH RESPECT TO Y */
@@ -490,8 +492,8 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		} else {
 			quot = atol[i] / rtol[i];
-			rtol[i] = pow(rtol[i], expm) * .1;
-			atol[i] = rtol[i] * quot;
+			rmem->rtol[i] = pow(rtol[i], expm) * .1;
+			rmem->atol[i] = rmem->rtol[i] * quot;
 		}
 	}
 	/* ------ THET, DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
@@ -505,7 +507,7 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 		}
     }
 	/* --- FNEWT, STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
-    tolst = rtol[0];
+    tolst = rmem->rtol[0];
     if (work[4] == 0.) {
 		fnewt = radau_max(uround * 10 / tolst, radau_min(.03, pow(tolst, .5)));
     } else {
@@ -558,23 +560,15 @@ int radau5_c(void* radau_mem, FP_CB_f fcn, void* fcn_EXT,
 	/* POSSIBLE ADDITIONAL RETURN FLAG */
 	*idid = 0;
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_ret = radcor_(rmem, rmem->n, (FP_CB_f)fcn, fcn_EXT, x, y, xend, &hmax, h__, rtol, atol, 
+    radcor_ret = radcor_(rmem, rmem->n, (FP_CB_f)fcn, fcn_EXT, x, y, xend, &hmax, h__, rmem->rtol, rmem->atol, 
 						 (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_EXT, ijac,
 						 (FP_CB_solout)solout, solout_EXT, iout, idid, &uround, &thet, &fnewt,
-						 &quot1, &quot2,
-						 &facl, &facr,
+						 &quot1, &quot2, &facl, &facr,
 						 rmem->z1, rmem->z2, rmem->z3, rmem->y0,
 						 rmem->scal, rmem->f1, rmem->f2, rmem->f3,
 						 rmem->lin_sol->jac, rmem->lin_sol->e1, rmem->lin_sol->e2r, rmem->lin_sol->e2i, 
 						 rmem->lin_sol->ip1, rmem->lin_sol->ip2, rmem->cont,
 						 rmem->werr);
-	/* -------- RESTORE TOLERANCES */
-    expm = 1. / expm;
-	for (i = 0; i < rmem->n; ++i) {
-		quot = atol[i] / rtol[i];
-		rtol[i] = pow(rtol[i] * 10., expm);
-		atol[i] = rtol[i] * quot;
-	}
 	return radcor_ret;
 } /* radau5_ */
 
@@ -1648,6 +1642,9 @@ void free_radau_mem(void **radau_mem){
 	free(rmem->f2);
 	free(rmem->f3);
 	free(rmem->cont);
+
+	free(rmem->rtol);
+	free(rmem->atol);
 
 	free(rmem->mconst);
 	free_radau_linsol_mem(&rmem->lin_sol);
