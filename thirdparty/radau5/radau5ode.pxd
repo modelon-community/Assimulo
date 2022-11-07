@@ -26,30 +26,35 @@ cdef extern from "radau5_impl.h":
     int RADAU_CALLBACK_ERROR_INVALID_NNZ
 
 cdef extern from "radau5_io.h":
-    int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
-
-    int reset_radau_internal_mem(void *radau_mem)
+    int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out)
+    int radau_reinit(void *radau_mem)
     int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves)
 
-    int radau_set_para_nmax(void *radau_mem, int val)
-    int radau_set_para_nmax_newton(void *radau_mem, int val)
+    int radau_set_nmax              (void *radau_mem, int val)
+    int radau_set_nmax_newton       (void *radau_mem, int val)
 
-    int radau_set_para_step_size_safety(void *radau_mem, double val)
+    int radau_set_step_size_safety  (void *radau_mem, double val)
+    int radau_set_theta_jac_recomp  (void *radau_mem, double val)
+    int radau_set_fnewt             (void *radau_mem, double val)
+    int radau_set_quot1             (void *radau_mem, double val)
+    int radau_set_quot2             (void *radau_mem, double val)
+    int radau_set_hmax              (void *radau_mem, double val)
+    int radau_set_fac_lower         (void *radau_mem, double val)
+    int radau_set_fac_upper         (void *radau_mem, double val)
 
-    void free_radau_mem(void **radau_mem)
+    void radau_free_mem(void **radau_mem)
 
 cdef extern from "radau5_c.h":
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
     ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
-    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int*, int*, void*)
+    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int, int*, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
 
-    int radau5_c(void*, FP_CB_f, void*,
+    int radau5_solve(void*, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*,
 			 FP_CB_jac, FP_CB_jac_sparse, void*, int*,
-			 FP_CB_solout, void*, int*,
-			 double*, int*)
+			 FP_CB_solout, void*, int*, int*)
 
     int radau_get_cont_output(void *radau_mem, double x, double *out)

@@ -38,7 +38,59 @@
 #define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
 #define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
 
-/* CONTAINS BASIC DATA STRUCTURES */
+/* forward declarations of data structures */
+struct radau_mem_t;
+struct radau_linsol_mem_t;
+struct radau_stats_t;
+struct radau_inputs_t;
+struct radau_math_const_t;
+
+/* shorthands */
+typedef struct radau_linsol_mem_t radau_linsol_mem_t;
+typedef struct radau_stats_t radau_stats_t;
+typedef struct radau_inputs_t radau_inputs_t;
+typedef struct radau_math_const_t radau_math_const_t;
+typedef struct radau_mem_t radau_mem_t;
+
+/* Main Radau data structure */
+struct radau_mem_t{
+	int n; /* problem size */
+
+	double *werr; /* local error estimate*/
+	double *z1, *z2, *z3; /* transformed state vector */
+	double *y0; /* auxiliary array for rhs eval at full time-points */
+	double *scal; /* norm scaling factors */
+	double *f1, *f2, *f3; /* newton rhs */
+	double *cont; /* interpolation*/
+
+	double *rtol, *atol; /* internal rtol and atol vectors */
+
+	/* derived mathematical constants */
+	radau_math_const_t *mconst;
+
+	/* linear solver related data */
+	radau_linsol_mem_t *lin_sol;
+
+	/* input parameters relevant for solver control */
+	radau_inputs_t *input;
+
+	/* solver statistics */
+	radau_stats_t *stats;
+
+	/* dense output */
+	int _dense_output_valid; /* switch if solver is in callback, since only then dense output calls are allowed */
+	double xsol;  /* latest solution point */
+	double hsol;  /* latest successful stepsize */
+
+    /* internal parameters */
+    /* these can affect the solver of several radau_solve() calls */
+	int jac_is_fresh; /* flag if computed jacobian is fresh, used in fallbacks */
+	double h_old; /* previous step-size, used in predictive controller */
+	double erracc; /* bound in predictive controller */
+    double faccon; /* factor tracked over several timestep to track jacobian recomputes in newton */
+
+	int new_jac_req; /* flag if new jacobian is required */
+};
 
 /* Struct for linear solver related memory info */
 struct radau_linsol_mem_t{
@@ -59,7 +111,7 @@ struct radau_linsol_mem_t{
 	/* superlu auxiliary structs */
 	void *slu_aux_d, *slu_aux_z; 
 };
-typedef struct radau_linsol_mem_t radau_linsol_mem_t;
+
 
 /* structure for statistics logged when running Radau5 */
 struct radau_stats_t{
@@ -73,10 +125,12 @@ struct radau_stats_t{
 	int ludecomps; /* LU decompositions */
 	int lusolves; /* LU solves */
 };
-typedef struct radau_stats_t radau_stats_t;
 
-/* structure for parameters, both internal and input, for Radau5 */
-struct radau_parameters_t{
+
+/* structure for input parameters, both internal and input, for Radau5 */
+struct radau_inputs_t{
+    int _checked; /* flag if the inputs have been checked for consistency */
+
 	int use_jac_external; /* switch for internal/external jacobian */
 	int callback_enabled; /* switch for calling callback function after each successful step */
 	int atol_as_vec; /* switch if atol is a vector or scalar */
@@ -93,20 +147,17 @@ struct radau_parameters_t{
 	/* pred_step_control != 0; : CLASSICAL STEP SIZE CONTROL */
 	/* = 0 is considered safer, while != 0 may often yield slightly faster runs for simple problems*/
 	int pred_step_control;
+	int hmax_set; /* flag if hmax has been set manually */
+	int fnewt_set; /* flag if fnewt has been set manually */
 
 	double step_size_safety; /* safety factor for stepsize control */
-
-	/* INTERNAL PARAMETERS */
-
-	int jac_is_fresh; /* flag if computed jacobian is fresh, used in fallbacks */
-	double h_old; /* previous step-size, used in predictive controller */
-	double dynold; /* newton related parameter */
-	double erracc; /* bound in predictive controller */
-	double thqold; /* newton related parameter */
-
-	int new_jac_req; /* flag if new jacobian is required */
+	double uround; /* machine epsilon; 1.0D0+UROUND>1.0D0 */
+	double theta_jac_recomp; /* theta; factor for jacobian recomputation */
+	double fnewt; /* fnewt; newton cancellation factor: kappa*tol */
+	double quot1, quot2; /* quot1; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
+	double hmax; /* maximal step-size */
+	double fac_lower, fac_upper; /* maximal limit for step-size (in|de)crease */
 };
-typedef struct radau_parameters_t radau_parameters_t;
 
 /* structure of (computed) mathematical constants inside Radau5 */
 struct radau_math_const_t{
@@ -119,36 +170,5 @@ struct radau_math_const_t{
 
 	double c1m1, c2m1;
 };
-typedef struct radau_math_const_t radau_math_const_t;
-struct radau_mem_t{
-	int n; /* problem size */
-
-	double *work; /* base work parameters; TODO */
-	double *werr; /* local error estimate*/
-	double *z1, *z2, *z3; /* transformed state vector */
-	double *y0;
-	double *scal;
-	double *f1, *f2, *f3; /* newton rhs */
-	double *cont; /* interpolation*/
-
-	double *rtol, *atol; /* internal rtol and atol vectors */
-
-	/* derived mathematical constants */
-	radau_math_const_t *mconst;
-
-	/* linear solver related data */
-	radau_linsol_mem_t *lin_sol;
-
-	/* parameters relevant for solver control */
-	radau_parameters_t *para;
-
-	/* solver statistics */
-	radau_stats_t *stats;
-
-	/* dense output */
-	double xsol;  /* latest solution point */
-	double hsol;  /* latest successful stepsize */
-};
-typedef struct radau_mem_t radau_mem_t;
 
 #endif /*_RADAU5_IMPL_H*/

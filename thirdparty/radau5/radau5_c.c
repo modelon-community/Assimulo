@@ -41,25 +41,54 @@
 /* other magical numbers */
 #define expm .66666666666666663
 
-int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
+/* forward declarations of private functions */
+static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
+			double *x, double *y, double *xend, double *h__,
+			double *rtol, double *atol,
+			FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac,
+			FP_CB_solout solout, void *solout_EXT, int *iout, int *idid,
+			double *z1, double *z2, double *z3,
+			double *y0, double *scal,
+			double *f1, double *f2, double *f3,
+			double *fjac, double *e1, double *e2r, double *e2i,
+			double *cont, double *werr);
+
+static int _dec(int n, double *a, int *ip, int *ier);
+static int _sol(int n, double *a, double *b, int *ip);
+
+static int _decc(int n, double *ar, double *ai, int *ip, int *ier);
+static int _solc(int n, double *ar, double *ai, double *br, double *bi, int *ip);
+
+static int _decomr(radau_linsol_mem_t *mem, int n, double *fjac, double fac1, double *e1, int *ier);
+static int _decomc(radau_linsol_mem_t *mem, int n, double *fjac, double alphn, double betan,
+	double *e2r, double *e2i, int *ier);
+
+static int _slvrad(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
+	double *e1, double *e2r, double *e2i, 
+	double *z1, double *z2, double *z3,
+	double *f1, double *f2, double *f3);
+
+static int _estrad(radau_mem_t *rmem, int n, double h,
+	double dd1, double dd2, double dd3,
+	FP_CB_f fcn, void *fcn_EXT,
+	double *y0, double *y,
+	double x,double *e1,
+	double *z1, double *z2, double *z3,
+	double *cont, double *werr,
+	double *f1, double *f2,
+	double *err, int first, int reject);
+
+int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	double *x, double *y, double *xend, double *h__,
 	double *rtol, double *atol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac,
-	FP_CB_solout solout, void *solout_EXT, int *iout,
-	double *work, int *idid)
+	FP_CB_solout solout, void *solout_EXT, int *iout, int *idid)
 {
     int i;
-    double facl;
-    double facr;
-    double hmax;
-    double thet;
     double quot;
-    double quot1, quot2;
-    double fnewt;
     double tolst;
-    double uround;
-	int radcor_ret = 0;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
+	if (!radau_mem){ return RADAU_PARA_RADAU_MEM_NULL; }
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST ORDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -139,46 +168,6 @@ int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /*                    IOUT=0: SUBROUTINE IS NEVER CALLED */
 /*                    IOUT=1: SUBROUTINE IS AVAILABLE FOR OUTPUT. */
 
-/*     WORK        ARRAY OF WORKING SPACE OF LENGTH 20. */
-/*                 WORK(1), WORK(2),.., WORK(20) SERVE AS PARAMETERS */
-/*                 FOR THE CODE. FOR STANDARD USE OF THE CODE */
-/*                 WORK(1),..,WORK(20) MUST BE SET TO ZERO BEFORE */
-/*                 CALLING. SEE BELOW FOR A MORE SOPHISTICATED USE. */
-
-/* ---------------------------------------------------------------------- */
-
-/*     SOPHISTICATED SETTING OF PARAMETERS */
-/*    WORK(1)   UROUND, THE ROUNDING UNIT, DEFAULT 1.D-16. */
-
-/*    WORK(2)   THE SAFETY FACTOR IN STEP SIZE PREDICTION, */
-/*              DEFAULT 0.9D0. */
-
-/*    WORK(3)   DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
-/*              INCREASE WORK(3), TO 0.1 SAY, WHEN JACOBIAN EVALUATIONS */
-/*              ARE COSTLY. FOR SMALL SYSTEMS WORK(3) SHOULD BE SMALLER */
-/*              (0.001D0, SAY). NEGATIV WORK(3) FORCES THE CODE TO */
-/*              COMPUTE THE JACOBIAN AFTER EVERY ACCEPTED STEP. */
-/*              DEFAULT 0.001D0. */
-
-/*    WORK(4)   STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
-/*              SMALLER VALUES OF WORK(4) MAKE THE CODE SLOWER, BUT SAFER. */
-/*              DEFAULT MIN(0.03D0,RTOL(1)**0.5D0) */
-
-/*    WORK(5) AND WORK(6) : IF WORK(5) < HNEW/HOLD < WORK(6), THEN THE */
-/*              STEP SIZE IS NOT CHANGED. THIS SAVES, TOGETHER WITH A */
-/*              LARGE WORK(3), LU-DECOMPOSITIONS AND COMPUTING TIME FOR */
-/*              LARGE SYSTEMS. FOR SMALL SYSTEMS ONE MAY HAVE */
-/*              WORK(5)=1.D0, WORK(6)=1.2D0, FOR LARGE FULL SYSTEMS */
-/*              WORK(5)=0.99D0, WORK(6)=2.D0 MIGHT BE GOOD. */
-/*              DEFAULTS WORK(5)=1.D0, WORK(6)=1.2D0 . */
-
-/*    WORK(7)   MAXIMAL STEP SIZE, DEFAULT XEND-X. */
-
-/*    WORK(8), WORK(9)   PARAMETERS FOR STEP SIZE SELECTION */
-/*              THE NEW STEP SIZE IS CHOSEN SUBJECT TO THE RESTRICTION */
-/*                 WORK(8) <= HNEW/HOLD <= WORK(9) */
-/*              DEFAULT VALUES: WORK(8)=0.2D0, WORK(9)=8.D0 */
-
 /* ----------------------------------------------------------------------- */
 
 /*     OUTPUT PARAMETERS */
@@ -195,26 +184,10 @@ int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /*     IDID        IF RETURN == RADAU_SUCCESS_SOLOUT_INTERRUPT, IDID = RETURN FLAG FROM SOLOUT CALLBACK */
 
 /* ----------------------------------------------------------------------- */
-	if (!radau_mem){
-		return RADAU_PARA_RADAU_MEM_NULL;
-	}
 
-    /* Parameter adjustments */
-    --work;
-
-	/* -------- UROUND   SMALLEST NUMBER SATISFYING 1.0D0+UROUND>1.0D0 */
-    if (work[1] == 0.) {
-		uround = 1e-16;
-    } else {
-		uround = work[1];
-		if (uround <= 1e-19 || uround >= 1.) {
-			printf(" COEFFICIENTS HAVE 20 DIGITS, UROUND= \t %e \n", uround);
-			return RADAU_ERROR_INCONSISTENT_INPUT;
-		}
-    }
 	/* -------- CHECK AND CHANGE THE TOLERANCES */
 	for (i = 0; i < rmem->n; ++i) {
-		if (atol[i] <= 0. || rtol[i] <= uround * 10.) {
+		if (atol[i] <= 0. || rtol[i] <= rmem->input->uround * 10.) {
 			printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		} else {
@@ -223,63 +196,26 @@ int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 			rmem->atol[i] = rmem->rtol[i] * quot;
 		}
 	}
-	/* ------ THET, DECIDES WHETHER THE JACOBIAN SHOULD BE RECOMPUTED; */
-    if (work[3] == 0.) {
-		thet = .001;
-    } else {
-		thet = work[3];
-		if (thet >= 1.) {
-			printf("CURIOUS INPUT FOR WORK(3)= %f \n", thet);
+
+	tolst = rmem->rtol[0]; /* internal representation of rtol */
+	/* check inputs for consistency */
+	if (!rmem->input->_checked){
+		/* sanity check on fnewt */
+		if (rmem->input->fnewt <= rmem->input->uround / tolst){
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
-    }
-	/* --- FNEWT, STOPPING CRITERION FOR NEWTON'S METHOD, USUALLY CHOSEN <1. */
-    tolst = rmem->rtol[0];
-    if (work[4] == 0.) {
-		fnewt = radau_max(uround * 10 / tolst, radau_min(.03, pow(tolst, .5)));
-    } else {
-		fnewt = work[4];
-		if (fnewt <= uround / tolst) {
-			printf("CURIOUS INPUT FOR WORK(4)= %f \n", fnewt);
-			return RADAU_ERROR_INCONSISTENT_INPUT;
-		}
-    }
-	/* --- QUOT1 AND QUOT2: IF QUOT1 < HNEW/HOLD < QUOT2, STEP SIZE = CONST. */
-    if (work[5] == 0.) {
-		quot1 = 1.;
-    } else {
-		quot1 = work[5];
-    }
-    if (work[6] == 0.) {
-		quot2 = 1.2;
-    } else {
-		quot2 = work[6];
-    }
-    if (quot1 > 1. || quot2 < 1.) {
-		printf("CURIOUS INPUT FOR WORK(5, 6)= %f \t %f \n", quot1, quot2);
-		return RADAU_ERROR_INCONSISTENT_INPUT;
-    }
-	/* -------- MAXIMAL STEP SIZE */
-    if (work[7] == 0.) {
-		hmax = *xend - *x;
-    } else {
-		hmax = work[7];
-    }
-	/* -------  FACL,FACR, PARAMETERS FOR STEP SIZE SELECTION */
-    if (work[8] == 0.) {
-		facl = 5.;
-    } else {
-		facl = 1. / work[8];
-    }
-    if (work[9] == 0.) {
-		facr = .125;
-    } else {
-		facr = 1. / work[9];
-    }
-    if (facl < 1. || facr > 1.) {
-		printf("CURIOUS INPUT FOR WORK(8, 9)= %f \t %f \n", facl, facr);
-		return RADAU_ERROR_INCONSISTENT_INPUT;
-    }
+		rmem->input->_checked = TRUE_;
+	}
+	/* automatically set input parameters that have not been set directly */
+	if (!rmem->input->hmax_set){
+		rmem->input->hmax = *xend - *x;
+	}
+	if (!rmem->input->fnewt_set){
+		
+		/* Note: This is using the transformed tolerances */
+		rmem->input->fnewt = radau_max(rmem->input->uround * 10 / tolst, radau_min(.03, pow(tolst, .5)));
+	}
+
 	if (rmem->lin_sol->sparseLU && !(*ijac)){
 		printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
 		return RADAU_ERROR_INCONSISTENT_INPUT;
@@ -287,26 +223,21 @@ int radau5_c(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	/* POSSIBLE ADDITIONAL RETURN FLAG */
 	*idid = 0;
 	/* -------- CALL TO CORE INTEGRATOR ------------ */
-    radcor_ret = radcor_(rmem, rmem->n, (FP_CB_f)fcn, fcn_EXT, x, y, xend, &hmax, h__, rmem->rtol, rmem->atol, 
-						 (FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_EXT, ijac,
-						 (FP_CB_solout)solout, solout_EXT, iout, idid, &uround, &thet, &fnewt,
-						 &quot1, &quot2, &facl, &facr,
-						 rmem->z1, rmem->z2, rmem->z3, rmem->y0,
-						 rmem->scal, rmem->f1, rmem->f2, rmem->f3,
-						 rmem->lin_sol->jac, rmem->lin_sol->e1, rmem->lin_sol->e2r, rmem->lin_sol->e2i, 
-						 rmem->cont, rmem->werr);
-	return radcor_ret;
-} /* radau5_ */
+    return _radcor(rmem, rmem->n, (FP_CB_f)fcn, fcn_EXT, x, y, xend, h__, rmem->rtol, rmem->atol, 
+					(FP_CB_jac)jac, (FP_CB_jac_sparse) jac_sparse, jac_EXT, ijac,
+					(FP_CB_solout)solout, solout_EXT, iout, idid,
+					rmem->z1, rmem->z2, rmem->z3, rmem->y0,
+					rmem->scal, rmem->f1, rmem->f2, rmem->f3,
+					rmem->lin_sol->jac, rmem->lin_sol->e1, rmem->lin_sol->e2r, rmem->lin_sol->e2i, 
+					rmem->cont, rmem->werr);
+} /* radau5_solve */
 
 
-int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
-	double *x, double *y, double *xend, double *hmax, double *h__,
+static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
+	double *x, double *y, double *xend, double *h__,
 	double *rtol, double *atol,
 	FP_CB_jac jac, FP_CB_jac_sparse jac_sparse, void *jac_EXT, int *ijac, 
 	FP_CB_solout solout, void *solout_EXT, int *iout, int *idid,
-	double *uround, double *thet,
-	double *fnewt, double *quot1, double *quot2,
-	double *facl, double *facr,
 	double *z1, double *z2, double *z3,
 	double *y0, double *scal,
 	double *f1, double *f2, double *f3,
@@ -315,29 +246,52 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 {
 	int ret = RADAU_OK;
     int i, j;
-    double a1, a2, a3;
-    int nunexpect;
-    double ak;
-    double qt, ak1, ak2, ak3, f1i, f2i, f3i, c1q, 
-	    c2q, c3q, z1i, z2i, z3i, fac;
-    int ier;
-    double xph, thq, err, fac1, cfac;
-    double hold;
-    double delt, hnew;
-    int last;
-    double hopt, xold;
-    int newt;
-    double dyno, dyth, quot, hhfac, betan, alphn, theta, ysafe, hmaxn;
-    int nsing;
-    int first;
-    int irtrn, nrsol, nsolu;
-    double qnewt, xosol, acont3;
-    double faccon;
-    int reject;
-    double facgus;
-    double posneg;
+    double a1, a2, a3; /* auxiliary variables */
+	double ak, ak1, ak2, ak3, acont3; /* auxiliary variables */
+	double qt, f1i, f2i, f3i, c1q, c2q, c3q, z1i, z2i, z3i; /* auxiliary variables */
 
-	fac1 = 0; alphn = 0; betan = 0;  /* avoid warnings */
+    int ier;
+	/* Newton related parameters */
+	int newt; /* number of newton iterations taken */
+    double xph; /* x + h, used for newton rhs */
+	double thq, cfac;
+	double dyno, dyth, theta;
+	double qnewt;
+	double dynold = 0;
+	double thqold = 0;
+
+	/* Linear system related parameters */
+	double fac1 = 0; /* diagonal factor for real linear system */
+	double betan = 0; /* real diagonal factor for complex linear system */
+	double alphn = 0; /* complex diagonal factor for complex linear system */
+
+	/* stepsize control related parameters */
+	/* TODO: Separate into predive controller and normal one */
+	int first; /* switch if first timestep */
+    int last; /* switch if current step is last one */
+	int reject; /* switch if step is to be rejected */
+    double hopt; /* backup stepsize for output */
+	double xold; /* previous time-point */
+    double hold; /* previos stepsize */
+	double hnew; /* new stepsize */
+	double err; /* local error norm, return from estrad */
+	double fac; /* stepsize adjustment factor */
+	double quot; /* auxiliary; a quotient */ 
+	double hhfac;
+	double hmaxn; /* maximum stepsize in current step */
+	double facgus;
+	double posneg; /* sign */
+
+	/* misc */
+    double delt; /* perturbation in jacobian finite diffs */
+	double ysafe; /* auxiliary value in jacobians*/
+
+	/* solout callback related */
+	int irtrn; /*additional solout return TODO: use return value instead */
+
+	/* tracking for various failure states */
+	int nunexpect; /* number of unexpected step failures, max = 10 */
+	int nsing; /* number of singular jacobians */
 
     /* Parameter adjustments */
     --cont;
@@ -359,8 +313,8 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
     e1 -= 1 + n;
 
     posneg = copysign(1., *xend - *x);
-    hmaxn = radau_min(radau5_abs(*hmax), radau5_abs(*xend - *x));
-    if (radau5_abs(*h__) <= *uround * 10.) {
+    hmaxn = radau_min(radau5_abs(rmem->input->hmax), radau5_abs(*xend - *x));
+    if (radau5_abs(*h__) <= rmem->input->uround * 10.) {
 		*h__ = 1e-6;
     }
     *h__ = radau_min(radau5_abs(*h__), hmaxn);
@@ -374,8 +328,7 @@ int radcor_(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 		last = TRUE_;
     }
     hopt = *h__;
-    faccon = 1.;
-    cfac = rmem->para->step_size_safety * ((rmem->para->nmax_newton << 1) + 1);
+    cfac = rmem->input->step_size_safety * ((rmem->input->nmax_newton << 1) + 1);
     nsing = 0;
     nunexpect = 0;
     xold = *x;
@@ -394,7 +347,7 @@ L10:
 /* *** *** *** *** *** *** *** */
 /*  COMPUTATION OF THE JACOBIAN */
 /* *** *** *** *** *** *** *** */
-	if (!rmem->para->new_jac_req){
+	if (!rmem->new_jac_req){
 		goto L30; /* no new jacobian required; reuse old one + LU factorization */
 	}
     rmem->stats->njac++;
@@ -403,7 +356,7 @@ L10:
 		/* --- JACOBIAN IS FULL */
 		for (i = 1; i <= n; ++i) {
 			ysafe = y[i];
-			delt = sqrt(*uround * radau_max(1e-5, radau5_abs(ysafe)));
+			delt = sqrt(rmem->input->uround * radau_max(1e-5, radau5_abs(ysafe)));
 			y[i] = ysafe + delt;
 			ier = (*fcn)(n, *x, &y[1], &cont[1], fcn_EXT);
 			if (ier != RADAU_CALLBACK_OK) {
@@ -445,18 +398,18 @@ L10:
 			}
 		}
     }
-    rmem->para->jac_is_fresh = TRUE_; /* flag that Jacobian is freshly computed this timestep */
-	rmem->para->new_jac_req = FALSE_; /* no new Jacobian required */
+    rmem->jac_is_fresh = TRUE_; /* flag that Jacobian is freshly computed this timestep */
+	rmem->new_jac_req = FALSE_; /* no new Jacobian required */
 /* --- COMPUTE THE MATRICES E1 AND E2 AND THEIR DECOMPOSITIONS */
 L20:
     fac1 = rmem->mconst->u1 / *h__;
-    decomr_(rmem->lin_sol, n, fjac, fac1, e1, &ier);
+    _decomr(rmem->lin_sol, n, fjac, fac1, e1, &ier);
     if (ier != 0) {
 		goto L185;
     }
 	alphn = rmem->mconst->alph / *h__;
     betan = rmem->mconst->beta / *h__;
-    decomc_(rmem->lin_sol, n, fjac, alphn, betan, e2r, e2i, &ier);
+    _decomc(rmem->lin_sol, n, fjac, alphn, betan, e2r, e2i, &ier);
     if (ier != 0) {
 		goto L185;
     }
@@ -466,20 +419,20 @@ L20:
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}
     rmem->stats->ludecomps++; /* increment LU decompositions counter */
-/* --- COMPUTE STEPSIZE; step accepted*/
+/* --- NEXT STEP, NO NEW JAC/LU */
 L30:
     rmem->stats->nsteps++;
-    if (rmem->stats->nsteps > rmem->para->nmax) {
+    if (rmem->stats->nsteps > rmem->input->nmax) {
 		goto L178;
     }
-    if (radau5_abs(*h__) * .1 <= radau5_abs(*x) * *uround) {
+    if (radau5_abs(*h__) * .1 <= radau5_abs(*x) * rmem->input->uround) {
 		goto L177;
     }
     xph = *x + *h__;
 	/* *** *** *** *** *** *** *** */
 	/*  STARTING VALUES FOR NEWTON ITERATION */
 	/* *** *** *** *** *** *** *** */
-    if (first || rmem->para->newton_start_zero) {
+    if (first || rmem->input->newton_start_zero) {
 		for (i = 1; i <= n; ++i) {
 			z1[i] = 0.;
 			z2[i] = 0.;
@@ -511,11 +464,11 @@ L30:
 	/*  LOOP FOR THE SIMPLIFIED NEWTON ITERATION */
 	/* *** *** *** *** *** *** *** */
     newt = 0;
-    faccon = pow(radau_max(faccon,*uround), .8);
-    theta = radau5_abs(*thet);
+    rmem->faccon = pow(radau_max(rmem->faccon,rmem->input->uround), .8);
+    theta = radau5_abs(rmem->input->theta_jac_recomp);
 	/* --- NEWTON ITERATION */
 L40:
-    if (newt >= rmem->para->nmax_newton) {
+    if (newt >= rmem->input->nmax_newton) {
 		goto L78;
     }
 	/* ---     COMPUTE THE RIGHT-HAND SIDE */
@@ -552,7 +505,7 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-    ier = slvrad_(rmem, n, fac1, alphn, betan, &e1[1 + n],
+    ier = _slvrad(rmem, n, fac1, alphn, betan, &e1[1 + n],
 			&e2r[1 + n], &e2i[1 + n],
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1]);
 	if (ier != 0){
@@ -567,35 +520,35 @@ L40:
     }
     dyno = sqrt(dyno / (3*n));
 	/* ---     BAD CONVERGENCE OR NUMBER OF ITERATIONS TO LARGE */
-    if (newt > 1 && newt < rmem->para->nmax_newton) {
-		thq = dyno / rmem->para->dynold;
+    if (newt > 1 && newt < rmem->input->nmax_newton) {
+		thq = dyno / dynold;
 		if (newt == 2) {
 			theta = thq;
 		} else {
-			theta = sqrt(thq * rmem->para->thqold);
+			theta = sqrt(thq * thqold);
 		}
-		rmem->para->thqold = thq;
+		thqold = thq;
 		if (theta < .99) {
-			faccon = theta / (1. - theta);
-			dyth = faccon * dyno * pow(theta, rmem->para->nmax_newton - 1 - newt) / *fnewt;
+			rmem->faccon = theta / (1. - theta);
+			dyth = rmem->faccon * dyno * pow(theta, rmem->input->nmax_newton - 1 - newt) / rmem->input->fnewt;
 			if (dyth >= 1.) {
 				qnewt = radau_max(1e-4, radau_min(20., dyth));
-				hhfac = pow(qnewt, -1. / (rmem->para->nmax_newton + 4. - 1 - newt)) * .8;
+				hhfac = pow(qnewt, -1. / (rmem->input->nmax_newton + 4. - 1 - newt)) * .8;
 				*h__ = hhfac * *h__;
 				reject = TRUE_;
 				last = FALSE_;
-				if (rmem->para->jac_is_fresh) {
+				if (rmem->jac_is_fresh) {
 					goto L20;
 				}
-				rmem->para->new_jac_req = TRUE_;
+				rmem->new_jac_req = TRUE_;
 				goto L10;
 			}
 		} else {
 			goto L78;
 		}
     }
-    rmem->para->dynold = radau_max(dyno, *uround);
-    for (i = 1; i <= n; ++i) {
+    dynold = radau_max(dyno, rmem->input->uround);
+    for (i = 1; i <= n; ++i) { /* update Newton RHS ? */
 		f1i = f1[i] + z1[i];
 		f2i = f2[i] + z2[i];
 		f3i = f3[i] + z3[i];
@@ -606,11 +559,11 @@ L40:
 		z2[i] = t21 * f1i + t22 * f2i + t23 * f3i;
 		z3[i] = t31 * f1i + f2i;
     }
-    if (faccon * dyno > *fnewt) {
+    if (rmem->faccon * dyno > rmem->input->fnewt) {
 		goto L40;
     }
 	/* --- ERROR ESTIMATION */
-    ret = estrad_(rmem, n, *h__, rmem->mconst->dd1, rmem->mconst->dd2, rmem->mconst->dd3, (FP_CB_f) fcn, fcn_EXT,
+    ret = _estrad(rmem, n, *h__, rmem->mconst->dd1, rmem->mconst->dd2, rmem->mconst->dd3, (FP_CB_f) fcn, fcn_EXT,
 				   &y0[1], &y[1], *x, &e1[1 + n],
 				   &z1[1], &z2[1], &z3[1], &cont[1], &werr[1], &f1[1], &f2[1],
 				   &err, first, reject);
@@ -618,9 +571,9 @@ L40:
 		goto L184;
 	}
 	/* --- COMPUTATION OF HNEW */
-	/* --- WE REQUIRE facl<=HNEW/H<=facr */
-    fac = radau_min(rmem->para->step_size_safety, cfac / (newt + (rmem->para->nmax_newton << 1)));
-    quot = radau_max(*facr ,radau_min(*facl, pow(err, .25) / fac));
+	/* --- WE REQUIRE .2<=HNEW/H<=8. */
+    fac = radau_min(rmem->input->step_size_safety, cfac / (newt + (rmem->input->nmax_newton << 1)));
+    quot = radau_max(rmem->input->fac_upper ,radau_min(rmem->input->fac_lower, pow(err, .25) / fac));
     hnew = *h__ / quot;
 	/* *** *** *** *** *** *** *** */
 	/*  IS THE ERROR SMALL ENOUGH ? */
@@ -629,16 +582,16 @@ L40:
 	/* --- STEP IS ACCEPTED */
 		first = FALSE_;
 		rmem->stats->naccpt++;
-		if (rmem->para->pred_step_control) {
+		if (rmem->input->pred_step_control) {
 			/*       --- PREDICTIVE CONTROLLER OF GUSTAFSSON */
 			if (rmem->stats->naccpt > 1) {
-				facgus = rmem->para->h_old / *h__ * pow(err * err / rmem->para->erracc, .25) / rmem->para->step_size_safety;
-				facgus = radau_max(*facr, radau_min(*facl, facgus));
+				facgus = rmem->h_old / *h__ * pow(err * err / rmem->erracc, .25) / rmem->input->step_size_safety;
+				facgus = radau_max(rmem->input->fac_upper, radau_min(rmem->input->fac_lower, facgus));
 				quot = radau_max(quot,facgus);
 				hnew = *h__ / quot;
 			}
-			rmem->para->h_old = *h__;
-			rmem->para->erracc = radau_max(.01, err);
+			rmem->h_old = *h__;
+			rmem->erracc = radau_max(.01, err);
 		}
 		xold = *x;
 		hold = *h__;
@@ -658,22 +611,21 @@ L40:
 			scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
 		}
 		if (*iout != 0) {
-			nrsol = rmem->stats->naccpt + 1;
 			rmem->xsol = *x;
-			xosol = xold;
 			for (i = 1; i <= n; ++i) {
 				cont[i] = y[i];
 			}
-			nsolu = n;
 			rmem->hsol = hold;
 
 			irtrn = 0;
-			(*solout)(nrsol, xosol, rmem->xsol, &y[1], &werr[1], &nsolu, &irtrn, solout_EXT);
+			rmem->_dense_output_valid = TRUE_;
+			(*solout)(rmem->stats->naccpt + 1, xold, rmem->xsol, &y[1], &werr[1], n, &irtrn, solout_EXT);
 			if (irtrn < 0) {
 				goto L179;
 			}
+			rmem->_dense_output_valid = FALSE_;
 		}
-		rmem->para->jac_is_fresh = FALSE_;
+		rmem->jac_is_fresh = FALSE_;
 		if (last) {
 			*h__ = hopt;
 			return RADAU_SUCCESS;
@@ -687,22 +639,22 @@ L40:
 			hnew = posneg * radau_min(radau5_abs(hnew), radau5_abs(*h__));
 		}
 		reject = FALSE_;
-		if ((*x + hnew / *quot1 - *xend) * posneg >= 0.) {
+		if ((*x + hnew / rmem->input->quot1 - *xend) * posneg >= 0.) {
 			*h__ = *xend - *x;
 			last = TRUE_;
 		} else {
 			qt = hnew / *h__;
 			hhfac = *h__;
-			if (theta <= *thet && qt >= *quot1 && qt <= *quot2) {
+			if (theta <= rmem->input->theta_jac_recomp && qt >= rmem->input->quot1 && qt <= rmem->input->quot2) {
 				goto L30;
 			}
 			*h__ = hnew;
 		}
 		hhfac = *h__;
-		if (theta <= *thet) {
+		if (theta <= rmem->input->theta_jac_recomp) {
 			goto L20;
 		}
-		rmem->para->new_jac_req = TRUE_;
+		rmem->new_jac_req = TRUE_;
 		goto L10;
     } else {
 		/* --- STEP IS REJECTED */
@@ -718,13 +670,13 @@ L40:
 		if (rmem->stats->naccpt >= 1) {
 			rmem->stats->nreject++;
 		}
-		if (rmem->para->jac_is_fresh) {
+		if (rmem->jac_is_fresh) {
 			goto L20;
 		}
-		rmem->para->new_jac_req = TRUE_;
+		rmem->new_jac_req = TRUE_;
 		goto L10;
     }
-/* --- UNEXPECTED STEP-REJECTION, SINGULAR JACOBIAN */
+/* --- UNEXPECTED STEP-REJECTION OR SINGULAR JACOBIAN */
 L78:
     if (ier != 0) {
 		++nsing;
@@ -736,10 +688,10 @@ L78:
     hhfac = .5;
     reject = TRUE_;
     last = FALSE_;
-    if (rmem->para->jac_is_fresh) {
+    if (rmem->jac_is_fresh) {
 		goto L20;
     }
-	rmem->para->new_jac_req = TRUE_;
+	rmem->new_jac_req = TRUE_;
     goto L10;
 /* --- UNEXPECTED STEP-REJECTION */
 L79:
@@ -760,10 +712,10 @@ L79:
 			hhfac = .5;
 			reject = TRUE_;
 			last = FALSE_;
-			if (rmem->para->jac_is_fresh) {
+			if (rmem->jac_is_fresh) {
 				goto L20;
 			}
-			rmem->para->new_jac_req = TRUE_;
+			rmem->new_jac_req = TRUE_;
 			goto L10;
 			break;
 
@@ -793,7 +745,7 @@ L177:
 /* --- FAIL EXIT, NMAX EXCEEDED*/
 L178:
 	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", rmem->para->nmax);
+	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", rmem->input->nmax);
 	return RADAU_ERROR_NMAX_TOO_SMALL;
 /* --- FAILURE EXIT, ERROR IN SPARSE JACOBIAN CALLBACK*/
 L182:
@@ -832,7 +784,7 @@ L186:
 L179:
     *idid = irtrn; /* return from solout callback */
 	return RADAU_SUCCESS_SOLOUT_INTERRUPT;
-} /* radcor_ */
+} /* _radcor */
 
 int radau_get_cont_output_single(void *radau_mem, int i, double x, double *out){
 	/*     THIS FUNCTION CAN BE USED FOR CONINUOUS OUTPUT. IT PROVIDES AN */
@@ -842,6 +794,8 @@ int radau_get_cont_output_single(void *radau_mem, int i, double x, double *out){
 	double s;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem->_dense_output_valid){return -100;}
+
 	s = (x - rmem->xsol) / rmem->hsol;
     *out = rmem->cont[i] + s * (rmem->cont[i + rmem->n] + (s - rmem->mconst->c2m1)
 	       * (rmem->cont[i + 2*rmem->n] + (s - rmem->mconst->c1m1) * rmem->cont[i + 3*rmem->n]));
@@ -854,6 +808,7 @@ int radau_get_cont_output(void *radau_mem, double x, double *out){
 	double s;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem->_dense_output_valid){return -100;}
 	
 	s  = (x - rmem->xsol) / rmem->hsol;
 	for(i = 0; i < rmem->n; i++){
@@ -863,7 +818,7 @@ int radau_get_cont_output(void *radau_mem, double x, double *out){
 	return RADAU_OK;
 }
 
-int dec_(int n, double *a, int *ip, int *ier)
+static int _dec(int n, double *a, int *ip, int *ier)
 {
     int i, j, k, m;
     double t;
@@ -947,10 +902,10 @@ L80:
     *ier = k;
     ip[n] = 0;
     return RADAU_OK;
-} /* dec_ */
+} /* _dec */
 
 
-int sol_(int n, double *a, double *b, int *ip)
+static int _sol(int n, double *a, double *b, int *ip)
 {
     int i, k, m;
     double t;
@@ -997,10 +952,10 @@ int sol_(int n, double *a, double *b, int *ip)
 L50:
     b[1] /= a[n + 1];
     return RADAU_OK;
-} /* sol_ */
+} /* _sol */
 
 
-int decc_(int n, double *ar, double *ai, int *ip, int *ier)
+static int _decc(int n, double *ar, double *ai, int *ip, int *ier)
 {
     int i, j, k, m;
     double ti, tr;
@@ -1121,10 +1076,10 @@ L80:
     *ier = k;
     ip[n] = 0;
     return RADAU_OK;
-} /* decc_ */
+} /* _decc */
 
 
-int solc_(int n, double *ar, double *ai, double *br, double *bi, int *ip)
+static int _solc(int n, double *ar, double *ai, double *br, double *bi, int *ip)
 {
     int i, k, m, kb;
     double ti, tr;
@@ -1195,10 +1150,10 @@ L50:
     br[1] = prodr / den;
     bi[1] = prodi / den;
     return RADAU_OK;
-} /* solc_ */
+} /* _solc */
 
 
-int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *e1, int *ier)
+static int _decomr(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *e1, int *ier)
 {
     int i, j;
 
@@ -1214,13 +1169,13 @@ int decomr_(radau_linsol_mem_t *lmem, int n, double *fjac, double fac1, double *
 			}
 			e1[j + j * n] += fac1;
 		}
-		dec_(n, e1, lmem->ip1, ier);
+		_dec(n, e1, lmem->ip1, ier);
 	}
 	return RADAU_OK;
-} /* decomr_ */
+} /* _decomr */
 
 
-int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double betan,
+int _decomc(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double betan,
 	double *e2r, double *e2i, int *ier)
 {
     int i, j;
@@ -1239,13 +1194,13 @@ int decomc_(radau_linsol_mem_t *lmem, int n, double *fjac, double alphn, double 
 			e2r[j + j * n] += alphn;
 			e2i[j + j * n] = betan;
 		}
-		decc_(n, e2r, e2i, lmem->ip2, ier);
+		_decc(n, e2r, e2i, lmem->ip2, ier);
 	}
 	return RADAU_OK;
-} /* decomc_ */
+} /* _decomc */
 
 
-int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
+static int _slvrad(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
 	double *f1, double *f2, double *f3)
@@ -1269,15 +1224,15 @@ int slvrad_(radau_mem_t *rmem, int n, double fac1, double alphn, double betan,
 			ret = superlu_solve_z((SuperLU_aux_z*)rmem->lin_sol->slu_aux_z, z2, z3);
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
-		sol_(n, e1, z1, rmem->lin_sol->ip1);
-    	solc_(n, e2r, e2i, z2, z3, rmem->lin_sol->ip2);
+		_sol(n, e1, z1, rmem->lin_sol->ip1);
+    	_solc(n, e2r, e2i, z2, z3, rmem->lin_sol->ip2);
 	}
 	rmem->stats->lusolves++; /* increment factorization counter */
 	return ret;
-} /* slvrad_ */
+} /* _slvrad */
 
 
-int estrad_(radau_mem_t *rmem, int n, double h,
+static int _estrad(radau_mem_t *rmem, int n, double h,
 	double dd1, double dd2, double dd3,
 	FP_CB_f fcn, void *fcn_EXT,
 	double *y0, double *y,
@@ -1306,7 +1261,7 @@ int estrad_(radau_mem_t *rmem, int n, double h,
 			}
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}else{
-		sol_(n, e1, cont, rmem->lin_sol->ip1);
+		_sol(n, e1, cont, rmem->lin_sol->ip1);
 	}
 
     *err = 0.;
@@ -1337,7 +1292,7 @@ int estrad_(radau_mem_t *rmem, int n, double h,
 				}
 			#endif /*__RADAU5_WITH_SUPERLU*/
 		}else{
-			sol_(n, e1, cont, rmem->lin_sol->ip1);
+			_sol(n, e1, cont, rmem->lin_sol->ip1);
 		}
 
 		*err = 0.;
@@ -1348,5 +1303,5 @@ int estrad_(radau_mem_t *rmem, int n, double h,
 		*err = radau_max(sqrt(*err / n), 1e-10);
     }
     return ret;
-} /* estrad_ */
+} /* _estrad */
 

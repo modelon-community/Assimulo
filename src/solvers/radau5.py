@@ -95,16 +95,16 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
-        #Default values
+        #Default values; None = Radau5 decides
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
+        self.options["fnewt"]    = None #Stopping critera for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = None #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
@@ -201,6 +201,27 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if ret < 0: raise Radau5Error(ret)
         ret = self.rad_memory.set_step_size_safety(self.safe)
         if ret < 0: raise Radau5Error(ret)
+        ret = self.rad_memory.set_theta_jac(self.thet)
+        if ret < 0: raise Radau5Error(ret)
+
+        if self.options["fnewt"]: # not None
+            ret = self.rad_memory.set_fnewt(self.fnewt)
+            if ret < 0: raise Radau5Error(ret)
+
+        ret = self.rad_memory.set_quot1(self.quot1)
+        if ret < 0: raise Radau5Error(ret)
+        ret = self.rad_memory.set_quot2(self.quot2)
+        if ret < 0: raise Radau5Error(ret)
+        
+        if self.options["maxh"]: # not None
+            ret = self.rad_memory.set_hmax(self.maxh)
+            if ret < 0: raise Radau5Error(ret)
+
+        ret = self.rad_memory.set_fac_lower(self.fac1)
+        if ret < 0: raise Radau5Error(ret)
+        ret = self.rad_memory.set_fac_upper(self.fac2)
+        if ret < 0: raise Radau5Error(ret)
+
 
     def set_problem_data(self):
         if self.problem_info["state_events"]:
@@ -307,17 +328,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*20) #Work (double) vector
-        
-        #Setting work options
-        WORK[1] = self.safe
-        WORK[2] = self.thet
-        WORK[3] = self.fnewt
-        WORK[4] = self.quot1
-        WORK[5] = self.quot2
-        WORK[6] = self.maxh
-        WORK[7] = self.fac1
-        WORK[8] = self.fac2
         
         #Dummy methods
         jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
@@ -330,9 +340,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-        self.rad_memory.reset_internal()
-        t, y, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                         jac_dummy, IJAC, self._solout, IOUT, WORK, self.rad_memory)
+        self.rad_memory.reset_reinit()
+        t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                  jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
 
         #Checking return
         if flag == 1:

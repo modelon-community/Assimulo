@@ -3,25 +3,32 @@
 
 #include "radau5_impl.h"
 
-int setup_radau_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out);
-int reset_radau_internal_mem(void *radau_mem); /* reset internal radau_mem, affects internal parameters & stats */ 
-int setup_radau_linsol_mem(int n, int sparseLU, int nprocs, int nnz, radau_linsol_mem_t **mem_out);
-
-int reset_radau_stats(void *radau_mem);
+/* setup radau memory structure with inputs that are required to be fixed. */
+int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out);
+/* re-initializes internal radau_mem, affects internal parameters & stats, but not inputs */ 
+int radau_reinit(void *radau_mem); 
+/* returns all solver statistics, e.g., as number of function evaluations */
 int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves);
 
-int setup_radau_para_default(radau_parameters_t **mem_out);
-int radau_set_para_nmax(void *radau_mem, int val);
-int radau_set_para_nmax_newton(void *radau_mem, int val);
-int radau_set_para_newton_startn(void *radau_mem, int val);
-int radau_set_para_pred_step_control(void *radau_mem, int val);
+/* INPUT PARAMETER SETTING */
+/* Some parameters have immediate errors checks */
+/* Others depend on each other and are only checked when solver is run */
+int radau_set_nmax              (void *radau_mem, int val); /* maximal number of steps */
+int radau_set_nmax_newton       (void *radau_mem, int val); /* max number of newton steps */
+int radau_set_newton_startn     (void *radau_mem, int val); /* newton starting strategy switch */
+int radau_set_pred_step_control (void *radau_mem, int val); /* predictive step-size control switch */
 
-int radau_set_para_step_size_safety(void *radau_mem, double val);
+int radau_set_step_size_safety  (void *radau_mem, double val); /* safety factor in step-size control */
+int radau_set_uround            (void *radau_mem, double val); /* machine epsilon */
+int radau_set_theta_jac_recomp  (void *radau_mem, double val); /* theta; factor for jacobian recomputation */
+int radau_set_fnewt             (void *radau_mem, double val); /* fnewt; newton cancellation factor: kappa*tol */
+int radau_set_quot1             (void *radau_mem, double val); /* quot1; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */ 
+int radau_set_quot2             (void *radau_mem, double val); /* quot2; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
+int radau_set_hmax              (void *radau_mem, double val); /* maximal step-size */
+int radau_set_fac_lower         (void *radau_mem, double val); /* maximal factor for step-size decrease */
+int radau_set_fac_upper         (void *radau_mem, double val); /* maximal factor for step-size increase */
 
-
-void free_radau_mem(void **radau_mem);
-void free_radau_linsol_mem(radau_linsol_mem_t **mem);
-void free_radau_stats_mem(radau_stats_t **mem);
-void free_radau_parameters_mem(radau_parameters_t **mem);
+/* free all memory and delete structure */
+void radau_free_mem(void **radau_mem);
 
 #endif /*_RADAU5_IO_H*/
