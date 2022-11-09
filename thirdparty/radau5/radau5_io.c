@@ -1,5 +1,6 @@
 #include "radau5_io.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 #ifdef __RADAU5_WITH_SUPERLU
@@ -11,7 +12,7 @@
 #define FALSE_ (0)
 
 /* forward declarations of private functions */
-static int _radau_setup_linsol_mem(int n, int sparseLU, int nprocs, int nnz, radau_linsol_mem_t **mem_out);
+static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int nprocs, int nnz);
 static void _radau_setup_math_consts(radau_math_const_t* mconst);
 static void _radau_reset_stats(radau_stats_t *mem);
 
@@ -24,44 +25,57 @@ static void free_radau_parameters_mem(radau_inputs_t **mem);
 int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 	radau_mem_t *rmem;
 	int ret = RADAU_OK;
-	
-	/* input sanity checks */
-	if (n < 1){return RADAU_SETUP_INVALID_INPUT;}
 	rmem = (radau_mem_t*)malloc(sizeof(radau_mem_t));
-	if (!rmem){return RADAU_SETUP_MALLOC_FAILURE;}
+	if (!rmem){return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;}
+
+	/* input sanity check */
+	if (n < 1){
+		sprintf(rmem->err_log, "Problem size must be positive integer, received n = %i", n);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
+	}
 
 	rmem->n = n; /* problem size */
 
 	rmem->werr = (double*)malloc(n*sizeof(double));
-	rmem->z1 = (double*)malloc(n*sizeof(double));
-	rmem->z2 = (double*)malloc(n*sizeof(double));
-	rmem->z3 = (double*)malloc(n*sizeof(double));
-	rmem->y0 = (double*)malloc(n*sizeof(double));
+	rmem->z1 =   (double*)malloc(n*sizeof(double));
+	rmem->z2 =   (double*)malloc(n*sizeof(double));
+	rmem->z3 =   (double*)malloc(n*sizeof(double));
+	rmem->y0 =   (double*)malloc(n*sizeof(double));
 	rmem->scal = (double*)malloc(n*sizeof(double));
-	rmem->f1 = (double*)malloc(n*sizeof(double));
-	rmem->f2 = (double*)malloc(n*sizeof(double));
-	rmem->f3 = (double*)malloc(n*sizeof(double));
+	rmem->f1 =   (double*)malloc(n*sizeof(double));
+	rmem->f2 =   (double*)malloc(n*sizeof(double));
+	rmem->f3 =   (double*)malloc(n*sizeof(double));
 	rmem->cont = (double*)malloc(4*n*sizeof(double));
-
 	rmem->rtol = (double*)malloc(n*sizeof(double));
 	rmem->atol = (double*)malloc(n*sizeof(double));
 
 	if(!rmem->werr || !rmem->z1 || !rmem->z3 || !rmem->y0 || !rmem->scal || !rmem->f1 || !rmem->f2 || !rmem->f3 || !rmem->cont){
-		return RADAU_SETUP_MALLOC_FAILURE;
+		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 	}
+
+	/* function calls */
+	rmem->solout = 0;
+	rmem->solout_ext = 0;
 
 	/* maths constants */
 	rmem->mconst = (radau_math_const_t*)malloc(sizeof(radau_math_const_t));
-	if(!rmem->mconst){ return RADAU_SETUP_MALLOC_FAILURE;}
+	if(!rmem->mconst){
+		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
+	}
 	_radau_setup_math_consts(rmem->mconst);
 
 	/* Setup linear solver */
-	ret = _radau_setup_linsol_mem(n, sparseLU, nprocs, nnz, &rmem->lin_sol);
+	ret = _radau_setup_linsol_mem(rmem, n, sparseLU, nprocs, nnz);
 	if (ret < 0){ return ret;}
 
 	/* Setup stats */
 	rmem->stats = (radau_stats_t*)malloc(sizeof(radau_stats_t));
-	if(!rmem->stats){ return RADAU_SETUP_MALLOC_FAILURE;}
+	if(!rmem->stats){
+		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
+	}
 	/* reset - here: initialize - stats*/
 	_radau_reset_stats(rmem->stats);
 
@@ -79,7 +93,10 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 
 int radau_reinit(void *radau_mem){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
+
+	/* default error message */
+	sprintf(rmem->err_log, "No issues logged.");
 
 	_radau_reset_stats(rmem->stats);
 
@@ -103,7 +120,7 @@ int radau_reinit(void *radau_mem){
 /* returns all runtime stats */
 int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	*nfcn = rmem->stats->nfcn;
 	*njac = rmem->stats->njac;
@@ -116,14 +133,24 @@ int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *nac
 	return RADAU_OK;
 }
 
+char *radau_get_err_msg(void *radau_mem){
+	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
+	if (!rmem){
+		return MSG_MEM_NULL;
+	}else{
+		return rmem->err_log;
+	}
+}
+
 
 /* Set nmax parameter; maximal number of steps */
 int radau_set_nmax(void *radau_mem, int val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val <= 0){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for nmax must be nonnegative, received nmax = %i.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->nmax = val;
 	}
@@ -133,10 +160,11 @@ int radau_set_nmax(void *radau_mem, int val){
 /* Set nmax_newton parameter; maximal number of newton steps */
 int radau_set_nmax_newton(void *radau_mem, int val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val <= 0){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for nmax_newton must be nonnegative, received nmax = %i.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->nmax_newton = val;
 	}
@@ -146,7 +174,7 @@ int radau_set_nmax_newton(void *radau_mem, int val){
 /* Set newton_start_zero parameter; newton starting strategy */
 int radau_set_newton_start_zero(void *radau_mem, int val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	rmem->input->newton_start_zero = (val != 0) ? TRUE_ : FALSE_;
 	return RADAU_OK;
@@ -155,7 +183,7 @@ int radau_set_newton_start_zero(void *radau_mem, int val){
 /* Set pred_step_control parameter; step size control strategy */
 int radau_set_pred_step_control(void *radau_mem, int val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	rmem->input->pred_step_control = (val != 0) ? TRUE_ : FALSE_;
 	return RADAU_OK;
@@ -164,10 +192,11 @@ int radau_set_pred_step_control(void *radau_mem, int val){
 /* Set safety factor in timestep control */
 int radau_set_step_size_safety(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val <= .001 || val >= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for step_size_safety must be between 0.001 and 1. received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->step_size_safety = val;
 	}
@@ -177,11 +206,12 @@ int radau_set_step_size_safety(void *radau_mem, double val){
 /* Set machine epsilon */
 int radau_set_uround(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
     rmem->input->_checked = FALSE_;
 
 	if (val <= 1e-19 || val >= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for uround must be between 1e-19 and 1. received = %e.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->uround = val;
 	}
@@ -191,10 +221,11 @@ int radau_set_uround(void *radau_mem, double val){
 /* Set theta; factor for jacobian recomputation */
 int radau_set_theta_jac_recomp(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val >= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for theta_jac must be smaller 1. received = %e.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->theta_jac_recomp = val;
 	}
@@ -204,11 +235,12 @@ int radau_set_theta_jac_recomp(void *radau_mem, double val){
 /* Set fnewt; newton cancellation factor: kappa*tol */
 int radau_set_fnewt(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
     rmem->input->_checked = FALSE_;
 
 	if (val <= 0.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for fnewt must be nonnegative, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->fnewt = val;
 		rmem->input->fnewt_set = TRUE_;
@@ -220,10 +252,11 @@ int radau_set_fnewt(void *radau_mem, double val){
 /* Set quot1; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
 int radau_set_quot1(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val > 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for quot1 must be larger 1, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->quot1 = val;
 	}
@@ -233,10 +266,11 @@ int radau_set_quot1(void *radau_mem, double val){
 /* Set quot2; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
 int radau_set_quot2(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val < 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for quot2 must be smaller 1, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->quot2 = val;
 	}
@@ -246,10 +280,11 @@ int radau_set_quot2(void *radau_mem, double val){
 /* Set maximal step-size */
 int radau_set_hmax(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val <= 0){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for hmax must be positive, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->hmax = val;
 		rmem->input->hmax_set = TRUE_;
@@ -260,10 +295,11 @@ int radau_set_hmax(void *radau_mem, double val){
 /* Set maximal factor for step-size decrease */
 int radau_set_fac_lower(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val >= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for fac_lower must be smaller 1, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->fac_lower = 1./val;
 	}
@@ -273,13 +309,24 @@ int radau_set_fac_lower(void *radau_mem, double val){
 /* Set maximal factor for step-size increase */
 int radau_set_fac_upper(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
 
 	if (val <= 1.){
-		return RADAU_PARA_INCONSISTENT_INPUT;
+		sprintf(rmem->err_log, "Input for fac_upper must be larger 1, received = %g.", val);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}else{
 		rmem->input->fac_upper = 1./val;
 	}
+	return RADAU_OK;
+}
+
+int radau_set_solout(void *radau_mem, FP_CB_solout solout, void *solout_ext){
+	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
+
+	rmem->solout = solout;
+	rmem->solout_ext = solout_ext;
+
 	return RADAU_OK;
 }
 
@@ -336,66 +383,83 @@ static void _radau_setup_math_consts(radau_math_const_t* mconst){
 }
 
 
-static int _radau_setup_linsol_mem(int n, int sparseLU, int nprocs, int nnz, radau_linsol_mem_t **mem_out){
-	radau_linsol_mem_t *mem = (radau_linsol_mem_t*)malloc(sizeof(radau_linsol_mem_t));
-	int n_sq = n*n;
-
+static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int nprocs, int nnz){
+	int n_sq;
+	rmem->lin_sol = (radau_linsol_mem_t*)malloc(sizeof(radau_linsol_mem_t));
+	if (!rmem->lin_sol){
+		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
+	}
+	
 	/* input sanity check */
-	if (n < 1){return RADAU_SETUP_INVALID_INPUT;}
+	if (n < 1){
+		sprintf(rmem->err_log, "Problem size must be positive integer, received n = %i", n);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
+	}
+	n_sq = n*n;
 
-	mem->n = n;
-	mem->sparseLU = sparseLU;
+	rmem->lin_sol->n = n;
+	rmem->lin_sol->sparseLU = sparseLU;
 
 	/* initialize all pointers with 0, since we do not use all */
-	mem->jac = 0;
-	mem->e1 = 0;
-	mem->e2r = 0;
-	mem->e2i = 0;
-	mem->ip1 = 0;
-	mem->ip2 = 0;
-	mem->jac_indices = 0;
-	mem->jac_indptr = 0;
+	rmem->lin_sol->jac = 0;
+	rmem->lin_sol->e1 = 0;
+	rmem->lin_sol->e2r = 0;
+	rmem->lin_sol->e2i = 0;
+	rmem->lin_sol->ip1 = 0;
+	rmem->lin_sol->ip2 = 0;
+	rmem->lin_sol->jac_indices = 0;
+	rmem->lin_sol->jac_indptr = 0;
 
-	mem->slu_aux_d = 0;
-	mem->slu_aux_z = 0;
+	rmem->lin_sol->slu_aux_d = 0;
+	rmem->lin_sol->slu_aux_z = 0;
 	
 	if(sparseLU){
 		#ifdef __RADAU5_WITH_SUPERLU
-			if ((nnz < 0) || (nnz > n_sq) || (nprocs < 1)) {return RADAU_SETUP_INVALID_INPUT;}
-			mem->nnz = nnz;
-			mem->nnz_actual = nnz;
-			mem->nproc = nprocs;
-			mem->LU_with_fresh_jac = FALSE_;
+			if (nnz < 0){
+				sprintf(rmem->err_log, "Input nnz must be nonnegative, received nnz = %i", nnz);
+				return RADAU_ERROR_INCONSISTENT_INPUT;
+			}
+			if (nprocs < 1){
+				sprintf(rmem->err_log, "Input nprocs must be positive, received nprocs = %i", nprocs);
+				return RADAU_ERROR_INCONSISTENT_INPUT;
+			}
+			rmem->lin_sol->nnz = nnz > n*n ? nnz : nnz; /* automatically cap at n*n */
+			rmem->lin_sol->nnz_actual = rmem->lin_sol->nnz;
+			rmem->lin_sol->nproc = nprocs;
+			rmem->lin_sol->LU_with_fresh_jac = FALSE_;
 
 			/* allocate memory for sparse Jacobian structure */
-			mem->jac = (double*)malloc((nnz + n)*sizeof(double));
-			mem->jac_indices = (int*)malloc((nnz + n)*sizeof(int));
-			mem->jac_indptr = (int*)malloc((n + 1)*sizeof(int));
+			rmem->lin_sol->jac = (double*)malloc((nnz + n)*sizeof(double));
+			rmem->lin_sol->jac_indices = (int*)malloc((nnz + n)*sizeof(int));
+			rmem->lin_sol->jac_indptr = (int*)malloc((n + 1)*sizeof(int));
 
 			/* Create auxiliary superLU structures */
-			mem->slu_aux_d = (void*)superlu_init_d(nprocs, n, nnz);
-			mem->slu_aux_z = (void*)superlu_init_z(nprocs, n, nnz);
-			if(!mem->jac || !mem->jac_indices || !mem->jac_indptr || !mem->slu_aux_d || !mem->slu_aux_z){
-				return RADAU_SETUP_MALLOC_FAILURE;
+			rmem->lin_sol->slu_aux_d = (void*)superlu_init_d(nprocs, n, nnz);
+			rmem->lin_sol->slu_aux_z = (void*)superlu_init_z(nprocs, n, nnz);
+			if(!rmem->lin_sol->jac || !rmem->lin_sol->jac_indices || !rmem->lin_sol->jac_indptr || !rmem->lin_sol->slu_aux_d || !rmem->lin_sol->slu_aux_z){
+				sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+				return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 			}
 		#else
-			return RADAU_SETUP_SUPERLU_NOT_ENABLED;
+			sprintf(rmem->err_log, "sparseLU set to true, but code has not been compiled with '__RADAU5_WITH_SUPERLU' flag.");
+			return RADAU_ERROR_SUPERLU_NOT_ENABLED;
 		#endif /*__RADAU5_WITH_SUPERLU*/
 
 	}else{ /* DENSE */
-		mem->jac = (double*)malloc(n_sq*sizeof(double));
-		mem->e1 = (double*)malloc(n_sq*sizeof(double));
-		mem->e2r = (double*)malloc(n_sq*sizeof(double));
-		mem->e2i = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->jac = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->e1 = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->e2r = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->e2i = (double*)malloc(n_sq*sizeof(double));
 
-		mem->ip1 = (int*)malloc(n*sizeof(int));
-		mem->ip2 = (int*)malloc(n*sizeof(int));
+		rmem->lin_sol->ip1 = (int*)malloc(n*sizeof(int));
+		rmem->lin_sol->ip2 = (int*)malloc(n*sizeof(int));
 
-		if(!mem->jac || !mem->e1 || !mem->e2r || !mem->e2i || !mem->ip1 || !mem->ip2){
-			return RADAU_SETUP_MALLOC_FAILURE;
+		if(!rmem->lin_sol->jac || !rmem->lin_sol->e1 || !rmem->lin_sol->e2r || !rmem->lin_sol->e2i || !rmem->lin_sol->ip1 || !rmem->lin_sol->ip2){
+			sprintf(rmem->err_log, MSG_MALLOC_FAIL);
+			return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 		}
 	}
-	*mem_out = mem;
 	return RADAU_OK;
 }
 
@@ -413,7 +477,7 @@ static void _radau_reset_stats(radau_stats_t *rmem){
 
 static int setup_radau_para_default(radau_inputs_t **input_out){
 	radau_inputs_t *mem = (radau_inputs_t*)malloc(sizeof(radau_inputs_t));
-	if(!mem){ return RADAU_SETUP_MALLOC_FAILURE;}
+	if(!mem){ return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;}
 
     mem->_checked = FALSE_;
 

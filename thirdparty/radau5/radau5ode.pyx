@@ -24,72 +24,6 @@ import scipy.sparse as sps
 
 from numpy cimport PyArray_DATA
 
-cdef class RadauMemory:
-    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
-    cdef void* rmem
-    cdef int n
-
-    cpdef int initialize(self, int n, int superLU, int nprocs, int nnz):
-        """
-        n = problem size
-        superLU = 0 || 1, flag if using superLU
-        nprocs = number of processors/threads in superLU
-        nnz = number of non-zero elements with sparse LU
-        """
-        self.n = n
-        return radau5ode.radau_setup_mem(n, superLU, nprocs, nnz, &self.rmem)
-
-    cpdef int set_nmax(self, int val):
-        return radau5ode.radau_set_nmax(self.rmem, val)
-
-    cpdef int set_nmax_newton(self, int val):
-        return radau5ode.radau_set_nmax_newton(self.rmem, val)
-
-    cpdef int set_step_size_safety(self, double val):
-        return radau5ode.radau_set_step_size_safety(self.rmem, val)
-
-    cpdef int set_theta_jac(self, double val):
-        return radau5ode.radau_set_theta_jac_recomp(self.rmem, val)
-
-    cpdef int set_fnewt(self, double val):
-        return radau5ode.radau_set_fnewt(self.rmem, val)
-
-    cpdef int set_quot1(self, double val):
-        return radau5ode.radau_set_quot1(self.rmem, val)
-
-    cpdef int set_quot2(self, double val):
-        return radau5ode.radau_set_quot2(self.rmem, val)
-
-    cpdef int set_hmax(self, double val):
-        return radau5ode.radau_set_hmax(self.rmem, val)
-
-    cpdef int set_fac_lower(self, double val):
-        return radau5ode.radau_set_fac_lower(self.rmem, val)
-
-    cpdef int set_fac_upper(self, double val):
-        return radau5ode.radau_set_fac_upper(self.rmem, val)
-
-    cpdef int reset_reinit(self):
-        """
-        Reset internal memory and stats in Radau5
-        """
-        return radau5ode.radau_reinit(self.rmem)
-
-    cpdef int interpolate(self, double t, np.ndarray output_array):
-        cdef np.ndarray[double, ndim=1, mode="c"]output_array_c = output_array
-        return radau5ode.radau_get_cont_output(self.rmem, t, &output_array_c[0])
-
-    cpdef list get_stats(self):
-        """
-        Return runtime stats logged in Radau5.
-        """
-        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
-        radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
-        return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
-
-    cpdef void finalize(self):
-        radau_free_mem(&self.rmem)
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void py2c_d(double* dest, object source, int dim):
@@ -141,7 +75,7 @@ cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY
 
     py2c_d(y_out, rhs, len(rhs))
 
-    # RADAU_CALLBACK_OK || RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
+    # RADAU_OK || RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
     return ret[0] 
 
 cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
@@ -153,10 +87,10 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     J, ret = (<object>jac_PY)(x, y_py_in)
 
     if ret[0]:
-        return ret[0] # RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
+        return ret[0] # RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
 
     py2c_d_matrix_flat_F(fjac, J, J.shape[0], J.shape[1])
-    return RADAU_CALLBACK_OK
+    return RADAU_OK
 
 cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
                          double* werr, int n, int* irtrn, void* solout_PY):
@@ -182,13 +116,13 @@ cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
     J, ret = (<object>jac_PY)(x, y_py)
 
     if ret[0]:
-        return ret[0] # RADAU_CALLBACK_ERROR_RECOVERABLE || RADAU_CALLBACK_ERROR_NONRECOVERABLE
+        return ret[0] # RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
 
     if not isinstance(J, sps.csc.csc_matrix):
-        return RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT
+        return RADAU_ERROR_CALLBACK_JAC_FORMAT
 
     if J.nnz > nnz[0]:
-        return RADAU_CALLBACK_ERROR_INVALID_NNZ - J.nnz
+        return RADAU_ERROR_CALLBACK_INVALID_NNZ - J.nnz
 
     cdef np.ndarray[double, mode="c", ndim=1] jac_data_py = J.data.astype(np.double)
     cdef np.ndarray[int, mode="c", ndim=1] jac_indices_py = J.indices.astype(np.intc)
@@ -199,7 +133,77 @@ cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
     py2c_d(data, jac_data_py, nnz[0])
     py2c_i(indices, jac_indices_py, nnz[0])
     py2c_i(indptr, jac_indptr_py, n + 1)
-    return RADAU_CALLBACK_OK
+    return RADAU_OK
+
+cdef class RadauMemory:
+    """Auxiliary data structure required to have C structs persists over multiple integrate calls."""
+    cdef void* rmem
+    cdef int n
+
+    cpdef int initialize(self, int n, int superLU, int nprocs, int nnz):
+        """
+        n = problem size
+        superLU = 0 || 1, flag if using superLU
+        nprocs = number of processors/threads in superLU
+        nnz = number of non-zero elements with sparse LU
+        """
+        self.n = n
+        return radau5ode.radau_setup_mem(n, superLU, nprocs, nnz, &self.rmem)
+
+    cpdef int set_nmax(self, int val):
+        return radau5ode.radau_set_nmax(self.rmem, val)
+
+    cpdef int set_nmax_newton(self, int val):
+        return radau5ode.radau_set_nmax_newton(self.rmem, val)
+
+    cpdef int set_step_size_safety(self, double val):
+        return radau5ode.radau_set_step_size_safety(self.rmem, val)
+
+    cpdef int set_theta_jac(self, double val):
+        return radau5ode.radau_set_theta_jac_recomp(self.rmem, val)
+
+    cpdef int set_fnewt(self, double val):
+        return radau5ode.radau_set_fnewt(self.rmem, val)
+
+    cpdef int set_quot1(self, double val):
+        return radau5ode.radau_set_quot1(self.rmem, val)
+
+    cpdef int set_quot2(self, double val):
+        return radau5ode.radau_set_quot2(self.rmem, val)
+
+    cpdef int set_hmax(self, double val):
+        return radau5ode.radau_set_hmax(self.rmem, val)
+
+    cpdef int set_fac_lower(self, double val):
+        return radau5ode.radau_set_fac_lower(self.rmem, val)
+
+    cpdef int set_fac_upper(self, double val):
+        return radau5ode.radau_set_fac_upper(self.rmem, val)
+
+    cpdef str get_err_msg(self):
+        cdef char* ret = radau5ode.radau_get_err_msg(self.rmem)
+        return ret.decode('UTF-8')
+
+    cpdef int reset_reinit(self):
+        """
+        Reset internal memory and stats in Radau5
+        """
+        return radau5ode.radau_reinit(self.rmem)
+
+    cpdef int interpolate(self, double t, np.ndarray output_array):
+        cdef np.ndarray[double, ndim=1, mode="c"]output_array_c = output_array
+        return radau5ode.radau_get_cont_output(self.rmem, t, &output_array_c[0])
+
+    cpdef list get_stats(self):
+        """
+        Return runtime stats logged in Radau5.
+        """
+        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
+        radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
+        return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
+
+    cpdef void finalize(self):
+        radau_free_mem(&self.rmem)
 
 cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
                       double xend, double h__, np.ndarray rtol, np.ndarray atol,

@@ -1,4 +1,4 @@
-(Regarding radau5_c.c, which is based on a f2c translation of ../hairer/radau_decsol.f)
+(Regarding radau5_*.c/h, which is based on a f2c translation of ../hairer/radau_decsol.f)
 
 Copyright (c) 2004, Ernst Hairer
 

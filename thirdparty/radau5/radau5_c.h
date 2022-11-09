@@ -3,12 +3,6 @@
 
 #include "radau5_impl.h"
 
-/* FP_CB = FunctionPointer_CallBack */
-typedef int (*FP_CB_f)(int, double, double*, double*, void*);
-typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
-typedef int (*FP_CB_solout)(int, double, double, double*, double*, int, int*, void*);
-typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
-
 int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 				 double *x, double *y, double *xend, double *h__,
 				 double *rtol, double *atol,

@@ -42,6 +42,8 @@
 #define expm .66666666666666663
 
 /* forward declarations of private functions */
+
+/* core solver function */
 static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 			double *x, double *y, double *xend, double *h__,
 			double *rtol, double *atol,
@@ -53,21 +55,26 @@ static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 			double *fjac, double *e1, double *e2r, double *e2i,
 			double *cont, double *werr);
 
+/* real LU and solution */
 static int _dec(int n, double *a, int *ip, int *ier);
 static int _sol(int n, double *a, double *b, int *ip);
 
+/* complex LU and solution */
 static int _decc(int n, double *ar, double *ai, int *ip, int *ier);
 static int _solc(int n, double *ar, double *ai, double *br, double *bi, int *ip);
 
+/* assemble real/complex linear systems and create LU decomposition */
 static int _decomr(radau_linsol_mem_t *mem, int n, double *fjac, double fac1, double *e1, int *ier);
 static int _decomc(radau_linsol_mem_t *mem, int n, double *fjac, double alphn, double betan,
 	double *e2r, double *e2i, int *ier);
 
+/* LU solve */
 static int _slvrad(radau_mem_t *rmem, int n, double fac1, double alphn, double betan, 
 	double *e1, double *e2r, double *e2i, 
 	double *z1, double *z2, double *z3,
 	double *f1, double *f2, double *f3);
 
+/* local error estimation */
 static int _estrad(radau_mem_t *rmem, int n, double h,
 	double dd1, double dd2, double dd3,
 	FP_CB_f fcn, void *fcn_EXT,
@@ -88,7 +95,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
     double quot;
     double tolst;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!radau_mem){ return RADAU_PARA_RADAU_MEM_NULL; }
+	if (!radau_mem){ return RADAU_ERROR_MEM_NULL; }
 /* ---------------------------------------------------------- */
 /*     NUMERICAL SOLUTION OF A STIFF (OR DIFFERENTIAL ALGEBRAIC) */
 /*     SYSTEM OF FIRST ORDER ORDINARY DIFFERENTIAL EQUATIONS */
@@ -152,17 +159,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /*                 NUMERICAL SOLUTION DURING INTEGRATION. */
 /*                 IF IOUT=1, IT IS CALLED AFTER EVERY SUCCESSFUL STEP. */
 /*                 SUPPLY A DUMMY SUBROUTINE IF IOUT=0. */
-/*                 IT MUST HAVE THE FORM */
-/*                    SUBROUTINE SOLOUT (NR,XOLD,X,Y,N, */
-/*                                       IRTRN) */
-/*                    DOUBLE PRECISION X,Y(N) */
-/*                    .... */
-/*                 SOLOUT FURNISHES THE SOLUTION "Y" AT THE NR-TH */
-/*                    GRID-POINT "X" (THEREBY THE INITIAL VALUE IS */
-/*                    THE FIRST GRID-POINT). */
-/*                 "XOLD" IS THE PRECEEDING GRID-POINT. */
-/*                 "IRTRN" SERVES TO INTERRUPT THE INTEGRATION. IF IRTRN */
-/*                    IS SET <0, RADAU5 RETURNS TO THE CALLING PROGRAM. */
+/*                 Must be of type FP_CB_solout, see radau5_impl.h */
 
 /*     IOUT        SWITCH FOR CALLING THE SUBROUTINE SOLOUT: */
 /*                    IOUT=0: SUBROUTINE IS NEVER CALLED */
@@ -188,7 +185,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	/* -------- CHECK AND CHANGE THE TOLERANCES */
 	for (i = 0; i < rmem->n; ++i) {
 		if (atol[i] <= 0. || rtol[i] <= rmem->input->uround * 10.) {
-			printf("TOLERANCES (%i) ARE TOO SMALL \n", i);
+			sprintf(rmem->err_log, "Input tolerances are too small.");
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		} else {
 			quot = atol[i] / rtol[i];
@@ -202,6 +199,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	if (!rmem->input->_checked){
 		/* sanity check on fnewt */
 		if (rmem->input->fnewt <= rmem->input->uround / tolst){
+			sprintf(rmem->err_log, "Curious input for 'fnewt' = %g, must not be smaller than uround/rtol = %g.", rmem->input->fnewt, rmem->input->uround / tolst);
 			return RADAU_ERROR_INCONSISTENT_INPUT;
 		}
 		rmem->input->_checked = TRUE_;
@@ -217,7 +215,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 	}
 
 	if (rmem->lin_sol->sparseLU && !(*ijac)){
-		printf("CURIOUS INPUT; ANALYTICAL JACOBIAN DISABLED, IJAC = %i, WHICH IS REQUIRED FOR SPARSE SOLVER\n", *ijac);
+		sprintf(rmem->err_log, "sparseLU is set true, but analytical Jacobian usage is disabled.");
 		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}
 	/* POSSIBLE ADDITIONAL RETURN FLAG */
@@ -359,10 +357,10 @@ L10:
 			delt = sqrt(rmem->input->uround * radau_max(1e-5, radau5_abs(ysafe)));
 			y[i] = ysafe + delt;
 			ier = (*fcn)(n, *x, &y[1], &cont[1], fcn_EXT);
-			if (ier != RADAU_CALLBACK_OK) {
+			if (ier != RADAU_OK) {
 				y[i] = ysafe - delt;
 				ier =  (*fcn)(n, *x, &y[1], &cont[1], fcn_EXT);
-				if (ier != RADAU_CALLBACK_OK) {
+				if (ier != RADAU_OK) {
 					y[i] = ysafe;
 					goto L79;
 				}
@@ -382,7 +380,7 @@ L10:
 			#ifdef __RADAU5_WITH_SUPERLU
 			rmem->lin_sol->nnz_actual = rmem->lin_sol->nnz;
 			ier = (*jac_sparse)(n, *x, &y[1], &(rmem->lin_sol->nnz_actual), rmem->lin_sol->jac, rmem->lin_sol->jac_indices, rmem->lin_sol->jac_indptr, jac_EXT);
-			if (ier != RADAU_CALLBACK_OK){
+			if (ier != RADAU_OK){
 				goto L79;
 			}
 			ier = sparse_csc_add_diagonal(n, &(rmem->lin_sol->nnz_actual), rmem->lin_sol->jac, rmem->lin_sol->jac_indices, rmem->lin_sol->jac_indptr);
@@ -393,7 +391,7 @@ L10:
 			#endif /*__RADAU5_WITH_SUPERLU*/
 		} else {
 			ier = (*jac)(n, *x, &y[1], &fjac[1 + n], jac_EXT);
-			if (ier != RADAU_CALLBACK_OK){
+			if (ier != RADAU_OK){
 				goto L79;
 			}
 		}
@@ -477,7 +475,7 @@ L40:
     }
     ier = (*fcn)(n, *x + rmem->mconst->c1 * *h__, &cont[1], &z1[1], fcn_EXT);
     rmem->stats->nfcn++;
-    if (ier != RADAU_CALLBACK_OK) {
+    if (ier != RADAU_OK) {
 		goto L79;
     }
     for (i = 1; i <= n; ++i) {
@@ -485,7 +483,7 @@ L40:
     }
     ier = (*fcn)(n, *x + rmem->mconst->c2 * *h__, &cont[1], &z2[1], fcn_EXT);
     rmem->stats->nfcn++;
-    if (ier != RADAU_CALLBACK_OK) {
+    if (ier != RADAU_OK) {
 		goto L79;
     }
     for (i = 1; i <= n; ++i) {
@@ -493,7 +491,7 @@ L40:
     }
     ier = (*fcn)(n, xph, &cont[1], &z3[1], fcn_EXT);
     rmem->stats->nfcn++;
-    if (ier != RADAU_CALLBACK_OK) {
+    if (ier != RADAU_OK) {
 		goto L79;
     }
 	/* ---     SOLVE THE LINEAR SYSTEMS */
@@ -619,16 +617,17 @@ L40:
 
 			irtrn = 0;
 			rmem->_dense_output_valid = TRUE_;
-			(*solout)(rmem->stats->naccpt + 1, xold, rmem->xsol, &y[1], &werr[1], n, &irtrn, solout_EXT);
-			if (irtrn < 0) {
+			irtrn = (*solout)(rmem->stats->naccpt, xold, rmem->xsol, &y[1], &werr[1], n, &irtrn, solout_EXT);
+			rmem->_dense_output_valid = FALSE_;
+			if (irtrn != 0) {
 				goto L179;
 			}
-			rmem->_dense_output_valid = FALSE_;
 		}
 		rmem->jac_is_fresh = FALSE_;
 		if (last) {
 			*h__ = hopt;
-			return RADAU_SUCCESS;
+			sprintf(rmem->err_log, "Radau5 successfully finished computation.");
+			return RADAU_OK;
 		}
 		(*fcn)(n, *x, &y[1], &y0[1], fcn_EXT);
 		rmem->stats->nfcn++;
@@ -695,15 +694,15 @@ L78:
     goto L10;
 /* --- UNEXPECTED STEP-REJECTION */
 L79:
-	if (ier < RADAU_CALLBACK_ERROR_INVALID_NNZ){
+	if (ier < RADAU_ERROR_CALLBACK_INVALID_NNZ){
 		#ifdef __RADAU5_WITH_SUPERLU
-			printf("FAILURE IN JACOBIAN EVALUATIONS, NNZ TOO SMALL, SPECIFIED NNZ: %i, ACTUAL: %i \n", rmem->lin_sol->nnz, -(ier - RADAU_CALLBACK_ERROR_INVALID_NNZ));
+			sprintf(rmem->err_log, "Number of nonzero elements in provided jacobian is too small, specified = %i, actual = %i.", rmem->lin_sol->nnz, -(ier - RADAU_ERROR_CALLBACK_INVALID_NNZ));
 		#endif /*__RADAU5_WITH_SUPERLU*/
 		return RADAU_ERROR_NNZ_TOO_SMALL;
 	}
 
 	switch(ier){
-		case RADAU_CALLBACK_ERROR_RECOVERABLE:
+		case RADAU_ERROR_CALLBACK_RECOVERABLE:
 			++nunexpect;
 			if (nunexpect >= 10) {
 				goto L175;
@@ -719,49 +718,42 @@ L79:
 			goto L10;
 			break;
 
-		case RADAU_CALLBACK_ERROR_NONRECOVERABLE:
+		case RADAU_ERROR_CALLBACK_UNRECOVERABLE:
 			goto L186;
 			break;
 
-		case RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT:
+		case RADAU_ERROR_CALLBACK_INVALID_NNZ:
 			goto L182;
 			break;
 	}
 /* --- FAIL EXIT */
 L175:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("REPEATEDLY UNEXPECTED STEP REJECTIONS\n");
+	sprintf(rmem->err_log, "Repeated unexpected step rejections.");
 	return RADAU_ERROR_REP_STEP_REJECT;
 /* --- FAIL EXIT, REPEATED SINGULAR JACOBIAN*/
 L176:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MATRIX IS REPEATEDLY SINGULAR IER= %i\n", ier);
+	sprintf(rmem->err_log, "Matrix is repeatedly singular, flag = %i.", ier);
 	return RADAU_ERROR_JAC_SINGULAR;
 /* --- FAIL EXIT, STEP SIZE TOO SMALL*/
 L177:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("STEP SIZE TOO SMALL, H= %e\n", *h__);
+	sprintf(rmem->err_log, "Stepsize too small with h = %e", *h__);
 	return RADAU_ERROR_STEPSIZE_TOO_SMALL;
 /* --- FAIL EXIT, NMAX EXCEEDED*/
 L178:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("MORE THAN NMAX = %i STEPS ARE NEEDED\n", rmem->input->nmax);
+	sprintf(rmem->err_log, "Maximal number of steps = %i exceeded.", rmem->input->nmax);
 	return RADAU_ERROR_NMAX_TOO_SMALL;
 /* --- FAILURE EXIT, ERROR IN SPARSE JACOBIAN CALLBACK*/
 L182:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("JACOBIAN GIVEN IN WRONG FORMAT, REQUIRED SPARSE FORMAT: CSC\n");
-	return RADAU_ERROR_WRONG_SPARSE_JAC_FORMAT;
+	sprintf(rmem->err_log, "Jacobian given in wrong format, required sparsity format: CSC");
+	return RADAU_ERROR_CALLBACK_JAC_FORMAT;
 #ifdef __RADAU5_WITH_SUPERLU /* TODO */
 	L183:
-		printf("EXIT OF RADAU5 AT X = %e \n", *x);
-		printf("UNEXPECTED MALLOC FAILURE\n");
+		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
 		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 #endif /*__RADAU5_WITH_SUPERLU*/
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("UNEXPECTED FAILURE OF SUPERLU FUNCTION CALL, error code = %i \n", ret);
+	sprintf(rmem->err_log, "Unexpected failure in superLU call, error code = %i", ret);
 	return RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE;
 /* --- FAIL EXIT, OTHER SUPERLU FAILURE*/
 L185:
@@ -771,18 +763,17 @@ L185:
 	if (ier <= n){ /* factorization singular */
 		goto L78;
 	}else{ /* memory allocation failure */
-		printf("EXIT OF RADAU5 AT X = %e \n", *x);
-		printf("SUPERLU MEMORY ALLOCATION FAILURE, NUMBER OF BYTES ALLOCATED AT POINT OF FAILURE: %i.\n", ier - n);
+		sprintf(rmem->err_log, "Unexpected malloc failure in superLU, allocated bytes: %i", ier - n);
 		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 	}
 /* --- FAIL EXIT, UNRECOVERABLE EXCEPTION IN FCN OR JAC CALLBACK*/
 L186:
-	printf("EXIT OF RADAU5 AT X = %e \n", *x);
-	printf("UNRECOVERABLE EXCEPTION ENCOUNTERED IN PROBLEM CALLBACK\n");
-	return RADAU_ERROR_UNRECOVERABLE_CALLBACK_ERROR;
+	sprintf(rmem->err_log, "Unrecoverable exception encountered during problem callback.");
+	return RADAU_ERROR_CALLBACK_UNRECOVERABLE;
 /* --- EXIT CAUSED BY SOLOUT */
 L179:
     *idid = irtrn; /* return from solout callback */
+	sprintf(rmem->err_log, "Radau5 interrupted during solout callback with flag = %i.", irtrn);
 	return RADAU_SUCCESS_SOLOUT_INTERRUPT;
 } /* _radcor */
 
@@ -793,8 +784,11 @@ int radau_get_cont_output_single(void *radau_mem, int i, double x, double *out){
 	/*     THE LAST SUCCESSFULLY COMPUTED STEP (BY RADAU5). */
 	double s;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-	if (!rmem->_dense_output_valid){return -100;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
+	if (!rmem->_dense_output_valid){
+		sprintf(rmem->err_log, "Dense output may only be obtained during callbacks.");
+		return RADAU_ERROR_DENSE_CALLBACK;
+	}
 
 	s = (x - rmem->xsol) / rmem->hsol;
     *out = rmem->cont[i] + s * (rmem->cont[i + rmem->n] + (s - rmem->mconst->c2m1)
@@ -807,8 +801,11 @@ int radau_get_cont_output(void *radau_mem, double x, double *out){
 	int i;
 	double s;
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_PARA_RADAU_MEM_NULL;}
-	if (!rmem->_dense_output_valid){return -100;}
+	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
+	if (!rmem->_dense_output_valid){
+		sprintf(rmem->err_log, "Dense output may only be obtained during callbacks.");
+		return RADAU_ERROR_DENSE_CALLBACK;
+	}
 	
 	s  = (x - rmem->xsol) / rmem->hsol;
 	for(i = 0; i < rmem->n; i++){

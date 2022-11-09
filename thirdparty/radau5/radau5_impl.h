@@ -2,41 +2,35 @@
 #define _RADAU5_IMPL_H
 
 /* Radau return flags */
-#define RADAU_OK 0 
+#define RADAU_OK 0
 
-/* setup */
-#define RADAU_SETUP_INVALID_INPUT        -1
-#define RADAU_SETUP_MALLOC_FAILURE       -2
-#define RADAU_SETUP_SUPERLU_NOT_ENABLED  -100
+#define RADAU_SUCCESS_SOLOUT_INTERRUPT 1
 
-/* Setting parameters */
-#define RADAU_PARA_RADAU_MEM_NULL       -1
-#define RADAU_PARA_INCONSISTENT_INPUT	-2
+#define RADAU_ERROR_MEM_NULL                    -1
+#define RADAU_ERROR_INCONSISTENT_INPUT          -2
+#define RADAU_ERROR_SUPERLU_NOT_ENABLED         -3
+#define RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE   -4
+#define RADAU_ERROR_NMAX_TOO_SMALL              -5
+#define RADAU_ERROR_STEPSIZE_TOO_SMALL          -6
+#define RADAU_ERROR_JAC_SINGULAR                -7
+#define RADAU_ERROR_REP_STEP_REJECT             -8
+#define RADAU_ERROR_NNZ_TOO_SMALL               -9
+#define RADAU_ERROR_CALLBACK_RECOVERABLE        -10
+#define RADAU_ERROR_CALLBACK_UNRECOVERABLE      -11
+#define RADAU_ERROR_CALLBACK_JAC_FORMAT         -12
+#define RADAU_ERROR_CALLBACK_INVALID_NNZ        -13
+#define RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE  -14
+#define RADAU_ERROR_DENSE_CALLBACK              -15
 
-#define RADAU_SUCCESS                                1
-#define RADAU_SUCCESS_SOLOUT_INTERRUPT               2 
-#define RADAU_ERROR_INCONSISTENT_INPUT              -1
-#define RADAU_ERROR_NMAX_TOO_SMALL                  -2
-#define RADAU_ERROR_STEPSIZE_TOO_SMALL              -3
-#define RADAU_ERROR_JAC_SINGULAR                    -4
-#define RADAU_ERROR_REP_STEP_REJECT                 -5
-#define RADAU_ERROR_NNZ_TOO_SMALL                   -6
-#define RADAU_ERROR_WRONG_SPARSE_JAC_FORMAT         -7
-#define RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE      -8
-#define RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE       -9
-#define RADAU_ERROR_UNRECOVERABLE_CALLBACK_ERROR    -10
+/* Error messages used in multiple places */
+#define MSG_MALLOC_FAIL "Unexpected malloc failure."
+#define MSG_MEM_NULL    "Unexpected NULL pointer for Radau memory structure."
 
-#define RADAU_CALLBACK_OK                        0
-#define RADAU_CALLBACK_ERROR_RECOVERABLE        -1
-#define RADAU_CALLBACK_ERROR_NONRECOVERABLE     -2
-#define RADAU_CALLBACK_ERROR_INVALID_JAC_FORMAT -3
-/* this one always has to have the smaller number among all RADAU_CALLBACK_ERROR_x */
-#define RADAU_CALLBACK_ERROR_INVALID_NNZ        -10
-
-#define RADAU_SUPERLU_INVALID_INPUT_N             -1
-#define RADAU_SUPERLU_INVALID_INPUT_NNZ           -2
-#define RADAU_SUPERLU_INVALID_INPUT_NNZ_TOO_LARGE -3
-#define RADAU_SUPERLU_INVALID_INPUT_NPROC         -4
+/* FP_CB = FunctionPointer_CallBack */
+typedef int (*FP_CB_f)(int, double, double*, double*, void*);
+typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
+typedef int (*FP_CB_solout)(int, double, double, double*, double*, int, int*, void*);
+typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
 
 /* forward declarations of data structures */
 struct radau_mem_t;
@@ -62,8 +56,13 @@ struct radau_mem_t{
 	double *scal; /* norm scaling factors */
 	double *f1, *f2, *f3; /* newton rhs */
 	double *cont; /* interpolation*/
-
 	double *rtol, *atol; /* internal rtol and atol vectors */
+
+	char err_log[256]; /* logging error message in case of failure */
+
+	/* function calls */
+	FP_CB_solout solout; /* callback function, called after each successful timestep */
+	void *solout_ext; /* extra input to callback function */
 
 	/* derived mathematical constants */
 	radau_math_const_t *mconst;

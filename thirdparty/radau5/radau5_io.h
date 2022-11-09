@@ -9,6 +9,8 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out);
 int radau_reinit(void *radau_mem); 
 /* returns all solver statistics, e.g., as number of function evaluations */
 int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves);
+/* Get a detailed error message */
+char *radau_get_err_msg(void *radau_mem);
 
 /* INPUT PARAMETER SETTING */
 /* Some parameters have immediate errors checks */
@@ -27,6 +29,9 @@ int radau_set_quot2             (void *radau_mem, double val); /* quot2; if quot
 int radau_set_hmax              (void *radau_mem, double val); /* maximal step-size */
 int radau_set_fac_lower         (void *radau_mem, double val); /* maximal factor for step-size decrease */
 int radau_set_fac_upper         (void *radau_mem, double val); /* maximal factor for step-size increase */
+
+/* TODO: Currently not functioning */
+int radau_set_solout(void *radau_mem, FP_CB_solout solout, void *solout_ext); /* set callback function, this automatically enables callbacks */
 
 /* free all memory and delete structure */
 void radau_free_mem(void **radau_mem);

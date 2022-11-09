@@ -48,22 +48,22 @@ class Radau5Error(AssimuloException):
             -3    : 'The step size became too small.',
             -4    : 'The matrix is repeatedly singular.',
             -5    : 'Repeated unexpected step rejections.',
-            -6    : 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.',
-            -7    : 'Sparse Jacobian given in wrong format, expects CSC format.',
-            -8    : 'Unexpected internal function call failure of SUPERLU.',
-            -9    : 'Memory allocation failure in SUPERLU.',
-            -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).',
+            -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).'
             }
     
-    def __init__(self, value, t = 0.0):
+    def __init__(self, value: int = None, t: float = 0.0, err_msg: str = None):
         self.value = value
         self.t = t
+        self.err_msg = err_msg
         
-    def __str__(self): 
-        try:
-            return repr(self.msg[self.value]+' At time %f.'%self.t)    
-        except KeyError:
-            return repr('Radau failed with flag %s. At time %f.'%(self.value, self.t))
+    def __str__(self):
+        if self.err_msg:
+            return repr('Radau failed with flag %s. At time %f. Message: %s'%(self.value, self.t, self.err_msg))
+        else: 
+            try:
+                return repr(self.msg[self.value]+' At time %f.'%self.t)    
+            except KeyError:
+                return repr('Radau failed with flag %s. At time %f.'%(self.value, self.t))
 
 
 class Radau5ODE(Radau_Common,Explicit_ODE):
@@ -196,31 +196,31 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             raise Radau_Exception("Failed to initialize RadauSuperLUaux structure. Is SUPERLU installed? Error code = {}.".format(ret))
         # set parameters
         ret = self.rad_memory.set_nmax(self.maxsteps)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         ret = self.rad_memory.set_nmax_newton(self.newt)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         ret = self.rad_memory.set_step_size_safety(self.safe)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         ret = self.rad_memory.set_theta_jac(self.thet)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
 
         if self.options["fnewt"]: # not None
             ret = self.rad_memory.set_fnewt(self.fnewt)
-            if ret < 0: raise Radau5Error(ret)
+            if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
 
         ret = self.rad_memory.set_quot1(self.quot1)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         ret = self.rad_memory.set_quot2(self.quot2)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         
         if self.options["maxh"]: # not None
             ret = self.rad_memory.set_hmax(self.maxh)
-            if ret < 0: raise Radau5Error(ret)
+            if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
 
         ret = self.rad_memory.set_fac_lower(self.fac1)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
         ret = self.rad_memory.set_fac_upper(self.fac2)
-        if ret < 0: raise Radau5Error(ret)
+        if ret < 0: raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
 
 
     def set_problem_data(self):
@@ -235,9 +235,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = -10 #Recoverable error
                     else:
-                        ret = -2 #Non-recoverable
+                        ret = -11 #Non-recoverable
                 return rhs, [ret]
             self.f = f
             self.event_func = event_func
@@ -251,9 +251,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = -10 #Recoverable error
                     else:
-                        ret = -2 #Non-recoverable
+                        ret = -11 #Non-recoverable
                 return rhs, [ret]
             self.f = f
     
@@ -318,9 +318,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         except BaseException as E:
             jac = N.eye(len(y))
             if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                ret = -1 #Recoverable error
+                ret = -10 #Recoverable error
             else:
-                ret = -2 #Non-recoverable
+                ret = -11 #Non-recoverable
         return jac, [ret]
             
     def integrate(self, t, y, tf, opts):
@@ -345,13 +345,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                                                   jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
 
         #Checking return
-        if flag == 1:
+        if flag == 0:
             flag = ID_PY_COMPLETE
-        elif flag == 2:
+        elif flag == 1:
             flag = ID_PY_EVENT
         else:
+            msg = self.rad_memory.get_err_msg()
             self.finalize()
-            raise Radau5Error(flag, t) from None
+            raise Radau5Error(value = flag, t = t, err_msg = msg) from None
         
         #Retrieving statistics
         nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
