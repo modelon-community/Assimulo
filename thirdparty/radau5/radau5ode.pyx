@@ -93,7 +93,7 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     return RADAU_OK
 
 cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
-                         double* werr, int n, int* irtrn, void* solout_PY):
+                         double* werr, int n, void* solout_PY):
     """
     Internal callback function to enable call to Python based solution output function from C
     """
@@ -102,9 +102,7 @@ cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
     c2py_d(y_py, y, n)
     c2py_d(werr_py, werr, n)
 
-    irtrn[0] = (<object>solout_PY)(nrsol, xosol, xsol, y_py, werr_py, irtrn[0])
-
-    return irtrn[0]
+    return (<object>solout_PY)(nrsol, xosol, xsol, y_py, werr_py)
 
 cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,
@@ -151,58 +149,66 @@ cdef class RadauMemory:
         return radau5ode.radau_setup_mem(n, superLU, nprocs, nnz, &self.rmem)
 
     cpdef int set_nmax(self, int val):
+        """ Set maximum number of steps."""
         return radau5ode.radau_set_nmax(self.rmem, val)
 
     cpdef int set_nmax_newton(self, int val):
+        """ Set maximum number of newton steps."""
         return radau5ode.radau_set_nmax_newton(self.rmem, val)
 
     cpdef int set_step_size_safety(self, double val):
+        """ Set stepsize safety factor."""
         return radau5ode.radau_set_step_size_safety(self.rmem, val)
 
     cpdef int set_theta_jac(self, double val):
+        """ Set theta factor used as criterion for jacobian recomputation."""
         return radau5ode.radau_set_theta_jac_recomp(self.rmem, val)
 
     cpdef int set_fnewt(self, double val):
+        """ Set factor in newton cacellation criterion."""
         return radau5ode.radau_set_fnewt(self.rmem, val)
 
     cpdef int set_quot1(self, double val):
+        """ Set quot1 factor used stepsize selection: if quot1 < HNEW/HOLD < quot2, stepsize is not changed. """
         return radau5ode.radau_set_quot1(self.rmem, val)
 
     cpdef int set_quot2(self, double val):
+        """ Set quot2 factor used stepsize selection: if quot1 < HNEW/HOLD < quot2, stepsize is not changed. """
         return radau5ode.radau_set_quot2(self.rmem, val)
 
     cpdef int set_hmax(self, double val):
+        """ Set maximal stepsize."""
         return radau5ode.radau_set_hmax(self.rmem, val)
 
     cpdef int set_fac_lower(self, double val):
+        """ Set maximal factor for stepsize decreases."""
         return radau5ode.radau_set_fac_lower(self.rmem, val)
 
     cpdef int set_fac_upper(self, double val):
+        """ Set maximal factor for stepsize increases."""
         return radau5ode.radau_set_fac_upper(self.rmem, val)
 
     cpdef str get_err_msg(self):
         cdef char* ret = radau5ode.radau_get_err_msg(self.rmem)
         return ret.decode('UTF-8')
 
-    cpdef int reset_reinit(self):
-        """
-        Reset internal memory and stats in Radau5
-        """
+    cpdef int reinit(self):
+        """ Reset internal variables and stats in Radau5."""
         return radau5ode.radau_reinit(self.rmem)
 
     cpdef int interpolate(self, double t, np.ndarray output_array):
+        """ Interpolate to obain solution at time t."""
         cdef np.ndarray[double, ndim=1, mode="c"]output_array_c = output_array
         return radau5ode.radau_get_cont_output(self.rmem, t, &output_array_c[0])
 
     cpdef list get_stats(self):
-        """
-        Return runtime stats logged in Radau5.
-        """
+        """ Return runtime stats logged in Radau5."""
         cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
         radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
         return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
 
     cpdef void finalize(self):
+        """ Free all internal memory."""
         radau_free_mem(&self.rmem)
 
 cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
@@ -215,7 +221,8 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
         Parameters::
 
             fcn_PY
-                        - Right-hand side function f(x, y), where 'x' is time, returning the evaluated value, 
+                        - Right-hand side function [ret, ydot] = f(x, y), where 'x' is time.
+                          ret: 0 = OK, > 0 non-recoverable exception, < 0, recoverable
             x
                         - Start time
             y
@@ -225,11 +232,12 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
             h__
                         - Initial step-size guess
             rtol
-                        - Array (len == len(y)) or scalar, Relative error tolerance in step-size control
+                        - Array (len == len(y)). Relative error tolerance in step-size control
             atol
-                        - Array (len == len(y)) or scalar, Absolute error tolerance in step-size control
+                        - Array (len == len(y)). Absolute error tolerance in step-size control
             jac_PY
-                        - Jacobian function jac(x, y), where 'x' is time
+                        - Jacobian function [ret, J] = jac(x, y), where 'x' is time
+                          ret: 0 = OK, > 0 non-recoverable exception, < 0, recoverable
             ijac
                         - Switch for Jacobian computation:
                           ijac == 0: C based finite differences
@@ -241,9 +249,7 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
                             - told:  Previous time-point
                             - t:     Current time-point
                             - y:     Solution at current time-point
-                            - cont:  Output to be used to obtain high-order dense output, via the 'contr5' function
                             - werr:  Local error estimate
-                            - lrc:   Unsused optional parameter
                             - irtrn: Optional parameter for interrupting time-integation if irtrn < 0
             iout
                         - Switch for using solout_PY:
@@ -258,7 +264,7 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
             y
                         - Final solution
             idid
-                        - Return flag, see radau_decsol.c for details (1 == Successful computation)
+                        - Return flag, see radau5_c.c 0 = sucess, 1 = sucess, interrput by solout
     """
     cdef int ret
     cdef int idid = 1
@@ -269,6 +275,6 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
 
     ret = radau5ode.radau5_solve(rad_memory.rmem, callback_fcn, <void*>fcn_PY, &x, &y_vec[0], &xend,
                         &h__, &rtol_vec[0], &atol_vec[0], callback_jac, callback_jac_sparse, <void*> jac_PY,
-                        &ijac, callback_solout, <void*>solout_PY, &iout, &idid)
+                        ijac, callback_solout, <void*>solout_PY, iout, &idid)
 
     return x, y, ret

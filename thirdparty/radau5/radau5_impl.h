@@ -15,21 +15,17 @@
 #define RADAU_ERROR_JAC_SINGULAR                -7
 #define RADAU_ERROR_REP_STEP_REJECT             -8
 #define RADAU_ERROR_NNZ_TOO_SMALL               -9
-#define RADAU_ERROR_CALLBACK_RECOVERABLE        -10
-#define RADAU_ERROR_CALLBACK_UNRECOVERABLE      -11
-#define RADAU_ERROR_CALLBACK_JAC_FORMAT         -12
-#define RADAU_ERROR_CALLBACK_INVALID_NNZ        -13
-#define RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE  -14
-#define RADAU_ERROR_DENSE_CALLBACK              -15
-
-/* Error messages used in multiple places */
-#define MSG_MALLOC_FAIL "Unexpected malloc failure."
-#define MSG_MEM_NULL    "Unexpected NULL pointer for Radau memory structure."
+#define RADAU_ERROR_CALLBACK_UNRECOVERABLE      -10
+#define RADAU_ERROR_CALLBACK_JAC_FORMAT         -11
+#define RADAU_ERROR_CALLBACK_INVALID_NNZ        -12
+#define RADAU_ERROR_UNEXPECTED_SUPERLU_FAILURE  -13
+#define RADAU_ERROR_DENSE_CALLBACK              -14
 
 /* FP_CB = FunctionPointer_CallBack */
+/* See comments on radau5_solve in radau5_c.c for guide on the inputs */
 typedef int (*FP_CB_f)(int, double, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
-typedef int (*FP_CB_solout)(int, double, double, double*, double*, int, int*, void*);
+typedef int (*FP_CB_solout)(int, double, double, double*, double*, int, void*);
 typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
 
 /* forward declarations of data structures */
@@ -104,8 +100,7 @@ struct radau_linsol_mem_t{
 
 	/* sparse LU with SUPERLU */
 	int nnz, nproc, nnz_actual;
-
-    int *jac_indices, *jac_indptr;
+    int *jac_indices, *jac_indptr; /* sparse structure info */
 
 	/* superlu auxiliary structs */
 	void *slu_aux_d, *slu_aux_z; 
@@ -169,5 +164,9 @@ struct radau_math_const_t{
 
 	double c1m1, c2m1;
 };
+
+/* Error messages used in multiple places */
+#define MSG_MALLOC_FAIL "Unexpected malloc failure."
+#define MSG_MEM_NULL    "Unexpected NULL pointer for Radau memory structure."
 
 #endif /*_RADAU5_IMPL_H*/

@@ -12,16 +12,16 @@
 #define FALSE_ (0)
 
 /* forward declarations of private functions */
-static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int nprocs, int nnz);
+static int  _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int nprocs, int nnz);
 static void _radau_setup_math_consts(radau_math_const_t* mconst);
 static void _radau_reset_stats(radau_stats_t *mem);
+static int  _radau_set_default_inputs(radau_inputs_t **mem_out);
 
-static int setup_radau_para_default(radau_inputs_t **mem_out);
+static void _free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem);
+static void _free_radau_stats_mem(radau_stats_t **mem);
+static void free_radau_inputs_mem(radau_inputs_t **mem);
 
-static void free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem);
-static void free_radau_stats_mem(radau_stats_t **mem);
-static void free_radau_parameters_mem(radau_inputs_t **mem);
-
+/* setup radau memory structure with inputs that are required to be fixed. */
 int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 	radau_mem_t *rmem;
 	int ret = RADAU_OK;
@@ -37,14 +37,14 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 	rmem->n = n; /* problem size */
 
 	rmem->werr = (double*)malloc(n*sizeof(double));
-	rmem->z1 =   (double*)malloc(n*sizeof(double));
-	rmem->z2 =   (double*)malloc(n*sizeof(double));
-	rmem->z3 =   (double*)malloc(n*sizeof(double));
-	rmem->y0 =   (double*)malloc(n*sizeof(double));
+	rmem->z1   = (double*)malloc(n*sizeof(double));
+	rmem->z2   = (double*)malloc(n*sizeof(double));
+	rmem->z3   = (double*)malloc(n*sizeof(double));
+	rmem->y0   = (double*)malloc(n*sizeof(double));
 	rmem->scal = (double*)malloc(n*sizeof(double));
-	rmem->f1 =   (double*)malloc(n*sizeof(double));
-	rmem->f2 =   (double*)malloc(n*sizeof(double));
-	rmem->f3 =   (double*)malloc(n*sizeof(double));
+	rmem->f1   = (double*)malloc(n*sizeof(double));
+	rmem->f2   = (double*)malloc(n*sizeof(double));
+	rmem->f3   = (double*)malloc(n*sizeof(double));
 	rmem->cont = (double*)malloc(4*n*sizeof(double));
 	rmem->rtol = (double*)malloc(n*sizeof(double));
 	rmem->atol = (double*)malloc(n*sizeof(double));
@@ -54,11 +54,7 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 		return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;
 	}
 
-	/* function calls */
-	rmem->solout = 0;
-	rmem->solout_ext = 0;
-
-	/* maths constants */
+	/* computed maths constants */
 	rmem->mconst = (radau_math_const_t*)malloc(sizeof(radau_math_const_t));
 	if(!rmem->mconst){
 		sprintf(rmem->err_log, MSG_MALLOC_FAIL);
@@ -80,7 +76,7 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 	_radau_reset_stats(rmem->stats);
 
 	/* Setup input by their default values */
-	ret = setup_radau_para_default(&rmem->input);
+	ret = _radau_set_default_inputs(&rmem->input);
 	if (ret < 0){ return ret;}
 
     ret = radau_reinit((void*)rmem);
@@ -88,9 +84,9 @@ int radau_setup_mem(int n, int sparseLU, int nprocs, int nnz, void **mem_out){
 
 	*mem_out = (void*)rmem;
 	return RADAU_OK;
-}
+} /* radau_setup_mem */
 
-
+/* re-initializes internal radau_mem, affects internal parameters & stats, but not inputs */
 int radau_reinit(void *radau_mem){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
@@ -114,10 +110,9 @@ int radau_reinit(void *radau_mem){
 	rmem->new_jac_req = TRUE_; /* by default: require new Jacobian  */
 
 	return RADAU_OK;
-}
+} /* radau_reinit */
 
-
-/* returns all runtime stats */
+/* returns all solver statistics, e.g., as number of function evaluations */
 int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *naccpt, int *nreject, int * ludecomps, int *lusolves){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
@@ -131,8 +126,9 @@ int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *nac
 	*lusolves = rmem->stats->lusolves;
 
 	return RADAU_OK;
-}
+} /* radau_get_stats */
 
+/* Get a detailed error message */
 char *radau_get_err_msg(void *radau_mem){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){
@@ -140,8 +136,7 @@ char *radau_get_err_msg(void *radau_mem){
 	}else{
 		return rmem->err_log;
 	}
-}
-
+} /* radau_get_err_msg */
 
 /* Set nmax parameter; maximal number of steps */
 int radau_set_nmax(void *radau_mem, int val){
@@ -155,7 +150,7 @@ int radau_set_nmax(void *radau_mem, int val){
 		rmem->input->nmax = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_nmax */
 
 /* Set nmax_newton parameter; maximal number of newton steps */
 int radau_set_nmax_newton(void *radau_mem, int val){
@@ -169,7 +164,7 @@ int radau_set_nmax_newton(void *radau_mem, int val){
 		rmem->input->nmax_newton = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_nmax_newton */
 
 /* Set newton_start_zero parameter; newton starting strategy */
 int radau_set_newton_start_zero(void *radau_mem, int val){
@@ -178,7 +173,7 @@ int radau_set_newton_start_zero(void *radau_mem, int val){
 
 	rmem->input->newton_start_zero = (val != 0) ? TRUE_ : FALSE_;
 	return RADAU_OK;
-}
+} /* radau_set_newton_start_zero */
 
 /* Set pred_step_control parameter; step size control strategy */
 int radau_set_pred_step_control(void *radau_mem, int val){
@@ -187,7 +182,7 @@ int radau_set_pred_step_control(void *radau_mem, int val){
 
 	rmem->input->pred_step_control = (val != 0) ? TRUE_ : FALSE_;
 	return RADAU_OK;
-}
+} /* radau_set_pred_step_control */
 
 /* Set safety factor in timestep control */
 int radau_set_step_size_safety(void *radau_mem, double val){
@@ -201,7 +196,7 @@ int radau_set_step_size_safety(void *radau_mem, double val){
 		rmem->input->step_size_safety = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_step_size_safety */
 
 /* Set machine epsilon */
 int radau_set_uround(void *radau_mem, double val){
@@ -216,7 +211,7 @@ int radau_set_uround(void *radau_mem, double val){
 		rmem->input->uround = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_uround */
 
 /* Set theta; factor for jacobian recomputation */
 int radau_set_theta_jac_recomp(void *radau_mem, double val){
@@ -230,7 +225,7 @@ int radau_set_theta_jac_recomp(void *radau_mem, double val){
 		rmem->input->theta_jac_recomp = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_theta_jac_recomp */
 
 /* Set fnewt; newton cancellation factor: kappa*tol */
 int radau_set_fnewt(void *radau_mem, double val){
@@ -247,7 +242,7 @@ int radau_set_fnewt(void *radau_mem, double val){
 	}
 
 	return RADAU_OK;
-}
+} /* radau_set_fnewt */
 
 /* Set quot1; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
 int radau_set_quot1(void *radau_mem, double val){
@@ -261,7 +256,7 @@ int radau_set_quot1(void *radau_mem, double val){
 		rmem->input->quot1 = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_quot1 */
 
 /* Set quot2; if quot1 < HNEW/HOLD < quot2, stepsize is not changed */
 int radau_set_quot2(void *radau_mem, double val){
@@ -275,7 +270,7 @@ int radau_set_quot2(void *radau_mem, double val){
 		rmem->input->quot2 = val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_quot2 */
 
 /* Set maximal step-size */
 int radau_set_hmax(void *radau_mem, double val){
@@ -290,7 +285,7 @@ int radau_set_hmax(void *radau_mem, double val){
 		rmem->input->hmax_set = TRUE_;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_hmax */
 
 /* Set maximal factor for step-size decrease */
 int radau_set_fac_lower(void *radau_mem, double val){
@@ -304,7 +299,7 @@ int radau_set_fac_lower(void *radau_mem, double val){
 		rmem->input->fac_lower = 1./val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_fac_lower */
 
 /* Set maximal factor for step-size increase */
 int radau_set_fac_upper(void *radau_mem, double val){
@@ -318,18 +313,9 @@ int radau_set_fac_upper(void *radau_mem, double val){
 		rmem->input->fac_upper = 1./val;
 	}
 	return RADAU_OK;
-}
+} /* radau_set_fac_upper */
 
-int radau_set_solout(void *radau_mem, FP_CB_solout solout, void *solout_ext){
-	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
-	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
-
-	rmem->solout = solout;
-	rmem->solout_ext = solout_ext;
-
-	return RADAU_OK;
-}
-
+/* free all memory and delete structure */
 void radau_free_mem(void **radau_mem){
 	radau_mem_t *rmem = (radau_mem_t*) *radau_mem;
 	if(!rmem){ return;}
@@ -348,13 +334,12 @@ void radau_free_mem(void **radau_mem){
 	free(rmem->atol);
 
 	free(rmem->mconst);
-	free_radau_linsol_mem(&rmem->lin_sol);
-	free_radau_stats_mem(&rmem->stats);
-	free_radau_parameters_mem(&rmem->input);
+	_free_radau_linsol_mem(&rmem->lin_sol);
+	_free_radau_stats_mem(&rmem->stats);
+	free_radau_inputs_mem(&rmem->input);
 
 	free(rmem);
-}
-
+} /* radau_free_mem */
 
 /* setting up various computed mathematical constants used */
 static void _radau_setup_math_consts(radau_math_const_t* mconst){
@@ -380,9 +365,9 @@ static void _radau_setup_math_consts(radau_math_const_t* mconst){
     cno = mconst->alph * mconst->alph + mconst->beta * mconst->beta;
     mconst->alph /= cno;
     mconst->beta /= cno;
-}
+} /* _radau_setup_math_consts */
 
-
+/* Setup linear solver related memory */
 static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int nprocs, int nnz){
 	int n_sq;
 	rmem->lin_sol = (radau_linsol_mem_t*)malloc(sizeof(radau_linsol_mem_t));
@@ -432,7 +417,7 @@ static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int n
 			/* allocate memory for sparse Jacobian structure */
 			rmem->lin_sol->jac = (double*)malloc((nnz + n)*sizeof(double));
 			rmem->lin_sol->jac_indices = (int*)malloc((nnz + n)*sizeof(int));
-			rmem->lin_sol->jac_indptr = (int*)malloc((n + 1)*sizeof(int));
+			rmem->lin_sol->jac_indptr  = (int*)malloc((n + 1)*sizeof(int));
 
 			/* Create auxiliary superLU structures */
 			rmem->lin_sol->slu_aux_d = (void*)superlu_init_d(nprocs, n, nnz);
@@ -448,7 +433,7 @@ static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int n
 
 	}else{ /* DENSE */
 		rmem->lin_sol->jac = (double*)malloc(n_sq*sizeof(double));
-		rmem->lin_sol->e1 = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->e1  = (double*)malloc(n_sq*sizeof(double));
 		rmem->lin_sol->e2r = (double*)malloc(n_sq*sizeof(double));
 		rmem->lin_sol->e2i = (double*)malloc(n_sq*sizeof(double));
 
@@ -461,9 +446,9 @@ static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int n
 		}
 	}
 	return RADAU_OK;
-}
+} /* _radau_setup_linsol_mem */
 
-
+/* Reset all runtime related statistics */
 static void _radau_reset_stats(radau_stats_t *rmem){
 	rmem->nfcn = 0;
 	rmem->njac = 0;
@@ -472,10 +457,10 @@ static void _radau_reset_stats(radau_stats_t *rmem){
 	rmem->nreject = 0;
 	rmem->ludecomps = 0;
 	rmem->lusolves = 0;
-}
+} /* _radau_reset_stats */
 
-
-static int setup_radau_para_default(radau_inputs_t **input_out){
+/* Initialize inputs structure and assign default values */
+static int _radau_set_default_inputs(radau_inputs_t **input_out){
 	radau_inputs_t *mem = (radau_inputs_t*)malloc(sizeof(radau_inputs_t));
 	if(!mem){ return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;}
 
@@ -504,10 +489,10 @@ static int setup_radau_para_default(radau_inputs_t **input_out){
 
 	*input_out = mem;
 	return RADAU_OK;
-}
+} /* _radau_set_default_inputs */
 
-
-static void free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem){
+/* Free all linear solver related memory */
+static void _free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem){
 	radau_linsol_mem_t *mem = (radau_linsol_mem_t*) *lin_sol_mem;
 	if(!mem){ return;}
 
@@ -527,18 +512,20 @@ static void free_radau_linsol_mem(radau_linsol_mem_t **lin_sol_mem){
 	#endif /* __RADAU5_WITH_SUPERLU */
 
 	free(mem);
-}
+} /* _free_radau_linsol_mem */
 
-static void free_radau_stats_mem(radau_stats_t **stats_mem){
+/* Free stats related memorys */
+static void _free_radau_stats_mem(radau_stats_t **stats_mem){
 	radau_stats_t *mem = (radau_stats_t*) *stats_mem;
 	if(!mem){ return;}
 
 	free(mem);
-}
+} /* _free_radau_stats_mem */
 
-static void free_radau_parameters_mem(radau_inputs_t **para_mem){
+/* Free inputs related memory */
+static void free_radau_inputs_mem(radau_inputs_t **para_mem){
 	radau_inputs_t *mem = (radau_inputs_t*) *para_mem;
 	if(!mem){ return;}
 
 	free(mem);
-}
+} /* free_radau_inputs_mem */

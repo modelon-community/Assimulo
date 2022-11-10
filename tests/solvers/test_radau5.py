@@ -757,7 +757,7 @@ class Test_Explicit_Radau5:
         sim.maxh = 1.e-1
         sim.maxsteps = 9
 
-        err_msg = "The solver took max internal steps but could not reach the next output time."
+        err_msg = f'Radau failed with flag -5. At time {float_regex}. Message: Maximal number of steps = 9 exceeded.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -774,7 +774,7 @@ class Test_Explicit_Radau5:
         sim.inith = 1.e-1
         sim.maxh = 1.e-1
 
-        err_msg = f"The step size became too small. At time {float_regex}."
+        err_msg = f"Radau failed with flag -6. At time {float_regex}. Message: Stepsize too small with h = {float_regex}."
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1. + 1.e-16)
 
@@ -841,7 +841,7 @@ class Test_Explicit_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = 'Sparse Jacobian given in wrong format, expects CSC format.'
+        err_msg = f'Radau failed with flag -11. At time {float_regex}. Message: Jacobian given in wrong format, required sparsity format: CSC.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -862,7 +862,7 @@ class Test_Explicit_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.'
+        err_msg = f'Radau failed with flag -9. At time {float_regex}. Message: Number of nonzero elements in provided jacobian is too small, specified = 1, actual = 5.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -1031,8 +1031,8 @@ class Test_Explicit_Radau5:
         prob = Explicit_Problem(aux.f, y0)
         sim = Radau5ODE(prob)
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -1046,8 +1046,8 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(prob)
         sim.usejac = True
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -1063,8 +1063,8 @@ class Test_Explicit_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
 
