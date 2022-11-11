@@ -283,11 +283,6 @@ static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 	double dynold = 0;
 	double thqold = 0;
 
-	/* Linear system related parameters */
-	double fac1 = 0; /* diagonal factor for real linear system */
-	double betan = 0; /* real diagonal factor for complex linear system */
-	double alphn = 0; /* complex diagonal factor for complex linear system */
-
 	/* stepsize control related parameters */
 	int first; /* switch if first timestep */
     int last; /* switch if current step is last one */
@@ -422,14 +417,14 @@ L10:
 	rmem->new_jac_req = FALSE_; /* no new Jacobian required */
 /* --- COMPUTE THE MATRICES E1 AND E2 AND THEIR DECOMPOSITIONS */
 L20:
-    fac1 = rmem->mconst->u1 / *h__;
-    _decomr(rmem->lin_sol, n, fjac, fac1, e1, &ier);
+    rmem->fac1 = rmem->mconst->u1 / *h__;
+    _decomr(rmem->lin_sol, n, fjac, rmem->fac1, e1, &ier);
     if (ier != 0) {
 		goto L185;
     }
-	alphn = rmem->mconst->alph / *h__;
-    betan = rmem->mconst->beta / *h__;
-    _decomc(rmem->lin_sol, n, fjac, alphn, betan, e2r, e2i, &ier);
+	rmem->alphn = rmem->mconst->alph / *h__;
+    rmem->betan = rmem->mconst->beta / *h__;
+    _decomc(rmem->lin_sol, n, fjac, rmem->alphn, rmem->betan, e2r, e2i, &ier);
     if (ier != 0) {
 		goto L185;
     }
@@ -527,7 +522,7 @@ L40:
 		z2[i] = ti21 * a1 + ti22 * a2 + ti23 * a3;
 		z3[i] = ti31 * a1 + ti32 * a2 + ti33 * a3;
     }
-    ier = _slvrad(rmem, n, fac1, alphn, betan, &e1[1 + n],
+    ier = _slvrad(rmem, n, rmem->fac1, rmem->alphn, rmem->betan, &e1[1 + n],
 			&e2r[1 + n], &e2i[1 + n],
 			&z1[1], &z2[1], &z3[1], &f1[1], &f2[1], &f3[1]);
 	if (ier != 0){

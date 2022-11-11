@@ -85,6 +85,11 @@ struct radau_mem_t{
     double faccon; /* factor tracked over several timestep to track jacobian recomputes in newton */
 
 	int new_jac_req; /* flag if new jacobian is required */
+
+	/* need to be stored in case LU factorization from previous solve calls is used */
+	double fac1; /* diagonal factor for last real LU factorization */
+	double alphn;  /* real diagonal factor for last complex LU factorization */
+	double betan; /* complex diagonal factor for last complex LU factorization */
 };
 
 /* Struct for linear solver related memory info */

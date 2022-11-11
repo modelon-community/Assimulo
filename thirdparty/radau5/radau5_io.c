@@ -109,6 +109,10 @@ int radau_reinit(void *radau_mem){
 
 	rmem->new_jac_req = TRUE_; /* by default: require new Jacobian  */
 
+	rmem->fac1 = 0;
+	rmem->alphn = 0;
+	rmem->betan = 0;
+
 	return RADAU_OK;
 } /* radau_reinit */
 
@@ -132,7 +136,7 @@ int radau_get_stats(void *radau_mem, int *nfcn, int *njac, int *nsteps, int *nac
 char *radau_get_err_msg(void *radau_mem){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){
-		return MSG_MEM_NULL;
+		return "Unexpected NULL pointer for Radau memory structure when retrieving error message.";
 	}else{
 		return rmem->err_log;
 	}

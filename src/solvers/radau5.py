@@ -110,7 +110,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
         self.options["linear_solver"] = "DENSE" #Using dense or sparse linear solver in Newton iteration
-        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -188,15 +187,17 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
 
-        self.rad_memory = self.radau5.RadauMemory()
-        sparseLU = int(self.options["linear_solver"] == "SPARSE")
-
         def check_init_return(ret):
             if ret < 0:
                 self.finalize()
                 raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
 
+        self.rad_memory = self.radau5.RadauMemory()
+        sparseLU = int(self.options["linear_solver"] == "SPARSE")
         ret = self.rad_memory.initialize(self.problem_info["dim"], sparseLU, self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
+        if ret == -3: # SuperLU not enabled
+            self.finalize()
+            raise Radau5Error(value = ret, err_msg = "Radau5 solver has not been compiled with superLU enabled.")
         check_init_return(ret)
         # set parameters
         ret = self.rad_memory.set_nmax(self.maxsteps)
