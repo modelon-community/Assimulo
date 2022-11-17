@@ -25,7 +25,7 @@
 /* See comments on radau5_solve in radau5_c.c for guide on the inputs */
 typedef int (*FP_CB_f)(int, double, double*, double*, void*);
 typedef int (*FP_CB_jac)(int, double, double*, double*, void*);
-typedef int (*FP_CB_solout)(int, double, double, double*, double*, int, void*);
+typedef int (*FP_CB_solout)(int, double, double*, double*, double*, int, void*);
 typedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*);
 
 /* forward declarations of data structures */

@@ -148,8 +148,9 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /* ijac        switch for jacobian computation mode: ijac = internal finite differences, else uses jac/jac_sparse */
 
 /* solout      External function called after every successful timestep */
+/*			   NOTE: solout may change xsol, y for e.g., localization of discontinuities */
 /*             Only called if iout = 1 */
-/*             Signature of function: (int naccpt, double xold, double xsol, double *y, double *werr, int n, void *EXT) */
+/*             Signature of function: (int naccpt, double xold, double *xsol, double *y, double *werr, int n, void *EXT) */
 /* 			   naccpt = Number of accepted steps */
 /* 			   xold = timepoint corresponding to previous successful timestep */
 /* 			   xsol = timepoint corresponding to current successful timestep */
@@ -635,7 +636,7 @@ L40:
 			rmem->hsol = hold;
 
 			rmem->_dense_output_valid = TRUE_;
-			*solout_ret = (*solout)(rmem->stats->naccpt, xold, rmem->xsol, &y[1], &werr[1], n, solout_EXT);
+			*solout_ret = (*solout)(rmem->stats->naccpt, xold, x, &y[1], &werr[1], n, solout_EXT);
 			rmem->_dense_output_valid = FALSE_;
 			if (*solout_ret != RADAU_OK) {
 				sprintf(rmem->err_log, "Radau5 interrupted during solout callback with flag = %i.", *solout_ret);

@@ -92,7 +92,7 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     py2c_d_matrix_flat_F(fjac, J, J.shape[0], J.shape[1])
     return RADAU_OK
 
-cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
+cdef int callback_solout(int nrsol, double xosol, double *xsol, double* y,
                          double* werr, int n, void* solout_PY):
     """
     Internal callback function to enable call to Python based solution output function from C
@@ -102,7 +102,7 @@ cdef int callback_solout(int nrsol, double xosol, double xsol, double* y,
     c2py_d(y_py, y, n)
     c2py_d(werr_py, werr, n)
 
-    return (<object>solout_PY)(nrsol, xosol, xsol, y_py, werr_py)
+    return (<object>solout_PY)(nrsol, xosol, xsol[0], y_py, werr_py)
 
 cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,

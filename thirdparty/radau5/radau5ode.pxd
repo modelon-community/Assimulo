@@ -22,7 +22,7 @@ cdef extern from "radau5_impl.h":
     ## FunctionPointer_CallBack
     ctypedef int (*FP_CB_f)(int, double, double*, double*, void*)
     ctypedef int (*FP_CB_jac)(int, double, double*, double*, void*)
-    ctypedef int (*FP_CB_solout)(int, double, double, double*, double*, int, void*)
+    ctypedef int (*FP_CB_solout)(int, double, double*, double*, double*, int, void*)
     ctypedef int (*FP_CB_jac_sparse)(int, double, double*, int*, double*, int*, int*, void*)
     
     int RADAU_OK
