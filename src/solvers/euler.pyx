@@ -103,6 +103,7 @@ cdef class ImplicitEuler(Explicit_ODE):
             self.event_func = event_func
             self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
             self.g_old = self.event_func(self.t, self.y)
+            self.statistics["nstatefcns"] += 1
         else: 
             self.f = self.problem.rhs
     
@@ -180,7 +181,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y = self.event_locator(t-h , t, y)
+                flag, t, y = self.event_locator(t-h , t, y)
             
             if opts["report_continuously"]:
                 initialize_flag = self.report_solution(t, y, opts)
@@ -535,6 +536,7 @@ cdef class ExplicitEuler(Explicit_ODE):
             self.event_func = event_func
             self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
             self.g_old = self.event_func(self.t, self.y)
+            self.statistics["nstatefcns"] += 1
         else: 
             self.f = self.problem.rhs
     
@@ -567,7 +569,6 @@ cdef class ExplicitEuler(Explicit_ODE):
             t, y = self._step(t,y,self._inith)
             if self.problem_info["state_events"]: 
                 flag, t, y = self.event_locator(t-self._inith , t, y)
-            
             if opts["report_continuously"]:
                 initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT
@@ -586,8 +587,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         while t+h < tf and flag == ID_PY_OK:
             t, y = self._step(t,y,h)
             if self.problem_info["state_events"]: 
-                    flag, t, y = self.event_locator(t-h , t, y)
-            
+                flag, t, y = self.event_locator(t-h , t, y)
             if opts["report_continuously"]:
                 initialize_flag = self.report_solution(t, y, opts)
                 if initialize_flag: flag = ID_PY_EVENT

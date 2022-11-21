@@ -460,17 +460,24 @@ class Assimulo_prepare(object):
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
         
-        #Cythonize main modules
-        ext_list = cythonize(["assimulo"+os.path.sep+"*.pyx"], 
-                             include_path=[".","assimulo"])
+        # Cythonize main modules 
+        ext_list = cythonize([os.path.join("assimulo", "explicit_ode.pyx")], 
+                             include_path=[".", "assimulo"], force = True)
+        ext_list[-1].include_dirs += ["assimulo", self.incdirs]
+        ext_list[-1].sources += [os.path.join("assimulo", "ode_event_locator.c")]
+        ext_list[-1].name = "assimulo.explicit_ode"
 
-        #Cythonize Solvers
+        remaining_pyx = ["algebraic", "implicit_ode", "ode", "problem", "special_systems", "support"]
+        ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx], 
+                             include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
+        ext_list[-1].include_dirs += ["assimulo", self.incdirs]
+
+        # Cythonize Solvers
         # Euler
-        ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"euler.pyx"], 
-                             include_path=[".","assimulo"])
-        for el in ext_list:
-            el.include_dirs = [np.get_include()]
-            
+        ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")], 
+                             include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
+        ext_list[-1].include_dirs += ["assimulo", self.incdirs]
+
         # SUNDIALS
         if self.with_SUNDIALS:
             compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
@@ -534,7 +541,7 @@ class Assimulo_prepare(object):
         else:
             if 'win' not in self.platform:
                 ext_list[-1].libraries = ['m']
-        
+
         for el in ext_list:
             #Debug
             if self.debug_flag:

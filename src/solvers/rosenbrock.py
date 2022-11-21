@@ -320,6 +320,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_old = self.event_func(self.t, self.y)
+            self.statistics["nstatefcns"] += 1
         else:
             self.f = self.problem.rhs
     

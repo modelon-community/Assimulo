@@ -86,6 +86,7 @@ class Dopri5(Explicit_ODE):
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_old = self.event_func(self.t, self.y)
+            self.statistics["nstatefcns"] += 1
         else:
             self.f = self.problem.rhs
     
@@ -472,7 +473,8 @@ class RungeKutta34(Explicit_ODE):
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"] 
-            self.g_old = self.event_func(self.t, self.y) 
+            self.g_old = self.event_func(self.t, self.y)
+            self.statistics["nstatefcns"] += 1
         else: 
             self.f = self.problem.rhs_internal
     

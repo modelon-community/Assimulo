@@ -248,6 +248,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_old = N.array(self.event_func(self.t, self.y)).copy()
+            self.statistics["nstatefcns"] += 1
         else:
             def f(t, y):
                 ret = 0
@@ -282,7 +283,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
-            #Convert to Fortran indicator.
             if flag == ID_PY_EVENT: ret = -1
             
         if self._opts["report_continuously"]:
@@ -349,7 +349,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.rad_memory.reinit()
         t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                   jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
-
         #Checking return
         if flag == 0:
             flag = ID_PY_COMPLETE
@@ -1020,6 +1019,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             self.g_old = self.event_func(self.t, self.y, self.yd)
+            self.statistics["nstatefcns"] += 1
         else:
             def f(t, y):
                 ret = 0
