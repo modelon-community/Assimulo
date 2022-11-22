@@ -147,4 +147,3 @@ int f_event_locator(int n_y, int n_g, double TOL_inp, double t_low, double *t_hi
 
     return ID_EVENT;
 }
-        

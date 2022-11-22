@@ -469,14 +469,12 @@ class Assimulo_prepare(object):
 
         remaining_pyx = ["algebraic", "implicit_ode", "ode", "problem", "special_systems", "support"]
         ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx], 
-                             include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
-        ext_list[-1].include_dirs += ["assimulo", self.incdirs]
+                              include_path=[".", "assimulo"], force = True)
 
         # Cythonize Solvers
         # Euler
         ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")], 
-                             include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
-        ext_list[-1].include_dirs += ["assimulo", self.incdirs]
+                              include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
 
         # SUNDIALS
         if self.with_SUNDIALS:
