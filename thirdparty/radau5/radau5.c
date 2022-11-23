@@ -102,7 +102,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /* 			   y = state vector, length n */
 /* 			   ydot (output) = evaluated result */
 /* 			   EXT = optional extra input, see fcn_EXT */
-/*             Positive returns are treated as FATAL ERRORS, negative ones as recoverable */
+/*             Negative returns are treated as FATAL ERRORS, positive ones as recoverable */
 
 /* fcn_EXT     Extra input argument to fcn callback */
 
@@ -128,7 +128,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /* 			   y = state vector, length n */
 /* 			   J (output) = evaluated result, vector of length n*n, column-major order */
 /* 			   EXT = optional extra input, see jac_EXT */
-/*             Positive returns are treated as FATAL ERRORS, negative ones as recoverable */
+/*             Negative returns are treated as FATAL ERRORS, positive ones as recoverable */
 
 /* jac_sparse  External (sparse) Jacobian function: J = jac(x, y), requires output in CSC format */
 /*             Only called if ijac = 1 && sparseLU == 1 in radau_setup_mem(...) */
@@ -141,7 +141,7 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /*             indices (output) = row indices, vector of length nnz (output) */
 /*             indptr (output) = column starts in indices, vector of length n + 1 */
 /* 			   EXT = optional extra input, see jac_EXT */
-/*             Positive returns are treated as FATAL ERRORS, negative ones as recoverable */
+/*             Negative returns are treated as FATAL ERRORS, positive ones as recoverable */
 
 /* jac_EXT     Extra input argument to jac resp. jac_sparse callback */
 
@@ -721,31 +721,33 @@ L79:
 		return RADAU_ERROR_NNZ_TOO_SMALL;
 	}
 
-	if (ier > 0){
-		sprintf(rmem->err_log, "Unrecoverable exception encountered during problem callback.");
-		return RADAU_ERROR_CALLBACK_UNRECOVERABLE;
-	}
-
 	if (ier == RADAU_ERROR_CALLBACK_JAC_FORMAT){
 		sprintf(rmem->err_log, "Jacobian given in wrong format, required sparsity format: CSC");
 		return RADAU_ERROR_CALLBACK_JAC_FORMAT;
 	}
 
-	/* else, other negative return value: recoverable */
-	++nunexpect;
-	if (nunexpect >= 10) {
-		sprintf(rmem->err_log, "Repeated unexpected step rejections.");
-		return RADAU_ERROR_REP_STEP_REJECT;
+	if (ier < 0){
+		sprintf(rmem->err_log, "Unrecoverable exception encountered during problem callback.");
+		return RADAU_ERROR_CALLBACK_UNRECOVERABLE;
 	}
-	*h__ *= .5;
-	hhfac = .5;
-	reject = TRUE_;
-	last = FALSE_;
-	if (rmem->jac_is_fresh) {
-		goto L20;
+
+	if (ier > 0){ /* recoverable */
+		/* else, other negative return value: recoverable */
+		++nunexpect;
+		if (nunexpect >= 10) {
+			sprintf(rmem->err_log, "Repeated unexpected step rejections.");
+			return RADAU_ERROR_REP_STEP_REJECT;
+		}
+		*h__ *= .5;
+		hhfac = .5;
+		reject = TRUE_;
+		last = FALSE_;
+		if (rmem->jac_is_fresh) {
+			goto L20;
+		}
+		rmem->new_jac_req = TRUE_;
+		goto L10;
 	}
-	rmem->new_jac_req = TRUE_;
-	goto L10;
 /* --- FAIL EXIT, UNEXPECTED SUPERLU FAILURE*/
 L184:
 	sprintf(rmem->err_log, "Unexpected failure in superLU call, error code = %i", ret);

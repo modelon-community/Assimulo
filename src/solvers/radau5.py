@@ -240,9 +240,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = 1 #Recoverable error
                     else:
-                        ret = 1 #Non-recoverable
+                        ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
             self.event_func = event_func
@@ -256,9 +256,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = 1 #Recoverable error
                     else:
-                        ret = 1 #Non-recoverable
+                        ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
     
@@ -324,9 +324,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         except BaseException as E:
             jac = N.eye(len(y))
             if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                ret = -1 #Recoverable error
+                ret = 1 #Recoverable error
             else:
-                ret = 1 #Non-recoverable
+                ret = -1 #Non-recoverable
         return jac, [ret]
             
     def integrate(self, t, y, tf, opts):

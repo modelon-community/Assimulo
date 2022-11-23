@@ -75,7 +75,6 @@ cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY
 
     py2c_d(y_out, rhs, len(rhs))
 
-    # RADAU_OK || RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
     return ret[0] 
 
 cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
@@ -86,8 +85,8 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     c2py_d(y_py_in, y, n)
     J, ret = (<object>jac_PY)(x, y_py_in)
 
-    if ret[0]:
-        return ret[0] # RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
+    if ret[0]: # non-zero returns from Python; recoverable or non-recoverable
+        return ret[0]
 
     py2c_d_matrix_flat_F(fjac, J, J.shape[0], J.shape[1])
     return RADAU_OK
@@ -113,8 +112,8 @@ cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
 
     J, ret = (<object>jac_PY)(x, y_py)
 
-    if ret[0]:
-        return ret[0] # RADAU_ERROR_CALLBACK_RECOVERABLE || RADAU_ERROR_CALLBACK_UNRECOVERABLE
+    if ret[0]: # non-zero returns from Python; recoverable or non-recoverable
+        return ret[0]
 
     if not isinstance(J, sps.csc.csc_matrix):
         return RADAU_ERROR_CALLBACK_JAC_FORMAT
