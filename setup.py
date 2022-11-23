@@ -515,7 +515,7 @@ class Assimulo_prepare(object):
         ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
                                     os.path.join("assimulo","thirdparty","radau5"),
                                     self.incdirs]
-        extra_sources = ["radau5_c.c", "radau5_io.c"]
+        extra_sources = ["radau5.c", "radau5_io.c"]
         if self.with_SLU:
             ext_list[-1].include_dirs += [self.SLUincdir]
             extra_sources += ["superlu_double.c", "superlu_complex.c", "superlu_util.c"]

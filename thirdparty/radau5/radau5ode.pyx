@@ -264,7 +264,7 @@ cpdef radau5_py_solve(fcn_PY, double x, np.ndarray y,
             y
                         - Final solution
             idid
-                        - Return flag, see radau5_c.c 0 = sucess, 1 = sucess, interrput by solout
+                        - Return flag, see radau5.c 0 = success, 1 = success, interrupt by solout
     """
     cdef int ret
     cdef int idid = 1

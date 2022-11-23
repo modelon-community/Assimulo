@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "radau5_c.h"
+#include "radau5.h"
 
 #ifdef __RADAU5_WITH_SUPERLU
 	#include "superlu_double.h"

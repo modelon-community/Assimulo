@@ -1,5 +1,5 @@
-#ifndef _RADAU5_C_H
-#define _RADAU5_C_H
+#ifndef _RADAU5_H
+#define _RADAU5_H
 
 #include "radau5_impl.h"
 
@@ -12,4 +12,4 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 int radau_get_cont_output_single(void *radau_mem, int i, double x, double *out);
 int radau_get_cont_output(void *radau_mem, double x, double *out);
 
-#endif /*_RADAU5_C_H*/
+#endif /*_RADAU5_H*/

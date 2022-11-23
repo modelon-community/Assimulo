@@ -413,7 +413,7 @@ static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int n
 				sprintf(rmem->err_log, "Input nprocs must be positive, received nprocs = %i", nprocs);
 				return RADAU_ERROR_INCONSISTENT_INPUT;
 			}
-			rmem->lin_sol->nnz = nnz > n*n ? nnz : nnz; /* automatically cap at n*n */
+			rmem->lin_sol->nnz = nnz > n*n ? n*n : nnz; /* automatically cap at n*n */
 			rmem->lin_sol->nnz_actual = rmem->lin_sol->nnz;
 			rmem->lin_sol->nproc = nprocs;
 			rmem->lin_sol->LU_with_fresh_jac = FALSE_;

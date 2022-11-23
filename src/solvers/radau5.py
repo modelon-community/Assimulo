@@ -50,14 +50,14 @@ class Radau5Error(AssimuloException):
             -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).'
             }
     
-    def __init__(self, value: int = None, t: float = 0.0, err_msg: str = None):
+    def __init__(self, value = None, t = 0.0, err_msg = None):
         self.value = value
         self.t = t
         self.err_msg = err_msg
         
     def __str__(self):
         if self.err_msg:
-            return repr('Radau failed with flag %s. At time %f. Message: %s'%(self.value, self.t, self.err_msg))
+            return repr('Radau5 failed with flag %s. At time %f. Message: %s'%(self.value, self.t, self.err_msg))
         else: 
             try:
                 return repr(self.msg[self.value]+' At time %f.'%self.t)    
@@ -147,13 +147,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     linear_solver = property(_get_linear_solver, _set_linear_solver)
 
     def _get_implementation(self):
+        self.log_message("Deprecation Warning: Radau5ODE only supports the 'c' implementation and this attribute will be removed in the future\n", LOUD)
         return 'c'
 
     def _set_implementation(self, x):
         """
         Deprecated; only c available
         """
-        self.log_message("Warning: Radau5ODE only supports the 'c' implementation.\n", LOUD)
+        self.log_message("Deprecation Warning: Radau5ODE only supports the 'c' implementation and this option will be removed in the future\n", LOUD)
         
     implementation = property(_get_implementation, _set_implementation)
         

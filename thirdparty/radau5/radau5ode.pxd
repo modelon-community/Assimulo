@@ -51,7 +51,7 @@ cdef extern from "radau5_io.h":
 
     void radau_free_mem(void **radau_mem)
 
-cdef extern from "radau5_c.h":
+cdef extern from "radau5.h":
     int radau5_solve(void*, FP_CB_f, void*,
 			 double*, double*, double*, double*,
 			 double*, double*,
