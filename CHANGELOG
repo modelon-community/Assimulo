@@ -5,6 +5,7 @@
     * Minor refactoring of Radau5 C implementation:
       Now uses actual return value to return error codes. idid is return of solout callback.
     * Separate fortran from C flags in setup.py
+    * Changed "numpy.bool" to equivalent "bool" due to DeprecationWarnings for numpy >= 1.20.
 
 --- Assimulo-3.3 ---
     * Sundials 6.x port

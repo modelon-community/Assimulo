@@ -101,7 +101,7 @@ cdef class ODE:
             self.p = self.p0.copy()
         
         if hasattr(problem, "sw0"):
-            self.sw0 = N.array(problem.sw0,dtype=N.bool) if len(N.array(problem.sw0,dtype=N.bool).shape)>0 else N.array([problem.sw0],dtype=N.bool)
+            self.sw0 = N.array(problem.sw0,dtype=bool) if len(N.array(problem.sw0,dtype=bool).shape)>0 else N.array([problem.sw0],dtype=bool)
             self.problem_info["switches"] = True
             self.sw = self.sw0.tolist()
         
