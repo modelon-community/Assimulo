@@ -93,7 +93,7 @@ cdef class Explicit_ODE(ODE):
         self.y = y0
         
         if sw0 is not None:
-            self.sw = (N.array(sw0,dtype=N.bool) if len(N.array(sw0,dtype=N.bool).shape)>0 else N.array([sw0],dtype=N.bool)).tolist()
+            self.sw = (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool)).tolist()
             
         #Clear logs
         self.clear_logs()
