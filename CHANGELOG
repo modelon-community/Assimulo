@@ -1,5 +1,10 @@
 --- CHANGELOG ---
 
+--- Assimulo-3.4.0 ---
+    * Removed Radau5ODE Fortran implementation. 
+      This change should be seamless since the C implementation is numerically equivalent.
+    * Radau5 C with SuperLU now requires compilation with '-D__RADAU5_WITH_SUPERLU'
+    * Refactored Radau5 C implementation; moved to thirdparts/radau5/.
 
 --- Assimulo-3.3.1 ---
     * Minor refactoring of Radau5 C implementation:

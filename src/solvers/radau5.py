@@ -27,6 +27,7 @@ from assimulo.exception import (
 )
 from assimulo.ode import (
     NORMAL,
+    LOUD,
     ID_PY_OK,
     ID_PY_EVENT,
     ID_PY_COMPLETE,
@@ -46,22 +47,22 @@ class Radau5Error(AssimuloException):
             -3    : 'The step size became too small.',
             -4    : 'The matrix is repeatedly singular.',
             -5    : 'Repeated unexpected step rejections.',
-            -6    : 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.',
-            -7    : 'Sparse Jacobian given in wrong format, expects CSC format.',
-            -8    : 'Unexpected internal function call failure of SUPERLU.',
-            -9    : 'Memory allocation failure in SUPERLU.',
-            -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).',
+            -10   : 'Unrecoverable exception encountered during callback to problem (right-hand side/jacobian).'
             }
     
-    def __init__(self, value, t = 0.0):
+    def __init__(self, value = None, t = 0.0, err_msg = None):
         self.value = value
         self.t = t
+        self.err_msg = err_msg
         
-    def __str__(self): 
-        try:
-            return repr(self.msg[self.value]+' At time %f.'%self.t)    
-        except KeyError:
-            return repr('Radau failed with flag %s. At time %f.'%(self.value, self.t))
+    def __str__(self):
+        if self.err_msg:
+            return repr('Radau5 failed with flag %s. At time %f. Message: %s'%(self.value, self.t, self.err_msg))
+        else: 
+            try:
+                return repr(self.msg[self.value]+' At time %f.'%self.t)    
+            except KeyError:
+                return repr('Radau failed with flag %s. At time %f.'%(self.value, self.t))
 
 
 class Radau5ODE(Radau_Common,Explicit_ODE):
@@ -93,24 +94,22 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
-        #Default values
+        #Default values; None = Radau5 decides
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
+        self.options["fnewt"]    = None #Stopping critera for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = None #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
         self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
-        self.options["implementation"]   = "c" #internal solver implementation; "f" for fortran, "c" for c based code
         self.options["linear_solver"] = "DENSE" #Using dense or sparse linear solver in Newton iteration
-        self.solver_module_imported = False # flag if the internal solver module has been imported or not
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -148,40 +147,14 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     linear_solver = property(_get_linear_solver, _set_linear_solver)
 
     def _get_implementation(self):
-        return self.options["implementation"]
-    
-    def _set_implementation(self, implementation):
+        self.log_message("Deprecation Warning: Radau5ODE only supports the 'c' implementation and this attribute will be removed in the future\n", LOUD)
+        return 'c'
+
+    def _set_implementation(self, x):
         """
-        Solver implementation used, "f" for Fortran, "c" for C
-        
-            Parameters::
-            
-                implementation
-                            - Default "f"
-                            
-                            - needs to be either "f" (Fotran) or "c" (C)
+        Deprecated; only c available
         """
-        try:
-            implementation_lower = implementation.lower()
-        except Exception:
-            raise Radau_Exception("'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}".format(implementation, type(implementation))) from None
-        if implementation_lower == "f": ## Fortran
-            try:
-                from assimulo.lib import radau5 as radau5_f
-                self.radau5 = radau5_f
-                self.solver_module_imported = True
-            except Exception:
-                raise Radau_Exception("Failed to import the Fortran based Radau5 solver. Try using 'implementation' = 'c' for the C based solver instead.") from None
-        elif implementation_lower == "c":
-            try:
-                from assimulo.lib import radau5_c_py as radau5_c
-                self.radau5 = radau5_c
-                self.solver_module_imported = True
-            except Exception:
-                raise Radau_Exception("Failed to import the C based Radau5 solver implementation. Note that this solver requires an installation with SuperLU. Try using 'implementation' = 'f' for the Fortran based solver instead.") from None
-        else:
-            raise Radau_Exception("'implementation' parameter needs to be either 'f' or 'c'. Set value: {}".format(implementation)) from None
-        self.options["implementation"] = implementation_lower
+        self.log_message("Deprecation Warning: Radau5ODE only supports the 'c' implementation and this option will be removed in the future\n", LOUD)
         
     implementation = property(_get_implementation, _set_implementation)
         
@@ -190,20 +163,22 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics.reset()
         #for k in self.statistics.keys():
         #    self.statistics[k] = 0
-        if not self.solver_module_imported:
-            self.implementation = self.options["implementation"]
+        try:
+            from assimulo.lib import radau5ode as radau5ode_c
+            self.radau5 = radau5ode_c
+        except Exception:
+            raise Radau_Exception("Failed to import the Radau5 solver.") from None
 
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
         
         if self.options["linear_solver"] == "SPARSE":
-            if self.options["implementation"] == "f":
-                raise Radau_Exception("Sparse Linear solver not supported for Fortran based implementation, instead use 'implementation' = 'c' or 'linear_solver' = 'DENSE'.")
             if not self.usejac:
-                self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", NORMAL)
+                self.log_message("Switching to 'DENSE' linear solver since a Jacobian method has not been provided.", LOUD)
                 self.linear_solver = "DENSE"
-                return
 
+        ## sanity checks on sparse solver inputs
+        if self.options["linear_solver"] == "SPARSE":
             if not isinstance(self.problem_info["jac_fcn_nnz"], int):
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be an integer, received: {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] < 0:
@@ -212,13 +187,47 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}.".format(self.problem_info["jac_fcn_nnz"]))
             if self.problem_info["jac_fcn_nnz"] > self.problem_info["dim"]**2 + self.problem_info["dim"]:
                 raise Radau_Exception("Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared.")
-            
-            ## initialize necessary superLU datastructures
-            self.RadauSuperLUaux = self.radau5.RadauSuperLUaux()
-            ret_flag = self.RadauSuperLUaux.initialize(self.options["num_threads"], self.problem_info["dim"], self.problem_info["jac_fcn_nnz"])
-            if ret_flag:
-                raise Radau_Exception("Failed to initialize RadauSuperLUaux structure, error code = {}.".format(ret_flag))
-            
+
+        def check_init_return(ret):
+            if ret < 0:
+                self.finalize()
+                raise Radau5Error(value = ret, err_msg = self.rad_memory.get_err_msg())
+
+        self.rad_memory = self.radau5.RadauMemory()
+        sparseLU = int(self.options["linear_solver"] == "SPARSE")
+        ret = self.rad_memory.initialize(self.problem_info["dim"], sparseLU, self.options["num_threads"], self.problem_info["jac_fcn_nnz"])
+        if ret == -3: # SuperLU not enabled
+            self.finalize()
+            raise Radau5Error(value = ret, err_msg = "Radau5 solver has not been compiled with superLU enabled.")
+        check_init_return(ret)
+        # set parameters
+        ret = self.rad_memory.set_nmax(self.maxsteps)
+        check_init_return(ret)
+        ret = self.rad_memory.set_nmax_newton(self.newt)
+        check_init_return(ret)
+        ret = self.rad_memory.set_step_size_safety(self.safe)
+        check_init_return(ret)
+        ret = self.rad_memory.set_theta_jac(self.thet)
+        check_init_return(ret)
+
+        if self.options["fnewt"]: # not None
+            ret = self.rad_memory.set_fnewt(self.fnewt)
+            check_init_return(ret)
+
+        ret = self.rad_memory.set_quot1(self.quot1)
+        check_init_return(ret)
+        ret = self.rad_memory.set_quot2(self.quot2)
+        check_init_return(ret)
+        
+        if self.options["maxh"]: # not None
+            ret = self.rad_memory.set_hmax(self.maxh)
+            check_init_return(ret)
+
+        ret = self.rad_memory.set_fac_lower(self.fac1)
+        check_init_return(ret)
+        ret = self.rad_memory.set_fac_upper(self.fac2)
+        check_init_return(ret)
+
     def set_problem_data(self):
         if self.problem_info["state_events"]:
             def event_func(t, y):
@@ -231,9 +240,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = 1 #Recoverable error
                     else:
-                        ret = -2 #Non-recoverable
+                        ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
             self.event_func = event_func
@@ -247,18 +256,15 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                 except BaseException as E:
                     rhs = y.copy()
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                        ret = -1 #Recoverable error
+                        ret = 1 #Recoverable error
                     else:
-                        ret = -2 #Non-recoverable
+                        ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
     
     def interpolate(self, time):
         y = N.empty(self._leny)
-        for i in range(self._leny):
-            # Note: index shift to Fortran based indices
-            y[i] = self.radau5.contr5(i+1, time, self.cont)
-        
+        self.rad_memory.interpolate(time, y)
         return y
         
     def get_weighted_local_errors(self):
@@ -267,21 +273,21 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         return N.abs(self._werr)
     
-    def _solout(self, nrsol, told, t, y, cont, werr, lrc, irtrn):
+    def _solout(self, nrsol, told, t, y, werr):
         """
         This method is called after every successful step taken by Radau5
         """
-        self.cont = cont #Saved to be used by the interpolation function.
         self._werr = werr
+        ret = 0
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
             #Convert to Fortran indicator.
-            if flag == ID_PY_EVENT: irtrn = -1
+            if flag == ID_PY_EVENT: ret = -1
             
         if self._opts["report_continuously"]:
             initialize_flag = self.report_solution(t, y.copy(), self._opts)
-            if initialize_flag: irtrn = -1
+            if initialize_flag: ret = -1
         else:
             if self._opts["output_list"] is None:
                 self._tlist.append(t)
@@ -303,7 +309,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     self._tlist.append(t)
                     self._ylist.append(y)
         
-        return irtrn
+        return ret
         
     def _jacobian(self, t, y):
         """
@@ -318,41 +324,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         except BaseException as E:
             jac = N.eye(len(y))
             if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
-                ret = -1 #Recoverable error
+                ret = 1 #Recoverable error
             else:
-                ret = -2 #Non-recoverable
+                ret = -1 #Non-recoverable
         return jac, [ret]
             
     def integrate(self, t, y, tf, opts):
-        ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
         if self.usejac and not hasattr(self.problem, "jac"):
             raise Radau_Exception("Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function.")
-        MLJAC = self.problem_info["dim"] #The jacobian is full
-        MUJAC = self.problem_info["dim"] #See MLJAC
-        IMAS  = 0 #The mass matrix is the identity
-        MLMAS = self.problem_info["dim"] #The mass matrix is full
-        MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(4*self.problem_info["dim"]**2+13*self.problem_info["dim"]+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*self.problem_info["dim"]+20),dtype=N.intc) #Work (integer) vector
         
-        #Setting work options
-        WORK[1] = self.safe
-        WORK[2] = self.thet
-        WORK[3] = self.fnewt
-        WORK[4] = self.quot1
-        WORK[5] = self.quot2
-        WORK[6] = self.maxh
-        WORK[7] = self.fac1
-        WORK[8] = self.fac2
-        
-        #Setting iwork options
-        IWORK[1] = self.maxsteps
-        IWORK[2] = self.newt
-
         #Dummy methods
-        mas_dummy = lambda t:x
         jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
         
         #Check for initialization
@@ -363,34 +346,29 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-
-        if self.options["implementation"] == 'c':
-            sparse_LU =  int(self.options["linear_solver"] == "SPARSE")
-            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                        ITOL, jac_dummy, IJAC, sparse_LU, self._solout,
-                                                        IOUT, WORK, IWORK, self.RadauSuperLUaux if sparse_LU else self.radau5.RadauSuperLUaux())
-        else:
-            t, y, h, iwork, flag =  self.radau5.radau5(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
-                                                       ITOL, jac_dummy, IJAC, MLJAC, MUJAC, mas_dummy, IMAS, MLMAS, MUMAS, self._solout,
-                                                       IOUT, WORK, IWORK)
+        self.rad_memory.reinit()
+        t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+                                                  jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
 
         #Checking return
-        if flag == 1:
+        if flag == 0:
             flag = ID_PY_COMPLETE
-        elif flag == 2:
+        elif flag == 1:
             flag = ID_PY_EVENT
         else:
+            msg = self.rad_memory.get_err_msg()
             self.finalize()
-            raise Radau5Error(flag, t) from None
+            raise Radau5Error(value = flag, t = t, err_msg = msg) from None
         
         #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcns"]        += iwork[13]
-        self.statistics["njacs"]        += iwork[14]
-        self.statistics["nfcnjacs"]    += (iwork[14]*self.problem_info["dim"] if not self.usejac else 0)
+        nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
+        self.statistics["nsteps"]      += nsteps
+        self.statistics["nfcns"]        += nfcns
+        self.statistics["njacs"]        += njacs
+        self.statistics["nfcnjacs"]    += (njacs*self.problem_info["dim"] if not self.usejac else 0)
         #self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["nerrfails"]     += iwork[17]
-        self.statistics["nlus"]         += iwork[18]
+        self.statistics["nerrfails"]     += nerrfails
+        self.statistics["nlus"]         += nLU
         
         return flag, self._tlist, self._ylist
     
@@ -406,21 +384,18 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                                                verbose)
-        self.log_message(' Solver                  : Radau5({}) '.format(self.options["implementation"]) + self._type, verbose)
-        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]),                   verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),                            verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),                            verbose)
-        self.log_message('',                                                                                   verbose)
+        self.log_message('\nSolver options:\n',                                              verbose)
+        self.log_message(' Solver                  : Radau5' + self._type,                   verbose)
+        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]), verbose)
+        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),          verbose)
+        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),          verbose)
+        self.log_message('',                                                                 verbose)
 
     def finalize(self):
         """
-        Called after simulation is done, possibly de-allocate memory internally to the called C sovler.
+        Called after simulation is done, de-allocate memory internally to the called C solver.
         """
-        if hasattr(self, 'RadauSuperLUaux'):
-            flag = self.RadauSuperLUaux.finalize()
-            if flag != 0:
-                Radau_Exception("Failure in freeing memory of SuperLU datastructures.")
+        self.rad_memory.finalize()
 
 class _Radau5ODE(Radau_Common,Explicit_ODE):
     """

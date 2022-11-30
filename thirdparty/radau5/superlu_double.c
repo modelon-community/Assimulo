@@ -1,5 +1,5 @@
 #include "slu_mt_ddefs.h"
-#include "radau5_superlu_double.h"
+#include "superlu_double.h"
 
 struct SuperLU_aux_d{
     int nprocs, n, nnz_jac;
@@ -91,15 +91,14 @@ SuperLU_aux_d* superlu_init_d(int nprocs, int n, int nnz){
 int superlu_setup_d(SuperLU_aux_d *slu_aux, double scale,
                     double *data_J, int *indices_J, int *indptr_J,
                     int fresh_jacobian, int jac_nnz){
+    int i, j, current_idx;
     NCformat *AStore = slu_aux->A->Store;
     SUPERLU_FREE(AStore);
 
     /* number of non-zero elements maz have changed during recent jacobian evaluation */
     slu_aux -> nnz_jac = jac_nnz;
 
-    int current_idx = 0;
-    int i, j;
-
+    current_idx = 0;
     /* build system matrix scale * I - JAC */
     /* Copy jacobian data to slu_aux struct */
     slu_aux->indices_sys = indices_J;
@@ -140,12 +139,13 @@ int superlu_factorize_d(SuperLU_aux_d *slu_aux){
         SUPERLU_FREE(ACstore);
         if (slu_aux->refact == NO){
             SCPformat *LStore = slu_aux->L->Store;
+            NCPformat *UStore = slu_aux->U->Store;
+
             SUPERLU_FREE(LStore->col_to_sup);
             SUPERLU_FREE(LStore->sup_to_colbeg);
             SUPERLU_FREE(LStore->sup_to_colend);
             Destroy_SuperNode_Matrix(slu_aux->L);
 
-            NCPformat *UStore = slu_aux->U->Store;
             SUPERLU_FREE(UStore->colend);
             Destroy_CompCol_Matrix(slu_aux->U);
 
@@ -178,7 +178,10 @@ int superlu_solve_d(SuperLU_aux_d *slu_aux, double *rhs){
 }
 
 /* de-allocate memory */
-int superlu_finalize_d(SuperLU_aux_d *slu_aux){
+void superlu_finalize_d(SuperLU_aux_d *slu_aux){
+    if (!slu_aux){
+        return;
+    }
     SUPERLU_FREE(slu_aux->perm_r);
     SUPERLU_FREE(slu_aux->perm_c);
 
@@ -192,12 +195,13 @@ int superlu_finalize_d(SuperLU_aux_d *slu_aux){
 
     if (slu_aux->fact_done){
         SCPformat *LStore = slu_aux->L->Store;
+        NCPformat *UStore = slu_aux->U->Store;
+            
         SUPERLU_FREE(LStore->col_to_sup);
         SUPERLU_FREE(LStore->sup_to_colbeg);
         SUPERLU_FREE(LStore->sup_to_colend);
         Destroy_SuperNode_Matrix(slu_aux->L);
 
-        NCPformat *UStore = slu_aux->U->Store;
         SUPERLU_FREE(UStore->colend);
         Destroy_CompCol_Matrix(slu_aux->U);
         
@@ -216,5 +220,4 @@ int superlu_finalize_d(SuperLU_aux_d *slu_aux){
     free(slu_aux->slu_options);
     free(slu_aux->work);
     free(slu_aux);
-    return 0;
 }

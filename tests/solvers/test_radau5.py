@@ -411,7 +411,7 @@ class Test_Explicit_Radau5_Py:
         with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
             self.sim.atol = [1e-6,1e-6,1e-6]
         
-class Test_Explicit_Fortran_Radau5:
+class Test_Explicit_Radau5:
     """
     Tests the explicit Radau solver.
     """
@@ -464,11 +464,8 @@ class Test_Explicit_Fortran_Radau5:
             
         #Define an explicit solver
         self.sim = Radau5ODE(exp_mod) #Create a Radau5 solve
-        self.sim.implementation = 'f'
         self.sim_t0 = Radau5ODE(exp_mod_t0)
-        self.sim_t0.implementation = 'f'
         self.sim_sp = Radau5ODE(exp_mod_sp)
-        self.sim_sp.implementation = 'f'
         
         #Sets the parameters
         self.sim.atol = 1e-4 #Default 1e-6
@@ -481,7 +478,6 @@ class Test_Explicit_Fortran_Radau5:
         exp_mod = Extended_Problem() #Create the problem
 
         exp_sim = Radau5ODE(exp_mod) #Create the solver
-        exp_sim.implementation = 'f'
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
@@ -497,7 +493,6 @@ class Test_Explicit_Fortran_Radau5:
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
         
         sim.usejac = False
         sim.simulate(1)
@@ -505,7 +500,6 @@ class Test_Explicit_Fortran_Radau5:
         nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
         
         sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
         sim.simulate(1)
         
         nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
@@ -542,7 +536,6 @@ class Test_Explicit_Fortran_Radau5:
         
         #CVode
         exp_sim = Radau5ODE(exp_mod)
-        exp_sim.implementation = 'f'
         exp_sim(5.,100)
         
         nose.tools.assert_equal(nevent, 5)
@@ -552,504 +545,6 @@ class Test_Explicit_Fortran_Radau5:
         
         #Test both y0 in problem and not.
         sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
-        
-        nose.tools.assert_equal(sim._leny, 2)
-    
-    @testattr(stddist = True)
-    def test_collocation_polynomial(self):
-        """
-        This tests the functionality of the collocation polynomial (communication points)
-        """
-        self.sim.report_continuously = False
-        
-        self.sim.simulate(2.,200) #Simulate 2 seconds
-        
-        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
-        
-        #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
-        
-        self.sim.report_continuously = True
-        self.sim.reset()
-        self.sim.simulate(2.,200) #Simulate 2 seconds
-        
-        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
-
-        #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
-        
-        self.sim_t0.simulate(3.)
-        nose.tools.assert_almost_equal(self.sim_t0.t_sol[0], 1.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim_t0.t_sol[-1], 3.0000000, 4)
-        nose.tools.assert_almost_equal(self.sim_t0.y_sol[-1][0], 1.7061680350, 4)
-        
-    @testattr(stddist = True)
-    def test_simulation(self):
-        """
-        This tests the Radau5 with a simulation of the van der pol problem.
-        """
-        self.sim.simulate(2.) #Simulate 2 seconds
-        
-        nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
-
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
-    
-    @testattr(stddist = True)    
-    def test_simulation_ncp(self):
-        """
-        Test a simulation with ncp.
-        """
-        self.sim.report_continuously = True
-        
-        self.sim.simulate(1.0, 200) #Simulate 1 second
-        nose.tools.assert_equal(len(self.sim.t_sol), 201)
-        
-        self.sim.reset()
-        self.sim.report_continuously = False
-        
-        self.sim.simulate(1.0, 200) #Simulate 1 second
-        nose.tools.assert_equal(len(self.sim.t_sol), 201)
-    
-    @testattr(stddist = True)
-    def test_usejac(self):
-        """
-        This tests the usejac property.
-        """
-        self.sim.usejac = True
-        
-        self.sim.simulate(2.) #Simulate 2 seconds
-
-        nose.tools.assert_equal(self.sim.statistics["nfcnjacs"], 0)
-        
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
-    
-    @testattr(stddist = True)
-    def test_usejac_csc_matrix(self):
-        """
-        This tests the functionality of the property usejac.
-        """
-        self.sim_sp.usejac = True
-        
-        self.sim_sp.simulate(2.) #Simulate 2 seconds
-    
-        nose.tools.assert_equal(self.sim_sp.statistics["nfcnjacs"], 0)
-        
-        nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
-    
-    @testattr(stddist = True)
-    def test_thet(self):
-        """
-        This tests a negative value of thet.
-        """
-        self.sim.thet = -1
-        self.sim.simulate(2.) #Simulate 2 seconds
-
-        nose.tools.assert_equal(self.sim.statistics["nsteps"], self.sim.statistics["njacs"])
-    
-    @testattr(stddist = True)
-    def test_maxh(self):
-        """
-        This tests the maximum step length.
-        """
-        self.sim.maxh = 0.01
-        self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
-        
-    @testattr(stddist = True)
-    def test_newt(self):
-        """
-        This tests the maximum number of newton iterations.
-        """
-        pass
-        # self.sim.simulate(1.0)
-        # self.sim.reset()
-        # self.sim.newt = 10
-        # self.sim.simulate(1.0)
-        
-        # nose.tools.assert_equal(self.sim.statistics["nniterfail"], 1)
-    
-    @testattr(stddist = True)
-    def test_safe(self):
-        """
-        This tests the safety factor in the step-size prediction.
-        """
-        self.sim.safe = 0.99
-        self.sim.simulate(1.0)
-        nose.tools.assert_less(self.sim.statistics["nsteps"], 150)
-        
-    @testattr(stddist = True)
-    def test_reset_statistics(self):
-        """
-        Tests that the statistics are reset.
-        """
-        self.sim.simulate(1.0)
-        steps = self.sim.statistics["nsteps"]
-        
-        self.sim.reset()
-        self.sim.simulate(1.0)
-        
-        nose.tools.assert_less(self.sim.statistics["nsteps"], steps*1.5)
-        
-    @testattr(stddist = True)
-    def test_weighted_error(self):
-        
-        def handle_result(solver, t, y):
-            err = solver.get_weighted_local_errors()
-            nose.tools.assert_equal(len(err), len(y))
-        
-        self.mod.handle_result = handle_result
-            
-        #Define an explicit solver
-        sim = Radau5ODE(self.mod) #Create a Radau5 solve
-        sim.implementation = 'f'
-        
-        sim.get_weighted_local_errors()
-        
-        sim.simulate(1)
-        
-        
-    @testattr(stddist = True)
-    def test_atol(self):
-        """
-        This test the absolute tolerance.
-        """
-        self.sim.simulate(1.0)
-        
-        steps = self.sim.statistics["nsteps"]
-        
-        self.sim.reset()
-        
-        self.sim.rtol = 1e-8
-        self.sim.atol = 1e-8
-        
-        self.sim.simulate(1.0)
-        steps2 = self.sim.statistics["nsteps"]
-        
-        nose.tools.assert_greater(steps2, steps)
-        
-        self.sim.reset()
-        self.sim.atol = [1e-8, 1e-8]
-        
-        steps3 = self.sim.statistics["nsteps"]
-        
-        nose.tools.assert_equal(steps3, steps2)
-        
-        err_msg = "atol must be of length one or same as the dimension of the problem."
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
-            self.sim.atol = [1e-6,1e-6,1e-6]
-        
-    @testattr(stddist = True)
-    def test_switches(self):
-        """
-        This tests that the switches are actually turned when override.
-        """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
-        def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
-        
-        mod = Explicit_Problem(f,[0.0])
-        mod.sw0 = [True]
-
-        mod.state_events = state_events
-        mod.handle_event = handle_event
-        
-        sim = Radau5ODE(mod)
-        sim.implementation = 'f'
-        nose.tools.assert_true(sim.sw[0])
-        sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
-
-    @testattr(stddist = True)
-    def test_nmax_steps(self):
-        """
-        This tests the error upon exceeding a set maximum number of steps
-        """
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
-
-        sim.maxh = 1.e-1
-        sim.maxsteps = 9
-
-        err_msg = "The solver took max internal steps but could not reach the next output time."
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
-            sim.simulate(1.)
-
-    @testattr(stddist = True)
-    def test_step_size_too_small(self):
-        """
-        This tests the error for too small step-sizes
-        """
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
-
-        sim.atol = 1.e10
-        sim.rtol = 1.e10
-
-        sim.inith = 1.e-1
-        sim.maxh = 1.e-1
-        
-        err_msg = f"The step size became too small. At time {float_regex}."
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
-            sim.simulate(1. + 1.e-16)
-
-    @testattr(stddist = True)
-    def test_repeated_unexpected_step_rejections(self):
-        """
-        This tests the error for repeated unexpected step rejections
-        """
-        def f(t, y):
-            raise N.linalg.LinAlgError()
-        y0 = N.array([1.])
-        prob = Explicit_Problem(f, y0)
-        sim = Radau5ODE(prob)
-        sim.implementation = 'f'
-
-        err_msg = f'Repeated unexpected step rejections.'
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
-            sim.simulate(1.)
-
-    @testattr(stddist = True)
-    def test_sparse_solver_attribute(self):
-        """
-        This tests the error when trying to simulate using the Fortran based solver with sparse linear solver setting enabled
-        """
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'f'
-        sim.linear_solver = 'SPARSE'
-
-        err_msg = "Sparse Linear solver not supported for Fortran based implementation, instead use 'implementation' = 'c' or 'linear_solver' = 'DENSE'."
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
-            sim.simulate(1.)
-
-    @testattr(stddist = True)
-    def test_linear_solver(self):
-        """
-        This tests the functionality of the property linear_solver.
-        """
-        self.sim.linear_solver = 'dense'
-        nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
-        self.sim.linear_solver = 'sparse'
-        nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
-        self.sim.linear_solver = 'DENSE'
-        nose.tools.assert_equal(self.sim.linear_solver, 'DENSE')
-        self.sim.linear_solver = 'SPARSE'
-        nose.tools.assert_equal(self.sim.linear_solver, 'SPARSE')
-
-        err_msg = "'linear_solver' parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('default')):
-            self.sim.linear_solver = 'default'
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('GMRES')):
-            self.sim.linear_solver = 'GMRES'
-
-        err_msg = "'linear_solver' parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('0', "<class 'int'>")):
-            self.sim.linear_solver = 0
-
-    @testattr(stddist = True)
-    def test_implementation(self):
-        """
-        This tests the functionality of the property solver.
-        """
-        self.sim.implementation = 'f'
-        nose.tools.assert_equal(self.sim.implementation, 'f')
-        self.sim.implementation = 'c'
-        nose.tools.assert_equal(self.sim.implementation, 'c')
-        self.sim.implementation = 'f'
-        nose.tools.assert_equal(self.sim.implementation, 'f')
-        self.sim.implementation = 'c'
-        nose.tools.assert_equal(self.sim.implementation, 'c')
-
-        err_msg = "'implementation' parameter needs to be either 'f' or 'c'. Set value: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('Python')):
-            self.sim.implementation = 'Python'
-        err_msg = "'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('True', "<class 'bool'>")):
-            self.sim.implementation = True
-        
-    def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + Fortran + explicit problem."""
-
-        y0 = N.array([1., 1.])
-        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
-        prob = Explicit_Problem(aux.f, y0)
-        sim = Radau5ODE(prob)
-        sim.implementation = 'f'
-
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
-            sim.simulate(1.)
-
-    @testattr(stddist = True)
-    def test_keyboard_interrupt_jac(self):
-        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + Fortran + explicit problem."""
-
-        y0 = N.array([1., 1.])
-        aux = KeyboardInterruptAux(dim = len(y0), jac = True)
-        prob = Explicit_Problem(aux.f, y0)
-        prob.jac = aux.jac
-        sim = Radau5ODE(prob)
-        sim.usejac = True
-        sim.implementation = 'f'
-
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
-            sim.simulate(1.)
-
-
-    @testattr(stddist = True)
-    def test_sparse_solver_attribute(self):
-        """
-        This tests the error when trying to simulate using the Fotran based solver with sparse linear solver setting enabled
-        """
-        sim = Radau5ODE(self.mod)
-        sim.solver = 'f'
-        sim.linear_solver = 'SPARSE'
-        nose.tools.assert_raises(Radau_Exception, sim.simulate, 1.)
-
-class Test_Explicit_C_Radau5:
-    """
-    Tests the explicit Radau solver.
-    """
-    def setUp(self):
-        """
-        This sets up the test case.
-        """
-        def f(t,y):
-            eps = 1.e-6
-            my = 1./eps
-            yd_0 = y[1]
-            yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
-            
-            return N.array([yd_0,yd_1])
-        
-        def jac(t,y):
-            eps = 1.e-6
-            my = 1./eps
-            J = N.zeros([2,2])
-            
-            J[0,0]=0.
-            J[0,1]=1.
-            J[1,0]=my*(-2.*y[0]*y[1]-1.)
-            J[1,1]=my*(1.-y[0]**2)
-            
-            return J
-        
-        def jac_sparse(t,y):
-            eps = 1.e-6
-            my = 1./eps
-            J = N.zeros([2,2])
-            
-            J[0,0]=0.
-            J[0,1]=1.
-            J[1,0]=my*(-2.*y[0]*y[1]-1.)
-            J[1,1]=my*(1.-y[0]**2)
-            
-            return sp.csc_matrix(J)
-        
-        #Define an Assimulo problem
-        y0 = [2.0,-0.6] #Initial conditions
-        
-        exp_mod = Explicit_Problem(f,y0)
-        exp_mod_t0 = Explicit_Problem(f,y0,1.0)
-        exp_mod_sp = Explicit_Problem(f,y0)
-        
-        exp_mod.jac = jac
-        exp_mod_sp.jac = jac_sparse
-        self.mod = exp_mod
-            
-        #Define an explicit solver
-        self.sim = Radau5ODE(exp_mod) #Create a Radau5 solve
-        self.sim.implementation = 'c'
-        self.sim_t0 = Radau5ODE(exp_mod_t0)
-        self.sim_t0.implementation = 'c'
-        self.sim_sp = Radau5ODE(exp_mod_sp)
-        self.sim_sp.implementation = 'c'
-        
-        #Sets the parameters
-        self.sim.atol = 1e-4 #Default 1e-6
-        self.sim.rtol = 1e-4 #Default 1e-6
-        self.sim.inith = 1.e-4 #Initial step-size
-        self.sim.usejac = False
-
-    @testattr(stddist = True)
-    def test_event_localizer(self):
-        exp_mod = Extended_Problem() #Create the problem
-
-        exp_sim = Radau5ODE(exp_mod) #Create the solver
-        exp_sim.implementation = 'c'
-        
-        exp_sim.verbosity = 0
-        exp_sim.report_continuously = True
-        
-        #Simulate
-        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
-        
-        #Basic test
-        nose.tools.assert_almost_equal(y[-1][0],8.0)
-        nose.tools.assert_almost_equal(y[-1][1],3.0)
-        nose.tools.assert_almost_equal(y[-1][2],2.0)
-    
-    @testattr(stddist = True)
-    def test_nbr_fcn_evals_due_to_jac(self):
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'c'
-        
-        sim.usejac = False
-        sim.simulate(1)
-        
-        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
-        
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'c'
-        sim.simulate(1)
-        
-        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
-    
-    @testattr(stddist = True)
-    def test_time_event(self):
-        f = lambda t,y: [1.0]
-        global tnext
-        global nevent
-        tnext = 0.0
-        nevent = 0
-        def time_events(t,y,sw):
-            global tnext,nevent
-            events = [1.0, 2.0, 2.5, 3.0]
-            for ev in events:
-                if t < ev:
-                    tnext = ev
-                    break
-                else:
-                    tnext = None
-            nevent += 1
-            return tnext
-            
-        def handle_event(solver, event_info):
-            solver.y+= 1.0
-            global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
-    
-        exp_mod = Explicit_Problem(f,0.0)
-        exp_mod.time_events = time_events
-        exp_mod.handle_event = handle_event
-        
-        #CVode
-        exp_sim = Radau5ODE(exp_mod)
-        exp_sim.implementation = 'c'
-        exp_sim(5.,100)
-        
-        nose.tools.assert_equal(nevent, 5)
-    
-    @testattr(stddist = True)
-    def test_init(self):
-        
-        #Test both y0 in problem and not.
-        sim = Radau5ODE(self.mod)
-        sim.implementation = 'c'
         
         nose.tools.assert_equal(sim._leny, 2)
     
@@ -1198,12 +693,8 @@ class Test_Explicit_C_Radau5:
             
         #Define an explicit solver
         sim = Radau5ODE(self.mod) #Create a Radau5 solve
-        sim.implementation = 'c'
-        
         sim.get_weighted_local_errors()
-        
         sim.simulate(1)
-        
         
     @testattr(stddist = True)
     def test_atol(self):
@@ -1252,7 +743,6 @@ class Test_Explicit_C_Radau5:
         mod.handle_event = handle_event
         
         sim = Radau5ODE(mod)
-        sim.implementation = 'c'
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
@@ -1263,12 +753,11 @@ class Test_Explicit_C_Radau5:
         This tests the error upon exceeding a set maximum number of steps
         """
         sim = Radau5ODE(self.mod)
-        sim.implementation = 'c'
 
         sim.maxh = 1.e-1
         sim.maxsteps = 9
 
-        err_msg = "The solver took max internal steps but could not reach the next output time."
+        err_msg = f'Radau5 failed with flag -5. At time {float_regex}. Message: Maximal number of steps = 9 exceeded.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -1278,7 +767,6 @@ class Test_Explicit_C_Radau5:
         This tests the error for too small step-sizes
         """
         sim = Radau5ODE(self.mod)
-        sim.implementation = 'c'
 
         sim.atol = 1.e10
         sim.rtol = 1.e10
@@ -1286,7 +774,7 @@ class Test_Explicit_C_Radau5:
         sim.inith = 1.e-1
         sim.maxh = 1.e-1
 
-        err_msg = f"The step size became too small. At time {float_regex}."
+        err_msg = f"Radau5 failed with flag -6. At time {float_regex}. Message: Stepsize too small with h = {float_regex}."
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1. + 1.e-16)
 
@@ -1300,7 +788,6 @@ class Test_Explicit_C_Radau5:
         y0 = N.array([1.])
         prob = Explicit_Problem(f, y0)
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
 
         err_msg = f'Repeated unexpected step rejections.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
@@ -1316,7 +803,6 @@ class Test_Explicit_C_Radau5:
         prob = Explicit_Problem(f, y0)
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = False
 
@@ -1333,7 +819,6 @@ class Test_Explicit_C_Radau5:
         prob = Explicit_Problem(f, y0)
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.usejac = True
 
         err_msg = "Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function."
@@ -1353,11 +838,10 @@ class Test_Explicit_C_Radau5:
         prob.jac_nnz = 1
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = 'Sparse Jacobian given in wrong format, expects CSC format.'
+        err_msg = f'Radau5 failed with flag -11. At time {float_regex}. Message: Jacobian given in wrong format, required sparsity format: CSC.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -1375,11 +859,10 @@ class Test_Explicit_C_Radau5:
         prob.jac_nnz = 1
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = 'Failure in sparse Jacobian evaluation, specified number of nonzero elements too small.'
+        err_msg = f'Radau5 failed with flag -9. At time {float_regex}. Message: Number of nonzero elements in provided jacobian is too small, specified = 1, actual = 5.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
@@ -1397,7 +880,6 @@ class Test_Explicit_C_Radau5:
         prob.jac_nnz = 0
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
@@ -1415,7 +897,6 @@ class Test_Explicit_C_Radau5:
         prob.jac = jac
 
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
@@ -1438,7 +919,6 @@ class Test_Explicit_C_Radau5:
             prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
-            sim.implementation = 'c'
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
@@ -1461,7 +941,6 @@ class Test_Explicit_C_Radau5:
             prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
-            sim.implementation = 'c'
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
@@ -1484,7 +963,6 @@ class Test_Explicit_C_Radau5:
             prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
-            sim.implementation = 'c'
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
@@ -1515,7 +993,6 @@ class Test_Explicit_C_Radau5:
             prob.jac_nnz = nnz
 
             sim = Radau5ODE(prob)
-            sim.implementation = 'c'
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
@@ -1546,27 +1023,6 @@ class Test_Explicit_C_Radau5:
             self.sim.linear_solver = 0
 
     @testattr(stddist = True)
-    def test_implementation(self):
-        """
-        This tests the functionality of the property solver.
-        """
-        self.sim.implementation = 'f'
-        nose.tools.assert_equal(self.sim.implementation, 'f')
-        self.sim.implementation = 'c'
-        nose.tools.assert_equal(self.sim.implementation, 'c')
-        self.sim.implementation = 'f'
-        nose.tools.assert_equal(self.sim.implementation, 'f')
-        self.sim.implementation = 'c'
-        nose.tools.assert_equal(self.sim.implementation, 'c')
-
-        err_msg = "'implementation' parameter needs to be either 'f' or 'c'. Set value: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('Python')):
-            self.sim.implementation = 'Python'
-        err_msg = "'implementation' parameter needs to be the STRING 'c' or 'f'. Set value: {}, type: {}"
-        with nose.tools.assert_raises_regex(Radau_Exception, err_msg.format('True', "<class 'bool'>")):
-            self.sim.implementation = True
-
-    @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
         """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
 
@@ -1574,10 +1030,9 @@ class Test_Explicit_C_Radau5:
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Explicit_Problem(aux.f, y0)
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -1589,11 +1044,10 @@ class Test_Explicit_C_Radau5:
         prob = Explicit_Problem(aux.f, y0)
         prob.jac = aux.jac
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.usejac = True
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -1606,12 +1060,11 @@ class Test_Explicit_C_Radau5:
         prob.jac = aux.jac
         prob.jac_nnz = 1
         sim = Radau5ODE(prob)
-        sim.implementation = 'c'
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
 
