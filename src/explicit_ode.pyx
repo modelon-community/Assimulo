@@ -53,14 +53,12 @@ cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out,
     cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
     c2py_d(y_py, y_in, n_y)
     g_high = (<object>f_event_EXT)(t, y_py)
-    # print(f"callback event, t = {t}, g_high = {g_high}, type = {type(g_high)}")
     py2c_d(g_out, g_high, n_g)
     return 0
 
 cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
     """Interpolation callback function to event_locator.c"""
     y_interp = (<object>f_interp_EXT)(t)
-    # print(f"Callback interpolation, t = {t}, y = {y_interp}, type =  {type(y_interp)}")
     py2c_d(y_out, y_interp, n)
     return 0
 

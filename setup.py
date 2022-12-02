@@ -465,7 +465,6 @@ class Assimulo_prepare(object):
                              include_path=[".", "assimulo"], force = True)
         ext_list[-1].include_dirs += ["assimulo", self.incdirs]
         ext_list[-1].sources += [os.path.join("assimulo", "ode_event_locator.c")]
-        ext_list[-1].name = "assimulo.explicit_ode"
 
         remaining_pyx = ["algebraic", "implicit_ode", "ode", "problem", "special_systems", "support"]
         ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx], 
