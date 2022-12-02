@@ -198,15 +198,11 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 		}
 	}
 
+	/* sanity check on fnewt */
 	tolst = rmem->rtol[0]; /* internal representation of rtol */
-	/* check inputs for consistency */
-	if (!rmem->input->_checked){
-		/* sanity check on fnewt */
-		if (rmem->input->fnewt <= rmem->input->uround / tolst){
-			sprintf(rmem->err_log, "Curious input for 'fnewt' = %g, must not be smaller than uround/rtol = %g.", rmem->input->fnewt, rmem->input->uround / tolst);
-			return RADAU_ERROR_INCONSISTENT_INPUT;
-		}
-		rmem->input->_checked = TRUE_;
+	if (rmem->input->fnewt <= rmem->input->uround / tolst){
+		sprintf(rmem->err_log, "Curious input for 'fnewt' = %g, must not be smaller than uround/rtol = %g.", rmem->input->fnewt, rmem->input->uround / tolst);
+		return RADAU_ERROR_INCONSISTENT_INPUT;
 	}
 	/* automatically set input parameters that have not been set directly */
 	if (!rmem->input->hmax_set){
