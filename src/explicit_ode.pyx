@@ -23,12 +23,44 @@ import sys
 import numpy as N
 cimport numpy as N
 
-from exception import *
+cimport explicit_ode # .pxd
+cimport cython
+
+from exception import Explicit_ODE_Exception, TimeLimitExceeded, TerminateSimulation
 from timeit import default_timer as timer
 
 include "constants.pxi" #Includes the constants (textual include)
 
 realtype = float
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void py2c_d(double* dest, object source, int dim):
+    """Copy 1D numpy (double) array to (double *) C vector."""
+    if not (isinstance(source, N.ndarray) and source.flags.contiguous and source.dtype == N.float):
+        source = N.ascontiguousarray(source, dtype=N.float)
+    assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
+    memcpy(dest, <double*>N.PyArray_DATA(source), dim*sizeof(double))
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void c2py_d(N.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
+    """Copy (double *) C vector to 1D numpy array."""
+    memcpy(N.PyArray_DATA(dest), source, dim*sizeof(double))
+
+cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out, void* f_event_EXT):
+    """Event indicator callback function to event_locator.c"""
+    cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
+    c2py_d(y_py, y_in, n_y)
+    g_high = (<object>f_event_EXT)(t, y_py)
+    py2c_d(g_out, g_high, n_g)
+    return 0
+
+cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
+    """Interpolation callback function to event_locator.c"""
+    y_interp = (<object>f_interp_EXT)(t)
+    py2c_d(y_out, y_interp, n)
+    return 0
 
 cdef class Explicit_ODE(ODE):
     """
@@ -295,97 +327,35 @@ cdef class Explicit_ODE(ODE):
             
         return flag_initialize
         
-    def event_locator(self, t_low, t_high, y_high):
+    cpdef event_locator(self, double t_low, double t_high, N.ndarray y_high):
         '''Checks if an event occurs in [t_low, t_high], if that is the case event 
         localization is started. Event localization finds the earliest small interval 
         that contains a change in domain. The right endpoint of this interval is then 
         returned as the time to restart the integration at.
         '''
-        
-        g_high = N.array(self.event_func(t_high, y_high)).copy()
-        g_low = self.g_old
-        self.statistics["nstatefcns"] += 1
-        n_g = self.problem_info["dimRoot"]
-        TOL = max(abs(t_low), abs(t_high)) * 1e-13
-        #Check for events in [t_low, t_high].
-        for i in xrange(n_g):
-            if (g_low[i] > 0) != (g_high[i] > 0):
-                break
-        else:
-            self.g_old = g_high
-            return (ID_PY_OK, t_high, y_high)
-        
-        side = 0
-        sideprev = -1
-        
-        while abs(t_high - t_low) > TOL:
-            #Adjust alpha if the same side is choosen more than once in a row.
-            if (sideprev == side):
-                if side == 2:
-                    alpha = alpha * 2.0
-                else:
-                    alpha = alpha / 2.0
-            #Otherwise alpha = 1 and the secant rule is used.
-            else:
-                alpha = 1
-            
-            #Decide which event function to iterate with.
-            maxfrac = 0
-            imax = 0 #Avoid compilation problem
-            for i in xrange(n_g):
-                if ((g_low[i] > 0) != (g_high[i] > 0)):
-                    gfrac = abs(g_high[i]/(g_low[i] - g_high[i]))
-                    if gfrac >= maxfrac:
-                        maxfrac = gfrac
-                        imax = i
-            
-            #Hack for solving the slow converging case when g is zero for a large part of [t_low, t_high].
-            if g_high[imax] == 0 or g_low[imax] == 0:
-                t_mid = (t_low + t_high)/2
-            else:
-                t_mid = t_high - (t_high - t_low)*g_high[imax]/ \
-                                 (g_high[imax] - alpha*g_low[imax])
-        
-            #Check if t_mid is to close to current brackets and adjust inwards if so is the case.
-            if (abs(t_mid - t_low) < TOL/2):
-                fracint = abs(t_low - t_high)/TOL
-                if fracint > 5:
-                    delta = (t_high - t_low) / 10.0
-                else:
-                    delta = (t_high - t_low) / (2.0 * fracint)
-                t_mid = t_low + delta
-        
-            if (abs(t_mid - t_high) < TOL/2):
-                fracint = abs(t_low - t_high)/TOL
-                if fracint > 5:
-                    delta = (t_high - t_low) / 10.0
-                else:
-                    delta = (t_high - t_low) / (2.0 * fracint)
-                t_mid = t_high - delta
-            
-            #Calculate g at t_mid and check for events in [t_low, t_mid].
-            g_mid = N.array(self.event_func(t_mid, self.interpolate(t_mid))).copy()
-            self.statistics["nstatefcns"] += 1
-            sideprev = side
-            for i in xrange(n_g):
-                if (g_low[i] > 0) != (g_mid[i] > 0):
-                    (t_high, g_high) = (t_mid, g_mid[0:n_g])
-                    side = 1
-                    break
-            #If there are no events in [t_low, t_mid] there must be some event in [t_mid, t_high].
-            else:
-                (t_low, g_low) = (t_mid, g_mid[0:n_g])
-                side = 2
-        
-        event_info = N.array([0] * n_g)
-        for i in xrange(n_g):
-            if (g_low[i] > 0) != (g_high[i] > 0):
-                event_info[i] = 1 if g_high[i] > 0 else -1
-                
-        self.set_event_info(event_info)
-        self.statistics["nstateevents"] += 1
-        self.g_old = g_high
-        return (ID_PY_EVENT, t_high, self.interpolate(t_high))
+        cdef int n_g = self.problem_info["dimRoot"]
+        cdef N.ndarray[double, mode="c", ndim=1] g_low_c  = N.array(self.g_old)
+        cdef N.ndarray[double, mode="c", ndim=1] g_mid_c  = N.empty(n_g, dtype = N.double)
+        cdef N.ndarray[double, mode="c", ndim=1] g_high_c = N.empty(n_g, dtype = N.double)
+        cdef N.ndarray[double, mode="c", ndim=1] y_high_c = N.array(y_high)
+        cdef int nstatefcns = 0
+        cdef int ret = explicit_ode.f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
+                                                    &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
+                                                    callback_event, <void*>self.event_func,
+                                                    callback_interp, <void*>self.interpolate,
+                                                    &nstatefcns)
+        self.statistics["nstatefcns"] += nstatefcns
+
+        if ret == ID_PY_EVENT:
+            event_info = N.zeros(n_g, dtype = int)
+            for i in range(n_g):
+                if (g_low_c[i] > 0) != (g_high_c[i] > 0):
+                    event_info[i] = 1 if g_high_c[i] > 0 else -1
+            self.set_event_info(event_info)
+
+        self.g_old = g_high_c[:]
+        y_high = y_high_c[:]
+        return ret, t_high, y_high
     
     def plot(self, mask=None, **kwargs):
         """

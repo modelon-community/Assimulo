@@ -425,6 +425,7 @@ cdef class IDA(Implicit_ODE):
                 return self.problem.state_events(t, y, self.sw)
         self.event_func = event_func
         self.g_old = self.event_func(self.t, self.y, self.yd)
+        self.statistics["nstatefcns"] += 1
         self._event_info = N.array([0] * self.problem_info["dimRoot"])
     
     cdef initialize_sensitivity_options(self):
@@ -1901,6 +1902,7 @@ cdef class CVode(Explicit_ODE):
             return self.problem.state_events(t, y, self.sw)
         self.event_func = event_func
         self.g_old = self.event_func(self.t, self.y)
+        self.statistics["nstatefcns"] += 1
         self._event_info = N.array([0] * self.problem_info["dimRoot"])
         
     
