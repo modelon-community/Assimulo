@@ -128,8 +128,6 @@ struct radau_stats_t{
 
 /* structure for input parameters, both internal and input, for Radau5 */
 struct radau_inputs_t{
-    int _checked; /* flag if the inputs have been checked for consistency */
-
 	int use_jac_external; /* switch for internal/external jacobian */
 	int callback_enabled; /* switch for calling callback function after each successful step */
 	int atol_as_vec; /* switch if atol is a vector or scalar */

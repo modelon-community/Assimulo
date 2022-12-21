@@ -206,7 +206,6 @@ int radau_set_step_size_safety(void *radau_mem, double val){
 int radau_set_uround(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
-    rmem->input->_checked = FALSE_;
 
 	if (val <= 1e-19 || val >= 1.){
 		sprintf(rmem->err_log, "Input for uround must be between 1e-19 and 1. received = %e.", val);
@@ -235,7 +234,6 @@ int radau_set_theta_jac_recomp(void *radau_mem, double val){
 int radau_set_fnewt(void *radau_mem, double val){
 	radau_mem_t *rmem = (radau_mem_t*)radau_mem;
 	if (!rmem){ return RADAU_ERROR_MEM_NULL;}
-    rmem->input->_checked = FALSE_;
 
 	if (val <= 0.){
 		sprintf(rmem->err_log, "Input for fnewt must be nonnegative, received = %g.", val);
@@ -467,8 +465,6 @@ static void _radau_reset_stats(radau_stats_t *rmem){
 static int _radau_set_default_inputs(radau_inputs_t **input_out){
 	radau_inputs_t *mem = (radau_inputs_t*)malloc(sizeof(radau_inputs_t));
 	if(!mem){ return RADAU_ERROR_UNEXPECTED_MALLOC_FAILURE;}
-
-    mem->_checked = FALSE_;
 
 	/* external parameters */
 	mem->nmax = 100000;
