@@ -434,13 +434,13 @@ static int _radau_setup_linsol_mem(radau_mem_t *rmem, int n, int sparseLU, int n
 		#endif /*__RADAU5_WITH_SUPERLU*/
 
 	}else{ /* DENSE */
-		rmem->lin_sol->jac = (double*)malloc(n_sq*sizeof(double));
-		rmem->lin_sol->e1  = (double*)malloc(n_sq*sizeof(double));
-		rmem->lin_sol->e2r = (double*)malloc(n_sq*sizeof(double));
-		rmem->lin_sol->e2i = (double*)malloc(n_sq*sizeof(double));
+		rmem->lin_sol->jac = (double*)calloc(n_sq, sizeof(double));
+		rmem->lin_sol->e1  = (double*)calloc(n_sq, sizeof(double));
+		rmem->lin_sol->e2r = (double*)calloc(n_sq, sizeof(double));
+		rmem->lin_sol->e2i = (double*)calloc(n_sq, sizeof(double));
 
-		rmem->lin_sol->ip1 = (int*)malloc(n*sizeof(int));
-		rmem->lin_sol->ip2 = (int*)malloc(n*sizeof(int));
+		rmem->lin_sol->ip1 = (int*)calloc(n, sizeof(int));
+		rmem->lin_sol->ip2 = (int*)calloc(n, sizeof(int));
 
 		if(!rmem->lin_sol->jac || !rmem->lin_sol->e1 || !rmem->lin_sol->e2r || !rmem->lin_sol->e2i || !rmem->lin_sol->ip1 || !rmem->lin_sol->ip2){
 			sprintf(rmem->err_log, MSG_MALLOC_FAIL);
