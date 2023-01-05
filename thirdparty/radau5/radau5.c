@@ -286,7 +286,7 @@ static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 	int reject; /* switch if step is to be rejected */
     double h_output; /* backup stepsize for output */
 	double xold; /* previous time-point */
-    double hold; /* previos stepsize */
+    double hold; /* previous stepsize */
 	double hnew; /* new stepsize */
 	double err; /* local error norm, return from estrad */
 	double fac; /* stepsize adjustment factor */
@@ -359,7 +359,7 @@ L10:
 /*  COMPUTATION OF THE JACOBIAN */
 /* *** *** *** *** *** *** *** */
 	if (!rmem->new_jac_req){
-		goto L30; /* no new jacobian required; reuse old one + LU factorization */
+		goto L20; /* no new jacobian required; reuse old one*/
 	}
     rmem->stats->njac++;
     if (ijac == 0) {
@@ -431,7 +431,7 @@ L20:
 		#endif /*__RADAU5_WITH_SUPERLU*/
 	}
     rmem->stats->ludecomps++; /* increment LU decompositions counter */
-/* --- NEXT STEP, NO NEW JAC/LU */
+/* --- NEXT STEP */
 L30:
     rmem->stats->nsteps++;
     if (rmem->stats->nsteps > rmem->input->nmax) {

@@ -7,6 +7,7 @@
     * Refactored Radau5 C implementation; moved to thirdparts/radau5/.
     * Replaced event localization for explicit problems with an equivalent C implementation.
     * Added missing counts on event indicator evaluations when setting problem data in solvers.
+    * Radau5 bugfix in introduced in re-factorization, do not skip LU-factorizations if no new Jacobian is needed.
 
 --- Assimulo-3.3.1 ---
     * Minor refactoring of Radau5 C implementation:
