@@ -1,23 +1,67 @@
-from assimulo.solvers import *
-from assimulo.problem import *
+from assimulo.solvers import sundials, radau5, euler, runge_kutta, rosenbrock, dasp3, odepack, glimda, odassl
+from assimulo.problem import Explicit_Problem, Implicit_Problem, SingPerturbed_Problem, Overdetermined_Problem
 import os
+import shutil
+import pylab as pl
+import assimulo.examples as examples
+
+def run_ex(ex: str, plot_prefix: str = '') -> None:
+    ## Custom savefig to make figures look good in Sphinx page
+    def savefig():
+        fig = pl.gcf()
+        fig.set_size_inches(*(1.0 * fig.get_size_inches()))
+        fig.set_facecolor([0.69, 0.76, 0.77])
+        return fig.savefig(plot_prefix + ex + '.png', facecolor = fig.get_facecolor())
+    pl.show = savefig ## overwrite show command to instead save plots
+
+    getattr(examples, ex).run_example()
 
 def mark_examples():
-    import assimulo.examples as examples
+    ## Examples are to be sorted into a folder
+    try:
+        os.mkdir('examples')
+    except FileExistsError:
+        pass
+
+    ## Automatically create rst for sphinx with nice looking toc structure
+    try:
+        os.remove('examples.rst')
+    except FileNotFoundError:
+        pass
+    ## start from a defined base structure
+    shutil.copyfile('examples_base.rst', 'examples.rst')
     
-    for ex in examples.__all__:
-        file = open("EXAMPLE_"+ex+".rst",'w')
-        
-        file.write(ex + '.py\n')
-        file.write('=============================================\n\n')
-        file.write('.. autofunction:: assimulo.examples.'+ex+'.run_example\n\n')
-        file.write('=============================================\n\n')
-        file.write('.. program-output::   python '+os.path.join(os.getcwd(),'execute_example.py')+' '+os.path.join(os.getcwd(), examples.__path__[0]+os.sep+ex+'.py')+' \n\n')
-        if os.path.isfile(os.path.join(os.getcwd(),ex+'.png')):
-            file.write('.. image:: '+os.sep+os.path.join(os.getcwd(),ex+'.png')+'\n\n')
-        file.write('.. note::\n\n')
-        file.write('    Press [source] (to the top right) to view the example.\n\n')
-        file.close()
+    solvers_set = set()
+    for ex in sorted(examples.__all__):
+        solver = ex.split('_')[0] ## Assumes all examples are of format <solver>_*.py
+
+        # for each new solver make new entry in examples.rst
+        if solver not in solvers_set: 
+            with open('examples.rst', 'a') as file:
+                file.write(f"\n{solver.upper()}\n")
+                file.write('-'*30 + "\n")
+                file.write("\n.. toctree::\n")
+                file.write("\t:hidden: \n")
+                file.write("\t:maxdepth: 1\n")
+                file.write(f"\t:caption: {solver.upper()} \n\n")
+                solvers_set.add(solver)
+
+        with open('examples.rst', 'a') as file:
+            file.write(f"\tEXAMPLE_{ex}.rst\n")
+
+        with open(f"EXAMPLE_{ex}.rst", 'w') as file:
+            file.write(ex + '.py\n')
+            file.write('=============================================\n\n')
+            # file.write('.. autofunction:: assimulo.examples.'+ex+'.run_example\n\n')
+            file.write(f".. literalinclude:: {os.path.join(os.getcwd(), examples.__path__[0], ex +'.py')}\n\n") ## TODO: Not optional; any better way to filter the relevant bit here?
+            file.write('=============================================\n\n')
+            #file.write('.. program-output::   python '+ '/'.join([os.getcwd().replace('\\', '/'), 'execute_example.py']) + ' ' + '/'.join([examples.__path__[0].replace('\\', '/'), ex, '.py']) + '\n\n')
+            # file.write('.. program-output::   python '+ '/'.join([os.getcwd().replace('\\', '/'), 'execute_example.py']) + ' ' + os.path.join(os.getcwd(), examples.__path__[0], ex +'.py').replace('\\', '/') + '\n\n')
+            file.write('.. program-output::   python '+ '/'.join([os.getcwd().replace('\\', '/'), 'execute_example.py']) + ' ' + ex + '\n\n')
+            if os.path.isfile(os.path.join(os.getcwd(),ex+'.png')):
+                file.write('.. image:: ' + os.path.join(os.getcwd(),ex + '.png').replace('\\', '/')+'\n\n')
+            file.write('.. note::\n\n')
+            file.write('    Press [source] (to the top right) to view the example.\n\n')
         
 def mark_solvers():
 
@@ -113,7 +157,7 @@ def mark_solvers():
         elif solver[1] == "DAE_OVER":
             file.write('    mod = '+problem_name+'(res, y0, yd0, t0)\n\n')
         else:
-            print "Unknown solver type"
+            print("Unknown solver type")
         file.write('.. note::\n\n')
         file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
         file.write('.. warning::\n\n')
@@ -123,7 +167,7 @@ def mark_solvers():
         file.write('Modify (optionally) the solver parameters.\n\n')
         file.write('    Parameters:\n\n')
         
-        iter_options = options.keys()
+        iter_options = list(options.keys())
         iter_options.sort()
         for opt in iter_options:
 
@@ -138,6 +182,8 @@ def mark_solvers():
                         str_doc = find_doc(solv.mro()[1], opt)
                         if str_doc == " " and len(solv.mro()) > 2:
                             str_doc = find_doc(solv.mro()[2], opt)
+                except AttributeError: ## in case there is no docstring
+                    str_doc = " "
                 return str_doc
             str_doc = find_doc(solver[0], opt)
             file.write(str_name + ' ' + str_doc + '.\n')

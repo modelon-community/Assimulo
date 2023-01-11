@@ -21,4 +21,4 @@ When using Assimulo together with JModelica.org and the new high-level simulatio
                         algorithm='AssimuloAlg', 
                         options={}):
 
-A list of the different solver specific parameters can be found in the :doc:`usage` section. A more detailed description of the available options and interface between JModelica.org and Assimulo can be found in the JModelica.org users guide.
+A list of the different solver specific parameters can be found in the :doc:`solvers` section. A more detailed description of the available options and interface between JModelica.org and Assimulo can be found in the JModelica.org users guide.

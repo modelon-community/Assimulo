@@ -1,7 +1,9 @@
 
 ===============
-Usage
+Solvers
 ===============
+
+TODO: Could paste a sentence or 2 on the difference between explicit and implicit solvers here again.
 
 Explicit Solvers
 ----------------

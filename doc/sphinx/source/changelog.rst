@@ -53,7 +53,7 @@ Changelog
 --- Assimulo-3.1 ---
     * Added support for building Assimulo with Intel and MSVC on Windows (ticket: 434)
     * Added support for Sundials 4.1 (ticket:431)
-    * Fixed so that *.pyf files are included in the source distro (ticket:430)
+    * Fixed so that \*.pyf files are included in the source distro (ticket:430)
     * Moved ImportError output to stderr instead of stdout (ticket:429)
     * Disabled test dasp3_basic because problem appears to numerically unstable.
 
@@ -261,7 +261,7 @@ Changelog
     * Changed assimulo.ODE.problemname to problem_name.
     * Fixed a bug when printing information when used FixedPoint.
     * Changed algvar to be more type independent.
-    * Added **kwargs to the plotting functionality.
+    * Added \*\*kwargs to the plotting functionality.
 
 --- Assimulo-1.0b2 ---
     * Added an option to mask which variables that is to be plotted.

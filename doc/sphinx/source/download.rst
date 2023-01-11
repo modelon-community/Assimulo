@@ -4,6 +4,8 @@
 Download
 =============
 
+TODO: Is this still relevant?
+
 Current version:
 
     Available on PyPI, http://pypi.python.org/pypi/Assimulo

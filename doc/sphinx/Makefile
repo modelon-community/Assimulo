@@ -23,13 +23,18 @@ help:
 	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  qthelp    to make HTML files and a qthelp project"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
-	@echo "  changes   to make an overview of all changed/added/deprecated items"
+	@echo "  changes   to make an overview of all changed/added/deprecated items"fr
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
+	-rm source/EXAMPLE_*.rst
+	-rm source/ODE_*.rst
+	-rm source/DAE_*.rst
+	-rm source/examples.rst
 	-rm -rf $(BUILDDIR)/*
 
+## TODO: Currently needs to be run twice, once to generate images, 2nd time to correctly include them; fix
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo

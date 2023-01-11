@@ -14,7 +14,7 @@
 import sys, os
 
 #RUN MARKUP
-execfile("markup.py")
+exec(open("./markup.py").read())
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -25,9 +25,21 @@ execfile("markup.py")
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 
-              'sphinx.ext.coverage', 'sphinx.ext.pngmath','sphinx.ext.ifconfig','sphinx.ext.viewcode',
-              'sphinxcontrib.programoutput', 'sphinx.ext.mathjax']
+# extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 
+#               'sphinx.ext.coverage', 'sphinx.ext.pngmath','sphinx.ext.ifconfig','sphinx.ext.viewcode',
+#               'sphinxcontrib.programoutput', 'sphinx.ext.mathjax']
+
+extensions = ['sphinx.ext.autodoc',
+			  'sphinx_rtd_theme',
+			  'sphinx.ext.viewcode',
+			  'sphinx.ext.intersphinx',
+			#   'sphinx.ext.coverage',
+			  'sphinx.ext.imgmath',
+			  'sphinx_copybutton',
+			  'sphinx.ext.mathjax',
+			  'sphinxcontrib.programoutput',
+			  'sphinx.ext.ifconfig'
+			  ]
 # 'sphinx.ext.jsmath', '
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -39,7 +51,7 @@ source_suffix = '.rst'
 source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'contents'
+master_doc = 'index'
 
 # General information about the project.
 project = u'Assimulo'
@@ -70,6 +82,7 @@ release = '3.3'
 # List of directories, relative to source directory, that shouldn't be searched
 # for source files.
 exclude_trees = []
+exclude_patterns = ['examples_base.rst']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -96,16 +109,16 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'assimulo'
+# html_theme = 'assimulo'
 #html_theme = 'default'
 #html_theme = 'sphinxdoc'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'nosidebar': True}
+# html_theme_options = {'nosidebar': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = ['../themes']
+# html_theme_path = ['../themes']
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -158,11 +171,11 @@ html_index = 'index.html'
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
-html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
+# html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
 #html_additional_pages = {}
-html_additional_pages = {'index': 'index.html'}
+# html_additional_pages = {'index': 'index.html'}
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = ''
@@ -172,9 +185,18 @@ htmlhelp_basename = 'Assimulodoc'
 
 autoclass_content = 'both'
 # -- Options for LaTeX output --------------------------------------------------
+html_theme = 'sphinx_rtd_theme'
+# html_logo = '_static/assimulo.png' ## TODO: Currently doesn't blend well with the orange color of header
+html_show_sourcelink = False ## Enable "View page source" in top right corner
+html_theme_options = {
+    'style_nav_header_background': '#fb8c00', ## orange color of header
+    'collapse_navigation' : False, ## Table of contents in sidebar is expanded by default
+}
 
 # The paper size ('letter' or 'a4').
 #latex_paper_size = 'letter'
+
+# latex_engine = 'pdflatex'
 
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'

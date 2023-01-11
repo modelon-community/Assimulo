@@ -1,7 +1,7 @@
 
 
 =============
-Citing
+Citation
 =============
 
 If you wish to cite Assimulo in a publication, please use the following publication:

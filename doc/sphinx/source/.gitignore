@@ -1,0 +1,5 @@
+DAE*.rst
+ODE*.rst
+EXAMPLE*.rst
+*.png
+!AssimuloJModelica.png

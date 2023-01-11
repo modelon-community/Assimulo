@@ -34,7 +34,9 @@ The Assimulo package comes with a number of examples, showing how to use the dif
 .. note::
 
     If there are any questions about a method or class, it is recommended to have a look at the docstrings.  For example, when using IPython, the docstrings are displayed  by entering the name of the method/class followed by 
-    a question mark(?). Example, ::
+    a question mark(?). Example,
+
+    .. code-block:: ipython
     
         CVode.atol?
 
