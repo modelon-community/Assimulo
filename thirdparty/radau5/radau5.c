@@ -159,6 +159,8 @@ int radau5_solve(void *radau_mem, FP_CB_f fcn, void *fcn_EXT,
 /*             n = problem size */
 /* 			   EXT = optional extra input, see solout_EXT */
 /*             non-zero returns will interrupt simulation */
+/* 			   positive returns lead to solver exit with flag = RADAU_SUCCESS_SOLOUT_INTERRUPT */
+/* 			   negative returns lead to solver exit with flag = RADAU_ERROR_CALLBACK_UNRECOVERABLE */
 
 /* solout_EXT  Extra input argument to solout callback */
 
@@ -634,9 +636,13 @@ L40:
 			rmem->_dense_output_valid = TRUE_;
 			*solout_ret = (*solout)(rmem->stats->naccpt, xold, x, &y[1], &werr[1], n, solout_EXT);
 			rmem->_dense_output_valid = FALSE_;
-			if (*solout_ret != RADAU_OK) {
+			if (*solout_ret > 0) { /* Event based exit */
 				sprintf(rmem->err_log, "Radau5 interrupted during solout callback with flag = %i.", *solout_ret);
 				return RADAU_SUCCESS_SOLOUT_INTERRUPT;
+			}
+			if (*solout_ret < 0) { /* unrecoverable exception */
+				sprintf(rmem->err_log, "Radau5 interrupted during solout callback with flag = %i.", *solout_ret);
+				return RADAU_ERROR_CALLBACK_UNRECOVERABLE;
 			}
 		}
 		rmem->jac_is_fresh = FALSE_;

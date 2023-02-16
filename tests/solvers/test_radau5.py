@@ -1067,6 +1067,26 @@ class Test_Explicit_Radau5:
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = Radau5ODE(prob)
+        
+        sim.maxh = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        expected_err_flag = -2
+        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Radau5 interrupted during solout callback with flag = {expected_err_flag}.'
+        err_msg += f'TimeLimitExceeded: The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+            sim.simulate(1.)
 
 class Test_Implicit_Radau5:
     """

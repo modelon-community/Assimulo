@@ -23,7 +23,8 @@ from assimulo.exception import (
     AssimuloException,
     Explicit_ODE_Exception,
     Implicit_ODE_Exception,
-    AssimuloRecoverableError
+    AssimuloRecoverableError,
+    TimeLimitExceeded
 )
 from assimulo.ode import (
     NORMAL,
@@ -120,6 +121,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._type = '(explicit)'
         self._event_info = None
         self._werr = N.zeros(self._leny)
+        self.py_err = "" ## extra Python message to be displayed in final error messages
 
     def _get_linear_solver(self):
         return self.options["linear_solver"]
@@ -283,11 +285,15 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
-            if flag == ID_PY_EVENT: ret = -1
+            if flag == ID_PY_EVENT: ret = 1
             
         if self._opts["report_continuously"]:
-            initialize_flag = self.report_solution(t, y.copy(), self._opts)
-            if initialize_flag: ret = -1
+            try:
+                initialize_flag = self.report_solution(t, y.copy(), self._opts)
+                if initialize_flag: ret = 1
+            except TimeLimitExceeded as e:
+                self.py_err = "TimeLimitExceeded: " + str(e)
+                ret = -2
         else:
             if self._opts["output_list"] is None:
                 self._tlist.append(t)
@@ -357,7 +363,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         else:
             msg = self.rad_memory.get_err_msg()
             self.finalize()
-            raise Radau5Error(value = flag, t = t, err_msg = msg) from None
+            raise Radau5Error(value = flag, t = t, err_msg = msg + self.py_err) from None
         
         #Retrieving statistics
         nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
