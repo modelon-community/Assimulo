@@ -121,7 +121,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._type = '(explicit)'
         self._event_info = None
         self._werr = N.zeros(self._leny)
-        self.py_err = "" ## extra Python message to be displayed in final error messages
 
     def _get_linear_solver(self):
         return self.options["linear_solver"]
@@ -233,7 +232,12 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
     def set_problem_data(self):
         if self.problem_info["state_events"]:
             def event_func(t, y):
-                return self.problem.state_events(t, y, self.sw)
+                try:
+                    res = self.problem.state_events(t, y, self.sw)
+                except BaseException as E:
+                    self._py_err = E
+                    return -1, None # non-recoverable
+                return 0, res ## OK
             def f(t, y):
                 ret = 0
                 try:
@@ -244,12 +248,16 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = 1 #Recoverable error
                     else:
+                        self._py_err = E
                         ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_old = N.array(self.event_func(self.t, self.y)).copy()
+            ret, self.g_old = self.event_func(self.t, self.y)
+            self.g_old = N.array(self.g_old)
+            if ret < 0:
+                raise self._py_err
             self.statistics["nstatefcns"] += 1
         else:
             def f(t, y):
@@ -261,6 +269,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = 1 #Recoverable error
                     else:
+                        self._py_err = E
                         ret = -1 #Non-recoverable
                 return rhs, [ret]
             self.f = f
@@ -280,41 +289,46 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         This method is called after every successful step taken by Radau5
         """
-        self._werr = werr
-        ret = 0
-        
-        if self.problem_info["state_events"]:
-            flag, t, y = self.event_locator(told, t, y)
-            if flag == ID_PY_EVENT: ret = 1
+        try:
+            self._werr = werr
+            ret = 0
             
-        if self._opts["report_continuously"]:
-            try:
-                initialize_flag = self.report_solution(t, y.copy(), self._opts)
-                if initialize_flag: ret = 1
-            except TimeLimitExceeded as e:
-                self.py_err = "TimeLimitExceeded: " + str(e)
-                ret = -2
-        else:
-            if self._opts["output_list"] is None:
-                self._tlist.append(t)
-                self._ylist.append(y.copy())
-            else:
-                output_list = self._opts["output_list"]
-                output_index = self._opts["output_index"]
-                try:
-                    while output_list[output_index] <= t:
-                        self._tlist.append(output_list[output_index])
-                        self._ylist.append(self.interpolate(output_list[output_index]))
-                        
-                        output_index += 1
-                except IndexError:
-                    pass
-                self._opts["output_index"] = output_index
+            if self.problem_info["state_events"]:
+                flag, t, y = self.event_locator(told, t, y)
+                if flag == ID_PY_EVENT: ret = 1
+                if flag < 0: ret = -1 # non-recoverable
                 
-                if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+            if self._opts["report_continuously"]:
+                try:
+                    initialize_flag = self.report_solution(t, y.copy(), self._opts)
+                    if initialize_flag: ret = 1
+                except TimeLimitExceeded as e:
+                    self._py_err = e
+                    ret = -2 # non-recoverable
+            else:
+                if self._opts["output_list"] is None:
                     self._tlist.append(t)
-                    self._ylist.append(y)
-        
+                    self._ylist.append(y.copy())
+                else:
+                    output_list = self._opts["output_list"]
+                    output_index = self._opts["output_index"]
+                    try:
+                        while output_list[output_index] <= t:
+                            self._tlist.append(output_list[output_index])
+                            self._ylist.append(self.interpolate(output_list[output_index]))
+                            
+                            output_index += 1
+                    except IndexError:
+                        pass
+                    self._opts["output_index"] = output_index
+                    
+                    if self.problem_info["state_events"] and flag == ID_PY_EVENT and len(self._tlist) > 0 and self._tlist[-1] != t:
+                        self._tlist.append(t)
+                        self._ylist.append(y)
+        except BaseException as E: ## e.g., KeyboardInterrupt
+            self._py_err = E
+            ret = -1 # non-recoverable
+            
         return ret
         
     def _jacobian(self, t, y):
@@ -332,6 +346,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                 ret = 1 #Recoverable error
             else:
+                self._py_err = E
                 ret = -1 #Non-recoverable
         return jac, [ret]
             
@@ -351,6 +366,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self._ylist = []
         
         #Store the opts
+        self._py_err = None ## reset 
         self._opts = opts
         self.rad_memory.reinit()
         t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
@@ -363,7 +379,9 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         else:
             msg = self.rad_memory.get_err_msg()
             self.finalize()
-            raise Radau5Error(value = flag, t = t, err_msg = msg + self.py_err) from None
+            if isinstance(self._py_err, BaseException): ## not None & valid Exception
+                raise self._py_err from None
+            raise Radau5Error(value = flag, t = t, err_msg = msg) from None
         
         #Retrieving statistics
         nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()

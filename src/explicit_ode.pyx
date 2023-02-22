@@ -52,9 +52,11 @@ cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out,
     """Event indicator callback function to event_locator.c"""
     cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
     c2py_d(y_py, y_in, n_y)
-    g_high = (<object>f_event_EXT)(t, y_py)
+    ret, g_high = (<object>f_event_EXT)(t, y_py)
+    if ret < 0: ## immediate return, no not try to copy g_high
+        return ret
     py2c_d(g_out, g_high, n_g)
-    return 0
+    return ret
 
 cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
     """Interpolation callback function to event_locator.c"""

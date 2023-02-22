@@ -163,6 +163,10 @@ cdef class ODE:
         self.statistics.add_key("nsensnfails", "Number of sensitivity nonlinear convergence failures")
         self.statistics.add_key("nsenserrfails", "Number of sensitivity error test failures")
 
+        #Error logging
+        # storing Python error, would otherwise be lost when returning from callbacks
+        self._py_err = None
+        
         
     def __call__(self, double tfinal, int ncp=0, list cpts=None):
         return self.simulate(tfinal, ncp, cpts)
