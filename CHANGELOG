@@ -4,7 +4,7 @@
     * Removed Radau5ODE Fortran implementation. 
       This change should be seamless since the C implementation is numerically equivalent.
     * Radau5 C with SuperLU now requires compilation with '-D__RADAU5_WITH_SUPERLU'
-    * Refactored Radau5 C implementation; moved to thirdparts/radau5/.
+    * Refactored Radau5 C implementation; moved to thirdparty/radau5/.
     * Replaced event localization for explicit problems with an equivalent C implementation.
     * Added missing counts on event indicator evaluations when setting problem data in solvers.
     * Radau5 bugfix introduced in re-factorization, do not skip LU-factorizations if no new Jacobian is needed.
