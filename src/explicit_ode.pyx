@@ -203,7 +203,6 @@ cdef class Explicit_ODE(ODE):
         output_index = 0
         
         self.display_progress_activated = 1 if self.display_progress else 0
-        self.time_limit_activated = 1 if self.time_limit > 0 else 0
         self.time_integration_start = timer()
         
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):

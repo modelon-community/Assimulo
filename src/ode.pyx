@@ -140,6 +140,7 @@ cdef class ODE:
         self.display_counter = 1
         self.chattering_clear_counter = 0
         self.chattering_ok_print = 1
+        self.time_limit_activated = 0 ## time limit off by default
         
         #Add common statistics
         self.statistics.add_key("nsteps", "Number of steps")
@@ -240,6 +241,9 @@ cdef class ODE:
         if self.problem_info["step_events"] and self.supports["report_continuously"] is False:
             self.log_message("The current solver does not support step events (report continuously). Disabling step events and continues.", WHISPER)
             self.problem_info["step_events"] = False
+        
+        if self.time_limit_activated and self.supports["report_continuously"] is False:
+            self.log_message("The current solver does not support time-limits. Limit is ignored and continues.", WHISPER)
         
         if self.supports["report_continuously"] is False and self.options["report_continuously"]:
             self.log_message("The current solver does not support to report continuously. Setting report_continuously to False and continues.", WHISPER)
@@ -365,6 +369,7 @@ cdef class ODE:
         if time_limit < 0:
             raise AssimuloException("The time limit must be positive or zero.")
         self.options["time_limit"] = time_limit
+        self.time_limit_activated = 1 if self.time_limit else 0
         
     def _get_time_limit(self):
         """

@@ -16,15 +16,16 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import nose
-import numpy.testing
 from assimulo import testattr
 from assimulo.lib.odepack import dsrcar, dcfode
-from assimulo.solvers import LSODAR, odepack
+from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import TimeLimitExceeded
 
 import numpy as N
 import scipy.sparse as sp
+
+float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Extended_Problem(Explicit_Problem):
     
@@ -202,11 +203,13 @@ class Test_LSODAR:
         self.sim.simulate(1.) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+    
     @testattr(stddist = True)
     def test_setcoefficients(self):
         elco,tesco=dcfode(1)
         nose.tools.assert_almost_equal(elco[0,2],5./12.,9) # AM-2
         nose.tools.assert_almost_equal(tesco[0,2],2.,9) # AM-2 error coeff  
+    
     @testattr(stddist = True)
     def test_readcommon(self):
         """
@@ -232,6 +235,7 @@ class Test_LSODAR:
         dsrcar(r,i,1)
         nose.tools.assert_almost_equal(r[0], 1., 4)
         nose.tools.assert_equal(i[0], 1)  
+    
     def test_rkstarter(self):
         """
         This test checks the correctness of the Nordsieck array generated 
@@ -274,7 +278,7 @@ class Test_LSODAR:
         #print y_sol[ind05],y_sol1[-1]
         nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
         
-        
+    @testattr(stddist = True)
     def test_simulation_with_jac(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
@@ -332,3 +336,22 @@ class Test_LSODAR:
         self.sim.simulate(1.,100) #Simulate 2 seconds
 
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = LSODAR(prob)
+        
+        sim.maxh = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)

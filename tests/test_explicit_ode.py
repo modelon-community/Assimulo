@@ -17,13 +17,10 @@
 
 import nose
 from assimulo import testattr
-from assimulo.explicit_ode import *
+from assimulo.explicit_ode import Explicit_ODE
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
 
 class Test_Explicit_ODE:
-    pass
-    
     @testattr(stddist = True)
     def test_elapsed_step_time(self):
         rhs = lambda t,y: y

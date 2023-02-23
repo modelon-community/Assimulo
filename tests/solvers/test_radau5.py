@@ -22,7 +22,7 @@ from assimulo.solvers.radau5 import Radau5ODE, _Radau5ODE
 from assimulo.solvers.radau5 import Radau5Error
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
-from assimulo.lib.radau_core import Radau_Exception, Radau_Common
+from assimulo.lib.radau_core import Radau_Exception
 from assimulo.exception import TimeLimitExceeded
 import scipy.sparse as sp
 import numpy as N

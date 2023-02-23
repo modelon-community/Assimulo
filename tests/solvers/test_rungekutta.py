@@ -17,9 +17,12 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.runge_kutta import *
+from assimulo.solvers.runge_kutta import Dopri5, RungeKutta34, RungeKutta4
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded
+import numpy as N
+
+float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_Dopri5:
     
@@ -42,7 +45,6 @@ class Test_Dopri5:
         
         nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
         nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
-    @testattr(stddist = True)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -100,6 +102,24 @@ class Test_Dopri5:
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
 
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = Dopri5(prob)
+        
+        sim.h = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)
 
 class Test_RungeKutta34:
     
@@ -213,6 +233,24 @@ class Test_RungeKutta34:
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
 
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = RungeKutta34(prob)
+        
+        sim.h = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)
 
 class Test_RungeKutta4:
     

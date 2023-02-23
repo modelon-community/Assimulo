@@ -17,14 +17,17 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.euler import *
+from assimulo.solvers.euler import ExplicitEuler, ImplicitEuler
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import AssimuloException, TimeLimitExceeded
+import numpy as N
 import scipy.sparse as sp
+
+float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     event_array = N.array([0.0,0.0,0.0])
@@ -242,6 +245,25 @@ class Test_Explicit_Euler:
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
+
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = ExplicitEuler(prob)
+        
+        sim.h = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)
     
 class Test_Implicit_Euler:
     
@@ -391,3 +413,22 @@ class Test_Implicit_Euler:
         nose.tools.assert_true(sim.sw[0])
         sim.simulate(3)
         nose.tools.assert_false(sim.sw[0])
+
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = ImplicitEuler(prob)
+        
+        sim.h = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)

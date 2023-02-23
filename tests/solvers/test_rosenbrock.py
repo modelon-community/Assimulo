@@ -17,10 +17,13 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.rosenbrock import *
+from assimulo.solvers.rosenbrock import RodasODE
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import TimeLimitExceeded
+import numpy as N
 import scipy.sparse as sp
+
+float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
     def setUp(self):
@@ -87,3 +90,22 @@ class Test_RodasODE:
         nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
         
         nose.tools.assert_almost_equal(sim.y_sol[-1][0], 1.7061680350, 4)
+
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = RodasODE(prob)
+        
+        sim.h = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)

@@ -17,11 +17,9 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.odassl import *
-from assimulo.problem import Explicit_Problem
+from assimulo.solvers.odassl import ODASSL
 from assimulo.problem import Implicit_Problem
 from assimulo.problem import Overdetermined_Problem
-from assimulo.exception import *
 import numpy as np
 
 class Test_ODASSL:
