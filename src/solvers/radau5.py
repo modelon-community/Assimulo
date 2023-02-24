@@ -371,6 +371,16 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.rad_memory.reinit()
         t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
                                                   jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
+        
+        #Retrieving statistics
+        nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
+        self.statistics["nsteps"]    += nsteps
+        self.statistics["nfcns"]     += nfcns
+        self.statistics["njacs"]     += njacs
+        self.statistics["nfcnjacs"]  += (njacs*self.problem_info["dim"] if not self.usejac else 0)
+        self.statistics["nerrfails"] += nerrfails
+        self.statistics["nlus"]      += nLU
+        
         #Checking return
         if flag == 0:
             flag = ID_PY_COMPLETE
@@ -382,16 +392,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if isinstance(self._py_err, BaseException): ## not None & valid Exception
                 raise self._py_err from None
             raise Radau5Error(value = flag, t = t, err_msg = msg) from None
-        
-        #Retrieving statistics
-        nfcns, njacs, _, nsteps, nerrfails, nLU, _ = self.rad_memory.get_stats()
-        self.statistics["nsteps"]      += nsteps
-        self.statistics["nfcns"]        += nfcns
-        self.statistics["njacs"]        += njacs
-        self.statistics["nfcnjacs"]    += (njacs*self.problem_info["dim"] if not self.usejac else 0)
-        #self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["nerrfails"]     += nerrfails
-        self.statistics["nlus"]         += nLU
         
         return flag, self._tlist, self._ylist
     

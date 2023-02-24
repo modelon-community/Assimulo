@@ -1120,6 +1120,34 @@ class Test_Explicit_Radau5:
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
         with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
             sim.simulate(1.)
+    
+    @testattr(stddist = True)
+    def test_statistics_stored(self):
+        """
+        Test that the statistics is stored even if there is a TimeLimit exception
+        """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = Radau5ODE(prob)
+        
+        sim.maxh = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+        try:
+            sim.simulate(1.0)
+        except:
+            pass
+            
+        found_data = False
+        for k in sim.statistics.keys():
+            if sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
+                found_data = True
+        
+        assert found_data, "No statistics was found to be stored"
 
 class Test_Implicit_Radau5:
     """
