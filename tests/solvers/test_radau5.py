@@ -22,8 +22,8 @@ from assimulo.solvers.radau5 import Radau5ODE, _Radau5ODE
 from assimulo.solvers.radau5 import Radau5Error
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
-from assimulo.exception import *
-from assimulo.lib.radau_core import Radau_Exception, Radau_Common
+from assimulo.lib.radau_core import Radau_Exception
+from assimulo.exception import TimeLimitExceeded
 import scipy.sparse as sp
 import numpy as N
 
@@ -32,35 +32,48 @@ float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class KeyboardInterruptAux:
     """Auxiliary class for creating problems (both explicit and implicit) 
-    that simulate a Keyboardinterrupt (Ctrl + c) in the rhs f or jacobian.
+    that simulate a Keyboardinterrupt (Ctrl + c) in the rhs f, jacobian or event indicator.
     
-    Set 'fcn' or 'jac' to True to enable KeyboardInterrupt Exceptions in f or jac."""
-    def __init__(self, dim, fcn = False, jac = False, fcn_n = 5):
+    Set 'fcn', 'jac' or 'event' to True to enable KeyboardInterrupt Exceptions for the respective functions."""
+    def __init__(self, dim, fcn = False, jac = False, event = False, fcn_n = 5, event_n = 5):
         self.dim = dim
         self.fcn_raise = fcn
         self.fcn_n = fcn_n
         self.jac_raise = jac
-        self.n = 0
+        self.event_raise = event
+        self.event_n = event_n
+        self.n_f = 0
+        self.n_e = 0
 
-    def f(self, t, y):
-        self.n += 1
-        if self.fcn_raise and (self.n % self.fcn_n == 0):
-            raise KeyboardInterrupt()
-        else:
-            return -y
+    def f(self, t, y, sw = None):
+        if self.fcn_raise:
+            self.n_f += 1
+            if self.n_f % self.fcn_n == 0:
+                raise KeyboardInterrupt('f')
+        return -y
 
     def f_impl(self, t, y, yd):
-        self.n += 1
-        if self.fcn_raise and (self.n % self.fcn_n == 0):
-            raise KeyboardInterrupt()
-        else:
-            return -y
+        if self.fcn_raise:
+            self.n_f += 1
+            if self.n_f % self.fcn_n == 0:
+                raise KeyboardInterrupt('f_impl')
+        return -y
         
     def jac(self, t, y):
         if self.jac_raise:
-            raise KeyboardInterrupt()
+            raise KeyboardInterrupt('jac')
         else:
             return -N.eye(self.dim)
+
+    def state_events(self,t,y,sw):
+        if self.event_raise:
+            self.n_e += 1
+            if self.n_e % self.event_n == 0:
+                raise KeyboardInterrupt('event')
+        return N.ones(len(sw))
+
+    def handle_event(self, solver, event_info):
+        pass
 
 class Extended_Problem(Explicit_Problem):
     
@@ -1030,10 +1043,11 @@ class Test_Explicit_Radau5:
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Explicit_Problem(aux.f, y0)
         sim = Radau5ODE(prob)
-
-        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+        try:
             sim.simulate(1.)
+            raise Exception("Simulation passed without interrupt.")
+        except KeyboardInterrupt as e:
+            nose.tools.assert_equal(str(e), "f")
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_jac(self):
@@ -1046,9 +1060,11 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(prob)
         sim.usejac = True
 
-        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+        try:
             sim.simulate(1.)
+            raise Exception("Simulation passed without interrupt.")
+        except KeyboardInterrupt as e:
+            nose.tools.assert_equal(str(e), "jac")
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_jac_sparse(self):
@@ -1063,10 +1079,47 @@ class Test_Explicit_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        err_msg = f'Radau5 failed with flag -10. At time {float_regex}. Message: Unrecoverable exception encountered during problem callback.'
-        with nose.tools.assert_raises_regex(Radau5Error, err_msg):
+        try:
             sim.simulate(1.)
+            raise Exception("Simulation passed without interrupt.")
+        except KeyboardInterrupt as e:
+            nose.tools.assert_equal(str(e), "jac")
 
+    @testattr(stddist = True)
+    def test_keyboard_interrupt_event_indicator(self):
+        """Test that KeyboardInterrupts in event indicator function resp. solout callback correctly terminate solution."""
+
+        y0 = N.array([1.])
+        aux = KeyboardInterruptAux(dim = len(y0), event = True, event_n = 3)
+        prob = Explicit_Problem(aux.f, y0, sw0 = N.array([1.]))
+        prob.state_events = aux.state_events
+        prob.handle_event = aux.handle_event
+        sim = Radau5ODE(prob)
+
+        try:
+            sim.simulate(1.)
+            raise Exception("Simulation passed without interrupt.")
+        except KeyboardInterrupt as e:
+            nose.tools.assert_equal(str(e), "event")
+
+    @testattr(stddist = True)
+    def test_time_limit(self):
+        """ Test that simulation is canceled when a set time limited is exceeded. """
+        import time
+        def f(t, y):
+            time.sleep(.1)
+            return -y
+        
+        prob = Explicit_Problem(f,1.0)
+        sim = Radau5ODE(prob)
+        
+        sim.maxh = 1e-5
+        sim.time_limit = 1
+        sim.report_continuously = True
+
+        err_msg = f'The time limit was exceeded at integration time {float_regex}.'
+        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+            sim.simulate(1.)
 
 class Test_Implicit_Radau5:
     """

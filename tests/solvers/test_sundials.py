@@ -17,10 +17,10 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.sundials import *
+from assimulo.solvers.sundials import CVode, IDA, CVodeError
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
-from assimulo.exception import *
+from assimulo.exception import AssimuloException, TimeLimitExceeded, TerminateSimulation
 import numpy as np
 import scipy.sparse as sp
 
@@ -29,8 +29,8 @@ class Extended_Problem(Explicit_Problem):
     #Sets the initial conditons directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
-    event_array = N.array([0.0,0.0,0.0])
-    rhs_array   = N.array([0.0,0.0,0.0])
+    event_array = np.array([0.0,0.0,0.0])
+    rhs_array   = np.array([0.0,0.0,0.0])
     
     #The right-hand-side function (rhs)
     def rhs(self,t,y,sw):
@@ -120,7 +120,7 @@ class Test_CVode:
         """
         This function sets up the test case.
         """
-        f = lambda t,y:N.array(y)
+        f = lambda t,y:np.array(y)
         y0 = [1.0]
         
         self.problem = Explicit_Problem(f,y0)
@@ -186,7 +186,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         step = self.simulator.get_used_initial_step()
-        nose.tools.assert_less(N.abs(step-1e-8), 1e-2)
+        nose.tools.assert_less(np.abs(step-1e-8), 1e-2)
         
     
     @testattr(stddist = True)
@@ -378,7 +378,7 @@ class Test_CVode:
         """
         This tests that the change from Functional to Newton works
         """
-        f = lambda t,y: N.array([1.0])
+        f = lambda t,y: np.array([1.0])
         y0 = 4.0 #Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
@@ -401,7 +401,7 @@ class Test_CVode:
         nose.tools.assert_equal(self.simulator.options["norm"], "EUCLIDEAN")
         nose.tools.assert_equal(self.simulator.norm, 'EUCLIDEAN')
         
-        f = lambda t,y: N.array([1.0])
+        f = lambda t,y: np.array([1.0])
         y0 = 4.0 #Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
@@ -421,8 +421,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: N.array([[0.,1.],[0.,0.]]) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: np.array([[0.,1.],[0.,0.]]) #Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -447,8 +447,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: sp.csc_matrix(N.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: sp.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -473,8 +473,8 @@ class Test_CVode:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -527,7 +527,7 @@ class Test_CVode:
         """
         This tests the functionality of the method interpolate.
         """
-        f = lambda t,x: N.array(x**0.25)
+        f = lambda t,x: np.array(x**0.25)
         
         prob = Explicit_Problem(f,[1.0])
 
@@ -541,13 +541,13 @@ class Test_CVode:
     
     @testattr(stddist = True)
     def test_ncp_list(self):
-        f = lambda t,y:N.array(-y)
+        f = lambda t,y:np.array(-y)
         y0 = [4.0]
         
         prob = Explicit_Problem(f,y0)
         sim = CVode(prob)
         
-        t, y = sim.simulate(7, ncp_list=N.arange(0, 7, 0.1)) #Simulate 5 seconds
+        t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) #Simulate 5 seconds
         
         nose.tools.assert_almost_equal(float(y[-1]), 0.00364832, 4)
         
@@ -598,14 +598,14 @@ class Test_CVode:
     
     @testattr(stddist = True)
     def test_spgmr(self):
-        f = lambda t,y: N.array([y[1], -9.82])
-        fsw = lambda t,y,sw: N.array([y[1], -9.82])
-        fp = lambda t,y,p: N.array([y[1], -9.82])
-        fswp = lambda t,y,sw,p: N.array([y[1], -9.82])
-        jacv = lambda t,y,fy,v: N.dot(N.array([[0,1.],[0,0]]),v)
-        jacvsw = lambda t,y,fy,v,sw: N.dot(N.array([[0,1.],[0,0]]),v)
-        jacvp = lambda t,y,fy,v,p: N.dot(N.array([[0,1.],[0,0]]),v)
-        jacvswp = lambda t,y,fy,v,sw,p: N.dot(N.array([[0,1.],[0,0]]),v)
+        f = lambda t,y: np.array([y[1], -9.82])
+        fsw = lambda t,y,sw: np.array([y[1], -9.82])
+        fp = lambda t,y,p: np.array([y[1], -9.82])
+        fswp = lambda t,y,sw,p: np.array([y[1], -9.82])
+        jacv = lambda t,y,fy,v: np.dot(np.array([[0,1.],[0,0]]),v)
+        jacvsw = lambda t,y,fy,v,sw: np.dot(np.array([[0,1.],[0,0]]),v)
+        jacvp = lambda t,y,fy,v,p: np.dot(np.array([[0,1.],[0,0]]),v)
+        jacvswp = lambda t,y,fy,v,sw,p: np.dot(np.array([[0,1.],[0,0]]),v)
         y0 = [1.0,0.0] #Initial conditions
         
         def run_sim(exp_mod):
@@ -733,10 +733,10 @@ class Test_CVode:
             def handle_event(self, solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
-            rhs = lambda self,t,y,sw: N.array([1.0])
+            rhs = lambda self,t,y,sw: np.array([1.0])
             y0 = [1.0]
             sw0 = [False,True]
-            state_events = lambda self,t,y,sw:  N.array([t-1.0, t-2.0])
+            state_events = lambda self,t,y,sw:  np.array([t-1.0, t-2.0])
 
         exp_mod = Extended_Problem()
         simulator = CVode(exp_mod)
@@ -801,7 +801,7 @@ class Test_IDA:
         """
         Test a simulation of an explicit problem using IDA.
         """
-        f = lambda t,y:N.array(-y)
+        f = lambda t,y:np.array(-y)
         y0 = [1.0]
         
         problem = Explicit_Problem(f,y0)
@@ -811,7 +811,7 @@ class Test_IDA:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(np.exp(-1.0)),4)
     
     @testattr(stddist = True)    
     def test_init(self):
@@ -910,7 +910,7 @@ class Test_IDA:
         def f(t,y,yd):
             res_0 = yd[0] - y[1]
             res_1 = yd[1] +9.82-0.01*y[1]**2
-            return N.array([res_0,res_1])
+            return np.array([res_0,res_1])
             
         mod = Implicit_Problem(f,y0=[5.0,0.0], yd0=[0.0,9.82])
         
@@ -943,8 +943,8 @@ class Test_IDA:
         def handle_event(solver, event_info):
             
             if event_info[1]:
-                solver.y  = N.array([1.0])
-                solver.yd = N.array([1.0])
+                solver.y  = np.array([1.0])
+                solver.yd = np.array([1.0])
                 
                 if not solver.sw[0]:
                     solver.sw[1] = False
@@ -986,8 +986,8 @@ class Test_IDA:
         def handle_event(solver, event_info):
             
             if event_info[1]:
-                solver.y  = N.array([1.0])
-                solver.yd = N.array([1.0])
+                solver.y  = np.array([1.0])
+                solver.yd = np.array([1.0])
                 
                 if not solver.sw[0]:
                     solver.sw[1] = False
@@ -1015,8 +1015,8 @@ class Test_IDA:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x,xd: N.array([xd[0]-x[1], xd[1]-9.82])       #Defines the rhs
-        jac = lambda c,t,x,xd: N.array([[c,-1.],[0.,c]]) #Defines the jacobian
+        f = lambda t,x,xd: np.array([xd[0]-x[1], xd[1]-9.82])       #Defines the rhs
+        jac = lambda c,t,x,xd: np.array([[c,-1.],[0.,c]]) #Defines the jacobian
 
         imp_mod = Implicit_Problem(f,[1.0,0.0],[0.,-9.82])
         imp_mod.jac = jac
@@ -1046,8 +1046,8 @@ class Test_IDA:
             def handle_event(self,solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
-            res = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
-            state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t-2.0])
+            res = lambda self,t,y,yd,sw: np.array([y[0]-1.0])
+            state_events = lambda self,t,y,yd,sw: np.array([t-1.0, t-2.0])
             y0 = [1.0]
             yd0 = [1.0]
             sw0 = [False]
@@ -1139,7 +1139,7 @@ class Test_IDA:
         def f(t,y,yd):
             res_1 = y[0] + y[1]+1.0
             res_2 = y[1]
-            return N.array([res_1, res_2])
+            return np.array([res_1, res_2])
         y0 = [2.0, 2.0]
         yd0 = [1.0 , 0.0]
         
@@ -1160,8 +1160,8 @@ class Test_IDA:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,xd,sw: N.array([xd[0]- 1.0])
-        state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
+        f = lambda t,x,xd,sw: np.array([xd[0]- 1.0])
+        state_events = lambda t,x,xd,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -1186,7 +1186,7 @@ class Test_IDA:
         def f(t,y,yd):
             res_1 = y[0] + y[1]+1.0
             res_2 = y[1]
-            return N.array([res_1, res_2])
+            return np.array([res_1, res_2])
         def completed_step(solver):
             global nsteps
             nsteps += 1
@@ -1220,8 +1220,8 @@ class Test_Sundials:
         class Prob_IDA(Implicit_Problem):
             def __init__(self):
                 pass
-            res = lambda self,t,y,yd,sw: N.array([y[0]-1.0])
-            state_events = lambda self,t,y,yd,sw: N.array([t-1.0, t])
+            res = lambda self,t,y,yd,sw: np.array([y[0]-1.0])
+            state_events = lambda self,t,y,yd,sw: np.array([t-1.0, t])
             y0 = [1.0]
             yd0 = [1.0]
             sw0 = [False, True]
@@ -1231,8 +1231,8 @@ class Test_Sundials:
         class Prob_CVode(Explicit_Problem):
             def __init__(self):
                 pass
-            rhs = lambda self,t,y,sw: N.array([1.0])
-            state_events = lambda self,t,y,sw: N.array([t-1.0, t])
+            rhs = lambda self,t,y,sw: np.array([1.0])
+            state_events = lambda self,t,y,sw: np.array([t-1.0, t])
             y0 = [1.0]
             sw0 = [False, True]
 
@@ -1241,7 +1241,7 @@ class Test_Sundials:
         self.simulators = [IDA(res), CVode(f)]
         
         
-        f = lambda t,y,yd,p: N.array([0.0])
+        f = lambda t,y,yd,p: np.array([0.0])
         y0 = [1.0]
         yd0 = [1.0]
         p0 = [1.0]
@@ -1270,7 +1270,7 @@ class Test_Sundials:
             nose.tools.assert_equal(self.simulators[i].atol, 1.0)
             self.simulators[i].atol = 1001.0
             nose.tools.assert_equal(self.simulators[i].atol, 1001.0)
-            self.simulators[i].atol = [N.array([1e-5])]
+            self.simulators[i].atol = [np.array([1e-5])]
             nose.tools.assert_equal(len(self.simulators[i].atol.shape), 1)
             nose.tools.assert_equal(self.simulators[i].atol, 1e-5)
             """
@@ -1279,9 +1279,9 @@ class Test_Sundials:
             nose.tools.assert_raises(Exception, self.simulators[i]._set_atol, [1.0, 1.0, -1.0])
             self.simulators[i].atol = [1.0, 1.0, 1.0]
             nose.tools.assert_equal(self.simulators[i].atol, [1.0, 1.0, 1.0])
-            self.simulators[i].atol = N.array([1.0, 1.0, 1.0])
+            self.simulators[i].atol = np.array([1.0, 1.0, 1.0])
             nose.tools.assert_equal(self.simulators[i].atol[0], 1.0)
-            self.simulators[i].atol = N.array([1, 5, 1.0])
+            self.simulators[i].atol = np.array([1, 5, 1.0])
             nose.tools.assert_equal(self.simulators[i].atol[0], 1.0)
             """
     
@@ -1430,7 +1430,7 @@ class Test_Sundials:
         """
         Tests the property of pbar.
         """
-        f = lambda t,y,p:N.array([0.0]*len(y))
+        f = lambda t,y,p:np.array([0.0]*len(y))
         y0 = [1.0]*2
         p0 = [1000.0, -100.0]
         exp_mod = Explicit_Problem(f,y0,p0=p0)
@@ -1440,7 +1440,7 @@ class Test_Sundials:
         nose.tools.assert_almost_equal(exp_sim.pbar[0], 1000.00000,4)
         nose.tools.assert_almost_equal(exp_sim.pbar[1], 100.000000,4)
         
-        f = lambda t,y,yd,p: N.array([0.0]*len(y))
+        f = lambda t,y,yd,p: np.array([0.0]*len(y))
         yd0 = [0.0]*2
         imp_mod = Implicit_Problem(f,y0,yd0,p0=p0)
         

@@ -313,13 +313,20 @@ class RodasODE(Rodas_Common, Explicit_ODE):
     def set_problem_data(self):
         if self.problem_info["state_events"]:
             def event_func(t, y):
-                return self.problem.state_events(t, y, self.sw)
+                try:
+                    res = self.problem.state_events(t, y, self.sw)
+                except BaseException as E:
+                    self._py_err = E
+                    return -1, None # non-recoverable
+                return 0, res ## OK
             def f(t, y):
                 return self.problem.rhs(t, y, self.sw)
             self.f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
-            self.g_old = self.event_func(self.t, self.y)
+            ret, self.g_old = self.event_func(self.t, self.y)
+            if ret < 0:
+                raise self._py_err
             self.statistics["nstatefcns"] += 1
         else:
             self.f = self.problem.rhs

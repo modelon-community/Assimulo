@@ -39,6 +39,7 @@ cdef class ODE:
     cdef int time_limit_activated, display_progress_activated
     cdef double clock_start
     cdef public object _event_info
+    cdef object _py_err
     
     #cdef public list t,y,yd,p,sw_cur
     cdef public list t_sol, y_sol, yd_sol, p_sol, sw

@@ -185,7 +185,6 @@ cdef class Implicit_ODE(ODE):
         opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
         output_index = 0
         
-        self.time_limit_activated = 1 if self.time_limit > 0 else 0
         self.time_integration_start = timer()
 
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):

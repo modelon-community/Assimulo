@@ -52,9 +52,11 @@ cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out,
     """Event indicator callback function to event_locator.c"""
     cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
     c2py_d(y_py, y_in, n_y)
-    g_high = (<object>f_event_EXT)(t, y_py)
+    ret, g_high = (<object>f_event_EXT)(t, y_py)
+    if ret < 0: ## immediate return, no not try to copy g_high
+        return ret
     py2c_d(g_out, g_high, n_g)
-    return 0
+    return ret
 
 cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
     """Interpolation callback function to event_locator.c"""
@@ -201,7 +203,6 @@ cdef class Explicit_ODE(ODE):
         output_index = 0
         
         self.display_progress_activated = 1 if self.display_progress else 0
-        self.time_limit_activated = 1 if self.time_limit > 0 else 0
         self.time_integration_start = timer()
         
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
