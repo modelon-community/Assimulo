@@ -1139,6 +1139,7 @@ class Test_Explicit_Radau5:
         sim.report_continuously = True
         try:
             sim.simulate(1.0)
+            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
         except:
             pass
             

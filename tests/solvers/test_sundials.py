@@ -371,6 +371,7 @@ class Test_CVode:
         
         try:
             exp_sim.simulate(1.0)
+            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
         except:
             pass
             
