@@ -2078,6 +2078,7 @@ cdef class CVode(Explicit_ODE):
                     
                 flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
                 if flag < 0:
+                    self.store_statistics(CV_TSTOP_RETURN)
                     N_VDestroy(yout)
                     raise CVodeError(flag, tret)
                 
@@ -2092,7 +2093,11 @@ cdef class CVode(Explicit_ODE):
                     if event_flag == ID_PY_EVENT: flag = CV_ROOT_RETURN
                 
                 if opts["report_continuously"]:
-                    flag_initialize = self.report_solution(t, y, opts)
+                    try:
+                        flag_initialize = self.report_solution(t, y, opts)
+                    except:
+                        self.store_statistics(CV_TSTOP_RETURN)
+                        raise
                     if flag_initialize:
                         #If a step event has occured the integration has to be reinitialized
                         flag = CV_STEP_RETURN
@@ -2116,6 +2121,7 @@ cdef class CVode(Explicit_ODE):
             for tout in output_list:
                 flag = SUNDIALS.CVode(self.cvode_mem,tout,yout,&tret,CV_NORMAL)
                 if flag < 0:
+                    self.store_statistics(CV_TSTOP_RETURN)
                     N_VDestroy(yout)
                     raise CVodeError(flag, tret)
                 

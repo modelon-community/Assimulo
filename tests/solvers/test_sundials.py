@@ -355,6 +355,33 @@ class Test_CVode:
         
         nose.tools.assert_raises(TimeLimitExceeded, exp_sim.simulate, 1)
     
+    @testattr(stddist = True)
+    def test_statistics_stored(self):
+        """
+        Test that the statistics is stored even if there is a TimeLimit exception
+        """
+        f = lambda t,y: -y
+        
+        exp_mod = Explicit_Problem(f,1.0)
+        exp_sim = CVode(exp_mod)
+        
+        exp_sim.maxh = 1e-8
+        exp_sim.time_limit = 1 #One second
+        exp_sim.report_continuously = True
+        
+        try:
+            exp_sim.simulate(1.0)
+            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
+        except:
+            pass
+            
+        found_data = False
+        for k in exp_sim.statistics.keys():
+            if exp_sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
+                found_data = True
+        
+        assert found_data, "No statistics was found to be stored"
+    
     @testattr(stddist = True)    
     def test_discr_method(self):
         """

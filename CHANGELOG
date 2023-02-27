@@ -12,6 +12,7 @@
     * Radau5(ODE) errors due to Exceptions in callbacks will now raise these Exceptions, rather than Radau5Error.
     * KeyboardInterrupt in Radau5ODE solout callback (e.g., event_indicator) will properly terminate simulation.
     * Added warning if a solver does not support setting time limits.
+    * Added so that solver statistics is stored in case of early abort for CVode and Radau5.
 
 --- Assimulo-3.3.1 ---
     * Minor refactoring of Radau5 C implementation:

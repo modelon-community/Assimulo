@@ -202,7 +202,7 @@ cdef class RadauMemory:
 
     cpdef list get_stats(self):
         """ Return runtime stats logged in Radau5."""
-        cdef int nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves
+        cdef int nfcn = 0, njac = 0, nsteps = 0, naccpt = 0, nreject = 0, ludecomps = 0, lusolves = 0
         radau5ode.radau_get_stats(self.rmem, &nfcn, &njac, &nsteps, &naccpt, &nreject, &ludecomps, &lusolves)
         return [nfcn, njac, nsteps, naccpt, nreject, ludecomps, lusolves]
 
