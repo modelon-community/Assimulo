@@ -3,6 +3,23 @@
 Changelog
 ==========
 
+--- Assimulo-3.4.0 ---
+    * Removed Radau5ODE Fortran implementation. 
+      This change should be seamless since the C implementation is numerically equivalent.
+    * Radau5 C with SuperLU now requires compilation with '-D__RADAU5_WITH_SUPERLU'
+    * Refactored Radau5 C implementation; moved to thirdparty/radau5/.
+    * Replaced event localization for explicit problems with an equivalent C implementation.
+    * Added missing counts on event indicator evaluations when setting problem data in solvers.
+    * Fixed Radau5 bug where simulation would not stop when time limit has been exceeded.
+    * Radau5(ODE) errors due to Exceptions in callbacks will now raise these Exceptions, rather than Radau5Error.
+    * KeyboardInterrupt in Radau5ODE solout callback (e.g., event_indicator) will properly terminate simulation.
+    * Added warning if a solver does not support setting time limits.
+    * Added so that solver statistics is stored in case of early abort for CVode and Radau5.
+    * Minor refactoring of Radau5 C implementation:
+      Now uses actual return value to return error codes. idid is return of solout callback.
+    * Separate fortran from C flags in setup.py
+    * Changed "numpy.bool" to equivalent "bool" due to DeprecationWarnings for numpy >= 1.20.
+
 --- Assimulo-3.3 ---
     * Sundials 6.x port
     * Radau5ODE and Radau5DAE now correctly terminate from unrecoverable errors in right-hand side and Jacobian calls.
