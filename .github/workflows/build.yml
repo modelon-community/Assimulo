@@ -8,37 +8,35 @@ permissions:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    env:
-      CC: gcc-9
-      F77: gfortran-9
-      F90: gfortran-9
+    strategy:
+      matrix:
+        sundials_version: [2.7.0, 3.2.0]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install system
       run: |
-        sudo apt-get -y install python3-scipy python3-lxml python3-setuptools python3-nose cython3
-        sudo apt-get -y install csh cmake liblapack-dev libsuitesparse-dev libhypre-dev
+        sudo apt-get -y install python3-scipy python3-setuptools python3-nose cython3
+        sudo apt-get -y install cmake liblapack-dev libsuitesparse-dev libhypre-dev
         sudo cp -v /usr/lib/x86_64-linux-gnu/libblas.so /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
     - name: Install superlu
       run: |
         cd /tmp
         curl -fSsL https://portal.nersc.gov/project/sparse/superlu/superlu_mt_3.1.tar.gz | tar xz
         cd SuperLU_MT_3.1
-        make CFLAGS="-O2 -fPIC -fopenmp" BLASLIB="-lblas" PLAT="_OPENMP" MPLIB="-fopenmp" -j1
+        make CFLAGS="-O2 -fPIC -fopenmp" BLASLIB="-lblas" PLAT="_OPENMP" MPLIB="-fopenmp" lib -j1
         sudo cp -v ./lib/libsuperlu_mt_OPENMP.a /usr/lib
         sudo cp -v ./SRC/*.h /usr/include
     - name: Install sundials
       run: |
-        git clone --depth 1 -b v2.7.0 https://github.com/LLNL/sundials /tmp/sundials
+        git clone --depth 1 -b v${{ matrix.sundials_version }} https://github.com/LLNL/sundials /tmp/sundials
         cd /tmp/sundials
-        echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" >> src/idas/CMakeLists.txt
-        echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" >> src/kinsol/CMakeLists.txt
+        if test "${{ matrix.sundials_version }}" = "2.7.0"; then echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" >> src/idas/CMakeLists.txt; echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" >> src/kinsol/CMakeLists.txt; fi
         mkdir build && cd build
-        cmake -LAH -DSUPERLUMT_BLAS_LIBRARIES=blas -DSUPERLUMT_INCLUDE_DIR=/usr/include -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a -DSUPERLUMT_THREAD_TYPE=OpenMP -DCMAKE_INSTALL_PREFIX=/usr -DSUPERLUMT_ENABLE=ON -DLAPACK_ENABLE=ON -DEXAMPLES_ENABLE=OFF ..
+        cmake -LAH -DSUPERLUMT_BLAS_LIBRARIES=blas -DSUPERLUMT_INCLUDE_DIR=/usr/include -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a -DSUPERLUMT_THREAD_TYPE=OpenMP -DCMAKE_INSTALL_PREFIX=/usr -DSUPERLUMT_ENABLE=ON -DLAPACK_ENABLE=ON -DEXAMPLES_ENABLE=OFF -DEXAMPLES_ENABLE_C=OFF ..
         make -j4
         sudo make install
     - name: Build
-      run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr
+      run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr --extra-fortran-compile-flags="-fallow-argument-mismatch"
     - name: Test
       run: nosetests3 tests
 
