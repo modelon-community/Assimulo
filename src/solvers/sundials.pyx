@@ -1898,10 +1898,16 @@ cdef class CVode(Explicit_ODE):
                 raise CVodeError(flag, self.t)
             
     def initialize_event_detection(self):
-        def event_func(t, y):
-            return self.problem.state_events(t, y, self.sw)
-        self.event_func = event_func
-        self.g_old = self.event_func(self.t, self.y)
+        if self.options["external_event_detection"]:
+            def event_func(t, y):
+                return 0, self.problem.state_events(t, y, self.sw)
+            self.event_func = event_func
+            _, self.g_old = self.event_func(self.t, self.y)
+        else:
+            def event_func(t, y):
+                return self.problem.state_events(t, y, self.sw)
+            self.event_func = event_func
+            self.g_old = self.event_func(self.t, self.y)
         self.statistics["nstatefcns"] += 1
         self._event_info = N.array([0] * self.problem_info["dimRoot"])
         

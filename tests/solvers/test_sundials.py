@@ -26,7 +26,7 @@ import scipy.sparse as sp
 
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     event_array = np.array([0.0,0.0,0.0])
@@ -155,6 +155,24 @@ class Test_CVode:
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
+        
+        #Simulate
+        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        
+        #Basic test
+        nose.tools.assert_almost_equal(y[-1][0],8.0)
+        nose.tools.assert_almost_equal(y[-1][1],3.0)
+        nose.tools.assert_almost_equal(y[-1][2],2.0)
+    
+    @testattr(stddist = True)
+    def test_event_localizer_external(self):
+        exp_mod = Extended_Problem() #Create the problem
+
+        exp_sim = CVode(exp_mod) #Create the solver
+        
+        exp_sim.verbosity = 0
+        exp_sim.report_continuously = True
+        exp_sim.external_event_detection = True
         
         #Simulate
         t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
@@ -1082,6 +1100,31 @@ class Test_IDA:
         prob = Extended_Problem()
     
         sim = IDA(prob)
+        sim.simulate(2.5)
+        
+        nose.tools.assert_almost_equal(sim.t, 2.000000, 4)
+
+    @testattr(stddist = True)
+    def test_terminate_simulation_external_event(self):
+        """
+        This tests the functionality of raising TerminateSimulation exception in handle_result. External event detection.
+        """
+        class Extended_Problem(Implicit_Problem):
+            def __init__(self):
+                pass
+            def handle_event(self,solver, event_info):
+                if solver.t > 1.5:
+                    raise TerminateSimulation
+            res = lambda self,t,y,yd,sw: np.array([y[0]-1.0])
+            state_events = lambda self,t,y,yd,sw: np.array([t-1.0, t-2.0])
+            y0 = [1.0]
+            yd0 = [1.0]
+            sw0 = [False]
+
+        prob = Extended_Problem()
+    
+        sim = IDA(prob)
+        sim.external_event_detection = True
         sim.simulate(2.5)
         
         nose.tools.assert_almost_equal(sim.t, 2.000000, 4)
