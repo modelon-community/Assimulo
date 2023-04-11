@@ -1,5 +1,8 @@
 --- CHANGELOG ---
 
+--- Assimulo-3.4.1 ---
+    * Restored functionality of CVode with 'external_event_detection' = True, which broke with 3.4.0.
+
 --- Assimulo-3.4.0 ---
     * Removed Radau5ODE Fortran implementation. 
       This change should be seamless since the C implementation is numerically equivalent.
