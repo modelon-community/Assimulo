@@ -1115,7 +1115,7 @@ class Test_IDA:
             def handle_event(self,solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
-            res = lambda self,t,y,yd,sw: np.array([y[0]-1.0])
+            res = lambda self, t, y, yd, sw: np.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: np.array([t-1.0, t-2.0])
             y0 = [1.0]
             yd0 = [1.0]
