@@ -149,38 +149,41 @@ class Test_CVode:
 
     @testattr(stddist = True)
     def test_event_localizer(self):
+        """ Test that CVode internal event localization works correctly."""
         exp_mod = Extended_Problem() #Create the problem
 
         exp_sim = CVode(exp_mod) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
+        exp_sim.external_event_detection = False # default; CVode internal event detection
         
         #Simulate
-        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        nose.tools.assert_almost_equal(y[-1][0],8.0)
-        nose.tools.assert_almost_equal(y[-1][1],3.0)
-        nose.tools.assert_almost_equal(y[-1][2],2.0)
+        nose.tools.assert_almost_equal(y[-1][0], 8.0)
+        nose.tools.assert_almost_equal(y[-1][1], 3.0)
+        nose.tools.assert_almost_equal(y[-1][2], 2.0)
     
     @testattr(stddist = True)
     def test_event_localizer_external(self):
+        """ Test that CVode with Assimulo event localization works correctly."""
         exp_mod = Extended_Problem() #Create the problem
 
         exp_sim = CVode(exp_mod) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
-        exp_sim.external_event_detection = True
+        exp_sim.external_event_detection = True # Assimulo event detection
         
         #Simulate
-        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        nose.tools.assert_almost_equal(y[-1][0],8.0)
-        nose.tools.assert_almost_equal(y[-1][1],3.0)
-        nose.tools.assert_almost_equal(y[-1][2],2.0)
+        nose.tools.assert_almost_equal(y[-1][0], 8.0)
+        nose.tools.assert_almost_equal(y[-1][1], 3.0)
+        nose.tools.assert_almost_equal(y[-1][2], 2.0)
     
     @testattr(stddist = True)
     def test_get_error_weights(self):
@@ -773,8 +776,6 @@ class Test_CVode:
         This tests the functionality of raising TerminateSimulation exception in handle_result.
         """
         class Extended_Problem(Explicit_Problem):
-            def __init__(self):
-                pass
             def handle_event(self, solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
@@ -1086,8 +1087,6 @@ class Test_IDA:
         This tests the functionality of raising TerminateSimulation exception in handle_result.
         """
         class Extended_Problem(Implicit_Problem):
-            def __init__(self):
-                pass
             def handle_event(self,solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
@@ -1110,8 +1109,6 @@ class Test_IDA:
         This tests the functionality of raising TerminateSimulation exception in handle_result. External event detection.
         """
         class Extended_Problem(Implicit_Problem):
-            def __init__(self):
-                pass
             def handle_event(self,solver, event_info):
                 if solver.t > 1.5:
                     raise TerminateSimulation
@@ -1288,8 +1285,6 @@ class Test_Sundials:
         This sets up the test case.
         """
         class Prob_IDA(Implicit_Problem):
-            def __init__(self):
-                pass
             res = lambda self,t,y,yd,sw: np.array([y[0]-1.0])
             state_events = lambda self,t,y,yd,sw: np.array([t-1.0, t])
             y0 = [1.0]
@@ -1299,8 +1294,6 @@ class Test_Sundials:
         res = Prob_IDA()
         
         class Prob_CVode(Explicit_Problem):
-            def __init__(self):
-                pass
             rhs = lambda self,t,y,sw: np.array([1.0])
             state_events = lambda self,t,y,sw: np.array([t-1.0, t])
             y0 = [1.0]

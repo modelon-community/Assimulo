@@ -1899,11 +1899,14 @@ cdef class CVode(Explicit_ODE):
             
     def initialize_event_detection(self):
         if self.options["external_event_detection"]:
+            # Event detection in explicit_ode.pyx
             def event_func(t, y):
+                # first argument is an additional error flag, currently unused here, thus 0
                 return 0, self.problem.state_events(t, y, self.sw)
             self.event_func = event_func
             _, self.g_old = self.event_func(self.t, self.y)
         else:
+            # CVode inbuilt event detection
             def event_func(t, y):
                 return self.problem.state_events(t, y, self.sw)
             self.event_func = event_func
