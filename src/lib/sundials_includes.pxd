@@ -323,6 +323,8 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSetInitStep(void  *cvode_mem, realtype hin)
     int CVodeSStolerances(void *cvode_mem, realtype reltol, realtype abstol)
     int CVodeSVtolerances(void *cvode_mem, realtype reltol, N_Vector abstol)
+    IF SUNDIALS_CVODE_RTOL_VEC:
+        int CVodeVVtolerances(void *cvode_mem, N_Vector reltol, N_Vector abstol)
     int CVodeSetStopTime(void  *cvode_mem, realtype tstop)
     int CVodeSetUserData(void  *cvode_mem,void *user_data)
     int CVodeSetMaxConvFails(void *cvode_mem, int maxncf)

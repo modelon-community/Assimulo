@@ -988,18 +988,6 @@ cdef class IDA(Implicit_ODE):
     suppress_sens=property(_get_suppress_sens,_set_suppress_sens)
     
     def _set_atol(self,atol):
-        
-        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
-        self.options["atol"] = set_type_shape_array(atol)
-    
-        if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
-        elif len(self.options["atol"]) != self.pData.dim:
-            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<=0.0).any():
-            raise AssimuloException("The absolute tolerance must be positive.")
-    
-    def _get_atol(self):
         """
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
@@ -1017,22 +1005,23 @@ cdef class IDA(Implicit_ODE):
         
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
+        
+        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = set_type_shape_array(atol)
+    
+        if len(self.options["atol"]) == 1:
+            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+        elif len(self.options["atol"]) != self.pData.dim:
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<=0.0).any():
+            raise AssimuloException("The absolute tolerance must be positive.")
+    
+    def _get_atol(self):
         return self.options["atol"]
     
     atol=property(_get_atol,_set_atol)
     
     def _set_rtol(self,rtol):
-        
-        try:
-            rtol = float(rtol)
-        except (ValueError, TypeError):
-            raise AssimuloException('Relative tolerance must be a (scalar) float.')
-        if rtol <= 0.0:
-            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
-        
-        self.options["rtol"] = rtol
-    
-    def _get_rtol(self):
         """
         Defines the relative tolerance that is to be used by the solver.
         
@@ -1047,6 +1036,16 @@ cdef class IDA(Implicit_ODE):
                                 rtol = 1.0e-4
                                 
         """
+        try:
+            rtol = float(rtol)
+        except (ValueError, TypeError):
+            raise AssimuloException('Relative tolerance must be a (scalar) float.')
+        if rtol <= 0.0:
+            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
+        
+        self.options["rtol"] = rtol
+    
+    def _get_rtol(self):
         return self.options["rtol"]
         
     rtol=property(_get_rtol,_set_rtol)
@@ -1516,7 +1515,7 @@ cdef class CVode(Explicit_ODE):
     """
     cdef void* cvode_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp, nv_atol
+    cdef N_Vector yTemp, ydTemp, nv_atol, nv_rtol
     cdef N_Vector *ySO
     cdef object f
     cdef public object event_func
@@ -1574,6 +1573,7 @@ cdef class CVode(Explicit_ODE):
         self.supports["interpolated_output"] = True
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
+        self.supports["rtol_as_vector"] = bool(SUNDIALS_CVODE_RTOL_VEC)
         
         self.statistics.add_key("nlsred", "Number of order reductions due to stability")
          
@@ -1593,6 +1593,9 @@ cdef class CVode(Explicit_ODE):
             
         if self.nv_atol != NULL:
             N_VDestroy(self.nv_atol)
+
+        if self.nv_rtol != NULL:
+            N_VDestroy(self.nv_rtol)
         
         if self.cvode_mem != NULL:
             #Free Memory
@@ -2445,7 +2448,11 @@ cdef class CVode(Explicit_ODE):
         
         #Tolerances
         self.nv_atol = arr2nv(self.options["atol"])
-        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
+        if SUNDIALS_CVODE_RTOL_VEC:
+            self.nv_rtol = arr2nv(self.options["rtol"])
+            flag = SUNDIALS.CVodeVVtolerances(self.cvode_mem, self.nv_rtol, self.nv_atol)
+        else:
+            flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise CVodeError(flag)
             
@@ -2566,18 +2573,6 @@ cdef class CVode(Explicit_ODE):
     norm = property(_get_norm_method,_set_norm_method)
     
     def _set_atol(self,atol):
-        
-        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
-        self.options["atol"] = set_type_shape_array(atol)
-    
-        if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
-        elif len(self.options["atol"]) != self.pData.dim:
-            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<=0.0).any():
-            raise AssimuloException("The absolute tolerance must be positive.")
-    
-    def _get_atol(self):
         """
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
@@ -2595,36 +2590,59 @@ cdef class CVode(Explicit_ODE):
         
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
+        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = set_type_shape_array(atol)
+    
+        if len(self.options["atol"]) == 1:
+            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+        elif len(self.options["atol"]) != self.pData.dim:
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<=0.0).any():
+            raise AssimuloException("The absolute tolerance must be positive.")
+    
+    def _get_atol(self):
         return self.options["atol"]
     
     atol = property(_get_atol,_set_atol)
     
     def _set_rtol(self,rtol):
-        
-        try:
-            rtol = float(rtol)
-        except (ValueError, TypeError):
-            raise AssimuloException('Relative tolerance must be a (scalar) float.')
-        if rtol <= 0.0:
-            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
-        
-        self.options["rtol"] = rtol
-    
-    def _get_rtol(self):
         """
         Defines the relative tolerance that is to be used by the solver.
+        Can be set differently for each variable, if supported by Sundials version.
         
             Parameters::
             
                 rtol    
                         - Default '1.0e-6'.
                 
-                        - Should be a positive float.
+                        - Should be a positive float or a numpy vector
+                          of floats.
                         
-                            Example:
+                            Examples:
                                 rtol = 1.0e-4
+                                rtol = [1.0e-4, 1.0e-6]
                                 
         """
+        if SUNDIALS_CVODE_RTOL_VEC:
+            self.options["rtol"] = set_type_shape_array(rtol)
+        
+            if len(self.options["rtol"]) == 1:
+                self.options["rtol"] = self.options["rtol"]*N.ones(self.pData.dim)
+            elif len(self.options["rtol"]) != self.pData.dim:
+                raise AssimuloException("rtol must be of length one or same as the dimension of the problem.")
+            if (self.options["rtol"]<=0.0).any():
+                raise AssimuloException("The absolute tolerance must be positive.")
+        else:
+            try:
+                rtol = float(rtol)
+            except (ValueError, TypeError):
+                raise AssimuloException('Relative tolerance must be a (scalar) float.')
+            if rtol <= 0.0:
+                raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
+            
+            self.options["rtol"] = rtol
+    
+    def _get_rtol(self):
         return self.options["rtol"]
         
     rtol=property(_get_rtol,_set_rtol)

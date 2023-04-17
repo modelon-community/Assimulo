@@ -50,7 +50,13 @@ cdef class ODE:
                         "clock_step":False, 
                         "num_threads":1} #multiprocessing.cpu_count()
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
+        #Flags for determining what the solver supports
+        self.supports = {"state_events":False,
+                         "interpolated_output":False,
+                         "report_continuously":False,
+                         "sensitivity_calculations":False,
+                         "interpolated_sensitivity_output":False,
+                         "rtol_as_vector":False}
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False
                              ,"jac_fcn_nnz": -1}
