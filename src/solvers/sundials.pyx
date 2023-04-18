@@ -1483,19 +1483,20 @@ cdef class IDA(Implicit_ODE):
         """
         Implicit_ODE.print_statistics(self, verbose) #Calls the base class
 
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
-            self.log_message('\nSensitivity options:\n' , verbose)
-            self.log_message(' Method                       : ' + str(self.options["sensmethod"]), verbose)
-            self.log_message(' Difference quotient type     : ' + str(self.options["dqtype"]), verbose)
-            self.log_message(' Suppress Sens                : ' + str(self.options["suppress_sens"]), verbose)
+            log_message_verbose('\nSensitivity options:\n')
+            log_message_verbose(' Method                       : ' + str(self.options["sensmethod"]))
+            log_message_verbose(' Difference quotient type     : ' + str(self.options["dqtype"]))
+            log_message_verbose(' Suppress Sens                : ' + str(self.options["suppress_sens"]))
    
-        self.log_message('\nSolver options:\n',                                       verbose)
-        self.log_message(' Solver                       : IDA (BDF)',                      verbose)
-        self.log_message(' Maximal order                : ' + str(self.options["maxord"]), verbose)
-        self.log_message(' Suppressed algebr. variables : ' + str(self.options["suppress_alg"]), verbose)
-        self.log_message(' Tolerances (absolute)        : ' + str(self._compact_atol()),   verbose)
-        self.log_message(' Tolerances (relative)        : ' + str(self.options["rtol"]),   verbose)
-        self.log_message('',                                                          verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                       : IDA (BDF)')
+        log_message_verbose(' Maximal order                : ' + str(self.options["maxord"]))
+        log_message_verbose(' Suppressed algebr. variables : ' + str(self.options["suppress_alg"]))
+        log_message_verbose(' Tolerances (absolute)        : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)        : ' + str(self.options["rtol"]))
+        log_message_verbose('')
 
 cdef class CVode(Explicit_ODE):
     r"""
@@ -2449,6 +2450,7 @@ cdef class CVode(Explicit_ODE):
         #Tolerances
         self.nv_atol = arr2nv(self.options["atol"])
         if SUNDIALS_CVODE_RTOL_VEC:
+            self.rtol = self.options["rtol"] ## convert to array as necessary
             self.nv_rtol = arr2nv(self.options["rtol"])
             flag = SUNDIALS.CVodeVVtolerances(self.cvode_mem, self.nv_rtol, self.nv_atol)
         else:
@@ -2615,8 +2617,8 @@ cdef class CVode(Explicit_ODE):
                 rtol    
                         - Default '1.0e-6'.
                 
-                        - Should be a positive float or a numpy vector
-                          of floats.
+                        - Should be a non-negative float or a numpy vector
+                          of non-negative floats.
                         
                             Examples:
                                 rtol = 1.0e-4
@@ -2630,15 +2632,15 @@ cdef class CVode(Explicit_ODE):
                 self.options["rtol"] = self.options["rtol"]*N.ones(self.pData.dim)
             elif len(self.options["rtol"]) != self.pData.dim:
                 raise AssimuloException("rtol must be of length one or same as the dimension of the problem.")
-            if (self.options["rtol"]<=0.0).any():
-                raise AssimuloException("The absolute tolerance must be positive.")
+            if (self.options["rtol"]<0.0).any():
+                raise AssimuloException("The relative tolerances must be non-negative.")
         else:
             try:
                 rtol = float(rtol)
             except (ValueError, TypeError):
-                raise AssimuloException('Relative tolerance must be a (scalar) float.')
-            if rtol <= 0.0:
-                raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
+                raise AssimuloException('Relative tolerance must be a (scalar) float. Installed Sundials version does not support relative tolerance vectors.')
+            if rtol < 0.0:
+                raise AssimuloException('Relative tolerance must be a non-negative (scalar) float.')
             
             self.options["rtol"] = rtol
     
@@ -3311,22 +3313,23 @@ cdef class CVode(Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
 
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on            
-            self.log_message('\nSensitivity options:\n' , verbose)
-            self.log_message(' Method                   : ' + str(self.options["sensmethod"]), verbose)
-            self.log_message(' Difference quotient type : ' + str(self.options["dqtype"]), verbose)
-            self.log_message(' Suppress Sens            : ' + str(self.options["suppress_sens"]), verbose)
+            log_message_verbose('\nSensitivity options:\n')
+            log_message_verbose(' Method                   : ' + str(self.options["sensmethod"]))
+            log_message_verbose(' Difference quotient type : ' + str(self.options["dqtype"]))
+            log_message_verbose(' Suppress Sens            : ' + str(self.options["suppress_sens"]))
     
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                   : CVode',                         verbose)
-        self.log_message(' Linear multistep method  : ' +self.options["discr"],       verbose)
-        self.log_message(' Nonlinear solver         : ' + self.options["iter"],       verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                   : CVode')
+        log_message_verbose(' Linear multistep method  : ' + self.options["discr"])
+        log_message_verbose(' Nonlinear solver         : ' + self.options["iter"])
         if self.options["iter"] == "Newton":
-            self.log_message(' Linear solver type       : ' + self.options["linear_solver"],       verbose)
-        self.log_message(' Maximal order            : ' + str(self.options["maxord"]),verbose)
-        self.log_message(' Tolerances (absolute)    : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)    : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+            log_message_verbose(' Linear solver type       : ' + self.options["linear_solver"])
+        log_message_verbose(' Maximal order            : ' + str(self.options["maxord"]))
+        log_message_verbose(' Tolerances (absolute)    : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)    : ' + str(self._compact_tol(self.options["rtol"])))
+        log_message_verbose('')
 
 
 class CVodeError(Exception):

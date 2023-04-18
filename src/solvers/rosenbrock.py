@@ -458,10 +458,9 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Rodas ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
-
-
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : Rodas')
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')

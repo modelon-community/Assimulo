@@ -580,15 +580,15 @@ cdef class ODE:
         """
         return self.elapsed_step_time
         
-    def _compact_atol(self):
+    def _compact_tol(self, tol_vec):
         """
-        Reduces atol to a scalar if it is an ndarray and  all entries are the same.
-        Used for print solver options in a more compact way
+        Reduces a tol vector to a scalar if it is an ndarray and all entries are the same.
+        Used for printing solver options in a more compact way
         """
-        if isinstance(self.atol,N.ndarray) and (self.atol==self.atol[0]).all():
-                return self.atol[0]
+        if isinstance(tol_vec, N.ndarray) and (tol_vec == tol_vec[0]).all():
+            return tol_vec[0]
         else:
-                return self.atol
+            return tol_vec
     
     cpdef _chattering_check(self, object event_info):
         self.chattering_clear_counter = 0

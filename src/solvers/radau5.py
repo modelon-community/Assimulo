@@ -407,12 +407,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                              verbose)
-        self.log_message(' Solver                  : Radau5' + self._type,                   verbose)
-        self.log_message(' Linear solver           : ' + str(self.options["linear_solver"]), verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),          verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),          verbose)
-        self.log_message('',                                                                 verbose)
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : Radau5' + self._type)
+        log_message_verbose(' Linear solver           : ' + str(self.options["linear_solver"]))
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')
 
     def finalize(self):
         """
@@ -1206,11 +1207,12 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         """
         Implicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Radau5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : Radau5' + self._type)
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')
 
 class _Radau5DAE(Radau_Common,Implicit_ODE):
     """
