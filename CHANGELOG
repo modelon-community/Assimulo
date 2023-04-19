@@ -2,6 +2,10 @@
 
 --- Assimulo-3.4.1 ---
     * Restored functionality of CVode with 'external_event_detection' = True, which broke with 3.4.0.
+    * CVode now allows rtol = 0.
+    * Added support for CVode with non-negative relative tolerance vector:
+      Usage requires a SUNDIALS installation supporting this.
+      Currently disabled for CVode + sensitivity analysis.
 
 --- Assimulo-3.4.0 ---
     * Removed Radau5ODE Fortran implementation. 

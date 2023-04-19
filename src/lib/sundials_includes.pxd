@@ -379,8 +379,6 @@ cdef extern from "cvodes/cvodes.h":
     int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *ySO)
     int CVodeSensFree(void *cvode_mem)
     int CVodeSensToggleOff(void *cvode_mem)
-    int CVodeSensSStolerances(void *cvode_mem, realtype reltolS, realtype *abstolS)
-    int CVodeSensSVtolerances(void *cvode_mem, realtype reltolS, N_Vector *abstolS)
     int CVodeSensEEtolerances(void *cvode_mem)
     int CVodeGetSens(void *cvode_mem, realtype *tret, N_Vector *yS)
     int CVodeGetSensDky(void *cvode_mem, realtype t, int k, N_Vector *dkyS)

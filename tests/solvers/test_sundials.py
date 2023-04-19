@@ -859,6 +859,23 @@ class Test_CVode:
         else:
             nose.tools.assert_raises(AssimuloException, sim._set_rtol, [1., 0.])
 
+    @testattr(stddist = True)
+    def test_rtol_vector_sense(self):
+        """ Test CVode with rtol vector and sensitivity analysis. """
+        n = 2
+        f = lambda t, y, p: p*y
+        prob = Explicit_Problem(f, np.ones(n), p0 = np.ones(n))
+        prob.yS0 = np.zeros((2, 2))
+
+        sim = CVode(prob)
+
+        # not supported
+        nose.tools.assert_raises(AssimuloException, sim._set_rtol, [1., 0.])
+        # Ok
+        sim.rtol = 1e-6
+        sim.rtol = [1e-6]
+        sim.rtol = np.array([1e-6])
+
 class Test_IDA:
     
     def setUp(self):
