@@ -2623,31 +2623,22 @@ cdef class CVode(Explicit_ODE):
                                 rtol = [1.0e-4, 1.0e-6]
                                 
         """
-        try: # Is rtol scalar or trivially convertible to scalar (e.g., numpy.array([1.]))?
-            rtol = float(rtol)
-            if rtol < 0.0:
-                raise AssimuloException('Relative tolerance must be a non-negative (scalar) float.')
+        rtol = set_type_shape_array(rtol) ## convert to appropriate numpy array
+        rtol = N.array([rtol[0]]) if N.all(N.isclose(rtol, rtol[0])) else rtol ## reduce if possible
+
+        if (rtol<0.0).any():
+            raise AssimuloException('Relative tolerance(s) must be a non-negative.')
+
+        if len(rtol) == 1:
+            self.options["rtol"] = float(rtol) # convert to scalar
+        else: # nontrivial vector
+            if not SUNDIALS_CVODE_RTOL_VEC: # Verify Sundials support
+                raise AssimuloException('Relative tolerance must be a (scalar) float. Installed Sundials version does not support relative tolerance vectors.')
+            if self.pData.dimSens > 0: # Reject if sensitivites
+                raise AssimuloException("CVode does not support relative tolerance vectors for sensitivity analysis.")
+            if len(rtol) != self.pData.dim: # verify length match
+                raise AssimuloException("rtol must be of length one or same as the dimension of the problem.")
             self.options["rtol"] = rtol
-        except (ValueError, TypeError):
-            # Trivial list/vector?
-            if isinstance(rtol, (N.ndarray, list)):
-                if len(rtol) == 1: # trivial list/numpy.array
-                    return self._set_rtol(rtol[0]) # try setting rtol with outer level unpacked
-                else: # non-trivial list/numpy.array
-                    if SUNDIALS_CVODE_RTOL_VEC:
-                        self.options["rtol"] = set_type_shape_array(rtol)
-
-                        if self.pData.dimSens > 0:
-                            raise AssimuloException("CVode does not support relative tolerance vectors for sensitivity analysis.")
-
-                        if len(self.options["rtol"]) != self.pData.dim:
-                            raise AssimuloException("rtol must be of length one or same as the dimension of the problem.")
-                        if (self.options["rtol"]<0.0).any():
-                            raise AssimuloException("The relative tolerances must be non-negative.")
-                        return # rtol OK
-
-            # not list/numpy vector OR not SUNDIALS_CVODE_RTOL_VEC
-            raise AssimuloException('Relative tolerance must be a (scalar) float. Installed Sundials version does not support relative tolerance vectors.')
     
     def _get_rtol(self):
         return self.options["rtol"]

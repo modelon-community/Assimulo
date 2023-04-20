@@ -823,6 +823,9 @@ class Test_CVode:
         prob = Explicit_Problem(f, np.array([1, 1]))
         sim = CVode(prob)
 
+        sim.rtol = [1e-2, 1e-2] # reduces to scalar
+        nose.tools.assert_equal(sim.rtol, 1e-2)
+
         if sim.supports['rtol_as_vector']:
             sim.rtol = [1e-2, 1e-3]
             nose.tools.assert_equal(sim.rtol[0], 1e-2)
@@ -1416,7 +1419,7 @@ class Test_Sundials:
         """
         for sim in self.simulators:
             nose.tools.assert_raises(Exception, sim._set_rtol, -1.0)
-            nose.tools.assert_raises(Exception, sim._set_rtol, [1.0, 1.0]) ## size mismatch
+            nose.tools.assert_raises(Exception, sim._set_rtol, [1.0, 2.0]) ## size mismatch
             nose.tools.assert_raises(Exception, sim._set_rtol, "Test")
             
             sim.rtol = 1.0e-5
