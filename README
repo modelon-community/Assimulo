@@ -29,15 +29,23 @@ which pass to the problem class constructor. Then create your solver, set the at
 For more information about Assimulo, documentation tutorial etc, visit 
 http://www.jmodelica.org/assimulo
 
+SUPPORTED SUNDIALS VERSIONS
+=======
+Current Assimulo development aims for compliancy with Sundials v2.7.0:
+https://github.com/LLNL/sundials/releases/tag/v2.7.0.
+
+Some optional features in Assimulo>=3.4.1 are built on the modified Sundials version:
+https://github.com/modelon-community/sundials/tree/v2.7.x-patched
+
 INSTALL
+=======
 See the INSTALL file or the installation page on http://www.jmodelica.org/assimulo.
 
 CONTRIBUTING
+=======
 For information about contributing, see https://github.com/modelon/contributing.
 
 CONTACT
+=======
 Homepage: http://www.jmodelica.org/assimulo
 Email: christian.winther@modelon.com
-
-
-
