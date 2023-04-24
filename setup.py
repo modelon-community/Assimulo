@@ -382,6 +382,7 @@ class Assimulo_prepare(object):
             sundials_vector_type_size = None
             sundials_with_superlu = False
             sundials_with_msvc = False
+            sundials_cvode_with_rtol_vec = False
             try:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')):
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
@@ -409,6 +410,12 @@ class Assimulo_prepare(object):
                                 sundials_with_superlu = True
                                 L.debug('SUNDIALS found to be compiled with support for SuperLU.')
                                 break
+                    with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
+                        for line in f:
+                            if "SUNDIALS_CVODE_RTOL_VEC" in line and line.startswith("#define"): #Sundials with CVode support for rtol vectors
+                                sundials_cvode_with_rtol_vec = True
+                                L.debug('SUNDIALS found with CVode supporting rtol vectors.')
+                                break
                     if os.path.exists(os.path.join(self.libdirs,'sundials_nvecserial.lib')) and not os.path.exists(os.path.join(self.libdirs,'libsundials_nvecserial.a')):
                         sundials_with_msvc = True
             except Exception as e:
@@ -423,6 +430,7 @@ class Assimulo_prepare(object):
             self.SUNDIALS_vector_size = sundials_vector_type_size
             self.sundials_with_superlu = sundials_with_superlu
             self.sundials_with_msvc = sundials_with_msvc
+            self.sundials_cvode_with_rtol_vec = sundials_cvode_with_rtol_vec
             if not self.sundials_with_superlu:
                 L.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
         else:    
@@ -479,7 +487,8 @@ class Assimulo_prepare(object):
         if self.with_SUNDIALS:
             compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
                                 'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu and self.with_SLU,
-                                'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size}
+                                'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size,
+                                'SUNDIALS_CVODE_RTOL_VEC': self.sundials_cvode_with_rtol_vec}
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],

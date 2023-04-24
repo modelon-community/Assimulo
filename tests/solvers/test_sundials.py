@@ -815,7 +815,70 @@ class Test_CVode:
         sim.simulate(2.)
         nose.tools.assert_equal(len(sim.t_sol), sim.statistics["nsteps"]+1)
         nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
-        
+
+    @testattr(stddist = True)
+    def test_rtol_vector(self):
+        """This tests the functionality of using an rtol vector, if supported."""
+        f = lambda t, y: y
+        prob = Explicit_Problem(f, np.array([1, 1]))
+        sim = CVode(prob)
+
+        sim.rtol = [1e-2, 1e-2] # reduces to scalar
+        nose.tools.assert_equal(sim.rtol, 1e-2)
+
+        if sim.supports['rtol_as_vector']:
+            sim.rtol = [1e-2, 1e-3]
+            nose.tools.assert_equal(sim.rtol[0], 1e-2)
+            nose.tools.assert_equal(sim.rtol[1], 1e-3)
+
+            sim.simulate(1.)
+        else:
+            nose.tools.assert_raises(AssimuloException, sim._set_rtol, [1e-2, 1e-3])
+            nose.tools.assert_raises(AssimuloException, sim._set_rtol, np.array([1e-2, 1e-3]))
+
+    @testattr(stddist = True)
+    def test_rtol_zero(self):
+        """ Test CVode with rtol = 0. """
+        f = lambda t, y: y
+        prob = Explicit_Problem(f, np.array([1]))
+        sim = CVode(prob)
+
+        sim.rtol = 0.
+        nose.tools.assert_equal(sim.rtol, 0.)
+
+    @testattr(stddist = True)
+    def test_rtol_vector_with_zeroes(self):
+        """ Test CVode with rtol vector containing zeroes. """
+        f = lambda t, y: y
+        prob = Explicit_Problem(f, np.array([1, 1]))
+        sim = CVode(prob)
+
+        if sim.supports['rtol_as_vector']:
+            sim.rtol = [1., 0.]
+            nose.tools.assert_equal(sim.rtol[0], 1.)
+            nose.tools.assert_equal(sim.rtol[1], 0.)
+
+            sim.simulate(1.)
+        else:
+            nose.tools.assert_raises(AssimuloException, sim._set_rtol, [1., 0.])
+
+    @testattr(stddist = True)
+    def test_rtol_vector_sense(self):
+        """ Test CVode with rtol vector and sensitivity analysis. """
+        n = 2
+        f = lambda t, y, p: p*y
+        prob = Explicit_Problem(f, np.ones(n), p0 = np.ones(n))
+        prob.yS0 = np.zeros((2, 2))
+
+        sim = CVode(prob)
+
+        # not supported
+        nose.tools.assert_raises(AssimuloException, sim._set_rtol, [1., 0.])
+        # Ok
+        sim.rtol = 1e-6
+        sim.rtol = [1e-6]
+        sim.rtol = np.array([1e-6])
+
 class Test_IDA:
     
     def setUp(self):
@@ -1354,20 +1417,20 @@ class Test_Sundials:
         """
         This tests the functionality of the property rtol.
         """
-        for i in range(len(self.simulators)):
-            nose.tools.assert_raises(Exception, self.simulators[i]._set_rtol, -1.0)
-            nose.tools.assert_raises(Exception, self.simulators[i]._set_rtol, [1.0, 1.0])
-            nose.tools.assert_raises(Exception, self.simulators[i]._set_rtol, "Test")
+        for sim in self.simulators:
+            nose.tools.assert_raises(Exception, sim._set_rtol, -1.0)
+            nose.tools.assert_raises(Exception, sim._set_rtol, [1.0, 2.0]) ## size mismatch
+            nose.tools.assert_raises(Exception, sim._set_rtol, "Test")
             
-            self.simulators[i].rtol = 1.0e-5
-            nose.tools.assert_equal(self.simulators[i].rtol, 1.0e-5)
-            self.simulators[i].rtol = 1.0
-            nose.tools.assert_equal(self.simulators[i].rtol, 1.0)
-            self.simulators[i].rtol = 1001.0
-            nose.tools.assert_equal(self.simulators[i].rtol, 1001.0)
-            self.simulators[i].rtol = 1001
-            nose.tools.assert_equal(self.simulators[i].rtol, 1001.0)
-    
+            sim.rtol = 1.0e-5
+            nose.tools.assert_equal(sim.rtol, 1.0e-5)
+            sim.rtol = 1.0
+            nose.tools.assert_equal(sim.rtol, 1.0)
+            sim.rtol = 1001.0
+            nose.tools.assert_equal(sim.rtol, 1001.0)
+            sim.rtol = 1001
+            nose.tools.assert_equal(sim.rtol, 1001.0)
+
     @testattr(stddist = True)
     def test_maxh(self):
         """

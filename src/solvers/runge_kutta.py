@@ -200,11 +200,12 @@ class Dopri5(Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Dopri5 ',          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : Dopri5')
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')
         
     def _set_atol(self,atol):
         
@@ -734,11 +735,13 @@ class RungeKutta34(Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
         
-        self.log_message('\nSolver options:\n',                                              verbose)
-        self.log_message(' Solver             : RungeKutta34',                               verbose)
-        self.log_message(' Solver type        : Adaptive',                                   verbose)
-        self.log_message(' Relative tolerance : ' + str(self.options["rtol"]),        verbose)
-        self.log_message(' Absolute tolerance : ' + str(self._compact_atol()) + '\n', verbose)
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : RungeKutta34')
+        log_message_verbose(' Solver type             : Adaptive')
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')      
     
     
 class RungeKutta4(Explicit_ODE):

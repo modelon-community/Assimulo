@@ -50,7 +50,13 @@ cdef class ODE:
                         "clock_step":False, 
                         "num_threads":1} #multiprocessing.cpu_count()
         #self.internal_flags = {"state_events":False,"step_events":False,"time_events":False} #Flags for checking the problem (Does the problem have state events?)
-        self.supports = {"state_events":False,"interpolated_output":False,"report_continuously":False,"sensitivity_calculations":False,"interpolated_sensitivity_output":False} #Flags for determining what the solver supports
+        #Flags for determining what the solver supports
+        self.supports = {"state_events":False,
+                         "interpolated_output":False,
+                         "report_continuously":False,
+                         "sensitivity_calculations":False,
+                         "interpolated_sensitivity_output":False,
+                         "rtol_as_vector":False}
         self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
                              ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False
                              ,"jac_fcn_nnz": -1}
@@ -574,15 +580,15 @@ cdef class ODE:
         """
         return self.elapsed_step_time
         
-    def _compact_atol(self):
+    def _compact_tol(self, tol_vec):
         """
-        Reduces atol to a scalar if it is an ndarray and  all entries are the same.
-        Used for print solver options in a more compact way
+        Reduces a tol vector to a scalar if it is an ndarray and all entries are the same.
+        Used for printing solver options in a more compact way
         """
-        if isinstance(self.atol,N.ndarray) and (self.atol==self.atol[0]).all():
-                return self.atol[0]
+        if isinstance(tol_vec, N.ndarray) and (tol_vec == tol_vec[0]).all():
+            return tol_vec[0]
         else:
-                return self.atol
+            return tol_vec
     
     cpdef _chattering_check(self, object event_info):
         self.chattering_clear_counter = 0

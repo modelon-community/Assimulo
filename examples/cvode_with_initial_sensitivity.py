@@ -31,7 +31,7 @@ def run_example(with_plots=True):
        \dot y_2 &= k_{21} y_1 - (k_{02}+k_{12}) y_2 \\
        \dot y_3 &= k_{31} y_1 - k_{13} y_3
      
-    with the parameter dependent inital conditions 
+    with the parameter dependent initial conditions 
     :math:`y_1(0) = 0, y_2(0) = 0, y_3(0) = 0` . The initial values are taken as parameters :math:`p_1,p_2,p_3`
     for the computation of the sensitivity matrix, 
     see http://sundials.2283335.n4.nabble.com/Forward-sensitivities-for-initial-conditions-td3239724.html
@@ -73,14 +73,14 @@ def run_example(with_plots=True):
     #Create an Assimulo explicit solver (CVode)
     exp_sim = CVode(exp_mod)
     
-    #Sets the paramters
+    #Sets the parameters
     exp_sim.iter = 'Newton'
     exp_sim.discr = 'BDF'
     exp_sim.rtol = 1e-7
     exp_sim.atol = 1e-6
     exp_sim.pbar = [1,1,1] #pbar is used to estimate the tolerances for the parameters
     exp_sim.report_continuously = True #Need to be able to store the result using the interpolate methods
-    exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
+    exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitivity method used
     exp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
     
     #Simulate

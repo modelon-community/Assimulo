@@ -839,7 +839,7 @@ cdef class IDA(Implicit_ODE):
             
             N_VDestroy(dkyS)
             
-            return np.array(matrix)
+            return N.array(matrix)
         else:
             flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
             
@@ -988,18 +988,6 @@ cdef class IDA(Implicit_ODE):
     suppress_sens=property(_get_suppress_sens,_set_suppress_sens)
     
     def _set_atol(self,atol):
-        
-        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
-        self.options["atol"] = set_type_shape_array(atol)
-    
-        if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
-        elif len(self.options["atol"]) != self.pData.dim:
-            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<=0.0).any():
-            raise AssimuloException("The absolute tolerance must be positive.")
-    
-    def _get_atol(self):
         """
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
@@ -1017,22 +1005,23 @@ cdef class IDA(Implicit_ODE):
         
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
+        
+        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = set_type_shape_array(atol)
+    
+        if len(self.options["atol"]) == 1:
+            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+        elif len(self.options["atol"]) != self.pData.dim:
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<=0.0).any():
+            raise AssimuloException("The absolute tolerance must be positive.")
+    
+    def _get_atol(self):
         return self.options["atol"]
     
     atol=property(_get_atol,_set_atol)
     
     def _set_rtol(self,rtol):
-        
-        try:
-            rtol = float(rtol)
-        except (ValueError, TypeError):
-            raise AssimuloException('Relative tolerance must be a (scalar) float.')
-        if rtol <= 0.0:
-            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
-        
-        self.options["rtol"] = rtol
-    
-    def _get_rtol(self):
         """
         Defines the relative tolerance that is to be used by the solver.
         
@@ -1047,6 +1036,16 @@ cdef class IDA(Implicit_ODE):
                                 rtol = 1.0e-4
                                 
         """
+        try:
+            rtol = float(rtol)
+        except (ValueError, TypeError):
+            raise AssimuloException('Relative tolerance must be a (scalar) float.')
+        if rtol <= 0.0:
+            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
+        
+        self.options["rtol"] = rtol
+    
+    def _get_rtol(self):
         return self.options["rtol"]
         
     rtol=property(_get_rtol,_set_rtol)
@@ -1484,19 +1483,20 @@ cdef class IDA(Implicit_ODE):
         """
         Implicit_ODE.print_statistics(self, verbose) #Calls the base class
 
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on
-            self.log_message('\nSensitivity options:\n' , verbose)
-            self.log_message(' Method                       : ' + str(self.options["sensmethod"]), verbose)
-            self.log_message(' Difference quotient type     : ' + str(self.options["dqtype"]), verbose)
-            self.log_message(' Suppress Sens                : ' + str(self.options["suppress_sens"]), verbose)
+            log_message_verbose('\nSensitivity options:\n')
+            log_message_verbose(' Method                       : ' + str(self.options["sensmethod"]))
+            log_message_verbose(' Difference quotient type     : ' + str(self.options["dqtype"]))
+            log_message_verbose(' Suppress Sens                : ' + str(self.options["suppress_sens"]))
    
-        self.log_message('\nSolver options:\n',                                       verbose)
-        self.log_message(' Solver                       : IDA (BDF)',                      verbose)
-        self.log_message(' Maximal order                : ' + str(self.options["maxord"]), verbose)
-        self.log_message(' Suppressed algebr. variables : ' + str(self.options["suppress_alg"]), verbose)
-        self.log_message(' Tolerances (absolute)        : ' + str(self._compact_atol()),   verbose)
-        self.log_message(' Tolerances (relative)        : ' + str(self.options["rtol"]),   verbose)
-        self.log_message('',                                                          verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                       : IDA (BDF)')
+        log_message_verbose(' Maximal order                : ' + str(self.options["maxord"]))
+        log_message_verbose(' Suppressed algebr. variables : ' + str(self.options["suppress_alg"]))
+        log_message_verbose(' Tolerances (absolute)        : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)        : ' + str(self.options["rtol"]))
+        log_message_verbose('')
 
 cdef class CVode(Explicit_ODE):
     r"""
@@ -1516,7 +1516,7 @@ cdef class CVode(Explicit_ODE):
     """
     cdef void* cvode_mem
     cdef ProblemData pData      #A struct containing information about the problem
-    cdef N_Vector yTemp, ydTemp, nv_atol
+    cdef N_Vector yTemp, ydTemp, nv_atol, nv_rtol
     cdef N_Vector *ySO
     cdef object f
     cdef public object event_func
@@ -1574,6 +1574,7 @@ cdef class CVode(Explicit_ODE):
         self.supports["interpolated_output"] = True
         self.supports["interpolated_sensitivity_output"] = True
         self.supports["state_events"] = True
+        self.supports["rtol_as_vector"] = bool(SUNDIALS_CVODE_RTOL_VEC) # not with sensitivities though
         
         self.statistics.add_key("nlsred", "Number of order reductions due to stability")
          
@@ -1593,6 +1594,9 @@ cdef class CVode(Explicit_ODE):
             
         if self.nv_atol != NULL:
             N_VDestroy(self.nv_atol)
+
+        if self.nv_rtol != NULL:
+            N_VDestroy(self.nv_rtol)
         
         if self.cvode_mem != NULL:
             #Free Memory
@@ -2445,7 +2449,11 @@ cdef class CVode(Explicit_ODE):
         
         #Tolerances
         self.nv_atol = arr2nv(self.options["atol"])
-        flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
+        if SUNDIALS_CVODE_RTOL_VEC and isinstance(self.options["rtol"], N.ndarray):
+            self.nv_rtol = arr2nv(self.options["rtol"])
+            flag = SUNDIALS.CVodeVVtolerances(self.cvode_mem, self.nv_rtol, self.nv_atol)
+        else:
+            flag = SUNDIALS.CVodeSVtolerances(self.cvode_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
             raise CVodeError(flag)
             
@@ -2566,18 +2574,6 @@ cdef class CVode(Explicit_ODE):
     norm = property(_get_norm_method,_set_norm_method)
     
     def _set_atol(self,atol):
-        
-        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
-        self.options["atol"] = set_type_shape_array(atol)
-    
-        if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
-        elif len(self.options["atol"]) != self.pData.dim:
-            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
-        if (self.options["atol"]<=0.0).any():
-            raise AssimuloException("The absolute tolerance must be positive.")
-    
-    def _get_atol(self):
         """
         Defines the absolute tolerance(s) that is to be used by the solver.
         Can be set differently for each variable.
@@ -2595,36 +2591,56 @@ cdef class CVode(Explicit_ODE):
         
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
+        self.options["atol"] = set_type_shape_array(atol)
+    
+        if len(self.options["atol"]) == 1:
+            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+        elif len(self.options["atol"]) != self.pData.dim:
+            raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
+        if (self.options["atol"]<=0.0).any():
+            raise AssimuloException("The absolute tolerance must be positive.")
+    
+    def _get_atol(self):
         return self.options["atol"]
     
     atol = property(_get_atol,_set_atol)
     
     def _set_rtol(self,rtol):
-        
-        try:
-            rtol = float(rtol)
-        except (ValueError, TypeError):
-            raise AssimuloException('Relative tolerance must be a (scalar) float.')
-        if rtol <= 0.0:
-            raise AssimuloException('Relative tolerance must be a positive (scalar) float.')
-        
-        self.options["rtol"] = rtol
-    
-    def _get_rtol(self):
         """
         Defines the relative tolerance that is to be used by the solver.
+        Can be set differently for each variable, if supported by Sundials version.
         
             Parameters::
             
                 rtol    
                         - Default '1.0e-6'.
                 
-                        - Should be a positive float.
+                        - Should be a non-negative float or a numpy vector
+                          of non-negative floats.
                         
-                            Example:
+                            Examples:
                                 rtol = 1.0e-4
+                                rtol = [1.0e-4, 1.0e-6]
                                 
         """
+        rtol = set_type_shape_array(rtol) ## convert to appropriate numpy array
+        rtol = N.array([rtol[0]]) if N.all(N.isclose(rtol, rtol[0])) else rtol ## reduce if possible
+
+        if (rtol<0.0).any():
+            raise AssimuloException('Relative tolerance(s) must be a non-negative.')
+
+        if len(rtol) == 1:
+            self.options["rtol"] = float(rtol) # convert to scalar
+        else: # nontrivial vector
+            if not SUNDIALS_CVODE_RTOL_VEC: # Verify Sundials support
+                raise AssimuloException('Relative tolerance must be a (scalar) float. Installed Sundials version does not support relative tolerance vectors.')
+            if self.pData.dimSens > 0: # Reject if sensitivites
+                raise AssimuloException("CVode does not support relative tolerance vectors for sensitivity analysis.")
+            if len(rtol) != self.pData.dim: # verify length match
+                raise AssimuloException("rtol must be of length one or same as the dimension of the problem.")
+            self.options["rtol"] = rtol
+    
+    def _get_rtol(self):
         return self.options["rtol"]
         
     rtol=property(_get_rtol,_set_rtol)
@@ -3293,22 +3309,23 @@ cdef class CVode(Explicit_ODE):
         """
         Explicit_ODE.print_statistics(self, verbose) #Calls the base class
 
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
         if self.problem_info['dimSens'] > 0: #Senstivity calculations is on            
-            self.log_message('\nSensitivity options:\n' , verbose)
-            self.log_message(' Method                   : ' + str(self.options["sensmethod"]), verbose)
-            self.log_message(' Difference quotient type : ' + str(self.options["dqtype"]), verbose)
-            self.log_message(' Suppress Sens            : ' + str(self.options["suppress_sens"]), verbose)
+            log_message_verbose('\nSensitivity options:\n')
+            log_message_verbose(' Method                   : ' + str(self.options["sensmethod"]))
+            log_message_verbose(' Difference quotient type : ' + str(self.options["dqtype"]))
+            log_message_verbose(' Suppress Sens            : ' + str(self.options["suppress_sens"]))
     
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                   : CVode',                         verbose)
-        self.log_message(' Linear multistep method  : ' +self.options["discr"],       verbose)
-        self.log_message(' Nonlinear solver         : ' + self.options["iter"],       verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                   : CVode')
+        log_message_verbose(' Linear multistep method  : ' + self.options["discr"])
+        log_message_verbose(' Nonlinear solver         : ' + self.options["iter"])
         if self.options["iter"] == "Newton":
-            self.log_message(' Linear solver type       : ' + self.options["linear_solver"],       verbose)
-        self.log_message(' Maximal order            : ' + str(self.options["maxord"]),verbose)
-        self.log_message(' Tolerances (absolute)    : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)    : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+            log_message_verbose(' Linear solver type       : ' + self.options["linear_solver"])
+        log_message_verbose(' Maximal order            : ' + str(self.options["maxord"]))
+        log_message_verbose(' Tolerances (absolute)    : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)    : ' + str(self._compact_tol(self.options["rtol"])))
+        log_message_verbose('')
 
 
 class CVodeError(Exception):

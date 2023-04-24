@@ -350,19 +350,20 @@ class Radar5ODE(Explicit_ODE):
         """
         Prints the run-time statistics for the problem.
         """
-        self.log_message('Final Run Statistics: %s \n' % self.problem.name,        verbose)
+        log_message_verbose = lambda msg: self.log_message(msg, verbose)
+        log_message_verbose('Final Run Statistics: %s \n' % self.problem.name)
         
-        self.log_message(' Number of steps                          : '+str(self.statistics["nsteps"]),          verbose)               
-        self.log_message(' Number of function evaluations           : '+str(self.statistics["nfcn"]),         verbose)
-        self.log_message(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]),    verbose)
-        self.log_message(' Number of error test failures            : '+ str(self.statistics["errfail"]),       verbose)
-        self.log_message(' Number of LU decompositions              : '+ str(self.statistics["nlu"]),       verbose)
+        log_message_verbose(' Number of steps                          : '+ str(self.statistics["nsteps"]))
+        log_message_verbose(' Number of function evaluations           : '+ str(self.statistics["nfcn"]))
+        log_message_verbose(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]))
+        log_message_verbose(' Number of error test failures            : '+ str(self.statistics["errfail"]))
+        log_message_verbose(' Number of LU decompositions              : '+ str(self.statistics["nlu"]))
         
-        self.log_message('\nSolver options:\n',                                      verbose)
-        self.log_message(' Solver                  : Radar5 ' + self._type,          verbose)
-        self.log_message(' Tolerances (absolute)   : ' + str(self._compact_atol()),  verbose)
-        self.log_message(' Tolerances (relative)   : ' + str(self.options["rtol"]),  verbose)
-        self.log_message('',                                                         verbose)
+        log_message_verbose('\nSolver options:\n')
+        log_message_verbose(' Solver                  : Radar5 ' + self._type)
+        log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
+        log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
+        log_message_verbose('')
         
     def _get_h(self):
         """

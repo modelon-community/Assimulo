@@ -34,7 +34,7 @@ t=10    , [True, False, False]  (End of simulation)
 #Extend Assimulos problem definition
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     
@@ -126,7 +126,7 @@ class Extended_Problem(Explicit_Problem):
 def run_example(with_plots=True):
     """
     Example of the use of CVode for a differential equation
-    with a iscontinuity (state event) and the need for an event iteration.
+    with a discontinuity (state event) and the need for an event iteration.
     
     on return:
     
