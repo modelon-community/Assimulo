@@ -35,7 +35,7 @@ Current Assimulo development aims for compliancy with Sundials v2.7.0:
 https://github.com/LLNL/sundials/releases/tag/v2.7.0.
 
 Some optional features in Assimulo>=3.4.1 are built on the modified Sundials version:
-https://github.com/modelon-community/sundials/tree/v2.7.x-patched
+https://github.com/modelon-community/sundials/releases/tag/v2.7.0-1
 
 INSTALL
 =======
