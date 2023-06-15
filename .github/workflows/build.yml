@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sundials_version: [2.7.0, 3.2.0, 7.1.1]
+        sundials_version: [2.7.0-1, 2.7.0, 3.2.0, 7.1.1]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -35,7 +35,7 @@ jobs:
         sudo make install
     - name: Install sundials
       run: |
-        git clone --depth 1 -b v${{ matrix.sundials_version }} https://github.com/LLNL/sundials /tmp/sundials
+        git clone --depth 1 -b v${{ matrix.sundials_version }} https://github.com/modelon-community/sundials /tmp/sundials
         cd /tmp/sundials
         if test "${{ matrix.sundials_version }}" = "2.7.0"; then echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" >> src/idas/CMakeLists.txt; echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" >> src/kinsol/CMakeLists.txt; fi
         mkdir build && cd build
