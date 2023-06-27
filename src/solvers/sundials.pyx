@@ -2378,9 +2378,10 @@ cdef class CVode(Explicit_ODE):
             IF SUNDIALS_VERSION >= (3,0,0):
                 IF SUNDIALS_VERSION >= (6,0,0):
                     self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT, ctx)
+                    self.sun_linearsolver = SUNDIALS.SUNLinSol_SuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"], ctx)
                 ELSE:
                     self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
-                self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
+                    self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
                 IF SUNDIALS_VERSION >= (4,0,0):
                     flag = SUNDIALS.CVodeSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
                 ELSE:
