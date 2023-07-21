@@ -18,7 +18,7 @@
 import cython
 
 
-cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
+cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noexcept:
     """
     This method is used to connect the Assimulo.Problem.f to the Sundials
     right-hand-side function.
@@ -56,7 +56,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
             
 cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
                          N_Vector *yvS, N_Vector *yvSdot, void *problem_data, 
-                         N_Vector tmp1, N_Vector tmp2):
+                         N_Vector tmp1, N_Vector tmp2) noexcept:
     
     cdef ProblemData pData = <ProblemData>problem_data
     cdef N.ndarray y = pData.work_y
@@ -91,7 +91,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac,
-                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Sparse Jacobian function.
@@ -145,7 +145,7 @@ ELSE:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SlsMat Jacobian,
-                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Sparse Jacobian function.
@@ -212,7 +212,7 @@ ELSE:
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int cv_jac(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac, 
-                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -263,7 +263,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         return CVDLS_SUCCESS
 ELSE:
     cdef int cv_jac(long int Neq, realtype t, N_Vector yv, N_Vector fy, DlsMat Jacobian, 
-                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -314,7 +314,7 @@ ELSE:
         
         
 cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv,
-				    void *problem_data, N_Vector tmp):
+				    void *problem_data, N_Vector tmp) noexcept:
     """
     This method is used to connect the Assimulo.Problem.jacv to the Sundials
     Jacobian times vector function.
@@ -364,7 +364,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
                       bint jok, bint *jcurPtr,
-                      realtype gamma, void *problem_data):
+                      realtype gamma, void *problem_data) noexcept:
         """
         For information see CVODES documentation 4.6.9
         """
@@ -386,7 +386,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
     cdef int cv_prec_solve(realtype t, N_Vector yy, N_Vector fyy,
                       N_Vector rr, N_Vector z,
                       realtype gamma, realtype delta,
-                      int lr, void *problem_data):
+                      int lr, void *problem_data) noexcept:
         """
         For information see CVODES documentation 4.6.8
         """
@@ -411,7 +411,7 @@ ELSE:
                       bint jok, bint *jcurPtr,
                       realtype gamma, void *problem_data,
                       N_Vector tmp1, N_Vector tmp2,
-                      N_Vector tmp3):
+                      N_Vector tmp3) noexcept:
         """
         For information see CVODES documentation 4.6.9
         """
@@ -433,7 +433,7 @@ ELSE:
     cdef int cv_prec_solve(realtype t, N_Vector yy, N_Vector fyy,
                       N_Vector rr, N_Vector z,
                       realtype gamma, realtype delta,
-                      int lr, void *problem_data, N_Vector tmp):
+                      int lr, void *problem_data, N_Vector tmp) noexcept:
         """
         For information see CVODES documentation 4.6.8
         """
@@ -479,7 +479,7 @@ cdef int cv_prec(realtype t, N Vector yv, N Vector fyv,
         return SPGMR_PSOLVE_FAIL_UNREC
 """
 
-cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
+cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data) noexcept:
     """
     This method is used to connect the Assimulo.Problem.state_events to the Sundials
     Root-finding function.
@@ -504,7 +504,7 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
     except:
         return CV_RTFUNC_FAIL  # Unrecoverable Error
 
-cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data):
+cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data) noexcept:
     """
     This method is used to connect the Assimulo.Problem.f to the Sundials
     residual function.
@@ -558,7 +558,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int ida_jac(realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, SUNMatrix Jac,
-                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -611,7 +611,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 return IDADLS_JACFUNC_UNRECVR
 ELSE:
     cdef int ida_jac(long int Neq, realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, DlsMat Jacobian,
-                 void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3):
+                 void* problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
         This method is used to connect the Assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -663,7 +663,7 @@ ELSE:
                 return IDADLS_JACFUNC_UNRECVR
             
 
-cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data):
+cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void* problem_data) noexcept:
     """
     This method is used to connect the Assimulo.Problem.state_events to the Sundials
     root function.
@@ -692,7 +692,7 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
 
 cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv, N_Vector Jv, realtype cj,
-				    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+				    void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept:
     """
     This method is used to connect the Assimulo.Problem.jacv to the Sundials
     Jacobian times vector function.
@@ -743,31 +743,31 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
 # Error handling callback functions
 # =================================
 
-cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
+cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data) noexcept:
     """
     This method overrides the default handling of error messages.
     """
     cdef ProblemData pData = <ProblemData>problem_data
     
     if error_code > 0 and pData.verbose > 0: #Warning
-        print '[CVode Warning]', msg
+        print('[CVode Warning]', msg)
     
     if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
         if error_code < 0: #Error
-            print '[CVode Error]', msg
+            print('[CVode Error]', msg)
             
-cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
+cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data) noexcept:
     """
     This method overrides the default handling of error messages.
     """
     cdef ProblemData pData = <ProblemData>problem_data
     
     if error_code > 0 and pData.verbose > 0: #Warning
-        print '[IDA Warning]', msg
+        print('[IDA Warning]', msg)
     
     if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
         if error_code < 0: #Error
-            print '[IDA Error]', msg
+            print('[IDA Error]', msg)
 
 
 cdef class ProblemData:

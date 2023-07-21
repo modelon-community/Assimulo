@@ -424,7 +424,7 @@ cdef class KINSOL(Algebraic):
         if flag < 0:
             raise KINSOLError(flag)
         if flag == KIN_STEP_LT_STPTOL:
-            print 'Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.'
+            print('Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.')
         
         self.store_statistics()
         

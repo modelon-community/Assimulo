@@ -449,7 +449,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         ELSE:
             cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads): return NULL
     
-    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data): return 0    
+    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept: return 0
     cdef inline tuple version(): return (3,0,0)
 ELSE:
     cdef extern from "cvodes/cvodes_dense.h":
@@ -645,7 +645,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
 
 
                 
-    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
+    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept: return 0
 ELSE:
     cdef extern from "idas/idas_dense.h":
         int IDADense(void *ida_mem, long int n)

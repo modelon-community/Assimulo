@@ -48,7 +48,7 @@ cdef void c2py_d(N.ndarray[double, ndim=1, mode='c'] dest, double* source, int d
     """Copy (double *) C vector to 1D numpy array."""
     memcpy(N.PyArray_DATA(dest), source, dim*sizeof(double))
 
-cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out, void* f_event_EXT):
+cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out, void* f_event_EXT) noexcept:
     """Event indicator callback function to event_locator.c"""
     cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
     c2py_d(y_py, y_in, n_y)
@@ -58,7 +58,7 @@ cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out,
     py2c_d(g_out, g_high, n_g)
     return ret
 
-cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
+cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT) noexcept:
     """Interpolation callback function to event_locator.c"""
     y_interp = (<object>f_interp_EXT)(t)
     py2c_d(y_out, y_interp, n)
