@@ -1,4 +1,6 @@
 --- CHANGELOG ---
+--- Assimulo-3.4.2 ---
+    * Updated an import statement in one of the examples to resolve compliance issues with scipy 1.10.1.
 
 --- Assimulo-3.4.1 ---
     * Restored functionality of CVode with 'external_event_detection' = True, which broke with 3.4.0.
