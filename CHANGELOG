@@ -1,4 +1,7 @@
 --- CHANGELOG ---
+--- Assimulo-3.4.3 ---
+    * This version has replaced all redundant scipy references in one of the examples with numpy function calls. In order to improve compliance with newer versions of scipy.
+
 --- Assimulo-3.4.2 ---
     * Updated an import statement in one of the examples to resolve compliance issues with scipy 1.10.1.
 
