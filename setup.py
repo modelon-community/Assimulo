@@ -1,7 +1,7 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Modelon AB  
+# Copyright (C) 2010 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -17,7 +17,7 @@
 #from distutils.core import setup, Extension
 import numpy as np
 import logging as L
-import sys 
+import sys
 import os
 import shutil as SH
 import ctypes.util
@@ -38,10 +38,10 @@ parser.register('type','bool',str2bool)
 package_arguments=['plugins','sundials','blas','superlu','lapack','mkl']
 package_arguments.sort()
 for pg in package_arguments:
-    parser.add_argument("--{}-home".format(pg), 
+    parser.add_argument("--{}-home".format(pg),
            help="Location of the {} directory".format(pg.upper()),type=str,default='')
 parser.add_argument("--blas-name", help="name of the blas package",default='blas')
-parser.add_argument("--mkl-name", help="name of the mkl package",default='mkl')    
+parser.add_argument("--mkl-name", help="name of the mkl package",default='mkl')
 parser.add_argument("--extra-c-flags", help='Extra C-flags (a list enclosed in " ")',default='')
 parser.add_argument("--with_openmp", type='bool', help="set to true if present",default=False)
 parser.add_argument("--is_static", type='bool', help="set to true if present",default=False)
@@ -56,7 +56,7 @@ parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='')
 parser.add_argument("--version", help='Package version number', default='Default')
-                                       
+
 args = parser.parse_known_args()
 version_number_arg = args[0].version
 
@@ -68,7 +68,7 @@ try:
     revision = _p.communicate()[0].decode('ascii')
 except:
     revision = "unknown"
-L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
+L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline
 
 #If prefix is set, we want to allow installation in a directory that is not on PYTHONPATH
 #and this is only possible with distutils, not setuptools
@@ -94,7 +94,7 @@ if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[
 
 L.debug('Python version used: {}'.format(sys.version.split()[0]))
 
-thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3","radau5"] 
+thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3","radau5"]
 
 class Assimulo_prepare(object):
 # helper functions
@@ -116,13 +116,13 @@ class Assimulo_prepare(object):
                 self.copy_file(f,to_dir)
     def __init__(self,args, thirdparty_methods):
         # args[0] are optinal arguments given above
-        # args[1] are argumenets passed to distutils 
+        # args[1] are argumenets passed to distutils
         self.distutil_args=args[1]
         if args[0].prefix:
             self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
             self.distutil_args.append('--prefix={}'.format(self.prefix))
         self.SLUdir = args[0].superlu_home
-        self.BLASdir = args[0].blas_home 
+        self.BLASdir = args[0].blas_home
         self.sundialsdir = args[0].sundials_home
         self.MKLdir = args[0].mkl_home
         self.sundials_with_superlu = args[0].sundials_with_superlu
@@ -130,16 +130,16 @@ class Assimulo_prepare(object):
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.MKLname_t = args[0].mkl_name if args[0].mkl_name.startswith('lib') else 'lib'+args[0].mkl_name
         self.MKLname = self.MKLname_t[3:]    # the name without "lib"
-        self.debug_flag = args[0].debug 
+        self.debug_flag = args[0].debug
         self.LAPACKdir = args[0].lapack_home
         self.LAPACKname = ""
         self.PLUGINSdir = args[0].plugins_home
-        self.static = args[0].is_static 
+        self.static = args[0].is_static
         self.static_link_gcc = ["-static-libgcc"] if self.static else []
         self.static_link_gfortran = ["-static-libgfortran"] if self.static else []
         self.force_32bit = args[0].force_32bit
-        self.flag_32bit = ["-m32"] if self.force_32bit else [] 
-        self.no_mvscr = args[0].no_msvcr 
+        self.flag_32bit = ["-m32"] if self.force_32bit else []
+        self.no_mvscr = args[0].no_msvcr
         self.extra_c_flags = args[0].extra_c_flags.split()
         self.extra_fortran_compile_flags = args[0].extra_fortran_compile_flags.split()
         self.extra_fortran_link_flags = args[0].extra_fortran_link_flags.split()
@@ -151,14 +151,14 @@ class Assimulo_prepare(object):
 
         if self.sundials_with_superlu is not None:
             L.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
-        
+
         if self.no_mvscr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
-            def msvc_runtime_library_mod(): 
+            def msvc_runtime_library_mod():
                 return None
             nd.misc_util.msvc_runtime_library = msvc_runtime_library_mod
             L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
-        
+
         # prevent Fortran to link dynamically
         # Are there any additional flags needed for e.g. MKL, see https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
         def fortran_compiler_flags(self):
@@ -166,14 +166,14 @@ class Assimulo_prepare(object):
             return opt
         from numpy.distutils.fcompiler import intel
         nd.fcompiler.intel.IntelVisualFCompiler.get_flags=fortran_compiler_flags
-        
+
         self.platform = 'linux'
         if 'win' in sys.platform: self.platform = 'win'
-        if 'darwin' in sys.platform: self.platform = 'mac' 
-        
+        if 'darwin' in sys.platform: self.platform = 'mac'
+
         self.is_python3 = True if sys.version_info.major >= 3 else False
         L.debug('Platform {}'.format(self.platform))
-        
+
         if args[0].sundials_home:
             self.incdirs = os.path.join(self.sundialsdir,'include')
             self.libdirs = os.path.join(self.sundialsdir,'lib')
@@ -183,16 +183,16 @@ class Assimulo_prepare(object):
         else:
             self.incdirs = os.path.sep + os.path.join('usr', 'local', 'include')
             self.libdirs = os.path.sep + os.path.join('usr', 'local', 'lib')
-        
+
         self.assimulo_lib = os.path.join('assimulo','lib')
-        
+
         # check packages
         self.check_BLAS()
         self.check_SuperLU()
         self.check_SUNDIALS()
         self.check_LAPACK()
         self.check_MKL()
-        
+
     def _set_directories(self):
         # directory paths
         self.curdir = os.path.dirname(os.path.abspath(__file__))
@@ -207,7 +207,7 @@ class Assimulo_prepare(object):
         self.desMain = os.path.join(self.curdir,"build")
         self.desTests = os.path.join(self.desSrc,"tests")
         self.desTestsSolvers = os.path.join(self.desTests,"solvers")
-        self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
+        self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp))
                                           for thp in self.thirdparty_methods])
         # filelists
         self.fileSrc     = os.listdir("src")
@@ -217,19 +217,19 @@ class Assimulo_prepare(object):
         self.fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
         self.fileMainIncludes = ["README","CHANGELOG", "LICENSE"]
         self.fileTests   = os.listdir("tests")
-        self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
+        self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp)))
                                          for thp in self.thirdparty_methods])
         self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
-        
+
     def create_assimulo_dirs_and_populate(self):
         self._set_directories()
-        
+
         for subdir in ["lib", "solvers", "examples"]:
             self.create_dir(os.path.join(self.build_assimulo,subdir))
         self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
         for pck in self.thirdparty_methods:
             self.create_dir(os.path.join(self.build_assimulo_thirdparty, pck))
-        
+
         self.copy_all_files(self.fileSrc, "src", self.desSrc)
         self.copy_all_files(self.fileLib, "src/lib", self.desLib)
         self.copy_all_files(self.fileSolvers, os.path.join("src","solvers"), self.desSolvers)
@@ -242,7 +242,7 @@ class Assimulo_prepare(object):
         for f in self.filelist_thirdparty.items():
             L.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
             self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
-            try:   
+            try:
                 SH.copy2(os.path.join("thirdparty",f[0],"LICENSE_{}".format(f[0].upper())),self.desLib)
             except IOError:
                 L.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
@@ -259,7 +259,7 @@ class Assimulo_prepare(object):
                     os.remove(dirDel)
                 except:
                     L.debug("Could not remove: "+str(dirDel))
-        
+
         if self.extra_fortran_link_files:
             for extra_fortran_lib in self.extra_fortran_link_files:
                 path_extra_fortran_lib = ctypes.util.find_library(extra_fortran_lib)
@@ -267,7 +267,7 @@ class Assimulo_prepare(object):
                     SH.copy2(path_extra_fortran_lib,self.desSrc)
                 else:
                     L.debug("Could not find Fortran link file: "+str(extra_fortran_lib))
-    
+
     def check_BLAS(self):
         """
         Check if BLAS can be found
@@ -285,7 +285,7 @@ class Assimulo_prepare(object):
                 suffix = ".lib"
             if "mac" in self.platform:
                 suffix = ".dylib"
-                
+
             if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')) and not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+suffix)):
                 L.warning("Could not find BLAS"+msg)
                 L.debug("Could not find BLAS at the given path {}.".format(self.BLASdir))
@@ -319,15 +319,15 @@ class Assimulo_prepare(object):
                 # To make sure that when MKL is found, BLAS and/or LAPACK aren't used
                 self.with_BLAS = False
                 self.with_LAPACK = False
-        
+
     def check_SuperLU(self):
         """
         Check if SuperLU package installed
         """
         self.with_SLU = True
         slu_missing_msg='SUNDIALS&Radau5 will not be compiled with support for SuperLU.'
-        
-        if self.SLUdir != "":    
+
+        if self.SLUdir != "":
             self.SLUincdir = os.path.join(self.SLUdir,'SRC')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.SLUincdir = os.path.join(self.SLUdir,'include')
@@ -340,7 +340,7 @@ class Assimulo_prepare(object):
                 L.debug(slu_missing_msg)
             else:
                 L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
-            
+
             potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
             self.msvcSLU = False
             if not potential_files:
@@ -349,7 +349,7 @@ class Assimulo_prepare(object):
                 potential_files = [f[:-len(msvs_lib_suffix)] for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(msvs_lib_suffix)]
             potential_files.sort(reverse=True)
             L.debug("Potential SuperLU files: "+str(potential_files))
-            
+
             self.superLUFiles = []
             for f in potential_files:
                 if "superlu" in f:
@@ -358,19 +358,19 @@ class Assimulo_prepare(object):
                 #    self.superLUFiles.append(f)
                 if "blas" in f:
                     self.superLUFiles.append(f)
-                    
+
             #if self.with_BLAS:
             #    self.superLUFiles.append(self.BLASname)
-            
+
             L.debug("SuperLU files: "+str(self.superLUFiles))
-            
+
         else:
             L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
             L.debug("No path to SuperLU supplied, SUNDIALS&Radau5 will not be compiled with support for SuperLU.")
             L.debug("usage: --superlu-home=path")
             L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
             self.with_SLU = False
-    
+
     def check_SUNDIALS(self):
         """
         Check if Sundials installed
@@ -425,7 +425,7 @@ class Assimulo_prepare(object):
                 else:
                     sundials_version = (2,5,0)
                     L.debug('SUNDIALS 2.5 found.')
-                
+
             self.SUNDIALS_version = sundials_version
             self.SUNDIALS_vector_size = sundials_vector_type_size
             self.sundials_with_superlu = sundials_with_superlu
@@ -433,12 +433,12 @@ class Assimulo_prepare(object):
             self.sundials_cvode_with_rtol_vec = sundials_cvode_with_rtol_vec
             if not self.sundials_with_superlu:
                 L.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
-        else:    
-            L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
+        else:
+            L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+
                     "to see that it actually points to Sundials.").format(self.sundialsdir))
             L.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
             self.with_SUNDIALS=False
-            
+
     def check_LAPACK(self):
         """
         Check if LAPACK installed
@@ -464,23 +464,23 @@ class Assimulo_prepare(object):
             L.debug("usage: --lapack-home=path")
             L.debug("Note: the path required is to where the static library lib is found")
             self.with_LAPACK = False
-            
+
     def cython_extensionlists(self):
         extra_link_flags = self.static_link_gcc + self.flag_32bit
-        
-        # Cythonize main modules 
-        ext_list = cythonize([os.path.join("assimulo", "explicit_ode.pyx")], 
+
+        # Cythonize main modules
+        ext_list = cythonize([os.path.join("assimulo", "explicit_ode.pyx")],
                              include_path=[".", "assimulo"], force = True)
         ext_list[-1].include_dirs += ["assimulo", self.incdirs]
         ext_list[-1].sources += [os.path.join("assimulo", "ode_event_locator.c")]
 
         remaining_pyx = ["algebraic", "implicit_ode", "ode", "problem", "special_systems", "support"]
-        ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx], 
+        ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx],
                               include_path=[".", "assimulo"], force = True)
 
         # Cythonize Solvers
         # Euler
-        ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")], 
+        ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")],
                               include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
 
         # SUNDIALS
@@ -490,12 +490,12 @@ class Assimulo_prepare(object):
                                 'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size,
                                 'SUNDIALS_CVODE_RTOL_VEC': self.sundials_cvode_with_rtol_vec}
             #CVode and IDA
-            ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
+            ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"],
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
                                  compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
-            
+
             if self.SUNDIALS_version >= (3,0,0):
                 ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas", "sundials_sunlinsoldense", "sundials_sunlinsolspgmr", "sundials_sunmatrixdense", "sundials_sunmatrixsparse"]
             else:
@@ -503,19 +503,19 @@ class Assimulo_prepare(object):
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
                 if self.SUNDIALS_version >= (3,0,0):
                     ext_list[-1].libraries.extend(["sundials_sunlinsolsuperlumt"])
-                
+
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
-        
+
             #Kinsol
-            ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
+            ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"],
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
                         compile_time_env=compile_time_env, force=True)
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            
+
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
@@ -575,7 +575,7 @@ class Assimulo_prepare(object):
 
         for el in ext_list:
             if self.is_python3:
-                el.cython_directives = {"language_level": 3} 
+                el.cython_directives = {"language_level": 3}
             el.extra_link_args += extra_link_flags
         return ext_list
 
@@ -592,31 +592,31 @@ class Assimulo_prepare(object):
 
         extraargs['extra_f77_compile_args'] = extra_fortran_compile_flags[:]
         extraargs['extra_f90_compile_args'] = extra_fortran_compile_flags[:]
-    
+
         #Hairer
         sources='assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.f','assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+'{0}.pyf'
         config.add_extension('assimulo.lib.dopri5', sources=[s.format('dopri5') for s in sources], **extraargs)
         config.add_extension('assimulo.lib.rodas', sources=[s.format('rodas_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
         config.add_extension('assimulo.lib.radau5', sources=[s.format('radau_decsol') for s in sources], include_dirs=[np.get_include()],**extraargs)
-                             
+
         radar_list=['contr5.f90', 'radar5_int.f90', 'radar5.f90', 'dontr5.f90', 'decsol.f90', 'dc_decdel.f90', 'radar5.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'hairer'+os.sep+code for code in radar_list]
         config.add_extension('assimulo.lib.radar5', sources= src, include_dirs=[np.get_include()],**extraargs)
-        
+
         #ODEPACK
         odepack_list = ['opkdmain.f', 'opkda1.f', 'opkda2.f', 'odepack_aux.f90','odepack.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'odepack'+os.sep+code for code in odepack_list]
         config.add_extension('assimulo.lib.odepack', sources= src, include_dirs=[np.get_include()],**extraargs)
-     
+
         #ODASSL
         odassl_list=['odassl.pyf','odassl.f','odastp.f','odacor.f','odajac.f','d1mach.f','daxpy.f','ddanrm.f','ddatrp.f','ddot.f',
                       'ddwats.f','dgefa.f','dgesl.f','dscal.f','idamax.f','xerrwv.f']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'odassl'+os.sep+code for code in odassl_list]
         config.add_extension('assimulo.lib.odassl', sources= src, include_dirs=[np.get_include()],**extraargs)
-    
+
         dasp3_f77_compile_flags = ["-fdefault-double-8","-fdefault-real-8"]
         dasp3_f77_compile_flags += extra_fortran_compile_flags
-        
+
         #NOTE, THERE IS A PROBLEM WITH PASSING F77 COMPILER ARGS FOR NUMPY LESS THAN 1.6.1
         dasp3_list = ['dasp3dp.pyf', 'DASP3.f', 'ANORM.f','CTRACT.f','DECOMP.f', 'HMAX.f','INIVAL.f','JACEST.f','PDERIV.f','PREPOL.f','SOLVE.f','SPAPAT.f']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'dasp3'+os.sep+code for code in dasp3_list]
@@ -624,22 +624,22 @@ class Assimulo_prepare(object):
                               sources= src,
                               include_dirs=[np.get_include()], extra_link_args=extra_link_flags[:],extra_f77_compile_args=dasp3_f77_compile_flags[:],
                               extra_compile_args=extra_compile_flags[:],extra_f90_compile_args=extra_fortran_compile_flags[:])
-    
+
         #GLIMDA
         glimda_list = ['glimda_complete.f','glimda_complete.pyf']
         src=['assimulo'+os.sep+'thirdparty'+os.sep+'glimda'+os.sep+code for code in glimda_list]
         if self.with_BLAS and self.with_LAPACK:
             extraargs_glimda={'extra_link_args':extra_link_flags[:], 'extra_compile_args':extra_compile_flags[:], 'library_dirs':[self.BLASdir, self.LAPACKdir], 'libraries':['lapack', self.BLASname]}
             extraargs_glimda["extra_f77_compile_args"] = extra_fortran_compile_flags[:]
-            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda) 
+            config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()],**extraargs_glimda)
             extra_link_flags=extra_link_flags[:-2]  # remove LAPACK flags after GLIMDA
         elif self.with_MKL: #assuming windows and Intel fortran compiler
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()], library_dirs=[self.MKLdir], libraries=[self.MKLname])
         else:
             L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
-        
+
         return config.todict()["ext_modules"]
-    
+
 prepare=Assimulo_prepare(args, thirdparty_methods)
 curr_dir=os.getcwd()
 if not os.path.isdir("assimulo"):
@@ -666,7 +666,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "3.4.1" if version_number_arg == "Default" else version_number_arg
+VERSION = "3.4.2" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
@@ -681,24 +681,24 @@ CLASSIFIERS = [ 'Programming Language :: Python',
                 'Operating System :: Unix']
 
 LONG_DESCRIPTION = """
-Assimulo is a Cython / Python based simulation package that allows for 
-simulation of both ordinary differential equations (ODEs), f(t,y), and 
-differential algebraic equations (DAEs), f(t,y,yd). It combines a 
-variety of different solvers written in C, FORTRAN and Python via a 
+Assimulo is a Cython / Python based simulation package that allows for
+simulation of both ordinary differential equations (ODEs), f(t,y), and
+differential algebraic equations (DAEs), f(t,y,yd). It combines a
+variety of different solvers written in C, FORTRAN and Python via a
 common high-level interface.
 
-Assimulo supports Explicit Euler, adaptive Runge-Kutta of 
-order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS 
-(https://computation.llnl.gov/casc/sundials/main.html) solvers CVode 
-(for ODEs) and IDA (for DAEs). Ernst Hairer's 
-(http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
+Assimulo supports Explicit Euler, adaptive Runge-Kutta of
+order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS
+(https://computation.llnl.gov/casc/sundials/main.html) solvers CVode
+(for ODEs) and IDA (for DAEs). Ernst Hairer's
+(http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and
 Dopri5 are also available. For the full list, see the documentation.
 
-Documentation and installation instructions can be found at: 
-http://www.jmodelica.org/assimulo . 
+Documentation and installation instructions can be found at:
+http://www.jmodelica.org/assimulo .
 
-The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
+The package requires Numpy, Scipy and Matplotlib and additionally for
+compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK
 together with a C-compiler and a FORTRAN-compiler.
 """
 
@@ -715,7 +715,7 @@ else:# If it does not, check if the file exists and if not, create the file!
             f.write(VERSION+'\n')
             f.write("unknown")
 
-license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
+license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper())
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]
 L.debug(license_info)
 
@@ -742,4 +742,3 @@ ndc.setup(name=NAME,
 
 if change_dir:
     os.chdir(curr_dir) #Change back to original directory
-
