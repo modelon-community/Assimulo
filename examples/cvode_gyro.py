@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from scipy import *
-from numpy import stack as numpy_hstack
+from numpy import hstack as numpy_hstack
 import nose
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
