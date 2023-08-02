@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Modelon AB
+# Copyright (C) 2010-2023 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from scipy import *
+from numpy import stack as numpy_hstack
 import nose
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
@@ -54,7 +55,7 @@ def run_example(with_plots=True):
         omega=array([pi[0]/I1,pi[1]/I2,pi[2]/I3])
         pid=dot(curl(omega),pi)+f
         Qd=dot(curl(omega),Q)
-        return hstack([pid,Qd.reshape((9,))])
+        return numpy_hstack([pid,Qd.reshape((9,))])
 
     def energi(state):
         energi=[]
@@ -69,7 +70,7 @@ def run_example(with_plots=True):
         return energi
 
     #Initial conditions
-    y0=hstack([[1000.*10,5000.*10,6000*10],eye(3).reshape((9,))])
+    y0=numpy_hstack([[1000.*10,5000.*10,6000*10],eye(3).reshape((9,))])
     
     #Create an Assimulo explicit problem
     exp_mod = Explicit_Problem(f,y0, name="Gyroscope Example")
