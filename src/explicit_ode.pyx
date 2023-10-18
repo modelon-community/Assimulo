@@ -37,8 +37,8 @@ realtype = float
 @cython.wraparound(False)
 cdef void py2c_d(double* dest, object source, int dim):
     """Copy 1D numpy (double) array to (double *) C vector."""
-    if not (isinstance(source, N.ndarray) and source.flags.contiguous and source.dtype == N.float):
-        source = N.ascontiguousarray(source, dtype=N.float)
+    if not (isinstance(source, N.ndarray) and source.flags.contiguous and source.dtype == N.float64):
+        source = N.ascontiguousarray(source, dtype=N.float64)
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <double*>N.PyArray_DATA(source), dim*sizeof(double))
 

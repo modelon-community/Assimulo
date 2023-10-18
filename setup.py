@@ -66,7 +66,7 @@ try:
     from subprocess import Popen, PIPE
     _p = Popen(["svnversion", "."], stdout=PIPE)
     revision = _p.communicate()[0].decode('ascii')
-except:
+except Exception:
     revision = "unknown"
 L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
@@ -257,7 +257,7 @@ class Assimulo_prepare(object):
             if os.path.exists(dirDel):
                 try:
                     os.remove(dirDel)
-                except:
+                except Exception:
                     L.debug("Could not remove: "+str(dirDel))
         
         if self.extra_fortran_link_files:
