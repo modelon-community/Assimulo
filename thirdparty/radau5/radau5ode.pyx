@@ -30,8 +30,8 @@ cdef void py2c_d(double* dest, object source, int dim):
     """
     Copy 1D numpy (double) array to (double *) C vector
     """
-    if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.float):
-        source = np.ascontiguousarray(source, dtype=np.float)
+    if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.float64):
+        source = np.ascontiguousarray(source, dtype=np.float64)
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <double*>PyArray_DATA(source), dim*sizeof(double))
 
@@ -41,7 +41,7 @@ cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     """
     Copy (square) 2D numpy array (order = c) to (double *) C matrix (with Fortran-style column major ordering)
     """
-    cdef np.ndarray[double, ndim=2] source_np = np.array(source, copy=False, dtype = np.float)
+    cdef np.ndarray[double, ndim=2] source_np = np.array(source, copy=False, dtype = np.float64)
     for i in range(ncol):
         for j in range(nrow):
             dest[j + i*nrow] = source_np[j][i]
