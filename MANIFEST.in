@@ -1,6 +1,6 @@
 include CHANGELOG
 include INSTALL
-include README
+include README.md
 include assimulo/*.pxd
 include assimulo/*.pxi
 include assimulo/lib/*.pxd

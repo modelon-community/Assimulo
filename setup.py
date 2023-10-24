@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2010 Modelon AB  
+# Copyright (C) 2010-2023 Modelon AB  
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -214,8 +214,8 @@ class Assimulo_prepare(object):
         self.fileLib     = os.listdir(os.path.join("src","lib"))
         self.fileSolvers = os.listdir(os.path.join("src","solvers"))
         self.fileExamples= os.listdir("examples")
-        self.fileMain    = ["setup.py","README","INSTALL","CHANGELOG","MANIFEST.in"]
-        self.fileMainIncludes = ["README","CHANGELOG", "LICENSE"]
+        self.fileMain    = ["setup.py","README.md","INSTALL","CHANGELOG","MANIFEST.in"]
+        self.fileMainIncludes = ["README.md","CHANGELOG", "LICENSE"]
         self.fileTests   = os.listdir("tests")
         self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
@@ -735,7 +735,7 @@ ndc.setup(name=NAME,
       packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
-      package_data={'assimulo': ['*.pxd', 'version.txt', 'CHANGELOG', 'README', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
+      package_data={'assimulo': ['*.pxd', 'version.txt', 'CHANGELOG', 'README.md', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',
                                 'examples'+os.sep+'kinsol_ors_matrix.mtx'] + (['lib'+os.sep+f for f in prepare.extra_fortran_link_files] if prepare.extra_fortran_link_files else [])},
       script_args=prepare.distutil_args)
 
