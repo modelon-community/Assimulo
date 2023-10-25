@@ -1,12 +1,12 @@
 About
 -------------------
 
-Assimulo is a Cython/Python based simulation package that allows for simulation of both ordinary differential equations of the form $$f(t,\,y)$ (explicit problems) and differential algebraic equations of the form $f(t,\,y,\,y_d)$ (implicit problems).
+Assimulo is a Cython/Python based simulation package that allows for simulation of both ordinary differential equations of the form $f(t,y)$ (explicit problems) and differential algebraic equations of the form $f(t, y, y_d)$ (implicit problems).
 Assimulo currently supports Explicit Euler, adaptive Runge-Kutta of order 4 and Runge-Kutta of order 4.
 Assimulo also wraps the popular [SUNDIALS](https://computation.llnl.gov/casc/sundials/main.html) solvers CVode (for explicit problems) and IDA (for implicit problems).
 [Hairer's](http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and Dopri5 is also available.
 
-CVode and IDA supports discontinuous systems of the form $f(t,\,y,\,s_w)$ and $f(t,\,y,\,y_d,\,s_w)$ with event(root)-functions defined as $g(t,\,y,\,s_w)$ and $g(t,\,y,\,y_d,\,s_w)$ where $s_w$ should be fixed during the integration.
+CVode and IDA supports discontinuous systems of the form $f(t, y, s_w)$ and $f(t, y, y_d, s_w)$ with event(root)-functions defined as $g(t, y, s_w)$ and $g(t, y, y_d, s_w)$ where $s_w$ should be fixed during the integration.
 
 The package comes with a Problem specifications class and subclasses corresponding to different types of problems. Choices are `Implicit_Problem` and `Explicit_Problem`.
 To define and solve a problem, first import the solver of choice and the appropriate `Implicit`/`Explicit` class. Furthermore, define your function $f$ and the initial conditions to pass to the problem class constructor. Then, create your solver, set the attributes
