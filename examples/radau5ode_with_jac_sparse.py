@@ -54,9 +54,9 @@ def run_example(with_plots=True):
     #Defines the Jacobian
     def jac(t,y):
         
-        colptrs = [0,3,6,9]
-        rowvals = [0, 1, 2, 0, 1, 2, 0, 1, 2]
-        data = [-0.04, 0.04, 0.0, 1e4*y[2], -1e4*y[2]-6e7*y[1], 6e7*y[1], 1e4*y[1], -1e4*y[1], 0.0]
+        colptrs = [0,2,5,7]
+        rowvals = [0, 1, 0, 1, 2, 0, 1]
+        data = [-0.04, 0.04, 1e4*y[2], -1e4*y[2]-6e7*y[1], 6e7*y[1], 1e4*y[1], -1e4*y[1]]
 
         J = SP.csc_matrix((data, rowvals, colptrs))
         return J
@@ -67,7 +67,7 @@ def run_example(with_plots=True):
     exp_mod = Explicit_Problem(f, y0, name = 'Example using analytic (sparse) Jacobian')
     
     exp_mod.jac = jac #Sets the Jacobian
-    exp_mod.jac_nnz = 9
+    exp_mod.jac_nnz = 7
    
     
     exp_sim = Radau5ODE(exp_mod) #Create a Radau5 solver
