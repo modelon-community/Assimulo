@@ -1112,7 +1112,7 @@ class Test_IDA:
         mod = Implicit_Problem(f,[1.0],[1.0])
         mod.time_events = time_events
         mod.handle_event = handle_event
-        mod.switches0 = [True, True]
+        mod.sw0 = [True, True]
         
         sim = IDA(mod)
         
@@ -1120,11 +1120,7 @@ class Test_IDA:
 
         nose.tools.assert_almost_equal(sim.y_sol[38], 1.0000000, 5)
         nose.tools.assert_almost_equal(sim.y_sol[87], 1.0000000, 5)
-        
-        sim = IDA(mod, [1.0],[1.0])
-        sim.simulate(2.0)
-        
-        nose.tools.assert_almost_equal(sim.t_sol[-1], 2.0000000, 5)
+        nose.tools.assert_almost_equal(sim.t_sol[-1], 5.0000000, 5)
     
     @testattr(stddist = True)
     def test_clear_event_log(self):
