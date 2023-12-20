@@ -18,8 +18,8 @@
 import numpy as N
 import sys
 
-from assimulo.exception import *
-from assimulo.ode import *
+from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
+from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
 
 from assimulo.explicit_ode import Implicit_ODE
 

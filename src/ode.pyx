@@ -22,7 +22,7 @@ from timeit import default_timer as timer
 import itertools
 import multiprocessing
 
-from exception import *
+from exception import ODE_Exception, AssimuloException
 from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
 from support import Statistics
 
@@ -345,7 +345,7 @@ cdef class ODE:
     def _set_verbosity(self, verb):
         try:
             self.options["verbosity"] = int(verb)
-        except:
+        except Exception:
             raise AssimuloException("Verbosity must be an integer.")
     
     def _get_verbosity(self):

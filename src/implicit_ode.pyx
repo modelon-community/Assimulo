@@ -24,7 +24,7 @@ import sys
 import numpy as N
 cimport numpy as N
 
-from exception import *
+from exception import TerminateSimulation, TimeLimitExceeded
 from timeit import default_timer as timer
 import warnings
 

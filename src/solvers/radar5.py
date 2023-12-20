@@ -16,16 +16,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import scipy as S
-import scipy.linalg as LIN
-import copy
+import pylab as P
 import sys
 
-from assimulo.exception import *
-from assimulo.ode import *
-
+from assimulo.ode import NORMAL, ID_PY_COMPLETE, ID_PY_EVENT
 from assimulo.explicit_ode import Explicit_ODE
-from assimulo.implicit_ode import Implicit_ODE
 
 try:
     from assimulo.lib import radar5
@@ -274,9 +269,9 @@ class Radar5ODE(Explicit_ODE):
 #        print IWORK
         
         #Dummy methods
-        mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self.Fjac
-        jaclag_dummy = (lambda t:x) if not self.usejaclag else self.problem.jaclag
+        mas_dummy = lambda t:t
+        jac_dummy = (lambda t:t) if not self.usejac else self.Fjac
+        jaclag_dummy = (lambda t:t) if not self.usejaclag else self.problem.jaclag
         nlags = 0 if not self.usejaclag else self.problem.nlags
         njacl = 0 if not self.usejaclag else self.problem.njacl
         
@@ -681,7 +676,7 @@ class Radar5ODE(Explicit_ODE):
     
     def _set_usejaclag(self, jaclag):
         self.options["usejaclag"] = bool(jaclag)
-    def _get_usejaclag(self, jaclag):
+    def _get_usejaclag(self):
         return self.options["usejaclag"]
     usejaclag = property(_get_usejaclag,_set_usejaclag)
     
@@ -878,7 +873,7 @@ class Radar5ODE(Explicit_ODE):
         if (self.options["mxst"] < 1):
             raise Radar_Exception("mxst must be a positive integer.")
 
-        mxst = property(_get_mxst, _set_mxst)
+    mxst = property(_get_mxst, _set_mxst)
         
     def _set_usejaclag(self, jaclag):
         self.options["usejaclag"] = bool(jaclag)
@@ -903,4 +898,4 @@ class Radar5ODE(Explicit_ODE):
         """
         return self.options["usejaclag"]
     
-    usejaclag = property(_get_usejaclag,_set_usejaclag)
+    usejaclag = property(_get_usejaclag, _set_usejaclag)

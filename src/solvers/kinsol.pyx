@@ -24,7 +24,6 @@ N.import_array()
 import numpy.linalg
 import traceback 
  
-from assimulo.exception import * 
 from assimulo.algebraic cimport Algebraic
 
 cimport sundials_includes as SUNDIALS
@@ -678,7 +677,7 @@ cdef class KINSOL(Algebraic):
     
     def _set_globalization_strategy(self, lsolver):
         if lsolver.upper() == "LINESEARCH":
-            self.options["strategy"] = KIN_LINSEARCH
+            self.options["strategy"] = KIN_LINESEARCH
         elif lsolver.upper() == "NONE":
             self.options["strategy"] = KIN_NONE
         else:
@@ -700,7 +699,7 @@ cdef class KINSOL(Algebraic):
     def _set_max_krylov(self, max_krylov):
         try:
             self.options["max_krylov"] = int(max_krylov)
-        except:
+        except Exception:
             raise Exception("Maximum number of krylov dimension should be an integer.")
         if self.options["max_krylov"] < 0:
             raise Exception("Maximum number of krylov dimension should be an positive integer.")

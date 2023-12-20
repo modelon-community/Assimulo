@@ -103,7 +103,7 @@ cdef class cImplicit_Problem(cProblem):
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
             res[:] = self.res(t,y,yd)
-        except:
+        except Exception:
             return ID_FAIL
         return ID_OK
         
@@ -132,7 +132,7 @@ cdef class cOverdetermined_Problem(cProblem):
     cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
         try:
             res[:] = self.res(t,y,yd)
-        except:
+        except Exception:
             return ID_FAIL
         return ID_OK
     
@@ -161,7 +161,7 @@ cdef class cExplicit_Problem(cProblem):
     cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
         try:
             yd[:] = self.rhs(t,y)
-        except:
+        except Exception:
             return ID_FAIL
         return ID_OK
         

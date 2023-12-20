@@ -1140,7 +1140,7 @@ class Test_Explicit_Radau5:
         try:
             sim.simulate(1.0)
             assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except:
+        except Exception:
             pass
             
         found_data = False

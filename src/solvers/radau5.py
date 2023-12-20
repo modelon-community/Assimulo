@@ -357,7 +357,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         IOUT  = 1 #solout is called after every step
         
         #Dummy methods
-        jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
+        jac_dummy = (lambda t:t) if not self.usejac else self._jacobian
         
         #Check for initialization
         if opts["initialize"]:
@@ -1151,8 +1151,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         IWORK[9] = self._leny #M2
         
         #Dummy methods
-        mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self.problem.jac
+        mas_dummy = lambda t:t
+        jac_dummy = (lambda t:t) if not self.usejac else self.problem.jac
         
         #Check for initialization
         if opts["initialize"]:
@@ -1586,7 +1586,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 Z = N.dot(self.T3,W) #Calculate the new Z values
                 
                 if self._fac_con*newnrm <= self.fnewt: #Convergence?
-                    self._itfail = False;
+                    self._itfail = False
                     break
                 
             else: #Iteration failed

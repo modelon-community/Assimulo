@@ -19,9 +19,7 @@ import numpy as N
 cimport numpy as N
 from timeit import default_timer as timer
 
-import itertools
-
-from exception import *
+from exception import Algebraic_Exception, AssimuloException
 from problem import Algebraic_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
@@ -129,7 +127,7 @@ cdef class Algebraic:
     def _set_verbosity(self, verb):
         try:
             self.options["verbosity"] = int(verb)
-        except:
+        except Exception:
             raise AssimuloException("Verbosity must be an integer.")
     
     def _get_verbosity(self):

@@ -16,12 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import scipy as S
-import scipy.linalg as LIN
 
 from assimulo.problem import SingPerturbed_Problem
-from assimulo.exception import *
-from assimulo.ode import *
+from assimulo.exception import Explicit_ODE_Exception, DASP3_Exception
+from assimulo.ode import NORMAL, ID_PY_COMPLETE
 
 from assimulo.explicit_ode import Explicit_ODE
 

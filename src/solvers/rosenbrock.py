@@ -18,10 +18,10 @@
 import numpy as N
 import scipy.sparse as sp
 
-from assimulo.ode import *
+from assimulo.ode import NORMAL, ID_PY_EVENT, ID_PY_COMPLETE
 from assimulo.explicit_ode import Explicit_ODE
 
-from assimulo.exception import *
+from assimulo.exception import Rodas_Exception
 from assimulo.support import set_type_shape_array
 
 from assimulo.lib import rodas
@@ -346,7 +346,7 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         
         if self.problem_info["state_events"]:
             flag, t, y = self.event_locator(told, t, y)
-            #Convert to Fortram indicator.
+            #Convert to Fortran indicator.
             if flag == ID_PY_EVENT: irtrn = -1
         
         if self._opts["report_continuously"]:
@@ -411,9 +411,9 @@ class RodasODE(Rodas_Common, Explicit_ODE):
         IWORK[0] = self.maxsteps
         
         #Dummy methods
-        mas_dummy = lambda t:x
-        jac_dummy = (lambda t:x) if not self.usejac else self._jacobian
-        dfx_dummy = lambda t:x
+        mas_dummy = lambda t:t
+        jac_dummy = (lambda t:t) if not self.usejac else self._jacobian
+        dfx_dummy = lambda t:t
         
         #Check for initialization
         if opts["initialize"]:

@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cython
-
+from assimulo.exception import AssimuloRecoverableError
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
     """
@@ -37,7 +37,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
                 rhs = (<object>pData.RHS)(t,y,sw=<list>pData.sw, p=p)
             else:
                 rhs = (<object>pData.RHS)(t,y,p)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         
     else: #No sensitivity
@@ -46,7 +46,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
                 rhs = (<object>pData.RHS)(t,y,<list>pData.sw)
             else:
                 rhs = (<object>pData.RHS)(t,y)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
     
     for i in range(pData.dim):
@@ -82,7 +82,7 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
         return CV_SUCCESS
     except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return CV_REC_ERR
-    except:
+    except Exception:
         traceback.print_exc()
         return CV_UNREC_RHSFUNC_ERR 
 
@@ -138,7 +138,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
             return CVDLS_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-        except:
+        except Exception:
             traceback.print_exc()
             return CVDLS_JACFUNC_UNRECVR
 ELSE:
@@ -205,7 +205,7 @@ ELSE:
             return CVDLS_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-        except:
+        except Exception:
             traceback.print_exc()
             return CVDLS_JACFUNC_UNRECVR
 
@@ -234,7 +234,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y,p)
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-            except:
+            except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         else:
@@ -245,7 +245,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y)
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-            except:
+            except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         
@@ -284,7 +284,7 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y,p)
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-            except:
+            except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         else:
@@ -295,7 +295,7 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y)
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-            except:
+            except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
                 
@@ -341,7 +341,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
             return SPGMR_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
-        except:
+        except Exception:
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC 
     else:
@@ -357,7 +357,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
             return SPGMR_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
-        except:
+        except Exception:
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
 
@@ -375,7 +375,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         
         try:
             ret = (<object>pData.PREC_SETUP)(t,y,fy,jok,gamma,pData.PREC_DATA)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         
         jcurPtr[0] = 1 if ret[0] else 0
@@ -399,7 +399,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
 
         try:
             zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta,pData.PREC_DATA)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
                     
         for i in range(pData.dim):
@@ -422,7 +422,7 @@ ELSE:
         
         try:
             ret = (<object>pData.PREC_SETUP)(t,y,fy,jok,gamma,pData.PREC_DATA)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         
         jcurPtr[0] = 1 if ret[0] else 0
@@ -446,7 +446,7 @@ ELSE:
 
         try:
             zres = (<object>pData.PREC_SOLVE)(t,y,fy,r,gamma,delta,pData.PREC_DATA)
-        except:
+        except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
                     
         for i in range(pData.dim):
@@ -475,7 +475,7 @@ cdef int cv_prec(realtype t, N Vector yv, N Vector fyv,
             zptr[i] = zres[i]
         
         return SPGMR_SUCCESS
-    except:
+    except Exception:
         return SPGMR_PSOLVE_FAIL_UNREC
 """
 
@@ -501,7 +501,7 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout,  void* problem_data):
             gout[i]=root[i]
     
         return CV_SUCCESS
-    except:
+    except Exception:
         return CV_RTFUNC_FAIL  # Unrecoverable Error
 
 cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, void* problem_data):
@@ -534,7 +534,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             return IDA_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
-        except:
+        except Exception:
             traceback.print_exc()
             return IDA_RES_FAIL
     else: #NO SENSITIVITY
@@ -552,7 +552,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             return IDA_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
-        except:
+        except Exception:
             traceback.print_exc()
             return IDA_RES_FAIL
 
@@ -589,7 +589,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 return IDADLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
-            except:
+            except Exception:
                 traceback.print_exc()
                 return IDADLS_JACFUNC_UNRECVR
         else:
@@ -606,7 +606,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 return IDADLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
-            except:
+            except Exception:
                 traceback.print_exc()
                 return IDADLS_JACFUNC_UNRECVR
 ELSE:
@@ -641,7 +641,7 @@ ELSE:
                 return IDADLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
-            except:
+            except Exception:
                 traceback.print_exc()
                 return IDADLS_JACFUNC_UNRECVR
         else:
@@ -658,7 +658,7 @@ ELSE:
                 return IDADLS_SUCCESS
             except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
-            except:
+            except Exception:
                 traceback.print_exc()
                 return IDADLS_JACFUNC_UNRECVR
             
@@ -688,7 +688,7 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout,  void
             gout[i]=root[i]
         
         return IDA_SUCCESS
-    except:
+    except Exception:
         return IDA_RTFUNC_FAIL  # Unrecoverable Error
 
 cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv, N_Vector Jv, realtype cj,
@@ -720,7 +720,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
             return SPGMR_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
-        except:
+        except Exception:
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC 
     else:
@@ -736,7 +736,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
             return SPGMR_SUCCESS
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
-        except:
+        except Exception:
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
 

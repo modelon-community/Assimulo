@@ -17,10 +17,9 @@
 
 import numpy as N
 
-from assimulo.ode import *
+from assimulo.ode import ID_PY_EVENT, ID_PY_COMPLETE, NORMAL, ID_PY_OK
 from assimulo.explicit_ode import Explicit_ODE
-
-from assimulo.exception import *
+from assimulo.exception import Dopri5_Exception, Explicit_ODE_Exception, AssimuloException
 
 from assimulo.lib import dopri5
 
@@ -480,7 +479,7 @@ class RungeKutta34(Explicit_ODE):
             def f(dy ,t, y): 
                 try:
                     dy[:] = self.problem.rhs(t, y, self.sw)
-                except:
+                except Exception:
                     return False
                 return True
             self.f = f
@@ -815,7 +814,7 @@ class RungeKutta4(Explicit_ODE):
     def _set_h(self,h):
         try:
             self.options["h"] = float(h)
-        except:
+        except Exception:
             raise AssimuloException("Step-size must be a (scalar) float.")
     
     def _get_h(self):

@@ -18,8 +18,8 @@
 import numpy as N
 import sys
 
-from assimulo.exception import *
-from assimulo.ode import *
+from assimulo.exception import GLIMDA_Exception
+from assimulo.ode import ID_PY_COMPLETE, NORMAL
 
 from assimulo.implicit_ode import Implicit_ODE
 
@@ -158,9 +158,9 @@ class GLIMDA(Implicit_ODE):
         ROPT[10]= 0.0 #Minimum condition number
         
         #Dummy methods
-        dfdy_dummy = lambda t:x #df/dy
-        dfdx_dummy = lambda t:x #df/dx
-        dqdx_dummy = lambda t:x #dq/dx
+        dfdy_dummy = lambda t:t #df/dy
+        dfdx_dummy = lambda t:t #df/dx
+        dqdx_dummy = lambda t:t #dq/dx
         qeval_dummy = lambda x,t:x #q(x,t)
         res_dummy = lambda yd,y,t:self.problem.res(t,y,yd) #Needed to correct the order of the arguments
 

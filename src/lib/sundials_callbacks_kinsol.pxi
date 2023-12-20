@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cython
+from assimulo.exception import AssimuloRecoverableError
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int kin_jac(N_Vector xv, N_Vector fval, SUNMatrix Jac, 
@@ -39,7 +40,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     col_i[j] = jac[j,i]
 
             return KINDLS_SUCCESS
-        except:
+        except Exception:
             return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 ELSE:
     cdef int kin_jac(long int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
@@ -62,7 +63,7 @@ ELSE:
                     col_i[j] = jac[j,i]
 
             return KINDLS_SUCCESS
-        except:
+        except Exception:
             return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             
 cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
@@ -83,7 +84,7 @@ cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
         return SPGMR_SUCCESS
     except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return SPGMR_ATIMES_FAIL_REC
-    except:
+    except Exception:
         traceback.print_exc()
         return SPGMR_PSOLVE_FAIL_UNREC 
     
@@ -105,7 +106,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
         return KIN_SUCCESS
     except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
-    except:
+    except Exception:
         traceback.print_exc()
         return KIN_SYSFUNC_FAIL
 
@@ -132,7 +133,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
             zres = (<object>pData.PREC_SOLVE)(r)
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
-        except:
+        except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
                     
@@ -157,7 +158,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
-        except:
+        except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
         
@@ -186,7 +187,7 @@ ELSE:
             zres = (<object>pData.PREC_SOLVE)(r)
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
-        except:
+        except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
                     
@@ -211,7 +212,7 @@ ELSE:
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
         except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
-        except:
+        except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
         

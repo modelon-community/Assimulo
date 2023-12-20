@@ -35,6 +35,6 @@ try:
     with open(_fpath, 'r') as f:
         __version__=f.readline().strip()
         __revision__=f.readline().strip()
-except:
+except Exception:
     __version__ = "unknown"
     __revision__ = "unknown"
