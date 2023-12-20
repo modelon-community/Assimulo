@@ -59,7 +59,7 @@ parser.add_argument("--version", help='Package version number', default='Default
 args = parser.parse_known_args()
 version_number_arg = args[0].version
 
-logging.basicConfig(level=getattr(L,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
+logging.basicConfig(level=getattr(logging,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
 logging.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
 try:
     from subprocess import Popen, PIPE
