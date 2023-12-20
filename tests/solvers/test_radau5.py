@@ -1482,6 +1482,20 @@ class Test_Implicit_Radau5:
             sim.simulate(1.)
 
     @testattr(stddist = True)
+    def test_keyboard_interrupt_fcn(self):
+        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
+
+        y0 = N.array([1., 1.])
+        yd = N.array([0., 0.])
+        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
+        prob = Implicit_Problem(aux.f_impl, y0, yd)
+        sim = Radau5DAE(prob)
+
+        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
+        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
+            sim.simulate(1.)
+
+    @testattr(stddist = True)
     def test_too_close_time_events(self):
         """Test of problem with too close time-events."""
         prob = TimeEventProblemImpl()
@@ -1489,7 +1503,7 @@ class Test_Implicit_Radau5:
 
         tfinal = 5
         expected_events = 3
-        t, y = sim.simulate(tfinal)
+        t, y, yd = sim.simulate(tfinal)
         assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
         assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
@@ -1635,20 +1649,6 @@ class Test_Implicit_Radau5_Py:
         nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
 
     @testattr(stddist = True)
-    def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
-
-        y0 = N.array([1., 1.])
-        yd = N.array([0., 0.])
-        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
-        prob = Implicit_Problem(aux.f_impl, y0, yd)
-        sim = _Radau5DAE(prob)
-
-        err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
-            sim.simulate(1.)
-
-    @testattr(stddist = True)
     def test_too_close_time_events(self):
         """Test of problem with too close time-events."""
         prob = TimeEventProblemImpl()
@@ -1656,7 +1656,7 @@ class Test_Implicit_Radau5_Py:
 
         tfinal = 5
         expected_events = 3
-        t, y = sim.simulate(tfinal)
+        t, y, yd = sim.simulate(tfinal)
         assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
         assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 

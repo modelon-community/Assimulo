@@ -1264,7 +1264,7 @@ class Test_IDA:
         #nose.tools.assert_equal(self.simulator.algvar[2], vector[2])
     
     @testattr(stddist = True)
-    def test_time_event(self):
+    def test_time_event_2(self):
         f = lambda t,y,yd: y-yd
         global tnext
         global nevent
@@ -1395,7 +1395,7 @@ class Test_IDA:
 
         tfinal = 5
         expected_events = 3
-        t, y = sim.simulate(tfinal)
+        t, y, yd = sim.simulate(tfinal)
         assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
         assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
