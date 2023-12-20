@@ -203,7 +203,15 @@ cdef class Implicit_ODE(ODE):
             if REPORT_CONTINUOUSLY and self.options["clock_step"]: 
                 self.clock_start = timer()
                 
-            [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
+            # skip simulation if next time-event is too close
+            if TIME_EVENT and abs(self.t - tevent) < eps*self.t:
+                flag = ID_COMPLETE
+                self.t = tevent
+                tlist = [tevent]
+                ylist = [self.y]
+                ydlist = [self.yd]
+            else:
+                [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
 
             #Store data if not done in report_solution
             if REPORT_CONTINUOUSLY is False and len(tlist) > 0:
@@ -496,6 +504,3 @@ cdef class OverdeterminedDAE(Implicit_ODE):
     def check_instance(self):
         if not isinstance(self.problem, Overdetermined_Problem) and not isinstance(self.problem, Implicit_Problem):
             raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem or of Implicit_Problem.')
-
-        
-

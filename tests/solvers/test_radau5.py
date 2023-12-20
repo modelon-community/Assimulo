@@ -128,7 +128,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -164,6 +164,42 @@ class Extended_Problem(Explicit_Problem):
         """
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
+
+class TimeEventProblemBase:
+    """Test problem with too close time-events."""
+    y0 = N.array([0.])
+    yd0 = N.array([1.])
+    event_times = [1.0, N.nextafter(1.0, 2.0), 2.0]
+    tnext = 0.0
+
+    def _rhs(self, t, y):
+        return self.yd0
+    
+    def _time_events(self, t):
+        for ev in self.event_times:
+            if t < ev:
+                tnext = ev
+                break
+            else:
+                tnext = None
+        return tnext
+    
+    def handle_event(self, solver, event_info):
+        solver.y += 1.0
+        
+class TimeEventProblemExpl(TimeEventProblemBase, Explicit_Problem):
+    def rhs(self,t,y):
+        return self._rhs(t, y)
+    
+    def time_events(self, t, y, sw):
+        return self._time_events(t)
+    
+class TimeEventProblemImpl(TimeEventProblemBase, Implicit_Problem):
+    def res(self, t, y, yd):
+        return yd - self._rhs(t, y)
+    
+    def time_events(self, t, y, yd, sw):
+        return self._time_events(t)
 
 class Test_Explicit_Radau5_Py:
     """
@@ -423,6 +459,18 @@ class Test_Explicit_Radau5_Py:
         err_msg = "atol must be of length one or same as the dimension of the problem."
         with nose.tools.assert_raises_regex(Radau_Exception, err_msg):
             self.sim.atol = [1e-6,1e-6,1e-6]
+
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemExpl()
+        sim = _Radau5ODE(prob)
+
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
         
 class Test_Explicit_Radau5:
     """
@@ -1140,7 +1188,7 @@ class Test_Explicit_Radau5:
         try:
             sim.simulate(1.0)
             assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except:
+        except Exception:
             pass
             
         found_data = False
@@ -1149,6 +1197,18 @@ class Test_Explicit_Radau5:
                 found_data = True
         
         assert found_data, "No statistics was found to be stored"
+
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemExpl()
+        sim = Radau5ODE(prob)
+
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
 class Test_Implicit_Radau5:
     """
@@ -1417,10 +1477,21 @@ class Test_Implicit_Radau5:
         prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
         sim = Radau5DAE(prob)
 
-        err_msg = f'Repeated unexpected step rejections.'
+        err_msg = 'Repeated unexpected step rejections.'
         with nose.tools.assert_raises_regex(Radau5Error, err_msg):
             sim.simulate(1.)
 
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemImpl()
+        sim = Radau5DAE(prob)
+
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
 class Test_Implicit_Radau5_Py:
     """
@@ -1571,11 +1642,23 @@ class Test_Implicit_Radau5_Py:
         yd = N.array([0., 0.])
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Implicit_Problem(aux.f_impl, y0, yd)
-        sim = Radau5DAE(prob)
+        sim = _Radau5DAE(prob)
 
         err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
         with nose.tools.assert_raises_regex(Radau5Error, re.escape(err_msg)):
             sim.simulate(1.)
+
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemImpl()
+        sim = _Radau5DAE(prob)
+
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
 class Test_Radau_Common:
     """

@@ -77,7 +77,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -113,6 +113,42 @@ class Extended_Problem(Explicit_Problem):
         """
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
+
+class TimeEventProblemBase:
+    """Test problem with too close time-events."""
+    y0 = np.array([0.])
+    yd0 = np.array([1.])
+    event_times = [1.0, np.nextafter(1.0, 2.0), 2.0]
+    tnext = 0.0
+
+    def _rhs(self, t, y):
+        return self.yd0
+    
+    def _time_events(self, t):
+        for ev in self.event_times:
+            if t < ev:
+                tnext = ev
+                break
+            else:
+                tnext = None
+        return tnext
+    
+    def handle_event(self, solver, event_info):
+        solver.y += 1.0
+        
+class TimeEventProblemExpl(TimeEventProblemBase, Explicit_Problem):
+    def rhs(self,t,y):
+        return self._rhs(t, y)
+    
+    def time_events(self, t, y, sw):
+        return self._time_events(t)
+    
+class TimeEventProblemImpl(TimeEventProblemBase, Implicit_Problem):
+    def res(self, t, y, yd):
+        return yd - self._rhs(t, y)
+    
+    def time_events(self, t, y, yd, sw):
+        return self._time_events(t)
 
 class Test_CVode:
     
@@ -879,6 +915,18 @@ class Test_CVode:
         sim.rtol = [1e-6]
         sim.rtol = np.array([1e-6])
 
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemExpl()
+        sim = CVode(prob)
+
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
+
 class Test_IDA:
     
     def setUp(self):
@@ -1339,7 +1387,17 @@ class Test_IDA:
         nose.tools.assert_equal(len(sim.t_sol), sim.statistics["nsteps"] + 1)
         nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
 
+    @testattr(stddist = True)
+    def test_too_close_time_events(self):
+        """Test of problem with too close time-events."""
+        prob = TimeEventProblemImpl()
+        sim = IDA(prob)
 
+        tfinal = 5
+        expected_events = 3
+        t, y = sim.simulate(tfinal)
+        assert abs(y[-1] - (tfinal + expected_events)) < 1e-6, "Solution incorrect"
+        assert sim.get_statistics()['ntimeevents'] == expected_events, "Incorrect number of events"
 
 class Test_Sundials:
     

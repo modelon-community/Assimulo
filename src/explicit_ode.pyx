@@ -206,7 +206,6 @@ cdef class Explicit_ODE(ODE):
         self.time_integration_start = timer()
         
         while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
-
             #Time event function is specified
             if TIME_EVENT == 1:
                 tret = self.problem.time_events(self.t, self.y, self.sw)
@@ -218,7 +217,14 @@ cdef class Explicit_ODE(ODE):
             if REPORT_CONTINUOUSLY and self.options["clock_step"]:
                 self.clock_start = timer()
             
-            flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
+            # skip simulation if next time-event is too close
+            if TIME_EVENT and abs(self.t - tevent) < eps*self.t:
+                flag = ID_COMPLETE
+                self.t = tevent
+                tlist = [tevent]
+                ylist = [self.y]
+            else:
+                flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
             
             #Store data if not done after each step
             if REPORT_CONTINUOUSLY is False and len(tlist) > 0:
