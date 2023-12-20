@@ -17,9 +17,9 @@
 
 import nose
 from assimulo import testattr
-from assimulo.ode import *
+from assimulo.ode import ODE, NORMAL
 from assimulo.problem import Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import AssimuloException
 
 class Test_ODE:
     
