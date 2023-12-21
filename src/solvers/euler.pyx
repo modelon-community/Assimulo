@@ -20,9 +20,8 @@ import numpy as N
 import numpy.linalg as LIN
 import scipy.sparse as sp
 
-#from assimulo.ode import *
 from assimulo.explicit_ode cimport Explicit_ODE
-from assimulo.exception import *
+from assimulo.exception import AssimuloException
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -442,7 +441,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     def _set_h(self,h):
         try:
             self.options["h"] = float(h)
-        except:
+        except Exception:
             raise AssimuloException("Step-size must be a (scalar) float.")
     
     def _get_h(self):
@@ -651,7 +650,7 @@ cdef class ExplicitEuler(Explicit_ODE):
     def _set_h(self,h):
         try:
             self.options["h"] = float(h)
-        except:
+        except Exception:
             raise AssimuloException("Step-size must be a (scalar) float.")
     
     def _get_h(self):

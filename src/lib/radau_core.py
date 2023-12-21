@@ -16,8 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-
-from assimulo.ode import *
+from assimulo.ode import NORMAL
 
 class Radau_Exception(Exception):
     pass

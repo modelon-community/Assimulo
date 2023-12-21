@@ -17,11 +17,9 @@
 
 import numpy as np
 
-from assimulo.ode import *
+from assimulo.ode import ID_PY_EVENT, ID_PY_COMPLETE, NORMAL
 from assimulo.support import set_type_shape_array
 from assimulo.implicit_ode import OverdeterminedDAE
-
-from assimulo.exception import *
 
 from assimulo.lib import odassl
 

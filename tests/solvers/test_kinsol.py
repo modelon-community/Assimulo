@@ -17,9 +17,8 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.kinsol import *
+from assimulo.solvers.kinsol import KINSOL
 from assimulo.problem import Algebraic_Problem
-from assimulo.exception import *
 
 class Test_KINSOL:
     

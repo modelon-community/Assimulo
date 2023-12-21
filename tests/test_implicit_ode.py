@@ -17,9 +17,8 @@
 
 import nose
 from assimulo import testattr
-from assimulo.implicit_ode import *
+from assimulo.implicit_ode import Implicit_ODE
 from assimulo.problem import Implicit_Problem
-from assimulo.exception import *
 
 class Test_Implicit_ODE:
     

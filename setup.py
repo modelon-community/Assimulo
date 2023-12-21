@@ -16,13 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #from distutils.core import setup, Extension
 import numpy as np
-import logging as L
+import logging
 import sys 
 import os
 import shutil as SH
 import ctypes.util
 import argparse
-from os import listdir
 from os.path import isfile, join
 
 def str2bool(v):
@@ -60,15 +59,15 @@ parser.add_argument("--version", help='Package version number', default='Default
 args = parser.parse_known_args()
 version_number_arg = args[0].version
 
-L.basicConfig(level=getattr(L,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
-L.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
+logging.basicConfig(level=getattr(logging,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
+logging.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
 try:
     from subprocess import Popen, PIPE
     _p = Popen(["svnversion", "."], stdout=PIPE)
     revision = _p.communicate()[0].decode('ascii')
 except Exception:
     revision = "unknown"
-L.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
+logging.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
 #If prefix is set, we want to allow installation in a directory that is not on PYTHONPATH
 #and this is only possible with distutils, not setuptools
@@ -81,7 +80,7 @@ try:
     from Cython.Build import cythonize
 except ImportError:
     msg="Please upgrade to a newer Cython version, >= 0.18."
-    L.error(msg)
+    logging.error(msg)
     raise Exception(msg)
 
 #Verify Cython version
@@ -89,10 +88,10 @@ import Cython
 cython_version = Cython.__version__.split(".")
 if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[1] >= '18')):
     msg="Please upgrade to a newer Cython version, >= 0.18."
-    L.error(msg)
+    logging.error(msg)
     raise Exception(msg)
 
-L.debug('Python version used: {}'.format(sys.version.split()[0]))
+logging.debug('Python version used: {}'.format(sys.version.split()[0]))
 
 thirdparty_methods= ["hairer","glimda", "odepack","odassl","dasp3","radau5"] 
 
@@ -108,7 +107,7 @@ class Assimulo_prepare(object):
         if not os.path.isdir(fi):
             SH.copy2(fi, to_dir)
     def copy_all_files(self,file_list, from_dir, to_dir):
-        L.debug('fromdir {}  todir {}'.format(from_dir,to_dir))
+        logging.debug('fromdir {}  todir {}'.format(from_dir,to_dir))
         for f in file_list:
             if from_dir:
                 self.copy_file(os.path.join(from_dir,f),to_dir)
@@ -150,14 +149,14 @@ class Assimulo_prepare(object):
         self.msvcSLU = False
 
         if self.sundials_with_superlu is not None:
-            L.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
+            logging.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
         
         if self.no_mvscr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
                 return None
             nd.misc_util.msvc_runtime_library = msvc_runtime_library_mod
-            L.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
+            logging.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
         
         # prevent Fortran to link dynamically
         # Are there any additional flags needed for e.g. MKL, see https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
@@ -172,7 +171,7 @@ class Assimulo_prepare(object):
         if 'darwin' in sys.platform: self.platform = 'mac' 
         
         self.is_python3 = True if sys.version_info.major >= 3 else False
-        L.debug('Platform {}'.format(self.platform))
+        logging.debug('Platform {}'.format(self.platform))
         
         if args[0].sundials_home:
             self.incdirs = os.path.join(self.sundialsdir,'include')
@@ -240,12 +239,12 @@ class Assimulo_prepare(object):
         self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
 
         for f in self.filelist_thirdparty.items():
-            L.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
+            logging.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
             self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
             try:   
                 SH.copy2(os.path.join("thirdparty",f[0],"LICENSE_{}".format(f[0].upper())),self.desLib)
             except IOError:
-                L.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
+                logging.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
 
         #Delete OLD renamed files
         delFiles = [("lib","sundials_kinsol_core_wSLU.pxd")]
@@ -258,7 +257,7 @@ class Assimulo_prepare(object):
                 try:
                     os.remove(dirDel)
                 except Exception:
-                    L.debug("Could not remove: "+str(dirDel))
+                    logging.debug("Could not remove: "+str(dirDel))
         
         if self.extra_fortran_link_files:
             for extra_fortran_lib in self.extra_fortran_link_files:
@@ -266,7 +265,7 @@ class Assimulo_prepare(object):
                 if path_extra_fortran_lib != None:
                     SH.copy2(path_extra_fortran_lib,self.desSrc)
                 else:
-                    L.debug("Could not find Fortran link file: "+str(extra_fortran_lib))
+                    logging.debug("Could not find Fortran link file: "+str(extra_fortran_lib))
     
     def check_BLAS(self):
         """
@@ -275,9 +274,9 @@ class Assimulo_prepare(object):
         self.with_BLAS = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.BLASdir == "":
-            L.warning("No path to BLAS supplied" + msg)
-            L.debug("usage: --blas-home=path")
-            L.debug("Note: the path required is to where the static library lib is found")
+            logging.warning("No path to BLAS supplied" + msg)
+            logging.debug("usage: --blas-home=path")
+            logging.debug("Note: the path required is to where the static library lib is found")
             self.with_BLAS = False
         else:
             suffix = ".so"
@@ -287,12 +286,12 @@ class Assimulo_prepare(object):
                 suffix = ".dylib"
                 
             if not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+'.a')) and not os.path.exists(os.path.join(self.BLASdir,self.BLASname_t+suffix)):
-                L.warning("Could not find BLAS"+msg)
-                L.debug("Could not find BLAS at the given path {}.".format(self.BLASdir))
-                L.debug("usage: --blas-home=path")
+                logging.warning("Could not find BLAS"+msg)
+                logging.debug("Could not find BLAS at the given path {}.".format(self.BLASdir))
+                logging.debug("usage: --blas-home=path")
                 self.with_BLAS = False
             else:
-                L.debug("BLAS found at "+self.BLASdir)
+                logging.debug("BLAS found at "+self.BLASdir)
                 self.with_BLAS = True
 
     def check_MKL(self):
@@ -302,19 +301,19 @@ class Assimulo_prepare(object):
         self.with_MKL = True
         msg=", disabling support. View more information using --log=DEBUG"
         if self.MKLdir == "":
-            L.warning("No path to MKL supplied" + msg)
-            L.debug("usage: --mkl-home=path")
-            L.debug("Note: the path required is to where the static library lib is found")
+            logging.warning("No path to MKL supplied" + msg)
+            logging.debug("usage: --mkl-home=path")
+            logging.debug("Note: the path required is to where the static library lib is found")
             self.with_MKL = False
         else:
             if not os.path.exists(os.path.join(self.MKLdir,self.MKLname_t+'.a')) and not os.path.exists(os.path.join(self.MKLdir,self.MKLname+'.lib')):
-                L.warning("Could not find MKL"+msg)
-                L.debug("Could not find MKL at the given path {}.".format(self.MKLdir))
-                L.debug("Searched for: {} and {}".format(self.MKLname_t+'.a', self.MKLname+'.lib'))
-                L.debug("usage: --mkl-home=path")
+                logging.warning("Could not find MKL"+msg)
+                logging.debug("Could not find MKL at the given path {}.".format(self.MKLdir))
+                logging.debug("Searched for: {} and {}".format(self.MKLname_t+'.a', self.MKLname+'.lib'))
+                logging.debug("usage: --mkl-home=path")
                 self.with_MKL = False
             else:
-                L.debug("MKL found at "+self.MKLdir)
+                logging.debug("MKL found at "+self.MKLdir)
                 self.with_MKL = True
                 # To make sure that when MKL is found, BLAS and/or LAPACK aren't used
                 self.with_BLAS = False
@@ -334,21 +333,21 @@ class Assimulo_prepare(object):
             self.SLUlibdir = os.path.join(self.SLUdir,'lib')
             if not os.path.exists(os.path.join(self.SLUincdir,'supermatrix.h')):
                 self.with_SLU = False
-                L.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
-                L.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
-                L.debug("usage: --superlu-home path")
-                L.debug(slu_missing_msg)
+                logging.warning("Could not find SuperLU, disabling support. View more information using --log=DEBUG")
+                logging.debug("Could not find SuperLU at the given path {}.".format(self.SLUdir))
+                logging.debug("usage: --superlu-home path")
+                logging.debug(slu_missing_msg)
             else:
-                L.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
+                logging.debug("SuperLU found in {} and {}: ".format(self.SLUincdir, self.SLUlibdir))
             
-            potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
+            potential_files = [remove_prefix(f.rsplit(".",1)[0],"lib") for f in os.listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(".a")]
             self.msvcSLU = False
             if not potential_files:
                 msvs_lib_suffix=".lib"
                 self.msvcSLU = True
-                potential_files = [f[:-len(msvs_lib_suffix)] for f in listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(msvs_lib_suffix)]
+                potential_files = [f[:-len(msvs_lib_suffix)] for f in os.listdir(self.SLUlibdir) if isfile(join(self.SLUlibdir, f)) and f.endswith(msvs_lib_suffix)]
             potential_files.sort(reverse=True)
-            L.debug("Potential SuperLU files: "+str(potential_files))
+            logging.debug("Potential SuperLU files: "+str(potential_files))
             
             self.superLUFiles = []
             for f in potential_files:
@@ -362,13 +361,13 @@ class Assimulo_prepare(object):
             #if self.with_BLAS:
             #    self.superLUFiles.append(self.BLASname)
             
-            L.debug("SuperLU files: "+str(self.superLUFiles))
+            logging.debug("SuperLU files: "+str(self.superLUFiles))
             
         else:
-            L.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
-            L.debug("No path to SuperLU supplied, SUNDIALS&Radau5 will not be compiled with support for SuperLU.")
-            L.debug("usage: --superlu-home=path")
-            L.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
+            logging.warning("No path to SuperLU supplied, disabling support. View more information using --log=DEBUG")
+            logging.debug("No path to SuperLU supplied, SUNDIALS&Radau5 will not be compiled with support for SuperLU.")
+            logging.debug("usage: --superlu-home=path")
+            logging.debug("Note: the path required is to the folder where the folders 'SRC' and 'lib' are found.")
             self.with_SLU = False
     
     def check_SUNDIALS(self):
@@ -377,7 +376,7 @@ class Assimulo_prepare(object):
         """
         if os.path.exists(os.path.join(os.path.join(self.incdirs,'cvodes'), 'cvodes.h')):
             self.with_SUNDIALS=True
-            L.debug('SUNDIALS found.')
+            logging.debug('SUNDIALS found.')
             sundials_version = None
             sundials_vector_type_size = None
             sundials_with_superlu = False
@@ -389,42 +388,42 @@ class Assimulo_prepare(object):
                         for line in f:
                             if "SUNDIALS_PACKAGE_VERSION" in line or "SUNDIALS_VERSION" in line:
                                 sundials_version = tuple([int(f) for f in line.split()[-1][1:-1].split('-dev')[0].split(".")])
-                                L.debug('SUNDIALS %d.%d found.'%(sundials_version[0], sundials_version[1]))
+                                logging.debug('SUNDIALS %d.%d found.'%(sundials_version[0], sundials_version[1]))
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
                             if "SUNDIALS_INT32_T" in line and line.startswith("#define"):
                                 sundials_vector_type_size = "32"
-                                L.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
+                                logging.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
                                 break
                             if "SUNDIALS_INT64_T" in line and line.startswith("#define"):
                                 sundials_vector_type_size = "64"
-                                L.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
+                                logging.debug('SUNDIALS vector type size %s bit found.'%(sundials_vector_type_size))
                                 if self.with_SLU:
-                                    L.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU (or make sure that SuperLU is configured to use the same int size).")
-                                    L.warning("SuperLU may not function properly.")
+                                    logging.warning("It is recommended to set the SUNDIALS_INDEX_TYPE to an 32bit integer when using SUNDIALS together with SuperLU (or make sure that SuperLU is configured to use the same int size).")
+                                    logging.warning("SuperLU may not function properly.")
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
                             if "SUNDIALS_SUPERLUMT" in line and line.startswith("#define"): #Sundials compiled with support for SuperLU
                                 sundials_with_superlu = True
-                                L.debug('SUNDIALS found to be compiled with support for SuperLU.')
+                                logging.debug('SUNDIALS found to be compiled with support for SuperLU.')
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
                             if "SUNDIALS_CVODE_RTOL_VEC" in line and line.startswith("#define"): #Sundials with CVode support for rtol vectors
                                 sundials_cvode_with_rtol_vec = True
-                                L.debug('SUNDIALS found with CVode supporting rtol vectors.')
+                                logging.debug('SUNDIALS found with CVode supporting rtol vectors.')
                                 break
                     if os.path.exists(os.path.join(self.libdirs,'sundials_nvecserial.lib')) and not os.path.exists(os.path.join(self.libdirs,'libsundials_nvecserial.a')):
                         sundials_with_msvc = True
             except Exception as e:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
-                    L.debug('SUNDIALS 2.6 found.')
+                    logging.debug('SUNDIALS 2.6 found.')
                 else:
                     sundials_version = (2,5,0)
-                    L.debug('SUNDIALS 2.5 found.')
+                    logging.debug('SUNDIALS 2.5 found.')
                 
             self.SUNDIALS_version = sundials_version
             self.SUNDIALS_vector_size = sundials_vector_type_size
@@ -432,11 +431,11 @@ class Assimulo_prepare(object):
             self.sundials_with_msvc = sundials_with_msvc
             self.sundials_cvode_with_rtol_vec = sundials_cvode_with_rtol_vec
             if not self.sundials_with_superlu:
-                L.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
+                logging.debug("Could not detect SuperLU support with Sundials, disabling support for SuperLU.")
         else:    
-            L.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
+            logging.warning(("Could not find Sundials, check the provided path (--sundials-home={}) "+ 
                     "to see that it actually points to Sundials.").format(self.sundialsdir))
-            L.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
+            logging.debug("Could not find cvodes.h in " + os.path.join(self.incdirs,'cvodes'))
             self.with_SUNDIALS=False
             
     def check_LAPACK(self):
@@ -447,22 +446,22 @@ class Assimulo_prepare(object):
         self.with_LAPACK=False
         if self.LAPACKdir != "":
             if not os.path.exists(self.LAPACKdir):
-                L.warning('LAPACK directory {} not found'.format(self.LAPACKdir))
+                logging.warning('LAPACK directory {} not found'.format(self.LAPACKdir))
             else:
-                L.debug("LAPACK found at "+self.LAPACKdir)
+                logging.debug("LAPACK found at "+self.LAPACKdir)
                 self.with_LAPACK = True
         else:
             """
             name = ctypes.util.find_library("lapack")
             if name != "":
-                L.debug('LAPACK found in standard library path as {}'.format(name))
+                logging.debug('LAPACK found in standard library path as {}'.format(name))
                 self.with_LAPACK=True
                 self.LAPACKname = name
             else:
             """
-            L.warning("No path to LAPACK supplied" + msg)
-            L.debug("usage: --lapack-home=path")
-            L.debug("Note: the path required is to where the static library lib is found")
+            logging.warning("No path to LAPACK supplied" + msg)
+            logging.debug("usage: --lapack-home=path")
+            logging.debug("Note: the path required is to where the static library lib is found")
             self.with_LAPACK = False
             
     def cython_extensionlists(self):
@@ -636,7 +635,7 @@ class Assimulo_prepare(object):
         elif self.with_MKL: #assuming windows and Intel fortran compiler
             config.add_extension('assimulo.lib.glimda', sources= src,include_dirs=[np.get_include()], library_dirs=[self.MKLdir], libraries=[self.MKLname])
         else:
-            L.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
+            logging.warning("Could not find Blas or Lapack, disabling support for the solver GLIMDA.")
         
         return config.todict()["ext_modules"]
     
@@ -717,7 +716,7 @@ else:# If it does not, check if the file exists and if not, create the file!
 
 license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]
-L.debug(license_info)
+logging.debug(license_info)
 
 import numpy.distutils.core as ndc
 ndc.setup(name=NAME,

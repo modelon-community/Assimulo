@@ -17,7 +17,7 @@
 
 import nose
 from assimulo import testattr
-from assimulo.exception import *
+from assimulo.exception import AssimuloException
 from assimulo.examples import *
 
 class Test_Examples:
@@ -214,7 +214,6 @@ class Test_Examples:
         This tests the class Mechanical_system together with ovstab1 and odassl
         """
         mech_system_pendulum.run_example('ovstab1',with_plots=False,with_test=True)
-        
     
     @testattr(stddist = True)
     def test_lsodar_vanderpol(self):

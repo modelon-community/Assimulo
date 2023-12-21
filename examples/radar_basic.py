@@ -19,10 +19,8 @@
 Created on Tue Feb 21 14:03:12 2012
 @author: tony
 """
-from  scipy       import *
-from matplotlib.pyplot import *
 
-from copy import copy, deepcopy
+import numpy as np
 
 from assimulo.problem import Delay_Explicit_Problem
 from assimulo.solvers import radar5
@@ -44,8 +42,7 @@ class Simple(Delay_Explicit_Problem):
 #        return J
 
     def phi(self, i, t):    # History function for $t \in [-1,0]$
-        return sin(pi*t)
-
+        return np.sin(np.pi*t)
 
 if __name__ == '__main__':
 
@@ -66,10 +63,10 @@ if __name__ == '__main__':
     #tf = 1.1
     
     s = radar5.Radar5ODE(p)
-    s.grid = array([1.0])
-    s.grid = array([0.5, 2.1])
-    s.grid = array([0.7, 1.0, 1.1])
-    s.grid = array([0.7, 1.0, 1.1, 2.5, 3.7, 4.3])
+    s.grid = np.array([1.0])
+    s.grid = np.array([0.5, 2.1])
+    s.grid = np.array([0.7, 1.0, 1.1])
+    s.grid = np.array([0.7, 1.0, 1.1, 2.5, 3.7, 4.3])
     #s.grid = array([0.7, 1.0, 1.1, 1.5, 3.7, 4.4])
     #s.grid = array([0.2, .7, 2.0])
     #s.grid = array([0.2, .7, 1.0, 2.0, 3.0, 4.0, 5.0])
@@ -79,9 +76,3 @@ if __name__ == '__main__':
     s.inith = H
     s.maxsteps = 1000
     t,y = s.simulate(tf)
-    
-    y1 = array(deepcopy(s.y_sol)).reshape(-1)
-    t1 = copy(s.t_sol)
-    
-    past1 = deepcopy(s.past)
-    

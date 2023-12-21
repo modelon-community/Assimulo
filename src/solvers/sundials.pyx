@@ -25,7 +25,7 @@ import numpy.linalg
 import traceback 
 import scipy.sparse as sparse
  
-from assimulo.exception import * 
+from assimulo.exception import AssimuloException
 
 from assimulo.explicit_ode cimport Explicit_ODE 
 from assimulo.implicit_ode cimport Implicit_ODE
@@ -855,7 +855,7 @@ cdef class IDA(Implicit_ODE):
     def _set_lsoff(self, lsoff):
         try:
             self.options["lsoff"] = bool(lsoff)
-        except:
+        except Exception:
             Exception('Unkown input to lsoff, must be a boolean.')
         
     def _get_lsoff(self):
@@ -933,7 +933,7 @@ cdef class IDA(Implicit_ODE):
     def _set_suppress_alg(self,suppress_alg):
         try:
             self.options["suppress_alg"] = bool(suppress_alg)
-        except:
+        except Exception:
             raise AssimuloException("Unkown input to suppress_alg, must be a boolean.")
 
     def _get_suppress_alg(self):
@@ -962,7 +962,7 @@ cdef class IDA(Implicit_ODE):
     def _set_suppress_sens(self,suppress_sens):
         try:
             self.options["suppress_sens"] = bool(suppress_sens)
-        except:
+        except Exception:
             raise AssimuloException("Unkown input to suppress_sens, must be a boolean.")
 
     def _get_suppress_sens(self):
@@ -1090,7 +1090,7 @@ cdef class IDA(Implicit_ODE):
     def _set_max_cor_S(self,maxcorS):
         try:
             self.options["maxcorS"] = int(maxcorS)
-        except:
+        except Exception:
             raise AssimuloException("The maximum nonlinear sensitivity iterations must be a positiv integer.")
     
     def _get_max_cor_S(self):
@@ -1141,7 +1141,7 @@ cdef class IDA(Implicit_ODE):
     def _set_max_h(self,max_h):
         try:
             self.options["maxh"] = float(max_h)
-        except:
+        except Exception:
             raise AssimuloException("Maximal stepsize must be a (scalar) float.")
     
     def _get_max_h(self):
@@ -1388,7 +1388,7 @@ cdef class IDA(Implicit_ODE):
     def _set_external_event_detection(self, event_opt): 
         try: 
             self.options["external_event_detection"] = bool(event_opt) 
-        except: 
+        except Exception: 
             raise AssimuloException("Unkown input to external_event_detection, must be a boolean.") 
              
     def _get_external_event_detection(self): 
@@ -2108,7 +2108,7 @@ cdef class CVode(Explicit_ODE):
                 if opts["report_continuously"]:
                     try:
                         flag_initialize = self.report_solution(t, y, opts)
-                    except:
+                    except Exception:
                         self.store_statistics(CV_TSTOP_RETURN)
                         raise
                     if flag_initialize:
@@ -2803,7 +2803,7 @@ cdef class CVode(Explicit_ODE):
     def _set_max_cor_S(self,maxcorS):
         try:
             self.options["maxcorS"] = int(maxcorS)
-        except:
+        except Exception:
             raise AssimuloException("The maximum nonlinear sensitivity iterations must be a positiv integer.")
     
     def _get_max_cor_S(self):
@@ -2827,7 +2827,7 @@ cdef class CVode(Explicit_ODE):
     def _set_max_cor(self, maxcor):
         try:
             self.options["maxcor"] = int(maxcor)
-        except:
+        except Exception:
             raise AssimuloException("The maximum nonlinear iterations must be a positiv integer.")
     
     def _get_max_cor(self):
@@ -2850,7 +2850,7 @@ cdef class CVode(Explicit_ODE):
     def _set_max_h(self,max_h):
         try:
             self.options["maxh"] = float(max_h)
-        except:
+        except Exception:
             raise AssimuloException("Maximal stepsize must be a (scalar) float.")
     
     def _get_max_h(self):
@@ -2876,7 +2876,7 @@ cdef class CVode(Explicit_ODE):
     def _set_min_h(self,min_h):
         try:
             self.options["minh"] = float(min_h)
-        except:
+        except Exception:
             raise AssimuloException("Minimal stepsize must be a (scalar) float.")
     
     def _get_min_h(self):
@@ -2981,7 +2981,7 @@ cdef class CVode(Explicit_ODE):
     def _set_suppress_sens(self,suppress_sens):
         try:
             self.options["suppress_sens"] = bool(suppress_sens)
-        except:
+        except Exception:
             raise AssimuloException("Unkown input to suppress_sens, must be a boolean.")
 
     def _get_suppress_sens(self):
@@ -3098,7 +3098,7 @@ cdef class CVode(Explicit_ODE):
     def _set_max_krylov(self, maxkrylov):
         try:
             self.options["maxkrylov"] = int(maxkrylov)
-        except:
+        except Exception:
             raise AssimuloException("Maximum number of krylov dimension should be an integer.")
         if self.options["maxkrylov"] < 0:
             raise AssimuloException("Maximum number of krylov dimension should be an positive integer.")
@@ -3192,7 +3192,7 @@ cdef class CVode(Explicit_ODE):
     def _set_external_event_detection(self, event_opt):
         try:
             self.options["external_event_detection"] = bool(event_opt)
-        except:
+        except Exception:
             raise AssimuloException("Unkown input to external_event_detection, must be a boolean.")
         
     def _get_external_event_detection(self):

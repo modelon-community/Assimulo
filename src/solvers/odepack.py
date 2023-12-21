@@ -19,8 +19,8 @@ import numpy as N
 import scipy.linalg as Sc
 import scipy.sparse as sp
 import sys
-from assimulo.exception import *
-from assimulo.ode import *
+from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
+from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
 import logging
 
 from assimulo.explicit_ode import Explicit_ODE
@@ -969,7 +969,7 @@ class RKStarterNordsieck(object):
         s=self.number_of_steps
         H=(s-1)*self.H
         co_nord=[N.array([1./2,1.]),N.array([2./5,3./5,1.])]
-        l=size(y,0)
+        l=N.size(y,0)
         y0=y[0,:]
         yf=self.f(t0,y0,sw0)
         

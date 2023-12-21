@@ -19,7 +19,7 @@ import nose
 from assimulo import testattr
 from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem, Explicit_Problem
-from assimulo.exception import *
+from assimulo.exception import GLIMDA_Exception
 
 import numpy as N
 

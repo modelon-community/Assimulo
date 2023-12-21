@@ -1,10 +1,10 @@
-from scipy import *
 import odassl as od
+import numpy as np
 
 g=13.7503716373294544 # gravitation constant such that the period is 2
 
 def tolerance_set(irun,tol):
-    rtol=atol=tol*ones((5,))
+    rtol=atol=tol*np.ones((5,))
     if irun == 1 or irun == 3:
        rtol[4]=atol[4]=1.e7
     elif irun == 0:                                                                
@@ -13,7 +13,7 @@ def tolerance_set(irun,tol):
     return rtol,atol,info            
 def res1(t,p,pp):
     ires=0                                                                                                                      
-    delta=empty((5,))                                                      
+    delta=np.empty((5,))                                                      
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -23,7 +23,7 @@ def res1(t,p,pp):
     return delta, ires
 def res2(t,p,pp):
     ires=0                                                                      
-    delta=empty((5,))                                                      
+    delta=np.empty((5,))                                                      
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -33,7 +33,7 @@ def res2(t,p,pp):
     return delta, ires
 def res3(t,p,pp):
     ires=0                                                                      
-    delta=empty((5,))                                                  
+    delta=np.empty((5,))                                                  
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -43,7 +43,7 @@ def res3(t,p,pp):
     return delta, ires
 def resStab2(t,p,pp):
     ires=0                                                                      
-    delta=empty((neq,))                                    
+    delta=np.empty((neq,))                                    
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -55,7 +55,7 @@ def resStab2(t,p,pp):
     return delta, ires    
 def resStab1(t,p,pp):
     ires=0                                                                      
-    delta=empty((neq,))
+    delta=np.empty((neq,))
     # kinematics                                                                               
     delta[0:2] = [pp[0] - p[2], pp[1] - p[3]]                                                                         
     # dynamics                                                  
@@ -68,10 +68,10 @@ def resStab1(t,p,pp):
     delta[5] = p[0]**2 + p[1]**2 - 1.0                                           
     return delta, ires    
 
-p=empty(5)
-pp=empty(5)
-rwork=empty((1000,))
-iwork=empty((200,),dtype=int32)  
+p=np.empty(5)
+pp=np.empty(5)
+rwork=np.empty((1000,))
+iwork=np.empty((200,),dtype=np.int32)  
 
                                                   
 ny = 5                                                                    
@@ -84,10 +84,10 @@ for irun, task in enumerate(['INDEX-3', 'INDEX-2',
              'INDEX-1', 
              'STAB. INDEX-2','STAB. INDEX-1']):
      
-     info=zeros((15,),dtype=int32)                                                                                         
+     info=np.zeros((15,),dtype=np.int32)                                                                                         
      # initial conditions                                                                                                                                               
      p[0] = 1.0                                                             
-     p[1] = -sqrt(1.0 - p[0]**2)                                           
+     p[1] = -np.sqrt(1.0 - p[0]**2)                                           
      p[2:] = 0.0                                                                                                                         
      pp[0:2] = p[2:4]                                                           
      pp[2:5] = [-p[4]*p[0], -g-p[4]*p[1],0.]                                                                                                                        
