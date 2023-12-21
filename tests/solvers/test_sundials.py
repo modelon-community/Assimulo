@@ -77,7 +77,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -1064,7 +1064,7 @@ class Test_IDA:
         mod = Implicit_Problem(f,[1.0],[1.0])
         mod.time_events = time_events
         mod.handle_event = handle_event
-        mod.switches0 = [True, True]
+        mod.sw0 = [True, True]
         
         sim = IDA(mod)
         
@@ -1072,11 +1072,7 @@ class Test_IDA:
 
         nose.tools.assert_almost_equal(sim.y_sol[38], 1.0000000, 5)
         nose.tools.assert_almost_equal(sim.y_sol[87], 1.0000000, 5)
-        
-        sim = IDA(mod, [1.0],[1.0])
-        sim.simulate(2.0)
-        
-        nose.tools.assert_almost_equal(sim.t_sol[-1], 2.0000000, 5)
+        nose.tools.assert_almost_equal(sim.t_sol[-1], 5.0000000, 5)
     
     @testattr(stddist = True)
     def test_clear_event_log(self):
@@ -1216,7 +1212,7 @@ class Test_IDA:
         #nose.tools.assert_equal(self.simulator.algvar[2], vector[2])
     
     @testattr(stddist = True)
-    def test_time_event(self):
+    def test_time_event_2(self):
         f = lambda t,y,yd: y-yd
         global tnext
         global nevent
@@ -1338,7 +1334,6 @@ class Test_IDA:
         sim.simulate(2.)
         nose.tools.assert_equal(len(sim.t_sol), sim.statistics["nsteps"] + 1)
         nose.tools.assert_equal(nsteps, sim.statistics["nsteps"])
-
 
 
 class Test_Sundials:
