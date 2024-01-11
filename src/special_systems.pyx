@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import assimulo.problem as ap
 from assimulo.support import set_type_shape_array
 import numpy as N

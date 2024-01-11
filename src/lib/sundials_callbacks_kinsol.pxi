@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cython
+import traceback
 from assimulo.exception import AssimuloRecoverableError
 
 IF SUNDIALS_VERSION >= (3,0,0):
@@ -229,9 +230,9 @@ cdef void kin_err(int err_code, const char *module, const char *function, char *
     else:
         category = 0
     
-    print "Error occured in <function: %s>."%function
-    print "<message: %s>"%msg
-    #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+    print("Error occured in <function: %s>."%function)
+    print("<message: %s>"%msg)
+    #print("<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL))
 
 
 cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data):
@@ -246,8 +247,8 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
         
     pData.log.append([module, function, msg])
     
-    #print "KinsolInfo <calling_function:%s>"%function
-    #print "<message: %s>"%msg
+    #print("KinsolInfo <calling_function:%s>"%function)
+    #print("<message: %s>"%msg)
     """
     # Get the number of iterations
     KINGetNumNonlinSolvIters(kin_mem, &nniters)
@@ -262,9 +263,9 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
     
     
     if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
-        print "<iteration_index:%d>"%nniters
-        print "ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n);
-        print "<scaled_residual_norm:%E>", kin_mem->kin_fnorm);
+        print("<iteration_index:%d>"%nniters)
+        print("ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n))
+        print("<scaled_residual_norm:%E>", kin_mem->kin_fnorm))
         print "residuals", 
             realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
             f[i]*residual_scaling_factors[i]

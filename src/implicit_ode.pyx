@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 from ode cimport ODE
 from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
 from problem import cExplicit_Problem

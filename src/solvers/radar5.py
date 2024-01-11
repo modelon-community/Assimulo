@@ -113,9 +113,9 @@ class Radar5ODE(Explicit_ODE):
         """
         This method is called after every successful step taken by Radar5
         """
-        #print "SOLOUT:", told, t, hold, y, cont
-#        print cont
-#        print told, t, told + hold
+        # print("SOLOUT:", told, t, hold, y, cont)
+        # print(cont)
+        # print(told, t, told + hold)
         if self._opts["output_list"] is None:
             self._tlist.append(t)
             self._ylist.append(y.copy())
@@ -207,7 +207,7 @@ class Radar5ODE(Explicit_ODE):
         return ydelay
 
     def F(self, t, y, past, ipast):
-        #print 'F:', t, y, past, ipast
+        #print('F:', t, y, past, ipast)
  
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
@@ -277,8 +277,8 @@ class Radar5ODE(Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-        #print "INIT", t,y,tf,self.inith, self.problem.ipast
-        #print "GRID", self.problem.grid, self.problem.ngrid
+        #print("INIT", t,y,tf,self.inith, self.problem.ipast)
+        #print("GRID", self.problem.grid, self.problem.ngrid)
         #t, y, h, iwork, flag, past = radar5.assimulo_radar5(self.F,            \
         a = radar5.assimulo_radar5(self.F,            \
                                        self.problem.phi,        \

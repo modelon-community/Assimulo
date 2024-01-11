@@ -154,7 +154,7 @@ class SDIRK_DAE(Implicit_ODE):
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
                 hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
-                #print 't= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu)
+                #print('t= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu))
                 self._nordsieck_array = \
                      RWORK[nordsieck_start_index:nordsieck_start_index+(nq+1)*nyh].reshape((nyh,-1),order='F') 
                 self._nyh = nyh              
@@ -212,7 +212,7 @@ class SDIRK_DAE(Implicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter > 1 else False
-        #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
+        #print('rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE))
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]

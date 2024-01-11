@@ -113,7 +113,7 @@ def mark_solvers():
         elif solver[1] == "DAE_OVER":
             file.write('    mod = '+problem_name+'(res, y0, yd0, t0)\n\n')
         else:
-            print "Unknown solver type"
+            print("Unknown solver type")
         file.write('.. note::\n\n')
         file.write('    For complex problems, it is recommended to check the available :doc:`examples <examples>` and the documentation in the problem class, :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`. It is also recommended to define your problem as a subclass of :class:`'+problem_name+ ' <assimulo.problem.'+problem_name+'>`.\n\n')
         file.write('.. warning::\n\n')

@@ -16,6 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cython
+import traceback
 from assimulo.exception import AssimuloRecoverableError
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data):
@@ -750,11 +751,11 @@ cdef void cv_err(int error_code, const char *module, const char *function, char 
     cdef ProblemData pData = <ProblemData>problem_data
     
     if error_code > 0 and pData.verbose > 0: #Warning
-        print '[CVode Warning]', msg
+        print('[CVode Warning]', msg)
     
     if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
         if error_code < 0: #Error
-            print '[CVode Error]', msg
+            print('[CVode Error]', msg)
             
 cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
     """
@@ -763,11 +764,11 @@ cdef void ida_err(int error_code, const char *module, const char *function, char
     cdef ProblemData pData = <ProblemData>problem_data
     
     if error_code > 0 and pData.verbose > 0: #Warning
-        print '[IDA Warning]', msg
+        print('[IDA Warning]', msg)
     
     if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
         if error_code < 0: #Error
-            print '[IDA Error]', msg
+            print('[IDA Error]', msg)
 
 
 cdef class ProblemData:

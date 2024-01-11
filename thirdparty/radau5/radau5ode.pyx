@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 cimport radau5ode # .pxd
 cimport cython
 
@@ -26,7 +28,7 @@ from numpy cimport PyArray_DATA
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_d(double* dest, object source, int dim):
+cdef void py2c_d(double* dest, object source, int dim) noexcept:
     """
     Copy 1D numpy (double) array to (double *) C vector
     """
@@ -37,7 +39,7 @@ cdef void py2c_d(double* dest, object source, int dim):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
+cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol) noexcept:
     """
     Copy (square) 2D numpy array (order = c) to (double *) C matrix (with Fortran-style column major ordering)
     """
@@ -48,7 +50,7 @@ cdef void py2c_d_matrix_flat_F(double* dest, object source, int nrow, int ncol):
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
+cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim) noexcept:
     """
     Copy (double *) C vector to 1D numpy array
     """
@@ -56,7 +58,7 @@ cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int 
     
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void py2c_i(int* dest, object source, int dim):
+cdef void py2c_i(int* dest, object source, int dim) noexcept:
     """
     Copy 1D numpy (int) array to (int *) C vector
     """
@@ -65,7 +67,7 @@ cdef void py2c_i(int* dest, object source, int dim):
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
-cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY):
+cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY) except? -1:
     """
     Internal callback function to enable call to Python based rhs function from C
     """
@@ -77,7 +79,7 @@ cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY
 
     return ret[0] 
 
-cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
+cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY) except? -1:
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
@@ -92,7 +94,7 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     return RADAU_OK
 
 cdef int callback_solout(int nrsol, double xosol, double *xsol, double* y,
-                         double* werr, int n, void* solout_PY):
+                         double* werr, int n, void* solout_PY) except? -1:
     """
     Internal callback function to enable call to Python based solution output function from C
     """
@@ -105,7 +107,7 @@ cdef int callback_solout(int nrsol, double xosol, double *xsol, double* y,
 
 cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,
-                             void* jac_PY):
+                             void* jac_PY) except? -1:
     """Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians."""
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)

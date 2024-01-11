@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N
 cimport numpy as N
 from timeit import default_timer as timer
@@ -555,9 +557,9 @@ cdef class ODE:
         """
         cdef i = 0
         for i in self.event_data:
-            print 'Time, t = %e'%i[0]
-            print '  Event info, ', i[1]
-        print 'Number of events: ', len(self.event_data)
+            print('Time, t = %e'%i[0])
+            print('Event info, ', i[1])
+        print('Number of events: ', len(self.event_data))
         
     def print_statistics(self, verbose=NORMAL):
         """
