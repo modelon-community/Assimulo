@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
-from ode cimport ODE
 import numpy as N
 cimport numpy as N
 
+from assimulo.ode cimport ODE
 
 cdef class Explicit_ODE(ODE):
 

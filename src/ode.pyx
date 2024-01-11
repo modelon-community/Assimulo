@@ -19,14 +19,13 @@
 
 import numpy as N
 cimport numpy as N
-from timeit import default_timer as timer
-
 import itertools
 import multiprocessing
+from timeit import default_timer as timer
 
-from exception import ODE_Exception, AssimuloException
-from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
-from support import Statistics
+from assimulo.exception import ODE_Exception, AssimuloException
+from assimulo.problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
+from assimulo.support import Statistics
 
 include "constants.pxi" #Includes the constants (textual include)
 

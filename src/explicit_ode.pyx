@@ -17,19 +17,19 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-from ode cimport ODE     
-from problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem
+cimport cython
 
 import itertools
 import sys
 import numpy as N
 cimport numpy as N
-
-cimport explicit_ode # .pxd
-cimport cython
-
-from exception import Explicit_ODE_Exception, TimeLimitExceeded, TerminateSimulation
 from timeit import default_timer as timer
+
+from assimulo.ode cimport ODE     
+from assimulo.explicit_ode cimport Explicit_ODE, f_event_locator
+
+from assimulo.problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem
+from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded, TerminateSimulation
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -342,11 +342,11 @@ cdef class Explicit_ODE(ODE):
         cdef N.ndarray[double, mode="c", ndim=1] g_high_c = N.empty(n_g, dtype = N.double)
         cdef N.ndarray[double, mode="c", ndim=1] y_high_c = N.array(y_high)
         cdef int nstatefcns = 0
-        cdef int ret = explicit_ode.f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
-                                                    &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
-                                                    callback_event, <void*>self.event_func,
-                                                    callback_interp, <void*>self.interpolate,
-                                                    &nstatefcns)
+        cdef int ret = f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
+                                       &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
+                                       callback_event, <void*>self.event_func,
+                                       callback_interp, <void*>self.interpolate,
+                                       &nstatefcns)
         self.statistics["nstatefcns"] += nstatefcns
 
         if ret == ID_PY_EVENT:
