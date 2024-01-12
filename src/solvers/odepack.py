@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import logging
 import numpy as N
 import scipy.linalg as Sc
 import scipy.sparse as sp
-import sys
+
 from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
 from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
-import logging
-
 from assimulo.explicit_ode import Explicit_ODE
 
 try:

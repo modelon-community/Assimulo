@@ -17,10 +17,11 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-import assimulo.problem as ap
-from assimulo.support import set_type_shape_array
 import numpy as N
 cimport numpy as N
+
+from assimulo.problem import Implicit_Problem, Overdetermined_Problem
+from assimulo.support import set_type_shape_array
 
 cdef class cMechanical_System:
     u"""
@@ -198,10 +199,10 @@ cdef class cMechanical_System:
         elif index is None:
             algvar = (self.pos0.size + self.vel0.size) * [1]
         if index in ('ovstab2','ovstab1'):
-            problem=ap.Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            problem=Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
             problem.neq=neq           
         else:
-            problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            problem=Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
         problem.algvar=algvar
         return problem          
                     

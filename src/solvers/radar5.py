@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import numpy as N
 import pylab as P
-import sys
 
 from assimulo.ode import NORMAL, ID_PY_COMPLETE, ID_PY_EVENT
 from assimulo.explicit_ode import Explicit_ODE

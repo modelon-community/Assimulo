@@ -17,18 +17,16 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-from ode cimport ODE
-from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
-from problem import cExplicit_Problem
-
 import itertools
 import sys
+import warnings
 import numpy as N
 cimport numpy as N
-
-from exception import TerminateSimulation, TimeLimitExceeded
 from timeit import default_timer as timer
-import warnings
+
+from assimulo.ode cimport ODE
+from assimulo.problem import Implicit_Problem, cExplicit_Problem, cImplicit_Problem, Overdetermined_Problem
+from assimulo.exception import TerminateSimulation, TimeLimitExceeded
 
 realtype = float
 

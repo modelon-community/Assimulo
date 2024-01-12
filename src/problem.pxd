@@ -41,9 +41,7 @@ cdef class cDelay_Explicit_Problem(cExplicit_Problem):
     
 cdef class cSingPerturbed_Problem(cExplicit_Problem):
     pass
-            
 
 cdef class cAlgebraic_Problem:
     cpdef initialize(self, solver)
     cpdef finalize(self,object solver)
-    

@@ -17,12 +17,12 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-cimport radau5ode # .pxd
 cimport cython
-
 import numpy as np
 cimport numpy as np
 import scipy.sparse as sps
+
+cimport radau5ode # .pxd
 
 from numpy cimport PyArray_DATA
 

@@ -17,6 +17,7 @@
 
 import numpy as N
 cimport numpy as N
+
 from assimulo.support cimport Statistics
 
 cdef class ODE:

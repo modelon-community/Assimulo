@@ -78,7 +78,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -141,9 +141,9 @@ class Test_Explicit_Euler:
         t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        nose.tools.assert_almost_equal(y[-1][0],8.0)
-        nose.tools.assert_almost_equal(y[-1][1],3.0)
-        nose.tools.assert_almost_equal(y[-1][2],2.0)
+        nose.tools.assert_almost_equal(y[-1][0], 8.0)
+        nose.tools.assert_almost_equal(y[-1][1], 3.0)
+        nose.tools.assert_almost_equal(y[-1][2], 2.0)
     
     @testattr(stddist = True)
     def test_h(self):

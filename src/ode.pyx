@@ -593,7 +593,7 @@ cdef class ODE:
     
     cpdef _chattering_check(self, object event_info):
         self.chattering_clear_counter = 0
-        if event_info[0] is not None and event_info[0] != []:
+        if event_info[0] is not None and len(event_info[0]) > 0:
             if self.chattering_check is None:
                 self.chattering_check  = abs(N.array(event_info[0]))
             else:

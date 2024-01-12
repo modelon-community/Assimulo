@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N 
 cimport numpy as N
-from numpy cimport PyArray_DATA
+from numpy cimport PyArray_DATA # TODO: Fix?
 
 N.import_array()
 

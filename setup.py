@@ -176,8 +176,8 @@ class Assimulo_prepare(object):
         logging.debug('Platform {}'.format(self.platform))
         
         if args[0].sundials_home:
-            self.incdirs = os.path.join(self.sundialsdir,'include')
-            self.libdirs = os.path.join(self.sundialsdir,'lib')
+            self.incdirs = os.path.join(self.sundialsdir, 'include')
+            self.libdirs = os.path.join(self.sundialsdir, 'lib')
         elif 'win' in self.platform:
             self.incdirs = ''
             self.libdirs = ''
@@ -420,7 +420,7 @@ class Assimulo_prepare(object):
                                 break
                     if os.path.exists(os.path.join(self.libdirs,'sundials_nvecserial.lib')) and not os.path.exists(os.path.join(self.libdirs,'libsundials_nvecserial.a')):
                         sundials_with_msvc = True
-            except Exception as e:
+            except Exception:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
                     logging.debug('SUNDIALS 2.6 found.')

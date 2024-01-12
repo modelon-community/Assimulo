@@ -25,7 +25,7 @@ import numpy as N
 cimport numpy as N
 from timeit import default_timer as timer
 
-from assimulo.ode cimport ODE     
+from assimulo.ode cimport ODE
 from assimulo.explicit_ode cimport Explicit_ODE, f_event_locator
 
 from assimulo.problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem

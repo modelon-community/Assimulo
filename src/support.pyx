@@ -62,7 +62,7 @@ cdef class Statistics:
         for k in list(self.statistics.keys()):
             if self.statistics[k] == -1:
                 continue
-            print(" %s %s: %d")%(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1) ,self.statistics[k])
+            print(" {} {}: {}".format(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1), self.statistics[k]))
         
     def reset(self):
         """
