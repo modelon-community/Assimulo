@@ -77,13 +77,13 @@ class Radar5ODE(Explicit_ODE):
         self.C2M1 = C2-1.0 
         
         # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nsteps"]       = 0 #Number of steps
+        self.statistics["nfcns"]        = 0 #Number of function evaluations
+        self.statistics["njacs"]        = 0 #Number of Jacobian evaluations
+        self.statistics["nfcnjacs"]     = 0 #Number of function evaluations when evaluating the jacobian
+        self.statistics["nerrfails"]    = 0 #Number of step rejections
+        self.statistics["nlus"]         = 0 #Number of LU decompositions
+        # self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
         #Internal values
         self._leny = len(self.y) #Dimension of the problem
@@ -91,7 +91,7 @@ class Radar5ODE(Explicit_ODE):
         self._yDelayTemp = []
         self._ntimelags = len(self.problem.lagcompmap)
         for i in range(self._ntimelags):
-            self._yDelayTemp.append(range(len(self.problem.lagcompmap[i])))
+            self._yDelayTemp.append(list(range(len(self.problem.lagcompmap[i]))))
         flat_lagcompmap = []
         for comp in self.problem.lagcompmap:
             flat_lagcompmap.extend(comp)
@@ -332,12 +332,12 @@ class Radar5ODE(Explicit_ODE):
             raise Exception("Radar5 failed with flag %d"%flag)
         
         #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
+        self.statistics["nsteps"]       += iwork[16]
+        self.statistics["nfcns"]        += iwork[13]
+        self.statistics["njacs"]        += iwork[14]
+        # self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nerrfails"]    += iwork[17]
+        self.statistics["nlus"]         += iwork[18]
         
         return flag, self._tlist, self._ylist
     
@@ -349,10 +349,10 @@ class Radar5ODE(Explicit_ODE):
         log_message_verbose('Final Run Statistics: %s \n' % self.problem.name)
         
         log_message_verbose(' Number of steps                          : '+ str(self.statistics["nsteps"]))
-        log_message_verbose(' Number of function evaluations           : '+ str(self.statistics["nfcn"]))
-        log_message_verbose(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]))
-        log_message_verbose(' Number of error test failures            : '+ str(self.statistics["errfail"]))
-        log_message_verbose(' Number of LU decompositions              : '+ str(self.statistics["nlu"]))
+        log_message_verbose(' Number of function evaluations           : '+ str(self.statistics["nfcns"]))
+        log_message_verbose(' Number of Jacobian evaluations           : '+ str(self.statistics["njacs"]))
+        log_message_verbose(' Number of error test failures            : '+ str(self.statistics["nerrfails"]))
+        log_message_verbose(' Number of LU decompositions              : '+ str(self.statistics["nlus"]))
         
         log_message_verbose('\nSolver options:\n')
         log_message_verbose(' Solver                  : Radar5 ' + self._type)

@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import scipy as S
 import scipy.linalg as LIN
 import scipy.io as IO
 import scipy.sparse as SPARSE
@@ -79,7 +78,7 @@ def run_example(with_plots=True):
     def prec_solve(r):
         return solvePrec(r)
         
-    y0 = S.rand(A.shape[0])
+    y0 = N.random.rand(A.shape[0])
     
     #Define an Assimulo problem
     alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, name = 'ORS Example')
@@ -101,10 +100,10 @@ def run_example(with_plots=True):
     setup_param(alg_solver)
     setup_param(alg_solver_prec)
     
-    #Solve orignal system
+    #Solve original system
     y = alg_solver.solve()
 
-    #Solve Preconditionined system
+    #Solve Preconditioned system
     y_prec = alg_solver_prec.solve()
     
     print("Error                 , in y: ", LIN.norm(y-N.ones(len(y))))
@@ -137,4 +136,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod, solv = run_example()
-

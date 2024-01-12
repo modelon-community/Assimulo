@@ -83,7 +83,7 @@ cdef class Explicit_ODE(ODE):
         """
         ODE.__init__(self, problem) #Sets general attributes
         
-        if isinstance(problem, cExplicit_Problem) or isinstance(problem, Delay_Explicit_Problem) or isinstance(problem, SingPerturbed_Problem):
+        if isinstance(problem, (cExplicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem)):
             self.problem = problem
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')

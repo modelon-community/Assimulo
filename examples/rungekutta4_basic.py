@@ -49,7 +49,7 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(5, 100) #Simulate 5 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(float(y[-1]),0.02695179)
+    nose.tools.assert_almost_equal(y[-1][0], 0.02695179)
     
     #Plot
     if with_plots:

@@ -17,7 +17,7 @@
 
 import numpy as N
 import nose
-from assimulo.solvers import GLIMDA,IDA
+from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):

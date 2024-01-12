@@ -68,7 +68,7 @@ def run_example(with_plots=True):
     exp_sim = CVode(exp_mod) #Create a CVode solver
     
     #Sets the parameters
-    exp_sim.stablimdet = True
+    exp_sim.stablimit = True
     exp_sim.report_continuously = True
     
     #Simulate

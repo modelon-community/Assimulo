@@ -80,7 +80,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
