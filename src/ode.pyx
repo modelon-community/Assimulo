@@ -329,7 +329,7 @@ cdef class ODE:
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
         
         #Return the results
-        if isinstance(self.problem, Explicit_Problem) or isinstance(self.problem, Delay_Explicit_Problem) or isinstance(self.problem, SingPerturbed_Problem):
+        if isinstance(self.problem, (Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem)):
             return self.t_sol, N.array(self.y_sol)
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)

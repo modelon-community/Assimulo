@@ -587,7 +587,6 @@ class Assimulo_prepare(object):
             el.extra_compile_args += self.flag_32bit + self.extra_c_flags
 
         for el in ext_list:
-            # el.cython_directives = {"language_level": "3str"} ## TODO: Redundant?
             el.extra_link_args += extra_link_flags
         return ext_list
 

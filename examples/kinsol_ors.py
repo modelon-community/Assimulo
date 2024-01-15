@@ -27,7 +27,6 @@ from assimulo.problem import Algebraic_Problem
 import warnings
 import scipy.sparse
 
-
 warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -58,11 +57,11 @@ def run_example(with_plots=True):
         solvePrec = LINSP.factorized(Prec)
 
     #Create the RHS
-    b = A.dot(N.ones((A.shape[0],1)))
+    b = A.dot(N.ones(A.shape[0]))
     
     #Define the res
     def res(x):
-        return A.dot(x.reshape(len(x),1))-b
+        return A.dot(x) - b
         
     #The Jacobian
     def jac(x):
@@ -70,7 +69,7 @@ def run_example(with_plots=True):
     
     #The Jacobian*Vector
     def jacv(x,v):
-        return A.dot(v.reshape(len(v),1))
+        return A.dot(v)
     
     def prec_setup(u,f, uscale, fscale):
         pass

@@ -83,7 +83,7 @@ cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
             jacvptr[i] = jacv[i]
         
         return SPGMR_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return SPGMR_ATIMES_FAIL_REC
     except Exception:
         traceback.print_exc()
@@ -103,14 +103,12 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data) noexcept:
 
         for i in range(pData.dim):
             resptr[i] = res[i]
-
         return KIN_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except Exception:
         traceback.print_exc()
         return KIN_SYSFUNC_FAIL
-
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
@@ -157,14 +155,13 @@ IF SUNDIALS_VERSION >= (3,0,0):
         
         try:
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
         
         return KIN_SUCCESS
-        
 
 ELSE:
     cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
@@ -270,8 +267,6 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
             realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
             f[i]*residual_scaling_factors[i]
     """
-
-
 
 cdef class ProblemDataEquationSolver:
     cdef:

@@ -144,7 +144,7 @@ cdef class KINSOL(Algebraic):
                 elif self.options["y_min"]:
                     self.options["y_scale"][i] = max(1.0, abs(self.options["y_min"][i]))
         else:
-            self.options["y_scale"] = N.array([value]) if isinstance(value, float) or isinstance(value, int) else N.array(value)
+            self.options["y_scale"] = N.array([value]) if isinstance(value, (float, int)) else N.array(value)
             
         arr2nv_inplace(self.options["y_scale"], self.y_scale)
     
@@ -155,7 +155,7 @@ cdef class KINSOL(Algebraic):
         if isinstance(value, str) and value.upper() == "AUTOMATIC":
             pass
         else:
-            self.options["f_scale"] = N.array([value]) if isinstance(value, float) or isinstance(value, int) else N.array(value)
+            self.options["f_scale"] = N.array([value]) if isinstance(value, (float, int)) else N.array(value)
             
         arr2nv_inplace(self.options["f_scale"], self.f_scale)
             
@@ -301,9 +301,9 @@ cdef class KINSOL(Algebraic):
             if self.problem_info["prec_setup"] or self.problem_info["prec_solve"]:
                 if not self.problem_info["prec_setup"]:
                     IF SUNDIALS_VERSION >= (4,0,0):
-                        flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, NULL,kin_prec_solve)
+                        flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     ELSE:
-                        flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL,kin_prec_solve)
+                        flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     if flag < 0:
                         raise KINSOLError(flag)
                 elif not self.problem_info["prec_solve"]:
@@ -764,4 +764,3 @@ class KINSOLError(Exception):
             return repr(self.msg[self.value])    
         except KeyError:
             return repr('Sundials failed with flag %s.'%(self.value))
-

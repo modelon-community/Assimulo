@@ -154,4 +154,3 @@ cdef class Algebraic:
         return self.options["verbosity"]
     
     verbosity = property(_get_verbosity,_set_verbosity)
-    
