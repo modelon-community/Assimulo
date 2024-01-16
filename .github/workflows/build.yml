@@ -12,10 +12,15 @@ jobs:
       matrix:
         sundials_version: [2.7.0, 3.2.0]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.x'
+    - name: Setup Python
+      run: |
+        python3 -m pip install Cython numpy scipy matplotlib nose-py3
     - name: Install system
       run: |
-        sudo apt-get -y install python3-scipy python3-setuptools python3-nose cython3
         sudo apt-get -y install cmake liblapack-dev libsuitesparse-dev libhypre-dev
         sudo cp -v /usr/lib/x86_64-linux-gnu/libblas.so /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
     - name: Install superlu
