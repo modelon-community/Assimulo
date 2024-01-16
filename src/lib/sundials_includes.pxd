@@ -275,9 +275,9 @@ cdef extern from "stdlib.h":
 #==============================================
 
 IF SUNDIALS_WITH_SUPERLU:
-    cdef inline int with_superlu(): return 1
+    cdef inline int with_superlu() noexcept: return 1
 ELSE:
-    cdef inline int with_superlu(): return 0
+    cdef inline int with_superlu() noexcept: return 0
 
 IF SUNDIALS_VERSION >= (4,0,0):
     cdef extern from "cvodes/cvodes.h":
@@ -445,12 +445,12 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads)
     ELSE:
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef inline SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx): return NULL
+            cdef inline SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx) noexcept: return NULL
         ELSE:
-            cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads): return NULL
+            cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads) noexcept: return NULL
     
-    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data): return 0    
-    cdef inline tuple version(): return (3,0,0)
+    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept: return 0    
+    cdef inline tuple version() noexcept: return (3,0,0)
 ELSE:
     cdef extern from "cvodes/cvodes_dense.h":
         int CVDense(void *cvode_mem, long int n)
@@ -480,20 +480,20 @@ ELSE:
                                         N_Vector tmp2, N_Vector tmp3) noexcept
             int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
             int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
-        cdef inline tuple version(): return (2,6,0)
+        cdef inline tuple version() noexcept: return (2,6,0)
         IF SUNDIALS_WITH_SUPERLU:
             cdef extern from "cvodes/cvodes_superlumt.h":
                 int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
         ELSE:
-            cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+            cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept: return -1
     ELSE:
-        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept: return -1
         ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                   SlsMat Jac, void *user_data, N_Vector tmp1,
-                                    N_Vector tmp2, N_Vector tmp3)
-        cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac): return -1
-        cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals): return -1
-        cdef inline tuple version(): return (2,5,0)
+                                    N_Vector tmp2, N_Vector tmp3) noexcept
+        cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac) noexcept: return -1
+        cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept: return -1
+        cdef inline tuple version() noexcept: return (2,5,0)
     
 cdef extern from "cvodes/cvodes_spils.h":
     IF SUNDIALS_VERSION >= (4,0,0):
@@ -645,7 +645,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
 
 
                 
-    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
+    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept: return 0
 ELSE:
     cdef extern from "idas/idas_dense.h":
         int IDADense(void *ida_mem, long int n)
