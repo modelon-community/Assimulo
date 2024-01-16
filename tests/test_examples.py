@@ -249,4 +249,4 @@ class Test_Examples:
 
     @testattr(stddist = True)
     def test_radar_basic(self):
-        radar_basic.run_example(with_plots=False)
+        radar_basic.run_example()

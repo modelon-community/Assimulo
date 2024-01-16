@@ -43,9 +43,9 @@ class Simple(Delay_Explicit_Problem):
 
     def phi(self, i, t):    # History function for $t \in [-1,0]$
         return np.sin(np.pi*t)
-
-if __name__ == '__main__':
-
+    
+def run_example():
+    """ Basic example of running Radar solver."""
     RTOL = 1.e-6
     ATOL = 1e-6
     H = 1.e-3
@@ -76,3 +76,8 @@ if __name__ == '__main__':
     s.inith = H
     s.maxsteps = 1000
     t,y = s.simulate(tf)
+
+    return t, y
+
+if __name__ == '__main__':
+    t, y = run_example()

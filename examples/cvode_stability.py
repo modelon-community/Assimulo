@@ -95,4 +95,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod,sim = run_example()
-
