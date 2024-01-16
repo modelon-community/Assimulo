@@ -309,7 +309,7 @@ ELSE:
         void* CVodeCreate(int lmm, int iter)
         
 cdef extern from "cvodes/cvodes.h":
-    ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data)
+    ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data) noexcept
     int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
     int CVodeReInit(void *cvode_mem, realtype t0, N_Vector y0)
     void CVodeFree(void **cvode_mem)
@@ -336,11 +336,11 @@ cdef extern from "cvodes/cvodes.h":
     
     #Functions for error handling
     ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg,
-                                   void *eh_data)
+                                   void *eh_data) noexcept
     int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data)
     
     #Functions for discontinuity handling
-    ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data)
+    ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data) noexcept
     int CVodeRootDirection(void *cvode_mem, int *rootdir)
     int CVodeSetNoInactiveRootWarn(void *cvode_mem)
     int CVodeRootInit(void *cvode_mem, int nrtfn, CVRootFn g)
@@ -371,9 +371,9 @@ cdef extern from "cvodes/cvodes.h":
     
     #Sensitivity methods
     ctypedef int (*CVSensRhsFn)(int Ns, realtype t, N_Vector y, N_Vector ydot, N_Vector *yS,
-                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
     ctypedef int (*CVSensRhs1Fn)(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector *yS,
-                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
     int CVodeSensInit(void *cvode_mem, int Ns, int ism, CVSensRhsFn fS, N_Vector *ySO)
     int CVodeSensInit1(void *cvode_mem, int Ns, int ism, CVSensRhs1Fn fS1, N_Vector *ySO)
     int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *ySO)
@@ -410,12 +410,12 @@ cdef extern from "cvodes/cvodes.h":
 
 cdef extern from "cvodes/cvodes_spils.h":
     ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t,
-            N_Vector y, N_Vector fy, void *user_data, N_Vector tmp)
+            N_Vector y, N_Vector fy, void *user_data, N_Vector tmp) noexcept
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "cvodes/cvodes_direct.h":
         ctypedef int (*CVDlsDenseJacFn)(realtype t, N_Vector y, N_Vector fy, 
-                       SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int CVodeSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A)
             int CVodeSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
@@ -423,17 +423,17 @@ IF SUNDIALS_VERSION >= (3,0,0):
             int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A)
             int CVDlsSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
     cdef extern from "cvodes/cvodes_spils.h":
-        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data)
+        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int CVodeSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
         ELSE:
             int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS)
             int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
         ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
-				  booleantype jok, booleantype *jcurPtr, realtype gamma, void *user_data)
+				  booleantype jok, booleantype *jcurPtr, realtype gamma, void *user_data) noexcept
         ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
 				  N_Vector r, N_Vector z,
-				  realtype gamma, realtype delta, int lr, void *user_data)
+				  realtype gamma, realtype delta, int lr, void *user_data) noexcept
 
 
     IF SUNDIALS_WITH_SUPERLU:
@@ -467,17 +467,17 @@ ELSE:
 				  booleantype jok, booleantype *jcurPtr,
 				  realtype gamma, void *user_data,
 				  N_Vector tmp1, N_Vector tmp2,
-				  N_Vector tmp3)
+				  N_Vector tmp3) noexcept
         ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
 				  N_Vector r, N_Vector z,
 				  realtype gamma, realtype delta,
-				  int lr, void *user_data, N_Vector tmp)
+				  int lr, void *user_data, N_Vector tmp) noexcept
     
     IF SUNDIALS_VERSION >= (2,6,0):
         cdef extern from "cvodes/cvodes_sparse.h":
             ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                       SlsMat Jac, void *user_data, N_Vector tmp1,
-                                        N_Vector tmp2, N_Vector tmp3)
+                                        N_Vector tmp2, N_Vector tmp3) noexcept
             int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
             int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
         cdef inline tuple version(): return (2,6,0)
@@ -510,7 +510,7 @@ cdef extern from "cvodes/cvodes_spils.h":
         int CVSpilsGetNumPrecSolves(void *cvode_mem, long int *npsolves)
 
 cdef extern from "idas/idas.h":
-    ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
+    ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data) noexcept
     IF SUNDIALS_VERSION >= (6,0,0):
         void* IDACreate(SUNContext ctx)
     ELSE:
@@ -539,12 +539,12 @@ cdef extern from "idas/idas.h":
     
     #Functions for error handling
     ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg,
-                                    void *eh_data)
+                                    void *eh_data) noexcept
     int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data)
     
     
     #Functions for discontinuity handling
-    ctypedef int (*IDARootFn)(realtype tt, N_Vector yy, N_Vector yp, realtype *gout, void *user_data)
+    ctypedef int (*IDARootFn)(realtype tt, N_Vector yy, N_Vector yp, realtype *gout, void *user_data) noexcept
     int IDASetRootDirection(void *ida_mem, int *rootdir)
     int IDASetNoInactiveRootWarn(void *ida_mem)
     int IDARootInit(void *ida_mem, int nrtfn, IDARootFn g)
@@ -581,7 +581,7 @@ cdef extern from "idas/idas.h":
     #===================
     ctypedef int (*IDASensResFn)(int Ns, realtype t, N_Vector yy, N_Vector yp, 
                                 N_Vector *yS, N_Vector *ypS, N_Vector *resvalS, 
-                                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
     int IDASensInit(void *ida_mem, int Ns, int ism, IDASensResFn resS, N_Vector *ySO, N_Vector *ypSO)
     int IDASensReInit(void *ida_mem, int ism, N_Vector *ySO, N_Vector *ypSO)
     
@@ -618,13 +618,13 @@ cdef extern from "idas/idas.h":
     
 cdef extern from "idas/idas_spils.h":
     ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, 
-            N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
+            N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2) noexcept
     
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "idas/idas_direct.h":
         ctypedef int (*IDADlsDenseJacFn)(realtype tt, realtype cj, N_Vector yy, 
                        N_Vector yp, N_Vector rr, SUNMatrix Jac, void *user_data, 
-                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int IDASetJacFn(void *ida_mem, IDADlsDenseJacFn djac)
             int IDASetLinearSolver(void *ida_mem, SUNLinearSolver LS, SUNMatrix A)
@@ -634,7 +634,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
     
     cdef extern from "idas/idas_spils.h":
         ctypedef int (*IDASpilsJacTimesSetupFn)(realtype tt, N_Vector yy,
-                      N_Vector yp, N_Vector rr, realtype c_j, void *user_data)
+                      N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int IDASetJacTimes(void *ida_mem,
                 IDASpilsJacTimesSetupFn jtsetup, IDASpilsJacTimesVecFn jtimes)
@@ -651,7 +651,7 @@ ELSE:
         int IDADense(void *ida_mem, long int n)
         ctypedef int (*IDADlsDenseJacFn)(long int Neq, realtype tt, realtype cj, N_Vector yy, 
                        N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
-                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
     
     cdef extern from "idas/idas_spgmr.h":
@@ -677,9 +677,9 @@ cdef extern from "idas/idas_spils.h":
 # KINSOL functions and routines
 cdef extern from "kinsol/kinsol.h":
     # user defined functions
-    ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data )
-    ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
-    ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data)
+    ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data) noexcept
+    ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data) noexcept
+    ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data) noexcept
     # initialization routines
     IF SUNDIALS_VERSION >= (6,0,0):
         void *KINCreate(SUNContext ctx)
@@ -732,7 +732,7 @@ cdef extern from "kinsol/kinsol.h":
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "kinsol/kinsol_direct.h":
-        ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
         IF SUNDIALS_VERSION < (4,0,0):
             int KINDlsSetLinearSolver(void *kinmem, SUNLinearSolver LS, SUNMatrix A)
             int KINDlsSetJacFn(void *kinmem, KINDlsDenseJacFn djac)
@@ -743,14 +743,14 @@ IF SUNDIALS_VERSION >= (3,0,0):
         int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS)
         
         ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data)
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data) noexcept
         ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, void *problem_data)
+                    N_Vector fval, N_Vector fscale, void *problem_data) noexcept
 ELSE:
     # functions used for supplying jacobian, and receiving info from linear solver
     cdef extern from "kinsol/kinsol_direct.h":
         # user functions
-        ctypedef int (*KINDlsDenseJacFn)(long int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*KINDlsDenseJacFn)(long int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
         
         # function used to link user functions to KINSOL
         int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
@@ -763,9 +763,9 @@ ELSE:
         
     cdef extern from "kinsol/kinsol_spils.h":
         ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp) noexcept
         ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
+                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept
 
 cdef extern from "kinsol/kinsol_direct.h":
     # optional output fcts for linear direct solver
@@ -782,7 +782,7 @@ cdef extern from "kinsol/kinsol_direct.h":
 
 cdef extern from "kinsol/kinsol_spils.h":
     ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
-                void *problem_data)
+                void *problem_data) noexcept
     IF SUNDIALS_VERSION >= (4,0,0):
         int KINSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
         int KINSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve)
