@@ -65,7 +65,7 @@ cdef void py2c_i(int* dest, object source, int dim):
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
     memcpy(dest, <int*>PyArray_DATA(source), dim*sizeof(int))
 
-cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY):
+cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY) noexcept:
     """
     Internal callback function to enable call to Python based rhs function from C
     """
@@ -77,7 +77,7 @@ cdef int callback_fcn(int n, double x, double* y_in, double* y_out, void* fcn_PY
 
     return ret[0] 
 
-cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
+cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY) noexcept:
     """
     Internal callback function to enable call to Python based Jacobian function from C
     """
@@ -92,7 +92,7 @@ cdef int callback_jac(int n, double x, double* y, double* fjac, void* jac_PY):
     return RADAU_OK
 
 cdef int callback_solout(int nrsol, double xosol, double *xsol, double* y,
-                         double* werr, int n, void* solout_PY):
+                         double* werr, int n, void* solout_PY) noexcept:
     """
     Internal callback function to enable call to Python based solution output function from C
     """
@@ -105,7 +105,7 @@ cdef int callback_solout(int nrsol, double xosol, double *xsol, double* y,
 
 cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
                              double *data, int *indices, int *indptr,
-                             void* jac_PY):
+                             void* jac_PY) noexcept:
     """Internal callback function to enable call to Python based evaluation of sparse (csc) jacobians."""
     cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n, dtype = np.double)
     c2py_d(y_py, y, n)

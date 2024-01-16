@@ -19,8 +19,8 @@ import numpy as N
 cimport numpy as N
 from timeit import default_timer as timer
 
-from exception import Algebraic_Exception, AssimuloException
-from problem import Algebraic_Problem
+from assimulo.exception import Algebraic_Exception, AssimuloException
+from assimulo.problem import Algebraic_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 

@@ -22,9 +22,9 @@ from timeit import default_timer as timer
 import itertools
 import multiprocessing
 
-from exception import ODE_Exception, AssimuloException
-from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
-from support import Statistics
+from .exception import ODE_Exception, AssimuloException
+from .problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
+from .support import Statistics
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -555,9 +555,9 @@ cdef class ODE:
         """
         cdef i = 0
         for i in self.event_data:
-            print 'Time, t = %e'%i[0]
-            print '  Event info, ', i[1]
-        print 'Number of events: ', len(self.event_data)
+            print ('Time, t = %e'%i[0])
+            print ('  Event info, ', i[1])
+        print ('Number of events: ', len(self.event_data))
         
     def print_statistics(self, verbose=NORMAL):
         """

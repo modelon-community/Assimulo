@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from ode cimport ODE
-from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
-from problem import cExplicit_Problem
+from assimulo.ode cimport ODE
+from assimulo.problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
+from assimulo.problem import cExplicit_Problem
 
 import itertools
 import sys
 import numpy as N
 cimport numpy as N
 
-from exception import TerminateSimulation, TimeLimitExceeded
+from assimulo.exception import TerminateSimulation, TimeLimitExceeded
 from timeit import default_timer as timer
 import warnings
 

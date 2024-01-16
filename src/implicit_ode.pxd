@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from ode cimport ODE
+from assimulo.ode cimport ODE
 import numpy as N
 cimport numpy as N
 
