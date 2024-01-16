@@ -19,9 +19,6 @@
 
 import numpy as N 
 cimport numpy as N
-from numpy cimport PyArray_DATA
-
-N.import_array()
 
 import scipy.sparse as sparse
  

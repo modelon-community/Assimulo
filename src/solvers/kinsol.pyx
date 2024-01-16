@@ -19,12 +19,6 @@
 
 import numpy as N 
 cimport numpy as N
-from numpy cimport PyArray_DATA # TODO: Fix?
-
-N.import_array()
-
-import numpy.linalg
-import traceback 
  
 from assimulo.algebraic cimport Algebraic
 
