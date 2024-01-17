@@ -125,7 +125,6 @@ class Assimulo_prepare(object):
         self.BLASdir = args[0].blas_home 
         self.sundialsdir = args[0].sundials_home
         self.MKLdir = args[0].mkl_home
-        self.sundials_with_superlu = args[0].sundials_with_superlu
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.MKLname_t = args[0].mkl_name if args[0].mkl_name.startswith('lib') else 'lib'+args[0].mkl_name
@@ -149,9 +148,6 @@ class Assimulo_prepare(object):
         self.sundials_with_msvc = False
         self.msvcSLU = False
 
-        if self.sundials_with_superlu is not None:
-            logging.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
-        
         if self.no_mvscr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
