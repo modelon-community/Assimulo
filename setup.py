@@ -77,18 +77,18 @@ if not args[0].prefix:
 import numpy.distutils as nd
 
 try:
-    # from Cython.Distutils import build_ext ## TODO: obsolete?
+    from Cython.Distutils import build_ext
     from Cython.Build import cythonize
 except ImportError:
-    msg="Please upgrade to a newer Cython version, >= 0.18."
+    msg="Please upgrade to a newer Cython version, >= 3"
     logging.error(msg)
     raise Exception(msg)
 
 #Verify Cython version
 import Cython
 cython_version = Cython.__version__.split(".")
-if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[1] >= '18')):
-    msg="Please upgrade to a newer Cython version, >= 0.18."
+if not cython_version[0] >= '3':
+    msg="Please upgrade to a newer Cython version, >= 3"
     logging.error(msg)
     raise Exception(msg)
 
@@ -661,14 +661,6 @@ else:
     change_dir = False
 
 ext_list = prepare.cython_extensionlists()
-
-#MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
-#HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
-#SAME TIME.
-for e in ext_list:
-    e.extra_f77_compile_args = []
-    e.extra_f90_compile_args = []
-
 ext_list += prepare.fortran_extensionlists()
 
 # distutils part
@@ -677,7 +669,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "trunk" if version_number_arg == "Default" else version_number_arg
+VERSION = "3.5.0" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
@@ -709,7 +701,7 @@ Documentation and installation instructions can be found at:
 http://www.jmodelica.org/assimulo . 
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
+compiling from source, Cython >=3, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
 together with a C-compiler and a FORTRAN-compiler.
 """
 

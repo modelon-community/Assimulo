@@ -3,6 +3,23 @@
 Changelog
 ==========
 
+--- Assimulo-3.5.0 ---
+    * Changed "numpy.float" to equivalent "numpy.float64" due to DeprecationWarnings in numpy >= 1.20.
+    * Improved examples with sparse jacobians by omitting the zeros in the jacobians.
+    * Upgraded to Cython >= 3.
+
+--- Assimulo-3.4.3 ---
+    * Improved compliance with newer scipy version by instead using corresponding numpy calls when more suitable.
+
+--- Assimulo-3.4.2 ---
+    * Updated an import statement in one of the examples to resolve compliance issues with scipy 1.10.1.
+
+--- Assimulo-3.4.1 ---
+    * Restored functionality of CVode with 'external_event_detection' = True, which broke with 3.4.0.
+    * CVode now allows rtol = 0.
+    * Added support for CVode (without sensitivities) with non-negative relative tolerance vector.
+      Requires a SUNDIALS installation supporting this, see README.
+
 --- Assimulo-3.4.0 ---
     * Removed Radau5ODE Fortran implementation. 
       This change should be seamless since the C implementation is numerically equivalent.

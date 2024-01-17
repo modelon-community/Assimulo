@@ -736,9 +736,6 @@ class Radar5ODE(Explicit_ODE):
     rtol=property(_get_rtol,_set_rtol)
     
     def _get_grid(self):
-        """
-        TODO
-        """
         return self._grid
     def _set_grid(self, grid):
         self._grid
