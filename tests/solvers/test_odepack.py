@@ -275,7 +275,6 @@ class Test_LSODAR:
         self.sim.reset()
         t_sol1,y_sol1=self.sim.simulate(0.5)
         ind05=N.nonzero(N.array(t_sol)==0.5)[0][0]
-        #print y_sol[ind05],y_sol1[-1]
         nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
         
     @testattr(stddist = True)

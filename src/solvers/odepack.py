@@ -186,7 +186,6 @@ class LSODAR(Explicit_ODE):
         """
         Helper program for the initialization of LSODAR
         """
-        #print('We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active))
         if not(self.rkstarter>1 and self._rkstarter_active):
             # first call or classical restart after a discontinuity
             ISTATE=1
@@ -409,7 +408,6 @@ class LSODAR(Explicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter > 1 else False
-        #print('rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE))
         
         #Retrieving statistics
         self.statistics["nstatefcns"]            += IWORK[9]
