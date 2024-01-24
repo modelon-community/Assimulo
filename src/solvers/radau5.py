@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import scipy as S
 import scipy.sparse as sp
 
@@ -106,7 +106,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
         self.options["maxh"]     = None #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
@@ -120,7 +120,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
         self._event_info = None
-        self._werr = N.zeros(self._leny)
+        self._werr = np.zeros(self._leny)
 
     def _get_linear_solver(self):
         return self.options["linear_solver"]
@@ -245,7 +245,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     return rhs, [ret]
                 except BaseException as E:
                     rhs = y.copy()
-                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = 1 #Recoverable error
                     else:
                         self._py_err = E
@@ -255,7 +255,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
             ret, self.g_old = self.event_func(self.t, self.y)
-            self.g_old = N.array(self.g_old)
+            self.g_old = np.array(self.g_old)
             if ret < 0:
                 raise self._py_err
             self.statistics["nstatefcns"] += 1
@@ -266,7 +266,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
                     rhs = self.problem.rhs(t, y)
                 except BaseException as E:
                     rhs = y.copy()
-                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = 1 #Recoverable error
                     else:
                         self._py_err = E
@@ -275,7 +275,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             self.f = f
     
     def interpolate(self, time):
-        y = N.empty(self._leny)
+        y = np.empty(self._leny)
         self.rad_memory.interpolate(time, y)
         return y
         
@@ -283,7 +283,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         """
         Returns the vector of weighted estimated local errors at the current step.
         """
-        return N.abs(self._werr)
+        return np.abs(self._werr)
     
     def _solout(self, nrsol, told, t, y, werr):
         """
@@ -342,8 +342,8 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
             if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
                 jac = jac.toarray()
         except BaseException as E:
-            jac = N.eye(len(y))
-            if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+            jac = np.eye(len(y))
+            if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                 ret = 1 #Recoverable error
             else:
                 self._py_err = E
@@ -369,7 +369,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self._py_err = None ## reset 
         self._opts = opts
         self.rad_memory.reinit()
-        t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]), self.atol, 
+        t, y, flag =  self.radau5.radau5_py_solve(self.f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]), self.atol, 
                                                   jac_dummy, IJAC, self._solout, IOUT, self.rad_memory)
         
         #Retrieving statistics
@@ -459,7 +459,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = np.inf #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
         self.options["atol"]     = 1.0e-6 #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
@@ -476,8 +476,8 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self._leny = len(self.y) #Dimension of the problem
         self._oldh = 0.0 #Old stepsize
         self._olderr = 1.0 #Old error
-        self._eps = N.finfo('double').eps
-        self._col_poly = N.zeros(self._leny*3)
+        self._eps = np.finfo('double').eps
+        self._col_poly = np.zeros(self._leny*3)
         self._type = '(explicit)'
         self._curiter = 0 #Number of current iterations
         
@@ -485,10 +485,10 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self.f = problem.rhs_internal
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(self.y0))
-        self.Y2 = N.array([0.0]*len(self.y0))
-        self.Y3 = N.array([0.0]*len(self.y0))
-        self._f0 = N.array([0.0]*len(self.y0))
+        self.Y1 = np.array([0.0]*len(self.y0))
+        self.Y2 = np.array([0.0]*len(self.y0))
+        self.Y3 = np.array([0.0]*len(self.y0))
+        self._f0 = np.array([0.0]*len(self.y0))
         
         #Solver support
         self.supports["one_step_mode"] = True
@@ -523,8 +523,8 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 self._tc = t
                 self._yc = y
                 
-                if self.h > N.abs(tf-t):
-                    self.h = N.abs(tf-t)
+                if self.h > np.abs(tf-t):
+                    self.h = np.abs(tf-t)
                 
                 if t < tf:
                     yield ID_PY_OK, t, y
@@ -576,7 +576,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
-        self._scaling = N.array(abs(y)*self.rtol + self.atol) #The scaling used.
+        self._scaling = np.array(abs(y)*self.rtol + self.atol) #The scaling used.
         
         while True: #Loop for integrating one step.
             
@@ -663,15 +663,15 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         
         self.statistics["nfcns"] += 3
         
-        return N.hstack((N.hstack((self.Y1,self.Y2)),self.Y3))
+        return np.hstack((np.hstack((self.Y1,self.Y2)),self.Y3))
     
     def calc_start_values(self):
         """
         Calculate newton starting values.
         """
         if self._first:
-            Z = N.zeros(self._leny*3)
-            W = N.zeros(self._leny*3)
+            Z = np.zeros(self._leny*3)
+            W = np.zeros(self._leny*3)
         else:
             Z = self._Z
             cq = self.C*self.h/self._oldh#self._oldoldh#self._oldh
@@ -682,7 +682,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             Z[leny:2*leny]  = cq[1,0]*(newtval[:leny]+(cq[1,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[1,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
             Z[2*leny:3*leny]= cq[2,0]*(newtval[:leny]+(cq[2,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[2,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
             
-            W = N.dot(self.T2,Z)
+            W = np.dot(self.T2,Z)
             
         return Z, W
     
@@ -713,7 +713,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 
                 self._needLU = False
                 
-                if min(abs(N.diag(self._U1)))<self._eps:
+                if min(abs(np.diag(self._U1)))<self._eps:
                     raise Explicit_ODE_Exception('Error, gI-J is singular.')
                     
             Z, W = self.calc_start_values()
@@ -723,24 +723,24 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 self.statistics["nniters"] += 1 #Adding one iteration
                 
                 #Solve the system
-                Z = N.dot(self.T2,self._radau_F(Z.real,t,y))
+                Z = np.dot(self.T2,self._radau_F(Z.real,t,y))
 
-                Z[:self._leny]              =Z[:self._leny]              -self._g*N.dot(self.I,W[:self._leny])
-                Z[self._leny:2*self._leny]  =Z[self._leny:2*self._leny]  -self._a*N.dot(self.I,W[self._leny:2*self._leny])   #+self._b*N.dot(self.I,W[2*self._leny:3*self._leny])
-                Z[2*self._leny:3*self._leny]=Z[2*self._leny:3*self._leny]-self._b*N.dot(self.I,W[2*self._leny:3*self._leny]) #-self._a*N.dot(self.I,W[2*self._leny:3*self._leny])
+                Z[:self._leny]              =Z[:self._leny]              -self._g*np.dot(self.I,W[:self._leny])
+                Z[self._leny:2*self._leny]  =Z[self._leny:2*self._leny]  -self._a*np.dot(self.I,W[self._leny:2*self._leny])   #+self._b*np.dot(self.I,W[2*self._leny:3*self._leny])
+                Z[2*self._leny:3*self._leny]=Z[2*self._leny:3*self._leny]-self._b*np.dot(self.I,W[2*self._leny:3*self._leny]) #-self._a*np.dot(self.I,W[2*self._leny:3*self._leny])
                 
-                Z[:self._leny]              =N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,Z[:self._leny])))
-                Z[self._leny:2*self._leny]  =N.linalg.solve(self._U2,N.linalg.solve(self._L2,N.linalg.solve(self._P2,Z[self._leny:2*self._leny])))
-                Z[2*self._leny:3*self._leny]=N.linalg.solve(self._U3,N.linalg.solve(self._L3,N.linalg.solve(self._P3,Z[2*self._leny:3*self._leny])))
+                Z[:self._leny]              =np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,Z[:self._leny])))
+                Z[self._leny:2*self._leny]  =np.linalg.solve(self._U2,np.linalg.solve(self._L2,np.linalg.solve(self._P2,Z[self._leny:2*self._leny])))
+                Z[2*self._leny:3*self._leny]=np.linalg.solve(self._U3,np.linalg.solve(self._L3,np.linalg.solve(self._P3,Z[2*self._leny:3*self._leny])))
                 #----
-                newnrm = N.linalg.norm(Z.reshape(-1,self._leny)/self._scaling,'fro')/N.sqrt(3.*self._leny)
+                newnrm = np.linalg.norm(Z.reshape(-1,self._leny)/self._scaling,'fro')/np.sqrt(3.*self._leny)
                       
                 if i > 0:
                     thq = newnrm/oldnrm
                     if i == 1:
                         self._theta = thq
                     else:
-                        self._theta = N.sqrt(thq*thqold)
+                        self._theta = np.sqrt(thq*thqold)
                     thqold = thq
                     
                     if self._theta < 0.99: #Convergence
@@ -760,10 +760,10 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 oldnrm = max(newnrm,self._eps) #Store oldnorm
                 W = W+Z #Perform the iteration
 
-                Z = N.dot(self.T3,W) #Calculate the new Z values
+                Z = np.dot(self.T3,W) #Calculate the new Z values
                 
                 if self._fac_con*newnrm <= self.fnewt: #Convergence?
-                    self._itfail = False;
+                    self._itfail = False
                     break
                 
             else: #Iteration failed
@@ -828,17 +828,17 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         temp = 1./self.h*(self.E[0]*self._Z[:self._leny]+self.E[1]*self._Z[self._leny:2*self._leny]+self.E[2]*self._Z[2*self._leny:3*self._leny])
 
         scal = self._scaling#/self.h
-        err_v = N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,self._f0+temp)))
-        err = N.linalg.norm(err_v/scal)
-        err = max(err/N.sqrt(self._leny),1.e-10)
+        err_v = np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,self._f0+temp)))
+        err = np.linalg.norm(err_v/scal)
+        err = max(err/np.sqrt(self._leny),1.e-10)
 
         if (self._rejected or self._first) and err >= 1.: #If the step was rejected, use the more expensive error estimation
             self.statistics["nfcns"] += 1
-            err_new = N.array([0.0]*self._leny)
+            err_new = np.array([0.0]*self._leny)
             self.f(err_new,self._tc,self._yc+err_v)
-            err_v =  N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,err_new+temp)))
-            err = N.linalg.norm(err_v/scal)
-            err = max(err/N.sqrt(self._leny),1.e-10)
+            err_v =  np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,err_new+temp)))
+            err = np.linalg.norm(err_v/scal)
+            err = max(err/np.sqrt(self._leny),1.e-10)
 
         return err
     
@@ -854,10 +854,10 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         if self.usejac: #Retrieve the user-defined jacobian
             cjac = self.problem.jac(t,y)
         else:           #Calculate a numeric jacobian
-            delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
-            Fdelt = N.array([self.problem.rhs(t,y+e) for e in delt]) #Add the disturbance (row by row) 
+            delt = np.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*np.identity(self._leny) #Calculate a disturbance
+            Fdelt = np.array([self.problem.rhs(t,y+e) for e in delt]) #Add the disturbance (row by row) 
             grad = ((Fdelt-self.problem.rhs(t,y)).T/delt.diagonal()).T
-            cjac = N.array(grad).T
+            cjac = np.array(grad).T
 
             self.statistics["nfcnjacs"] += 1+self._leny #Add the number of function evaluations
         
@@ -878,37 +878,37 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
     def _load_parameters(self):
         
         #Parameters
-        A = N.zeros([3,3])
-        A[0,0] = (88.-7.*N.sqrt(6.))/360.0
-        A[0,1] = (296.-169.*N.sqrt(6.))/1800.0
-        A[0,2] = (-2.0+3.0*N.sqrt(6.))/225.0
-        A[1,0] = (296.0+169.0*N.sqrt(6.))/1800.0
-        A[1,1] = (88.+7.*N.sqrt(6.))/360.0
-        A[1,2] = (-2.-3.*N.sqrt(6.))/225.0
-        A[2,0] = (16.0-N.sqrt(6.))/36.0
-        A[2,1] = (16.0+N.sqrt(6.))/36.0
+        A = np.zeros([3,3])
+        A[0,0] = (88.-7.*np.sqrt(6.))/360.0
+        A[0,1] = (296.-169.*np.sqrt(6.))/1800.0
+        A[0,2] = (-2.0+3.0*np.sqrt(6.))/225.0
+        A[1,0] = (296.0+169.0*np.sqrt(6.))/1800.0
+        A[1,1] = (88.+7.*np.sqrt(6.))/360.0
+        A[1,2] = (-2.-3.*np.sqrt(6.))/225.0
+        A[2,0] = (16.0-np.sqrt(6.))/36.0
+        A[2,1] = (16.0+np.sqrt(6.))/36.0
         A[2,2] = (1.0/9.0)
         
-        C = N.zeros([3,1])
-        C[0,0]=(4.0-N.sqrt(6.0))/10.0
-        C[1,0]=(4.0+N.sqrt(6.0))/10.0
+        C = np.zeros([3,1])
+        C[0,0]=(4.0-np.sqrt(6.0))/10.0
+        C[1,0]=(4.0+np.sqrt(6.0))/10.0
         C[2,0]=1.0
         
-        B = N.zeros([1,3])
-        B[0,0]=(16.0-N.sqrt(6.0))/36.0
-        B[0,1]=(16.0+N.sqrt(6.0))/36.0
+        B = np.zeros([1,3])
+        B[0,0]=(16.0-np.sqrt(6.0))/36.0
+        B[0,1]=(16.0+np.sqrt(6.0))/36.0
         B[0,2]=1.0/9.0
         
-        E = N.zeros(3)
-        E[0] = -13.0-7.*N.sqrt(6.)
-        E[1] = -13.0+7.0*N.sqrt(6.)
+        E = np.zeros(3)
+        E[0] = -13.0-7.*np.sqrt(6.)
+        E[1] = -13.0+7.0*np.sqrt(6.)
         E[2] = -1.0
         E = 1.0/3.0*E
         
-        Ainv = N.linalg.inv(A)
-        [eig, T] = N.linalg.eig(Ainv)
-        eig = N.array([eig[2],eig[0],eig[1]])
-        J = N.diag(eig)
+        Ainv = np.linalg.inv(A)
+        [eig, T] = np.linalg.eig(Ainv)
+        eig = np.array([eig[2],eig[0],eig[1]])
+        J = np.diag(eig)
 
         self._alpha = eig[1]
         self._beta  = eig[2]
@@ -920,13 +920,13 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         T[:,0] = temp2
         T[:,1] = temp0
         T[:,2] = temp1
-        Tinv = N.linalg.inv(T)
+        Tinv = np.linalg.inv(T)
         
-        I = N.eye(self._leny)
-        I3 = N.eye(3)
-        T1 = N.kron(J,I)
-        T2 = N.kron(Tinv,I)
-        T3 = N.kron(T,I)
+        I = np.eye(self._leny)
+        I3 = np.eye(3)
+        T1 = np.kron(J,I)
+        T2 = np.kron(Tinv,I)
+        T3 = np.kron(T,I)
         
         self.A = A
         self.B = B
@@ -977,9 +977,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = np.inf #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 100000
@@ -1035,11 +1035,11 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                     res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
                 except BaseException as E:
                     res = y[:leny].copy()
-                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
-                return N.append(y[leny:2*leny],res), [ret]
+                return np.append(y[leny:2*leny],res), [ret]
             self._f = f
             self.event_func = event_func
             self._event_info = [0] * self.problem_info["dimRoot"]
@@ -1053,15 +1053,15 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                     res = self.problem.res(t, y[:leny], y[leny:2*leny])
                 except BaseException as E:
                     res = y[:leny].copy()
-                    if isinstance(E, (N.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
-                return N.append(y[leny:2*leny],res), [ret]
+                return np.append(y[leny:2*leny],res), [ret]
             self._f = f
     
     def interpolate(self, time, k=0):
-        y = N.empty(self._leny*2)
+        y = np.empty(self._leny*2)
         for i in range(self._leny*2):
             # Note: index shift to Fortan based indices
             y[i] = self.radau5.contr5(i+1, time, self.cont)
@@ -1113,7 +1113,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         return irtrn
         
     def _mas_f(self, am):
-        #return N.array([[1]*self._leny+[0]*self._leny])
+        #return np.array([[1]*self._leny+[0]*self._leny])
         return self._mass_matrix
         
     def integrate(self, t, y, yd, tf, opts):
@@ -1129,8 +1129,8 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         MLMAS = 0 #The mass matrix is only defined on the diagonal
         MUMAS = 0 #The mass matrix is only defined on the diagonal
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*(5*((self.problem_info["dim"]*2)**2+12)+20)) #Work (double) vector
-        IWORK = N.array([0]*(3*(self.problem_info["dim"]*2)+20),dtype=N.intc) #Work (integer) vector
+        WORK  = np.array([0.0]*(5*((self.problem_info["dim"]*2)**2+12)+20)) #Work (double) vector
+        IWORK = np.array([0]*(3*(self.problem_info["dim"]*2)+20),dtype=np.intc) #Work (integer) vector
         
         #Setting work options
         WORK[1] = self.safe
@@ -1165,14 +1165,14 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self._opts = opts
         
         #Create y = [y, yd]
-        y = N.append(y,yd)
+        y = np.append(y,yd)
         #Create mass matrix
-        #self._mass_matrix = N.array([[1]*self._leny+[0]*self._leny])
-        self._mass_matrix = N.array([[0]*self._leny])
+        #self._mass_matrix = np.array([[1]*self._leny+[0]*self._leny])
+        self._mass_matrix = np.array([[0]*self._leny])
         
-        atol = N.append(self.atol, self.atol)
+        atol = np.append(self.atol, self.atol)
 
-        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*N.ones(self.problem_info["dim"]*2), atol, 
+        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
                                                     ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
                                                     IOUT, WORK, IWORK)
 
@@ -1255,11 +1255,11 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = np.inf #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = N.array([1.0e-6]*self._leny) #Absolute tolerance
+        self.options["atol"]     = np.array([1.0e-6]*self._leny) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
-        self.options["index"]    = N.array([1]*self._leny+[2]*self._leny)
+        self.options["index"]    = np.array([1]*self._leny+[2]*self._leny)
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
         
@@ -1272,20 +1272,20 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self._rejected = True #Is the last step rejected?
         self._oldh = 0.0 #Old stepsize
         self._olderr = 1.0 #Old error
-        self._eps = N.finfo('double').eps
-        self._col_poly = N.zeros(self._2leny*3)
+        self._eps = np.finfo('double').eps
+        self._col_poly = np.zeros(self._2leny*3)
         self._type = '(implicit)'
         self._curiter = 0 #Number of current iterations
         
         #RES-Function
         self.f = problem.res_internal
-        self.RES =  N.array([0.0]*len(self.y0))
+        self.RES =  np.array([0.0]*len(self.y0))
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(self.y0))
-        self.Y2 = N.array([0.0]*len(self.y0))
-        self.Y3 = N.array([0.0]*len(self.y0))
-        self._f0 = N.array([0.0]*len(self.y0))
+        self.Y1 = np.array([0.0]*len(self.y0))
+        self.Y2 = np.array([0.0]*len(self.y0))
+        self.Y3 = np.array([0.0]*len(self.y0))
+        self._f0 = np.array([0.0]*len(self.y0))
         
         
         #Solver support
@@ -1310,9 +1310,9 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                             
         """
         if len(index) == self._2leny:
-            ind = N.array(index)
+            ind = np.array(index)
         elif len(index) == self._leny:
-            ind = N.array(index+(N.array(index)+1).tolist())
+            ind = np.array(index+(np.array(index)+1).tolist())
         else:
             raise Implicit_ODE_Exception('Wrong number of variables in the index vector.')
         self.options["index"] = ind
@@ -1349,7 +1349,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         if self.fnewt == 0:
             self.fnewt = max(10.*self._eps/self.rtol,min(0.03,self.rtol**0.5))
             
-        self._f0 = self._ode_f(t,N.append(y,yd))
+        self._f0 = self._ode_f(t,np.append(y,yd))
         self.statistics["nfcns"] +=1
         self._tc = t
         self._yc = y
@@ -1363,8 +1363,8 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 self._yc = y
                 self._ydc = yd
                 
-                if self.h > N.abs(tf-t):
-                    self.h = N.abs(tf-t)
+                if self.h > np.abs(tf-t):
+                    self.h = np.abs(tf-t)
                 
                 if t < tf:
                     yield ID_PY_OK, t,y,yd
@@ -1414,10 +1414,10 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
     def _ode_f(self, t, y):
         
         #self.res_fcn(t,y[:self._leny],y[self._leny:])
-        #return N.hstack((y[self._leny:],self.res_fcn(t,y[:self._leny],y[self._leny:])))
+        #return np.hstack((y[self._leny:],self.res_fcn(t,y[:self._leny],y[self._leny:])))
         
         self.f(self.RES,t,y[:self._leny],y[self._leny:])
-        return N.hstack((y[self._leny:],self.RES))
+        return np.hstack((y[self._leny:],self.RES))
     
     def _radau_F(self, Z, t, y, yd):
         
@@ -1425,7 +1425,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         Z2 = Z[self._2leny:2*self._2leny]
         Z3 = Z[2*self._2leny:3*self._2leny]
         
-        q = N.append(y,yd)
+        q = np.append(y,yd)
         
         sol1 = self._ode_f(t+self.C[0]*self.h, q+Z1)
         sol2 = self._ode_f(t+self.C[1]*self.h, q+Z2)
@@ -1433,13 +1433,13 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         
         self.statistics["nfcns"] += 3
         
-        return N.hstack((N.hstack((sol1,sol2)),sol3))
+        return np.hstack((np.hstack((sol1,sol2)),sol3))
     
     def _step(self, t, y, yd):
         """
         This calculates the next step in the integration.
         """
-        self._scaling = N.array(abs(N.append(y,yd))*self.rtol + self.atol.tolist()*2) #The scaling used.
+        self._scaling = np.array(abs(np.append(y,yd))*self.rtol + self.atol.tolist()*2) #The scaling used.
         
         while True: #Loop for integrating one step.
             
@@ -1469,7 +1469,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 tn = t+self.h #Preform the step
                 yn = y+self._Z[2*self._2leny:3*self._2leny][:self._leny]
                 ydn = yd+self._Z[2*self._2leny:3*self._2leny][self._leny:]
-                self._f0 = self._ode_f(t,N.append(yn,ydn))
+                self._f0 = self._ode_f(t,np.append(yn,ydn))
                 self.statistics["nfcns"] += 1
                 
                 self._oldoldh = self._oldh #Store the old(old) step-size for use in the test below.
@@ -1532,7 +1532,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 
                 self._needLU = False
                 
-                if min(abs(N.diag(self._U1)))<self._eps:
+                if min(abs(np.diag(self._U1)))<self._eps:
                     raise Implicit_ODE_Exception('Error, gM-J is singular at ',self._tc)
                     
             Z, W = self.calc_start_values()
@@ -1542,27 +1542,27 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 self.statistics["nniters"] += 1 #Adding one iteration
 
                 #Solve the system
-                Z = N.dot(self.T2,self._radau_F(Z.real,t,y,yd))
+                Z = np.dot(self.T2,self._radau_F(Z.real,t,y,yd))
 
-                Z[:self._2leny]               =Z[:self._2leny]               -self._g*N.dot(self.M,W[:self._2leny])
-                Z[self._2leny:2*self._2leny]  =Z[self._2leny:2*self._2leny]  -self._a*N.dot(self.M,W[self._2leny:2*self._2leny])   #+self._b*N.dot(self.I,W[2*self._leny:3*self._leny])
-                Z[2*self._2leny:3*self._2leny]=Z[2*self._2leny:3*self._2leny]-self._b*N.dot(self.M,W[2*self._2leny:3*self._2leny]) #-self._a*N.dot(self.I,W[2*self._leny:3*self._leny])
+                Z[:self._2leny]               =Z[:self._2leny]               -self._g*np.dot(self.M,W[:self._2leny])
+                Z[self._2leny:2*self._2leny]  =Z[self._2leny:2*self._2leny]  -self._a*np.dot(self.M,W[self._2leny:2*self._2leny])   #+self._b*np.dot(self.I,W[2*self._leny:3*self._leny])
+                Z[2*self._2leny:3*self._2leny]=Z[2*self._2leny:3*self._2leny]-self._b*np.dot(self.M,W[2*self._2leny:3*self._2leny]) #-self._a*np.dot(self.I,W[2*self._leny:3*self._leny])
                 
-                Z[:self._2leny]               =N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,Z[:self._2leny])))
-                Z[self._2leny:2*self._2leny]  =N.linalg.solve(self._U2,N.linalg.solve(self._L2,N.linalg.solve(self._P2,Z[self._2leny:2*self._2leny])))
-                Z[2*self._2leny:3*self._2leny]=N.linalg.solve(self._U3,N.linalg.solve(self._L3,N.linalg.solve(self._P3,Z[2*self._2leny:3*self._2leny])))
+                Z[:self._2leny]               =np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,Z[:self._2leny])))
+                Z[self._2leny:2*self._2leny]  =np.linalg.solve(self._U2,np.linalg.solve(self._L2,np.linalg.solve(self._P2,Z[self._2leny:2*self._2leny])))
+                Z[2*self._2leny:3*self._2leny]=np.linalg.solve(self._U3,np.linalg.solve(self._L3,np.linalg.solve(self._P3,Z[2*self._2leny:3*self._2leny])))
                 #----
                 
                 self._scaling = self._scaling/self.h**(self.index-1)#hfac
                 
-                newnrm = N.linalg.norm(Z.reshape(-1,self._2leny)/self._scaling,'fro')/N.sqrt(3.*self._2leny)
+                newnrm = np.linalg.norm(Z.reshape(-1,self._2leny)/self._scaling,'fro')/np.sqrt(3.*self._2leny)
                 
                 if i > 0:
                     thq = newnrm/oldnrm
                     if i == 1:
                         self._theta = thq
                     else:
-                        self._theta = N.sqrt(thq*thqold)
+                        self._theta = np.sqrt(thq*thqold)
                     thqold = thq
                     
                     if self._theta < 0.99: #Convergence
@@ -1583,7 +1583,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 oldnrm = max(newnrm,self._eps) #Store oldnorm
                 W = W+Z #Perform the iteration
                 
-                Z = N.dot(self.T3,W) #Calculate the new Z values
+                Z = np.dot(self.T3,W) #Calculate the new Z values
                 
                 if self._fac_con*newnrm <= self.fnewt: #Convergence?
                     self._itfail = False
@@ -1615,21 +1615,21 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
     def estimate_error(self):
         
         temp = 1./self.h*(self.E[0]*self._Z[:self._2leny]+self.E[1]*self._Z[self._2leny:2*self._2leny]+self.E[2]*self._Z[2*self._2leny:3*self._2leny])
-        temp = N.dot(self.M,temp)
+        temp = np.dot(self.M,temp)
         
         self._scaling = self._scaling/self.h**(self.index-1)#hfac
         
         scal = self._scaling#/self.h
-        err_v = N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,self._f0+temp)))
-        err = N.linalg.norm(err_v/scal)
-        err = max(err/N.sqrt(self._2leny),1.e-10)
+        err_v = np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,self._f0+temp)))
+        err = np.linalg.norm(err_v/scal)
+        err = max(err/np.sqrt(self._2leny),1.e-10)
 
         if (self._rejected or self._first) and err >= 1.: #If the step was rejected, use the more expensive error estimation
             self.statistics["nfcns"] += 1
-            err_v = self._ode_f(self._tc,N.append(self._yc,self._ydc)+err_v)
-            err_v = N.linalg.solve(self._U1,N.linalg.solve(self._L1,N.linalg.solve(self._P1,err_v+temp)))
-            err = N.linalg.norm(err_v/scal)
-            err = max(err/N.sqrt(self._2leny),1.e-10)
+            err_v = self._ode_f(self._tc,np.append(self._yc,self._ydc)+err_v)
+            err_v = np.linalg.solve(self._U1,np.linalg.solve(self._L1,np.linalg.solve(self._P1,err_v+temp)))
+            err = np.linalg.norm(err_v/scal)
+            err = max(err/np.sqrt(self._2leny),1.e-10)
             
         return err
     
@@ -1662,15 +1662,15 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self._needLU = True #A new LU-decomposition is needed
         self._needjac = False #A new jacobian is not needed
         
-        q = N.append(y,yd)
+        q = np.append(y,yd)
         
         if self.usejac: #Retrieve the user-defined jacobian
             cjac = self.problem.jac(t,y,yd)
         else:           #Calculate a numeric jacobian
-            delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in q])*N.identity(self._2leny) #Calculate a disturbance
-            Fdelt = N.array([self._ode_f(t,q+e) for e in delt]) #Add the disturbance (row by row) 
+            delt = np.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in q])*np.identity(self._2leny) #Calculate a disturbance
+            Fdelt = np.array([self._ode_f(t,q+e) for e in delt]) #Add the disturbance (row by row) 
             grad = ((Fdelt-self._ode_f(t,q)).T/delt.diagonal()).T
-            cjac = N.array(grad).T
+            cjac = np.array(grad).T
             self.statistics["nfcnjacs"] += 1+self._2leny #Add the number of function evaluations
 
         self.statistics["njacs"] += 1 #add the number of jacobian evaluation
@@ -1729,8 +1729,8 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         Calculate newton starting values.
         """
         if self._first:
-            Z = N.zeros(self._2leny*3)
-            W = N.zeros(self._2leny*3)
+            Z = np.zeros(self._2leny*3)
+            W = np.zeros(self._2leny*3)
         else:
             Z = self._Z
             cq = self.C*self.h/self._oldh#self._oldoldh#self._oldh
@@ -1741,46 +1741,46 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             Z[leny:2*leny]  = cq[1,0]*(newtval[:leny]+(cq[1,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[1,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
             Z[2*leny:3*leny]= cq[2,0]*(newtval[:leny]+(cq[2,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[2,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
             
-            W = N.dot(self.T2,Z)
+            W = np.dot(self.T2,Z)
             
         return Z, W
     
     def _load_parameters(self):
         
         #Parameters
-        A = N.zeros([3,3])
-        A[0,0] = (88.-7.*N.sqrt(6.))/360.0
-        A[0,1] = (296.-169.*N.sqrt(6.))/1800.0
-        A[0,2] = (-2.0+3.0*N.sqrt(6.))/225.0
-        A[1,0] = (296.0+169.0*N.sqrt(6.))/1800.0
-        A[1,1] = (88.+7.*N.sqrt(6.))/360.0
-        A[1,2] = (-2.-3.*N.sqrt(6.))/225.0
-        A[2,0] = (16.0-N.sqrt(6.))/36.0
-        A[2,1] = (16.0+N.sqrt(6.))/36.0
+        A = np.zeros([3,3])
+        A[0,0] = (88.-7.*np.sqrt(6.))/360.0
+        A[0,1] = (296.-169.*np.sqrt(6.))/1800.0
+        A[0,2] = (-2.0+3.0*np.sqrt(6.))/225.0
+        A[1,0] = (296.0+169.0*np.sqrt(6.))/1800.0
+        A[1,1] = (88.+7.*np.sqrt(6.))/360.0
+        A[1,2] = (-2.-3.*np.sqrt(6.))/225.0
+        A[2,0] = (16.0-np.sqrt(6.))/36.0
+        A[2,1] = (16.0+np.sqrt(6.))/36.0
         A[2,2] = (1.0/9.0)
         
-        C = N.zeros([3,1])
-        C[0,0]=(4.0-N.sqrt(6.0))/10.0
-        C[1,0]=(4.0+N.sqrt(6.0))/10.0
+        C = np.zeros([3,1])
+        C[0,0]=(4.0-np.sqrt(6.0))/10.0
+        C[1,0]=(4.0+np.sqrt(6.0))/10.0
         C[2,0]=1.0
         
-        B = N.zeros([1,3])
-        B[0,0]=(16.0-N.sqrt(6.0))/36.0
-        B[0,1]=(16.0+N.sqrt(6.0))/36.0
+        B = np.zeros([1,3])
+        B[0,0]=(16.0-np.sqrt(6.0))/36.0
+        B[0,1]=(16.0+np.sqrt(6.0))/36.0
         B[0,2]=1.0/9.0
         
-        E = N.zeros(3)
-        E[0] = -13.0-7.*N.sqrt(6.)
-        E[1] = -13.0+7.0*N.sqrt(6.)
+        E = np.zeros(3)
+        E[0] = -13.0-7.*np.sqrt(6.)
+        E[1] = -13.0+7.0*np.sqrt(6.)
         E[2] = -1.0
         E = 1.0/3.0*E
         
-        M = N.array([[1.,0.],[0.,0.]])
+        M = np.array([[1.,0.],[0.,0.]])
         
-        Ainv = N.linalg.inv(A)
-        [eig, T] = N.linalg.eig(Ainv)
-        eig = N.array([eig[2],eig[0],eig[1]])
-        J = N.diag(eig)
+        Ainv = np.linalg.inv(A)
+        [eig, T] = np.linalg.eig(Ainv)
+        eig = np.array([eig[2],eig[0],eig[1]])
+        J = np.diag(eig)
 
         self._alpha = eig[1]
         self._beta  = eig[2]
@@ -1792,14 +1792,14 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         T[:,0] = temp2
         T[:,1] = temp0
         T[:,2] = temp1
-        Tinv = N.linalg.inv(T)
+        Tinv = np.linalg.inv(T)
         
-        I = N.eye(self._2leny)
-        M = N.kron(M,N.eye(self._leny))
-        I3 = N.eye(3)
-        T1 = N.kron(J,M)
-        T2 = N.kron(Tinv,I)
-        T3 = N.kron(T,I)
+        I = np.eye(self._2leny)
+        M = np.kron(M,np.eye(self._leny))
+        I3 = np.eye(3)
+        T1 = np.kron(J,M)
+        T2 = np.kron(Tinv,I)
+        T3 = np.kron(T,I)
         
         self.A = A
         self.B = B

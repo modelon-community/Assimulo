@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 import nose
@@ -53,7 +53,7 @@ def run_example(with_plots=True):
         res_3 = yd[3]+y[4]*y[1]+9.82
         res_4 = y[2]**2+y[3]**2-y[4]*(y[0]**2+y[1]**2)-y[1]*9.82
 
-        return N.array([res_0,res_1,res_2,res_3,res_4])
+        return np.array([res_0,res_1,res_2,res_3,res_4])
     
     def handle_result(solver, t ,y, yd):
         global order
@@ -64,7 +64,7 @@ def run_example(with_plots=True):
         solver.yd_sol.extend([yd])
         
         
-    #The initial conditons
+    #The initial conditions
     y0 = [1.0,0.0,0.0,0.0,5] #Initial conditions
     yd0 = [0.0,0.0,0.0,-9.82,0.0] #Initial conditions
     
@@ -78,7 +78,7 @@ def run_example(with_plots=True):
     #Create an Assimulo implicit solver (IDA)
     imp_sim = IDA(imp_mod) #Create a IDA solver
     
-    #Sets the paramters
+    #Sets the parameters
     imp_sim.atol = 1e-6 #Default 1e-6
     imp_sim.rtol = 1e-6 #Default 1e-6
     imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
@@ -100,7 +100,7 @@ def run_example(with_plots=True):
         P.title(imp_mod.name)
         
         P.figure(2)
-        P.plot([0] + N.add.accumulate(N.diff(t)).tolist(), order)
+        P.plot([0] + np.add.accumulate(np.diff(t)).tolist(), order)
         P.title("Used order during the integration")
         P.xlabel("Time")
         P.ylabel("Order")

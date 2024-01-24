@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -35,7 +35,7 @@ def run_example(with_plots=True):
     #Define the rhs
     def f(t,y,yd):
         res = yd[0] + y[0]
-        return N.array([res])
+        return np.array([res])
     
     #Define an Assimulo problem
     imp_mod = Implicit_Problem(f,t0=5, y0=0.02695, yd0=-0.02695,

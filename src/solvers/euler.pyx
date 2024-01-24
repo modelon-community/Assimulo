@@ -17,9 +17,8 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-cimport numpy as N
-import numpy as N
-import numpy.linalg as LIN
+cimport numpy as np
+import numpy as np
 import scipy.sparse as sp
 
 from assimulo.explicit_ode cimport Explicit_ODE
@@ -49,8 +48,8 @@ cdef class ImplicitEuler(Explicit_ODE):
     with :math:`h` being the step-size and :math:`y_n` the previous 
     solution to the equation.
     """
-    cdef N.ndarray yd1
-    cdef N.ndarray _old_jac
+    cdef np.ndarray yd1
+    cdef np.ndarray _old_jac
     cdef object f
     cdef public object event_func
     cdef int _leny
@@ -58,10 +57,10 @@ cdef class ImplicitEuler(Explicit_ODE):
     cdef int _needjac
     cdef int _curjac
     cdef int _steps_since_last_jac
-    cdef N.ndarray _yold
-    cdef N.ndarray _ynew
-    #cdef N.ndarray _event_info
-    cdef public N.ndarray g_old
+    cdef np.ndarray _yold
+    cdef np.ndarray _ynew
+    #cdef np.ndarray _event_info
+    cdef public np.ndarray g_old
     cdef double _told
     cdef double _h
     cdef double _inith
@@ -73,13 +72,13 @@ cdef class ImplicitEuler(Explicit_ODE):
         self.options["h"] = 0.01
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"]) else False
         self.options["newt"]     = 7 #Maximum number of newton iterations
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         
         #Internal temporary result vector
-        self.yd1 = N.array([0.0]*len(self.y0))
-        self._yold = N.array([0.0]*len(self.y0))
-        self._ynew = N.array([0.0]*len(self.y0))
+        self.yd1 = np.array([0.0]*len(self.y0))
+        self._yold = np.array([0.0]*len(self.y0))
+        self._ynew = np.array([0.0]*len(self.y0))
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -88,7 +87,7 @@ cdef class ImplicitEuler(Explicit_ODE):
 
         
         self._leny = len(self.y) #Dimension of the problem
-        self._eps  = N.finfo('double').eps
+        self._eps  = np.finfo('double').eps
         self._needjac = True #Do we need a new jacobian?
         self._curjac = False #Is the current jacobian up to date?
         self._steps_since_last_jac = 0 #Keep track on how long ago we updated the jacobian
@@ -107,7 +106,7 @@ cdef class ImplicitEuler(Explicit_ODE):
                 return self.problem.rhs(t, y, self.sw)
             self.f = f
             self.event_func = event_func
-            self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
+            self._event_info = np.array([0] * self.problem_info["dimRoot"]) 
             ret, self.g_old = self.event_func(self.t, self.y)
             if ret < 0:
                 raise self._py_err
@@ -141,7 +140,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     
     usejac = property(_get_usejac,_set_usejac)
     
-    cpdef step(self,double t,N.ndarray y,double tf,dict opts):
+    cpdef step(self,double t,np.ndarray y,double tf,dict opts):
         cdef double h
         h = self.options["h"]
         
@@ -153,7 +152,7 @@ cdef class ImplicitEuler(Explicit_ODE):
             t, y = self._step(t,y,h)
             return ID_COMPLETE, t, y
     
-    cpdef integrate(self, double t,N.ndarray y,double tf, dict opts):
+    cpdef integrate(self, double t,np.ndarray y,double tf, dict opts):
         cdef double h
         cdef list tr,yr
         
@@ -261,10 +260,10 @@ cdef class ImplicitEuler(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
 
@@ -335,10 +334,10 @@ cdef class ImplicitEuler(Explicit_ODE):
             if isinstance(jac, sp.csc_matrix):
                 jac = jac.toarray()
         else:           #Calculate a numeric jacobian
-            delt = N.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*N.identity(self._leny) #Calculate a disturbance
-            Fdelt = N.array([self.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 
+            delt = np.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*np.identity(self._leny) #Calculate a disturbance
+            Fdelt = np.array([self.f(t,y+e) for e in delt]) #Add the disturbance (row by row) 
             grad = ((Fdelt-self.f(t,y)).T/delt.diagonal()).T
-            jac = N.array(grad).T
+            jac = np.array(grad).T
             
             self.statistics["nfcnjacs"] += 1+self._leny #Add the number of function evaluations
         
@@ -347,7 +346,7 @@ cdef class ImplicitEuler(Explicit_ODE):
     
     
     
-    cdef double WRMS(self, N.ndarray x, N.ndarray w):
+    cdef double WRMS(self, np.ndarray x, np.ndarray w):
         """
         Calculates the Weighted Root-mean-square.
         """
@@ -361,17 +360,17 @@ cdef class ImplicitEuler(Explicit_ODE):
             
         return (sum/N)**0.5
     
-    cdef tuple _step(self,double t,N.ndarray y,double h):
+    cdef tuple _step(self,double t,np.ndarray y,double h):
         """
         This calculates the next step in the integration.
         """
         cdef double new_norm = 0
         cdef double old_norm = 0
         cdef double tn1 = t+h
-        cdef N.ndarray yn = y.copy() #Old y
-        #cdef N.ndarray yn1 = y.copy() #First newton guess
-        cdef N.ndarray yn1 = y+h*self.f(t,y) #First newton guess
-        cdef N.ndarray I = N.eye(self._leny)
+        cdef np.ndarray yn = y.copy() #Old y
+        #cdef np.ndarray yn1 = y.copy() #First newton guess
+        cdef np.ndarray yn1 = y+h*self.f(t,y) #First newton guess
+        cdef np.ndarray I = np.eye(self._leny)
         self.statistics["nfcns"] += 1
         
         FLAG_CONV = False
@@ -389,12 +388,12 @@ cdef class ImplicitEuler(Explicit_ODE):
                 
                 #jac = self._jacobian(tn1, yn1)
                 
-                #ynew = yn1 - N.dot(LIN.inv(h*jac-I),(yn-yn1+h*self.problem.rhs(tn1,yn1)))
-                ynew = yn1 - LIN.solve(h*jac-I, yn-yn1+h*self.f(tn1,yn1) )
+                #ynew = yn1 - np.dot(np.linalg.inv(h*jac-I),(yn-yn1+h*self.problem.rhs(tn1,yn1)))
+                ynew = yn1 - np.linalg.solve(h*jac-I, yn-yn1+h*self.f(tn1,yn1) )
                 self.statistics["nfcns"] += 1
                 
-                #print tn1, self.WRMS(ynew-yn1, 1.0/(self.rtol*N.abs(yn1)+self.atol))
-                new_norm = self.WRMS(ynew-yn1, 1.0/(self.rtol*N.abs(yn1)+self.atol))
+                #print tn1, self.WRMS(ynew-yn1, 1.0/(self.rtol*np.abs(yn1)+self.atol))
+                new_norm = self.WRMS(ynew-yn1, 1.0/(self.rtol*np.abs(yn1)+self.atol))
                 
                 if new_norm < 0.1: #Newton converged
                     FLAG_CONV = True
@@ -505,13 +504,13 @@ cdef class ExplicitEuler(Explicit_ODE):
     with :math:`h` being the step-size and :math:`y_n` the previous 
     solution to the equation.
     """
-    cdef N.ndarray yd1
+    cdef np.ndarray yd1
     cdef object f
     cdef public object event_func
-    cdef N.ndarray _yold
-    cdef N.ndarray _ynew
-    #cdef N.ndarray _event_info
-    cdef public N.ndarray g_old
+    cdef np.ndarray _yold
+    cdef np.ndarray _ynew
+    #cdef np.ndarray _event_info
+    cdef public np.ndarray g_old
     cdef double _told
     cdef double _h
     cdef double _inith
@@ -525,9 +524,9 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         
         #Internal temporary result vector
-        self.yd1 = N.array([0.0]*len(self.y0))
-        self._yold = N.array([0.0]*len(self.y0))
-        self._ynew = N.array([0.0]*len(self.y0))
+        self.yd1 = np.array([0.0]*len(self.y0))
+        self._yold = np.array([0.0]*len(self.y0))
+        self._ynew = np.array([0.0]*len(self.y0))
         self._inith = 0 #Used for taking an initial step of correct length after an event.
         
         #Solver support
@@ -548,7 +547,7 @@ cdef class ExplicitEuler(Explicit_ODE):
                 return self.problem.rhs(t, y, self.sw)
             self.f = f
             self.event_func = event_func
-            self._event_info = N.array([0] * self.problem_info["dimRoot"]) 
+            self._event_info = np.array([0] * self.problem_info["dimRoot"]) 
             ret, self.g_old = self.event_func(self.t, self.y)
             if ret < 0:
                 raise self._py_err
@@ -556,7 +555,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         else: 
             self.f = self.problem.rhs
     
-    cpdef step(self,double t,N.ndarray y,double tf,dict opts):
+    cpdef step(self,double t,np.ndarray y,double tf,dict opts):
         cdef double h
         h = self.options["h"]
         
@@ -568,7 +567,7 @@ cdef class ExplicitEuler(Explicit_ODE):
             t, y = self._step(t,y,h)
             return ID_COMPLETE, t, y
     
-    cpdef integrate(self, double t,N.ndarray y,double tf, dict opts):
+    cpdef integrate(self, double t,np.ndarray y,double tf, dict opts):
         cdef double h
         cdef list tr,yr
         
@@ -634,7 +633,7 @@ cdef class ExplicitEuler(Explicit_ODE):
             
         return flag, tr, yr
     
-    cdef tuple _step(self,double t,N.ndarray y,double h):
+    cdef tuple _step(self,double t,np.ndarray y,double h):
         """
         This calculates the next step in the integration.
         """

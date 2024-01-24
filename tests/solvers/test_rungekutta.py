@@ -20,7 +20,7 @@ from assimulo import testattr
 from assimulo.solvers.runge_kutta import Dopri5, RungeKutta34, RungeKutta4
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded
-import numpy as N
+import numpy as np
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
@@ -86,8 +86,8 @@ class Test_Dopri5:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -217,8 +217,8 @@ class Test_RungeKutta34:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         

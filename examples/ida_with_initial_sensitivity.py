@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -57,13 +57,13 @@ def run_example(with_plots=True):
         res_1 = -yd2 + k21*y1-(k02+k12)*y2
         res_2 = -yd3 + k31*y1-k13*y3
         
-        return N.array([res_0,res_1,res_2])
+        return np.array([res_0,res_1,res_2])
     
     #The initial conditions
     y0 = [0.0,0.0,0.0]          #Initial conditions for y
     yd0 = [49.3,0.,0.]
     p0 = [0.0, 0.0, 0.0]  #Initial conditions for parameters
-    yS0 = N.array([[1,0,0],[0,1,0],[0,0,1.]])
+    yS0 = np.array([[1,0,0],[0,1,0],[0,0,1.]])
     
     #Create an Assimulo implicit problem
     imp_mod = Implicit_Problem(f,y0,yd0,p0=p0,name='Example: Computing Sensitivities')
@@ -74,7 +74,7 @@ def run_example(with_plots=True):
     #Create an Assimulo explicit solver (IDA)
     imp_sim = IDA(imp_mod)
     
-    #Sets the paramters
+    #Sets the parameters
     imp_sim.rtol = 1e-7
     imp_sim.atol = 1e-6
     imp_sim.pbar = [1,1,1] #pbar is used to estimate the tolerances for the parameters
@@ -90,21 +90,21 @@ def run_example(with_plots=True):
         import pylab as P
         P.figure(1)
         P.subplot(221)
-        P.plot(t, N.array(imp_sim.p_sol[0])[:,0],
-               t, N.array(imp_sim.p_sol[0])[:,1],
-               t, N.array(imp_sim.p_sol[0])[:,2])
+        P.plot(t, np.array(imp_sim.p_sol[0])[:,0],
+               t, np.array(imp_sim.p_sol[0])[:,1],
+               t, np.array(imp_sim.p_sol[0])[:,2])
         P.title("Parameter p1")
         P.legend(("p1/dy1","p1/dy2","p1/dy3"))
         P.subplot(222)
-        P.plot(t, N.array(imp_sim.p_sol[1])[:,0],
-               t, N.array(imp_sim.p_sol[1])[:,1],
-               t, N.array(imp_sim.p_sol[1])[:,2])
+        P.plot(t, np.array(imp_sim.p_sol[1])[:,0],
+               t, np.array(imp_sim.p_sol[1])[:,1],
+               t, np.array(imp_sim.p_sol[1])[:,2])
         P.title("Parameter p2")
         P.legend(("p2/dy1","p2/dy2","p2/dy3"))
         P.subplot(223)
-        P.plot(t, N.array(imp_sim.p_sol[2])[:,0],
-               t, N.array(imp_sim.p_sol[2])[:,1],
-               t, N.array(imp_sim.p_sol[2])[:,2])
+        P.plot(t, np.array(imp_sim.p_sol[2])[:,0],
+               t, np.array(imp_sim.p_sol[2])[:,1],
+               t, np.array(imp_sim.p_sol[2])[:,2])
         P.title("Parameter p3")
         P.legend(("p3/dy1","p3/dy2","p3/dy3"))
         P.subplot(224)

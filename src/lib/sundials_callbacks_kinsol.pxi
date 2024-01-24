@@ -29,7 +29,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         cdef realtype* col_i=Jacobian.cols[0]
-        cdef N.ndarray x = nv2arr(xv)
+        cdef np.ndarray x = nv2arr(xv)
         cdef int i,j, Neq = pData.dim
         
         try:
@@ -52,7 +52,7 @@ ELSE:
         """
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         cdef realtype* col_i=DENSE_COL(Jacobian,0)
-        cdef N.ndarray x = nv2arr(xv)
+        cdef np.ndarray x = nv2arr(xv)
         cdef int i,j
         
         try:
@@ -70,8 +70,8 @@ ELSE:
 cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
             void *problem_data) noexcept:
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
-    cdef N.ndarray x  = nv2arr(vx)
-    cdef N.ndarray v  = nv2arr(vv)
+    cdef np.ndarray x  = nv2arr(vx)
+    cdef np.ndarray v  = nv2arr(vv)
     cdef int i
     
     cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
@@ -83,7 +83,7 @@ cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
             jacvptr[i] = jacv[i]
         
         return SPGMR_SUCCESS
-    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return SPGMR_ATIMES_FAIL_REC
     except Exception:
         traceback.print_exc()
@@ -94,7 +94,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data) noexcept:
     Residual fct called by KINSOL
     """
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
-    cdef N.ndarray x = nv2arr(xv)
+    cdef np.ndarray x = nv2arr(xv)
     cdef realtype* resptr = (<N_VectorContent_Serial>fval.content).data
     cdef int i
 
@@ -104,7 +104,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data) noexcept:
         for i in range(pData.dim):
             resptr[i] = res[i]
         return KIN_SUCCESS
-    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except Exception:
         traceback.print_exc()
@@ -123,14 +123,14 @@ IF SUNDIALS_VERSION >= (3,0,0):
         """
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         
-        cdef N.ndarray fscale  = nv2arr(fscaleN)
-        cdef N.ndarray uscale  = nv2arr(uscaleN)
-        cdef N.ndarray r       = nv2arr(v)
+        cdef np.ndarray fscale  = nv2arr(fscaleN)
+        cdef np.ndarray uscale  = nv2arr(uscaleN)
+        cdef np.ndarray r       = nv2arr(v)
         cdef realtype* zptr=(<N_VectorContent_Serial>v.content).data
         
         try:
             zres = (<object>pData.PREC_SOLVE)(r)
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()
@@ -148,14 +148,14 @@ IF SUNDIALS_VERSION >= (3,0,0):
         """
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         
-        cdef N.ndarray fscale  = nv2arr(fscaleN)
-        cdef N.ndarray uscale  = nv2arr(uscaleN)
-        cdef N.ndarray u       = nv2arr(uN)
-        cdef N.ndarray fval    = nv2arr(fvalN)
+        cdef np.ndarray fscale  = nv2arr(fscaleN)
+        cdef np.ndarray uscale  = nv2arr(uscaleN)
+        cdef np.ndarray u       = nv2arr(uN)
+        cdef np.ndarray fval    = nv2arr(fvalN)
         
         try:
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
-        except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except (np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()
@@ -176,14 +176,14 @@ ELSE:
         """
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         
-        cdef N.ndarray fscale  = nv2arr(fscaleN)
-        cdef N.ndarray uscale  = nv2arr(uscaleN)
-        cdef N.ndarray r       = nv2arr(v)
+        cdef np.ndarray fscale  = nv2arr(fscaleN)
+        cdef np.ndarray uscale  = nv2arr(uscaleN)
+        cdef np.ndarray r       = nv2arr(v)
         cdef realtype* zptr=(<N_VectorContent_Serial>v.content).data
         
         try:
             zres = (<object>pData.PREC_SOLVE)(r)
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()
@@ -201,14 +201,14 @@ ELSE:
         """
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
         
-        cdef N.ndarray fscale  = nv2arr(fscaleN)
-        cdef N.ndarray uscale  = nv2arr(uscaleN)
-        cdef N.ndarray u       = nv2arr(uN)
-        cdef N.ndarray fval    = nv2arr(fvalN)
+        cdef np.ndarray fscale  = nv2arr(fscaleN)
+        cdef np.ndarray uscale  = nv2arr(uscaleN)
+        cdef np.ndarray u       = nv2arr(uN)
+        cdef np.ndarray fval    = nv2arr(fvalN)
         
         try:
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()

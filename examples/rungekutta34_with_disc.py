@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import RungeKutta34
 from assimulo.problem import Explicit_Problem
@@ -34,7 +34,7 @@ t=10    , [True, False, False]  (End of simulation)
 #Extend Assimulos problem definition
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     
@@ -50,7 +50,7 @@ class Extended_Problem(Explicit_Problem):
         yd_1 = 0.0
         yd_2 = 0.0
 
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
 
     #Sets a name to our function
     name = 'ODE with discontinuities and a function with consistency problem'
@@ -65,7 +65,7 @@ class Extended_Problem(Explicit_Problem):
         event_1 = -y[2] + 1.0
         event_2 = -t + 1.0
         
-        return N.array([event_0,event_1,event_2])
+        return np.array([event_0,event_1,event_2])
     
     
     #Responsible for handling the events.

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -48,12 +48,12 @@ def run_example(with_plots=True):
         yd_0 = y[1]
         yd_1 = -9.82
 
-        return N.array([yd_0,yd_1])
+        return np.array([yd_0,yd_1])
     
     #Defines the Jacobian*vector product
     def jacv(t,y,fy,v):
-        j = N.array([[0,1.],[0,0]])
-        return N.dot(j,v)
+        j = np.array([[0,1.],[0,0]])
+        return np.dot(j,v)
     
     y0 = [1.0,0.0] #Initial conditions
     

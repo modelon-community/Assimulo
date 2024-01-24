@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -34,7 +34,7 @@ t=10    , [True, False, False]  (End of simulation)
 #Extend Assimulos problem definition
 class Extended_Problem(Implicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     yd0 = [-1.0, 0.0, 0.0]
     sw0 = [False,True,True]
@@ -53,7 +53,7 @@ class Extended_Problem(Implicit_Problem):
         res_1 = -y[1] + (-1.0 if sw[1] else 3.0)
         res_2 = -y[2] + (0.0 if sw[2] else 2.0)
         
-        return N.array([res_0,res_1,res_2])
+        return np.array([res_0,res_1,res_2])
 
     #Sets a name to our function
     name = 'ODE with discontinuities and a function with consistency problem'
@@ -68,7 +68,7 @@ class Extended_Problem(Implicit_Problem):
         event_1 = -y[2] + 1.0
         event_2 = -t + 1.0
         
-        return N.array([event_0,event_1,event_2])
+        return np.array([event_0,event_1,event_2])
     
     
     #Responsible for handling the events.

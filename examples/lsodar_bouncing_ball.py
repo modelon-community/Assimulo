@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
-import numpy as N
+import numpy as np
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 
@@ -28,7 +27,7 @@ The bouncing ball example for LSODAR
 #Extend Assimulos problem definition
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [2.0, 0]   # position and (downward) velocity
     sw0=[True,False]
     
@@ -42,7 +41,7 @@ class Extended_Problem(Explicit_Problem):
         """
         yd_0 = y[1]
         yd_1 = self.g
-        return N.array([yd_0,yd_1])
+        return np.array([yd_0,yd_1])
 
     #Sets a name to our function
     name = 'Bouncing Ball Problem'
@@ -56,7 +55,7 @@ class Extended_Problem(Explicit_Problem):
         event_0 = y[0] if sw[0] else 5 # hits the ground 
         event_1 = y[1] if sw[1] else 5 # velocity changes sign at topmost point
         
-        return N.array([event_0,event_1])
+        return np.array([event_0,event_1])
     
     
     #Responsible for handling the events.

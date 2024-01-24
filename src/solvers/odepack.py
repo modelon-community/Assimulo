@@ -17,7 +17,7 @@
 
 import sys
 import logging
-import numpy as N
+import numpy as np
 import scipy.linalg as Sc
 import scipy.sparse as sp
 
@@ -40,7 +40,7 @@ def g_dummy(t,y):
     return y
 
 def jac_dummy(t,y):
-    return N.zeros((len(y),len(y)))
+    return np.zeros((len(y),len(y)))
 
 class LSODAR(Explicit_ODE):
     """
@@ -70,7 +70,7 @@ class LSODAR(Explicit_ODE):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Default values
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = False
         self.options["maxsteps"] = 100000
@@ -91,10 +91,10 @@ class LSODAR(Explicit_ODE):
         self.supports["report_continuously"] = True
         self.supports["interpolated_output"] = True
         
-        self._RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+        self._RWORK = np.array([0.0]*(22 + self.problem_info["dim"] * 
                                max(16,self.problem_info["dim"]+9) + 
                                3*self.problem_info["dimRoot"]))
-        self._IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        self._IWORK = np.array([0]*(20 + self.problem_info["dim"]))
         
         
     def initialize(self):
@@ -151,11 +151,11 @@ class LSODAR(Explicit_ODE):
         t0=t
         tf=RWORK[0]
         T=abs(tf-t0)
-        direction=N.sign(tf-t0)
+        direction=np.sign(tf-t0)
         
         #Perturb initial condition and compute rough Lipschitz constant
         cent=Sc.norm(y)/normscale/100.
-        v0=y+cent*N.random.rand(len(y),1)
+        v0=y+cent*np.random.rand(len(y),1)
         u0prime=f(t,y,sw0)
         v0prime=f(t,v0,sw0)
         Lip=Sc.norm(u0prime-v0prime)/Sc.norm(y-v0)
@@ -173,9 +173,9 @@ class LSODAR(Explicit_ODE):
         #step 4: new estimate of Lipschitz constant
         u0comprime=f(t0,u0comp,sw0)
         L=Sc.norm(u0comprime-u0prime)/dunorm
-        M=N.dot(du,u0comprime-u0prime)/dunorm**2
+        M=np.dot(du,u0comprime-u0prime)/dunorm**2
         #step 5: construct a refined starting stepsize
-        theta1=tolscale/N.sqrt(errnorm)
+        theta1=tolscale/np.sqrt(errnorm)
         theta2=tolscale/abs(h*(L+M/2))
         h=h*(theta1+theta2)/2
         h=direction*min(3e-3*T,abs(h))
@@ -248,7 +248,7 @@ class LSODAR(Explicit_ODE):
             #RWORK[6]=dls001.hmin
             #RWORK[5]=dls001.hmxi
             
-            number_of_fevals=N.array([1,2,4,7,11])
+            number_of_fevals=np.array([1,2,4,7,11])
             # d) Reset statistics
             IWORK[9:13]=[0]*4
             dls001.nst=1
@@ -285,7 +285,7 @@ class LSODAR(Explicit_ODE):
         ISTATE, RWORK, IWORK = self.integrate_start( t, y)
         
         JT = 1 if self.usejac else 2#Jacobian type indicator
-        JROOT = N.array([0]*self.problem_info["dimRoot"])
+        JROOT = np.array([0]*self.problem_info["dimRoot"])
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
@@ -311,7 +311,7 @@ class LSODAR(Explicit_ODE):
         else:
             g_fcn = g_dummy
 
-        #jac_dummy = (lambda t,y:N.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
+        #jac_dummy = (lambda t,y:np.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
         jac_fcn = jac_dummy if not self.usejac else self._jacobian
         
         #Extra args to rhs and state_events
@@ -332,7 +332,7 @@ class LSODAR(Explicit_ODE):
         
         #Tolerances:
         atol = self.atol
-        rtol = self.rtol*N.ones(self.problem_info["dim"])
+        rtol = self.rtol*np.ones(self.problem_info["dim"])
         rhs = self.problem.rhs
         
         #if normal_mode == 0:
@@ -486,10 +486,10 @@ class LSODAR(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise ODEPACK_Exception("atol must be of length one or same as the dimension of the problem.")
 
@@ -673,17 +673,17 @@ class RKStarterNordsieck(object):
     See: Mohammadi (2013): https://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=4196026&fileOId=4196027
     """
     # Gamma matrix of Gear's RK starter which produce Nordsieck vector at t0
-    Gamma_0=[N.array([[1.,0.],                        # 1st order
+    Gamma_0=[np.array([[1.,0.],                        # 1st order
                       [0.,1.]]),
-             N.array([[1.,0.,0.],                     # 2nd order
+             np.array([[1.,0.,0.],                     # 2nd order
                       [0.,1.,-1.],
                       [0.,0.,1.]]),
-             N.array([[1.,0.,0.,0.],                  # 3rd order
+             np.array([[1.,0.,0.,0.],                  # 3rd order
                       [0.,1.,-5./3.,1.],         
                       [0.,0.,3.,-2.],
                       [0.,0.,0.,1.],
                       [0.,0.,-4./3.,0.]]),
-             N.array([[1.,0.,0.,0.,0.],               # 4th order
+             np.array([[1.,0.,0.,0.,0.],               # 4th order
                       [0.,1.,-5./6.,4./9.,-1./9.],         
                       [0.,0.,0.,0.,0.],
                       [0.,0.,1./2.,-4./9.,1./9.],
@@ -693,19 +693,19 @@ class RKStarterNordsieck(object):
                       
     # A matrices of RK starter with equidistanced states 
     
-    A_s=[    N.array([1]),                                           # 1st order
-             N.array([[0.,0],[1,0]]),                                # 2nd order
-             N.array([[0.,0.,0.,0.,0.],[1./2,0.,0.,0.,0.],          # 3rd order
+    A_s=[    np.array([1]),                                           # 1st order
+             np.array([[0.,0],[1,0]]),                                # 2nd order
+             np.array([[0.,0.,0.,0.,0.],[1./2,0.,0.,0.,0.],          # 3rd order
                      [0.,3./4,0.,0.,0.],[2./9,1./3,4./9,0.,0.],
                      [17./72,1./6,2./9,-1./8,0.]]),
-             N.array([[0.,0.,0.,0.,0.,0.,0.],                       # 4th order
+             np.array([[0.,0.,0.,0.,0.,0.,0.],                       # 4th order
                       [1./6.,0.,0.,0.,0.,0.,0.],
                       [0.,1./6.,0.,0.,0.,0.,0.],
                       [0.,0.,1./3.,0.,0.,0.,0.],
                       [1./18.,1./9.,1./9.,1./18.,0.,0.,0.],
                       [2.5,-3.,-3.,2.25,2.25,0.,0.],
                       [10./45.,-8./45.,-8./45.,-4./45.,13./15.,1./45.,0.]]),
-             N.array([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],  # 5th order
+             np.array([[0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],  # 5th order
                       [1./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
                       [3./160,9./160,0.,0.,0.,0.,0., 0.,0.,0.,0.,0.,0.,0.],
                       [3./40,-9./40,6./20,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.],
@@ -724,54 +724,54 @@ class RKStarterNordsieck(object):
                        38892959/120069679,11804845./141497517,0.]], dtype=object)]  
 
     co_ord_s=[[],[],[4],[4,6],[6,9,11]]                       
-    b_s=[    N.array([1]),
-             N.array([1./2,1./2]),
-             N.array([1./6,0.,0.,1./6,2./3]),
-             N.array([29./1062.,83./531.,83./531.,83./1062.,2./531.,56./531.,251./531.]),  # b-vectors of of 1st to 5th order RK starter method
-             N.array([0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
+    b_s=[    np.array([1]),
+             np.array([1./2,1./2]),
+             np.array([1./6,0.,0.,1./6,2./3]),
+             np.array([29./1062.,83./531.,83./531.,83./1062.,2./531.,56./531.,251./531.]),  # b-vectors of of 1st to 5th order RK starter method
+             np.array([0.03877310906055409,0.,3021245/89251943,5956469/58978530,851373/32201684,11559106/149527791,11325471/112382620,0.,-12983/235976962,17692261/82454251,0.,
                        38892959/120069679,11804845./141497517,0.])] 
                                
-    C_s=[    N.array([0.]),
-             N.array([0.]),
-             N.array([0.,1./2,3./4,1.,1./2,1.]),
-             N.array([0.,1./6,1./6,1./3,1./3,1.,1.,2./3,1.]),
-             N.array([0.,1./20,3./40,3./20,1./4,7./28,1./4,2./4,1.,2./4,3./4,3./4,1.,1.])]    # C-values in Butcher tableau of 8-stages Runge-Kutta                           
+    C_s=[    np.array([0.]),
+             np.array([0.]),
+             np.array([0.,1./2,3./4,1.,1./2,1.]),
+             np.array([0.,1./6,1./6,1./3,1./3,1.,1.,2./3,1.]),
+             np.array([0.,1./20,3./40,3./20,1./4,7./28,1./4,2./4,1.,2./4,3./4,3./4,1.,1.])]    # C-values in Butcher tableau of 8-stages Runge-Kutta                           
             
     # A matrices of RK starter with non-equidistanced stages        
-    A_n=[    N.array([1]),
-             N.array([[0.,0.],[0.,0.]]),
-             N.array([[0.,0.,0.,0.],[1./2,0.,0.,0.],[0.,1./2,0.,0.],[0.,0.,1.,0.]]),           # 3rd order
-             N.array([[0.,0.,0.,0.,0.,0.],[2./5,0.,0.,0.,0.,0.],[-3./20,3./4,0.,0.,0.,0.],    # 4th order
+    A_n=[    np.array([1]),
+             np.array([[0.,0.],[0.,0.]]),
+             np.array([[0.,0.,0.,0.],[1./2,0.,0.,0.],[0.,1./2,0.,0.],[0.,0.,1.,0.]]),           # 3rd order
+             np.array([[0.,0.,0.,0.,0.,0.],[2./5,0.,0.,0.,0.,0.],[-3./20,3./4,0.,0.,0.,0.],    # 4th order
                       [19./44,-15./44,40./44,0.,0.,0.],[-31./64,185./192,5./64,-11./192,0.,0.],[11./72,25./72,25./72,11./72,0.,0.]])]
              
-    b_n=[    N.array([0.]),
-             N.array([1./2.,1./2.]),
-             N.array([[5./24,1./6,1./6,-1/24],[1./6,1./3,1./3,1./6]]),
-             N.array([[802./5625,68./225,-67./225,-143./5625,144./625,6./125],[699./5000,81./200,-39./200,99./5000,144./625,0.],[11./72,25./72,25./72,11./72,0.,0.]])]   
+    b_n=[    np.array([0.]),
+             np.array([1./2.,1./2.]),
+             np.array([[5./24,1./6,1./6,-1/24],[1./6,1./3,1./3,1./6]]),
+             np.array([[802./5625,68./225,-67./225,-143./5625,144./625,6./125],[699./5000,81./200,-39./200,99./5000,144./625,0.],[11./72,25./72,25./72,11./72,0.,0.]])]   
              
-    C_n=[    N.array([0.]),
-             N.array([0.]),
-             N.array([0.,1./2,1./2,1.]),
-             N.array([0.,2./5,3./5,1.,1./2,1.])]
+    C_n=[    np.array([0.]),
+             np.array([0.]),
+             np.array([0.,1./2,1./2,1.]),
+             np.array([0.,2./5,3./5,1.,1./2,1.])]
 
     #co_ord_n=[[],[],[1./2,1.],[2./5,3./5,1.]]
-    #A=N.array([[1.,0.,0.,0.],
+    #A=np.array([[1.,0.,0.,0.],
     #          [1.,1./9.,1./27,1./81.],
     #           [1.,4./9.,8./27,16./81.],
     #           [1.,1.,1.,1.]]) 
-    A=[N.array([0.]),                       # Convert the state values to Nordsieck vector
-       N.array([0.]),
-       N.array([1.]),
-       N.array([[1./4,1./8],[1.,1.]]),
-       N.array([[1./9,1./27,1./81.],
+    A=[np.array([0.]),                       # Convert the state values to Nordsieck vector
+       np.array([0.]),
+       np.array([1.]),
+       np.array([[1./4,1./8],[1.,1.]]),
+       np.array([[1./9,1./27,1./81.],
                 [4./9.,8./27,16./81],
                 [1.,1.,1.]]),
-       N.array([[1./16,1./64,1./256,1./1024],
+       np.array([[1./16,1./64,1./256,1./1024],
                 [1./4,1./8,1./16,1./32],
                 [9./16,27./64,81./256,243./1024],
                 [1.,1.,1.,1.]])]
                       
-    scale=N.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
+    scale=np.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
     
     
     def __init__(self,  rhs, H, method='RKs_f', eval_at=0., number_of_steps=4):
@@ -818,16 +818,16 @@ class RKStarterNordsieck(object):
         b_s=b_s[s-1]
         co_ord_s=co_ord_s[s-1]
         H=(s-1)*self.H
-        K=N.zeros((N.size(A_s,0),len(y0)))
-        for i in range(N.size(A_s,0)):
-            K[i,:]=self.f(t0+C_s[i]*H,y0+H*N.dot(A_s[i,:],K),sw0)   
-        y=N.zeros((s,len(y0)))
+        K=np.zeros((np.size(A_s,0),len(y0)))
+        for i in range(np.size(A_s,0)):
+            K[i,:]=self.f(t0+C_s[i]*H,y0+H*np.dot(A_s[i,:],K),sw0)   
+        y=np.zeros((s,len(y0)))
         y[0,:]=y0
         for i in range(1,s):
             if i==s-1:
-                y[i,:]=y0+H*N.dot(b_s,K)
+                y[i,:]=y0+H*np.dot(b_s,K)
             else:
-                y[i,:]=y0+H*N.dot(A_s[co_ord_s[i-1],:],K)
+                y[i,:]=y0+H*np.dot(A_s[co_ord_s[i-1],:],K)
         return y    
     def RKn_f(self,t0,y0,sw0):
         s=self.number_of_steps
@@ -837,13 +837,13 @@ class RKStarterNordsieck(object):
         C_n=C_n[s-1]
         b_n=b_n[s-1]
         
-        K=N.zeros((N.size(A_n,0),len(y0)))
-        for i in range(N.size(A_n,0)):
-            K[i,:]=self.f(t0+C_n[i]*H,y0+H*N.dot(A_n[i,:],K),sw0)
-        y=N.zeros((s,len(y0)))  
+        K=np.zeros((np.size(A_n,0),len(y0)))
+        for i in range(np.size(A_n,0)):
+            K[i,:]=self.f(t0+C_n[i]*H,y0+H*np.dot(A_n[i,:],K),sw0)
+        y=np.zeros((s,len(y0)))  
         y[0,:]=y0
         for i in range(1,s):
-                y[i,:]=y0+H*N.dot(b_n[i-1],K)
+                y[i,:]=y0+H*np.dot(b_n[i-1],K)
         return y
   
             
@@ -861,7 +861,7 @@ class RKStarterNordsieck(object):
         k4 = h*f(y0 + 3./4. * k1 + 9./4. * k3)
         k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
         k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
-        return N.array([y0,k1,k2,k3,k4,k5,k6])
+        return np.array([y0,k1,k2,k3,k4,k5,k6])
     def rk_like3(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
@@ -875,7 +875,7 @@ class RKStarterNordsieck(object):
         k2 = h*f(y0 + k1)
         k3 = h*f(y0 + k1+ k2)
         k4 = h*f(y0 + 3./2. * k1)
-        return N.array([y0,k1,k2,k3,k4])
+        return np.array([y0,k1,k2,k3,k4])
     def rk_like2(self, t0, y0, sw0):
         """
         rk_like2 computes Runge-Kutta 2nd-stages
@@ -886,7 +886,7 @@ class RKStarterNordsieck(object):
         h=self.H/2.
         k1=h*f(y0)
         k2=h*f(y0+k1)
-        return N.array([y0,k1,k2])
+        return np.array([y0,k1,k2])
     def rk_like13(self, t0, y0, sw0):
         """
         rk_like6 computes Runge-Kutta 8th-stages 
@@ -894,15 +894,15 @@ class RKStarterNordsieck(object):
         h = self.H
         self.Gamma_2=self.Gamma_0[3]
         f=lambda y: self.f(t0 , y , sw0)
-        K=N.zeros((6,len(y0)))
-        sol=N.zeros((3,len(y0)))
-        b=N.zeros((2,len(y0)))          #remove the fifth stage value that is for error estimation
-        nord = N.zeros((4,len(y0)))     #Nordsieck vector
+        K=np.zeros((6,len(y0)))
+        sol=np.zeros((3,len(y0)))
+        b=np.zeros((2,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = np.zeros((4,len(y0)))     #Nordsieck vector
         for i in range(5):
-            K[i,:]= f(y0+h*N.dot(self.Gamma_2[i,:],K))
+            K[i,:]= f(y0+h*np.dot(self.Gamma_2[i,:],K))
         c=0
         for i in range(3):
-            sol[i,:]=y0+h*N.dot(self.Gamma_2[i+3,:],K)
+            sol[i,:]=y0+h*np.dot(self.Gamma_2[i+3,:],K)
             if i!=0:
                 b[c,:]=sol[i,:]-y0-(c+1)*h/2*K[0,:]
                 c+=1
@@ -917,15 +917,15 @@ class RKStarterNordsieck(object):
         h = self.H
         Gamma_2=self.Gamma_0[4]
         f=lambda y: self.f(t0 , y , sw0)
-        K=N.zeros((8,len(y0)))
-        sol=N.zeros((4,len(y0)))
-        b=N.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
-        nord = N.zeros((5,len(y0)))     #Nordsieck vector
+        K=np.zeros((8,len(y0)))
+        sol=np.zeros((4,len(y0)))
+        b=np.zeros((3,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = np.zeros((5,len(y0)))     #Nordsieck vector
         for i in range(7):
-            K[i,:]= f(y0+h*N.dot(Gamma_2[i,:],K))
+            K[i,:]= f(y0+h*np.dot(Gamma_2[i,:],K))
         c=0
         for i in range(4):
-            sol[i,:]=y0+h*N.dot(Gamma_2[i+4,:],K)
+            sol[i,:]=y0+h*np.dot(Gamma_2[i+4,:],K)
             if i!=1:
                 b[c,:]=sol[i,:]-y0-(c+1)*h/3*K[0,:]
                 c+=1
@@ -940,15 +940,15 @@ class RKStarterNordsieck(object):
         h = self.H
         Gamma_2=self.Gamma_0[5]
         f=lambda y: self.f(t0 , y , sw0)
-        K=N.zeros((14,len(y0)))
-        sol=N.zeros((8,len(y0)))
-        b=N.zeros((4,len(y0)))          #remove the fifth stage value that is for error estimation
-        nord = N.zeros((6,len(y0)))     #Nordsieck vector
+        K=np.zeros((14,len(y0)))
+        sol=np.zeros((8,len(y0)))
+        b=np.zeros((4,len(y0)))          #remove the fifth stage value that is for error estimation
+        nord = np.zeros((6,len(y0)))     #Nordsieck vector
         for i in range(13):
-            K[i,:]= f(y0+h*N.dot(Gamma_2[i,:],K))
+            K[i,:]= f(y0+h*np.dot(Gamma_2[i,:],K))
         c=0
         for i in range(8):
-            sol[i,:]=y0+h*N.dot(Gamma_2[i+6,:],K)
+            sol[i,:]=y0+h*np.dot(Gamma_2[i+6,:],K)
             if (i!=1) and (i!=2) and (i!=4) and (i!=6):
                 b[c,:]=sol[i,:]-y0-(c+1)*h/4*K[0,:]
                 c+=1
@@ -960,42 +960,42 @@ class RKStarterNordsieck(object):
         """
         Nordsieck array computed at initial point
         """
-        nord=self.scale[:self.number_of_steps+1]*N.dot(self.Gamma_0[self.number_of_steps-1].T,k)
+        nord=self.scale[:self.number_of_steps+1]*np.dot(self.Gamma_0[self.number_of_steps-1].T,k)
  
         return nord  
     def Nordsieck_RKn(self,t0,y,sw0):
         s=self.number_of_steps
         H=(s-1)*self.H
-        co_nord=[N.array([1./2,1.]),N.array([2./5,3./5,1.])]
-        l=N.size(y,0)
+        co_nord=[np.array([1./2,1.]),np.array([2./5,3./5,1.])]
+        l=np.size(y,0)
         y0=y[0,:]
         yf=self.f(t0,y0,sw0)
         
         if l==3:
-            co=N.array([co_nord[0]])
-            nord_n=N.vander(co_nord[0],self.number_of_steps+1)
+            co=np.array([co_nord[0]])
+            nord_n=np.vander(co_nord[0],self.number_of_steps+1)
             b=y[1:]-y0-co.T*yf
             nord=Sc.solve(nord_n[0:2,0:2],b)
         elif l==4:
-            co=N.array([co_nord[1]])
-            nord_n=N.vander(co_nord[1],self.number_of_steps+1)
+            co=np.array([co_nord[1]])
+            nord_n=np.vander(co_nord[1],self.number_of_steps+1)
             b=y[1:]-y0-H*co.T*yf
             nord=Sc.solve(nord_n[0:3,0:3],b)
-        nord=N.vstack((y0,H*yf,nord[::-1]))       
+        nord=np.vstack((y0,H*yf,nord[::-1]))       
         return nord
     def Nordsieck_RKs(self,t0,y,sw0):
         s=self.number_of_steps
         H=(s-1)*self.H
-        co_nord=[N.array([1]),N.array([1./2,1]),N.array([1./3,2./3,1]),
-                 N.array([1./4,2./4,3./4,1.])]
+        co_nord=[np.array([1]),np.array([1./2,1]),np.array([1./3,2./3,1]),
+                 np.array([1./4,2./4,3./4,1.])]
         A=self.A
         y0=y[0,:]
         yf=self.f(t0,y0,sw0)
         co=co_nord[s-2]
-        co=N.array([co])
+        co=np.array([co])
         b=y[1:]-y0-H*co.T*yf
         nord=Sc.solve(A[s],b)
-        nord=N.vstack((y0,H*yf,nord))
+        nord=np.vstack((y0,H*yf,nord))
         return nord
         
         

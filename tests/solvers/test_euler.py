@@ -20,7 +20,7 @@ from assimulo import testattr
 from assimulo.solvers.euler import ExplicitEuler, ImplicitEuler
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded
-import numpy as N
+import numpy as np
 import scipy.sparse as sp
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
@@ -30,8 +30,8 @@ class Extended_Problem(Explicit_Problem):
     #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
-    event_array = N.array([0.0,0.0,0.0])
-    rhs_array   = N.array([0.0,0.0,0.0])
+    event_array = np.array([0.0,0.0,0.0])
+    rhs_array   = np.array([0.0,0.0,0.0])
     
     #The right-hand-side function (rhs)
     def rhs(self,t,y,sw):
@@ -155,7 +155,7 @@ class Test_Explicit_Euler:
         
     @testattr(stddist = True)
     def test_time_event(self):
-        f = lambda t,y: N.array(1.0)
+        f = lambda t,y: np.array(1.0)
         global tnext
         global nevent
         tnext = 0.0
@@ -230,8 +230,8 @@ class Test_Explicit_Euler:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -292,8 +292,8 @@ class Test_Implicit_Euler:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: N.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: sp.csc_matrix(N.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
+        jac = lambda t,x: sp.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -321,7 +321,7 @@ class Test_Implicit_Euler:
         
     @testattr(stddist = True)
     def test_time_event(self):
-        f = lambda t,y: N.array(1.0)
+        f = lambda t,y: np.array(1.0)
         global tnext
         global nevent
         tnext = 0.0
@@ -388,18 +388,18 @@ class Test_Implicit_Euler:
 
         t,y = simulator.simulate(1)
         
-        y_correct = lambda t: N.exp(-15*t)
+        y_correct = lambda t: np.exp(-15*t)
         
-        abs_err = N.abs(y[:,0]-y_correct(N.array(t)))
-        nose.tools.assert_less(N.max(abs_err), 0.1)
+        abs_err = np.abs(y[:,0]-y_correct(np.array(t)))
+        nose.tools.assert_less(np.max(abs_err), 0.1)
         
     @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         

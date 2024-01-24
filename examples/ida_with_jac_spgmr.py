@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
-
 
 def run_example(with_plots=True):
     r"""
@@ -48,14 +47,14 @@ def run_example(with_plots=True):
         res_0 = yd[0] - y[1]
         res_1 = yd[1] + 9.82
 
-        return N.array([res_0,res_1])
+        return np.array([res_0,res_1])
     
     #Defines the Jacobian*vector product
     def jacv(t,y,yd,res,v,c):
-        jy = N.array([[0,-1.],[0,0]])
-        jyd = N.array([[1,0.],[0,1]])
+        jy = np.array([[0,-1.],[0,0]])
+        jyd = np.array([[1,0.],[0,1]])
         j = jy+c*jyd
-        return N.dot(j,v)
+        return np.dot(j,v)
     
     #Initial conditions
     y0 = [1.0,0.0] 

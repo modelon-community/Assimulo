@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import scipy.linalg as LIN
 import scipy.io as IO
 import scipy.sparse as SPARSE
@@ -57,7 +57,7 @@ def run_example(with_plots=True):
         solvePrec = LINSP.factorized(Prec)
 
     #Create the RHS
-    b = A.dot(N.ones(A.shape[0]))
+    b = A.dot(np.ones(A.shape[0]))
     
     #Define the res
     def res(x):
@@ -77,7 +77,7 @@ def run_example(with_plots=True):
     def prec_solve(r):
         return solvePrec(r)
         
-    y0 = N.random.rand(A.shape[0])
+    y0 = np.random.rand(A.shape[0])
     
     #Define an Assimulo problem
     alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, name = 'ORS Example')
@@ -105,8 +105,8 @@ def run_example(with_plots=True):
     #Solve Preconditioned system
     y_prec = alg_solver_prec.solve()
     
-    print("Error                 , in y: ", LIN.norm(y-N.ones(len(y))))
-    print("Error (preconditioned), in y: ", LIN.norm(y_prec-N.ones(len(y_prec))))
+    print("Error                 , in y: ", LIN.norm(y-np.ones(len(y))))
+    print("Error (preconditioned), in y: ", LIN.norm(y_prec-np.ones(len(y_prec))))
     
     if with_plots:
         import pylab as P

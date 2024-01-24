@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import scipy.sparse as SP
 import nose
 from assimulo.solvers import Radau5ODE
@@ -48,7 +48,7 @@ def run_example(with_plots=True):
         yd_0 = -0.04*y[0] + 1e4*y[1]*y[2]
         yd_2 = 3e7*y[1]*y[1]
         yd_1 = -yd_0 - yd_2
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
     
     #Defines the Jacobian
     def jac(t,y):

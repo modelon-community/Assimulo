@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
@@ -50,9 +50,9 @@ def run_example(with_plots=True):
         res2 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2-yd[1]
         res3 = y[0]+y[1]+y[2]-1
         
-        return N.array([res1,res2,res3])
+        return np.array([res1,res2,res3])
 
-    #The initial conditons
+    #The initial conditions
     y0 = [1.0, 0.0, 0.0]        #Initial conditions for y
     yd0 = [0.1, 0.0, 0.0]       #Initial conditions for dy/dt
     p0 = [0.040, 1.0e4, 3.0e7]  #Initial conditions for parameters
@@ -63,8 +63,8 @@ def run_example(with_plots=True):
     #Create an Assimulo implicit solver (IDA)
     imp_sim = IDA(imp_mod) #Create a IDA solver
     
-    #Sets the paramters
-    imp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
+    #Sets the parameters
+    imp_sim.atol = np.array([1.0e-8, 1.0e-14, 1.0e-6])
     imp_sim.algvar = [1.0,1.0,0.0]
     imp_sim.suppress_alg = False #Suppres the algebraic variables on the error test
     imp_sim.report_continuously = True #Store data continuous during the simulation

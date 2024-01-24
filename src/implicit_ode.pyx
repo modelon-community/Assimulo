@@ -20,8 +20,8 @@
 import itertools
 import sys
 import warnings
-import numpy as N
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 from timeit import default_timer as timer
 
 from assimulo.ode cimport ODE
@@ -60,7 +60,7 @@ cdef class Implicit_ODE(ODE):
         
         
         if hasattr(problem, 'yd0'):
-            self.yd0 = N.array(problem.yd0,dtype=realtype) if len(N.array(problem.yd0,dtype=realtype).shape)>0 else N.array([problem.yd0],dtype=realtype)
+            self.yd0 = np.array(problem.yd0,dtype=realtype) if len(np.array(problem.yd0,dtype=realtype).shape)>0 else np.array([problem.yd0],dtype=realtype)
         else:
             if isinstance(self.problem, cExplicit_Problem): #The problem is an explicit, get the yd0 values from the right-hand-side
                 self.problem_info["type"] = 0 #Change to explicit problem
@@ -109,8 +109,8 @@ cdef class Implicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
-        y0 = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
-        yd0 = N.array(yd0) if len(N.array(yd0).shape)>0 else N.array([yd0])
+        y0 = np.array(y0) if len(np.array(y0).shape)>0 else np.array([y0])
+        yd0 = np.array(yd0) if len(np.array(yd0).shape)>0 else np.array([yd0])
         
         if len(self.y) != len(y0) or len(self.yd) != len(yd0):
             raise Implicit_ODE_Exception('y0/yd0 must be of the same length as the original problem.')
@@ -121,12 +121,12 @@ cdef class Implicit_ODE(ODE):
         self.yd = yd0
         
         if sw0 is not None:
-            self.sw = (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool)).tolist()
+            self.sw = (np.array(sw0,dtype=bool) if len(np.array(sw0,dtype=bool).shape)>0 else np.array([sw0],dtype=bool)).tolist()
             
         #Clear logs
         self.clear_logs()
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
+    cpdef _simulate(self, double t0, double tfinal,np.ndarray output_list,int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
@@ -158,7 +158,7 @@ cdef class Implicit_ODE(ODE):
         cdef int flag, output_index
         cdef dict opts
         cdef int type = self.problem_info["type"]
-        cdef double eps = N.finfo(float).eps*100 #Machine Epsilon
+        cdef double eps = np.finfo(float).eps*100 #Machine Epsilon
         cdef backward = 1 if self.backward else 0
         
         y0  = self.y
@@ -408,7 +408,7 @@ cdef class Implicit_ODE(ODE):
                 (t_low, g_low) = (t_mid, g_mid[0:n_g])
                 side = 2
         
-        event_info = N.array([0] * n_g)
+        event_info = np.array([0] * n_g)
         for i in xrange(n_g):
             if (g_low[i] > 0) != (g_high[i] > 0):
                 event_info[i] = 1 if g_high[i] > 0 else -1
@@ -459,7 +459,7 @@ cdef class Implicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, N.array(self.y_sol)[:,i], **kwargs)
+                        P.plot(self.t_sol, np.array(self.y_sol)[:,i], **kwargs)
 
             P.xlabel('time')
             P.ylabel('state')
@@ -481,7 +481,7 @@ cdef class Implicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, N.array(self.yd_sol)[:,i], **kwargs)
+                        P.plot(self.t_sol, np.array(self.yd_sol)[:,i], **kwargs)
                         
                 P.xlabel('time')
                 P.ylabel('state derivatives')
@@ -496,6 +496,3 @@ cdef class OverdeterminedDAE(Implicit_ODE):
     def check_instance(self):
         if not isinstance(self.problem, (Overdetermined_Problem, Implicit_Problem)):
             raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem or of Implicit_Problem.')
-
-        
-

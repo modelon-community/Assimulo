@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 from assimulo.ode import NORMAL
 
 class Radau_Exception(Exception):
@@ -60,7 +60,7 @@ class Radau_Common(object):
         """
         import pylab as P
         
-        P.semilogy(N.diff(self.t),drawstyle='steps-post')
+        P.semilogy(np.diff(self.t),drawstyle='steps-post')
         P.title(self.problem.name)
         P.ylabel('Step length')
         P.xlabel('Number of steps')
@@ -357,10 +357,10 @@ class Radau_Common(object):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise Radau_Exception("atol must be of length one or same as the dimension of the problem.")
 
