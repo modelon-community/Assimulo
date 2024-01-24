@@ -21,7 +21,7 @@ from assimulo.solvers.rosenbrock import RodasODE
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
 import numpy as np
-import scipy.sparse as sp
+import scipy.sparse as sps
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
@@ -53,7 +53,7 @@ class Test_RodasODE:
             J[1,0]=my*(-2.*y[0]*y[1]-1.)
             J[1,1]=my*(1.-y[0]**2)
             
-            return sp.csc_matrix(J)
+            return sps.csc_matrix(J)
         
         y0 = [2.0,-0.6] #Initial conditions
         

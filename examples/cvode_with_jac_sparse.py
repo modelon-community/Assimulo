@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import scipy.sparse as SP
+import scipy.sparse as sps
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -59,7 +59,7 @@ def run_example(with_plots=True):
         rowvals = [0, 1, 0, 1, 2, 0, 1]
         data = [-0.04, 0.04, 1e4*y[2], -1e4*y[2]-6e7*y[1], 6e7*y[1], 1e4*y[1], -1e4*y[1]]
 
-        J = SP.csc_matrix((data, rowvals, colptrs))
+        J = sps.csc_matrix((data, rowvals, colptrs))
         return J
     
     #Defines an Assimulo explicit problem

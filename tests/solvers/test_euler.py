@@ -21,7 +21,7 @@ from assimulo.solvers.euler import ExplicitEuler, ImplicitEuler
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded
 import numpy as np
-import scipy.sparse as sp
+import scipy.sparse as sps
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
@@ -293,7 +293,7 @@ class Test_Implicit_Euler:
         This tests the functionality of the property usejac.
         """
         f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: sp.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        jac = lambda t,x: sps.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac

@@ -24,7 +24,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.lib.radau_core import Radau_Exception
 from assimulo.exception import TimeLimitExceeded
-import scipy.sparse as sp
+import scipy.sparse as sps
 import numpy as np
 
 import re
@@ -462,7 +462,7 @@ class Test_Explicit_Radau5:
             J[1,0]=my*(-2.*y[0]*y[1]-1.)
             J[1,1]=my*(1.-y[0]**2)
             
-            return sp.csc_matrix(J)
+            return sps.csc_matrix(J)
         
         #Define an Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
@@ -844,7 +844,7 @@ class Test_Explicit_Radau5:
         This tests the error when using a sparse jacobian of the wrong format
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csr')
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csr')
         y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
@@ -865,7 +865,7 @@ class Test_Explicit_Radau5:
         """
         n = 5
         f = lambda t, y: y
-        jac = lambda t, y: sp.eye(n, n, dtype = np.double, format = 'csc')
+        jac = lambda t, y: sps.eye(n, n, dtype = np.double, format = 'csc')
         y0 = np.array([1.]*n)
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
@@ -886,7 +886,7 @@ class Test_Explicit_Radau5:
         """
         n = 5
         f = lambda t, y: [0.]*n
-        jac = lambda t, y: sp.csc_matrix((n, n), dtype = np.double)
+        jac = lambda t, y: sps.csc_matrix((n, n), dtype = np.double)
         y0 = np.array([1.]*n)
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
@@ -904,7 +904,7 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
@@ -923,7 +923,7 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; wrong type.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = np.array([1.])
 
         for nnz in [None, "test"]:
@@ -945,7 +945,7 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; negative.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = np.array([1.])
 
         for nnz in [-2, -10]:
@@ -967,7 +967,7 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; too_large.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
         y0 = np.array([1.])
 
         for nnz in [5, 100]:
@@ -988,14 +988,14 @@ class Test_Explicit_Radau5:
         ## Take trivial problem with somewhat arbitrary jacobians
         ## Test that functions for internal processing of jacobian do not produces segfaults
         jacobians = [
-            (lambda t, y: sp.csc_matrix(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 9), 
-            (lambda t, y: sp.csc_matrix(np.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0.]])), 6),
-            (lambda t, y: sp.csc_matrix(np.array([[0., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 8),
-            (lambda t, y: sp.csc_matrix(np.array([[0., 0., 0.], [0., 1., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(np.array([[0., 0., 0.], [1., 0., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(np.array([[0., 0., 0.], [0., 0., 0.], [0., 1., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(np.array([[0., 0., 1.], [0., 0., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(np.array([[1., 0., 0.], [0., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 9), 
+            (lambda t, y: sps.csc_matrix(np.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0.]])), 6),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 8),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [0., 1., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [1., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [0., 0., 0.], [0., 1., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 1.], [0., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[1., 0., 0.], [0., 0., 0.], [0., 0., 0.]])), 1),
         ]
 
         for i, (jac, nnz) in enumerate(jacobians):

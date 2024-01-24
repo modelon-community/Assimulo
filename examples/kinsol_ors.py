@@ -15,19 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
-import scipy.linalg as LIN
-import scipy.io as IO
-import scipy.sparse as SPARSE
-import scipy.sparse.linalg as LINSP
-import nose
 import os
+import nose
+import numpy as np
+import scipy as sp
+import scipy.sparse as sps
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 import warnings
-import scipy.sparse
 
-warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
+warnings.simplefilter("ignore", sps.SparseEfficiencyWarning)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -39,22 +36,22 @@ def run_example(with_plots=True):
     Iterative Methods for Sparse Linear Systems.
     """
     #Read the original matrix
-    A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
+    A_original = sp.io.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
 
     #Scale the original matrix
-    A = SPARSE.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
+    A = sps.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
 
     #Preconditioning by Symmetric Gauss Seidel
     if True:
-        D = SPARSE.spdiags(A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
-        Dinv = SPARSE.spdiags(1.0/A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
-        E = -SPARSE.tril(A,k=-1)
-        F = -SPARSE.triu(A,k=1)
+        D = sps.spdiags(A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
+        Dinv = sps.spdiags(1.0/A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
+        E = -sps.tril(A,k=-1)
+        F = -sps.triu(A,k=1)
         L = (D-E).dot(Dinv)
         U = D-F
         Prec = L.dot(U)
         
-        solvePrec = LINSP.factorized(Prec)
+        solvePrec = sps.linalg.factorized(Prec)
 
     #Create the RHS
     b = A.dot(np.ones(A.shape[0]))
@@ -91,7 +88,7 @@ def run_example(with_plots=True):
     def setup_param(solver):
         solver.linear_solver = "spgmr"
         solver.max_dim_krylov_subspace = 10
-        solver.ftol = LIN.norm(res(solver.y0))*1e-9
+        solver.ftol = np.linalg.norm(res(solver.y0))*1e-9
         solver.max_iter = 300
         solver.verbosity = 10
         solver.globalization_strategy = "none"
@@ -105,8 +102,8 @@ def run_example(with_plots=True):
     #Solve Preconditioned system
     y_prec = alg_solver_prec.solve()
     
-    print("Error                 , in y: ", LIN.norm(y-np.ones(len(y))))
-    print("Error (preconditioned), in y: ", LIN.norm(y_prec-np.ones(len(y_prec))))
+    print("Error                 , in y: ", np.linalg.norm(y-np.ones(len(y))))
+    print("Error (preconditioned), in y: ", np.linalg.norm(y_prec-np.ones(len(y_prec))))
     
     if with_plots:
         import pylab as P

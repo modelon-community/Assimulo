@@ -16,8 +16,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import scipy as S
-import scipy.sparse as sp
+import scipy as sp
+import scipy.sparse as sps
 
 from assimulo.exception import (
     AssimuloException,
@@ -339,7 +339,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         ret = 0
         try:
             jac = self.problem.jac(t,y)
-            if isinstance(jac, sp.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
+            if isinstance(jac, sps.csc_matrix) and (self.options["linear_solver"] == "DENSE"):
                 jac = jac.toarray()
         except BaseException as E:
             jac = np.eye(len(y))
@@ -694,8 +694,8 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         for k in range(20):
             
             self._curiter = 0 #Reset the iteration
-            self._fac_con = max(self._fac_con, self._eps)**0.8;
-            self._theta = abs(self.thet);
+            self._fac_con = max(self._fac_con, self._eps)**0.8
+            self._theta = abs(self.thet)
             
             if self._needjac:
                 self._jac = self.jacobian(t,y)
@@ -707,9 +707,9 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 self._g = self._gamma/self.h
                 self._B = self._g*self.I - self._jac
                 
-                self._P1,self._L1,self._U1 = S.linalg.lu(self._B) #LU decomposition
-                self._P2,self._L2,self._U2 = S.linalg.lu(self._a*self.I-self._jac)
-                self._P3,self._L3,self._U3 = S.linalg.lu(self._b*self.I-self._jac)
+                self._P1,self._L1,self._U1 = sp.linalg.lu(self._B) #LU decomposition
+                self._P2,self._L2,self._U2 = sp.linalg.lu(self._a*self.I-self._jac)
+                self._P3,self._L3,self._U3 = sp.linalg.lu(self._b*self.I-self._jac)
                 
                 self._needLU = False
                 
@@ -1513,8 +1513,8 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         for k in range(20):
             
             self._curiter = 0 #Reset the iteration
-            self._fac_con = max(self._fac_con, self._eps)**0.8;
-            self._theta = abs(self.thet);
+            self._fac_con = max(self._fac_con, self._eps)**0.8
+            self._theta = abs(self.thet)
             
             if self._needjac:
                 self._jac = self.jacobian(t,y,yd)
@@ -1526,9 +1526,9 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 self._g = self._gamma/self.h
                 self._B = self._g*self.M - self._jac
                 
-                self._P1,self._L1,self._U1 = S.linalg.lu(self._B) #LU decomposition
-                self._P2,self._L2,self._U2 = S.linalg.lu(self._a*self.M-self._jac)
-                self._P3,self._L3,self._U3 = S.linalg.lu(self._b*self.M-self._jac)
+                self._P1,self._L1,self._U1 = sp.linalg.lu(self._B) #LU decomposition
+                self._P2,self._L2,self._U2 = sp.linalg.lu(self._a*self.M-self._jac)
+                self._P3,self._L3,self._U3 = sp.linalg.lu(self._b*self.M-self._jac)
                 
                 self._needLU = False
                 

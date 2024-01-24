@@ -17,6 +17,7 @@
 
 import cython
 import traceback
+import scipy.sparse as sps
 from assimulo.exception import AssimuloRecoverableError
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noexcept:
@@ -123,8 +124,8 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc_matrix):
-                jac = sparse.csc_matrix(jac)
+            if not isinstance(jac, sps.csc_matrix):
+                jac = sps.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -188,8 +189,8 @@ ELSE:
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc_matrix):
-                jac = sparse.csc_matrix(jac)
+            if not isinstance(jac, sps.csc_matrix):
+                jac = sps.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -250,7 +251,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         
-        if isinstance(jac, sparse.csc_matrix):
+        if isinstance(jac, sps.csc_matrix):
             for j in range(Neq):
                 col_i = Jacobian.cols[j]
                 for i in range(jac.indptr[j], jac.indptr[j+1]):
@@ -300,7 +301,7 @@ ELSE:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
                 
-        if isinstance(jac, sparse.csc_matrix):
+        if isinstance(jac, sps.csc_matrix):
             for j in range(Neq):
                 col_i = DENSE_COL(Jacobian, j)
                 for i in range(jac.indptr[j], jac.indptr[j+1]):

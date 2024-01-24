@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
-import scipy.sparse as SP
 import nose
+import numpy as np
+import scipy.sparse as sps
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
@@ -57,7 +57,7 @@ def run_example(with_plots=True):
         rowvals = [0, 1, 0, 1, 2, 0, 1]
         data = [-0.04, 0.04, 1e4*y[2], -1e4*y[2]-6e7*y[1], 6e7*y[1], 1e4*y[1], -1e4*y[1]]
 
-        J = SP.csc_matrix((data, rowvals, colptrs))
+        J = sps.csc_matrix((data, rowvals, colptrs))
         return J
     
     #Defines an Assimulo explicit problem

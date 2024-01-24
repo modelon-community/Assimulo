@@ -20,8 +20,6 @@
 import numpy as np
 cimport numpy as np
 
-import scipy.sparse as sparse
- 
 from assimulo.exception import AssimuloException
 
 from assimulo.explicit_ode cimport Explicit_ODE 

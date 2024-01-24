@@ -19,7 +19,7 @@
 
 cimport numpy as np
 import numpy as np
-import scipy.sparse as sp
+import scipy.sparse as sps
 
 from assimulo.explicit_ode cimport Explicit_ODE
 from assimulo.exception import AssimuloException
@@ -331,7 +331,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         if self.usejac: #Retrieve the user-defined jacobian
             jac = self.problem.jac(t,y)
             
-            if isinstance(jac, sp.csc_matrix):
+            if isinstance(jac, sps.csc_matrix):
                 jac = jac.toarray()
         else:           #Calculate a numeric jacobian
             delt = np.array([(self._eps*max(abs(yi),1.e-5))**0.5 for yi in y])*np.identity(self._leny) #Calculate a disturbance

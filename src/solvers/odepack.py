@@ -18,8 +18,7 @@
 import sys
 import logging
 import numpy as np
-import scipy.linalg as Sc
-import scipy.sparse as sp
+import scipy.sparse as sps
 
 from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
 from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
@@ -154,11 +153,11 @@ class LSODAR(Explicit_ODE):
         direction=np.sign(tf-t0)
         
         #Perturb initial condition and compute rough Lipschitz constant
-        cent=Sc.norm(y)/normscale/100.
+        cent=np.linalg.norm(y)/normscale/100.
         v0=y+cent*np.random.rand(len(y),1)
         u0prime=f(t,y,sw0)
         v0prime=f(t,v0,sw0)
-        Lip=Sc.norm(u0prime-v0prime)/Sc.norm(y-v0)
+        Lip=np.linalg.norm(u0prime-v0prime)/np.linalg.norm(y-v0)
         h=direction*min(1e-3*T,max(1e-8*T,0.05/Lip))
         #step 1: fwd Euler step
         u1=y+h*u0prime
@@ -168,11 +167,11 @@ class LSODAR(Explicit_ODE):
         u0comp=u1-h*u1prime
         #step 3: estimate of local error
         du=u0comp-y
-        dunorm=Sc.norm(du)
+        dunorm=np.linalg.norm(du)
         errnorm=dunorm/normscale
         #step 4: new estimate of Lipschitz constant
         u0comprime=f(t0,u0comp,sw0)
-        L=Sc.norm(u0comprime-u0prime)/dunorm
+        L=np.linalg.norm(u0comprime-u0prime)/dunorm
         M=np.dot(du,u0comprime-u0prime)/dunorm**2
         #step 5: construct a refined starting stepsize
         theta1=tolscale/np.sqrt(errnorm)
@@ -203,7 +202,7 @@ class LSODAR(Explicit_ODE):
             # a) get previous stepsize if any
             hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
             #H = hu if hu != 0. else 1.e-4  # this needs some reflections 
-            #H =(abs(RWORK[0]-t)*((self.options["rtol"])**(1/(self.rkstarter+1))))/(100*Sc.norm(self.problem.rhs(t,y,self.sw))+10)#if hu != 0. else 1.e-4
+            #H =(abs(RWORK[0]-t)*((self.options["rtol"])**(1/(self.rkstarter+1))))/(100*np.linalg.norm(self.problem.rhs(t,y,self.sw))+10)#if hu != 0. else 1.e-4
             H=1e-2
             #H=self.autostart(t,y)
             #H=3*H
@@ -271,7 +270,7 @@ class LSODAR(Explicit_ODE):
         """
         jac = self.problem.jac(t,y)
         
-        if isinstance(jac, sp.csc_matrix):
+        if isinstance(jac, sps.csc_matrix):
             jac = jac.toarray()
         
         return jac
@@ -908,7 +907,7 @@ class RKStarterNordsieck(object):
                 c+=1
         nord[0,:] = y0
         nord[1,:] = h*K[0,:]
-        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        nord[2:,:] = np.linalg.solve(self.A[self.number_of_steps],b)
         return nord     
     def rk_like14(self, t0, y0, sw0):
         """
@@ -931,7 +930,7 @@ class RKStarterNordsieck(object):
                 c+=1
         nord[0,:] = y0
         nord[1,:] = h*K[0,:]
-        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)
+        nord[2:,:] = np.linalg.solve(self.A[self.number_of_steps],b)
         return nord       
     def rk_like15(self, t0, y0, sw0):
         """
@@ -954,7 +953,7 @@ class RKStarterNordsieck(object):
                 c+=1
         nord[0,:] = y0
         nord[1,:] = h*K[0,:]
-        nord[2:,:] = Sc.solve(self.A[self.number_of_steps],b)        
+        nord[2:,:] = np.linalg.solve(self.A[self.number_of_steps],b)        
         return nord     
     def nordsieck(self,k):
         """
@@ -975,12 +974,12 @@ class RKStarterNordsieck(object):
             co=np.array([co_nord[0]])
             nord_n=np.vander(co_nord[0],self.number_of_steps+1)
             b=y[1:]-y0-co.T*yf
-            nord=Sc.solve(nord_n[0:2,0:2],b)
+            nord=np.linalg.solve(nord_n[0:2,0:2],b)
         elif l==4:
             co=np.array([co_nord[1]])
             nord_n=np.vander(co_nord[1],self.number_of_steps+1)
             b=y[1:]-y0-H*co.T*yf
-            nord=Sc.solve(nord_n[0:3,0:3],b)
+            nord=np.linalg.solve(nord_n[0:3,0:3],b)
         nord=np.vstack((y0,H*yf,nord[::-1]))       
         return nord
     def Nordsieck_RKs(self,t0,y,sw0):
@@ -994,7 +993,7 @@ class RKStarterNordsieck(object):
         co=co_nord[s-2]
         co=np.array([co])
         b=y[1:]-y0-H*co.T*yf
-        nord=Sc.solve(A[s],b)
+        nord=np.linalg.solve(A[s],b)
         nord=np.vstack((y0,H*yf,nord))
         return nord
         

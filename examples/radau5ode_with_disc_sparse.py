@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import scipy.sparse as sp
+import scipy.sparse as sps
 import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
@@ -54,7 +54,7 @@ class Extended_Problem(Explicit_Problem):
         return np.array([yd_0,yd_1,yd_2])
 
     def jac(self, t, y):
-        return sp.csc_matrix((len(y), len(y)), dtype = 'float')
+        return sps.csc_matrix((len(y), len(y)), dtype = 'float')
 
     jac_nnz = 0
 
