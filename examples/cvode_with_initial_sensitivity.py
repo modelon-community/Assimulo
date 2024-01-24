@@ -88,39 +88,39 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
+        import pylab as pl
         title_text=r"Sensitivity w.r.t.  ${}$"
         legend_text=r"$\mathrm{{d}}{}/\mathrm{{d}}{}$"
-        P.figure(1)
-        P.subplot(221)
-        P.plot(t, np.array(exp_sim.p_sol[0])[:,0],
+        pl.figure(1)
+        pl.subplot(221)
+        pl.plot(t, np.array(exp_sim.p_sol[0])[:,0],
                t, np.array(exp_sim.p_sol[0])[:,1],
                t, np.array(exp_sim.p_sol[0])[:,2])
-        P.title(title_text.format('p_1'))
-        P.legend((legend_text.format('y_1','p_1'),
+        pl.title(title_text.format('p_1'))
+        pl.legend((legend_text.format('y_1','p_1'),
                   legend_text.format('y_1','p_2'),
                   legend_text.format('y_1','p_3')))
-        P.subplot(222)
-        P.plot(t, np.array(exp_sim.p_sol[1])[:,0],
+        pl.subplot(222)
+        pl.plot(t, np.array(exp_sim.p_sol[1])[:,0],
                t, np.array(exp_sim.p_sol[1])[:,1],
                t, np.array(exp_sim.p_sol[1])[:,2])
-        P.title(title_text.format('p_2'))
-        P.legend((legend_text.format('y_2','p_1'),
+        pl.title(title_text.format('p_2'))
+        pl.legend((legend_text.format('y_2','p_1'),
                   legend_text.format('y_2','p_2'),
                   legend_text.format('y_2','p_3')))
-        P.subplot(223)
-        P.plot(t, np.array(exp_sim.p_sol[2])[:,0],
+        pl.subplot(223)
+        pl.plot(t, np.array(exp_sim.p_sol[2])[:,0],
                t, np.array(exp_sim.p_sol[2])[:,1],
                t, np.array(exp_sim.p_sol[2])[:,2])
-        P.title(title_text.format('p_3'))
-        P.legend((legend_text.format('y_3','p_1'),
+        pl.title(title_text.format('p_3'))
+        pl.legend((legend_text.format('y_3','p_1'),
                   legend_text.format('y_3','p_2'),
                   legend_text.format('y_3','p_3')))
-        P.subplot(224)
-        P.title('ODE Solution')
-        P.plot(t, y)
-        P.suptitle(exp_mod.name)
-        P.show()
+        pl.subplot(224)
+        pl.title('ODE Solution')
+        pl.plot(t, y)
+        pl.suptitle(exp_mod.name)
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 1577.6552477, 5)

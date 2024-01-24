@@ -87,31 +87,31 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.figure(1)
-        P.subplot(221)
-        P.plot(t, np.array(imp_sim.p_sol[0])[:,0],
+        import pylab as pl
+        pl.figure(1)
+        pl.subplot(221)
+        pl.plot(t, np.array(imp_sim.p_sol[0])[:,0],
                t, np.array(imp_sim.p_sol[0])[:,1],
                t, np.array(imp_sim.p_sol[0])[:,2])
-        P.title("Parameter p1")
-        P.legend(("p1/dy1","p1/dy2","p1/dy3"))
-        P.subplot(222)
-        P.plot(t, np.array(imp_sim.p_sol[1])[:,0],
+        pl.title("Parameter p1")
+        pl.legend(("p1/dy1","p1/dy2","p1/dy3"))
+        pl.subplot(222)
+        pl.plot(t, np.array(imp_sim.p_sol[1])[:,0],
                t, np.array(imp_sim.p_sol[1])[:,1],
                t, np.array(imp_sim.p_sol[1])[:,2])
-        P.title("Parameter p2")
-        P.legend(("p2/dy1","p2/dy2","p2/dy3"))
-        P.subplot(223)
-        P.plot(t, np.array(imp_sim.p_sol[2])[:,0],
+        pl.title("Parameter p2")
+        pl.legend(("p2/dy1","p2/dy2","p2/dy3"))
+        pl.subplot(223)
+        pl.plot(t, np.array(imp_sim.p_sol[2])[:,0],
                t, np.array(imp_sim.p_sol[2])[:,1],
                t, np.array(imp_sim.p_sol[2])[:,2])
-        P.title("Parameter p3")
-        P.legend(("p3/dy1","p3/dy2","p3/dy3"))
-        P.subplot(224)
-        P.title('ODE Solution')
-        P.plot(t, y)
-        P.suptitle(imp_mod.name)
-        P.show()
+        pl.title("Parameter p3")
+        pl.legend(("p3/dy1","p3/dy2","p3/dy3"))
+        pl.subplot(224)
+        pl.title('ODE Solution')
+        pl.plot(t, y)
+        pl.suptitle(imp_mod.name)
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 1577.6552477,3)

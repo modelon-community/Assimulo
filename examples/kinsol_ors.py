@@ -106,23 +106,23 @@ def run_example(with_plots=True):
     print("Error (preconditioned), in y: ", np.linalg.norm(y_prec-np.ones(len(y_prec))))
     
     if with_plots:
-        import pylab as P
-        P.figure(4)
-        P.semilogy(alg_solver.get_residual_norm_nonlinear_iterations(), label="Original")
-        P.semilogy(alg_solver_prec.get_residual_norm_nonlinear_iterations(), label='Preconditioned')
-        P.xlabel("Number of Iterations")
-        P.ylabel("Residual Norm")
-        P.title("Solution Progress")
-        P.legend()
-        P.grid()
+        import pylab as pl
+        pl.figure(4)
+        pl.semilogy(alg_solver.get_residual_norm_nonlinear_iterations(), label="Original")
+        pl.semilogy(alg_solver_prec.get_residual_norm_nonlinear_iterations(), label='Preconditioned')
+        pl.xlabel("Number of Iterations")
+        pl.ylabel("Residual Norm")
+        pl.title("Solution Progress")
+        pl.legend()
+        pl.grid()
         
-        P.figure(5)
-        P.plot(y, label="Original")
-        P.plot(y_prec, label="Preconditioned")
-        P.legend()
-        P.grid()
+        pl.figure(5)
+        pl.plot(y, label="Original")
+        pl.plot(y_prec, label="Preconditioned")
+        pl.legend()
+        pl.grid()
         
-        P.show()
+        pl.show()
     
     #Basic test
     for j in range(len(y)):

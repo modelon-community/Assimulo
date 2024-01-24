@@ -99,7 +99,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = None #Stopping critera for Newtons Method
+        self.options["fnewt"]    = None #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
@@ -454,7 +454,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         self.options["inith"] = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0 #Stopping critera for Newtons Method
+        self.options["fnewt"]    = 0 #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
@@ -972,7 +972,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
+        self.options["fnewt"]    = 0.0 #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
@@ -1250,7 +1250,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         self.options["inith"] = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-        self.options["fnewt"]    = 0 #Stopping critera for Newtons Method
+        self.options["fnewt"]    = 0 #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)

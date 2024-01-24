@@ -91,13 +91,13 @@ def run_example(with_plots=True):
 
     #Plot
     if with_plots:
-        import pylab as P
-        P.semilogy(t, y, color="b")
-        P.grid()
-        P.title(exp_mod.name+r' $\varepsilon = \frac{1}{3} 10^{-3}$')
-        P.xlabel('Time')
-        P.ylabel('y')
-        P.show()
+        import pylab as pl
+        pl.semilogy(t, y, color="b")
+        pl.grid()
+        pl.title(exp_mod.name+r' $\varepsilon = \frac{1}{3} 10^{-3}$')
+        pl.xlabel('Time')
+        pl.ylabel('y')
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1,0], 10.860063849896818, 3)

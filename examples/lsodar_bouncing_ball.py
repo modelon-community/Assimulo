@@ -131,23 +131,23 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.subplot(221)
-        P.plot(t,y)
-        P.title('LSODAR Bouncing ball (one step mode)')
-        P.ylabel('States: $y$ and $\dot y$')
-        P.subplot(223)
-        P.plot(exp_sim.t_sol,exp_sim.h_sol)
-        P.title('LSODAR step size plot')
-        P.xlabel('Time')
-        P.ylabel('Sepsize')
-        P.subplot(224)
-        P.plot(exp_sim.t_sol,exp_sim.nq_sol)
-        P.title('LSODAR order plot')
-        P.xlabel('Time')
-        P.ylabel('Order')
-        P.suptitle(exp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.subplot(221)
+        pl.plot(t,y)
+        pl.title('LSODAR Bouncing ball (one step mode)')
+        pl.ylabel('States: $y$ and $\dot y$')
+        pl.subplot(223)
+        pl.plot(exp_sim.t_sol,exp_sim.h_sol)
+        pl.title('LSODAR step size plot')
+        pl.xlabel('Time')
+        pl.ylabel('Sepsize')
+        pl.subplot(224)
+        pl.plot(exp_sim.t_sol,exp_sim.nq_sol)
+        pl.title('LSODAR order plot')
+        pl.xlabel('Time')
+        pl.ylabel('Order')
+        pl.suptitle(exp_mod.name)
+        pl.show()
     return exp_mod, exp_sim
     
 if __name__=="__main__":

@@ -58,13 +58,13 @@ class Radau_Common(object):
         """
         Plots the step-size.
         """
-        import pylab as P
+        import pylab as pl
         
-        P.semilogy(np.diff(self.t),drawstyle='steps-post')
-        P.title(self.problem.name)
-        P.ylabel('Step length')
-        P.xlabel('Number of steps')
-        P.show()
+        pl.semilogy(np.diff(self.t),drawstyle='steps-post')
+        pl.title(self.problem.name)
+        pl.ylabel('Step length')
+        pl.xlabel('Number of steps')
+        pl.show()
     
     def _set_newt(self, newt):
         """

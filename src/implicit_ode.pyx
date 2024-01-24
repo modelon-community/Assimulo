@@ -445,12 +445,12 @@ cdef class Implicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
-        import pylab as P
+        import pylab as pl
         
         if len(self.t_sol) > 0:
-            P.figure(1)
+            pl.figure(1)
             if not mask:
-                P.plot(self.t_sol, self.y_sol, **kwargs)
+                pl.plot(self.t_sol, self.y_sol, **kwargs)
             else:
                 if not isinstance(mask, list):
                     raise Implicit_ODE_Exception('Mask must be a list of integers')
@@ -459,21 +459,21 @@ cdef class Implicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, np.array(self.y_sol)[:,i], **kwargs)
+                        pl.plot(self.t_sol, np.array(self.y_sol)[:,i], **kwargs)
 
-            P.xlabel('time')
-            P.ylabel('state')
-            P.title(self.problem.name)
+            pl.xlabel('time')
+            pl.ylabel('state')
+            pl.title(self.problem.name)
 
             
             if der and not mask:
-                P.figure(2)
-                P.plot(self.t_sol, self.yd_sol, **kwargs)
-                P.xlabel('time')
-                P.ylabel('state derivatives')
-                P.title(self.problem.name)
+                pl.figure(2)
+                pl.plot(self.t_sol, self.yd_sol, **kwargs)
+                pl.xlabel('time')
+                pl.ylabel('state derivatives')
+                pl.title(self.problem.name)
             elif mask and der:
-                P.figure(2)
+                pl.figure(2)
                 if not isinstance(mask, list):
                     raise Implicit_ODE_Exception('Mask must be a list of integers')
                 if not len(mask)==len(self.yd_sol[-1]):
@@ -481,13 +481,13 @@ cdef class Implicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, np.array(self.yd_sol)[:,i], **kwargs)
+                        pl.plot(self.t_sol, np.array(self.yd_sol)[:,i], **kwargs)
                         
-                P.xlabel('time')
-                P.ylabel('state derivatives')
-                P.title(self.problem.name)
+                pl.xlabel('time')
+                pl.ylabel('state derivatives')
+                pl.title(self.problem.name)
             
-            P.show()
+            pl.show()
         else:
             self.log_message("No result for plotting found.",NORMAL)
             

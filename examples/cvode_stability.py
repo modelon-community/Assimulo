@@ -76,16 +76,16 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.subplot(211)
-        P.plot(t,y[:,2])
-        P.ylabel("State: $y_1$")
-        P.subplot(212)
-        P.plot(t,exp_mod.order)
-        P.ylabel("Order")
-        P.suptitle(exp_mod.name)
-        P.xlabel("Time")
-        P.show()
+        import pylab as pl
+        pl.subplot(211)
+        pl.plot(t,y[:,2])
+        pl.ylabel("State: $y_1$")
+        pl.subplot(212)
+        pl.plot(t,exp_mod.order)
+        pl.ylabel("Order")
+        pl.suptitle(exp_mod.name)
+        pl.xlabel("Time")
+        pl.show()
 
     #Basic test
     x1 = y[:,0]

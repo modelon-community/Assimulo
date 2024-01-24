@@ -114,12 +114,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
         
     return imp_mod, imp_sim
 

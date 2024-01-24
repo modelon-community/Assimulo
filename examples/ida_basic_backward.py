@@ -54,12 +54,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t, y, color="b")
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t, y, color="b")
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 4.00000000, 3)

@@ -75,12 +75,12 @@ def run_example(with_plots=True):
     
     # Plot
     if with_plots:
-        import pylab as P
-        P.plot(t, y/10000.)
-        P.xlabel('Time')
-        P.ylabel('States, scaled by $10^4$')
-        P.title(exp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t, y/10000.)
+        pl.xlabel('Time')
+        pl.ylabel('States, scaled by $10^4$')
+        pl.title(exp_mod.name)
+        pl.show()
     
     #Basic tests
     nose.tools.assert_almost_equal(y[-1][0], 692.800241862)

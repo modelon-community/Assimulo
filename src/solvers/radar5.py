@@ -17,7 +17,7 @@
 
 import sys
 import numpy as np
-import pylab as P
+import pylab as pl
 
 from assimulo.ode import NORMAL, ID_PY_COMPLETE, ID_PY_EVENT
 from assimulo.explicit_ode import Explicit_ODE
@@ -51,8 +51,8 @@ class Radar5ODE(Explicit_ODE):
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-#        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
-        self.options["fnewt"]    = 0.03 #Stopping critera for Newtons Method
+#        self.options["fnewt"]    = 0.0 #Stopping criteria for Newtons Method
+        self.options["fnewt"]    = 0.03 #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
@@ -374,11 +374,11 @@ class Radar5ODE(Explicit_ODE):
         """
         Plots the step-size.
         """
-        P.semilogy(np.diff(self.t),drawstyle='steps-post')
-        P.title(self.problem.name)
-        P.ylabel('Step length')
-        P.xlabel('Number of steps')
-        P.show()
+        pl.semilogy(np.diff(self.t),drawstyle='steps-post')
+        pl.title(self.problem.name)
+        pl.ylabel('Step length')
+        pl.xlabel('Number of steps')
+        pl.show()
     
     def _set_newt(self, newt):
         """

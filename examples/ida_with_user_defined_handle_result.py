@@ -92,19 +92,19 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.figure(1)
-        P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
+        import pylab as pl
+        pl.figure(1)
+        pl.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
         
-        P.figure(2)
-        P.plot([0] + np.add.accumulate(np.diff(t)).tolist(), order)
-        P.title("Used order during the integration")
-        P.xlabel("Time")
-        P.ylabel("Order")
-        P.show()
+        pl.figure(2)
+        pl.plot([0] + np.add.accumulate(np.diff(t)).tolist(), order)
+        pl.title("Used order during the integration")
+        pl.xlabel("Time")
+        pl.ylabel("Order")
+        pl.show()
     
     #Basic tests
     nose.tools.assert_almost_equal(y[-1][0],0.9401995, places=4)

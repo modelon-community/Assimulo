@@ -85,12 +85,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y[:,1],linestyle="dashed",marker="o") #Plot the solution
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(exp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y[:,1],linestyle="dashed",marker="o") #Plot the solution
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(exp_mod.name)
+        pl.show()
     
     #Basic tests
     nose.tools.assert_almost_equal(y[-1][0],0.9851,3)

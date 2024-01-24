@@ -82,12 +82,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y)
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y)
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
     return imp_mod,imp_sim
     
 if __name__=='__main__':

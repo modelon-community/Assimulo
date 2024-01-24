@@ -380,15 +380,15 @@ cdef class Explicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
-        import pylab as P
+        import pylab as pl
         
         if len(self.t_sol) > 0:
-            P.xlabel('time')
-            P.ylabel('state')
-            P.title(self.problem.name)
+            pl.xlabel('time')
+            pl.ylabel('state')
+            pl.title(self.problem.name)
             
             if not mask:
-                P.plot(self.t_sol, self.y_sol, **kwargs)
+                pl.plot(self.t_sol, self.y_sol, **kwargs)
             else:
                 if not isinstance(mask, list):
                     raise Explicit_ODE_Exception('Mask must be a list of integers')
@@ -397,8 +397,8 @@ cdef class Explicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, np.array(self.y_sol)[:,i],**kwargs)
+                        pl.plot(self.t_sol, np.array(self.y_sol)[:,i],**kwargs)
             
-            P.show()
+            pl.show()
         else:
             self.log_message("No result for plotting found.",NORMAL)

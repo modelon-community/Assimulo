@@ -144,12 +144,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y)
-        P.title("Solution of a differential equation with discontinuities")
-        P.ylabel('States')
-        P.xlabel('Time')
-        P.show()
+        import pylab as pl
+        pl.plot(t,y)
+        pl.title("Solution of a differential equation with discontinuities")
+        pl.ylabel('States')
+        pl.xlabel('Time')
+        pl.show()
         
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)

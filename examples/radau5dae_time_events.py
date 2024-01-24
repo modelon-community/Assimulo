@@ -64,12 +64,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y[:,0], marker='o')
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y[:,0], marker='o')
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
     
     #Basic test
     x1 = y[:,0]
