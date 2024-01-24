@@ -665,7 +665,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "3.5.0" if version_number_arg == "Default" else version_number_arg
+VERSION = "master" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
@@ -701,18 +701,12 @@ compiling from source, Cython >=3, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK
 together with a C-compiler and a FORTRAN-compiler.
 """
 
-
-version_txt = 'assimulo'+os.path.sep+'version.txt'
-#If a revision is found, always write it!
-if revision != "unknown" and revision!="":
-    with open(version_txt, 'w') as f:
-        f.write(VERSION+'\n')
-        f.write("r"+revision)
-else:# If it does not, check if the file exists and if not, create the file!
-    if not os.path.isfile(version_txt):
-        with open(version_txt, 'w') as f:
-            f.write(VERSION+'\n')
-            f.write("unknown")
+version_txt = os.path.join('assimulo', 'version.txt')
+if revision == "":
+    revision = "unknown"
+with open(version_txt, 'w') as f:
+    f.write(VERSION + '\n')
+    f.write("r" + revision)
 
 license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]

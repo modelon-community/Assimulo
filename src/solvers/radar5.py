@@ -83,6 +83,7 @@ class Radar5ODE(Explicit_ODE):
         self.statistics["nfcnjacs"]     = 0 #Number of function evaluations when evaluating the jacobian
         self.statistics["nerrfails"]    = 0 #Number of step rejections
         self.statistics["nlus"]         = 0 #Number of LU decompositions
+        # not currently supported by Assimulo
         # self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
         #Internal values
