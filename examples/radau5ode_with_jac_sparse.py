@@ -21,7 +21,6 @@ import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
 
-
 def run_example(with_plots=True):
     r"""
     Example for demonstrating the use of a user supplied Jacobian (sparse).
@@ -90,10 +89,9 @@ def run_example(with_plots=True):
         P.show()
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],0.9851,3)
+    nose.tools.assert_almost_equal(y[-1][0], 0.9851, 3)
     
     return exp_mod, exp_sim
-
 
 if __name__=='__main__':
     mod,sim = run_example()

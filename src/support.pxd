@@ -18,7 +18,6 @@
 import numpy as N
 cimport numpy as N
 
-
 cdef class Statistics:
     cdef public object statistics_msg
     cdef public object statistics

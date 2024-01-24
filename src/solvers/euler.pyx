@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 cimport numpy as N
 import numpy as N
 import numpy.linalg as LIN
@@ -363,7 +365,8 @@ cdef class ImplicitEuler(Explicit_ODE):
         """
         This calculates the next step in the integration.
         """
-        cdef double new_norm, old_norm
+        cdef double new_norm = 0
+        cdef double old_norm = 0
         cdef double tn1 = t+h
         cdef N.ndarray yn = y.copy() #Old y
         #cdef N.ndarray yn1 = y.copy() #First newton guess

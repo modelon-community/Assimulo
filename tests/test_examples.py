@@ -64,6 +64,10 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_cvode_basic(self):
         cvode_basic.run_example(with_plots=False)
+
+    @testattr(stddist = True)
+    def test_cvode_stability(self):
+        cvode_stability.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_cvode_with_disc(self):
@@ -222,6 +226,10 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_lsodar_with_disc(self):
         lsodar_with_disc.run_example(with_plots=False)
+
+    @testattr(stddist = True)
+    def test_lsodar_bouncing_ball(self):
+        lsodar_bouncing_ball.run_example(with_plots=False)
         
     @testattr(stddist = True)
     def test_euler_vanderpol(self):
@@ -234,3 +242,11 @@ class Test_Examples:
     @testattr(stddist = True)
     def test_ida_basic_backward(self):
         ida_basic_backward.run_example(with_plots=False)
+
+    @testattr(stddist = True)
+    def test_glimda_vanderpol(self):
+        glimda_vanderpol.run_example(with_plots=False)
+
+    @testattr(stddist = True)
+    def test_radar_basic(self):
+        radar_basic.run_example()

@@ -20,7 +20,6 @@ import scipy.sparse as sp
 
 from assimulo.ode import NORMAL, ID_PY_EVENT, ID_PY_COMPLETE
 from assimulo.explicit_ode import Explicit_ODE
-
 from assimulo.exception import Rodas_Exception
 from assimulo.support import set_type_shape_array
 

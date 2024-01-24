@@ -15,14 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N 
 cimport numpy as N
-from numpy cimport PyArray_DATA
 
-N.import_array()
-
-import numpy.linalg
-import traceback 
 import scipy.sparse as sparse
  
 from assimulo.exception import AssimuloException
@@ -1021,7 +1018,7 @@ cdef class IDA(Implicit_ODE):
     
     atol=property(_get_atol,_set_atol)
     
-    def _set_rtol(self,rtol):
+    def _set_rtol(self, rtol):
         """
         Defines the relative tolerance that is to be used by the solver.
         
@@ -2606,7 +2603,7 @@ cdef class CVode(Explicit_ODE):
     
     atol = property(_get_atol,_set_atol)
     
-    def _set_rtol(self,rtol):
+    def _set_rtol(self, rtol):
         """
         Defines the relative tolerance that is to be used by the solver.
         Can be set differently for each variable, if supported by Sundials version.
@@ -2626,12 +2623,10 @@ cdef class CVode(Explicit_ODE):
         """
         rtol = set_type_shape_array(rtol) ## convert to appropriate numpy array
         rtol = N.array([rtol[0]]) if N.all(N.isclose(rtol, rtol[0])) else rtol ## reduce if possible
-
         if (rtol<0.0).any():
             raise AssimuloException('Relative tolerance(s) must be a non-negative.')
-
-        if len(rtol) == 1:
-            self.options["rtol"] = float(rtol) # convert to scalar
+        if rtol.size == 1:
+            self.options["rtol"] = float(rtol.item()) # convert to scalar
         else: # nontrivial vector
             if not SUNDIALS_CVODE_RTOL_VEC: # Verify Sundials support
                 raise AssimuloException('Relative tolerance must be a (scalar) float. Installed Sundials version does not support relative tolerance vectors.')
@@ -2644,7 +2639,7 @@ cdef class CVode(Explicit_ODE):
     def _get_rtol(self):
         return self.options["rtol"]
         
-    rtol=property(_get_rtol,_set_rtol)
+    rtol=property(_get_rtol, _set_rtol)
     
     def _set_max_ord(self,maxord):
         try:

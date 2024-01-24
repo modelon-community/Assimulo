@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as N
-import scipy as S
 import scipy.linalg as LIN
 import scipy.io as IO
 import scipy.sparse as SPARSE
@@ -27,7 +26,6 @@ from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 import warnings
 import scipy.sparse
-
 
 warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
 
@@ -59,11 +57,11 @@ def run_example(with_plots=True):
         solvePrec = LINSP.factorized(Prec)
 
     #Create the RHS
-    b = A.dot(N.ones((A.shape[0],1)))
+    b = A.dot(N.ones(A.shape[0]))
     
     #Define the res
     def res(x):
-        return A.dot(x.reshape(len(x),1))-b
+        return A.dot(x) - b
         
     #The Jacobian
     def jac(x):
@@ -71,7 +69,7 @@ def run_example(with_plots=True):
     
     #The Jacobian*Vector
     def jacv(x,v):
-        return A.dot(v.reshape(len(v),1))
+        return A.dot(v)
     
     def prec_setup(u,f, uscale, fscale):
         pass
@@ -79,7 +77,7 @@ def run_example(with_plots=True):
     def prec_solve(r):
         return solvePrec(r)
         
-    y0 = S.rand(A.shape[0])
+    y0 = N.random.rand(A.shape[0])
     
     #Define an Assimulo problem
     alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, name = 'ORS Example')
@@ -101,10 +99,10 @@ def run_example(with_plots=True):
     setup_param(alg_solver)
     setup_param(alg_solver_prec)
     
-    #Solve orignal system
+    #Solve original system
     y = alg_solver.solve()
 
-    #Solve Preconditionined system
+    #Solve Preconditioned system
     y_prec = alg_solver_prec.solve()
     
     print("Error                 , in y: ", LIN.norm(y-N.ones(len(y))))
@@ -137,4 +135,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod, solv = run_example()
-

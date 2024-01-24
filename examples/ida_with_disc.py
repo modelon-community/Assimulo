@@ -87,7 +87,7 @@ class Extended_Problem(Implicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -124,8 +124,6 @@ class Extended_Problem(Implicit_Problem):
         solver.make_consistent('IDA_YA_YDP_INIT') #Calculate new initial conditions.
                                                    #see SUNDIALS IDA documentation
                                                    #on the option 'IDA_YA_YDP_INIT'
-
-
 
 def run_example(with_plots=True):
     r"""
@@ -168,6 +166,3 @@ def run_example(with_plots=True):
     
 if __name__=="__main__":
     mod,sim = run_example()
-    
-
-    

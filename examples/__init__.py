@@ -25,6 +25,5 @@ __all__ = ["cvode_gyro", "cvode_basic", "cvode_with_disc", "cvode_with_initial_s
            "mech_system_pendulum", "euler_vanderpol", "cvode_with_parameters_modified",
            "cvode_basic_backward","ida_basic_backward","dasp3_basic", "cvode_with_preconditioning",
            "kinsol_basic","kinsol_with_jac", "radau5dae_time_events", "kinsol_ors", "lsodar_bouncing_ball",
-           "cvode_with_parameters_fcn", "ida_with_user_defined_handle_result", "cvode_with_jac_sparse"]
-
-
+           "cvode_with_parameters_fcn", "ida_with_user_defined_handle_result", "cvode_with_jac_sparse",
+           "radar_basic", "cvode_stability"]

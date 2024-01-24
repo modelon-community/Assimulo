@@ -68,7 +68,7 @@ def run_example(with_plots=True):
     exp_sim.discr = 'BDF'
     exp_sim.rtol = 1.e-4
     exp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
-    exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
+    exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitivity method used
     exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
     exp_sim.report_continuously = True
 
@@ -95,4 +95,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod,sim = run_example()
-

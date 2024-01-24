@@ -58,4 +58,3 @@ def run_example(with_plots=True):
     
 if __name__=='__main__':
     mod, solv = run_example()
-

@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import numpy as N
 import pylab as P
-import sys
 
 from assimulo.ode import NORMAL, ID_PY_COMPLETE, ID_PY_EVENT
 from assimulo.explicit_ode import Explicit_ODE
@@ -77,13 +77,14 @@ class Radar5ODE(Explicit_ODE):
         self.C2M1 = C2-1.0 
         
         # - Statistic values
-        self.statistics["nsteps"]      = 0 #Number of steps
-        self.statistics["nfcn"]        = 0 #Number of function evaluations
-        self.statistics["njac"]        = 0 #Number of Jacobian evaluations
-        self.statistics["njacfcn"]     = 0 #Number of function evaluations when evaluating the jacobian
-        self.statistics["errfail"]     = 0 #Number of step rejections
-        self.statistics["nlu"]         = 0 #Number of LU decompositions
-        self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
+        self.statistics["nsteps"]       = 0 #Number of steps
+        self.statistics["nfcns"]        = 0 #Number of function evaluations
+        self.statistics["njacs"]        = 0 #Number of Jacobian evaluations
+        self.statistics["nfcnjacs"]     = 0 #Number of function evaluations when evaluating the jacobian
+        self.statistics["nerrfails"]    = 0 #Number of step rejections
+        self.statistics["nlus"]         = 0 #Number of LU decompositions
+        # not currently supported by Assimulo
+        # self.statistics["nstepstotal"] = 0 #Number of total computed steps (may NOT be equal to nsteps+nerrfail)
         
         #Internal values
         self._leny = len(self.y) #Dimension of the problem
@@ -91,7 +92,7 @@ class Radar5ODE(Explicit_ODE):
         self._yDelayTemp = []
         self._ntimelags = len(self.problem.lagcompmap)
         for i in range(self._ntimelags):
-            self._yDelayTemp.append(range(len(self.problem.lagcompmap[i])))
+            self._yDelayTemp.append(list(range(len(self.problem.lagcompmap[i]))))
         flat_lagcompmap = []
         for comp in self.problem.lagcompmap:
             flat_lagcompmap.extend(comp)
@@ -113,9 +114,9 @@ class Radar5ODE(Explicit_ODE):
         """
         This method is called after every successful step taken by Radar5
         """
-        #print "SOLOUT:", told, t, hold, y, cont
-#        print cont
-#        print told, t, told + hold
+        # print("SOLOUT:", told, t, hold, y, cont)
+        # print(cont)
+        # print(told, t, told + hold)
         if self._opts["output_list"] is None:
             self._tlist.append(t)
             self._ylist.append(y.copy())
@@ -207,8 +208,6 @@ class Radar5ODE(Explicit_ODE):
         return ydelay
 
     def F(self, t, y, past, ipast):
-        #print 'F:', t, y, past, ipast
- 
         # First find the correct place in the past vector for each time-lag
         # then evaluate all required solution components at that point
         ydelay = self.compute_ydelay(t,y, past,  ipast)
@@ -277,8 +276,6 @@ class Radar5ODE(Explicit_ODE):
         
         #Store the opts
         self._opts = opts
-        #print "INIT", t,y,tf,self.inith, self.problem.ipast
-        #print "GRID", self.problem.grid, self.problem.ngrid
         #t, y, h, iwork, flag, past = radar5.assimulo_radar5(self.F,            \
         a = radar5.assimulo_radar5(self.F,            \
                                        self.problem.phi,        \
@@ -316,8 +313,6 @@ class Radar5ODE(Explicit_ODE):
                                        #len(past)                \
                                        #)
         t, y, h, iwork, flag, past = a[0]
-        #print a[0]
-        #print len(a[0])
         #self.past = copy.deepcopy(past)
         self.past = past
         self.tk = N.trim_zeros(self.past[::self.idif], 'b')
@@ -332,12 +327,12 @@ class Radar5ODE(Explicit_ODE):
             raise Exception("Radar5 failed with flag %d"%flag)
         
         #Retrieving statistics
-        self.statistics["nsteps"]      += iwork[16]
-        self.statistics["nfcn"]        += iwork[13]
-        self.statistics["njac"]        += iwork[14]
-        self.statistics["nstepstotal"] += iwork[15]
-        self.statistics["errfail"]     += iwork[17]
-        self.statistics["nlu"]         += iwork[18]
+        self.statistics["nsteps"]       += iwork[16]
+        self.statistics["nfcns"]        += iwork[13]
+        self.statistics["njacs"]        += iwork[14]
+        # self.statistics["nstepstotal"] += iwork[15]
+        self.statistics["nerrfails"]    += iwork[17]
+        self.statistics["nlus"]         += iwork[18]
         
         return flag, self._tlist, self._ylist
     
@@ -349,10 +344,10 @@ class Radar5ODE(Explicit_ODE):
         log_message_verbose('Final Run Statistics: %s \n' % self.problem.name)
         
         log_message_verbose(' Number of steps                          : '+ str(self.statistics["nsteps"]))
-        log_message_verbose(' Number of function evaluations           : '+ str(self.statistics["nfcn"]))
-        log_message_verbose(' Number of Jacobian evaluations           : '+ str(self.statistics["njac"]))
-        log_message_verbose(' Number of error test failures            : '+ str(self.statistics["errfail"]))
-        log_message_verbose(' Number of LU decompositions              : '+ str(self.statistics["nlu"]))
+        log_message_verbose(' Number of function evaluations           : '+ str(self.statistics["nfcns"]))
+        log_message_verbose(' Number of Jacobian evaluations           : '+ str(self.statistics["njacs"]))
+        log_message_verbose(' Number of error test failures            : '+ str(self.statistics["nerrfails"]))
+        log_message_verbose(' Number of LU decompositions              : '+ str(self.statistics["nlus"]))
         
         log_message_verbose('\nSolver options:\n')
         log_message_verbose(' Solver                  : Radar5 ' + self._type)
@@ -736,9 +731,6 @@ class Radar5ODE(Explicit_ODE):
     rtol=property(_get_rtol,_set_rtol)
     
     def _get_grid(self):
-        """
-        TODO
-        """
         return self._grid
     def _set_grid(self, grid):
         self._grid

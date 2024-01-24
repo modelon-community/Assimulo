@@ -1,7 +1,9 @@
 --- CHANGELOG ---
---- Assimulo-3.4.4 ---
+--- Assimulo-3.5.0 ---
     * Changed "numpy.float" to equivalent "numpy.float64" due to DeprecationWarnings in numpy >= 1.20.
     * Improved examples with sparse jacobians by omitting the zeros in the jacobians.
+    * Upgraded to Cython >= 3.
+    * Removed deprecated build option "sundials_with_superlu", which is checked automatically.
 
 --- Assimulo-3.4.3 ---
     * Improved compliance with newer scipy version by instead using corresponding numpy calls when more suitable.
