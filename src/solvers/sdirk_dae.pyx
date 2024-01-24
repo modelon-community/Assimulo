@@ -15,12 +15,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
 import sys
+import numpy as N
 
 from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
 from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
-
 from assimulo.explicit_ode import Implicit_ODE
 
 try:
@@ -154,7 +153,7 @@ class SDIRK_DAE(Implicit_ODE):
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
                 hu, nqu ,nq ,nyh, nqnyh = get_lsod_common()
-                #print 't= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu)
+                #print('t= {}, tN={}, y={}, ns={}, hu={}'.format(t , RWORK[12], y, RWORK[nordsieck_start_index],hu))
                 self._nordsieck_array = \
                      RWORK[nordsieck_start_index:nordsieck_start_index+(nq+1)*nyh].reshape((nyh,-1),order='F') 
                 self._nyh = nyh              
@@ -212,7 +211,7 @@ class SDIRK_DAE(Implicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter > 1 else False
-        #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
+        #print('rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE))
         
         #Retrieving statistics
         self.statistics["ng"]            += IWORK[9]

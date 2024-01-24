@@ -55,7 +55,7 @@ def run_example(with_plots=True):
     exp_mod = Explicit_Problem(f,y0, name = "LSODAR: Van der Pol's equation")
     
     #Define an explicit solver
-    exp_sim = LSODAR(exp_mod) #Create a Radau5 solver
+    exp_sim = LSODAR(exp_mod) #Create a LSODAR solver
     
     #Sets the parameters
     exp_sim.atol = 1e-4 #Default 1e-6

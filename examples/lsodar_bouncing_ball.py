@@ -15,12 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
 import nose
+import numpy as N
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
-import sys
-import os
 
 """
 The bouncing ball example for LSODAR
@@ -155,6 +153,3 @@ def run_example(with_plots=True):
     
 if __name__=="__main__":
     mod,sim = run_example()
-    
-
-    

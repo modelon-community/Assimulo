@@ -30,7 +30,7 @@ def testattr(**kwargs):
 
 try:
     import os
-    curr_dir = os.path.dirname(os.path.abspath(__file__));
+    curr_dir = os.path.dirname(os.path.abspath(__file__))
     _fpath=os.path.join(curr_dir,'version.txt')
     with open(_fpath, 'r') as f:
         __version__=f.readline().strip()

@@ -15,14 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N 
 cimport numpy as N
-from numpy cimport PyArray_DATA
-
-N.import_array()
-
-import numpy.linalg
-import traceback 
  
 from assimulo.algebraic cimport Algebraic
 
@@ -142,7 +138,7 @@ cdef class KINSOL(Algebraic):
                 elif self.options["y_min"]:
                     self.options["y_scale"][i] = max(1.0, abs(self.options["y_min"][i]))
         else:
-            self.options["y_scale"] = N.array([value]) if isinstance(value, float) or isinstance(value, int) else N.array(value)
+            self.options["y_scale"] = N.array([value]) if isinstance(value, (float, int)) else N.array(value)
             
         arr2nv_inplace(self.options["y_scale"], self.y_scale)
     
@@ -153,7 +149,7 @@ cdef class KINSOL(Algebraic):
         if isinstance(value, str) and value.upper() == "AUTOMATIC":
             pass
         else:
-            self.options["f_scale"] = N.array([value]) if isinstance(value, float) or isinstance(value, int) else N.array(value)
+            self.options["f_scale"] = N.array([value]) if isinstance(value, (float, int)) else N.array(value)
             
         arr2nv_inplace(self.options["f_scale"], self.f_scale)
             
@@ -303,9 +299,9 @@ cdef class KINSOL(Algebraic):
             if self.problem_info["prec_setup"] or self.problem_info["prec_solve"]:
                 if not self.problem_info["prec_setup"]:
                     IF SUNDIALS_VERSION >= (4,0,0):
-                        flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, NULL,kin_prec_solve)
+                        flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     ELSE:
-                        flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL,kin_prec_solve)
+                        flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     if flag < 0:
                         raise KINSOLError(flag)
                 elif not self.problem_info["prec_solve"]:
@@ -428,7 +424,7 @@ cdef class KINSOL(Algebraic):
         if flag < 0:
             raise KINSOLError(flag)
         if flag == KIN_STEP_LT_STPTOL:
-            print 'Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.'
+            print('Scaled step length too small. Either an approximate solution or a local minimum is reached. Check value of residual.')
         
         self.store_statistics()
         
@@ -767,4 +763,3 @@ class KINSOLError(Exception):
             return repr(self.msg[self.value])    
         except KeyError:
             return repr('Sundials failed with flag %s.'%(self.value))
-

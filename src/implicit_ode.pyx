@@ -15,18 +15,18 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from ode cimport ODE
-from problem import Implicit_Problem, cImplicit_Problem, Overdetermined_Problem
-from problem import cExplicit_Problem
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
 import itertools
 import sys
+import warnings
 import numpy as N
 cimport numpy as N
-
-from exception import TerminateSimulation, TimeLimitExceeded
 from timeit import default_timer as timer
-import warnings
+
+from assimulo.ode cimport ODE
+from assimulo.problem import Implicit_Problem, cExplicit_Problem, cImplicit_Problem, Overdetermined_Problem
+from assimulo.exception import TerminateSimulation, TimeLimitExceeded
 
 realtype = float
 
@@ -82,7 +82,7 @@ cdef class Implicit_ODE(ODE):
         self.yd = self.yd0.copy()
         
     def check_instance(self):
-        if not isinstance(self.problem, cImplicit_Problem) and not isinstance(self.problem, cExplicit_Problem):
+        if not isinstance(self.problem, (cImplicit_Problem, cExplicit_Problem)):
             raise Implicit_ODE_Exception('The problem needs to be a subclass of Implicit_Problem (or Explicit_Problem).')
         
     def reset(self):
@@ -494,7 +494,7 @@ cdef class Implicit_ODE(ODE):
             
 cdef class OverdeterminedDAE(Implicit_ODE):
     def check_instance(self):
-        if not isinstance(self.problem, Overdetermined_Problem) and not isinstance(self.problem, Implicit_Problem):
+        if not isinstance(self.problem, (Overdetermined_Problem, Implicit_Problem)):
             raise Implicit_ODE_Exception('The problem needs to be a subclass of Overdetermined_Problem or of Implicit_Problem.')
 
         

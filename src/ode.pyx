@@ -15,16 +15,17 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N
 cimport numpy as N
-from timeit import default_timer as timer
-
 import itertools
 import multiprocessing
+from timeit import default_timer as timer
 
-from exception import ODE_Exception, AssimuloException
-from problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
-from support import Statistics
+from assimulo.exception import ODE_Exception, AssimuloException
+from assimulo.problem import Explicit_Problem, Delay_Explicit_Problem, Implicit_Problem, SingPerturbed_Problem
+from assimulo.support import Statistics
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -328,7 +329,7 @@ cdef class ODE:
         self.log_message('Elapsed simulation time: ' + str(time_stop-time_start) + ' seconds.', NORMAL)
         
         #Return the results
-        if isinstance(self.problem, Explicit_Problem) or isinstance(self.problem, Delay_Explicit_Problem) or isinstance(self.problem, SingPerturbed_Problem):
+        if isinstance(self.problem, (Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem)):
             return self.t_sol, N.array(self.y_sol)
         else:
             return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
@@ -555,9 +556,9 @@ cdef class ODE:
         """
         cdef i = 0
         for i in self.event_data:
-            print 'Time, t = %e'%i[0]
-            print '  Event info, ', i[1]
-        print 'Number of events: ', len(self.event_data)
+            print('Time, t = %e'%i[0])
+            print('Event info, ', i[1])
+        print('Number of events: ', len(self.event_data))
         
     def print_statistics(self, verbose=NORMAL):
         """
@@ -592,7 +593,7 @@ cdef class ODE:
     
     cpdef _chattering_check(self, object event_info):
         self.chattering_clear_counter = 0
-        if event_info[0] is not None and event_info[0] != []:
+        if event_info[0] is not None and len(event_info[0]) > 0:
             if self.chattering_check is None:
                 self.chattering_check  = abs(N.array(event_info[0]))
             else:

@@ -17,7 +17,8 @@
 
 import numpy as N
 cimport numpy as N
-from support cimport Statistics
+
+from assimulo.support cimport Statistics
 
 cdef class ODE:
     cdef public dict options, solver_options, problem_info

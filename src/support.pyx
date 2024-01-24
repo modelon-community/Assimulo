@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
 import numpy as N
 cimport numpy as N
 
@@ -60,7 +62,7 @@ cdef class Statistics:
         for k in list(self.statistics.keys()):
             if self.statistics[k] == -1:
                 continue
-            print(" %s %s: %d")%(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1) ,self.statistics[k])
+            print(" {} {}: {}".format(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1), self.statistics[k]))
         
     def reset(self):
         """

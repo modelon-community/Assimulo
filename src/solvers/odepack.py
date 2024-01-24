@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import logging
 import numpy as N
 import scipy.linalg as Sc
 import scipy.sparse as sp
-import sys
+
 from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
 from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
-import logging
-
 from assimulo.explicit_ode import Explicit_ODE
 
 try:
@@ -186,7 +186,6 @@ class LSODAR(Explicit_ODE):
         """
         Helper program for the initialization of LSODAR
         """
-        #print ' We have rkstarter {} and rkstarter_active {}'.format(self.rkstarter, self._rkstarter_active)
         if not(self.rkstarter>1 and self._rkstarter_active):
             # first call or classical restart after a discontinuity
             ISTATE=1
@@ -409,7 +408,6 @@ class LSODAR(Explicit_ODE):
             opts["output_index"] = output_index
         # deciding on restarting options
         self._rkstarter_active = True if ISTATE == 3 and self.rkstarter > 1 else False
-        #print 'rkstarter_active set to {} and ISTATE={}'.format(self._rkstarter_active, ISTATE)
         
         #Retrieving statistics
         self.statistics["nstatefcns"]            += IWORK[9]

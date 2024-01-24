@@ -62,7 +62,7 @@ def run_example(with_plots=True):
         P.show()
     
     #Basic test
-    nose.tools.assert_almost_equal(float(y[-1]), 4.00000000, 3)
+    nose.tools.assert_almost_equal(y[-1][0], 4.00000000, 3)
     
     return exp_mod, exp_sim
 

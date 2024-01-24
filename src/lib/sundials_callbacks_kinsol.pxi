@@ -16,11 +16,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import cython
+import traceback
 from assimulo.exception import AssimuloRecoverableError
 
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int kin_jac(N_Vector xv, N_Vector fval, SUNMatrix Jac, 
-                    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept:
         """
         This method is used to connect the assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -44,7 +45,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
             return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 ELSE:
     cdef int kin_jac(long int Neq, N_Vector xv, N_Vector fval, DlsMat Jacobian, 
-                    void *problem_data, N_Vector tmp1, N_Vector tmp2):
+                    void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept:
         """
         This method is used to connect the assimulo.Problem.jac to the Sundials
         Jacobian function.
@@ -72,7 +73,7 @@ ELSE:
     ctypedef int kin_jacv_bool
 
 cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, kin_jacv_bool* new_u,
-            void *problem_data):
+            void *problem_data) noexcept:
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
     cdef N.ndarray x  = nv2arr(vx)
     cdef N.ndarray v  = nv2arr(vv)
@@ -87,13 +88,13 @@ cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, kin_jacv_bool* new_u,
             jacvptr[i] = jacv[i]
         
         return SPGMR_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return SPGMR_ATIMES_FAIL_REC
     except Exception:
         traceback.print_exc()
         return SPGMR_PSOLVE_FAIL_UNREC 
     
-cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
+cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data) noexcept:
     """
     Residual fct called by KINSOL
     """
@@ -107,18 +108,16 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data):
 
         for i in range(pData.dim):
             resptr[i] = res[i]
-
         return KIN_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return KIN_REC_ERR
     except Exception:
         traceback.print_exc()
         return KIN_SYSFUNC_FAIL
 
-
 IF SUNDIALS_VERSION >= (3,0,0):
     cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
-             N_Vector fscaleN, N_Vector v, void *problem_data):
+             N_Vector fscaleN, N_Vector v, void *problem_data) noexcept:
         """
         Preconditioning solve function
         
@@ -148,7 +147,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         return KIN_SUCCESS
         
     cdef int kin_prec_setup(N_Vector uN, N_Vector uscaleN, N_Vector fvalN, 
-             N_Vector fscaleN, void *problem_data):
+             N_Vector fscaleN, void *problem_data) noexcept:
         """
         Preconditioning setup function
         """
@@ -161,18 +160,17 @@ IF SUNDIALS_VERSION >= (3,0,0):
         
         try:
             (<object>pData.PREC_SETUP)(u, fval, uscale, fscale)
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except (N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return KIN_REC_ERR
         except Exception:
             traceback.print_exc()
             return KIN_SYSFUNC_FAIL
         
         return KIN_SUCCESS
-        
 
 ELSE:
     cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
-             N_Vector fscaleN, N_Vector v, void *problem_data, N_Vector tmp):
+             N_Vector fscaleN, N_Vector v, void *problem_data, N_Vector tmp) noexcept:
         """
         Preconditioning solve function
         
@@ -202,7 +200,7 @@ ELSE:
         return KIN_SUCCESS
         
     cdef int kin_prec_setup(N_Vector uN, N_Vector uscaleN, N_Vector fvalN, 
-             N_Vector fscaleN, void *problem_data, N_Vector tmp1, N_Vector tmp2):
+             N_Vector fscaleN, void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept:
         """
         Preconditioning setup function
         """
@@ -229,7 +227,7 @@ IF SUNDIALS_VERSION >= (7,0,0):
         cdef struct _SUNContext:
             pass
         ctypedef int SUNErrCode
-    cdef void kin_err(int line, const char* function, const char* file, const char* msg, SUNErrCode err_code, void* eh_data, SUNContext sunctx):
+    cdef void kin_err(int line, const char* function, const char* file, const char* msg, SUNErrCode err_code, void* eh_data, SUNContext sunctx) noexcept:
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
         
         if err_code > 0: #Warning
@@ -243,7 +241,7 @@ IF SUNDIALS_VERSION >= (7,0,0):
         print "<message: %s>"%msg
         #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
 ELSE:
-    cdef void kin_err(int err_code, const char *module, const char *function, char *msg, void *eh_data):
+    cdef void kin_err(int err_code, const char *module, const char *function, char *msg, void *eh_data) noexcept:
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
         
         if err_code > 0: #Warning
@@ -258,7 +256,7 @@ ELSE:
         #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
 
 
-cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data):
+cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data) noexcept:
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
     cdef int flag
     cdef realtype fnorm
@@ -270,8 +268,8 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
         
     pData.log.append([module, function, msg])
     
-    #print "KinsolInfo <calling_function:%s>"%function
-    #print "<message: %s>"%msg
+    #print("KinsolInfo <calling_function:%s>"%function)
+    #print("<message: %s>"%msg)
     """
     # Get the number of iterations
     KINGetNumNonlinSolvIters(kin_mem, &nniters)
@@ -286,15 +284,13 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
     
     
     if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
-        print "<iteration_index:%d>"%nniters
-        print "ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n);
-        print "<scaled_residual_norm:%E>", kin_mem->kin_fnorm);
+        print("<iteration_index:%d>"%nniters)
+        print("ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n))
+        print("<scaled_residual_norm:%E>", kin_mem->kin_fnorm))
         print "residuals", 
             realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
             f[i]*residual_scaling_factors[i]
     """
-
-
 
 cdef class ProblemDataEquationSolver:
     cdef:

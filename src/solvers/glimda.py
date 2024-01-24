@@ -20,7 +20,6 @@ import sys
 
 from assimulo.exception import GLIMDA_Exception
 from assimulo.ode import ID_PY_COMPLETE, NORMAL
-
 from assimulo.implicit_ode import Implicit_ODE
 
 try:

@@ -238,4 +238,3 @@ DEF IDA_JAC_IND        = 2   # Index to user data jacobian
 DEF IDA_ROOT_IND       = 1   # Index to user data root handling
 DEF IDA_ROOTF_IND      = 0   # Index to user data root function
 DEF IDA_SW_IND         = 1   # Index to user data root switches
-

@@ -79,7 +79,7 @@ def run_example(with_plots=True):
     imp_sim.atol = 1e-6
     imp_sim.pbar = [1,1,1] #pbar is used to estimate the tolerances for the parameters
     imp_sim.report_continuously = True #Need to be able to store the result using the interpolate methods
-    imp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitvity method used
+    imp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitivity method used
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
 
     #Simulate
