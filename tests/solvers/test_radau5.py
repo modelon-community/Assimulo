@@ -24,8 +24,8 @@ from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.lib.radau_core import Radau_Exception
 from assimulo.exception import TimeLimitExceeded
-import scipy.sparse as sp
-import numpy as N
+import scipy.sparse as sps
+import numpy as np
 
 import re
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
@@ -63,14 +63,14 @@ class KeyboardInterruptAux:
         if self.jac_raise:
             raise KeyboardInterrupt('jac')
         else:
-            return -N.eye(self.dim)
+            return -np.eye(self.dim)
 
     def state_events(self,t,y,sw):
         if self.event_raise:
             self.n_e += 1
             if self.n_e % self.event_n == 0:
                 raise KeyboardInterrupt('event')
-        return N.ones(len(sw))
+        return np.ones(len(sw))
 
     def handle_event(self, solver, event_info):
         pass
@@ -80,8 +80,8 @@ class Extended_Problem(Explicit_Problem):
     #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
-    event_array = N.array([0.0,0.0,0.0])
-    rhs_array   = N.array([0.0,0.0,0.0])
+    event_array = np.array([0.0,0.0,0.0])
+    rhs_array   = np.array([0.0,0.0,0.0])
     
     #The right-hand-side function (rhs)
     def rhs(self,t,y,sw):
@@ -179,12 +179,12 @@ class Test_Explicit_Radau5_Py:
             yd_0 = y[1]
             yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
             
-            return N.array([yd_0,yd_1])
+            return np.array([yd_0,yd_1])
         
         def jac(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
@@ -360,7 +360,7 @@ class Test_Explicit_Radau5_Py:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
+        nose.tools.assert_less_equal(max(np.diff(self.sim.t_sol))-np.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_newt(self):
@@ -438,12 +438,12 @@ class Test_Explicit_Radau5:
             yd_0 = y[1]
             yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
             
-            return N.array([yd_0,yd_1])
+            return np.array([yd_0,yd_1])
         
         def jac(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
@@ -455,14 +455,14 @@ class Test_Explicit_Radau5:
         def jac_sparse(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
             J[1,0]=my*(-2.*y[0]*y[1]-1.)
             J[1,1]=my*(1.-y[0]**2)
             
-            return sp.csc_matrix(J)
+            return sps.csc_matrix(J)
         
         #Define an Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
@@ -659,7 +659,7 @@ class Test_Explicit_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
+        nose.tools.assert_less_equal(max(np.diff(self.sim.t_sol))-np.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_newt(self):
@@ -744,8 +744,8 @@ class Test_Explicit_Radau5:
         """
         This tests that the switches are actually turned when override.
         """
-        f = lambda t,x,sw: N.array([1.0])
-        state_events = lambda t,x,sw: N.array([x[0]-1.])
+        f = lambda t,x,sw: np.array([1.0])
+        state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -797,8 +797,8 @@ class Test_Explicit_Radau5:
         This tests the error for repeated unexpected step rejections
         """
         def f(t, y):
-            raise N.linalg.LinAlgError()
-        y0 = N.array([1.])
+            raise np.linalg.LinAlgError()
+        y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
         sim = Radau5ODE(prob)
 
@@ -812,7 +812,7 @@ class Test_Explicit_Radau5:
         This tests the trying to simulate using the sparse linear solver, with no analytical jacobian provided.
         """
         f = lambda t, y: [y]
-        y0 = N.array([1.])
+        y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
 
         sim = Radau5ODE(prob)
@@ -828,7 +828,7 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using an analytical jacobian, with none provided
         """
         f = lambda t, y: [y]
-        y0 = N.array([1.])
+        y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
 
         sim = Radau5ODE(prob)
@@ -844,8 +844,8 @@ class Test_Explicit_Radau5:
         This tests the error when using a sparse jacobian of the wrong format
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csr')
-        y0 = N.array([1.])
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csr')
+        y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
         prob.jac_nnz = 1
@@ -865,8 +865,8 @@ class Test_Explicit_Radau5:
         """
         n = 5
         f = lambda t, y: y
-        jac = lambda t, y: sp.eye(n, n, dtype = N.double, format = 'csc')
-        y0 = N.array([1.]*n)
+        jac = lambda t, y: sps.eye(n, n, dtype = np.double, format = 'csc')
+        y0 = np.array([1.]*n)
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
         prob.jac_nnz = 1
@@ -886,8 +886,8 @@ class Test_Explicit_Radau5:
         """
         n = 5
         f = lambda t, y: [0.]*n
-        jac = lambda t, y: sp.csc_matrix((n, n), dtype = N.double)
-        y0 = N.array([1.]*n)
+        jac = lambda t, y: sps.csc_matrix((n, n), dtype = np.double)
+        y0 = np.array([1.]*n)
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
         prob.jac_nnz = 0
@@ -904,8 +904,8 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
-        y0 = N.array([1.])
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = np.array([1.])
         prob = Explicit_Problem(f, y0)
         prob.jac = jac
 
@@ -923,8 +923,8 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; wrong type.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
-        y0 = N.array([1.])
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = np.array([1.])
 
         for nnz in [None, "test"]:
             prob = Explicit_Problem(f, y0)
@@ -945,8 +945,8 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; negative.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
-        y0 = N.array([1.])
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = np.array([1.])
 
         for nnz in [-2, -10]:
             prob = Explicit_Problem(f, y0)
@@ -967,8 +967,8 @@ class Test_Explicit_Radau5:
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; too_large.
         """
         f = lambda t, y: [y]
-        jac = lambda t, y: sp.spdiags([1], 0, 1, 1, format = 'csc')
-        y0 = N.array([1.])
+        jac = lambda t, y: sps.spdiags([1], 0, 1, 1, format = 'csc')
+        y0 = np.array([1.])
 
         for nnz in [5, 100]:
             prob = Explicit_Problem(f, y0)
@@ -988,19 +988,19 @@ class Test_Explicit_Radau5:
         ## Take trivial problem with somewhat arbitrary jacobians
         ## Test that functions for internal processing of jacobian do not produces segfaults
         jacobians = [
-            (lambda t, y: sp.csc_matrix(N.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 9), 
-            (lambda t, y: sp.csc_matrix(N.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0.]])), 6),
-            (lambda t, y: sp.csc_matrix(N.array([[0., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 8),
-            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [0., 1., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [1., 0., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 0.], [0., 0., 0.], [0., 1., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(N.array([[0., 0., 1.], [0., 0., 0.], [0., 0., 0.]])), 1),
-            (lambda t, y: sp.csc_matrix(N.array([[1., 0., 0.], [0., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[1., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 9), 
+            (lambda t, y: sps.csc_matrix(np.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0.]])), 6),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 1., 1.], [1., 1., 1.], [1., 1., 1.]])), 8),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [0., 1., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [1., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 0.], [0., 0., 0.], [0., 1., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[0., 0., 1.], [0., 0., 0.], [0., 0., 0.]])), 1),
+            (lambda t, y: sps.csc_matrix(np.array([[1., 0., 0.], [0., 0., 0.], [0., 0., 0.]])), 1),
         ]
 
         for i, (jac, nnz) in enumerate(jacobians):
             f = lambda t, y: y
-            y0 = 1.*N.ones(3)
+            y0 = 1.*np.ones(3)
             prob = Explicit_Problem(f, y0)
             prob.jac = jac
             prob.jac_nnz = nnz
@@ -1039,7 +1039,7 @@ class Test_Explicit_Radau5:
     def test_keyboard_interrupt_fcn(self):
         """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
 
-        y0 = N.array([1., 1.])
+        y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Explicit_Problem(aux.f, y0)
         sim = Radau5ODE(prob)
@@ -1053,7 +1053,7 @@ class Test_Explicit_Radau5:
     def test_keyboard_interrupt_jac(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
 
-        y0 = N.array([1., 1.])
+        y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), jac = True)
         prob = Explicit_Problem(aux.f, y0)
         prob.jac = aux.jac
@@ -1070,7 +1070,7 @@ class Test_Explicit_Radau5:
     def test_keyboard_interrupt_jac_sparse(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
 
-        y0 = N.array([1., 1.])
+        y0 = np.array([1., 1.])
         aux = KeyboardInterruptAux(dim = len(y0), jac = True)
         prob = Explicit_Problem(aux.f, y0)
         prob.jac = aux.jac
@@ -1089,9 +1089,9 @@ class Test_Explicit_Radau5:
     def test_keyboard_interrupt_event_indicator(self):
         """Test that KeyboardInterrupts in event indicator function resp. solout callback correctly terminate solution."""
 
-        y0 = N.array([1.])
+        y0 = np.array([1.])
         aux = KeyboardInterruptAux(dim = len(y0), event = True, event_n = 3)
-        prob = Explicit_Problem(aux.f, y0, sw0 = N.array([1.]))
+        prob = Explicit_Problem(aux.f, y0, sw0 = np.array([1.]))
         prob.state_events = aux.state_events
         prob.handle_event = aux.handle_event
         sim = Radau5ODE(prob)
@@ -1168,7 +1168,7 @@ class Test_Implicit_Radau5:
             res_0 = yd[0]-yd_0
             res_1 = yd[1]-yd_1
             
-            return N.array([res_0,res_1])
+            return np.array([res_0,res_1])
         
         y0 = [2.0,-0.6] #Initial conditions
         yd0 = [-.6,-200000.]
@@ -1232,7 +1232,7 @@ class Test_Implicit_Radau5:
         """
         Test a simulation of an explicit problem using Radau5DAE.
         """
-        f = lambda t,y:N.array(-y)
+        f = lambda t,y:np.array(-y)
         y0 = [1.0]
         
         problem = Explicit_Problem(f,y0)
@@ -1242,7 +1242,7 @@ class Test_Implicit_Radau5:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(np.exp(-1.0)),4)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -1347,15 +1347,15 @@ class Test_Implicit_Radau5:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
+        nose.tools.assert_less_equal(max(np.diff(self.sim.t_sol))-np.finfo('double').eps, 0.01)
         
     @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
         """
-        res = lambda t,x,xd,sw: N.array([1.0 - xd])
-        state_events = lambda t,x,xd,sw: N.array([x[0]-1.])
+        res = lambda t,x,xd,sw: np.array([1.0 - xd])
+        state_events = lambda t,x,xd,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
             solver.sw = [False] #Override the switches to point to another instance
         
@@ -1390,8 +1390,8 @@ class Test_Implicit_Radau5:
         This tests the error for too small step-sizes
         """
         f = lambda t, y, yd: -y
-        y0 = N.array([1.])
-        yd0 = N.array([0.])
+        y0 = np.array([1.])
+        yd0 = np.array([0.])
 
         prob = Implicit_Problem(f, y0, yd0)
 
@@ -1413,8 +1413,8 @@ class Test_Implicit_Radau5:
         This tests the error for repeated unexpected step rejections in Radau5DAE.
         """
         def f(t, y, yd):
-            raise N.linalg.LinAlgError()
-        prob = Implicit_Problem(f, N.array([1.]), N.array([1.]))
+            raise np.linalg.LinAlgError()
+        prob = Implicit_Problem(f, np.array([1.]), np.array([1.]))
         sim = Radau5DAE(prob)
 
         err_msg = f'Repeated unexpected step rejections.'
@@ -1440,7 +1440,7 @@ class Test_Implicit_Radau5_Py:
             res_0 = yd[0]-yd_0
             res_1 = yd[1]-yd_1
             
-            return N.array([res_0,res_1])
+            return np.array([res_0,res_1])
         
         y0 = [2.0,-0.6] #Initial conditions
         yd0 = [-.6,-200000.]
@@ -1561,14 +1561,14 @@ class Test_Implicit_Radau5_Py:
         """
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
-        nose.tools.assert_less_equal(max(N.diff(self.sim.t_sol))-N.finfo('double').eps, 0.01)
+        nose.tools.assert_less_equal(max(np.diff(self.sim.t_sol))-np.finfo('double').eps, 0.01)
 
     @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
         """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
 
-        y0 = N.array([1., 1.])
-        yd = N.array([0., 0.])
+        y0 = np.array([1., 1.])
+        yd = np.array([0., 0.])
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Implicit_Problem(aux.f_impl, y0, yd)
         sim = Radau5DAE(prob)

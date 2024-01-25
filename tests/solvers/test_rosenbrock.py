@@ -20,8 +20,8 @@ from assimulo import testattr
 from assimulo.solvers.rosenbrock import RodasODE
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
-import numpy as N
-import scipy.sparse as sp
+import numpy as np
+import scipy.sparse as sps
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
@@ -34,26 +34,26 @@ class Test_RodasODE:
             yd_0 = y[1]
             yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
             
-            return N.array([yd_0,yd_1])
+            return np.array([yd_0,yd_1])
         
         #Define the jacobian
         def jac(t,y):
             eps = 1.e-6
             my = 1./eps
-            j = N.array([[0.0,1.0],[my*((-2.0*y[0])*y[1]-1.0), my*(1.0-y[0]**2)]])
+            j = np.array([[0.0,1.0],[my*((-2.0*y[0])*y[1]-1.0), my*(1.0-y[0]**2)]])
             return j
         
         def jac_sparse(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
             J[1,0]=my*(-2.*y[0]*y[1]-1.)
             J[1,1]=my*(1.-y[0]**2)
             
-            return sp.csc_matrix(J)
+            return sps.csc_matrix(J)
         
         y0 = [2.0,-0.6] #Initial conditions
         

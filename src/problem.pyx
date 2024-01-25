@@ -17,8 +17,8 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-import numpy as N
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 
 from assimulo.support import set_type_shape_array
 
@@ -86,7 +86,7 @@ cdef class cImplicit_Problem(cProblem):
             self.yd0 = set_type_shape_array(yd0)
         
     
-    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    def handle_result(self, solver, double t, np.ndarray[double, ndim=1] y, np.ndarray[double, ndim=1] yd):
         """
         Method for specifying how the result is handled. By default the
         data is stored in three vectors: solver.(t/y/yd).
@@ -102,7 +102,7 @@ cdef class cImplicit_Problem(cProblem):
             for i in range(solver.problem_info["dimSens"]):
                 solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)] 
         
-    cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    cpdef res_internal(self, np.ndarray[double, ndim=1] res, double t, np.ndarray[double, ndim=1] y, np.ndarray[double, ndim=1] yd):
         try:
             res[:] = self.res(t,y,yd)
         except Exception:
@@ -120,7 +120,7 @@ cdef class cOverdetermined_Problem(cProblem):
             self.yd0 = set_type_shape_array(yd0)
         
     
-    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    def handle_result(self, solver, double t, np.ndarray[double, ndim=1] y, np.ndarray[double, ndim=1] yd):
         """
         Method for specifying how the result is to be handled. As default the
         data is stored in three vectors: solver.(t/y/yd).
@@ -131,7 +131,7 @@ cdef class cOverdetermined_Problem(cProblem):
         solver.y_sol.extend([y])
         solver.yd_sol.extend([yd])
         
-    cpdef res_internal(self, N.ndarray[double, ndim=1] res, double t, N.ndarray[double, ndim=1] y, N.ndarray[double, ndim=1] yd):
+    cpdef res_internal(self, np.ndarray[double, ndim=1] res, double t, np.ndarray[double, ndim=1] y, np.ndarray[double, ndim=1] yd):
         try:
             res[:] = self.res(t,y,yd)
         except Exception:
@@ -145,7 +145,7 @@ cdef class cExplicit_Problem(cProblem):
         cProblem.__init__(self, y0, t0, p0, sw0, name)        
         if rhs is not None:
             self.rhs = rhs
-    def handle_result(self, solver, double t, N.ndarray[double, ndim=1] y):
+    def handle_result(self, solver, double t, np.ndarray[double, ndim=1] y):
         """
         Method for specifying how the result is to be handled. As default the
         data is stored in two vectors: solver.(t/y).
@@ -160,14 +160,14 @@ cdef class cExplicit_Problem(cProblem):
             for i in range(solver.problem_info["dimSens"]):
                 solver.p_sol[i] += [solver.interpolate_sensitivity(t, i=i)] 
                 
-    cpdef int rhs_internal(self, N.ndarray[double, ndim=1] yd, double t, N.ndarray[double, ndim=1] y):
+    cpdef int rhs_internal(self, np.ndarray[double, ndim=1] yd, double t, np.ndarray[double, ndim=1] y):
         try:
             yd[:] = self.rhs(t,y)
         except Exception:
             return ID_FAIL
         return ID_OK
         
-    cpdef N.ndarray res(self, t, y, yd, sw=None):
+    cpdef np.ndarray res(self, t, y, yd, sw=None):
         if sw == None:
             return yd-self.rhs(t,y)
         else:
@@ -206,7 +206,7 @@ cdef class cSingPerturbed_Problem(cExplicit_Problem):
         # classical explicit problem without exposing the structure
         # of a singularly perturbed problem
         if yy0 is not None and zz0 is not None:
-            y0 = N.hstack((self.yy0,self.zz0))
+            y0 = np.hstack((self.yy0,self.zz0))
         elif yy0 is not None:
             y0 = self.yy0
         elif zz0 is not None:
@@ -224,7 +224,7 @@ cdef class cSingPerturbed_Problem(cExplicit_Problem):
         # a diagonal matrix
         if self.eps != None: 
             zzdot /= self.eps 
-        return N.hstack((yydot,zzdot))
+        return np.hstack((yydot,zzdot))
             
 class Delay_Explicit_Problem(cDelay_Explicit_Problem):
     pass

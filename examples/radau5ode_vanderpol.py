@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
@@ -46,7 +46,7 @@ def run_example(with_plots=True):
         yd_0 = y[1]
         yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
         
-        return N.array([yd_0,yd_1])
+        return np.array([yd_0,yd_1])
     
     y0 = [2.0,-0.6] #Initial conditions
     
@@ -67,16 +67,16 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y[:,0])#, marker='o')
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(exp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y[:,0])#, marker='o')
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(exp_mod.name)
+        pl.show()
 
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(N.abs(float(x1[-1]) - 1.706168035), 1e-3)
+    nose.tools.assert_less(np.abs(float(x1[-1]) - 1.706168035), 1e-3)
     
     return exp_mod, exp_sim
 

@@ -22,18 +22,18 @@ from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
 
-import numpy as N
-import scipy.sparse as sp
+import numpy as np
+import scipy.sparse as sps
 
 float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
-    event_array = N.array([0.0,0.0,0.0])
-    rhs_array   = N.array([0.0,0.0,0.0])
+    event_array = np.array([0.0,0.0,0.0])
+    rhs_array   = np.array([0.0,0.0,0.0])
     
     #The right-hand-side function (rhs)
     def rhs(self,t,y,sw):
@@ -132,12 +132,12 @@ class Test_LSODAR:
             yd_0 = y[1]
             yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
             
-            return N.array([yd_0,yd_1])
+            return np.array([yd_0,yd_1])
         
         def jac(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
@@ -149,14 +149,14 @@ class Test_LSODAR:
         def jac_sparse(t,y):
             eps = 1.e-6
             my = 1./eps
-            J = N.zeros([2,2])
+            J = np.zeros([2,2])
             
             J[0,0]=0.
             J[0,1]=1.
             J[1,0]=my*(-2.*y[0]*y[1]-1.)
             J[1,1]=my*(1.-y[0]**2)
             
-            return sp.csc_matrix(J)
+            return sps.csc_matrix(J)
         
         #Define an Assimulo problem
         y0 = [2.0,-0.6] #Initial conditions
@@ -216,8 +216,8 @@ class Test_LSODAR:
         This tests the LSODAR's subroutine dsrcar  (read functionality).
         """
         self.sim.simulate(1.) #Simulate 2 seconds
-        r=N.ones((245,),'d')
-        i=N.ones((55,),'i')
+        r=np.ones((245,),'d')
+        i=np.ones((55,),'i')
         dsrcar(r,i,1)
         nose.tools.assert_almost_equal(r[217], 2.22044605e-16, 20)
         nose.tools.assert_equal(i[36], 3)
@@ -227,8 +227,8 @@ class Test_LSODAR:
         """
         This tests the LSODAR's subroutine dsrcar  (write and read functionality).
         """
-        r=N.ones((245,),'d')
-        i=N.ones((55,),'i')
+        r=np.ones((245,),'d')
+        i=np.ones((55,),'i')
         dsrcar(r,i,2)
         r[0]=100.
         i[0]=10
@@ -243,24 +243,24 @@ class Test_LSODAR:
         """
         pass
         """
-        A=N.array([[0.,1.],[-4.,0.]])
+        A=np.array([[0.,1.],[-4.,0.]])
         def f(t,x,sw0):
-            return N.dot(A,N.array(x))
+            return np.dot(A,np.array(x))
         H = 1.e-8
         # Compute the exact solution at h=0,H/4,H/2,3H/4,H
-        T=N.array([0.,H/4.,H/2.,3./4.*H,H])
-        y0=N.array([1.,0.])
+        T=np.array([0.,H/4.,H/2.,3./4.*H,H])
+        y0=np.array([1.,0.])
         from scipy.linalg import expm
-        exact=N.array([N.dot(expm(A*t),y0) for t in T])
+        exact=np.array([np.dot(expm(A*t),y0) for t in T])
         #polynomial interpolation
         from scipy import polyfit
         coeff = polyfit(T,exact,4)
-        d1coeff=N.array([4,3,2,1]).reshape(-1,1)*coeff[:-1,:]
-        d2coeff=N.array([3,2,1]).reshape(-1,1)*d1coeff[:-1,:]
-        d3coeff=N.array([2,1]).reshape(-1,1)*d2coeff[:-1,:]
-        d4coeff=N.array([1]).reshape(-1,1)*d3coeff[:-1,:]
+        d1coeff=np.array([4,3,2,1]).reshape(-1,1)*coeff[:-1,:]
+        d2coeff=np.array([3,2,1]).reshape(-1,1)*d1coeff[:-1,:]
+        d3coeff=np.array([2,1]).reshape(-1,1)*d2coeff[:-1,:]
+        d4coeff=np.array([1]).reshape(-1,1)*d3coeff[:-1,:]
         h=H/4.
-        nordsieck_at_0=N.array([coeff[-1,:],h*d1coeff[-1,:],h**2/2.*d2coeff[-1,:],
+        nordsieck_at_0=np.array([coeff[-1,:],h*d1coeff[-1,:],h**2/2.*d2coeff[-1,:],
                                      h**3/6.*d3coeff[-1,:],h**4/24.*d4coeff[-1,:]])
         rkNordsieck=odepack.RKStarterNordsieck(f,H)
         computed=rkNordsieck(0,y0)       
@@ -274,7 +274,7 @@ class Test_LSODAR:
         t_sol,y_sol=self.sim.simulate(1.,ncp_list=[0.5])
         self.sim.reset()
         t_sol1,y_sol1=self.sim.simulate(0.5)
-        ind05=N.nonzero(N.array(t_sol)==0.5)[0][0]
+        ind05=np.nonzero(np.array(t_sol)==0.5)[0][0]
         nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
         
     @testattr(stddist = True)

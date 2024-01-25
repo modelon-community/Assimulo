@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 import nose
@@ -51,11 +51,11 @@ def run_example(with_plots=True):
         res_3 = yd[3]+y[4]*y[1]+9.82
         res_4 = y[2]**2+y[3]**2-y[4]*(y[0]**2+y[1]**2)-y[1]*9.82
 
-        return N.array([res_0,res_1,res_2,res_3,res_4])
+        return np.array([res_0,res_1,res_2,res_3,res_4])
     
     #Defines the Jacobian
     def jac(c,t,y,yd):
-        jacobian = N.zeros([len(y),len(y)])
+        jacobian = np.zeros([len(y),len(y)])
         
         #Derivative
         jacobian[0,0] = 1*c
@@ -80,7 +80,7 @@ def run_example(with_plots=True):
         
         return jacobian
         
-    #The initial conditons
+    #The initial conditions
     y0 = [1.0,0.0,0.0,0.0,5] #Initial conditions
     yd0 = [0.0,0.0,0.0,-9.82,0.0] #Initial conditions
     
@@ -95,7 +95,7 @@ def run_example(with_plots=True):
     #Create an Assimulo implicit solver (IDA)
     imp_sim = IDA(imp_mod) #Create a IDA solver
     
-    #Sets the paramters
+    #Sets the parameters
     imp_sim.atol = 1e-6 #Default 1e-6
     imp_sim.rtol = 1e-6 #Default 1e-6
     imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
@@ -114,12 +114,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
         
     return imp_mod, imp_sim
 

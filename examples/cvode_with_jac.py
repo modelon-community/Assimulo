@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
-
 
 def run_example(with_plots=True):
     r"""
@@ -45,11 +44,11 @@ def run_example(with_plots=True):
     def f(t,y):
         yd_0 = y[1]
         yd_1 = -9.82
-        return N.array([yd_0,yd_1])
+        return np.array([yd_0,yd_1])
     
     #Defines the Jacobian
     def jac(t,y):
-        j = N.array([[0,1.],[0,0]])
+        j = np.array([[0,1.],[0,0]])
         return j
     
     #Defines an Assimulo explicit problem
@@ -71,12 +70,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(exp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y,linestyle="dashed",marker="o") #Plot the solution
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(exp_mod.name)
+        pl.show()
     
     #Basic tests
     nose.tools.assert_almost_equal(y[-1][0],-121.75000000,4)

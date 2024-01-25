@@ -17,8 +17,8 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-import numpy as N
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 
 from collections import OrderedDict
 
@@ -28,7 +28,7 @@ def set_type_shape_array(var, datatype=realtype):
     """
     Helper function to convert a scalar or list to a 1D-array
     """
-    return  N.array(var, dtype = datatype).reshape(-1,)
+    return  np.array(var, dtype = datatype).reshape(-1,)
 
 cdef class Statistics:
     def __init__(self):

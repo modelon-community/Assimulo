@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import ExplicitEuler
 from assimulo.problem import Explicit_Problem
@@ -36,7 +36,7 @@ def run_example(with_plots=True):
     #Defines the rhs
     def f(t,y):
         ydot = -y[0]
-        return N.array([ydot])
+        return np.array([ydot])
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
@@ -52,13 +52,13 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t1, y1, color="b")
-        P.plot(t2, y2, color="r")
-        P.title(exp_mod.name)
-        P.ylabel('y')
-        P.xlabel('Time')
-        P.show()
+        import pylab as pl
+        pl.plot(t1, y1, color="b")
+        pl.plot(t2, y2, color="r")
+        pl.title(exp_mod.name)
+        pl.ylabel('y')
+        pl.xlabel('Time')
+        pl.show()
         
     #Basic test
     nose.tools.assert_almost_equal(y2[-1][0], 0.02628193)

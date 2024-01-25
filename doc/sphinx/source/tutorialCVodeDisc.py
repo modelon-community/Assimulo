@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 """
-Tutorial example showing how to use the explicit solver CVode for a discontinious problem. 
+Tutorial example showing how to use the explicit solver CVode for a discontinuous problem. 
 To run the example simply type,
 
     run tutorialCVodeDisc.py (in IPython)
