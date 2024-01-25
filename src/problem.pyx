@@ -21,9 +21,7 @@ import numpy as np
 cimport numpy as np
 
 from assimulo.support import set_type_shape_array
-
 include "constants.pxi" #Includes the constants (textual include)
-
     
 cdef class cProblem:
     
@@ -41,19 +39,19 @@ cdef class cProblem:
             self.name = name
         self.t0  = t0
     
-    cpdef initialize(self, solver):
+    def initialize(self, solver):
         """
         Method for specializing initiation.
         """
         solver.log_message("No initialization defined for the problem.", LOUD)
     
-    cpdef reset(self):
+    def reset(self):
         """
         Resets a problem to its default values.
         """
         pass
         
-    cpdef handle_event(self, object solver, event_info):
+    def handle_event(self, object solver, event_info):
         """
         Defines how to handle a discontinuity. This functions gets called when
         a discontinuity has been found in the supplied event functions. The solver
@@ -68,7 +66,7 @@ cdef class cProblem:
         solver.log_message("No event handling defined.", NORMAL)
        
     
-    cpdef finalize(self,object solver):
+    def finalize(self, object solver):
         """
         Method for specifying the finalization options when the simulation have
         finished.
@@ -568,13 +566,13 @@ cdef class cAlgebraic_Problem:
         if name:
             self.name = name
     
-    cpdef initialize(self, solver):
+    def initialize(self, solver):
         """
         Method for specializing initiation.
         """
         solver.log_message("No initialization defined for the problem.", LOUD)
     
-    cpdef finalize(self,object solver):
+    def finalize(self,object solver):
         """
         Method for specifying the finalization options when the simulation have
         finished.
