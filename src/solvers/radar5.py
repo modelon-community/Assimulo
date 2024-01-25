@@ -16,8 +16,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import numpy as N
-import pylab as P
+import numpy as np
+import pylab as pl
 
 from assimulo.ode import NORMAL, ID_PY_COMPLETE, ID_PY_EVENT
 from assimulo.explicit_ode import Explicit_ODE
@@ -51,15 +51,15 @@ class Radar5ODE(Explicit_ODE):
         self.options["inith"]    = 0.01
         self.options["newt"]     = 7 #Maximum number of newton iterations
         self.options["thet"]     = 1.e-3 #Boundary for re-calculation of jac
-#        self.options["fnewt"]    = 0.0 #Stopping critera for Newtons Method
-        self.options["fnewt"]    = 0.03 #Stopping critera for Newtons Method
+#        self.options["fnewt"]    = 0.0 #Stopping criteria for Newtons Method
+        self.options["fnewt"]    = 0.03 #Stopping criteria for Newtons Method
         self.options["quot1"]    = 1.0 #Parameters for changing step-size (lower bound)
         self.options["quot2"]    = 1.2 #Parameters for changing step-size (upper bound)
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 8.0 #Parameters for step-size selection (upper bound)
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = np.inf #Maximum step-size.
         self.options["safe"]     = 0.9 #Safety factor
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = True if self.problem_info["jac_fcn"] else False
         self.options["maxsteps"] = 10000
@@ -70,7 +70,7 @@ class Radar5ODE(Explicit_ODE):
         self.options["mxst"] = 100 # The maximum number of stored dense output points
         self.options["usejaclag"]   = True if self.problem_info["jaclag_fcn"] else False
         
-        SQ6 = N.sqrt(6.0)
+        SQ6 = np.sqrt(6.0)
         C1 = (4.0-SQ6)/10.0 
         C2 = (4.0+SQ6)/10.0 
         self.C1M1 = C1-1.0 
@@ -96,9 +96,9 @@ class Radar5ODE(Explicit_ODE):
         flat_lagcompmap = []
         for comp in self.problem.lagcompmap:
             flat_lagcompmap.extend(comp)
-        self._nrdens = len(N.unique(flat_lagcompmap))
-        self._ipast = N.unique(flat_lagcompmap).tolist()+[0]
-        self._grid = N.array([])
+        self._nrdens = len(np.unique(flat_lagcompmap))
+        self._ipast = np.unique(flat_lagcompmap).tolist()+[0]
+        self._grid = np.array([])
         
 #        if hasattr(problem, 'pbar'):
         
@@ -127,7 +127,7 @@ class Radar5ODE(Explicit_ODE):
                 while output_list[output_index] <= t:
                     self._tlist.append(output_list[output_index])
                     
-                    yval = N.empty(self._leny)
+                    yval = np.empty(self._leny)
                     for i in range(self._leny):
 #                        yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],t,hold)
                         yval[i] = radar5.contr5(i+1,self.problem_info["dim"],output_list[output_index],cont,t,hold)
@@ -144,7 +144,7 @@ class Radar5ODE(Explicit_ODE):
 
     #def coutput(self,t):
         #Nx = self.problem_info["dim"]
-        #y = N.zeros(Nx)
+        #y = np.zeros(Nx)
         
         #theta, pos = radar5.lagr5(10, t, None, self.arglag, self.past,  self.problem.phi,  self.problem.ipast)
         #for i in range(1,Nx+1):
@@ -159,11 +159,11 @@ class Radar5ODE(Explicit_ODE):
             i: solution component (default -1 gives the whole vector)
         """
         Nx = self.problem_info["dim"]
-        y = N.zeros(Nx)
+        y = np.zeros(Nx)
         
         
         # t belongs to the interval (tk[ik], tk[ik+1])
-        ik = N.searchsorted(self.tk, t) - 1
+        ik = np.searchsorted(self.tk, t) - 1
         
         I = self.idif*ik
         
@@ -175,7 +175,7 @@ class Radar5ODE(Explicit_ODE):
             # The line below this comment is what's effectively happening,
             # but it is unfortunately extremely slow compared to the
             # vectorized version below that doesn't use the cpoly function:
-            #return N.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
+            #return np.array([self.cpoly(i, I, theta) for i in range(self.problem_info["dim"])])
             nrds = self._nrdens
             I = I + 1
             I2 = I + self.problem_info["dim"]
@@ -233,11 +233,11 @@ class Radar5ODE(Explicit_ODE):
         MLMAS = self.problem_info["dim"] #The mass matrix is full
         MUMAS = self.problem_info["dim"] #See MLMAS
         IOUT  = 1 #solout is called after every step
-        WORK  = N.array([0.0]*30) #Work (double) vector
-        IWORK = N.array([0]*30) #Work (integer) vector
+        WORK  = np.array([0.0]*30) #Work (double) vector
+        IWORK = np.array([0]*30) #Work (integer) vector
         
         #Setting work options
-        WORK[0] = N.finfo(N.double).eps        # Rounding unit
+        WORK[0] = np.finfo(np.double).eps        # Rounding unit
         WORK[1] = self.safe     
         WORK[2] = self.thet
         WORK[3] = self.fnewt
@@ -261,9 +261,9 @@ class Radar5ODE(Explicit_ODE):
         
         self.idif = 4*self._nrdens + 2
         lrpast = self.mxst*self.idif
-        past = N.zeros(lrpast)
+        past = np.zeros(lrpast)
         
-        #past = N.zeros(self.mxst*(4*self.problem.nrdens+2))
+        #past = np.zeros(self.mxst*(4*self.problem.nrdens+2))
 #        print WORK
 #        print IWORK
         
@@ -284,7 +284,7 @@ class Radar5ODE(Explicit_ODE):
                                        y.copy(),                \
                                        tf,                      \
                                        self.inith,              \
-                                       self.rtol*N.ones(self.problem_info["dim"]), \
+                                       self.rtol*np.ones(self.problem_info["dim"]), \
                                        self.atol,               \
                                        ITOL,                    \
                                        jac_dummy,               \
@@ -315,8 +315,8 @@ class Radar5ODE(Explicit_ODE):
         t, y, h, iwork, flag, past = a[0]
         #self.past = copy.deepcopy(past)
         self.past = past
-        self.tk = N.trim_zeros(self.past[::self.idif], 'b')
-        self.hk = N.trim_zeros(self.past[self.idif-1:-1:self.idif], 'b')
+        self.tk = np.trim_zeros(self.past[::self.idif], 'b')
+        self.hk = np.trim_zeros(self.past[self.idif-1:-1:self.idif], 'b')
         
         #Checking return
         if flag == 1:
@@ -374,11 +374,11 @@ class Radar5ODE(Explicit_ODE):
         """
         Plots the step-size.
         """
-        P.semilogy(N.diff(self.t),drawstyle='steps-post')
-        P.title(self.problem.name)
-        P.ylabel('Step length')
-        P.xlabel('Number of steps')
-        P.show()
+        pl.semilogy(np.diff(self.t),drawstyle='steps-post')
+        pl.title(self.problem.name)
+        pl.ylabel('Step length')
+        pl.xlabel('Number of steps')
+        pl.show()
     
     def _set_newt(self, newt):
         """
@@ -677,10 +677,10 @@ class Radar5ODE(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise Radar_Exception("atol must be of length one or same as the dimension of the problem.")
 

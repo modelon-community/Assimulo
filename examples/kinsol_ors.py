@@ -15,19 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-import scipy.linalg as LIN
-import scipy.io as IO
-import scipy.sparse as SPARSE
-import scipy.sparse.linalg as LINSP
-import nose
 import os
+import nose
+import numpy as np
+import scipy as sp
+import scipy.sparse as sps
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 import warnings
-import scipy.sparse
 
-warnings.simplefilter("ignore", scipy.sparse.SparseEfficiencyWarning)
+warnings.simplefilter("ignore", sps.SparseEfficiencyWarning)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -39,25 +36,25 @@ def run_example(with_plots=True):
     Iterative Methods for Sparse Linear Systems.
     """
     #Read the original matrix
-    A_original = IO.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
+    A_original = sp.io.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
 
     #Scale the original matrix
-    A = SPARSE.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
+    A = sps.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
 
     #Preconditioning by Symmetric Gauss Seidel
     if True:
-        D = SPARSE.spdiags(A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
-        Dinv = SPARSE.spdiags(1.0/A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
-        E = -SPARSE.tril(A,k=-1)
-        F = -SPARSE.triu(A,k=1)
+        D = sps.spdiags(A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
+        Dinv = sps.spdiags(1.0/A.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal()))
+        E = -sps.tril(A,k=-1)
+        F = -sps.triu(A,k=1)
         L = (D-E).dot(Dinv)
         U = D-F
         Prec = L.dot(U)
         
-        solvePrec = LINSP.factorized(Prec)
+        solvePrec = sps.linalg.factorized(Prec)
 
     #Create the RHS
-    b = A.dot(N.ones(A.shape[0]))
+    b = A.dot(np.ones(A.shape[0]))
     
     #Define the res
     def res(x):
@@ -77,7 +74,7 @@ def run_example(with_plots=True):
     def prec_solve(r):
         return solvePrec(r)
         
-    y0 = N.random.rand(A.shape[0])
+    y0 = np.random.rand(A.shape[0])
     
     #Define an Assimulo problem
     alg_mod = Algebraic_Problem(res, y0=y0, jac=jac, jacv=jacv, name = 'ORS Example')
@@ -91,7 +88,7 @@ def run_example(with_plots=True):
     def setup_param(solver):
         solver.linear_solver = "spgmr"
         solver.max_dim_krylov_subspace = 10
-        solver.ftol = LIN.norm(res(solver.y0))*1e-9
+        solver.ftol = np.linalg.norm(res(solver.y0))*1e-9
         solver.max_iter = 300
         solver.verbosity = 10
         solver.globalization_strategy = "none"
@@ -105,27 +102,27 @@ def run_example(with_plots=True):
     #Solve Preconditioned system
     y_prec = alg_solver_prec.solve()
     
-    print("Error                 , in y: ", LIN.norm(y-N.ones(len(y))))
-    print("Error (preconditioned), in y: ", LIN.norm(y_prec-N.ones(len(y_prec))))
+    print("Error                 , in y: ", np.linalg.norm(y-np.ones(len(y))))
+    print("Error (preconditioned), in y: ", np.linalg.norm(y_prec-np.ones(len(y_prec))))
     
     if with_plots:
-        import pylab as P
-        P.figure(4)
-        P.semilogy(alg_solver.get_residual_norm_nonlinear_iterations(), label="Original")
-        P.semilogy(alg_solver_prec.get_residual_norm_nonlinear_iterations(), label='Preconditioned')
-        P.xlabel("Number of Iterations")
-        P.ylabel("Residual Norm")
-        P.title("Solution Progress")
-        P.legend()
-        P.grid()
+        import pylab as pl
+        pl.figure(4)
+        pl.semilogy(alg_solver.get_residual_norm_nonlinear_iterations(), label="Original")
+        pl.semilogy(alg_solver_prec.get_residual_norm_nonlinear_iterations(), label='Preconditioned')
+        pl.xlabel("Number of Iterations")
+        pl.ylabel("Residual Norm")
+        pl.title("Solution Progress")
+        pl.legend()
+        pl.grid()
         
-        P.figure(5)
-        P.plot(y, label="Original")
-        P.plot(y_prec, label="Preconditioned")
-        P.legend()
-        P.grid()
+        pl.figure(5)
+        pl.plot(y, label="Original")
+        pl.plot(y_prec, label="Preconditioned")
+        pl.legend()
+        pl.grid()
         
-        P.show()
+        pl.show()
     
     #Basic test
     for j in range(len(y)):

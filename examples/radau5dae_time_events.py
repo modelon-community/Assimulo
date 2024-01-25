@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import Radau5DAE
 from assimulo.problem import Implicit_Problem
-
 
 class VanDerPolProblem(Implicit_Problem):
     def __init__(self, **kargs):
@@ -34,7 +33,7 @@ class VanDerPolProblem(Implicit_Problem):
         
         res_0 = yd[0]-yd_0
         res_1 = yd[1]-yd_1
-        return N.array([res_0,res_1])
+        return np.array([res_0,res_1])
     
     def time_events(self, t,y,yd,sw):
         events = [1.0, 2.0, 2.5, 3.0]
@@ -65,16 +64,16 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y[:,0], marker='o')
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.title(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.plot(t,y[:,0], marker='o')
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.title(imp_mod.name)
+        pl.show()
     
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(N.abs(float(x1[-1]) - 1.14330840983), 1e-3)
+    nose.tools.assert_less(np.abs(float(x1[-1]) - 1.14330840983), 1e-3)
 
     return imp_mod, imp_sim
 if __name__=='__main__':

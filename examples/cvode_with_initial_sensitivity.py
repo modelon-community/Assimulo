@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -57,12 +57,12 @@ def run_example(with_plots=True):
         yd_1 = k21*y1-(k02+k12)*y2
         yd_2 = k31*y1-k13*y3
         
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
     
     #The initial conditions
     y0 = [0.0,0.0,0.0]          #Initial conditions for y
     p0 = [0.0, 0.0, 0.0]  #Initial conditions for parameters
-    yS0 = N.array([[1,0,0],[0,1,0],[0,0,1.]])
+    yS0 = np.array([[1,0,0],[0,1,0],[0,0,1.]])
     
     #Create an Assimulo explicit problem
     exp_mod = Explicit_Problem(f, y0, p0=p0,name='Example: Computing Sensitivities')
@@ -88,39 +88,39 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
+        import pylab as pl
         title_text=r"Sensitivity w.r.t.  ${}$"
         legend_text=r"$\mathrm{{d}}{}/\mathrm{{d}}{}$"
-        P.figure(1)
-        P.subplot(221)
-        P.plot(t, N.array(exp_sim.p_sol[0])[:,0],
-               t, N.array(exp_sim.p_sol[0])[:,1],
-               t, N.array(exp_sim.p_sol[0])[:,2])
-        P.title(title_text.format('p_1'))
-        P.legend((legend_text.format('y_1','p_1'),
+        pl.figure(1)
+        pl.subplot(221)
+        pl.plot(t, np.array(exp_sim.p_sol[0])[:,0],
+               t, np.array(exp_sim.p_sol[0])[:,1],
+               t, np.array(exp_sim.p_sol[0])[:,2])
+        pl.title(title_text.format('p_1'))
+        pl.legend((legend_text.format('y_1','p_1'),
                   legend_text.format('y_1','p_2'),
                   legend_text.format('y_1','p_3')))
-        P.subplot(222)
-        P.plot(t, N.array(exp_sim.p_sol[1])[:,0],
-               t, N.array(exp_sim.p_sol[1])[:,1],
-               t, N.array(exp_sim.p_sol[1])[:,2])
-        P.title(title_text.format('p_2'))
-        P.legend((legend_text.format('y_2','p_1'),
+        pl.subplot(222)
+        pl.plot(t, np.array(exp_sim.p_sol[1])[:,0],
+               t, np.array(exp_sim.p_sol[1])[:,1],
+               t, np.array(exp_sim.p_sol[1])[:,2])
+        pl.title(title_text.format('p_2'))
+        pl.legend((legend_text.format('y_2','p_1'),
                   legend_text.format('y_2','p_2'),
                   legend_text.format('y_2','p_3')))
-        P.subplot(223)
-        P.plot(t, N.array(exp_sim.p_sol[2])[:,0],
-               t, N.array(exp_sim.p_sol[2])[:,1],
-               t, N.array(exp_sim.p_sol[2])[:,2])
-        P.title(title_text.format('p_3'))
-        P.legend((legend_text.format('y_3','p_1'),
+        pl.subplot(223)
+        pl.plot(t, np.array(exp_sim.p_sol[2])[:,0],
+               t, np.array(exp_sim.p_sol[2])[:,1],
+               t, np.array(exp_sim.p_sol[2])[:,2])
+        pl.title(title_text.format('p_3'))
+        pl.legend((legend_text.format('y_3','p_1'),
                   legend_text.format('y_3','p_2'),
                   legend_text.format('y_3','p_3')))
-        P.subplot(224)
-        P.title('ODE Solution')
-        P.plot(t, y)
-        P.suptitle(exp_mod.name)
-        P.show()
+        pl.subplot(224)
+        pl.title('ODE Solution')
+        pl.plot(t, y)
+        pl.suptitle(exp_mod.name)
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 1577.6552477, 5)

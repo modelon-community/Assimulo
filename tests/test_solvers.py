@@ -19,7 +19,7 @@ import nose
 import numpy as np
 from assimulo import testattr
 from assimulo.problem import Explicit_Problem, Implicit_Problem
-from assimulo.solvers import Radau5DAE, Radau5ODE, Dopri5, RodasODE
+from assimulo.solvers import Radau5DAE, Dopri5, RodasODE
 
 def res(t,y,yd,sw):
     return np.array([yd+y])

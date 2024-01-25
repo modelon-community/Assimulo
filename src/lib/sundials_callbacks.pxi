@@ -33,9 +33,9 @@ cdef N_Vector N_VNewEmpty_Euclidean(long int n) noexcept:
     return v
 
 cdef inline N_Vector arr2nv(x) noexcept:
-    x=N.array(x)
+    x=np.array(x)
     cdef long int n = len(x)
-    cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
+    cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
     IF SUNDIALS_VERSION >= (6,0,0):
         cdef SUNDIALS.SUNContext ctx = NULL
@@ -48,34 +48,34 @@ cdef inline N_Vector arr2nv(x) noexcept:
     return v
 
 cdef inline N_Vector arr2nv_euclidean(x) noexcept:
-    x=N.array(x)
+    x=np.array(x)
     cdef long int n = len(x)
-    cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
+    cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
     cdef N_Vector v=N_VNewEmpty_Euclidean(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
     
 cdef inline void arr2nv_inplace(x, N_Vector out) noexcept:
-    x=N.array(x)
+    x=np.array(x)
     cdef long int n = len(x)
-    cdef N.ndarray[realtype, ndim=1,mode='c'] ndx=x
+    cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
     memcpy((<N_VectorContent_Serial>out.content).data, data_ptr, n*sizeof(realtype))
     
-cdef inline N.ndarray nv2arr(N_Vector v) noexcept:
+cdef inline np.ndarray nv2arr(N_Vector v) noexcept:
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
-    cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
+    cdef np.ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
     memcpy(PyArray_DATA(x), v_data, n*sizeof(realtype))
     return x
     
-cdef inline void nv2arr_inplace(N_Vector v, N.ndarray o) noexcept:
+cdef inline void nv2arr_inplace(N_Vector v, np.ndarray o) noexcept:
     cdef long int n = (<N_VectorContent_Serial>v.content).length
     cdef realtype* v_data = (<N_VectorContent_Serial>v.content).data
     memcpy(PyArray_DATA(o), v_data, n*sizeof(realtype))
     
-cdef inline void nv2mat_inplace(int Ns, N_Vector *v, N.ndarray o) noexcept:
+cdef inline void nv2mat_inplace(int Ns, N_Vector *v, np.ndarray o) noexcept:
     cdef long int i,j, Nf
     for i in range(Ns):
         Nf = (<N_VectorContent_Serial>v[i].content).length
@@ -84,6 +84,6 @@ cdef inline void nv2mat_inplace(int Ns, N_Vector *v, N.ndarray o) noexcept:
 
 cdef inline realtype2arr(realtype *data, int n) noexcept:
     """Create new numpy array from realtype*"""
-    cdef N.ndarray[realtype, ndim=1, mode='c'] x=N.empty(n)
+    cdef np.ndarray[realtype, ndim=1, mode='c'] x=np.empty(n)
     memcpy(PyArray_DATA(x), data, n*sizeof(realtype))
     return x

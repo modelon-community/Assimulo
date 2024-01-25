@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 
 from assimulo.problem import SingPerturbed_Problem
 from assimulo.exception import Explicit_ODE_Exception, DASP3_Exception
@@ -69,13 +69,13 @@ class DASP3ODE(Explicit_ODE):
         self.m=self.problem.m
         
         # Set initial values
-        self.wsy=N.empty((10*self.n,))
+        self.wsy=np.empty((10*self.n,))
         self.wsy[:self.n]=self.problem.yy0
-        self.wsz=N.empty((max(9*self.m,1),))  # array must be at least 1 element long
+        self.wsz=np.empty((max(9*self.m,1),))  # array must be at least 1 element long
         self.wsz[:self.m]=self.problem.zz0
 
         # - Default values
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         
         self.statistics.add_key("nyder", "Number of slow function evaluations (Y)")
@@ -93,15 +93,15 @@ class DASP3ODE(Explicit_ODE):
         This method is called after every successful step taken by DASP3
         """        
         self._tlist.append(t)
-        self._ylist.append(N.hstack((wsy[:n],wsz[:m])))
+        self._ylist.append(np.hstack((wsy[:n],wsz[:m])))
         
         if self._opts["report_continuously"]:
-            initialize_flag = self.report_solution(t, N.hstack((wsy[:n],wsz[:m])), self._opts)
+            initialize_flag = self.report_solution(t, np.hstack((wsy[:n],wsz[:m])), self._opts)
             if initialize_flag: 
                 jstop = -1
         else:
             self._tlist.append(t)
-            self._ylist.append(N.hstack((wsy[:n],wsz[:m])))
+            self._ylist.append(np.hstack((wsy[:n],wsz[:m])))
         
         return jstop
             
@@ -113,13 +113,13 @@ class DASP3ODE(Explicit_ODE):
         m = self.problem.m
         n = self.problem.n
         
-        a = N.empty((m,m))
-        w = N.empty((m,m))
-        slu= N.empty((2*m,))
-        ips= N.empty((m,),'int32')
-        ind = N.empty((2*m,),'int32')
-        eq= N.empty((m,),'bool')
-        wght=N.ones((m+n,))
+        a = np.empty((m,m))
+        w = np.empty((m,m))
+        slu= np.empty((2*m,))
+        ips= np.empty((m,),'int32')
+        ind = np.empty((2*m,),'int32')
+        eq= np.empty((m,),'bool')
+        wght=np.ones((m+n,))
         
         #Store the opts
         self._opts = opts
@@ -156,10 +156,10 @@ class DASP3ODE(Explicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.problem_info["dim"])
+            self.options["atol"] = self.options["atol"]*np.ones(self.problem_info["dim"])
         elif len(self.options["atol"]) != self.problem_info["dim"]:
             raise DASP3_Exception("atol must be of length one or same as the dimension of the problem.")
 

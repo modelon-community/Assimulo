@@ -17,11 +17,9 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-import numpy as N 
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 
-import scipy.sparse as sparse
- 
 from assimulo.exception import AssimuloException
 
 from assimulo.explicit_ode cimport Explicit_ODE 
@@ -71,9 +69,9 @@ cdef class IDA(Implicit_ODE):
     cdef public object event_func
     #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens
-    cdef public N.ndarray yS0
-    #cdef N.ndarray _event_info
-    cdef public N.ndarray g_old
+    cdef public np.ndarray yS0
+    #cdef np.ndarray _event_info
+    cdef public np.ndarray g_old
     cdef SUNDIALS.SUNMatrix sun_matrix
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     
@@ -86,7 +84,7 @@ cdef class IDA(Implicit_ODE):
         self.set_problem_data()
         
         #Solver options
-        self.options["atol"] = N.array([1.0e-6]*self.problem_info["dim"])        #The absolute tolerance
+        self.options["atol"] = np.array([1.0e-6]*self.problem_info["dim"])        #The absolute tolerance
         self.options["rtol"] = 1.0e-6        #The relative tolerance
         self.options["lsoff"] = False        #Turn on or off the linesearch algorithm
         self.options["tout1"] = 0.0001       #Direction of initial calculation
@@ -100,7 +98,7 @@ cdef class IDA(Implicit_ODE):
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["inith"] = 0.0          #Initial step-size
-        self.options["algvar"] = N.array([1.0]*self.problem_info["dim"])
+        self.options["algvar"] = np.array([1.0]*self.problem_info["dim"])
         self.options["sensmethod"] = 'STAGGERED'
         self.options["dqtype"] = "CENTERED"
         self.options["dqrhomax"] = 0.0
@@ -117,7 +115,7 @@ cdef class IDA(Implicit_ODE):
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
         elif hasattr(problem, 'p0'):
-            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.p0])
+            self.pbar = np.array([np.abs(x) if np.abs(x) > 0 else 1.0 for x in self.p0])
         if hasattr(problem, 'algvar'):
             self.algvar = problem.algvar
         if hasattr(problem, 'yS0'):
@@ -132,8 +130,8 @@ cdef class IDA(Implicit_ODE):
         self.pData.memSize = self.pData.dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        #self.yTemp   = N.zeros(self.pData.dim, dtype=float, order='c')
-        #self.ydTemp  = N.zeros(self.pData.dim, dtype=float, order='c')
+        #self.yTemp   = np.zeros(self.pData.dim, dtype=float, order='c')
+        #self.ydTemp  = np.zeros(self.pData.dim, dtype=float, order='c')
         #self.pData.y  = <void*>self.yTemp
         #self.pData.yd = <void*>self.ydTemp 
         
@@ -423,7 +421,7 @@ cdef class IDA(Implicit_ODE):
         self.event_func = event_func
         self.g_old = self.event_func(self.t, self.y, self.yd)
         self.statistics["nstatefcns"] += 1
-        self._event_info = N.array([0] * self.problem_info["dimRoot"])
+        self._event_info = np.array([0] * self.problem_info["dimRoot"])
     
     cdef initialize_sensitivity_options(self):
         """
@@ -517,12 +515,12 @@ cdef class IDA(Implicit_ODE):
         if self.pData.dimSens > 0:
             self.initialize_sensitivity_options()
     
-    cpdef integrate(self,double t,N.ndarray[ndim=1, dtype=realtype] y,N.ndarray[ndim=1, dtype=realtype] yd,double tf,dict opts):
+    cpdef integrate(self,double t,np.ndarray[ndim=1, dtype=realtype] y,np.ndarray[ndim=1, dtype=realtype] yd,double tf,dict opts):
         cdef int flag, output_index, normal_mode
         cdef N_Vector yout, ydout
         cdef double tret = 0.0, tout
         cdef list tr = [], yr = [], ydr = []
-        cdef N.ndarray output_list
+        cdef np.ndarray output_list
         yout = arr2nv(y)
         ydout = arr2nv(yd)
         
@@ -619,12 +617,12 @@ cdef class IDA(Implicit_ODE):
         return flag, tr, yr, ydr
     
     
-    cpdef step(self,double t,N.ndarray y, N.ndarray yd, double tf,dict opts):
+    cpdef step(self,double t,np.ndarray y, np.ndarray yd, double tf,dict opts):
         cdef int flag
         cdef N_Vector yout, ydout 
         cdef double tret = t
         cdef double tr
-        cdef N.ndarray yr, ydr
+        cdef np.ndarray yr, ydr
         
         yout  = arr2nv(y)
         ydout = arr2nv(yd)
@@ -735,7 +733,7 @@ cdef class IDA(Implicit_ODE):
 
     cpdef get_last_estimated_errors(self):
         cdef flag
-        cdef N.ndarray err, pyweight, pyele
+        cdef np.ndarray err, pyweight, pyele
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
             cdef void* comm = NULL
@@ -763,14 +761,14 @@ cdef class IDA(Implicit_ODE):
         
         return err
     
-    cpdef N.ndarray interpolate(self,double t,int k = 0):
+    cpdef np.ndarray interpolate(self,double t,int k = 0):
         """
         Calls the internal IDAGetDky for the interpolated values at time t.
         t must be within the last internal step. k is the derivative of y which
         can be from zero to the current order.
         """
         cdef flag
-        cdef N.ndarray res
+        cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
             cdef void* comm = NULL
@@ -820,7 +818,7 @@ cdef class IDA(Implicit_ODE):
         ELSE:
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef flag
-        cdef N.ndarray res
+        cdef np.ndarray res
         
         if i==-1:
             
@@ -836,7 +834,7 @@ cdef class IDA(Implicit_ODE):
             
             N_VDestroy(dkyS)
             
-            return N.array(matrix)
+            return np.array(matrix)
         else:
             flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
             
@@ -1003,11 +1001,11 @@ cdef class IDA(Implicit_ODE):
         See SUNDIALS IDA documentation 4.5.2 for more details.
         """
         
-        #self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        #self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
         self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+            self.options["atol"] = self.options["atol"]*np.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
         if (self.options["atol"]<=0.0).any():
@@ -1181,7 +1179,7 @@ cdef class IDA(Implicit_ODE):
     linear_solver = property(_get_linear_solver, _set_linear_solver)
     
     def _set_algvar(self,algvar):
-        self.options["algvar"] = N.array(algvar,dtype=float) if len(N.array(algvar,dtype=float).shape)>0 else N.array([algvar],dtype=float)
+        self.options["algvar"] = np.array(algvar,dtype=float) if len(np.array(algvar,dtype=float).shape)>0 else np.array([algvar],dtype=float)
         
         if len(self.options["algvar"]) != self.pData.dim:
             raise AssimuloException('When setting the algebraic variables, the' \
@@ -1519,9 +1517,9 @@ cdef class CVode(Explicit_ODE):
     cdef public object event_func
     #cdef public dict statistics
     cdef object pt_root, pt_fcn, pt_jac, pt_jacv, pt_sens,pt_prec_solve,pt_prec_setup
-    cdef public N.ndarray yS0
-    #cdef N.ndarray _event_info
-    cdef public N.ndarray g_old
+    cdef public np.ndarray yS0
+    #cdef np.ndarray _event_info
+    cdef public np.ndarray g_old
     cdef SUNDIALS.SUNMatrix sun_matrix
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver
@@ -1538,7 +1536,7 @@ cdef class CVode(Explicit_ODE):
         self.set_problem_data()
         
         #Solver options
-        self.options["atol"] = N.array([1.0e-6]*self.problem_info["dim"])        #The absolute tolerance
+        self.options["atol"] = np.array([1.0e-6]*self.problem_info["dim"])        #The absolute tolerance
         self.options["rtol"] = 1.0e-6        #The relative tolerance
         self.options["maxh"] = 0.0           #Maximum step-size
         self.options["minh"] = 0.0           #Minimal step-size
@@ -1579,7 +1577,7 @@ cdef class CVode(Explicit_ODE):
         if hasattr(problem, 'pbar'):
             self.pbar = problem.pbar
         elif hasattr(problem, 'p0'):
-            self.pbar = N.array([N.abs(x) if N.abs(x) > 0 else 1.0 for x in self.problem.p0])
+            self.pbar = np.array([np.abs(x) if np.abs(x) > 0 else 1.0 for x in self.problem.p0])
         if hasattr(problem, 'yS0'):
             self.yS0 = problem.yS0
     
@@ -1634,7 +1632,7 @@ cdef class CVode(Explicit_ODE):
         """
         Returns the vector of weighted estimated local errors at the current step.
         """
-        return N.abs(self.get_local_errors()*self.get_error_weights())
+        return np.abs(self.get_local_errors()*self.get_error_weights())
         
     cpdef get_last_order(self):
         """
@@ -1721,8 +1719,8 @@ cdef class CVode(Explicit_ODE):
         self.pData.memSize = self.pData.dim*sizeof(realtype)
         
         #Set the ndarray to the problem struct
-        #self.yTemp   = N.zeros(self.pData.dim, dtype=float, order='c')
-        #self.ydTemp  = N.zeros(self.pData.dim, dtype=float, order='c')
+        #self.yTemp   = np.zeros(self.pData.dim, dtype=float, order='c')
+        #self.ydTemp  = np.zeros(self.pData.dim, dtype=float, order='c')
         #self.pData.y  = <void*>self.yTemp
         #self.pData.yd = <void*>self.ydTemp
         
@@ -1913,17 +1911,17 @@ cdef class CVode(Explicit_ODE):
             self.event_func = event_func
             self.g_old = self.event_func(self.t, self.y)
         self.statistics["nstatefcns"] += 1
-        self._event_info = N.array([0] * self.problem_info["dimRoot"])
+        self._event_info = np.array([0] * self.problem_info["dimRoot"])
         
     
-    cpdef N.ndarray interpolate(self,double t,int k = 0):
+    cpdef np.ndarray interpolate(self,double t,int k = 0):
         """
         Calls the internal CVodeGetDky for the interpolated values at time t.
         t must be within the last internal step. k is the derivative of y which
         can be from zero to the current order.
         """
         cdef flag
-        cdef N.ndarray res
+        cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
             cdef void* comm = NULL
@@ -1944,7 +1942,7 @@ cdef class CVode(Explicit_ODE):
         
         return res
         
-    cpdef N.ndarray interpolate_sensitivity(self, realtype t, int k = 0, int i=-1):
+    cpdef np.ndarray interpolate_sensitivity(self, realtype t, int k = 0, int i=-1):
         """
         This method calls the internal method CVodeGetSensDky which computes the k-th derivatives
         of the interpolating polynomials for the sensitivity variables at time t.
@@ -1974,7 +1972,7 @@ cdef class CVode(Explicit_ODE):
         ELSE:
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim)
         cdef int flag
-        cdef N.ndarray res
+        cdef np.ndarray res
         
         if i==-1:
             
@@ -1989,7 +1987,7 @@ cdef class CVode(Explicit_ODE):
             
             N_VDestroy(dkyS)
             
-            return N.array(matrix)
+            return np.array(matrix)
         else:
             flag = SUNDIALS.CVodeGetSensDky1(self.cvode_mem, t, k, i, dkyS)
             if flag <0:
@@ -2012,12 +2010,12 @@ cdef class CVode(Explicit_ODE):
         
         self.initialize_cvode() 
     
-    cpdef step(self,double t,N.ndarray y,double tf,dict opts):
+    cpdef step(self,double t,np.ndarray y,double tf,dict opts):
         cdef int flag
         cdef N_Vector yout
         cdef double tret = t
         cdef double tr
-        cdef N.ndarray yr
+        cdef np.ndarray yr
         
         yout = arr2nv(y)
         
@@ -2057,12 +2055,12 @@ cdef class CVode(Explicit_ODE):
                 
         return flag, tr, yr
     
-    cpdef integrate(self,double t,N.ndarray[ndim=1, dtype=realtype] y,double tf,dict opts):
+    cpdef integrate(self,double t,np.ndarray[ndim=1, dtype=realtype] y,double tf,dict opts):
         cdef int flag, output_index, normal_mode
         cdef N_Vector yout
         cdef double tret = self.t, tout
         cdef list tr = [], yr = []
-        cdef N.ndarray output_list
+        cdef np.ndarray output_list
     
         if self.options["norm"] == "EUCLIDEAN":
             yout = arr2nv_euclidean(y)
@@ -2447,7 +2445,7 @@ cdef class CVode(Explicit_ODE):
         
         #Tolerances
         self.nv_atol = arr2nv(self.options["atol"])
-        if SUNDIALS_CVODE_RTOL_VEC and isinstance(self.options["rtol"], N.ndarray):
+        if SUNDIALS_CVODE_RTOL_VEC and isinstance(self.options["rtol"], np.ndarray):
             self.nv_rtol = arr2nv(self.options["rtol"])
             flag = SUNDIALS.CVodeVVtolerances(self.cvode_mem, self.nv_rtol, self.nv_atol)
         else:
@@ -2592,7 +2590,7 @@ cdef class CVode(Explicit_ODE):
         self.options["atol"] = set_type_shape_array(atol)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self.pData.dim)
+            self.options["atol"] = self.options["atol"]*np.ones(self.pData.dim)
         elif len(self.options["atol"]) != self.pData.dim:
             raise AssimuloException("atol must be of length one or same as the dimension of the problem.")
         if (self.options["atol"]<=0.0).any():
@@ -2622,7 +2620,7 @@ cdef class CVode(Explicit_ODE):
                                 
         """
         rtol = set_type_shape_array(rtol) ## convert to appropriate numpy array
-        rtol = N.array([rtol[0]]) if N.all(N.isclose(rtol, rtol[0])) else rtol ## reduce if possible
+        rtol = np.array([rtol[0]]) if np.all(np.isclose(rtol, rtol[0])) else rtol ## reduce if possible
         if (rtol<0.0).any():
             raise AssimuloException('Relative tolerance(s) must be a non-negative.')
         if rtol.size == 1:

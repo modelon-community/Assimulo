@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 
 from assimulo.ode import ID_PY_EVENT, ID_PY_COMPLETE, NORMAL, ID_PY_OK
 from assimulo.explicit_ode import Explicit_ODE
@@ -57,9 +57,9 @@ class Dopri5(Explicit_ODE):
         self.options["fac1"]     = 0.2 #Parameters for step-size selection (lower bound)
         self.options["fac2"]     = 10.0 #Parameters for step-size selection (upper bound)
         self.options["beta"]     = 0.04
-        self.options["maxh"]     = N.inf #Maximum step-size.
+        self.options["maxh"]     = np.inf #Maximum step-size.
         self.options["inith"]    = 0.0
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["maxsteps"] = 100000
         
@@ -97,7 +97,7 @@ class Dopri5(Explicit_ODE):
             self.f = self.problem.rhs
     
     def interpolate(self, time):
-        y = N.empty(self._leny)
+        y = np.empty(self._leny)
         for i in range(self._leny):
             y[i] = dopri5.contd5(i+1, time, self.cont, self.lrc)
                     
@@ -145,8 +145,8 @@ class Dopri5(Explicit_ODE):
     def integrate(self, t, y, tf, opts):
         ITOL  = 1 #Both atol and rtol are vectors
         IOUT  = 2 #Dense out in solout
-        WORK  = N.array([0.0]*(8*self.problem_info["dim"]+5*self.problem_info["dim"]+21))
-        IWORK = N.array([0]*(self.problem_info["dim"]+21))
+        WORK  = np.array([0.0]*(8*self.problem_info["dim"]+5*self.problem_info["dim"]+21))
+        IWORK = np.array([0]*(self.problem_info["dim"]+21))
         
         #Setting work options
         WORK[1] = self.safe
@@ -169,7 +169,7 @@ class Dopri5(Explicit_ODE):
         #Store the opts
         self._opts = opts
         
-        t, y, iwork, flag = dopri5.dopri5(self.f, t, y.copy(), tf, self.rtol*N.ones(self.problem_info["dim"]), self.atol, ITOL, self._solout, IOUT, WORK, IWORK)
+        t, y, iwork, flag = dopri5.dopri5(self.f, t, y.copy(), tf, self.rtol*np.ones(self.problem_info["dim"]), self.atol, ITOL, self._solout, IOUT, WORK, IWORK)
         
         #Checking return
         if flag == 1:
@@ -208,10 +208,10 @@ class Dopri5(Explicit_ODE):
         
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise Dopri5_Exception("atol must be of length one or same as the dimension of the problem.")
 
@@ -452,11 +452,11 @@ class RungeKutta34(Explicit_ODE):
         self.options["maxsteps"] = 10000
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(self.y0))
-        self.Y2 = N.array([0.0]*len(self.y0))
-        self.Y3 = N.array([0.0]*len(self.y0))
-        self.Y4 = N.array([0.0]*len(self.y0))
-        self.Z3 = N.array([0.0]*len(self.y0))
+        self.Y1 = np.array([0.0]*len(self.y0))
+        self.Y2 = np.array([0.0]*len(self.y0))
+        self.Y3 = np.array([0.0]*len(self.y0))
+        self.Y4 = np.array([0.0]*len(self.y0))
+        self.Z3 = np.array([0.0]*len(self.y0))
         
         #Solver support
         self.supports["report_continuously"] = True
@@ -521,7 +521,7 @@ class RungeKutta34(Explicit_ODE):
     def _set_atol(self,atol):
 
         try:
-            atol_arr = N.array(atol, dtype=float)
+            atol_arr = np.array(atol, dtype=float)
             if (atol_arr <= 0.0).any():
                 raise Explicit_ODE_Exception('Absolute tolerance must be a positive float or a float vector.')
         except (ValueError,TypeError):
@@ -620,7 +620,7 @@ class RungeKutta34(Explicit_ODE):
             self.set_problem_data()
         maxsteps = self.options["maxsteps"]
         h = self.options["inith"]
-        h = min(h, N.abs(tf-t))
+        h = min(h, np.abs(tf-t))
         self.f(self.Y1, t, y)
         flag = ID_PY_OK
         
@@ -648,7 +648,7 @@ class RungeKutta34(Explicit_ODE):
                         pass
                     opts["output_index"] = output_index
                 h=self.adjust_stepsize(h,error)
-                h=min(h, N.abs(tf-t))
+                h=min(h, np.abs(tf-t))
             else:
                 break
         else:
@@ -697,7 +697,7 @@ class RungeKutta34(Explicit_ODE):
         """
         self.statistics["nfcns"] += 5
         
-        scaling = N.array(abs(y)*self.rtol + self.atol) # to normalize the error 
+        scaling = np.array(abs(y)*self.rtol + self.atol) # to normalize the error 
         f = self.f
             
         f(self.Y2, t + h/2., y + h*self.Y1/2.)
@@ -705,7 +705,7 @@ class RungeKutta34(Explicit_ODE):
         f(self.Z3, t + h, y - h*self.Y1 + 2.0*h*self.Y2)
         f(self.Y4, t + h, y + h*self.Y3)
         
-        error = N.linalg.norm(h/6.0*(2.0*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
+        error = np.linalg.norm(h/6.0*(2.0*self.Y2 + self.Z3 - 2.0*self.Y3 - self.Y4)/scaling) #normalized 
         t_next = t + h
         y_next = y + h/6.0*(self.Y1 + 2.0*self.Y2 + 2.0*self.Y3 + self.Y4)
         
@@ -784,10 +784,10 @@ class RungeKutta4(Explicit_ODE):
         self.options["h"] = 0.01
         
         #Internal temporary result vector
-        self.Y1 = N.array([0.0]*len(self.y0))
-        self.Y2 = N.array([0.0]*len(self.y0))
-        self.Y3 = N.array([0.0]*len(self.y0))
-        self.Y4 = N.array([0.0]*len(self.y0))
+        self.Y1 = np.array([0.0]*len(self.y0))
+        self.Y2 = np.array([0.0]*len(self.y0))
+        self.Y3 = np.array([0.0]*len(self.y0))
+        self.Y4 = np.array([0.0]*len(self.y0))
         
         #RHS-Function
         self.f = problem.rhs_internal
@@ -838,12 +838,12 @@ class RungeKutta4(Explicit_ODE):
     
     def _iter(self,t,y,tf):
         h = self.options["h"]
-        h = min(h, N.abs(tf-t))
+        h = min(h, np.abs(tf-t))
         
         while t+h < tf:
             t, y = self._step(t, y, h)
             yield ID_PY_OK, t,y
-            h=min(h, N.abs(tf-t))
+            h=min(h, np.abs(tf-t))
         else:
             t, y = self._step(t, y, h)
             yield ID_PY_COMPLETE, t, y

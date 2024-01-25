@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
 import sys
+import numpy as np
 
 from assimulo.exception import GLIMDA_Exception
 from assimulo.ode import ID_PY_COMPLETE, NORMAL
@@ -58,10 +58,10 @@ class GLIMDA(Implicit_ODE):
         self.options["minord"]   = 1 #Minimum order used
         self.options["order"]    = 0 #Variable order (0) or fixed order (1-3)
         self.options["maxsteps"] = 100000 #Maximum number of steps
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
-        self.options["maxh"]     = N.inf #Maximum step-size.
-        self.options["minh"]     = N.finfo(N.double).eps #Minimum step-size      
+        self.options["maxh"]     = np.inf #Maximum step-size.
+        self.options["minh"]     = np.finfo(np.double).eps #Minimum step-size      
         self.options["maxretry"] = 15 #Maximum number of consecutive retries  
         
         #Solver support 
@@ -129,8 +129,8 @@ class GLIMDA(Implicit_ODE):
         IADCONST = 1 #The leading term (A,D) is constant 
         
         #Options vectors
-        IOPT = N.array([0]*9) #Integer options
-        ROPT = N.array([0.0]*11) #Real options
+        IOPT = np.array([0]*9) #Integer options
+        ROPT = np.array([0.0]*11) #Real options
         
         #Setting work options
         IOPT[0] = self._get_print_level() #Print level (default 2)
@@ -168,7 +168,7 @@ class GLIMDA(Implicit_ODE):
         
         yret, ydret, istats, flag =  glimda(res_dummy, qeval_dummy, dfdy_dummy, 
                             dfdx_dummy,dqdx_dummy,t,tf,y.copy(),yd.copy(),self.inith,
-                                self.atol, self.rtol*N.ones(self.problem_info["dim"]),ITOL,INUMA,INUMD,INUMB,
+                                self.atol, self.rtol*np.ones(self.problem_info["dim"]),ITOL,INUMA,INUMD,INUMB,
                                 IODE, IADCONST, IOPT, ROPT, self._solout)
         #print self._tlist, self._ylist
         #Checking return
@@ -340,10 +340,10 @@ class GLIMDA(Implicit_ODE):
 
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise GLIMDA_Exception("atol must be of length one or same as the dimension of the problem.")
 

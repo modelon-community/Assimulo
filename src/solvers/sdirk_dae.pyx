@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-import numpy as N
+import numpy as np
 
 from assimulo.exception import ODEPACK_Exception, RKStarter_Exception
 from assimulo.ode import ID_PY_COMPLETE, ID_PY_EVENT, NORMAL
@@ -56,7 +56,7 @@ class SDIRK_DAE(Implicit_ODE):
         Implicit_ODE.__init__(self, problem) #Calls the base class
         
         #Default values
-        self.options["atol"]     = 1.0e-6*N.ones(self.problem_info["dim"]) #Absolute tolerance
+        self.options["atol"]     = 1.0e-6*np.ones(self.problem_info["dim"]) #Absolute tolerance
         self.options["rtol"]     = 1.0e-6 #Relative tolerance
         self.options["usejac"]   = False
         self.options["hmax"] = 0.
@@ -90,11 +90,11 @@ class SDIRK_DAE(Implicit_ODE):
         
         # first call or classical restart after a discontinuity
         ISTATE=1
-        RWORK = N.array([0.0]*(22 + self.problem_info["dim"] * 
+        RWORK = np.array([0.0]*(22 + self.problem_info["dim"] * 
                                max(16,self.problem_info["dim"]+9) + 
                                3*self.problem_info["dimRoot"]))
         # Integer work array
-        IWORK = N.array([0]*(20 + self.problem_info["dim"]))
+        IWORK = np.array([0]*(20 + self.problem_info["dim"]))
 
  
         return ISTATE, RWORK, IWORK
@@ -109,7 +109,7 @@ class SDIRK_DAE(Implicit_ODE):
         ISTATE, RWORK, IWORK = self.integrate_start( t, y)
         
         JT = 1 if self.usejac else 2#Jacobian type indicator
-        JROOT = N.array([0]*self.problem_info["dimRoot"])
+        JROOT = np.array([0]*self.problem_info["dimRoot"])
         
         #Setting work options
         RWORK[0] = tf #Do not integrate past tf
@@ -125,7 +125,7 @@ class SDIRK_DAE(Implicit_ODE):
         
         #Dummy methods
         g_dummy = (lambda t:x) if not self.problem_info["state_events"] else self.problem.state_events
-        jac_dummy = (lambda t,y:N.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
+        jac_dummy = (lambda t,y:np.zeros((len(y),len(y)))) if not self.usejac else self.problem.jac
         
         #Extra args to rhs and state_events
         rhs_extra_args = (self.sw,) if self.problem_info["switches"] else ()
@@ -148,7 +148,7 @@ class SDIRK_DAE(Implicit_ODE):
             while (ISTATE == 2 or ISTATE == 1) and t < tf:
             
                 y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tf, ITOL, 
-                        self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                        self.rtol*np.ones(self.problem_info["dim"]), self.atol,
                         ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                         f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
@@ -189,7 +189,7 @@ class SDIRK_DAE(Implicit_ODE):
                 output_index += 1
 
                 y, t, ISTATE, RWORK, IWORK, roots = dlsodar(self.problem.rhs, y.copy(), t, tout, ITOL, 
-                    self.rtol*N.ones(self.problem_info["dim"]), self.atol,
+                    self.rtol*np.ones(self.problem_info["dim"]), self.atol,
                     ITASK, ISTATE, IOPT, RWORK, IWORK, jac_dummy, JT, g_dummy, JROOT,
                     f_extra_args = rhs_extra_args, g_extra_args = g_extra_args)
                 
@@ -297,10 +297,10 @@ class SDIRK_DAE(Implicit_ODE):
     
     def _set_atol(self,atol):
         
-        self.options["atol"] = N.array(atol,dtype=float) if len(N.array(atol,dtype=float).shape)>0 else N.array([atol],dtype=float)
+        self.options["atol"] = np.array(atol,dtype=float) if len(np.array(atol,dtype=float).shape)>0 else np.array([atol],dtype=float)
     
         if len(self.options["atol"]) == 1:
-            self.options["atol"] = self.options["atol"]*N.ones(self._leny)
+            self.options["atol"] = self.options["atol"]*np.ones(self._leny)
         elif len(self.options["atol"]) != self._leny:
             raise ODEPACK_Exception("atol must be of length one or same as the dimension of the problem.")
 
@@ -463,17 +463,17 @@ class RKStarterNordsieck(object):
     
     See: Mohammadi (2013): https://lup.lub.lu.se/luur/download?func=downloadFile&recordOId=4196026&fileOId=4196027
     """
-    Gamma_0=[N.array([[1.,0.],                        # 1st order
+    Gamma_0=[np.array([[1.,0.],                        # 1st order
                       [0.,1.]]),
-             N.array([[1.,0.,0.],                     # 2nd order
+             np.array([[1.,0.,0.],                     # 2nd order
                       [0.,1.,-1.],
                       [0.,0.,1.]]),
-             N.array([[1.,0.,0.,0.],                  # 3rd order
+             np.array([[1.,0.,0.,0.],                  # 3rd order
                       [0.,1.,-5./3.,1.],         
                       [0.,0.,3.,-2.],
                       [0.,0.,0.,1.],
                       [0.,0.,-4./3.,0.]]),
-             N.array([[1.,0.,0.,0.,0.],               # 4th order
+             np.array([[1.,0.,0.,0.,0.],               # 4th order
                       [0.,1.,-5./6.,4./9.,-1./9.],         
                       [0.,0.,0.,0.,0.],
                       [0.,0.,1./2.,-4./9.,1./9.],
@@ -481,7 +481,7 @@ class RKStarterNordsieck(object):
                       [0.,0.,-3.,10./3.,-4./3.],
                       [0.,0.,1.,-11./9.,5./9.]])]  
                       
-    scale=N.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
+    scale=np.array([1, 1, 1/2., 1./6., 1./24., 1./120.]).reshape(-1,1)
     
     def __init__(self,  rhs, H, eval_at=0.,number_of_steps=4):
         """
@@ -530,7 +530,7 @@ class RKStarterNordsieck(object):
         k4 = h*f(y0 + 3./4. * k1 + 9./4. * k3)
         k5 = h*f(y0 + k1/2. + k2 + k3/2. + 2. * k4)
         k6 = h*f(y0+k1/12.+2. * k2 + k3/4. + 2./3. * k4 + 2. * k5)
-        return N.array([y0,k1,k2,k3,k4,k5,k6])
+        return np.array([y0,k1,k2,k3,k4,k5,k6])
     def rk_like3(self, t0, y0, sw0): 
         """
         rk_like computes Runge-Kutta stages
@@ -544,7 +544,7 @@ class RKStarterNordsieck(object):
         k2 = h*f(y0 + k1)
         k3 = h*f(y0 + k1+ k2)
         k4 = h*f(y0 + 3./2. * k1)
-        return N.array([y0,k1,k2,k3,k4])
+        return np.array([y0,k1,k2,k3,k4])
     def rk_like2(self, t0, y0, sw0):
         """
         rk_like2 computes Runge-Kutta 2nd-stages
@@ -555,12 +555,12 @@ class RKStarterNordsieck(object):
         h=self.H/2
         k1=h*f(y0)
         k2=h*f(y0+k1)
-        return N.array([y0,k1,k2])        
+        return np.array([y0,k1,k2])        
     def nordsieck(self,k):
         """
         Nordsieck array computed at initial point
         """
-        nord=self.scale[:self.number_of_steps+1]*N.dot(self.Gamma_0[self.number_of_steps-1].T,k)
+        nord=self.scale[:self.number_of_steps+1]*np.dot(self.Gamma_0[self.number_of_steps-1].T,k)
         return nord  
     def __call__(self, t0 , y0, sw0=[]):
         """

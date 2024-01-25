@@ -17,8 +17,8 @@
 
 # distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
-import numpy as N
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 import itertools
 import multiprocessing
 from timeit import default_timer as timer
@@ -67,7 +67,7 @@ cdef class ODE:
         
         #Data object for storing the event data
         self.event_data = []
-        self._event_info = N.array([])
+        self._event_info = np.array([])
         
         if problem is None:
             raise ODE_Exception('The problem needs to be a subclass of a Problem.')
@@ -92,7 +92,7 @@ cdef class ODE:
                 self.problem_info["step_events"] = True
         
         if hasattr(problem, 'y0'):
-            self.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
+            self.y0 = np.array(problem.y0,dtype=realtype) if len(np.array(problem.y0,dtype=realtype).shape)>0 else np.array([problem.y0],dtype=realtype)
             self.problem_info["dim"] = len(self.y0)
         else:
             raise ODE_Exception('y0 must be specified in the problem.')
@@ -103,12 +103,12 @@ cdef class ODE:
             self.problem_info["neq"] = self.problem_info["dim"]
         
         if hasattr(problem, "p0"):
-            self.p0 = N.array(problem.p0,dtype=realtype) if len(N.array(problem.p0,dtype=realtype).shape)>0 else N.array([problem.p0],dtype=realtype)
+            self.p0 = np.array(problem.p0,dtype=realtype) if len(np.array(problem.p0,dtype=realtype).shape)>0 else np.array([problem.p0],dtype=realtype)
             self.problem_info["dimSens"] = len(self.p0)
             self.p = self.p0.copy()
         
         if hasattr(problem, "sw0"):
-            self.sw0 = N.array(problem.sw0,dtype=bool) if len(N.array(problem.sw0,dtype=bool).shape)>0 else N.array([problem.sw0],dtype=bool)
+            self.sw0 = np.array(problem.sw0,dtype=bool) if len(np.array(problem.sw0,dtype=bool).shape)>0 else np.array([problem.sw0],dtype=bool)
             self.problem_info["switches"] = True
             self.sw = self.sw0.tolist()
         
@@ -272,18 +272,18 @@ cdef class ODE:
             
         #Determine the output list
         if ncp != 0:
-            output_list = N.linspace(t0,tfinal,ncp+1)[1:]
+            output_list = np.linspace(t0,tfinal,ncp+1)[1:]
             output_index = 0
         elif ncp_list is not None:
             if self.options["backward"]:
-                output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)<t0,N.array(ncp_list, dtype=realtype, ndmin=1)>=tfinal)]
-                output_list = -N.sort(-output_list)
+                output_list = np.array(ncp_list, dtype=realtype, ndmin=1)[np.logical_and(np.array(ncp_list, dtype=realtype, ndmin=1)<t0,np.array(ncp_list, dtype=realtype, ndmin=1)>=tfinal)]
+                output_list = -np.sort(-output_list)
                 if output_list[-1] > tfinal: #Add the last point if necessary!
-                    output_list = N.append(output_list, tfinal)
+                    output_list = np.append(output_list, tfinal)
             else:
-                output_list = N.array(ncp_list, dtype=realtype, ndmin=1)[N.logical_and(N.array(ncp_list, dtype=realtype, ndmin=1)>t0,N.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
+                output_list = np.array(ncp_list, dtype=realtype, ndmin=1)[np.logical_and(np.array(ncp_list, dtype=realtype, ndmin=1)>t0,np.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
                 if output_list[-1] < tfinal: #Add the last point if necessary!
-                    output_list = N.append(output_list, tfinal)
+                    output_list = np.append(output_list, tfinal)
             output_index = 0
         else:
             output_list = None
@@ -330,9 +330,9 @@ cdef class ODE:
         
         #Return the results
         if isinstance(self.problem, (Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem)):
-            return self.t_sol, N.array(self.y_sol)
+            return self.t_sol, np.array(self.y_sol)
         else:
-            return self.t_sol, N.array(self.y_sol), N.array(self.yd_sol)
+            return self.t_sol, np.array(self.y_sol), np.array(self.yd_sol)
         
     def _simulate(self,t0, tfinal, output_list, REPORT_CONTINUOUSLY, INTERPOLATE_OUTPUT, TIME_EVENT):
          pass
@@ -586,7 +586,7 @@ cdef class ODE:
         Reduces a tol vector to a scalar if it is an ndarray and all entries are the same.
         Used for printing solver options in a more compact way
         """
-        if isinstance(tol_vec, N.ndarray) and (tol_vec == tol_vec[0]).all():
+        if isinstance(tol_vec, np.ndarray) and (tol_vec == tol_vec[0]).all():
             return tol_vec[0]
         else:
             return tol_vec
@@ -595,11 +595,11 @@ cdef class ODE:
         self.chattering_clear_counter = 0
         if event_info[0] is not None and len(event_info[0]) > 0:
             if self.chattering_check is None:
-                self.chattering_check  = abs(N.array(event_info[0]))
+                self.chattering_check  = abs(np.array(event_info[0]))
             else:
-                self.chattering_check += abs(N.array(event_info[0]))
+                self.chattering_check += abs(np.array(event_info[0]))
 
                 if max(self.chattering_check) > 5 and self.chattering_ok_print:
                     self.chattering_ok_print = 0
                     self.log_message("Warning: Possible chattering detected at t = %e in state event(s): "%self.t + 
-                                     str(N.where(self.chattering_check == max(self.chattering_check))[0]), NORMAL)
+                                     str(np.where(self.chattering_check == max(self.chattering_check))[0]), NORMAL)

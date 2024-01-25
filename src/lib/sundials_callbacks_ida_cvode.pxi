@@ -17,6 +17,7 @@
 
 import cython
 import traceback
+import scipy.sparse as sps
 from assimulo.exception import AssimuloRecoverableError
 
 cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noexcept:
@@ -25,7 +26,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noe
     right-hand-side function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y = pData.work_y
+    cdef np.ndarray y = pData.work_y
     cdef realtype* resptr=(<N_VectorContent_Serial>yvdot.content).data
     cdef int i
     
@@ -60,8 +61,8 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
                          N_Vector tmp1, N_Vector tmp2) noexcept:
     
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y = pData.work_y
-    cdef N.ndarray s = pData.work_ys
+    cdef np.ndarray y = pData.work_y
+    cdef np.ndarray s = pData.work_ys
     cdef realtype* resptr
     cdef int i, j
     
@@ -81,7 +82,7 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
                 resptr[j] = sens_rhs[j,i]
         
         return CV_SUCCESS
-    except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+    except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
         return CV_REC_ERR
     except Exception:
         traceback.print_exc()
@@ -99,7 +100,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         """
         cdef ProblemData pData = <ProblemData>problem_data
         cdef SUNMatrixContent_Sparse Jacobian = <SUNMatrixContent_Sparse>Jac.content
-        cdef N.ndarray y = pData.work_y
+        cdef np.ndarray y = pData.work_y
         cdef int i
         cdef sunindextype nnz = Jacobian.NNZ
         cdef int ret_nnz
@@ -123,8 +124,8 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc_matrix):
-                jac = sparse.csc_matrix(jac)
+            if not isinstance(jac, sps.csc_matrix):
+                jac = sps.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -137,7 +138,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                 colptrs[i] = jac.indptr[i]
             
             return CVDLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except Exception:
             traceback.print_exc()
@@ -152,15 +153,15 @@ ELSE:
         Sparse Jacobian function.
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray y = pData.work_y
+        cdef np.ndarray y = pData.work_y
         cdef int i
         cdef int nnz = Jacobian.NNZ
         cdef int ret_nnz
         cdef int dim = Jacobian.N
         cdef realtype* data = Jacobian.data
-        cdef N.ndarray[realtype, ndim=1, mode='c'] jdata
-        cdef N.ndarray[int, ndim=1, mode='c'] jindices
-        cdef N.ndarray[int, ndim=1, mode='c'] jindptr
+        cdef np.ndarray[realtype, ndim=1, mode='c'] jdata
+        cdef np.ndarray[int, ndim=1, mode='c'] jindices
+        cdef np.ndarray[int, ndim=1, mode='c'] jindptr
         
         IF SUNDIALS_VERSION >= (2,6,3):
             cdef int* rowvals = Jacobian.rowvals[0]
@@ -188,8 +189,8 @@ ELSE:
                 else:
                     jac=(<object>pData.JAC)(t,y)
                 
-            if not isinstance(jac, sparse.csc_matrix):
-                jac = sparse.csc_matrix(jac)
+            if not isinstance(jac, sps.csc_matrix):
+                jac = sps.csc_matrix(jac)
                 raise AssimuloException("The Jacobian must be stored on Scipy's CSC format.")
             ret_nnz = jac.nnz
             if ret_nnz > nnz:
@@ -204,7 +205,7 @@ ELSE:
             memcpy(colptrs, jindptr.data, (dim+1)*sizeof(int))
             
             return CVDLS_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
         except Exception:
             traceback.print_exc()
@@ -221,7 +222,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
         cdef ProblemData pData = <ProblemData>problem_data
         cdef realtype* col_i=Jacobian.cols[0]
-        cdef N.ndarray y = pData.work_y
+        cdef np.ndarray y = pData.work_y
         cdef int i,j, Neq = pData.dim
         
         nv2arr_inplace(yv, y)
@@ -233,7 +234,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
                 else:
                     jac=(<object>pData.JAC)(t,y,p)
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except Exception:
                 traceback.print_exc()
@@ -244,13 +245,13 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
                 else:
                     jac=(<object>pData.JAC)(t,y)
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
         
-        if isinstance(jac, sparse.csc_matrix):
+        if isinstance(jac, sps.csc_matrix):
             for j in range(Neq):
                 col_i = Jacobian.cols[j]
                 for i in range(jac.indptr[j], jac.indptr[j+1]):
@@ -271,7 +272,7 @@ ELSE:
         """
         cdef ProblemData pData = <ProblemData>problem_data
         cdef realtype* col_i=DENSE_COL(Jacobian,0)
-        cdef N.ndarray y = pData.work_y
+        cdef np.ndarray y = pData.work_y
         cdef int i,j
         
         nv2arr_inplace(yv, y)
@@ -283,7 +284,7 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw,p=p)
                 else:
                     jac=(<object>pData.JAC)(t,y,p)
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except Exception:
                 traceback.print_exc()
@@ -294,13 +295,13 @@ ELSE:
                     jac=(<object>pData.JAC)(t,y,sw=<list>pData.sw)
                 else:
                     jac=(<object>pData.JAC)(t,y)
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return CVDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
             except Exception:
                 traceback.print_exc()
                 return CVDLS_JACFUNC_UNRECVR
                 
-        if isinstance(jac, sparse.csc_matrix):
+        if isinstance(jac, sps.csc_matrix):
             for j in range(Neq):
                 col_i = DENSE_COL(Jacobian, j)
                 for i in range(jac.indptr[j], jac.indptr[j+1]):
@@ -321,9 +322,9 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
     Jacobian times vector function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y  = nv2arr(yv)
-    cdef N.ndarray v  = nv2arr(vv)
-    cdef N.ndarray fy = nv2arr(fyv)
+    cdef np.ndarray y  = nv2arr(yv)
+    cdef np.ndarray v  = nv2arr(vv)
+    cdef np.ndarray fy = nv2arr(fyv)
     cdef int i
     
     cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
@@ -340,7 +341,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except Exception:
             traceback.print_exc()
@@ -356,7 +357,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except Exception:
             traceback.print_exc()
@@ -370,8 +371,8 @@ IF SUNDIALS_VERSION >= (3,0,0):
         For information see CVODES documentation 4.6.9
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray y   = nv2arr(yy)
-        cdef N.ndarray fy  = nv2arr(fyy)
+        cdef np.ndarray y   = nv2arr(yy)
+        cdef np.ndarray fy  = nv2arr(fyy)
         cdef object ret
         
         try:
@@ -392,9 +393,9 @@ IF SUNDIALS_VERSION >= (3,0,0):
         For information see CVODES documentation 4.6.8
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray y   = nv2arr(yy)
-        cdef N.ndarray r   = nv2arr(rr)
-        cdef N.ndarray fy  = nv2arr(fyy)
+        cdef np.ndarray y   = nv2arr(yy)
+        cdef np.ndarray r   = nv2arr(rr)
+        cdef np.ndarray fy  = nv2arr(fyy)
         cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
         cdef int i
 
@@ -417,8 +418,8 @@ ELSE:
         For information see CVODES documentation 4.6.9
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray y   = nv2arr(yy)
-        cdef N.ndarray fy  = nv2arr(fyy)
+        cdef np.ndarray y   = nv2arr(yy)
+        cdef np.ndarray fy  = nv2arr(fyy)
         cdef object ret
         
         try:
@@ -439,9 +440,9 @@ ELSE:
         For information see CVODES documentation 4.6.8
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray y   = nv2arr(yy)
-        cdef N.ndarray r   = nv2arr(rr)
-        cdef N.ndarray fy  = nv2arr(fyy)
+        cdef np.ndarray y   = nv2arr(yy)
+        cdef np.ndarray r   = nv2arr(rr)
+        cdef np.ndarray fy  = nv2arr(fyy)
         cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
         cdef int i
 
@@ -461,9 +462,9 @@ cdef int cv_prec(realtype t, N Vector yv, N Vector fyv,
          void *problem_data, N Vector tmp):
     
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y = nv2arr(yv)
-    cdef N.ndarray fy = nv2arr(fyv)
-    cdef N.ndarray r = nv2arr(rv)
+    cdef np.ndarray y = nv2arr(yv)
+    cdef np.ndarray fy = nv2arr(fyv)
+    cdef np.ndarray r = nv2arr(rv)
     cdef int i
     
     cdef realtype* zptr=(<N_VectorContent_Serial>z.content).data
@@ -486,7 +487,7 @@ cdef int cv_root(realtype t, N_Vector yv, realtype *gout, void* problem_data) no
     Root-finding function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y = pData.work_y
+    cdef np.ndarray y = pData.work_y
     cdef int i
     
     nv2arr_inplace(yv, y)
@@ -511,9 +512,9 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
     residual function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
-    cdef N.ndarray y = pData.work_y
-    cdef N.ndarray yd = pData.work_yd
+    cdef np.ndarray[realtype, ndim=1, mode='c'] res #Used for return from the user function
+    cdef np.ndarray y = pData.work_y
+    cdef np.ndarray yd = pData.work_yd
     cdef realtype* resptr=(<N_VectorContent_Serial>residual.content).data
     cdef int i
     
@@ -533,7 +534,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
 
             return IDA_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except Exception:
             traceback.print_exc()
@@ -551,7 +552,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
                 resptr[i] = res[i]
             
             return IDA_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return IDA_REC_ERR # recoverable error (see Sundials description)
         except Exception:
             traceback.print_exc()
@@ -566,10 +567,10 @@ IF SUNDIALS_VERSION >= (3,0,0):
         """
         cdef SUNMatrixContent_Dense Jacobian = <SUNMatrixContent_Dense>Jac.content
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+        cdef np.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
         cdef realtype* col_i=Jacobian.cols[0]
-        cdef N.ndarray y = pData.work_y
-        cdef N.ndarray yd = pData.work_yd
+        cdef np.ndarray y = pData.work_y
+        cdef np.ndarray yd = pData.work_yd
         cdef int i,j, Neq = pData.dim
         
         nv2arr_inplace(yv, y)
@@ -588,7 +589,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     for j in range(Neq):
                         col_i[j] = jac[j,i]
                 return IDADLS_SUCCESS
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
             except Exception:
                 traceback.print_exc()
@@ -605,7 +606,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
                     for j in range(Neq):
                         col_i[j] = jac[j,i]
                 return IDADLS_SUCCESS
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
             except Exception:
                 traceback.print_exc()
@@ -618,10 +619,10 @@ ELSE:
         Jacobian function.
         """
         cdef ProblemData pData = <ProblemData>problem_data
-        cdef N.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
+        cdef np.ndarray[realtype, ndim=2, mode='c'] jac #Used for return from the user function
         cdef realtype* col_i=DENSE_COL(Jacobian,0)
-        cdef N.ndarray y = pData.work_y
-        cdef N.ndarray yd = pData.work_yd
+        cdef np.ndarray y = pData.work_y
+        cdef np.ndarray yd = pData.work_yd
         cdef int i,j
         
         nv2arr_inplace(yv, y)
@@ -640,7 +641,7 @@ ELSE:
                     for j in range(Neq):
                         col_i[j] = jac[j,i]
                 return IDADLS_SUCCESS
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
             except Exception:
                 traceback.print_exc()
@@ -657,7 +658,7 @@ ELSE:
                     for j in range(Neq):
                         col_i[j] = jac[j,i]
                 return IDADLS_SUCCESS
-            except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+            except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
                 return IDADLS_JACFUNC_RECVR #Recoverable Error
             except Exception:
                 traceback.print_exc()
@@ -670,9 +671,9 @@ cdef int ida_root(realtype t, N_Vector yv, N_Vector yvdot, realtype *gout, void*
     root function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
-    cdef N.ndarray y = pData.work_y
-    cdef N.ndarray yd = pData.work_yd
+    cdef np.ndarray[realtype, ndim=1, mode='c'] root #Used for return from the user function
+    cdef np.ndarray y = pData.work_y
+    cdef np.ndarray yd = pData.work_yd
     cdef int i
     
     nv2arr_inplace(yv, y)
@@ -699,10 +700,10 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
     Jacobian times vector function.
     """
     cdef ProblemData pData = <ProblemData>problem_data
-    cdef N.ndarray y  = nv2arr(yy)
-    cdef N.ndarray yd = nv2arr(yp)
-    cdef N.ndarray v  = nv2arr(vv)
-    cdef N.ndarray res = nv2arr(rr)
+    cdef np.ndarray y  = nv2arr(yy)
+    cdef np.ndarray yd = nv2arr(yp)
+    cdef np.ndarray v  = nv2arr(vv)
+    cdef np.ndarray res = nv2arr(rr)
     cdef int i
     
     cdef realtype* jacvptr=(<N_VectorContent_Serial>Jv.content).data
@@ -719,7 +720,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except Exception:
             traceback.print_exc()
@@ -735,7 +736,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
                 jacvptr[i] = jacv[i]
             
             return SPGMR_SUCCESS
-        except(N.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
+        except(np.linalg.LinAlgError,ZeroDivisionError,AssimuloRecoverableError):
             return SPGMR_ATIMES_FAIL_REC
         except Exception:
             traceback.print_exc()
@@ -794,11 +795,11 @@ cdef class ProblemData:
         int memSizeJac     #dim*dim*sizeof(realtype) used when copying memory
         int verbose        #Defines the verbosity
         object PREC_DATA   #Arbitrary data from the preconditioner
-        N.ndarray work_y
-        N.ndarray work_yd
-        N.ndarray work_ys
+        np.ndarray work_y
+        np.ndarray work_yd
+        np.ndarray work_ys
         
     cdef create_work_arrays(self):
-        self.work_y = N.empty(self.dim)
-        self.work_yd = N.empty(self.dim)
-        self.work_ys = N.empty((self.dim, self.dimSens))
+        self.work_y = np.empty(self.dim)
+        self.work_yd = np.empty(self.dim)
+        self.work_ys = np.empty((self.dim, self.dimSens))

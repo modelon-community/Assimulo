@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
@@ -36,10 +36,10 @@ def run_example(with_plots=True):
     def res(y):
         r1 = 2*y[0]+3*y[1]-6
         r2 = 4*y[0]+9*y[1]-15
-        return N.array([r1,r2])
+        return np.array([r1,r2])
         
     def jac(y):
-        return N.array([[2.,3.],[4.,9.]])
+        return np.array([[2.,3.],[4.,9.]])
     
     #Define an Assimulo problem
     alg_mod = Algebraic_Problem(res, y0=[0,0], jac=jac, name='KINSOL example with Jac')

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -50,7 +50,7 @@ def run_example(with_plots=True):
         yd_1 = p[0]*y[0]-p[1]*y[1]*y[2]-p[2]*y[1]**2 
         yd_2 = p[2]*y[1]**2
         
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
     
     #The initial conditions
     y0 = [1.0,0.0,0.0]          #Initial conditions for y
@@ -65,11 +65,11 @@ def run_example(with_plots=True):
     #Create an Assimulo explicit solver (CVode)
     exp_sim = CVode(exp_mod)
     
-    #Sets the solver paramters
+    #Sets the solver parameters
     exp_sim.iter = 'Newton'
     exp_sim.discr = 'BDF'
     exp_sim.rtol = 1.e-4
-    exp_sim.atol = N.array([1.0e-8, 1.0e-14, 1.0e-6])
+    exp_sim.atol = np.array([1.0e-8, 1.0e-14, 1.0e-6])
     exp_sim.sensmethod = 'SIMULTANEOUS' #Defines the sensitivity method used
     exp_sim.suppress_sens = False       #Dont suppress the sensitivity variables in the error test.
     exp_sim.report_continuously = True
@@ -79,12 +79,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t, y)
-        P.title(exp_mod.name)
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.show()  
+        import pylab as pl
+        pl.plot(t, y)
+        pl.title(exp_mod.name)
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.show()  
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)

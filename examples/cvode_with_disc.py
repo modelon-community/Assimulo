@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
@@ -50,7 +50,7 @@ class Extended_Problem(Explicit_Problem):
         yd_1 = 0.0
         yd_2 = 0.0
 
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
 
     #Sets a name to our function
     name = 'ODE with discontinuities and a function with consistency problem'
@@ -65,7 +65,7 @@ class Extended_Problem(Explicit_Problem):
         event_1 = -y[2] + 1.0
         event_2 = -t + 1.0
         
-        return N.array([event_0,event_1,event_2])
+        return np.array([event_0,event_1,event_2])
     
     
     #Responsible for handling the events.
@@ -148,12 +148,12 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y)
-        P.title(exp_mod.name)
-        P.ylabel('States')
-        P.xlabel('Time')
-        P.show()
+        import pylab as pl
+        pl.plot(t,y)
+        pl.title(exp_mod.name)
+        pl.ylabel('States')
+        pl.xlabel('Time')
+        pl.show()
     
     #Basic test
     nose.tools.assert_almost_equal(y[-1][0],8.0)
