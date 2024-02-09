@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import RungeKutta4
 from assimulo.problem import Explicit_Problem
 
@@ -49,7 +49,7 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(5, 100) #Simulate 5 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 0.02695179)
+    assert y[-1][0] == pytest.approx(0.02695179)
     
     #Plot
     if with_plots:

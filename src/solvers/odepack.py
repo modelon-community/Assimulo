@@ -657,7 +657,7 @@ class LSODAR(Explicit_ODE):
         return self.options["rkstarter"]
     
     def _set_rkstarter(self, rkstarter):
-        if not rkstarter in {1,2,3,4,5}:
+        if rkstarter not in {1,2,3,4,5}:
             raise ODEPACK_Exception("Must be a positive integer less than 6")
         self.options["rkstarter"] = rkstarter
     

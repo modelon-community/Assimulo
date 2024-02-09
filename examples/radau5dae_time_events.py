@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import Radau5DAE
 from assimulo.problem import Implicit_Problem
 
@@ -73,7 +73,7 @@ def run_example(with_plots=True):
     
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(np.abs(float(x1[-1]) - 1.14330840983), 1e-3)
+    assert np.abs(float(x1[-1]) - 1.14330840983) < 1e-3
 
     return imp_mod, imp_sim
 if __name__=='__main__':
