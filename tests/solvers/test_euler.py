@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
-from assimulo import testattr
+import pytest
 from assimulo.solvers.euler import ExplicitEuler, ImplicitEuler
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded
@@ -118,17 +117,18 @@ class Extended_Problem(Explicit_Problem):
 
 class Test_Explicit_Euler:
     
-    def setUp(self):
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup_class(cls):
         """
         This function sets up the test case.
         """
         f = lambda t,y: 1.0
         y0 = 1.0
         
-        self.problem = Explicit_Problem(f, y0)
-        self.simulator = ExplicitEuler(self.problem)
+        cls.problem = Explicit_Problem(f, y0)
+        cls.simulator = ExplicitEuler(cls.problem)
     
-    @testattr(stddist = True)
     def test_event_localizer(self):
         exp_mod = Extended_Problem() #Create the problem
 
@@ -141,19 +141,18 @@ class Test_Explicit_Euler:
         t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        nose.tools.assert_almost_equal(y[-1][0], 8.0)
-        nose.tools.assert_almost_equal(y[-1][1], 3.0)
-        nose.tools.assert_almost_equal(y[-1][2], 2.0)
+        assert y[-1][0] == pytest.approx(8.0)
+        assert y[-1][1] == pytest.approx(3.0)
+        assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_h(self):
         
-        nose.tools.assert_almost_equal(self.simulator.h, 0.01)
+        assert self.simulator.h == pytest.approx(0.01)
         self.simulator.h = 1.0
-        nose.tools.assert_almost_equal(self.simulator.h, 1.0)
-        nose.tools.assert_raises(AssimuloException, self.simulator._set_h, [1])
+        assert self.simulator.h == pytest.approx(1.0)
+        with pytest.raises(AssimuloException):
+            self.simulator._set_h([1])
         
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: np.array(1.0)
         global tnext
@@ -175,9 +174,9 @@ class Test_Explicit_Euler:
         def handle_event(solver, event_info):
             solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
+            assert solver.t == pytest.approx(tnext)
+            assert event_info[0] == []
+            assert event_info[1]
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -187,19 +186,17 @@ class Test_Explicit_Euler:
         exp_sim = ExplicitEuler(exp_mod)
         exp_sim(5.,100)
         
-        nose.tools.assert_equal(nevent, 5)
+        assert nevent == 5
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of using the normal mode.
         """
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_step(self):
         """
         This tests the functionality of using one step mode.
@@ -209,10 +206,9 @@ class Test_Explicit_Euler:
         self.simulator.h = 0.1
         self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
         
-    @testattr(stddist = True)
     def test_exception(self):
         """
         This tests that exceptions are no caught when evaluating the RHS in ExpEuler.
@@ -223,9 +219,9 @@ class Test_Explicit_Euler:
         prob = Explicit_Problem(f,0.0)
         sim = ExplicitEuler(prob)
         
-        nose.tools.assert_raises(NotImplementedError, sim.simulate, 1.0)
+        with pytest.raises(NotImplementedError):
+            sim.simulate(1.0)
 
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -242,11 +238,10 @@ class Test_Explicit_Euler:
         mod.handle_event = handle_event
         
         sim = ExplicitEuler(mod)
-        nose.tools.assert_true(sim.sw[0])
+        assert sim.sw[0]
         sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
+        assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -262,32 +257,32 @@ class Test_Explicit_Euler:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
     
 class Test_Implicit_Euler:
     
-    def setUp(self):
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup_class(cls):
         """
         This function sets up the test case.
         """
         f = lambda t,y: 1.0
         y0 = 1.0
         
-        self.problem = Explicit_Problem(f, y0)
-        self.simulator = ImplicitEuler(self.problem)
+        cls.problem = Explicit_Problem(f, y0)
+        cls.simulator = ImplicitEuler(cls.problem)
     
-    @testattr(stddist = True)
     def test_reset_statistics(self):
-        nose.tools.assert_equal(self.simulator.statistics["nsteps"], 0)
+        assert self.simulator.statistics["nsteps"] == 0
         
         self.simulator.simulate(5)
         nsteps = self.simulator.statistics["nsteps"]
         self.simulator.simulate(6)
         
-        nose.tools.assert_less(self.simulator.statistics["nsteps"], nsteps)
+        assert self.simulator.statistics["nsteps"] < nsteps
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         """
         This tests the functionality of the property usejac.
@@ -301,25 +296,24 @@ class Test_Implicit_Euler:
         exp_sim = ImplicitEuler(exp_mod)
         exp_sim.simulate(5.,100)
         
-        nose.tools.assert_equal(exp_sim.statistics["nfcnjacs"], 0)
-        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
+        assert exp_sim.statistics["nfcnjacs"] == 0
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, abs = 1e-4)
         
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
-        nose.tools.assert_almost_equal(exp_sim.y_sol[-1][0], -121.995500, 4)
-        nose.tools.assert_greater(exp_sim.statistics["nfcnjacs"], 0)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, abs = 1e-4)
+        assert exp_sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_h(self):
         
-        nose.tools.assert_almost_equal(self.simulator.h, 0.01)
+        assert self.simulator.h == pytest.approx(0.01)
         self.simulator.h = 1.0
-        nose.tools.assert_almost_equal(self.simulator.h, 1.0)
-        nose.tools.assert_raises(AssimuloException, self.simulator._set_h, [1])
+        assert self.simulator.h == pytest.approx(1.0)
+        with pytest.raises(AssimuloException):
+            self.simulator._set_h([1])
         
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: np.array(1.0)
         global tnext
@@ -341,9 +335,9 @@ class Test_Implicit_Euler:
         def handle_event(solver, event_info):
             solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
+            assert solver.t == pytest.approx(tnext)
+            assert event_info[0] == []
+            assert event_info[1]
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -353,19 +347,17 @@ class Test_Implicit_Euler:
         exp_sim = ImplicitEuler(exp_mod)
         exp_sim(5.,100)
         
-        nose.tools.assert_equal(nevent, 5)
+        assert nevent == 5
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of using the normal mode.
         """
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_step(self):
         """
         This tests the functionality of using one step mode.
@@ -375,10 +367,9 @@ class Test_Implicit_Euler:
         self.simulator.h = 0.1
         self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_stiff_problem(self):
         f = lambda t,y: -15.0*y
         y0 = 1.0
@@ -391,9 +382,8 @@ class Test_Implicit_Euler:
         y_correct = lambda t: np.exp(-15*t)
         
         abs_err = np.abs(y[:,0]-y_correct(np.array(t)))
-        nose.tools.assert_less(np.max(abs_err), 0.1)
+        assert np.max(abs_err) < 0.1
         
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -410,11 +400,10 @@ class Test_Implicit_Euler:
         mod.handle_event = handle_event
         
         sim = ImplicitEuler(mod)
-        nose.tools.assert_true(sim.sw[0])
+        assert sim.sw[0]
         sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
+        assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -430,5 +419,5 @@ class Test_Implicit_Euler:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)

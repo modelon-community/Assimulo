@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 import numpy as np
 from assimulo.special_systems import Mechanical_System
 from assimulo.solvers import IDA, ODASSL
@@ -60,7 +60,7 @@ def run_example(index="ind1", with_plots=True, with_test=False):
     print(final_residual, 'Norm:  ', np.linalg.norm(final_residual))
     
     if with_test:
-        nose.tools.assert_less(np.linalg.norm(final_residual), 1.5e-1)
+        assert np.linalg.norm(final_residual) < 1.5e-1
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
     return my_pend, dae_pend

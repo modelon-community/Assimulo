@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -77,8 +77,8 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],-121.75000000,4)
-    nose.tools.assert_almost_equal(y[-1][1],-49.100000000)
+    assert y[-1][0] == pytest.approx(-121.75000000, abs = 1e-4)
+    assert y[-1][1] == pytest.approx(-49.100000000)
     
     #Plot
     if with_plots:

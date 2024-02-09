@@ -15,19 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-def testattr(**kwargs):
-    """Add attributes to a test function/method/class.
-    
-    This function is needed to be able to add
-      @attr(slow = True)
-    for functions.
-    
-    """
-    def wrap(func):
-        func.__dict__.update(kwargs)
-        return func
-    return wrap
-
 try:
     import os
     curr_dir = os.path.dirname(os.path.abspath(__file__))

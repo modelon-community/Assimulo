@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import ExplicitEuler
 from assimulo.problem import Explicit_Problem
 
@@ -61,7 +61,7 @@ def run_example(with_plots=True):
         pl.show()
         
     #Basic test
-    nose.tools.assert_almost_equal(y2[-1][0], 0.02628193)
+    assert y2[-1][0] == pytest.approx(0.02628193)
     
     return exp_mod, exp_sim
 

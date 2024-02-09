@@ -27,13 +27,12 @@ cdef class cProblem:
     
     name = "---"
     
-    def __init__(self,  y0 = None, double t0 = 0.0, p0 = None, sw0 = None, name = None):
-        
-        if not y0  is None:
-            self.y0  = set_type_shape_array(y0)
-        if not p0  is None:
+    def __init__(self, y0 = None, double t0 = 0.0, p0 = None, sw0 = None, name = None):
+        if y0 is not None:
+            self.y0 = set_type_shape_array(y0)
+        if p0 is not None:
             self.p0 = set_type_shape_array(p0) 
-        if not sw0 is None:
+        if sw0 is not None:
             self.sw0 = set_type_shape_array(sw0, bool)
         if name:
             self.name = name
@@ -75,8 +74,8 @@ cdef class cProblem:
 
 cdef class cImplicit_Problem(cProblem):
     
-    def __init__(self, object res=None, y0=None, yd0=None,double t0=0.0, 
-                                                          p0=None, sw0=None, name = None):
+    def __init__(self, object res=None, y0 = None, yd0 = None, double t0 = 0.0, 
+                 p0 = None, sw0 = None, name = None):
         cProblem.__init__(self, y0, t0, p0, sw0, name)
         if res is not None:
             self.res = res
@@ -166,7 +165,7 @@ cdef class cExplicit_Problem(cProblem):
         return ID_OK
         
     cpdef np.ndarray res(self, t, y, yd, sw=None):
-        if sw == None:
+        if sw is None:
             return yd-self.rhs(t,y)
         else:
             return yd-self.rhs(t, y, sw)

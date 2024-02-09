@@ -117,7 +117,7 @@ cdef int callback_jac_sparse(int n, double x, double *y, int *nnz,
     if ret[0]: # non-zero returns from Python; recoverable or non-recoverable
         return ret[0]
 
-    if not isinstance(J, sps.csc.csc_matrix):
+    if not isinstance(J, sps.csc_matrix):
         return RADAU_ERROR_CALLBACK_JAC_FORMAT
 
     if J.nnz > nnz[0]:
