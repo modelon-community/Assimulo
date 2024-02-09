@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 import numpy as np
 import scipy.sparse as sps
 from assimulo.solvers import Radau5ODE
@@ -89,7 +89,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0], 0.9851, 3)
+    assert y[-1][0] == pytest.approx(0.9851, rel = 1e-3)
     
     return exp_mod, exp_sim
 

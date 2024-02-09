@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 import numpy as np
 from assimulo import testattr
 from assimulo.problem import Explicit_Problem, Implicit_Problem
@@ -33,14 +33,15 @@ def handle_event(solver, event_info):
     pass
 
 class Test_Solvers:
-    def setUp(self):
-        self.problem = Implicit_Problem(res, [1.0], [-1.0])
-        self.problem.state_events = state_events
-        self.problem.handle_event = handle_event
+    @classmethod
+    def setup_class(cls):
+        cls.problem = Implicit_Problem(res, [1.0], [-1.0])
+        cls.problem.state_events = state_events
+        cls.problem.handle_event = handle_event
 
-        self.eproblem = Explicit_Problem(rhs, [1.0])
-        self.eproblem.state_events = estate_events
-        self.eproblem.handle_event = handle_event
+        cls.eproblem = Explicit_Problem(rhs, [1.0])
+        cls.eproblem.state_events = estate_events
+        cls.eproblem.handle_event = handle_event
     
     @testattr(stddist = True)
     def test_radau5dae_state_events(self):
@@ -48,7 +49,7 @@ class Test_Solvers:
         
         t,y,yd = solver.simulate(2,33)
         
-        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)
         
     @testattr(stddist = True)
     def test_dopri5_state_events(self):
@@ -56,7 +57,7 @@ class Test_Solvers:
         
         t,y = solver.simulate(2,33)
         
-        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)
         
     @testattr(stddist = True)
     def test_rodasode_state_events(self):
@@ -64,4 +65,4 @@ class Test_Solvers:
         
         t,y = solver.simulate(2,33)
         
-        nose.tools.assert_almost_equal(float(y[-1]), 0.135, 3)
+        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)

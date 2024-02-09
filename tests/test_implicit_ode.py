@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 from assimulo import testattr
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.problem import Implicit_Problem
@@ -29,16 +29,16 @@ class Test_Implicit_ODE:
         prob = Implicit_Problem(res, 0.0, 0.0)
         solv = Implicit_ODE(prob)
 
-        nose.tools.assert_equal(solv.get_elapsed_step_time(), -1.0)
+        assert solv.get_elapsed_step_time() == -1.0
         
     @testattr(stddist = True)
     def test_problem_name_attribute(self):
         res = lambda t,y,yd: y
         
         prob = Implicit_Problem(res, 0.0, 0.0)
-        nose.tools.assert_equal(prob.name, "---")
+        assert prob.name == "---"
         prob = Implicit_Problem(res, 0.0, 0.0, name="Test")
-        nose.tools.assert_equal(prob.name, "Test")
+        assert prob.name == "Test"
     
     @testattr(stddist = True)
     def test_re_init(self):
@@ -48,12 +48,12 @@ class Test_Implicit_ODE:
         prob = Implicit_Problem(res, 0.0, 0.0)
         solv = Implicit_ODE(prob)
         
-        nose.tools.assert_equal(solv.t, 0.0)
-        nose.tools.assert_equal(solv.y[0], 0.0)
-        nose.tools.assert_equal(solv.yd[0], 0.0)
+        assert solv.t == 0.0
+        assert solv.y[0] == 0.0
+        assert solv.yd[0] == 0.0
         
         solv.re_init(1.0, 2.0, 3.0)
         
-        nose.tools.assert_equal(solv.t, 1.0)
-        nose.tools.assert_equal(solv.y[0], 2.0)
-        nose.tools.assert_equal(solv.yd[0], 3.0)
+        assert solv.t == 1.0
+        assert solv.y[0] == 2.0
+        assert solv.yd[0] == 3.0

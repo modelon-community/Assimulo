@@ -20,7 +20,7 @@ Example by Johannes Herold
 """
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
@@ -107,8 +107,8 @@ def run_example(with_plots=True):
         exp_sim.plot()
     
     #Basic verification
-    nose.tools.assert_almost_equal(y[-1,0],3.11178295,4)
-    nose.tools.assert_almost_equal(y[-1,1],3.19318992,4)
+    assert_almost_equal(y[-1,0],3.11178295,4)
+    assert_almost_equal(y[-1,1],3.19318992,4)
 
     return exp_mod, exp_sim
     

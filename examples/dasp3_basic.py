@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 
 try:
     from assimulo.solvers import DASP3ODE
@@ -100,7 +100,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1,0], 10.860063849896818, 3)
+    assert_almost_equal(y[-1,0], 10.860063849896818, 3)
     
     return exp_mod, exp_sim
 

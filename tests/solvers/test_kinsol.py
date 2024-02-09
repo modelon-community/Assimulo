@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 from assimulo import testattr
 from assimulo.solvers.kinsol import KINSOL
 from assimulo.problem import Algebraic_Problem
@@ -26,9 +26,9 @@ class Test_KINSOL:
     def test_problem_name_attribute(self):
         res = lambda y: y
         model  = Algebraic_Problem(res, 1)
-        nose.tools.assert_equal(model.name, "---")
+        assert model.name == "---"
         model  = Algebraic_Problem(res, 1, name="Test")
-        nose.tools.assert_equal(model.name, "Test")
+        assert model.name == "Test"
         
     @testattr(stddist = True)
     def test_properties_simple(self):
@@ -37,19 +37,19 @@ class Test_KINSOL:
         solver = KINSOL(model)
         
         solver.max_iter = 150
-        nose.tools.assert_equal(solver.max_iter, 150)
+        assert solver.max_iter == 150
         
         solver.no_initial_setup = True
-        nose.tools.assert_true(solver.no_initial_setup)
+        assert solver.no_initial_setup
         
         solver.max_solves_between_setup_calls = 15
-        nose.tools.assert_equal(solver.max_solves_between_setup_calls, 15)
+        assert solver.max_solves_between_setup_calls == 15
         
         solver.max_newton_step = 1.0
-        nose.tools.assert_equal(solver.max_newton_step, 1.0)
+        assert solver.max_newton_step == 1.0
         
         solver.no_min_epsilon = True
-        nose.tools.assert_true(solver.no_min_epsilon)
+        assert solver.no_min_epsilon
         
         solver.max_beta_fails = 15
-        nose.tools.assert_equal(solver.max_beta_fails, 15)
+        assert solver.max_beta_fails == 15

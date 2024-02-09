@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 from assimulo import testattr
 from assimulo.solvers.runge_kutta import Dopri5, RungeKutta34, RungeKutta4
 from assimulo.problem import Explicit_Problem
@@ -26,15 +26,16 @@ float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_Dopri5:
     
-    def setUp(self):
+    @classmethod
+    def setup_class(cls):
         """
         This function sets up the test case.
         """
         f = lambda t,y:1.0
         y0 = 1
         
-        self.problem = Explicit_Problem(f,y0)
-        self.simulator = Dopri5(self.problem)
+        cls.problem = Explicit_Problem(f,y0)
+        cls.simulator = Dopri5(cls.problem)
     
     @testattr(stddist = True)
     def test_integrator(self):
@@ -43,8 +44,8 @@ class Test_Dopri5:
         """
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -68,9 +69,9 @@ class Test_Dopri5:
         def handle_event(solver, event_info):
             solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
+            assert solver.t == pytest.approx(tnext)
+            assert event_info[0] == []
+            assert event_info[1]
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -80,7 +81,7 @@ class Test_Dopri5:
         exp_sim = Dopri5(exp_mod)
         exp_sim(5.,100)
         
-        nose.tools.assert_equal(nevent, 5)
+        assert nevent == 5
     
     def test_switches(self):
         """
@@ -98,9 +99,9 @@ class Test_Dopri5:
         mod.handle_event = handle_event
         
         sim = Dopri5(mod)
-        nose.tools.assert_true(sim.sw[0])
+        assert sim.sw[0]
         sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
+        assert not sim.sw[0]
 
     @testattr(stddist = True)
     def test_time_limit(self):
@@ -118,20 +119,21 @@ class Test_Dopri5:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
 
 class Test_RungeKutta34:
     
-    def setUp(self):
+    @classmethod
+    def setup_class(cls):
         """
         This function sets up the test case.
         """
         f = lambda t,y:1.0
         y0 = 1
         
-        self.problem = Explicit_Problem(f,y0)
-        self.simulator = RungeKutta34(self.problem)
+        cls.problem = Explicit_Problem(f,y0)
+        cls.simulator = RungeKutta34(cls.problem)
     
     @testattr(stddist = True)
     def test_integrator(self):
@@ -140,8 +142,8 @@ class Test_RungeKutta34:
         """
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1] == pytest.approx(2.0)
 
     @testattr(stddist = True)  
     def test_step(self):
@@ -153,8 +155,8 @@ class Test_RungeKutta34:
         self.simulator.h = 0.1
         self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(self.simulator.y_sol[-1], 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert self.simulator.y_sol[-1] == pytest.approx(2.0)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -178,9 +180,9 @@ class Test_RungeKutta34:
         def handle_event(solver, event_info):
             solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
+            assert solver.t == pytest.approx(tnext)
+            assert event_info[0] == []
+            assert event_info[1]
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -190,26 +192,30 @@ class Test_RungeKutta34:
         exp_sim = RungeKutta34(exp_mod)
         exp_sim(5.,100)
         
-        nose.tools.assert_equal(nevent, 5)
+        assert nevent == 5
     
     @testattr(stddist = True)    
     def test_tolerance(self):
         """
         This tests the functionality of the tolerances.
         """
-        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, 'hej')
-        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, 'hej')
-        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_rtol, -1)
+        with pytest.raises(Explicit_ODE_Exception):
+            self.simulator._set_rtol('hej')
+        with pytest.raises(Explicit_ODE_Exception):
+            self.simulator._set_atol('hej')
+        with pytest.raises(Explicit_ODE_Exception):
+            self.simulator._set_rtol(-1)
         
         self.simulator.rtol = 1.0
-        nose.tools.assert_equal(self.simulator._get_rtol(), 1.0)
+        assert self.simulator._get_rtol() == 1.0
         self.simulator.rtol = 1
-        nose.tools.assert_equal(self.simulator._get_rtol(), 1)
+        assert self.simulator._get_rtol() == 1
         
         self.simulator.atol = 1.0
-        nose.tools.assert_equal(self.simulator.atol, 1.0)
+        assert self.simulator.atol == 1.0
         
-        nose.tools.assert_raises(Explicit_ODE_Exception, self.simulator._set_atol, [1.0,1.0])
+        with pytest.raises(Explicit_ODE_Exception):
+            self.simulator._set_atol([1.0,1.0])
 
 
     @testattr(stddist = True)
@@ -229,9 +235,9 @@ class Test_RungeKutta34:
         mod.handle_event = handle_event
         
         sim = RungeKutta34(mod)
-        nose.tools.assert_true(sim.sw[0])
+        assert sim.sw[0]
         sim.simulate(3)
-        nose.tools.assert_false(sim.sw[0])
+        assert not sim.sw[0]
 
     @testattr(stddist = True)
     def test_time_limit(self):
@@ -249,20 +255,21 @@ class Test_RungeKutta34:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
 
 class Test_RungeKutta4:
     
-    def setUp(self):
+    @classmethod
+    def setup_class(cls):
         """
         This function sets up the test case.
         """ 
         f = lambda t,y:1.0
         y0 = 1
         
-        self.problem = Explicit_Problem(f,y0)
-        self.simulator = RungeKutta4(self.problem)
+        cls.problem = Explicit_Problem(f,y0)
+        cls.simulator = RungeKutta4(cls.problem)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -286,9 +293,9 @@ class Test_RungeKutta4:
         def handle_event(solver, event_info):
             solver.y+= 1.0
             global tnext
-            nose.tools.assert_almost_equal(solver.t, tnext)
-            nose.tools.assert_equal(event_info[0], [])
-            nose.tools.assert_true(event_info[1])
+            assert solver.t == pytest.approx(tnext)
+            assert event_info[0] == []
+            assert event_info[1]
     
         exp_mod = Explicit_Problem(f,0.0)
         exp_mod.time_events = time_events
@@ -298,14 +305,14 @@ class Test_RungeKutta4:
         exp_sim = RungeKutta4(exp_mod)
         exp_sim(5.,100)
         
-        nose.tools.assert_equal(nevent, 5)
+        assert nevent == 5
     
     @testattr(stddist = True)
     def test_integrate(self):
         values = self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
     @testattr(stddist = True)    
     def test_step(self):
@@ -314,5 +321,5 @@ class Test_RungeKutta4:
         self.simulator.h = 0.1
         self.simulator.simulate(1)
         
-        nose.tools.assert_almost_equal(self.simulator.t_sol[-1], 1.0)
-        nose.tools.assert_almost_equal(float(self.simulator.y_sol[-1]), 2.0)
+        assert self.simulator.t_sol[-1] == pytest.approx(1.0)
+        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)

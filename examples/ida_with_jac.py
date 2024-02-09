@@ -18,7 +18,7 @@
 import numpy as np
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
-import nose
+import pytest
 
 def run_example(with_plots=True):
     r"""
@@ -107,10 +107,10 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],0.9401995, places=4)
-    nose.tools.assert_almost_equal(y[-1][1],-0.34095124, places=4)
-    nose.tools.assert_almost_equal(yd[-1][0], -0.88198927, places=4)
-    nose.tools.assert_almost_equal(yd[-1][1], -2.43227069, places=4)
+    assert_almost_equal(y[-1][0],0.9401995, places=4)
+    assert_almost_equal(y[-1][1],-0.34095124, places=4)
+    assert yd[-1][0] == pytest.approx(-0.88198927, rel = 1e-4)
+    assert yd[-1][1] == pytest.approx(-2.43227069, rel = 1e-4)
     
     #Plot
     if with_plots:

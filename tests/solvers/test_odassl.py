@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
+import pytest
 from assimulo import testattr
 from assimulo.solvers.odassl import ODASSL
 from assimulo.problem import Implicit_Problem
@@ -24,7 +24,8 @@ import numpy as np
 
 class Test_ODASSL:
     
-    def setUp(self):
+    @classmethod
+    def setup_class(cls):
         """
         This function sets up the test case.
         """
@@ -32,8 +33,8 @@ class Test_ODASSL:
         y0 = [1.0, 1.0, 1.0]
         yd0 = [-1.0, -1.0, -1.0]
         
-        self.problem = Overdetermined_Problem(f,y0, yd0)
-        self.simulator = ODASSL(self.problem)
+        cls.problem = Overdetermined_Problem(f,y0, yd0)
+        cls.simulator = ODASSL(cls.problem)
     
     @testattr(stddist = True)
     def test_overdetermined(self):
