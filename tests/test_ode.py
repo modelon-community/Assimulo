@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.ode import ODE, NORMAL
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException
@@ -28,7 +27,6 @@ class Test_ODE:
         cls.problem = Explicit_Problem(y0=4.0)
         cls.simulator = ODE(cls.problem)
     
-    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -36,7 +34,6 @@ class Test_ODE:
         assert self.simulator.verbosity == NORMAL
         assert not self.simulator.report_continuously
     
-    @testattr(stddist = True)
     def test_verbosity(self):
         """
         This tests the functionality of the property verbosity.
@@ -56,7 +53,6 @@ class Test_ODE:
         assert self.simulator.verbosity == 4
         assert self.simulator.options["verbosity"] == 4
         
-    @testattr(stddist = True)    
     def test_report_continuously(self):
         """
         This tests the functionality of the property report_continuously.

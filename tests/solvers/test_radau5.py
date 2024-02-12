@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.radau5 import Radau5DAE, _Radau5DAE
 from assimulo.solvers.radau5 import Radau5ODE, _Radau5ODE
 from assimulo.solvers.radau5 import Radau5Error
@@ -214,7 +213,6 @@ class Test_Explicit_Radau5_Py:
         cls.sim.inith = 1.e-4 #Initial step-size
         cls.sim.usejac = False
     
-    @testattr(stddist = True)
     def test_event_localizer(self):
         pass
     #     exp_mod = Extended_Problem() #Create the problem
@@ -232,7 +230,6 @@ class Test_Explicit_Radau5_Py:
     #     assert y[-1][1] == pytest.approx(3.0)
     #     assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -268,7 +265,6 @@ class Test_Explicit_Radau5_Py:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_init(self):
         
         #Test both y0 in problem and not.
@@ -276,7 +272,6 @@ class Test_Explicit_Radau5_Py:
         
         assert sim._leny == 2
     
-    @testattr(stddist = True)
     def test_collocation_polynomial(self):
         """
         This tests the functionality of the collocation polynomial (communication points)
@@ -305,7 +300,6 @@ class Test_Explicit_Radau5_Py:
         assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
         assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
-    @testattr(stddist = True)
     def test_simulation(self):
         """
         This tests the Radau5 with a simulation of the van der Pol problem.
@@ -316,7 +310,6 @@ class Test_Explicit_Radau5_Py:
 
         assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
@@ -332,7 +325,6 @@ class Test_Explicit_Radau5_Py:
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
     
-    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the usejac property.
@@ -345,7 +337,6 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -355,7 +346,6 @@ class Test_Explicit_Radau5_Py:
 
         assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
     
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         This tests the maximum step length.
@@ -364,7 +354,6 @@ class Test_Explicit_Radau5_Py:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
         
-    @testattr(stddist = True)
     def test_newt(self):
         """
         This tests the maximum number of newton iterations.
@@ -374,7 +363,6 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.statistics["nnfails"] == 1
     
-    @testattr(stddist = True)
     def test_safe(self):
         """
         This tests the safety factor in the step-size prediction.
@@ -383,7 +371,6 @@ class Test_Explicit_Radau5_Py:
         self.sim.simulate(1.0)
         assert self.sim.statistics["nsteps"] < 150
         
-    @testattr(stddist = True)
     def test_reset_statistics(self):
         """
         Tests that the statistics are reset.
@@ -396,7 +383,6 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.statistics["nsteps"] < steps*1.5
         
-    @testattr(stddist = True)
     def test_atol(self):
         """
         This test the absolute tolerance.
@@ -490,7 +476,6 @@ class Test_Explicit_Radau5:
         cls.sim.inith = 1.e-4 #Initial step-size
         cls.sim.usejac = False
 
-    @testattr(stddist = True)
     def test_event_localizer(self):
         exp_mod = Extended_Problem() #Create the problem
 
@@ -507,7 +492,6 @@ class Test_Explicit_Radau5:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = Radau5ODE(self.mod)
         
@@ -521,7 +505,6 @@ class Test_Explicit_Radau5:
         
         assert sim.statistics["nfcnjacs"] == 0
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -557,7 +540,6 @@ class Test_Explicit_Radau5:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_init(self):
         
         #Test both y0 in problem and not.
@@ -565,7 +547,6 @@ class Test_Explicit_Radau5:
         
         assert sim._leny == 2
     
-    @testattr(stddist = True)
     def test_collocation_polynomial(self):
         """
         This tests the functionality of the collocation polynomial (communication points)
@@ -593,7 +574,6 @@ class Test_Explicit_Radau5:
         assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
         assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
-    @testattr(stddist = True)
     def test_simulation(self):
         """
         This tests the Radau5 with a simulation of the van der pol problem.
@@ -604,7 +584,6 @@ class Test_Explicit_Radau5:
 
         assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
@@ -620,7 +599,6 @@ class Test_Explicit_Radau5:
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
     
-    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the usejac property.
@@ -633,7 +611,6 @@ class Test_Explicit_Radau5:
         
         assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         """
         This tests the functionality of the property usejac.
@@ -646,7 +623,6 @@ class Test_Explicit_Radau5:
         
         assert self.sim_sp.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
-    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -656,7 +632,6 @@ class Test_Explicit_Radau5:
 
         assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
     
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         This tests the maximum step length.
@@ -665,7 +640,6 @@ class Test_Explicit_Radau5:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
         
-    @testattr(stddist = True)
     def test_newt(self):
         """
         This tests the maximum number of newton iterations.
@@ -677,7 +651,6 @@ class Test_Explicit_Radau5:
         # self.sim.simulate(1.0)
         # assert self.sim.statistics["nniterfail"] == 1
     
-    @testattr(stddist = True)
     def test_safe(self):
         """
         This tests the safety factor in the step-size prediction.
@@ -686,7 +659,6 @@ class Test_Explicit_Radau5:
         self.sim.simulate(1.0)
         assert self.sim.statistics["nsteps"] < 150
         
-    @testattr(stddist = True)
     def test_reset_statistics(self):
         """
         Tests that the statistics are reset.
@@ -699,7 +671,6 @@ class Test_Explicit_Radau5:
         
         assert self.sim.statistics["nsteps"] < steps*1.5
         
-    @testattr(stddist = True)
     def test_weighted_error(self):
         
         def handle_result(solver, t, y):
@@ -713,7 +684,6 @@ class Test_Explicit_Radau5:
         sim.get_weighted_local_errors()
         sim.simulate(1)
         
-    @testattr(stddist = True)
     def test_atol(self):
         """
         This test the absolute tolerance.
@@ -743,7 +713,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.atol = [1e-6,1e-6,1e-6]
         
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -764,7 +733,6 @@ class Test_Explicit_Radau5:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_nmax_steps(self):
         """
         This tests the error upon exceeding a set maximum number of steps
@@ -778,7 +746,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_step_size_too_small(self):
         """
         This tests the error for too small step-sizes
@@ -795,7 +762,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1. + 1.e-16)
 
-    @testattr(stddist = True)
     def test_repeated_unexpected_step_rejections(self):
         """
         This tests the error for repeated unexpected step rejections
@@ -810,7 +776,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_sparse_solver_jac_disabled(self):
         """
         This tests the trying to simulate using the sparse linear solver, with no analytical jacobian provided.
@@ -826,7 +791,6 @@ class Test_Explicit_Radau5:
         sim.simulate(1.)
         assert sim.linear_solver == 'DENSE'
 
-    @testattr(stddist = True)
     def test_solver_no_jac(self):
         """
         This tests the error when trying to simulate using an analytical jacobian, with none provided
@@ -842,7 +806,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_solver_sparse_jac_wrong_format(self):
         """
         This tests the error when using a sparse jacobian of the wrong format
@@ -862,7 +825,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_solver_sparse_jac_nnz_too_small(self):
         """
         This tests the error when using a sparse jacobian with nnz larger than specified
@@ -883,7 +845,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_solver_sparse_jac_nnz_zero(self):
         """
         This tests that using a sparse jacobian with nnz = 0 is valid.
@@ -902,7 +863,6 @@ class Test_Explicit_Radau5:
 
         sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_sparse_solver_no_nnz(self):
         """
         This tests the error when trying to simulate using the sparse linear solver, without specifying the number of non-zero elements
@@ -921,7 +881,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz_type(self):
         """
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; wrong type.
@@ -943,7 +902,6 @@ class Test_Explicit_Radau5:
             with pytest.raises(Radau_Exception, match = err_msg.format(nnz)):
                 sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz_negative(self):
         """
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; negative.
@@ -965,7 +923,6 @@ class Test_Explicit_Radau5:
             with pytest.raises(Radau_Exception, match = err_msg.format(nnz)):
                 sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_sparse_solver_invalid_nnz_too_large(self):
         """
         This tests the error when trying to simulate using the sparse linear solver with invalid inputs for nnz; too_large.
@@ -1015,7 +972,6 @@ class Test_Explicit_Radau5:
 
             assert sim.simulate(1.), f"Jacobian #{i} failed: {jac(0, 0)}"
 
-    @testattr(stddist = True)
     def test_linear_solver(self):
         """
         This tests the functionality of the property linear_solver.
@@ -1039,7 +995,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg.format('0', "<class 'int'>")):
             self.sim.linear_solver = 0
 
-    @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
         """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
 
@@ -1053,7 +1008,6 @@ class Test_Explicit_Radau5:
         except KeyboardInterrupt as e:
             assert str(e) == "f"
 
-    @testattr(stddist = True)
     def test_keyboard_interrupt_jac(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
 
@@ -1070,7 +1024,6 @@ class Test_Explicit_Radau5:
         except KeyboardInterrupt as e:
             assert str(e) == "jac"
 
-    @testattr(stddist = True)
     def test_keyboard_interrupt_jac_sparse(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
 
@@ -1089,7 +1042,6 @@ class Test_Explicit_Radau5:
         except KeyboardInterrupt as e:
             assert str(e) == "jac"
 
-    @testattr(stddist = True)
     def test_keyboard_interrupt_event_indicator(self):
         """Test that KeyboardInterrupts in event indicator function resp. solout callback correctly terminate solution."""
 
@@ -1106,7 +1058,6 @@ class Test_Explicit_Radau5:
         except KeyboardInterrupt as e:
             assert str(e) == "event"
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -1125,7 +1076,6 @@ class Test_Explicit_Radau5:
         with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
     
-    @testattr(stddist = True)
     def test_statistics_stored(self):
         """
         Test that the statistics is stored even if there is a TimeLimit exception
@@ -1192,14 +1142,12 @@ class Test_Implicit_Radau5:
         cls.sim.rtol = 1e-4 #Default 1e-6
         cls.sim.inith = 1.e-4 #Initial step-size
 
-    @testattr(stddist = True)
     def test_implementation_get(self):
         """
             Test getting of implementation property of Radau5DAE.
         """
         assert self.sim.implementation == 'f'
 
-    @testattr(stddist = True)
     def test_implementation_set(self):
         """
             Test setting of implementation property of Radau5DAE.
@@ -1208,14 +1156,12 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.implementation = 'c'
 
-    @testattr(stddist = True)
     def test_linear_solver_get(self):
         """
             Test getting of linear_solver property of Radau5DAE.
         """
         assert self.sim.linear_solver == 'DENSE'
 
-    @testattr(stddist = True)
     def test_linear_solver_set(self):
         """
             Test setting of linear_solver property of Radau5DAE.
@@ -1224,7 +1170,6 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.linear_solver = 'SPARSE'
     
-    @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = Radau5DAE(self.mod)
         
@@ -1233,7 +1178,6 @@ class Test_Implicit_Radau5:
         
         assert sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_simulate_explicit(self):
         """
         Test a simulation of an explicit problem using Radau5DAE.
@@ -1250,7 +1194,6 @@ class Test_Implicit_Radau5:
         
         assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y,yd: y-yd
         global tnext
@@ -1287,7 +1230,6 @@ class Test_Implicit_Radau5:
 
         assert nevent == 5
 
-    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of Radau5 Implicit Init.
@@ -1298,7 +1240,6 @@ class Test_Implicit_Radau5:
         
         assert sim._leny == 2
     
-    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -1307,7 +1248,6 @@ class Test_Implicit_Radau5:
         self.sim.simulate(.5) #Simulate 2 seconds
         assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
 
-    @testattr(stddist = True)    
     def test_simulation(self):
         """
         Test a simulation of the van der Pol equations (1).
@@ -1329,7 +1269,6 @@ class Test_Implicit_Radau5:
         assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
         assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
@@ -1346,7 +1285,6 @@ class Test_Implicit_Radau5:
         assert len(self.sim.t_sol) == 201
 
 
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         Tests implicit radau with maxh.
@@ -1355,7 +1293,6 @@ class Test_Implicit_Radau5:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
         
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -1376,7 +1313,6 @@ class Test_Implicit_Radau5:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_nmax_steps(self):
         """
         This tests the error upon exceeding a set maximum number of steps
@@ -1390,7 +1326,6 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
-    @testattr(stddist = True)
     def test_step_size_too_small(self):
         """
         This tests the error for too small step-sizes
@@ -1413,7 +1348,6 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1. + 1.e-16)
 
-    @testattr(stddist = True)
     def test_repeated_unexpected_step_rejections(self):
         """
         This tests the error for repeated unexpected step rejections in Radau5DAE.
@@ -1466,7 +1400,6 @@ class Test_Implicit_Radau5_Py:
         cls.sim.rtol = 1e-4 #Default 1e-6
         cls.sim.inith = 1.e-4 #Initial step-size
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y,yd: y-yd
         global tnext
@@ -1503,7 +1436,6 @@ class Test_Implicit_Radau5_Py:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of Radau5 Implicit Init.
@@ -1514,7 +1446,6 @@ class Test_Implicit_Radau5_Py:
         
         assert sim._leny == 2
     
-    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests a negative value of thet.
@@ -1524,7 +1455,6 @@ class Test_Implicit_Radau5_Py:
 
         assert self.sim.statistics["nsteps"] == self.sim.statistics["njacs"]
         
-    @testattr(stddist = True)    
     def test_simulation(self):
         """
         Test a simulation of the van der Pol equations (2).
@@ -1546,7 +1476,6 @@ class Test_Implicit_Radau5_Py:
         assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
         assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         """
         Test a simulation with ncp.
@@ -1562,7 +1491,6 @@ class Test_Implicit_Radau5_Py:
         self.sim.simulate(1.0, 200) #Simulate 1 second
         assert len(self.sim.t_sol) == 201
     
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         Tests implicit radau with maxh.
@@ -1571,7 +1499,6 @@ class Test_Implicit_Radau5_Py:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
 
-    @testattr(stddist = True)
     def test_keyboard_interrupt_fcn(self):
         """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
 
@@ -1603,7 +1530,6 @@ class Test_Radau_Common:
         exp_mod = Explicit_Problem(f,y0)
         cls.sim = Radau5ODE(exp_mod)
 
-    @testattr(stddist = True)    
     def test_fac1(self):
         """
         This tests the functionality of the property fac1.
@@ -1619,7 +1545,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.fac1 = [-1.0]
     
-    @testattr(stddist = True)
     def test_fac2(self):
         """
         This tests the functionality of the property fac2.
@@ -1635,7 +1560,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.fac2 = [-1.0]
     
-    @testattr(stddist = True)
     def test_fnewt(self):
         """
         This tests the functionality of the property fnewt.
@@ -1651,7 +1575,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.fnewt = [-1.0]
     
-    @testattr(stddist = True)
     def test_h(self):
         """
         This tests the functionality of the property h.
@@ -1661,7 +1584,6 @@ class Test_Radau_Common:
         self.sim.h = 0.001
         assert self.sim.h == 0.001
     
-    @testattr(stddist = True)
     def test_initial_step(self):
         """
         This tests the functionality of the property initial step.
@@ -1677,7 +1599,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.inith = [-1.0]
         
-    @testattr(stddist = True)
     def test_newt(self):
         """
         This tests the functionality of the property newt.
@@ -1695,7 +1616,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.newt = [-1.0]
         
-    @testattr(stddist = True)
     def test_quot1(self):
         """
         This tests the functionality of the property quot1.
@@ -1711,7 +1631,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.quot1 = [-1.0]
     
-    @testattr(stddist = True)    
     def test_quot2(self):
         """
         This tests the functionality of the property quot2.
@@ -1727,7 +1646,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.quot2 = [-1.0]
     
-    @testattr(stddist = True)
     def test_safe(self):
         """
         This tests the functionality of the property safe.
@@ -1743,7 +1661,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.safe = [-1.0]
         
-    @testattr(stddist = True)
     def test_thet(self):
         """
         This tests the functionality of the property thet.
@@ -1759,7 +1676,6 @@ class Test_Radau_Common:
         with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.thet = [-1.0]
     
-    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.

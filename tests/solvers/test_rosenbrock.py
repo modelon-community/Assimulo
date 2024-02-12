@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.rosenbrock import RodasODE
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
@@ -67,7 +66,6 @@ class Test_RodasODE:
         cls.mod = exp_mod
         cls.mod_sp = exp_mod_sp
     
-    @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = RodasODE(self.mod)
         
@@ -81,7 +79,6 @@ class Test_RodasODE:
         
         assert sim.statistics["nfcnjacs"] == 0
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         sim = RodasODE(self.mod_sp)
         
@@ -93,7 +90,6 @@ class Test_RodasODE:
         
         assert sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time

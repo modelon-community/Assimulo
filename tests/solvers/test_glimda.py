@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem, Explicit_Problem
 from assimulo.exception import GLIMDA_Exception
@@ -61,7 +60,6 @@ class Test_GLIMDA:
         cls.sim.rtol = 1e-4 #Default 1e-6
         cls.sim.inith = 1.e-4 #Initial step-size
     
-    @testattr(stddist = True)
     def test_simulate_explicit(self):
         """
         Test a simulation of an explicit problem using GLIMDA.
@@ -78,7 +76,6 @@ class Test_GLIMDA:
         
         assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
     
-    @testattr(stddist = True)
     def test_maxord(self):
         """
         Tests the maximum order of GLIMDA.
@@ -96,7 +93,6 @@ class Test_GLIMDA:
         with pytest.raises(GLIMDA_Exception):
             self.sim._set_maxord(0)
     
-    @testattr(stddist = True)
     def test_minord(self):
         """
         Tests the minimum order of GLIMDA.
@@ -114,7 +110,6 @@ class Test_GLIMDA:
         with pytest.raises(GLIMDA_Exception):
             self.sim._set_minord(0)
         
-    @testattr(stddist = True)
     def test_maxsteps(self):
         """
         Tests the maximum allowed steps of GLIMDA
@@ -130,7 +125,6 @@ class Test_GLIMDA:
         with pytest.raises(GLIMDA_Exception):
             self.sim._set_maxsteps(-1)
     
-    @testattr(stddist = True)
     def test_newt(self):
         """
         Tests the maximum allowed number of Newton iterations GLIMDA
@@ -146,7 +140,6 @@ class Test_GLIMDA:
         with pytest.raises(GLIMDA_Exception):
             self.sim._set_newt(-1)
         
-    @testattr(stddist = True)
     def test_minh(self):
         """
         Tests the minimum stepsize of GLIMDA.
@@ -159,7 +152,6 @@ class Test_GLIMDA:
         assert self.sim.minh == 1e-5
         assert self.sim.options["minh"] == 1e-5
         
-    @testattr(stddist = True)
     def test_order(self):
         """
         Tests the order of GLIMDA.
@@ -175,7 +167,6 @@ class Test_GLIMDA:
         with pytest.raises(GLIMDA_Exception):
             self.sim._set_order(-1)
     
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         Tests the maximum stepsize of GLIMDA.
@@ -188,7 +179,6 @@ class Test_GLIMDA:
         assert self.sim.maxh == 1e5
         assert self.sim.options["maxh"] == 1e5
         
-    @testattr(stddist = True)
     def test_maxretry(self):
         """
         Tests the maximum number of retries of GLIMDA.

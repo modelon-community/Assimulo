@@ -16,13 +16,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.kinsol import KINSOL
 from assimulo.problem import Algebraic_Problem
 
 class Test_KINSOL:
     
-    @testattr(stddist = True)
     def test_problem_name_attribute(self):
         res = lambda y: y
         model  = Algebraic_Problem(res, 1)
@@ -30,7 +28,6 @@ class Test_KINSOL:
         model  = Algebraic_Problem(res, 1, name="Test")
         assert model.name == "Test"
         
-    @testattr(stddist = True)
     def test_properties_simple(self):
         res = lambda y: y
         model  = Algebraic_Problem(res, 1)

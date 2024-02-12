@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.sundials import CVode, IDA, CVodeError
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
@@ -129,7 +128,6 @@ class Test_CVode:
         cls.simulator = CVode(cls.problem)
         cls.simulator.verbosity = 0
     
-    @testattr(stddist = True)
     def test_backward_integration(self):
         def f(t, y):
             x, v = y
@@ -149,7 +147,6 @@ class Test_CVode:
         
         assert np.all(t == np.arange(0,11)[::-1])
 
-    @testattr(stddist = True)
     def test_event_localizer(self):
         """ Test that CVode internal event localization works correctly."""
         exp_mod = Extended_Problem() #Create the problem
@@ -168,7 +165,6 @@ class Test_CVode:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_event_localizer_external(self):
         """ Test that CVode with Assimulo event localization works correctly."""
         exp_mod = Extended_Problem() #Create the problem
@@ -187,7 +183,6 @@ class Test_CVode:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_get_error_weights(self):
         with pytest.raises(CVodeError):
             self.simulator.get_error_weights()
@@ -197,7 +192,6 @@ class Test_CVode:
         weights = self.simulator.get_error_weights()
         assert weights[0] < 1e6
         
-    @testattr(stddist = True)
     def test_get_used_initial_step(self):
         self.simulator.simulate(1.0)
         
@@ -213,7 +207,6 @@ class Test_CVode:
         assert np.abs(step-1e-8) < 1e-2
         
     
-    @testattr(stddist = True)
     def test_get_local_errors(self):
         with pytest.raises(CVodeError):
             self.simulator.get_local_errors()
@@ -223,7 +216,6 @@ class Test_CVode:
         err = self.simulator.get_local_errors()
         assert err[0] < 1e-5
     
-    @testattr(stddist = True)
     def test_get_last_order(self):
         with pytest.raises(CVodeError):
             self.simulator.get_last_order()
@@ -233,7 +225,6 @@ class Test_CVode:
         qlast = self.simulator.get_last_order()
         assert qlast == 4
         
-    @testattr(stddist = True)
     def test_max_convergence_failures(self):
         assert self.simulator.maxncf == self.simulator.options["maxncf"]
         self.simulator.maxncf = 15
@@ -242,7 +233,6 @@ class Test_CVode:
         with pytest.raises(AssimuloException):
             self.simulator._set_max_conv_fails(-1)
         
-    @testattr(stddist = True)
     def test_max_error_tests_failures(self):
         assert self.simulator.maxnef == self.simulator.options["maxnef"]
         self.simulator.maxnef = 15
@@ -252,7 +242,6 @@ class Test_CVode:
         with pytest.raises(AssimuloException):
             self.simulator._set_max_err_fails(-1)
         
-    @testattr(stddist = True)
     def test_max_nonlinear_iterations(self):
         assert self.simulator.maxcor == self.simulator.options["maxcor"]
         self.simulator.maxcor = 15
@@ -262,7 +251,6 @@ class Test_CVode:
         # with pytest.raises(AssimuloException):
         #     self.simulator._set_max_err_fails(-1)
         
-    @testattr(stddist = True)
     def test_get_current_order(self):  
         
         with pytest.raises(CVodeError):
@@ -275,7 +263,6 @@ class Test_CVode:
 
 
         
-    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -290,7 +277,6 @@ class Test_CVode:
         assert self.simulator.discr == 'Adams'
         assert self.simulator.maxord == 12
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -326,7 +312,6 @@ class Test_CVode:
         
         assert nevent == 5
         
-    @testattr(stddist = True)
     def test_clear_event_log(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -372,7 +357,6 @@ class Test_CVode:
         exp_sim(5.,100)
         assert len(exp_sim.event_data) == 4
     
-    @testattr(stddist = True)
     def test_time_limit(self):
         f = lambda t,y: -y
         
@@ -386,7 +370,6 @@ class Test_CVode:
         with pytest.raises(TimeLimitExceeded):
             exp_sim.simulate(1)
     
-    @testattr(stddist = True)
     def test_statistics_stored(self):
         """
         Test that the statistics is stored even if there is a TimeLimit exception
@@ -413,7 +396,6 @@ class Test_CVode:
         
         assert found_data, "No statistics was found to be stored"
     
-    @testattr(stddist = True)    
     def test_discr_method(self):
         """
         This tests the functionality of the property discr.
@@ -437,7 +419,6 @@ class Test_CVode:
         self.simulator.discr = 'Adams'
         assert self.simulator.discr == 'Adams'
     
-    @testattr(stddist = True)
     def test_change_discr(self):
         """
         This tests that the change from Functional to Newton works
@@ -455,7 +436,6 @@ class Test_CVode:
         exp_sim.simulate(2)
         assert exp_sim.statistics["njacs"] > 0
         
-    @testattr(stddist = True)
     def test_change_norm(self):
         
         assert self.simulator.options["norm"] == "WRMS"
@@ -480,7 +460,6 @@ class Test_CVode:
         exp_sim.norm = "EUCLIDEAN"
         exp_sim.simulate(1)
     
-    @testattr(stddist = True)
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
@@ -506,7 +485,6 @@ class Test_CVode:
         assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         """
         This tests the functionality of the property usejac.
@@ -532,7 +510,6 @@ class Test_CVode:
         assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -553,7 +530,6 @@ class Test_CVode:
         sim.simulate(3)
         assert not sim.sw[0]
     
-    @testattr(stddist = True)
     def test_iter_method(self):
         """
         This tests the functionality of the property iter.
@@ -577,7 +553,6 @@ class Test_CVode:
         self.simulator.iter = 'FixedPoint'
         assert self.simulator.iter == 'FixedPoint'
     
-    @testattr(stddist = True)
     def test_initial_step(self):
         """
         This tests the functionality of the property initstep.
@@ -594,7 +569,6 @@ class Test_CVode:
         self.simulator.inith = 1
         assert self.simulator.inith == 1.0
     
-    @testattr(stddist = True)
     def test_interpolate(self):
         """
         This tests the functionality of the method interpolate.
@@ -611,7 +585,6 @@ class Test_CVode:
         sim.simulate(10.)
         assert float(y100[-2]) == pytest.approx(float(sim.interpolate(9.9, 0)), abs = 1e-5)
     
-    @testattr(stddist = True)
     def test_ncp_list(self):
         f = lambda t,y:np.array(-y)
         y0 = [4.0]
@@ -623,7 +596,6 @@ class Test_CVode:
         
         assert float(y[-1]) == pytest.approx(0.00364832, abs = 1e-4)
         
-    @testattr(stddist = True)
     def test_handle_result(self):
         """
         This function tests the handle result.
@@ -639,7 +611,6 @@ class Test_CVode:
         sim.report_continuously = True
         sim.simulate(10.)
     
-    @testattr(stddist = True)    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
@@ -672,7 +643,6 @@ class Test_CVode:
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
     
-    @testattr(stddist = True)
     def test_spgmr(self):
         f = lambda t,y: np.array([y[1], -9.82])
         fsw = lambda t,y,sw: np.array([y[1], -9.82])
@@ -734,7 +704,6 @@ class Test_CVode:
         exp_mod.jacv = jacvswp #Sets the jacobian
         run_sim(exp_mod)
     
-    @testattr(stddist = True)
     def test_max_order_discr(self):
         """
         This tests the maximum order when the discretization is changed.
@@ -755,7 +724,6 @@ class Test_CVode:
         self.simulator.discr = 'Adams'
         assert self.simulator.maxord == 12
    
-    @testattr(stddist = True)
     def test_pretype(self):
         """
         This tests the precondition option.
@@ -769,7 +737,6 @@ class Test_CVode:
         with pytest.raises(Exception):
             self.simulator._set_pre_cond('PREC_BOTH1')
     
-    @testattr(stddist = True)
     def test_maxkrylov(self):
         """
         This test the maximum number of krylov subspaces.
@@ -783,14 +750,12 @@ class Test_CVode:
         with pytest.raises(Exception):
             self.simulator._set_max_krylov('Test')
         
-    @testattr(stddist = True)
     def test_stablimit(self):
         assert not self.simulator.stablimit
         self.simulator.stablimit = True
         assert self.simulator.stablimit
         assert self.simulator.options["stablimit"]
     
-    @testattr(stddist = True)
     def test_linearsolver(self):
         """
         This test the choice of the linear solver.
@@ -804,7 +769,6 @@ class Test_CVode:
         with pytest.raises(Exception):
             self.simulator._set_linear_solver('Test')
     
-    @testattr(stddist = True)
     def test_terminate_simulation(self):
         """
         This tests the functionality of raising TerminateSimulation exception in handle_result.
@@ -824,7 +788,6 @@ class Test_CVode:
         
         assert simulator.t == pytest.approx(2.000000, abs = 1e-4)
     
-    @testattr(stddist = True)
     def test_completed_step(self):
         """
         This tests the functionality of the method completed_step.
@@ -850,7 +813,6 @@ class Test_CVode:
         assert len(sim.t_sol) == sim.statistics["nsteps"]+1
         assert nsteps == sim.statistics["nsteps"]
 
-    @testattr(stddist = True)
     def test_rtol_vector(self):
         """This tests the functionality of using an rtol vector, if supported."""
         f = lambda t, y: y
@@ -872,7 +834,6 @@ class Test_CVode:
             with pytest.raises(AssimuloException):
                 sim._set_rtol(np.array([1e-2, 1e-3]))
 
-    @testattr(stddist = True)
     def test_rtol_zero(self):
         """ Test CVode with rtol = 0. """
         f = lambda t, y: y
@@ -882,7 +843,6 @@ class Test_CVode:
         sim.rtol = 0.
         assert sim.rtol == 0.
 
-    @testattr(stddist = True)
     def test_rtol_vector_with_zeroes(self):
         """ Test CVode with rtol vector containing zeroes. """
         f = lambda t, y: y
@@ -899,7 +859,6 @@ class Test_CVode:
             with pytest.raises(AssimuloException):
                 sim._set_rtol([1., 0.])
 
-    @testattr(stddist = True)
     def test_rtol_vector_sense(self):
         """ Test CVode with rtol vector and sensitivity analysis. """
         n = 2
@@ -932,7 +891,6 @@ class Test_IDA:
         cls.problem = Implicit_Problem(f,y0,yd0)
         cls.simulator = IDA(cls.problem)
     
-    @testattr(stddist = True)
     def test_time_limit(self):
         f = lambda t,y,yd: yd-y
         
@@ -946,7 +904,6 @@ class Test_IDA:
         with pytest.raises(TimeLimitExceeded):
             exp_sim.simulate(1)
     
-    @testattr(stddist = True)
     def test_simulate_explicit(self):
         """
         Test a simulation of an explicit problem using IDA.
@@ -963,7 +920,6 @@ class Test_IDA:
         
         assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
     
-    @testattr(stddist = True)    
     def test_init(self):
         """
         This tests the functionality of the method __init__.
@@ -974,7 +930,6 @@ class Test_IDA:
         assert self.simulator.maxsteps == 10000
         assert self.simulator.y[0] == 1.0
     
-    @testattr(stddist = True)
     def test_interpolate(self):
         """
         This tests the functionality of the method interpolate.
@@ -991,7 +946,6 @@ class Test_IDA:
         sim.simulate(10.)
         assert y100[-2] == pytest.approx(sim.interpolate(9.9, 0), abs = 1e-5)
     
-    @testattr(stddist = True)
     def test_handle_result(self):
         """
         This function tests the handle result.
@@ -1009,7 +963,6 @@ class Test_IDA:
         
         sim.simulate(10.)
     
-    @testattr(stddist = True)    
     def test_max_order(self):
         """
         This tests the functionality of the property maxord.
@@ -1027,7 +980,6 @@ class Test_IDA:
         self.simulator.maxord = 6
         assert self.simulator.maxord == 5
     
-    @testattr(stddist = True)    
     def test_tout1(self):
         """
         This tests the functionality of the property tout1.
@@ -1045,7 +997,6 @@ class Test_IDA:
         self.simulator.tout1 = 1
         assert self.simulator.tout1 == 1.0
         
-    @testattr(stddist = True)
     def test_lsoff(self):
         """
         This tests the functionality of the property lsoff.
@@ -1056,7 +1007,6 @@ class Test_IDA:
         self.simulator.lsoff = False
         assert not self.simulator.lsoff
     
-    @testattr(stddist = True)
     def test_initstep(self):
         """
         This tests the funtionality of the property initstep.
@@ -1081,7 +1031,6 @@ class Test_IDA:
 
         assert sim.y_sol[-1][0] == pytest.approx(-13.4746596311, abs = 1e-7)
         
-    @testattr(stddist = True)
     def test_time_event(self):
         """
         This tests the functionality of the time event function.
@@ -1120,7 +1069,6 @@ class Test_IDA:
         assert sim.y_sol[87] == pytest.approx(1.0000000, abs = 1e-5)
         assert sim.t_sol[-1] == pytest.approx(5.0000000, abs = 1e-5)
     
-    @testattr(stddist = True)
     def test_clear_event_log(self):
         """
         This tests the functionality of the time event function.
@@ -1161,7 +1109,6 @@ class Test_IDA:
         sim.simulate(5.0)
         assert len(sim.event_data) > 0
         
-    @testattr(stddist = True)    
     def test_usejac(self):
         """
         This tests the functionality of the property usejac.
@@ -1186,7 +1133,6 @@ class Test_IDA:
         assert imp_sim.y_sol[-1][0] == pytest.approx(45.1900000, abs = 1e-4)
         assert imp_sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_terminate_simulation(self):
         """
         This tests the functionality of raising TerminateSimulation exception in handle_result.
@@ -1208,7 +1154,6 @@ class Test_IDA:
         
         assert sim.t == pytest.approx(2.000000, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_terminate_simulation_external_event(self):
         """
         This tests the functionality of raising TerminateSimulation exception in handle_result. External event detection.
@@ -1231,7 +1176,6 @@ class Test_IDA:
         
         assert sim.t == pytest.approx(2.000000, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_algvar(self):
         """
         This tests the functionality of the property algvar.
@@ -1264,7 +1208,6 @@ class Test_IDA:
         #assert self.simulator.algvar[1] == vector[1]
         #assert self.simulator.algvar[2] == vector[2]
     
-    @testattr(stddist = True)
     def test_time_event_2(self):
         f = lambda t,y,yd: y-yd
         global tnext
@@ -1300,7 +1243,6 @@ class Test_IDA:
         
         assert nevent == 5
     
-    @testattr(stddist = True)    
     def test_suppress_alg(self):
         """
         This tests the functionality of the property suppress_alg.
@@ -1310,7 +1252,6 @@ class Test_IDA:
         self.simulator.suppress_alg = False
         assert not self.simulator.suppress_alg
         
-    @testattr(stddist = True)
     def test_make_consistency(self):
         """
         This tests the functionality of the method make_consistency.
@@ -1334,7 +1275,6 @@ class Test_IDA:
         assert yd[0] == pytest.approx(1.0000)
         assert yd[1] == pytest.approx(0.0000)
 
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -1355,7 +1295,6 @@ class Test_IDA:
         sim.simulate(3)
         assert not sim.sw[0]
     
-    @testattr(stddist = True)
     def test_completed_step(self):
         """
         This tests the functionality of the method completed_step.
@@ -1425,7 +1364,6 @@ class Test_Sundials:
         mod = Implicit_Problem(f, y0,yd0,p0=p0)
         cls.sim = IDA(mod)
     
-    @testattr(stddist = True)
     def test_atol(self):
         """
         This tests the functionality of the property atol.
@@ -1467,7 +1405,6 @@ class Test_Sundials:
             """
     
     
-    @testattr(stddist = True)
     def test_rtol(self):
         """
         This tests the functionality of the property rtol.
@@ -1489,7 +1426,6 @@ class Test_Sundials:
             sim.rtol = 1001
             assert sim.rtol == 1001.0
 
-    @testattr(stddist = True)
     def test_maxh(self):
         """
         This tests the functionality of the property maxh.
@@ -1507,7 +1443,6 @@ class Test_Sundials:
             self.simulators[i].maxh = 1001.0
             assert self.simulators[i].maxh == 1001.0
 
-    @testattr(stddist = True)    
     def test_dqtype(self):
         """
         Tests the property of dqtype.
@@ -1534,7 +1469,6 @@ class Test_Sundials:
         with pytest.raises(Exception):
             self.sim._set_dqtype(-1)
     
-    @testattr(stddist = True)
     def test_dqrhomax(self):
         """
         Tests the property of DQrhomax.
@@ -1555,7 +1489,6 @@ class Test_Sundials:
         with pytest.raises(Exception):
             self.sim._set_dqrhomax(-10)
     
-    @testattr(stddist = True)    
     def test_usesens(self):
         """
         Tests the property of usesens.
@@ -1568,7 +1501,6 @@ class Test_Sundials:
         self.sim.usesens = 1
         assert self.sim.usesens
 
-    @testattr(stddist = True)
     def test_sensmethod(self):
         """
         Tests the property of sensmethod.
@@ -1594,7 +1526,6 @@ class Test_Sundials:
         with pytest.raises(Exception):
             self.sim._set_sensitivity_method(-1)
     
-    @testattr(stddist = True)    
     def test_suppress_sens(self):
         """
         Tests the property of suppress_sens.
@@ -1607,7 +1538,6 @@ class Test_Sundials:
         self.sim.suppress_sens = 1
         assert self.sim.suppress_sens
     
-    @testattr(stddist = True)
     def test_maxsensiter(self):
         """
         Tests the property of maxsensiter.
@@ -1627,7 +1557,6 @@ class Test_Sundials:
         # with pytest.raises(Exception):
             # self.sim._set_max_cor_S(-10)
     
-    @testattr(stddist = True)
     def test_pbar(self):
         """
         Tests the property of pbar.

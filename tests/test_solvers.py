@@ -17,7 +17,6 @@
 
 import pytest
 import numpy as np
-from assimulo import testattr
 from assimulo.problem import Explicit_Problem, Implicit_Problem
 from assimulo.solvers import Radau5DAE, Dopri5, RodasODE
 
@@ -44,7 +43,6 @@ class Test_Solvers:
         cls.eproblem.state_events = estate_events
         cls.eproblem.handle_event = handle_event
     
-    @testattr(stddist = True)
     def test_radau5dae_state_events(self):
         solver = Radau5DAE(self.problem)
         
@@ -52,7 +50,6 @@ class Test_Solvers:
         
         assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
         
-    @testattr(stddist = True)
     def test_dopri5_state_events(self):
         solver = Dopri5(self.eproblem)
         
@@ -60,7 +57,6 @@ class Test_Solvers:
         
         assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
         
-    @testattr(stddist = True)
     def test_rodasode_state_events(self):
         solver = RodasODE(self.eproblem)
         

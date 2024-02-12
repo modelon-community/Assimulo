@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.lib.odepack import dsrcar, dcfode
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
@@ -180,7 +179,6 @@ class Test_LSODAR:
         cls.sim.rtol = 1e-6 #Default 1e-6
         cls.sim.usejac = False
 
-    @testattr(stddist = True)
     def test_event_localizer(self):
         exp_mod = Extended_Problem() #Create the problem
 
@@ -197,7 +195,6 @@ class Test_LSODAR:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
 
-    @testattr(stddist = True)
     def test_simulation(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
@@ -206,13 +203,11 @@ class Test_LSODAR:
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
     
-    @testattr(stddist = True)
     def test_setcoefficients(self):
         elco,tesco=dcfode(1)
         assert elco[0,2] == pytest.approx(5./12., abs = 1e-9) # AM-2
         assert tesco[0,2] == pytest.approx(2., abs = 1e-9) # AM-2 error coeff  
     
-    @testattr(stddist = True)
     def test_readcommon(self):
         """
         This tests the LSODAR's subroutine dsrcar  (read functionality).
@@ -224,7 +219,6 @@ class Test_LSODAR:
         assert r[217] == pytest.approx(2.22044605e-16, abs = 1e-20)
         assert i[36] == 3
         
-    @testattr(stddist = True)
     def test_writereadcommon(self):
         """
         This tests the LSODAR's subroutine dsrcar  (write and read functionality).
@@ -269,7 +263,6 @@ class Test_LSODAR:
         numpy.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)      
         """              
         
-    @testattr(stddist = True)
     def test_interpol(self):
         # a with interpolation and report_continuously
         self.sim.report_continuously=True
@@ -279,7 +272,6 @@ class Test_LSODAR:
         ind05=np.nonzero(np.array(t_sol)==0.5)[0][0]
         assert y_sol[ind05,0] == pytest.approx(y_sol1[-1,0], abs = 1e-6)
         
-    @testattr(stddist = True)
     def test_simulation_with_jac(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
@@ -289,29 +281,24 @@ class Test_LSODAR:
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         self.sim.simulate(1.,100) #Simulate 2 seconds
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         self.sim_sp.usejac = True
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
         assert self.sim_sp.statistics["nfcnjacs"] == 0
-        
         assert self.sim_sp.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
-    @testattr(stddist = True)    
     def test_simulation_ncp_list(self):
         self.sim.simulate(1.,ncp_list=[0.5]) #Simulate 2 seconds
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)    
     def test_maxh(self):
         
         self.sim.hmax = 1.0
@@ -322,13 +309,11 @@ class Test_LSODAR:
         assert self.sim.options["maxh"] == 2.0
         assert self.sim.maxh == 2.0
         
-    @testattr(stddist = True)    
     def test_simulation_ncp_list_2(self):
         self.sim.simulate(1.,ncp_list=[0.5,4]) #Simulate 2 seconds
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)    
     def test_simulation_ncp_with_jac(self):
         """
         Test a simulation with ncp.
@@ -338,7 +323,6 @@ class Test_LSODAR:
 
         assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time

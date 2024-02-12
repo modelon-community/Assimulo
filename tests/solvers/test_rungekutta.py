@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.runge_kutta import Dopri5, RungeKutta34, RungeKutta4
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded
@@ -38,7 +37,6 @@ class Test_Dopri5:
         cls.problem = Explicit_Problem(f,y0)
         cls.simulator = Dopri5(cls.problem)
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of the method integrate.
@@ -48,7 +46,6 @@ class Test_Dopri5:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -104,7 +101,6 @@ class Test_Dopri5:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -137,7 +133,6 @@ class Test_RungeKutta34:
         cls.problem = Explicit_Problem(f,y0)
         cls.simulator = RungeKutta34(cls.problem)
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of the method integrate.
@@ -147,7 +142,6 @@ class Test_RungeKutta34:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert self.simulator.y_sol[-1] == pytest.approx(2.0)
 
-    @testattr(stddist = True)  
     def test_step(self):
         """
         This tests the functionality of the method step.
@@ -160,7 +154,6 @@ class Test_RungeKutta34:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert self.simulator.y_sol[-1] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -196,7 +189,6 @@ class Test_RungeKutta34:
         
         assert nevent == 5
     
-    @testattr(stddist = True)    
     def test_tolerance(self):
         """
         This tests the functionality of the tolerances.
@@ -220,7 +212,6 @@ class Test_RungeKutta34:
             self.simulator._set_atol([1.0,1.0])
 
 
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -241,7 +232,6 @@ class Test_RungeKutta34:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -274,7 +264,6 @@ class Test_RungeKutta4:
         cls.problem = Explicit_Problem(f,y0)
         cls.simulator = RungeKutta4(cls.problem)
     
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: [1.0]
         global tnext
@@ -310,14 +299,12 @@ class Test_RungeKutta4:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_integrate(self):
         values = self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
-    @testattr(stddist = True)    
     def test_step(self):
         self.simulator.report_continuously = True
         

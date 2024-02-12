@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.euler import ExplicitEuler, ImplicitEuler
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded
@@ -130,7 +129,6 @@ class Test_Explicit_Euler:
         cls.problem = Explicit_Problem(f, y0)
         cls.simulator = ExplicitEuler(cls.problem)
     
-    @testattr(stddist = True)
     def test_event_localizer(self):
         exp_mod = Extended_Problem() #Create the problem
 
@@ -147,7 +145,6 @@ class Test_Explicit_Euler:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_h(self):
         
         assert self.simulator.h == pytest.approx(0.01)
@@ -156,7 +153,6 @@ class Test_Explicit_Euler:
         with pytest.raises(AssimuloException):
             self.simulator._set_h([1])
         
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: np.array(1.0)
         global tnext
@@ -192,7 +188,6 @@ class Test_Explicit_Euler:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of using the normal mode.
@@ -202,7 +197,6 @@ class Test_Explicit_Euler:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_step(self):
         """
         This tests the functionality of using one step mode.
@@ -215,7 +209,6 @@ class Test_Explicit_Euler:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
         
-    @testattr(stddist = True)
     def test_exception(self):
         """
         This tests that exceptions are no caught when evaluating the RHS in ExpEuler.
@@ -229,7 +222,6 @@ class Test_Explicit_Euler:
         with pytest.raises(NotImplementedError):
             sim.simulate(1.0)
 
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -250,7 +242,6 @@ class Test_Explicit_Euler:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -283,7 +274,6 @@ class Test_Implicit_Euler:
         cls.problem = Explicit_Problem(f, y0)
         cls.simulator = ImplicitEuler(cls.problem)
     
-    @testattr(stddist = True)
     def test_reset_statistics(self):
         assert self.simulator.statistics["nsteps"] == 0
         
@@ -293,7 +283,6 @@ class Test_Implicit_Euler:
         
         assert self.simulator.statistics["nsteps"] < nsteps
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         """
         This tests the functionality of the property usejac.
@@ -317,7 +306,6 @@ class Test_Implicit_Euler:
         assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
-    @testattr(stddist = True)
     def test_h(self):
         
         assert self.simulator.h == pytest.approx(0.01)
@@ -326,7 +314,6 @@ class Test_Implicit_Euler:
         with pytest.raises(AssimuloException):
             self.simulator._set_h([1])
         
-    @testattr(stddist = True)
     def test_time_event(self):
         f = lambda t,y: np.array(1.0)
         global tnext
@@ -362,7 +349,6 @@ class Test_Implicit_Euler:
         
         assert nevent == 5
     
-    @testattr(stddist = True)
     def test_integrator(self):
         """
         This tests the functionality of using the normal mode.
@@ -372,7 +358,6 @@ class Test_Implicit_Euler:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_step(self):
         """
         This tests the functionality of using one step mode.
@@ -385,7 +370,6 @@ class Test_Implicit_Euler:
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
         assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
     
-    @testattr(stddist = True)
     def test_stiff_problem(self):
         f = lambda t,y: -15.0*y
         y0 = 1.0
@@ -400,7 +384,6 @@ class Test_Implicit_Euler:
         abs_err = np.abs(y[:,0]-y_correct(np.array(t)))
         assert np.max(abs_err) < 0.1
         
-    @testattr(stddist = True)
     def test_switches(self):
         """
         This tests that the switches are actually turned when override.
@@ -421,7 +404,6 @@ class Test_Implicit_Euler:
         sim.simulate(3)
         assert not sim.sw[0]
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time

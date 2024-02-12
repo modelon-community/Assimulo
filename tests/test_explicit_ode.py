@@ -16,12 +16,10 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.explicit_ode import Explicit_ODE
 from assimulo.problem import Explicit_Problem
 
 class Test_Explicit_ODE:
-    @testattr(stddist = True)
     def test_elapsed_step_time(self):
         rhs = lambda t,y: y
         
@@ -30,7 +28,6 @@ class Test_Explicit_ODE:
         
         assert solv.get_elapsed_step_time() == -1.0
         
-    @testattr(stddist = True)
     def test_problem_name_attribute(self):
         rhs = lambda t,y: y
         
@@ -39,7 +36,6 @@ class Test_Explicit_ODE:
         prob = Explicit_Problem(rhs, 0.0, name="Test")
         assert prob.name == "Test"
     
-    @testattr(stddist = True)
     def test_re_init(self):
         
         rhs = lambda t,y: y

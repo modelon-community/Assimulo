@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-from assimulo import testattr
 from assimulo.solvers.odassl import ODASSL
 from assimulo.problem import Implicit_Problem
 from assimulo.problem import Overdetermined_Problem
@@ -37,7 +36,6 @@ class Test_ODASSL:
         cls.problem = Overdetermined_Problem(f,y0, yd0)
         cls.simulator = ODASSL(cls.problem)
     
-    @testattr(stddist = True)
     def test_overdetermined(self):
         f = lambda t,y,yd: np.hstack((yd + 1, yd +1))
         y0 = [1.0, 1.0, 1.0]
@@ -48,7 +46,6 @@ class Test_ODASSL:
         
         self.simulator.simulate(1)
         
-    @testattr(stddist = True)
     def test_implicit_problem(self):
         f = lambda t,y,yd: yd + 1
         y0 = [1.0, 1.0, 1.0]
@@ -59,7 +56,6 @@ class Test_ODASSL:
         
         self.simulator.simulate(1)
 
-    @testattr(stddist = True)
     def test_atol(self):
         
         #Test a simulation
@@ -78,7 +74,6 @@ class Test_ODASSL:
         #Test a simulation
         self.simulator.simulate(1)
     
-    @testattr(stddist = True)
     def test_rtol(self):
         
         #Test a simulation
