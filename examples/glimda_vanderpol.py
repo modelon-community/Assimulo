@@ -86,7 +86,7 @@ def run_example(with_plots=True):
     
     #Basic test
     x1 = y[:,0]
-    assert x1[-1][0] == pytest.approx(1.706168035, abs = 1e-3)
+    assert x1[-1] == pytest.approx(1.706168035, abs = 1e-3)
     
     return imp_mod, imp_sim
 
