@@ -21,7 +21,7 @@ from assimulo.problem import Explicit_Problem
 from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded
 import numpy as np
 
-float_regex = "\s*[+-]?\d*.\d*((e|E)[+-]?\d*)?"
+float_regex = r"\s*[+-]?\d*.\d*((e|E)[+-]?\d*)?"
 
 class Test_Dopri5:
     
