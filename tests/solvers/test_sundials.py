@@ -117,6 +117,7 @@ class Extended_Problem(Explicit_Problem):
 class Test_CVode:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -201,7 +202,7 @@ class Test_CVode:
         self.simulator.simulate(1.0)
         
         step = self.simulator.get_used_initial_step()
-        assert step == pytest.approx(0.001, rel = 1e-3)
+        assert step == pytest.approx(0.001, abs = 1e-3)
         
         self.simulator.reset()
         
@@ -279,7 +280,7 @@ class Test_CVode:
         """
         This tests the functionality of the method __init__.
         """
-        # assert_equal(self.simulator.f, 'Test function')
+        # assert self.simulator.f == 'Test function'
         assert self.simulator.y == 1.0
         assert self.simulator.discr == 'BDF'
         assert self.simulator.iter == 'Newton'
@@ -496,13 +497,13 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
         
         assert exp_sim.statistics["nfcnjacs"] == 0
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
@@ -522,13 +523,13 @@ class Test_CVode:
         exp_sim.simulate(5.,100)
         
         assert exp_sim.statistics["nfcnjacs"] == 0
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.75000143, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
@@ -608,7 +609,7 @@ class Test_CVode:
         t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
-        assert_almost_equal(float(y100[-2]), float(sim.interpolate(9.9,0)),5)
+        assert float(y100[-2]) == pytest.approx(float(sim.interpolate(9.9, 0)), abs = 1e-5)
     
     @testattr(stddist = True)
     def test_ncp_list(self):
@@ -620,7 +621,7 @@ class Test_CVode:
         
         t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) #Simulate 5 seconds
         
-        assert float(y[-1]) == pytest.approx(0.00364832, rel = 1e-4)
+        assert float(y[-1]) == pytest.approx(0.00364832, abs = 1e-4)
         
     @testattr(stddist = True)
     def test_handle_result(self):
@@ -691,8 +692,8 @@ class Test_CVode:
             t, y = exp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
         
             #Basic tests
-            assert_almost_equal(y[-1][0],-121.75000000,4)
-            assert_almost_equal(y[-1][1],-49.100000000)
+            assert y[-1][0] == pytest.approx(-121.75000000, abs = 1e-4)
+            assert y[-1][1] == pytest.approx(-49.100000000)
         
         exp_mod = Explicit_Problem(f,y0)
         exp_mod.jacv = jacv #Sets the jacobian
@@ -821,7 +822,7 @@ class Test_CVode:
         simulator = CVode(exp_mod)
         simulator(3.)
         
-        assert simulator.t == pytest.approx(2.000000, rel = 1e-4)
+        assert simulator.t == pytest.approx(2.000000, abs = 1e-4)
     
     @testattr(stddist = True)
     def test_completed_step(self):
@@ -919,6 +920,7 @@ class Test_CVode:
 class Test_IDA:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -968,7 +970,7 @@ class Test_IDA:
         """
         assert not self.simulator.suppress_alg
         assert self.simulator.algvar[0] == 1.0
-        assert self.simulator.sw == None
+        assert self.simulator.sw is None
         assert self.simulator.maxsteps == 10000
         assert self.simulator.y[0] == 1.0
     
@@ -987,7 +989,7 @@ class Test_IDA:
         t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
-        assert_almost_equal(y100[-2], sim.interpolate(9.9,0),5)
+        assert y100[-2] == pytest.approx(sim.interpolate(9.9, 0), abs = 1e-5)
     
     @testattr(stddist = True)
     def test_handle_result(self):
@@ -1071,13 +1073,13 @@ class Test_IDA:
         sim = IDA(mod)
         sim.simulate(2.0)
 
-        assert sim.y_sol[-1][0] == pytest.approx(-13.4746473811, rel = 1e-7)
+        assert sim.y_sol[-1][0] == pytest.approx(-13.4746473811, abs = 1e-7)
         
         sim.reset()
         sim.inith = 1e-10
         sim.simulate(2.0)
 
-        assert sim.y_sol[-1][0] == pytest.approx(-13.4746596311, rel = 1e-7)
+        assert sim.y_sol[-1][0] == pytest.approx(-13.4746596311, abs = 1e-7)
         
     @testattr(stddist = True)
     def test_time_event(self):
@@ -1114,9 +1116,9 @@ class Test_IDA:
         
         sim.simulate(5.0)
 
-        assert sim.y_sol[38] == pytest.approx(1.0000000, rel = 1e-5)
-        assert sim.y_sol[87] == pytest.approx(1.0000000, rel = 1e-5)
-        assert sim.t_sol[-1] == pytest.approx(5.0000000, rel = 1e-5)
+        assert sim.y_sol[38] == pytest.approx(1.0000000, abs = 1e-5)
+        assert sim.y_sol[87] == pytest.approx(1.0000000, abs = 1e-5)
+        assert sim.t_sol[-1] == pytest.approx(5.0000000, abs = 1e-5)
     
     @testattr(stddist = True)
     def test_clear_event_log(self):
@@ -1175,13 +1177,13 @@ class Test_IDA:
         imp_sim.simulate(3,100)
 
         assert imp_sim.statistics["nfcnjacs"] == 0
-        assert imp_sim.y_sol[-1][0] == pytest.approx(45.1900000, rel = 1e-4)
+        assert imp_sim.y_sol[-1][0] == pytest.approx(45.1900000, abs = 1e-4)
         
         imp_sim.reset()
         imp_sim.usejac=False
         imp_sim.simulate(3.,100)
 
-        assert imp_sim.y_sol[-1][0] == pytest.approx(45.1900000, rel = 1e-4)
+        assert imp_sim.y_sol[-1][0] == pytest.approx(45.1900000, abs = 1e-4)
         assert imp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)
@@ -1204,7 +1206,7 @@ class Test_IDA:
         sim = IDA(prob)
         sim.simulate(2.5)
         
-        assert sim.t == pytest.approx(2.000000, rel = 1e-4)
+        assert sim.t == pytest.approx(2.000000, abs = 1e-4)
 
     @testattr(stddist = True)
     def test_terminate_simulation_external_event(self):
@@ -1227,7 +1229,7 @@ class Test_IDA:
         sim.external_event_detection = True
         sim.simulate(2.5)
         
-        assert sim.t == pytest.approx(2.000000, rel = 1e-4)
+        assert sim.t == pytest.approx(2.000000, abs = 1e-4)
     
     @testattr(stddist = True)    
     def test_algvar(self):
@@ -1258,9 +1260,9 @@ class Test_IDA:
         #self.simulator.algvar = vectorb
         #self.simulator.algvar = vectori
         #self.simulator.algvar = vector
-        #assert_equal(self.simulator.algvar[0], vector[0])
-        #assert_equal(self.simulator.algvar[1], vector[1])
-        #assert_equal(self.simulator.algvar[2], vector[2])
+        #assert self.simulator.algvar[0] == vector[0]
+        #assert self.simulator.algvar[1] == vector[1]
+        #assert self.simulator.algvar[2] == vector[2]
     
     @testattr(stddist = True)
     def test_time_event_2(self):
@@ -1390,6 +1392,7 @@ class Test_IDA:
 class Test_Sundials:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.
@@ -1456,11 +1459,11 @@ class Test_Sundials:
             with pytest.raises(Exception):
             self.simulators([i]._set_atol, [1.0, 1.0, -1.0])
             self.simulators[i].atol = [1.0, 1.0, 1.0]
-            assert_equal(self.simulators[i].atol, [1.0, 1.0, 1.0])
+            assert self.simulators[i].atol == [1.0, 1.0, 1.0]
             self.simulators[i].atol = np.array([1.0, 1.0, 1.0])
-            assert_equal(self.simulators[i].atol[0], 1.0)
+            assert self.simulators[i].atol[0] == 1.0
             self.simulators[i].atol = np.array([1, 5, 1.0])
-            assert_equal(self.simulators[i].atol[0], 1.0)
+            assert self.simulators[i].atol[0] == 1.0
             """
     
     
@@ -1636,8 +1639,8 @@ class Test_Sundials:
         
         exp_sim = CVode(exp_mod)
 
-        assert exp_sim.pbar[0] == pytest.approx(1000.00000, rel = 1e-4)
-        assert exp_sim.pbar[1] == pytest.approx(100.000000, rel = 1e-4)
+        assert exp_sim.pbar[0] == pytest.approx(1000.00000, abs = 1e-4)
+        assert exp_sim.pbar[1] == pytest.approx(100.000000, abs = 1e-4)
         
         f = lambda t,y,yd,p: np.array([0.0]*len(y))
         yd0 = [0.0]*2
@@ -1645,5 +1648,5 @@ class Test_Sundials:
         
         imp_sim = IDA(imp_mod)
         
-        assert imp_sim.pbar[0] == pytest.approx(1000.00000, rel = 1e-4)
-        assert imp_sim.pbar[1] == pytest.approx(100.000000, rel = 1e-4)
+        assert imp_sim.pbar[0] == pytest.approx(1000.00000, abs = 1e-4)
+        assert imp_sim.pbar[1] == pytest.approx(100.000000, abs = 1e-4)

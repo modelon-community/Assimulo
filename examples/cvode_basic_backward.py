@@ -62,7 +62,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert y[-1][0] == pytest.approx(4.00000000, rel = 1e-3)
+    assert y[-1][0] == pytest.approx(4.00000000, abs = 1e-3)
     
     return exp_mod, exp_sim
 

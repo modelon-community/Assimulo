@@ -170,6 +170,7 @@ class Test_Explicit_Radau5_Py:
     Tests the explicit Radau solver (Python implementation).
     """
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.
@@ -227,9 +228,9 @@ class Test_Explicit_Radau5_Py:
     #     t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
     #     #Basic test
-    #     assert_almost_equal(y[-1][0],8.0)
-    #     assert_almost_equal(y[-1][1],3.0)
-    #     assert_almost_equal(y[-1][2],2.0)
+    #     assert y[-1][0] == pytest.approx(8.0)
+    #     assert y[-1][1] == pytest.approx(3.0)
+    #     assert y[-1][2] == pytest.approx(2.0)
     
     @testattr(stddist = True)
     def test_time_event(self):
@@ -286,9 +287,9 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.statistics["nsteps"] < 300
         
-        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, rel = 1e-4)
+        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, abs = 1e-4)
         print
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
         self.sim.report_continuously = True
         self.sim.reset()
@@ -296,13 +297,13 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.statistics["nsteps"] < 300
 
-        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, rel = 1e-4)
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, abs = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
         self.sim_t0.simulate(3.)
-        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, rel = 1e-4)
-        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, rel = 1e-4)
-        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, abs = 1e-4)
+        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
+        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
     @testattr(stddist = True)
     def test_simulation(self):
@@ -313,7 +314,7 @@ class Test_Explicit_Radau5_Py:
         
         assert self.sim.statistics["nsteps"] < 300
 
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
@@ -342,7 +343,7 @@ class Test_Explicit_Radau5_Py:
 
         assert self.sim.statistics["nfcnjacs"] == 0
         
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
     @testattr(stddist = True)
     def test_thet(self):
@@ -422,7 +423,7 @@ class Test_Explicit_Radau5_Py:
         assert steps3 == steps2
 
         err_msg = "atol must be of length one or same as the dimension of the problem."
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.atol = [1e-6,1e-6,1e-6]
         
 class Test_Explicit_Radau5:
@@ -430,6 +431,7 @@ class Test_Explicit_Radau5:
     Tests the explicit Radau solver.
     """
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.
@@ -501,9 +503,9 @@ class Test_Explicit_Radau5:
         t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        assert_almost_equal(y[-1][0],8.0)
-        assert_almost_equal(y[-1][1],3.0)
-        assert_almost_equal(y[-1][2],2.0)
+        assert y[-1][0] == pytest.approx(8.0)
+        assert y[-1][1] == pytest.approx(3.0)
+        assert y[-1][2] == pytest.approx(2.0)
     
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
@@ -574,8 +576,8 @@ class Test_Explicit_Radau5:
         
         assert self.sim.statistics["nsteps"] < 300
         
-        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, rel = 1e-4)
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, abs = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
         self.sim.report_continuously = True
         self.sim.reset()
@@ -583,13 +585,13 @@ class Test_Explicit_Radau5:
         
         assert self.sim.statistics["nsteps"] < 300
 
-        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, rel = 1e-4)
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        #assert self.sim.y[-2][0] == pytest.approx(1.71505001, abs = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
         self.sim_t0.simulate(3.)
-        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, rel = 1e-4)
-        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, rel = 1e-4)
-        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, abs = 1e-4)
+        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
+        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
     @testattr(stddist = True)
     def test_simulation(self):
@@ -600,7 +602,7 @@ class Test_Explicit_Radau5:
         
         assert self.sim.statistics["nsteps"] < 300
 
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
@@ -629,7 +631,7 @@ class Test_Explicit_Radau5:
 
         assert self.sim.statistics["nfcnjacs"] == 0
         
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
     @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
@@ -642,7 +644,7 @@ class Test_Explicit_Radau5:
     
         assert self.sim_sp.statistics["nfcnjacs"] == 0
         
-        assert self.sim_sp.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim_sp.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
     @testattr(stddist = True)
     def test_thet(self):
@@ -673,7 +675,7 @@ class Test_Explicit_Radau5:
         # self.sim.reset()
         # self.sim.newt = 10
         # self.sim.simulate(1.0)
-        # assert_equal(self.sim.statistics["nniterfail"], 1)
+        # assert self.sim.statistics["nniterfail"] == 1
     
     @testattr(stddist = True)
     def test_safe(self):
@@ -738,7 +740,7 @@ class Test_Explicit_Radau5:
         assert steps3 == steps2
         
         err_msg = "atol must be of length one or same as the dimension of the problem."
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.atol = [1e-6,1e-6,1e-6]
         
     @testattr(stddist = True)
@@ -773,7 +775,7 @@ class Test_Explicit_Radau5:
         sim.maxsteps = 9
 
         err_msg = f'Radau5 failed with flag -5. At time {float_regex}. Message: Maximal number of steps = 9 exceeded.'
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -790,7 +792,7 @@ class Test_Explicit_Radau5:
         sim.maxh = 1.e-1
 
         err_msg = f"Radau5 failed with flag -6. At time {float_regex}. Message: Stepsize too small with h = {float_regex}."
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1. + 1.e-16)
 
     @testattr(stddist = True)
@@ -805,7 +807,7 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(prob)
 
         err_msg = f'Repeated unexpected step rejections.'
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -837,7 +839,7 @@ class Test_Explicit_Radau5:
         sim.usejac = True
 
         err_msg = "Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function."
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -857,7 +859,7 @@ class Test_Explicit_Radau5:
         sim.usejac = True
 
         err_msg = f'Radau5 failed with flag -11. At time {float_regex}. Message: Jacobian given in wrong format, required sparsity format: CSC.'
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -878,7 +880,7 @@ class Test_Explicit_Radau5:
         sim.usejac = True
 
         err_msg = f'Radau5 failed with flag -9. At time {float_regex}. Message: Number of nonzero elements in provided jacobian is too small, specified = 1, actual = 5.'
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -916,7 +918,7 @@ class Test_Explicit_Radau5:
         sim.usejac = True
 
         err_msg = "Number of non-zero elements of sparse Jacobian must be non-negative. Detected default value of '-1', has 'problem.jac_fcn_nnz' been set?"
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -938,7 +940,7 @@ class Test_Explicit_Radau5:
             sim.usejac = True
 
             err_msg = "Number of non-zero elements of sparse Jacobian must be an integer, received: {}."
-            with pytest.raises(Radau_Exception, err_msg.format(nnz)):
+            with pytest.raises(Radau_Exception, match = err_msg.format(nnz)):
                 sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -960,7 +962,7 @@ class Test_Explicit_Radau5:
             sim.usejac = True
 
             err_msg = "Number of non-zero elements of sparse Jacobian must be non-negative, given value = {}."
-            with pytest.raises(Radau_Exception, err_msg.format(nnz)):
+            with pytest.raises(Radau_Exception, match = err_msg.format(nnz)):
                 sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -982,7 +984,7 @@ class Test_Explicit_Radau5:
             sim.usejac = True
 
             err_msg = "Number of non-zero elements of sparse Jacobian infeasible, must be smaller than the problem dimension squared."
-            with pytest.raises(Radau_Exception, err_msg):
+            with pytest.raises(Radau_Exception, match = err_msg):
                 sim.simulate(1.)
 
     def test_sparse_solver_jacobian(self):
@@ -1011,7 +1013,7 @@ class Test_Explicit_Radau5:
             sim.linear_solver = 'SPARSE'
             sim.usejac = True
 
-            ok_(sim.simulate(1.), msg = f"Jacobian #{i} failed: {jac(0, 0)}")
+            assert sim.simulate(1.), f"Jacobian #{i} failed: {jac(0, 0)}"
 
     @testattr(stddist = True)
     def test_linear_solver(self):
@@ -1028,13 +1030,13 @@ class Test_Explicit_Radau5:
         assert self.sim.linear_solver == 'SPARSE'
 
         err_msg = "'linear_solver' parameter needs to be either 'DENSE' or 'SPARSE'. Set value: {}"
-        with pytest.raises(Radau_Exception, err_msg.format('default')):
+        with pytest.raises(Radau_Exception, match = err_msg.format('default')):
             self.sim.linear_solver = 'default'
-        with pytest.raises(Radau_Exception, err_msg.format('GMRES')):
+        with pytest.raises(Radau_Exception, match = err_msg.format('GMRES')):
             self.sim.linear_solver = 'GMRES'
 
         err_msg = "'linear_solver' parameter needs to be the STRING 'DENSE' or 'SPARSE'. Set value: {}, type: {}"
-        with pytest.raises(Radau_Exception, err_msg.format('0', "<class 'int'>")):
+        with pytest.raises(Radau_Exception, match = err_msg.format('0', "<class 'int'>")):
             self.sim.linear_solver = 0
 
     @testattr(stddist = True)
@@ -1157,6 +1159,7 @@ class Test_Implicit_Radau5:
     Tests the implicit Radau solver.
     """
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.
@@ -1202,7 +1205,7 @@ class Test_Implicit_Radau5:
             Test setting of implementation property of Radau5DAE.
         """
         err_msg = "Radau5DAE does not support setting the 'implementation' attribute, since it only supports the Fortran implementation of Radau5."
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.implementation = 'c'
 
     @testattr(stddist = True)
@@ -1218,7 +1221,7 @@ class Test_Implicit_Radau5:
             Test setting of linear_solver property of Radau5DAE.
         """
         err_msg = "Radau5DAE does not support setting the 'linear_solver' attribute, since it only supports the DENSE linear solver in Fortran implementation of Radau5."
-        with pytest.raises(Radau_Exception, err_msg):
+        with pytest.raises(Radau_Exception, match = err_msg):
             self.sim.linear_solver = 'SPARSE'
     
     @testattr(stddist = True)
@@ -1311,7 +1314,7 @@ class Test_Implicit_Radau5:
         """
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.706272, rel = 1e-3)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.706272, abs = 1e-3)
 
         self.sim.reset()
 
@@ -1319,12 +1322,12 @@ class Test_Implicit_Radau5:
 
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.706166, rel = 1e-3)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.706166, abs = 1e-3)
 
         self.sim_t0.simulate(3.)
-        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, rel = 1e-4)
-        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, rel = 1e-4)
-        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, abs = 1e-4)
+        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
+        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
@@ -1384,7 +1387,7 @@ class Test_Implicit_Radau5:
         sim.maxsteps = 9
 
         err_msg = "The solver took max internal steps but could not reach the next output time."
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
     @testattr(stddist = True)
@@ -1407,7 +1410,7 @@ class Test_Implicit_Radau5:
         sim.maxh = 1.e-1
         
         err_msg = f"The step size became too small. At time {float_regex}."
-        with pytest.raises(Radau5Error, err_msg):
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1. + 1.e-16)
 
     @testattr(stddist = True)
@@ -1420,8 +1423,8 @@ class Test_Implicit_Radau5:
         prob = Implicit_Problem(f, np.array([1.]), np.array([1.]))
         sim = Radau5DAE(prob)
 
-        err_msg = f'Repeated unexpected step rejections.'
-        with pytest.raises(Radau5Error, err_msg):
+        err_msg = 'Repeated unexpected step rejections.'
+        with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
 
@@ -1430,6 +1433,7 @@ class Test_Implicit_Radau5_Py:
     Tests the implicit Radau solver (Python implementation).
     """
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.
@@ -1527,7 +1531,7 @@ class Test_Implicit_Radau5_Py:
         """
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.706272, rel = 1e-3)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.706272, abs = 1e-3)
         
         self.sim.reset()
         
@@ -1535,12 +1539,12 @@ class Test_Implicit_Radau5_Py:
         
         #Simulate
         self.sim.simulate(2.) #Simulate 2 seconds
-        assert self.sim.y_sol[-1][0] == pytest.approx(1.706947, rel = 1e-2)
+        assert self.sim.y_sol[-1][0] == pytest.approx(1.706947, abs = 1e-2)
         
         self.sim_t0.simulate(3.)
-        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, rel = 1e-4)
-        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, rel = 1e-4)
-        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert self.sim_t0.t_sol[0] == pytest.approx(1.0000000, abs = 1e-4)
+        assert self.sim_t0.t_sol[-1] == pytest.approx(3.0000000, abs = 1e-4)
+        assert self.sim_t0.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
     
     @testattr(stddist = True)    
     def test_simulation_ncp(self):
@@ -1578,7 +1582,7 @@ class Test_Implicit_Radau5_Py:
         sim = Radau5DAE(prob)
 
         err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
-        with pytest.raises(Radau5Error, re.escape(err_msg)):
+        with pytest.raises(Radau5Error, match = re.escape(err_msg)):
             sim.simulate(1.)
 
 class Test_Radau_Common:
@@ -1586,6 +1590,7 @@ class Test_Radau_Common:
     Tests the common attributes of the Radau solvers.
     """
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This sets up the test case.

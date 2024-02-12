@@ -46,7 +46,7 @@ def run_example(with_plots=True):
     y = alg_solver.solve()
     
     #Basic test
-    assert y == pytest.approx(1.0, rel = 1e-5)
+    assert y == pytest.approx(1.0, abs = 1e-5)
     
     return alg_mod, alg_solver
 

@@ -93,7 +93,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic tests
-    assert_almost_equal(y[-1][0],0.9851,3)
+    assert y[-1][0] == pytest.approx(0.9851, abs = 1e-3)
     
     return exp_mod, exp_sim
 

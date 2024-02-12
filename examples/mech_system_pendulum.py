@@ -60,7 +60,7 @@ def run_example(index="ind1", with_plots=True, with_test=False):
     print(final_residual, 'Norm:  ', np.linalg.norm(final_residual))
     
     if with_test:
-        assert_less(np.linalg.norm(final_residual), 1.5e-1)
+        assert np.linalg.norm(final_residual) < 1.5e-1
     if with_plots:
         dae_pend.plot(mask=[1,1]+(len(my_pend.y0)-2)*[0]) 
     return my_pend, dae_pend

@@ -107,8 +107,8 @@ def run_example(with_plots=True):
         exp_sim.plot()
     
     #Basic verification
-    assert_almost_equal(y[-1,0],3.11178295,4)
-    assert_almost_equal(y[-1,1],3.19318992,4)
+    assert y[-1,0] == pytest.approx(3.11178295, abs = 1e-4)
+    assert y[-1,1] == pytest.approx(3.19318992, abs = 1e-4)
 
     return exp_mod, exp_sim
     

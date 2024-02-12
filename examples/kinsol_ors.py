@@ -126,7 +126,7 @@ def run_example(with_plots=True):
     
     #Basic test
     for j in range(len(y)):
-        assert y[j] == pytest.approx(1.0, rel = 1e-4)
+        assert y[j] == pytest.approx(1.0, abs = 1e-4)
         
     return [alg_mod, alg_mod_prec], [alg_solver, alg_solver_prec]
 

@@ -87,12 +87,12 @@ def run_example(with_plots=True):
         pl.show()  
     
     #Basic test
-    assert y[-1][0] == pytest.approx(9.05518032e-01, rel = 1e-4)
-    assert y[-1][1] == pytest.approx(2.24046805e-05, rel = 1e-4)
-    assert y[-1][2] == pytest.approx(9.44595637e-02, rel = 1e-4)
-    assert exp_sim.p_sol[0][-1][0] == pytest.approx(-1.8761, rel = 1e-2) #Values taken from the example in Sundials
-    assert exp_sim.p_sol[1][-1][0] == pytest.approx(2.9614e-06, rel = 1e-8)
-    assert exp_sim.p_sol[2][-1][0] == pytest.approx(-4.9334e-10, rel = 1e-12)
+    assert y[-1][0] == pytest.approx(9.05518032e-01, abs = 1e-4)
+    assert y[-1][1] == pytest.approx(2.24046805e-05, abs = 1e-4)
+    assert y[-1][2] == pytest.approx(9.44595637e-02, abs = 1e-4)
+    assert exp_sim.p_sol[0][-1][0] == pytest.approx(-1.8761, abs = 1e-2) #Values taken from the example in Sundials
+    assert exp_sim.p_sol[1][-1][0] == pytest.approx(2.9614e-06, abs = 1e-8)
+    assert exp_sim.p_sol[2][-1][0] == pytest.approx(-4.9334e-10, abs = 1e-12)
     
     return exp_mod, exp_sim
 

@@ -56,7 +56,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert_almost_equal(y[-1][0],0.02695199,5)
+    assert y[-1][0] == pytest.approx(0.02695199, abs = 1e-5)
     
     return exp_mod, exp_sim
 

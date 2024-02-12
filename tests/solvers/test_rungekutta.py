@@ -27,6 +27,7 @@ float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 class Test_Dopri5:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -125,6 +126,7 @@ class Test_Dopri5:
 class Test_RungeKutta34:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -261,6 +263,7 @@ class Test_RungeKutta34:
 class Test_RungeKutta4:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.

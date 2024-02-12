@@ -119,6 +119,7 @@ class Extended_Problem(Explicit_Problem):
 class Test_Explicit_Euler:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -271,6 +272,7 @@ class Test_Explicit_Euler:
 class Test_Implicit_Euler:
     
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -306,13 +308,13 @@ class Test_Implicit_Euler:
         exp_sim.simulate(5.,100)
         
         assert exp_sim.statistics["nfcnjacs"] == 0
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, abs = 1e-4)
         
         exp_sim.reset()
         exp_sim.usejac=False
         exp_sim.simulate(5.,100)
 
-        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, rel = 1e-4)
+        assert exp_sim.y_sol[-1][0] == pytest.approx(-121.995500, abs = 1e-4)
         assert exp_sim.statistics["nfcnjacs"] > 0
     
     @testattr(stddist = True)

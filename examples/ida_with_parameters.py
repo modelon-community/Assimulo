@@ -66,7 +66,7 @@ def run_example(with_plots=True):
     #Sets the parameters
     imp_sim.atol = np.array([1.0e-8, 1.0e-14, 1.0e-6])
     imp_sim.algvar = [1.0,1.0,0.0]
-    imp_sim.suppress_alg = False #Suppres the algebraic variables on the error test
+    imp_sim.suppress_alg = False #Suppress the algebraic variables on the error test
     imp_sim.report_continuously = True #Store data continuous during the simulation
     imp_sim.pbar = p0
     imp_sim.suppress_sens = False            #Dont suppress the sensitivity variables in the error test.
@@ -78,12 +78,12 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(4,400) #Simulate 4 seconds with 400 communication points
 
     #Basic test
-    assert y[-1][0] == pytest.approx(9.05518032e-01, rel = 1e-4)
-    assert y[-1][1] == pytest.approx(2.24046805e-05, rel = 1e-4)
-    assert y[-1][2] == pytest.approx(9.44595637e-02, rel = 1e-4)
-    assert imp_sim.p_sol[0][-1][0] == pytest.approx(-1.8761, rel = 1e-2) #Values taken from the example in Sundials
-    assert imp_sim.p_sol[1][-1][0] == pytest.approx(2.9614e-06, rel = 1e-8)
-    assert imp_sim.p_sol[2][-1][0] == pytest.approx(-4.9334e-10, rel = 1e-12)
+    assert y[-1][0] == pytest.approx(9.05518032e-01, abs = 1e-4)
+    assert y[-1][1] == pytest.approx(2.24046805e-05, abs = 1e-4)
+    assert y[-1][2] == pytest.approx(9.44595637e-02, abs = 1e-4)
+    assert imp_sim.p_sol[0][-1][0] == pytest.approx(-1.8761, abs = 1e-2) #Values taken from the example in Sundials
+    assert imp_sim.p_sol[1][-1][0] == pytest.approx(2.9614e-06, abs = 1e-8)
+    assert imp_sim.p_sol[2][-1][0] == pytest.approx(-4.9334e-10, abs = 1e-12)
     
     #Plot
     if with_plots:

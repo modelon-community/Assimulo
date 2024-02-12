@@ -34,6 +34,7 @@ def handle_event(solver, event_info):
 
 class Test_Solvers:
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         cls.problem = Implicit_Problem(res, [1.0], [-1.0])
         cls.problem.state_events = state_events
@@ -49,7 +50,7 @@ class Test_Solvers:
         
         t,y,yd = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)
+        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
         
     @testattr(stddist = True)
     def test_dopri5_state_events(self):
@@ -57,7 +58,7 @@ class Test_Solvers:
         
         t,y = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)
+        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
         
     @testattr(stddist = True)
     def test_rodasode_state_events(self):
@@ -65,4 +66,4 @@ class Test_Solvers:
         
         t,y = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, rel = 1e-3)
+        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)

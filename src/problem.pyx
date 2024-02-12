@@ -166,7 +166,7 @@ cdef class cExplicit_Problem(cProblem):
         return ID_OK
         
     cpdef np.ndarray res(self, t, y, yd, sw=None):
-        if sw == None:
+        if sw is None:
             return yd-self.rhs(t,y)
         else:
             return yd-self.rhs(t, y, sw)

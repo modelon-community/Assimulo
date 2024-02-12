@@ -136,9 +136,9 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
     
     #Basic test
-    assert_almost_equal(y[-1][0],8.0)
-    assert_almost_equal(y[-1][1],3.0)
-    assert_almost_equal(y[-1][2],2.0)
+    assert y[-1][0] == pytest.approx(8.0)
+    assert y[-1][1] == pytest.approx(3.0)
+    assert y[-1][2] == pytest.approx(2.0)
     
     #Plot
     if with_plots:

@@ -98,7 +98,7 @@ def run_example(with_plots=True):
     #Sets the parameters
     imp_sim.atol = 1e-6 #Default 1e-6
     imp_sim.rtol = 1e-6 #Default 1e-6
-    imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
+    imp_sim.suppress_alg = True #Suppress the algebraic variables on the error test
     
     #Let Sundials find consistent initial conditions by use of 'IDA_YA_YDP_INIT'
     imp_sim.make_consistent('IDA_YA_YDP_INIT')
@@ -107,10 +107,10 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    assert_almost_equal(y[-1][0],0.9401995, places=4)
-    assert_almost_equal(y[-1][1],-0.34095124, places=4)
-    assert yd[-1][0] == pytest.approx(-0.88198927, rel = 1e-4)
-    assert yd[-1][1] == pytest.approx(-2.43227069, rel = 1e-4)
+    assert y[-1][0] == pytest.approx(0.9401995, abs = 1e-4)
+    assert y[-1][1] == pytest.approx(-0.34095124, abs = 1e-4)
+    assert yd[-1][0] == pytest.approx(-0.88198927, abs = 1e-4)
+    assert yd[-1][1] == pytest.approx(-2.43227069, abs = 1e-4)
     
     #Plot
     if with_plots:

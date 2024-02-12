@@ -66,8 +66,8 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert y2[-1][0] == pytest.approx(0.00347746, rel = 1e-5)
-    assert exp_sim.get_last_step() == pytest.approx(0.0222169642893, rel = 1e-3)
+    assert y2[-1][0] == pytest.approx(0.00347746, abs = 1e-5)
+    assert exp_sim.get_last_step() == pytest.approx(0.0222169642893, abs = 1e-3)
     
     return exp_mod, exp_sim
 

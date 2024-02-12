@@ -27,6 +27,7 @@ float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
     @classmethod
+    @pytest.fixture(autouse=True)
     def setup_class(cls):
         #Define the rhs
         def f(t,y):
@@ -90,7 +91,7 @@ class Test_RodasODE:
     
         assert sim.statistics["nfcnjacs"] == 0
         
-        assert sim.y_sol[-1][0] == pytest.approx(1.7061680350, rel = 1e-4)
+        assert sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
     @testattr(stddist = True)
     def test_time_limit(self):

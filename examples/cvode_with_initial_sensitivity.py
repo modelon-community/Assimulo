@@ -123,9 +123,9 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert y[-1][0] == pytest.approx(1577.6552477, rel = 1e-5)
-    assert y[-1][1] == pytest.approx(611.9574565, rel = 1e-5)
-    assert y[-1][2] == pytest.approx(2215.88563217, rel = 1e-5)
+    assert y[-1][0] == pytest.approx(1577.6552477, abs = 1e-5)
+    assert y[-1][1] == pytest.approx(611.9574565, abs = 1e-5)
+    assert y[-1][2] == pytest.approx(2215.88563217, abs = 1e-5)
     assert exp_sim.p_sol[0][1][0] == pytest.approx(1.0)
     
     return exp_mod, exp_sim

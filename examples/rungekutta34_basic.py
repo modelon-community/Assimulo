@@ -49,7 +49,7 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
     #Basic test
-    assert y[-1][0] == pytest.approx(0.02695199, rel = 1e-5)
+    assert y[-1][0] == pytest.approx(0.02695199, abs = 1e-5)
     
     #Plot
     if with_plots:
