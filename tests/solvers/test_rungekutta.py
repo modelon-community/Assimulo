@@ -44,7 +44,7 @@ class Test_Dopri5:
         values = self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
     def test_time_event(self):
         f = lambda t,y: [1.0]
@@ -303,7 +303,7 @@ class Test_RungeKutta4:
         values = self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
     def test_step(self):
         self.simulator.report_continuously = True
@@ -312,4 +312,4 @@ class Test_RungeKutta4:
         self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)

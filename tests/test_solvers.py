@@ -48,18 +48,18 @@ class Test_Solvers:
         
         t,y,yd = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
+        assert y[-1][0] == pytest.approx(0.135, abs = 1e-3)
         
     def test_dopri5_state_events(self):
         solver = Dopri5(self.eproblem)
         
         t,y = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
+        assert y[-1][0] == pytest.approx(0.135, abs = 1e-3)
         
     def test_rodasode_state_events(self):
         solver = RodasODE(self.eproblem)
         
         t,y = solver.simulate(2,33)
         
-        assert float(y[-1]) == pytest.approx(0.135, abs = 1e-3)
+        assert y[-1][0] == pytest.approx(0.135, abs = 1e-3)

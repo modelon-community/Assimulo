@@ -195,7 +195,7 @@ class Test_Explicit_Euler:
         values = self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
     def test_step(self):
         """
@@ -207,7 +207,7 @@ class Test_Explicit_Euler:
         self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
         
     def test_exception(self):
         """
@@ -356,7 +356,7 @@ class Test_Implicit_Euler:
         values = self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
     def test_step(self):
         """
@@ -368,7 +368,7 @@ class Test_Implicit_Euler:
         self.simulator.simulate(1)
         
         assert self.simulator.t_sol[-1] == pytest.approx(1.0)
-        assert float(self.simulator.y_sol[-1]) == pytest.approx(2.0)
+        assert self.simulator.y_sol[-1][0] == pytest.approx(2.0)
     
     def test_stiff_problem(self):
         f = lambda t,y: -15.0*y

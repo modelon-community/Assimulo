@@ -74,7 +74,7 @@ class Test_GLIMDA:
         
         t,y = simulator.simulate(1.0)
         
-        assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
+        assert y[-1][0] == pytest.approx(np.exp(-1.0),4)
     
     def test_maxord(self):
         """

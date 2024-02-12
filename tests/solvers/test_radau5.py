@@ -283,7 +283,6 @@ class Test_Explicit_Radau5_Py:
         assert self.sim.statistics["nsteps"] < 300
         
         #assert self.sim.y[-2][0] == pytest.approx(1.71505001, abs = 1e-4)
-        print
         assert self.sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
         self.sim.report_continuously = True
@@ -746,6 +745,7 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_step_size_too_small(self):
         """
         This tests the error for too small step-sizes
@@ -1192,7 +1192,7 @@ class Test_Implicit_Radau5:
         
         t,y = simulator.simulate(1.0)
         
-        assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
+        assert y[-1][0] == pytest.approx(np.exp(-1.0),4)
     
     def test_time_event(self):
         f = lambda t,y,yd: y-yd
@@ -1326,6 +1326,7 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_step_size_too_small(self):
         """
         This tests the error for too small step-sizes

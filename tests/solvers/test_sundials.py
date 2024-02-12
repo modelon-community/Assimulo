@@ -583,7 +583,7 @@ class Test_CVode:
         t100 = sim.t_sol
         sim.reset()
         sim.simulate(10.)
-        assert float(y100[-2]) == pytest.approx(float(sim.interpolate(9.9, 0)), abs = 1e-5)
+        assert y100[-2][0] == pytest.approx(sim.interpolate(9.9, 0)[0], abs = 1e-5)
     
     def test_ncp_list(self):
         f = lambda t,y:np.array(-y)
@@ -594,7 +594,7 @@ class Test_CVode:
         
         t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) #Simulate 5 seconds
         
-        assert float(y[-1]) == pytest.approx(0.00364832, abs = 1e-4)
+        assert y[-1][0] == pytest.approx(0.00364832, abs = 1e-4)
         
     def test_handle_result(self):
         """
@@ -918,7 +918,7 @@ class Test_IDA:
         
         t,y = simulator.simulate(1.0)
         
-        assert float(y[-1]) == pytest.approx(float(np.exp(-1.0)),4)
+        assert y[-1][0] == pytest.approx(np.exp(-1.0),4)
     
     def test_init(self):
         """

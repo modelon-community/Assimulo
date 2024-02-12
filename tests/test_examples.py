@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import pytest
 from assimulo.exception import AssimuloException
 from assimulo.examples import *
 
@@ -37,6 +38,7 @@ class Test_Examples:
     def test_kinsol_with_jac(self):
         kinsol_with_jac.run_example(with_plots=False)
     
+    @pytest.mark.filterwarnings("ignore::Warning") # SparseEfficiencyWarning
     def test_kinsol_ors(self):
         kinsol_ors.run_example(with_plots=False)
     
