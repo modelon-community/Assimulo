@@ -28,7 +28,7 @@ import scipy.sparse as sps
 import numpy as np
 
 import re
-float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
+float_regex = "\s*[+-]?\d*.\d*((e|E)[+-]?\d*)?"
 
 class KeyboardInterruptAux:
     """Auxiliary class for creating problems (both explicit and implicit) 
@@ -806,7 +806,7 @@ class Test_Explicit_Radau5:
         prob = Explicit_Problem(f, y0)
         sim = Radau5ODE(prob)
 
-        err_msg = f'Repeated unexpected step rejections.'
+        err_msg = 'Repeated unexpected step rejections.'
         with pytest.raises(Radau5Error, match = err_msg):
             sim.simulate(1.)
 

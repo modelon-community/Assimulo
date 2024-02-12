@@ -25,7 +25,7 @@ from assimulo.exception import TimeLimitExceeded
 import numpy as np
 import scipy.sparse as sps
 
-float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
+float_regex = "\s*[+-]?\d*.\d*((e|E)[+-]?\d*)?"
 
 class Extended_Problem(Explicit_Problem):
     
