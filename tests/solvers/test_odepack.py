@@ -17,6 +17,7 @@
 
 import pytest
 from assimulo.lib.odepack import dsrcar, dcfode
+from assimulo.solvers.odepack import RKStarterNordsieck
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
@@ -232,12 +233,11 @@ class Test_LSODAR:
         assert r[0] == pytest.approx(1., abs = 1e-4)
         assert i[0] == 1  
     
+    @pytest.mark.skip("Test broken")
     def test_rkstarter(self):
         """
         This test checks the correctness of the Nordsieck array generated 
         from a RK starter
-        """
-        pass
         """
         A=np.array([[0.,1.],[-4.,0.]])
         def f(t,x,sw0):
@@ -258,10 +258,9 @@ class Test_LSODAR:
         h=H/4.
         nordsieck_at_0=np.array([coeff[-1,:],h*d1coeff[-1,:],h**2/2.*d2coeff[-1,:],
                                      h**3/6.*d3coeff[-1,:],h**4/24.*d4coeff[-1,:]])
-        rkNordsieck=odepack.RKStarterNordsieck(f,H)
+        rkNordsieck=RKStarterNordsieck(f,H)
         computed=rkNordsieck(0,y0)       
-        numpy.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)      
-        """              
+        np.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)      
         
     def test_interpol(self):
         # a with interpolation and report_continuously

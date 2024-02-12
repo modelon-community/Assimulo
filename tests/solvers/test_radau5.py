@@ -213,22 +213,22 @@ class Test_Explicit_Radau5_Py:
         cls.sim.inith = 1.e-4 #Initial step-size
         cls.sim.usejac = False
     
+    @pytest.mark.skip("Does not support state events")
     def test_event_localizer(self):
-        pass
-    #     exp_mod = Extended_Problem() #Create the problem
+        exp_mod = Extended_Problem() #Create the problem
 
-    #     exp_sim = _Radau5ODE(exp_mod) #Create the solver
+        exp_sim = _Radau5ODE(exp_mod) #Create the solver
         
-    #     exp_sim.verbosity = 0
-    #     exp_sim.report_continuously = True
+        exp_sim.verbosity = 0
+        exp_sim.report_continuously = True
         
-    #     #Simulate
-    #     t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
+        #Simulate
+        t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
-    #     #Basic test
-    #     assert y[-1][0] == pytest.approx(8.0)
-    #     assert y[-1][1] == pytest.approx(3.0)
-    #     assert y[-1][2] == pytest.approx(2.0)
+        #Basic test
+        assert y[-1][0] == pytest.approx(8.0)
+        assert y[-1][1] == pytest.approx(3.0)
+        assert y[-1][2] == pytest.approx(2.0)
     
     def test_time_event(self):
         f = lambda t,y: [1.0]
@@ -638,17 +638,17 @@ class Test_Explicit_Radau5:
         self.sim.maxh = 0.01
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
-        
+    
+    @pytest.mark.skip("Statistic not recorded by Radau5")
     def test_newt(self):
         """
         This tests the maximum number of newton iterations.
         """
-        pass
-        # self.sim.simulate(1.0)
-        # self.sim.reset()
-        # self.sim.newt = 10
-        # self.sim.simulate(1.0)
-        # assert self.sim.statistics["nniterfail"] == 1
+        self.sim.simulate(1.0)
+        self.sim.reset()
+        self.sim.newt = 10
+        self.sim.simulate(1.0)
+        assert self.sim.statistics["nniterfail"] == 1
     
     def test_safe(self):
         """
