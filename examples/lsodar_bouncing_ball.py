@@ -135,7 +135,7 @@ def run_example(with_plots=True):
         pl.subplot(221)
         pl.plot(t,y)
         pl.title('LSODAR Bouncing ball (one step mode)')
-        pl.ylabel('States: $y$ and $\dot y$')
+        pl.ylabel('States: $y$ and $\\dot y$')
         pl.subplot(223)
         pl.plot(exp_sim.t_sol,exp_sim.h_sol)
         pl.title('LSODAR step size plot')

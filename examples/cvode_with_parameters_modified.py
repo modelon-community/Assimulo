@@ -30,9 +30,9 @@ def run_example(with_plots=True):
 
     .. math:: 
     
-       \dot y_1 &= -p_1 y_1 + p_2 y_2 y_3 \\
-       \dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2 \\
-       \dot y_3 &= p_3  y_2^2
+       \\dot y_1 &= -p_1 y_1 + p_2 y_2 y_3 \\
+       \\dot y_2 &= p_1 y_1 - p_2 y_2 y_3 - p_3 y_2^2 \\
+       \\dot y_3 &= p_3  y_2^2
     
     on return:
     

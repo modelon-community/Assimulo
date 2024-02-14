@@ -40,7 +40,7 @@ def run_example(with_plots=True):
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
-              name = 'RK34 Example: $\dot y = - y$')
+              name = 'RK34 Example: $\\dot y = - y$')
     
     exp_sim = RungeKutta34(exp_mod) #Create a RungeKutta34 solver
     exp_sim.inith = 0.1 #Sets the initial step, default = 0.01

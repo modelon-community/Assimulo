@@ -41,7 +41,7 @@ def run_example(with_plots=True):
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
-              name = 'RK4 Example: $\dot y = - y$')
+              name = 'RK4 Example: $\\dot y = - y$')
     
     exp_sim = RungeKutta4(exp_mod) #Create a RungeKutta4 solver
     

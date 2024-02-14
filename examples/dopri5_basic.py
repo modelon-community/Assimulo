@@ -39,7 +39,7 @@ def run_example(with_plots=True):
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
-              name = 'DOPRI5 Example: $\dot y = - y$')
+              name = 'DOPRI5 Example: $\\dot y = - y$')
     
     exp_sim = Dopri5(exp_mod) #Create a Dopri5 solver
 

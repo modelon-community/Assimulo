@@ -1033,9 +1033,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 try:
                     leny = self._leny
                     res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
-                except BaseException as E:
+                except BaseException as err:
                     res = y[:leny].copy()
-                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(err, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
@@ -1051,13 +1051,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 try:
                     leny = self._leny
                     res = self.problem.res(t, y[:leny], y[leny:2*leny])
-                except BaseException as E:
+                except BaseException as err:
                     res = y[:leny].copy()
-                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(err, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
-                return np.append(y[leny:2*leny],res), [ret]
+                return np.append(y[leny:2*leny], res), [ret]
             self._f = f
     
     def interpolate(self, time, k=0):
@@ -1081,11 +1081,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         if self.problem_info["state_events"]:
             flag, t, y, yd = self.event_locator(told, t, y, yd)
             #Convert to Fortram indicator.
-            if flag == ID_PY_EVENT: irtrn = -1
+            if flag == ID_PY_EVENT:
+                irtrn = -1
         
         if self._opts["report_continuously"]:
             initialize_flag = self.report_solution(t, y, yd, self._opts)
-            if initialize_flag: irtrn = -1
+            if initialize_flag:
+                irtrn = -1
         else:
             if self._opts["output_list"] is None:
                 self._tlist.append(t)
@@ -1119,7 +1121,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def integrate(self, t, y, yd, tf, opts):
         if self.usejac:
             self.usejac=False
-            self.log_message("Jacobians are not currently supported, disabling.",NORMAL)
+            self.log_message("Jacobians are not currently supported, disabling.", NORMAL)
         
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
@@ -1172,9 +1174,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = np.append(self.atol, self.atol)
 
-        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
-                                                    ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
-                                                    IOUT, WORK, IWORK)
+        t, y, h, iwork, flag = self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
+                                                  ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+                                                  IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:
