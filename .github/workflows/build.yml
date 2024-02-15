@@ -43,4 +43,4 @@ jobs:
     - name: Build
       run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr --extra-fortran-compile-flags="-fallow-argument-mismatch"
     - name: Test
-      run: pytest --verbose tests/
+      run: pytest

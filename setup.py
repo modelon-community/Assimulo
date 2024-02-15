@@ -202,28 +202,23 @@ class Assimulo_prepare(object):
         self.desSolvers = os.path.join(self.desSrc,"solvers")
         self.desExamples = os.path.join(self.desSrc,"examples")
         self.desMain = os.path.join(self.curdir,"build")
-        self.desTests = os.path.join(self.desSrc,"tests")
-        self.desTestsSolvers = os.path.join(self.desTests,"solvers")
         self.desThirdParty=dict([(thp,os.path.join(self.curdir,self.build_assimulo_thirdparty,thp)) 
                                           for thp in self.thirdparty_methods])
-        # filelists
+        # file lists
         self.fileSrc     = os.listdir("src")
         self.fileLib     = os.listdir(os.path.join("src","lib"))
         self.fileSolvers = os.listdir(os.path.join("src","solvers"))
         self.fileExamples= os.listdir("examples")
         self.fileMain    = ["setup.py","README.md","INSTALL","CHANGELOG","MANIFEST.in"]
         self.fileMainIncludes = ["README.md","CHANGELOG", "LICENSE"]
-        self.fileTests   = os.listdir("tests")
         self.filelist_thirdparty=dict([(thp,os.listdir(os.path.join("thirdparty",thp))) 
                                          for thp in self.thirdparty_methods])
-        self.fileTestsSolvers = os.listdir(os.path.join("tests","solvers"))
         
     def create_assimulo_dirs_and_populate(self):
         self._set_directories()
         
         for subdir in ["lib", "solvers", "examples"]:
             self.create_dir(os.path.join(self.build_assimulo,subdir))
-        self.create_dir(os.path.join(self.build_assimulo, "tests", "solvers"))
         for pck in self.thirdparty_methods:
             self.create_dir(os.path.join(self.build_assimulo_thirdparty, pck))
         
@@ -233,8 +228,6 @@ class Assimulo_prepare(object):
         self.copy_all_files(self.fileExamples, "examples", self.desExamples)
         self.copy_all_files(self.fileMain, None, self.desMain)
         self.copy_all_files(self.fileMainIncludes, None, self.desSrc)
-        self.copy_all_files(self.fileTests, "tests", self.desTests)
-        self.copy_all_files(self.fileTestsSolvers, os.path.join("tests","solvers"), self.desTestsSolvers)
 
         for f in self.filelist_thirdparty.items():
             logging.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
@@ -724,7 +717,7 @@ ndc.setup(name=NAME,
       platforms=PLATFORMS,
       classifiers=CLASSIFIERS,
       package_dir = {'assimulo':'assimulo'},
-      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples','assimulo.tests','assimulo.tests.solvers'],
+      packages=['assimulo', 'assimulo.lib','assimulo.solvers','assimulo.examples'],
       #cmdclass = {'build_ext': build_ext},
       ext_modules = ext_list,
       package_data={'assimulo': ['*.pxd', 'version.txt', 'CHANGELOG', 'README.md', 'LICENSE']+license_info+['examples'+os.sep+'kinsol_ors_matrix.mtx',

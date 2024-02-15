@@ -60,9 +60,9 @@ the section troubleshooting see :ref:`instTrouble` should be consulted before in
 
 .. note::
 
-    To test Assimulo, go into the tests folder and type::
+    To test Assimulo, go to the Assimulo directory and type::
     
-        pytest .
+        pytest
         
     Which requires pytest.
 
@@ -88,9 +88,9 @@ After a successful installation, the package will be located in pythons dist-pac
 
 .. note::
 
-    To test Assimulo, go into the tests folder and type::
+    To test Assimulo, go to the Assimulo directory and type::
     
-        pytest .
+        pytest
         
     Which requires pytest.
 
