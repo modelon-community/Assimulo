@@ -267,7 +267,6 @@ class Test_CVode:
         """
         This tests the functionality of the method __init__.
         """
-        # assert self.simulator.f == 'Test function'
         assert self.simulator.y == 1.0
         assert self.simulator.discr == 'BDF'
         assert self.simulator.iter == 'Newton'
@@ -1180,12 +1179,6 @@ class Test_IDA:
         """
         This tests the functionality of the property algvar.
         """
-        #self.simulator.Integrator.dim = 3
-        
-        # with pytest.raises(Exception):
-        #     self.simulator._set_algvar(1)
-        # with pytest.raises(Exception):
-        #     self.simulator._set_algvar(1.0)
         with pytest.raises(Exception):
             self.simulator._set_algvar([1,'hej',1])
         with pytest.raises(Exception):
@@ -1196,17 +1189,6 @@ class Test_IDA:
             self.simulator._set_algvar([1.0,1.0])
         with pytest.raises(Exception):
             self.simulator._set_algvar([3.0, 1.0, 1.0])
-        
-        #vector = [1.0,0.0,1.0]
-        #vectorb = [True,False,True]
-        #vectori = [1,0,1]
-        
-        #self.simulator.algvar = vectorb
-        #self.simulator.algvar = vectori
-        #self.simulator.algvar = vector
-        #assert self.simulator.algvar[0] == vector[0]
-        #assert self.simulator.algvar[1] == vector[1]
-        #assert self.simulator.algvar[2] == vector[2]
     
     def test_time_event_2(self):
         f = lambda t,y,yd: y-yd
@@ -1390,20 +1372,6 @@ class Test_Sundials:
             self.simulators[i].atol = [np.array([1e-5])]
             assert len(self.simulators[i].atol.shape) == 1
             assert self.simulators[i].atol == 1e-5
-            """
-            self.simulators[i].Integrator.dim = 3
-            with pytest.raises(Exception):
-            self.simulators([i]._set_atol, [1.0, 1.0])
-            with pytest.raises(Exception):
-            self.simulators([i]._set_atol, [1.0, 1.0, -1.0])
-            self.simulators[i].atol = [1.0, 1.0, 1.0]
-            assert self.simulators[i].atol == [1.0, 1.0, 1.0]
-            self.simulators[i].atol = np.array([1.0, 1.0, 1.0])
-            assert self.simulators[i].atol[0] == 1.0
-            self.simulators[i].atol = np.array([1, 5, 1.0])
-            assert self.simulators[i].atol[0] == 1.0
-            """
-    
     
     def test_rtol(self):
         """
@@ -1548,14 +1516,10 @@ class Test_Sundials:
         self.sim.maxcorS = 10.5
         assert self.sim.maxcorS == 10
         
-        # with pytest.raises(Exception):
-            # self.sim._set_max_cor_S(0)
         with pytest.raises(Exception):
             self.sim._set_max_cor_S('str')
         with pytest.raises(Exception):
             self.sim._set_max_cor_S([])
-        # with pytest.raises(Exception):
-            # self.sim._set_max_cor_S(-10)
     
     def test_pbar(self):
         """
