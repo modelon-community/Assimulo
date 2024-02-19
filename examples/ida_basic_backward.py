@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -39,7 +39,7 @@ def run_example(with_plots=True):
     
     #Define an Assimulo problem
     imp_mod = Implicit_Problem(f,t0=5, y0=0.02695, yd0=-0.02695,
-              name = 'IDA Example: $\dot y + y = 0$ (reverse time)')
+              name = 'IDA Example: $\\dot y + y = 0$ (reverse time)')
     
     #Define an explicit solver
     imp_sim = IDA(imp_mod) #Create a IDA solver
@@ -62,7 +62,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 4.00000000, 3)
+    assert y[-1][0] == pytest.approx(4.00000000, abs = 1e-3)
     
     return imp_mod, imp_sim
 

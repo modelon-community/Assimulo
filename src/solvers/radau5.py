@@ -642,11 +642,11 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
     
     def _collocation_pol(self, Z, col_poly, leny):
         
-        col_poly[2*leny:3*leny] = Z[:leny] / self.C[0,0]
-        col_poly[leny:2*leny]   = ( Z[:leny] - Z[leny:2*leny] ) / (self.C[0,0]-self.C[1,0])
-        col_poly[:leny]         = ( Z[leny:2*leny] -Z[2*leny:3*leny] ) / (self.C[1,0]-1.)
-        col_poly[2*leny:3*leny] = ( col_poly[leny:2*leny] - col_poly[2*leny:3*leny] ) / self.C[1,0]
-        col_poly[leny:2*leny]   = ( col_poly[leny:2*leny] - col_poly[:leny] ) / (self.C[0,0]-1.)
+        col_poly[2*leny:3*leny] = Z[:leny] / self.C[0]
+        col_poly[leny:2*leny]   = ( Z[:leny] - Z[leny:2*leny] ) / (self.C[0]-self.C[1])
+        col_poly[:leny]         = ( Z[leny:2*leny] -Z[2*leny:3*leny] ) / (self.C[1]-1.)
+        col_poly[2*leny:3*leny] = ( col_poly[leny:2*leny] - col_poly[2*leny:3*leny] ) / self.C[1]
+        col_poly[leny:2*leny]   = ( col_poly[leny:2*leny] - col_poly[:leny] ) / (self.C[0]-1.)
         col_poly[2*leny:3*leny] =   col_poly[leny:2*leny]-col_poly[2*leny:3*leny]
         
         return col_poly
@@ -657,9 +657,9 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         Z2 = Z[self._leny:2*self._leny]
         Z3 = Z[2*self._leny:3*self._leny]
 
-        self.f(self.Y1,t+self.C[0]*self.h, y+Z1)
-        self.f(self.Y2,t+self.C[1]*self.h, y+Z2)
-        self.f(self.Y3,t+self.C[2]*self.h, y+Z3)
+        self.f(self.Y1, t + self.C[0] * self.h, y + Z1)
+        self.f(self.Y2, t + self.C[1] * self.h, y + Z2)
+        self.f(self.Y3, t + self.C[2] * self.h, y + Z3)
         
         self.statistics["nfcns"] += 3
         
@@ -678,9 +678,9 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
             newtval = self._col_poly
             leny = self._leny
             
-            Z[:leny]        = cq[0,0]*(newtval[:leny]+(cq[0,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[0,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
-            Z[leny:2*leny]  = cq[1,0]*(newtval[:leny]+(cq[1,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[1,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
-            Z[2*leny:3*leny]= cq[2,0]*(newtval[:leny]+(cq[2,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[2,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
+            Z[:leny]        = cq[0]*(newtval[:leny]+(cq[0]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[0]-self.C[0]+1.)*newtval[2*leny:3*leny]))
+            Z[leny:2*leny]  = cq[1]*(newtval[:leny]+(cq[1]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[1]-self.C[0]+1.)*newtval[2*leny:3*leny]))
+            Z[2*leny:3*leny]= cq[2]*(newtval[:leny]+(cq[2]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[2]-self.C[0]+1.)*newtval[2*leny:3*leny]))
             
             W = np.dot(self.T2,Z)
             
@@ -872,7 +872,7 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         s = (t-self._newt)/self._oldh
         Z = self._col_poly
         
-        yout = self._yc+s*(Z[:leny]+(s-self.C[1,0]+1.)*(Z[leny:2*leny]+(s-self.C[0,0]+1.)*Z[2*leny:3*leny]))
+        yout = self._yc+s*(Z[:leny]+(s-self.C[1]+1.)*(Z[leny:2*leny]+(s-self.C[0]+1.)*Z[2*leny:3*leny]))
         return yout
     
     def _load_parameters(self):
@@ -889,15 +889,15 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
         A[2,1] = (16.0+np.sqrt(6.))/36.0
         A[2,2] = (1.0/9.0)
         
-        C = np.zeros([3,1])
-        C[0,0]=(4.0-np.sqrt(6.0))/10.0
-        C[1,0]=(4.0+np.sqrt(6.0))/10.0
-        C[2,0]=1.0
+        C = np.zeros([3])
+        C[0]=(4.0-np.sqrt(6.0))/10.0
+        C[1]=(4.0+np.sqrt(6.0))/10.0
+        C[2]=1.0
         
-        B = np.zeros([1,3])
-        B[0,0]=(16.0-np.sqrt(6.0))/36.0
-        B[0,1]=(16.0+np.sqrt(6.0))/36.0
-        B[0,2]=1.0/9.0
+        B = np.zeros([3])
+        B[0]=(16.0-np.sqrt(6.0))/36.0
+        B[1]=(16.0+np.sqrt(6.0))/36.0
+        B[2]=1.0/9.0
         
         E = np.zeros(3)
         E[0] = -13.0-7.*np.sqrt(6.)
@@ -1033,9 +1033,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 try:
                     leny = self._leny
                     res = self.problem.res(t, y[:leny], y[leny:2*leny], self.sw)
-                except BaseException as E:
+                except BaseException as err:
                     res = y[:leny].copy()
-                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(err, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
@@ -1051,13 +1051,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
                 try:
                     leny = self._leny
                     res = self.problem.res(t, y[:leny], y[leny:2*leny])
-                except BaseException as E:
+                except BaseException as err:
                     res = y[:leny].copy()
-                    if isinstance(E, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
+                    if isinstance(err, (np.linalg.LinAlgError, ZeroDivisionError, AssimuloRecoverableError)): ## recoverable
                         ret = -1 #Recoverable error
                     else:
                         ret = -2 #Non-recoverable
-                return np.append(y[leny:2*leny],res), [ret]
+                return np.append(y[leny:2*leny], res), [ret]
             self._f = f
     
     def interpolate(self, time, k=0):
@@ -1081,11 +1081,13 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         if self.problem_info["state_events"]:
             flag, t, y, yd = self.event_locator(told, t, y, yd)
             #Convert to Fortram indicator.
-            if flag == ID_PY_EVENT: irtrn = -1
+            if flag == ID_PY_EVENT:
+                irtrn = -1
         
         if self._opts["report_continuously"]:
             initialize_flag = self.report_solution(t, y, yd, self._opts)
-            if initialize_flag: irtrn = -1
+            if initialize_flag:
+                irtrn = -1
         else:
             if self._opts["output_list"] is None:
                 self._tlist.append(t)
@@ -1119,7 +1121,7 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
     def integrate(self, t, y, yd, tf, opts):
         if self.usejac:
             self.usejac=False
-            self.log_message("Jacobians are not currently supported, disabling.",NORMAL)
+            self.log_message("Jacobians are not currently supported, disabling.", NORMAL)
         
         ITOL  = 1 #Both atol and rtol are vectors
         IJAC  = 1 if self.usejac else 0 #Switch for the jacobian, 0==NO JACOBIAN
@@ -1172,9 +1174,9 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         atol = np.append(self.atol, self.atol)
 
-        t, y, h, iwork, flag =  self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
-                                                    ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
-                                                    IOUT, WORK, IWORK)
+        t, y, h, iwork, flag = self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
+                                                  ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
+                                                  IOUT, WORK, IWORK)
 
         #Checking return
         if flag == 1:
@@ -1641,7 +1643,7 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         s = (t-self._newt)/self._oldh
         Z = self._col_poly
         
-        diff = s*(Z[:leny]+(s-self.C[1,0]+1.)*(Z[leny:2*leny]+(s-self.C[0,0]+1.)*Z[2*leny:3*leny]))
+        diff = s*(Z[:leny]+(s-self.C[1]+1.)*(Z[leny:2*leny]+(s-self.C[0]+1.)*Z[2*leny:3*leny]))
         
         yout  = self._yc + diff[:self._leny]
         ydout = self._ydc+ diff[self._leny:]
@@ -1715,11 +1717,11 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
     
     def _collocation_pol(self, Z, col_poly, leny):
 
-        col_poly[2*leny:3*leny] = Z[:leny] / self.C[0,0]
-        col_poly[leny:2*leny]   = ( Z[:leny] - Z[leny:2*leny] ) / (self.C[0,0]-self.C[1,0])
-        col_poly[:leny]         = ( Z[leny:2*leny] -Z[2*leny:3*leny] ) / (self.C[1,0]-1.)
-        col_poly[2*leny:3*leny] = ( col_poly[leny:2*leny] - col_poly[2*leny:3*leny] ) / self.C[1,0]
-        col_poly[leny:2*leny]   = ( col_poly[leny:2*leny] - col_poly[:leny] ) / (self.C[0,0]-1.)
+        col_poly[2*leny:3*leny] = Z[:leny] / self.C[0]
+        col_poly[leny:2*leny]   = ( Z[:leny] - Z[leny:2*leny] ) / (self.C[0]-self.C[1])
+        col_poly[:leny]         = ( Z[leny:2*leny] -Z[2*leny:3*leny] ) / (self.C[1]-1.)
+        col_poly[2*leny:3*leny] = ( col_poly[leny:2*leny] - col_poly[2*leny:3*leny] ) / self.C[1]
+        col_poly[leny:2*leny]   = ( col_poly[leny:2*leny] - col_poly[:leny] ) / (self.C[0]-1.)
         col_poly[2*leny:3*leny] =   col_poly[leny:2*leny]-col_poly[2*leny:3*leny]
         
         return col_poly
@@ -1737,9 +1739,9 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
             newtval = self._col_poly
             leny = self._2leny
             
-            Z[:leny]        = cq[0,0]*(newtval[:leny]+(cq[0,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[0,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
-            Z[leny:2*leny]  = cq[1,0]*(newtval[:leny]+(cq[1,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[1,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
-            Z[2*leny:3*leny]= cq[2,0]*(newtval[:leny]+(cq[2,0]-self.C[1,0]+1.)*(newtval[leny:2*leny]+(cq[2,0]-self.C[0,0]+1.)*newtval[2*leny:3*leny]))
+            Z[:leny]        = cq[0]*(newtval[:leny]+(cq[0]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[0]-self.C[0]+1.)*newtval[2*leny:3*leny]))
+            Z[leny:2*leny]  = cq[1]*(newtval[:leny]+(cq[1]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[1]-self.C[0]+1.)*newtval[2*leny:3*leny]))
+            Z[2*leny:3*leny]= cq[2]*(newtval[:leny]+(cq[2]-self.C[1]+1.)*(newtval[leny:2*leny]+(cq[2]-self.C[0]+1.)*newtval[2*leny:3*leny]))
             
             W = np.dot(self.T2,Z)
             
@@ -1759,15 +1761,15 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
         A[2,1] = (16.0+np.sqrt(6.))/36.0
         A[2,2] = (1.0/9.0)
         
-        C = np.zeros([3,1])
-        C[0,0]=(4.0-np.sqrt(6.0))/10.0
-        C[1,0]=(4.0+np.sqrt(6.0))/10.0
-        C[2,0]=1.0
+        C = np.zeros([3])
+        C[0]=(4.0-np.sqrt(6.0))/10.0
+        C[1]=(4.0+np.sqrt(6.0))/10.0
+        C[2]=1.0
         
-        B = np.zeros([1,3])
-        B[0,0]=(16.0-np.sqrt(6.0))/36.0
-        B[0,1]=(16.0+np.sqrt(6.0))/36.0
-        B[0,2]=1.0/9.0
+        B = np.zeros([3])
+        B[0]=(16.0-np.sqrt(6.0))/36.0
+        B[1]=(16.0+np.sqrt(6.0))/36.0
+        B[2]=1.0/9.0
         
         E = np.zeros(3)
         E[0] = -13.0-7.*np.sqrt(6.)

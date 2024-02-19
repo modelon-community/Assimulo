@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.solvers import RungeKutta34
 from assimulo.problem import Explicit_Problem
 
@@ -40,7 +40,7 @@ def run_example(with_plots=True):
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
-              name = 'RK34 Example: $\dot y = - y$')
+              name = 'RK34 Example: $\\dot y = - y$')
     
     exp_sim = RungeKutta34(exp_mod) #Create a RungeKutta34 solver
     exp_sim.inith = 0.1 #Sets the initial step, default = 0.01
@@ -49,7 +49,7 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 0.02695199, 5)
+    assert y[-1][0] == pytest.approx(0.02695199, abs = 1e-5)
     
     #Plot
     if with_plots:

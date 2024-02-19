@@ -15,52 +15,53 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
-from assimulo import testattr
+import pytest
 from assimulo.ode import ODE, NORMAL
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import AssimuloException
 
 class Test_ODE:
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup_class(cls):
+        cls.problem = Explicit_Problem(y0=4.0)
+        cls.simulator = ODE(cls.problem)
     
-    def setUp(self):
-        self.problem = Explicit_Problem(y0=4.0)
-        self.simulator = ODE(self.problem)
-    
-    @testattr(stddist = True)
     def test_init(self):
         """
         This tests the functionality of the method __init__.
         """
-        nose.tools.assert_equal(self.simulator.verbosity, NORMAL)
-        nose.tools.assert_false(self.simulator.report_continuously)
+        assert self.simulator.verbosity == NORMAL
+        assert not self.simulator.report_continuously
     
-    @testattr(stddist = True)
     def test_verbosity(self):
         """
         This tests the functionality of the property verbosity.
         """
-        nose.tools.assert_raises(AssimuloException, self.simulator._set_verbosity, 'Test')
-        nose.tools.assert_raises(AssimuloException, self.simulator._set_verbosity, [1, 31])
-        nose.tools.assert_raises(AssimuloException, self.simulator._set_verbosity, [1])
-        
+
+        with pytest.raises(AssimuloException):
+            self.simulator._set_verbosity('Test')
+        with pytest.raises(AssimuloException):
+            self.simulator._set_verbosity([1, 31])
+        with pytest.raises(AssimuloException):
+            self.simulator._set_verbosity([1])
+
         self.simulator.verbosity=1
-        nose.tools.assert_equal(self.simulator.verbosity, 1)
-        nose.tools.assert_equal(self.simulator.options["verbosity"], 1)
+        assert self.simulator.verbosity == 1
+        assert self.simulator.options["verbosity"] == 1
         self.simulator.verbosity=4
-        nose.tools.assert_equal(self.simulator.verbosity, 4)
-        nose.tools.assert_equal(self.simulator.options["verbosity"], 4)
+        assert self.simulator.verbosity == 4
+        assert self.simulator.options["verbosity"] == 4
         
-    @testattr(stddist = True)    
     def test_report_continuously(self):
         """
         This tests the functionality of the property report_continuously.
         """
-        nose.tools.assert_false(self.simulator.report_continuously) #Test the default value
+        assert not self.simulator.report_continuously #Test the default value
         
         self.simulator.report_continuously = True
-        nose.tools.assert_true(self.simulator.report_continuously)
-        nose.tools.assert_true(self.simulator.options["report_continuously"])
+        assert self.simulator.report_continuously
+        assert self.simulator.options["report_continuously"]
     def test_step_events_report_continuously(self):
         """
         This test tests if report_continuously is set correctly, when step_events are present.
@@ -70,4 +71,4 @@ class Test_ODE:
         self.simulator.problem_info["step_events"] = True
         self.simulator.problem=self.problem
         self.simulator(10.,ncp=10) # output points and step events should set report_continuously to True 
-        nose.tools.assert_true(self.simulator.report_continuously)
+        assert self.simulator.report_continuously

@@ -753,7 +753,7 @@ class RungeKutta4(Explicit_ODE):
     
     .. math::
 
-        \dot{y} = f(t,y), \quad y(t_0) = y_0 .
+        \\dot{y} = f(t,y), \\quad y(t_0) = y_0 .
         
     Using a Runge-Kutta method of order 4, the approximation is defined as 
     follow,

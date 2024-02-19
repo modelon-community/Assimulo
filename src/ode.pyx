@@ -58,9 +58,9 @@ cdef class ODE:
                          "sensitivity_calculations":False,
                          "interpolated_sensitivity_output":False,
                          "rtol_as_vector":False}
-        self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False
-                             ,"jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,'prec_solve':False,'prec_setup':False
-                             ,"jac_fcn_nnz": -1}
+        self.problem_info = {"dim":0,"dimRoot":0,"dimSens":0,"state_events":False,"step_events":False,"time_events":False,
+                             "jac_fcn":False, "sens_fcn":False, "jacv_fcn":False,"switches":False,"type":0,"jaclag_fcn":False,
+                             'prec_solve':False, 'prec_setup':False, "jac_fcn_nnz": -1}
         #Type of the problem
         #0 = Explicit
         #1 = Implicit
