@@ -342,7 +342,10 @@ cdef class IDA(Implicit_ODE):
                     raise IDAError(flag,self.t)
             
             #Specify the error handling
-            flag = SUNDIALS.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
+            IF SUNDIALS_VERSION >= (7,0,0):
+                flag = SUNDIALS.SUNContext_PushErrHandler(ctx, ida_err, <void*>self.pData)
+            ELSE:
+                flag = SUNDIALS.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
             if flag < 0:
                 raise IDAError(flag, self.t)
                 
@@ -1843,7 +1846,10 @@ cdef class CVode(Explicit_ODE):
                     raise CVodeError(flag, self.t)
                     
             #Specify the error handling
-            flag = SUNDIALS.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
+            IF SUNDIALS_VERSION >= (7,0,0):
+                flag = SUNDIALS.SUNContext_PushErrHandler(ctx, cv_err, <void*>self.pData)
+            ELSE:
+                flag = SUNDIALS.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
             if flag < 0:
                 raise CVodeError(flag, self.t)
                 

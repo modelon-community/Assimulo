@@ -742,32 +742,64 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
 
 # Error handling callback functions
 # =================================
+IF SUNDIALS_VERSION >= (7,0,0):
+    cdef extern from "sundials/sundials_context.h":
+        ctypedef _SUNContext * SUNContext
+        cdef struct _SUNContext:
+            pass
+        ctypedef int SUNErrCode
+    cdef void cv_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx):
+        """
+        This method overrides the default handling of error messages.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        
+        if error_code > 0 and pData.verbose > 0: #Warning
+            print '[CVode Warning]', msg
+        
+        if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+            if error_code < 0: #Error
+                print '[CVode Error]', msg
+ELSE:
+    cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
+        """
+        This method overrides the default handling of error messages.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        
+        if error_code > 0 and pData.verbose > 0: #Warning
+            print '[CVode Warning]', msg
+        
+        if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+            if error_code < 0: #Error
+                print '[CVode Error]', msg
 
-cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
-    """
-    This method overrides the default handling of error messages.
-    """
-    cdef ProblemData pData = <ProblemData>problem_data
-    
-    if error_code > 0 and pData.verbose > 0: #Warning
-        print '[CVode Warning]', msg
-    
-    if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
-        if error_code < 0: #Error
-            print '[CVode Error]', msg
-            
-cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
-    """
-    This method overrides the default handling of error messages.
-    """
-    cdef ProblemData pData = <ProblemData>problem_data
-    
-    if error_code > 0 and pData.verbose > 0: #Warning
-        print '[IDA Warning]', msg
-    
-    if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
-        if error_code < 0: #Error
-            print '[IDA Error]', msg
+IF SUNDIALS_VERSION >= (7,0,0):
+    cdef void ida_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx):
+        """
+        This method overrides the default handling of error messages.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        
+        if error_code > 0 and pData.verbose > 0: #Warning
+            print '[IDA Warning]', msg
+        
+        if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+            if error_code < 0: #Error
+                print '[IDA Error]', msg
+ELSE:
+    cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
+        """
+        This method overrides the default handling of error messages.
+        """
+        cdef ProblemData pData = <ProblemData>problem_data
+        
+        if error_code > 0 and pData.verbose > 0: #Warning
+            print '[IDA Warning]', msg
+        
+        if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
+            if error_code < 0: #Error
+                print '[IDA Error]', msg
 
 
 cdef class ProblemData:

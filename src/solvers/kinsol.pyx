@@ -210,14 +210,18 @@ cdef class KINSOL(Algebraic):
                 raise KINSOLError(flag)
             
             #Specify the error handling
-            flag = SUNDIALS.KINSetErrHandlerFn(self.kinsol_mem, kin_err, <void*>self.pData)
+            IF SUNDIALS_VERSION >= (7,0,0):
+                flag = SUNDIALS.SUNContext_PushErrHandler(ctx, kin_err, <void*>self.pData)
+            ELSE:
+                flag = SUNDIALS.KINSetErrHandlerFn(self.kinsol_mem, kin_err, <void*>self.pData)
             if flag < 0:
                 raise KINSOLError(flag) 
                 
             #Specify the handling of info messages
-            flag = SUNDIALS.KINSetInfoHandlerFn(self.kinsol_mem, kin_info, <void*>self.pData);
-            if flag < 0:
-                raise KINSOLError(flag)
+            IF SUNDIALS_VERSION < (7,0,0):
+                flag = SUNDIALS.KINSetInfoHandlerFn(self.kinsol_mem, kin_info, <void*>self.pData);
+                if flag < 0:
+                    raise KINSOLError(flag)
             
         else: #The solver needs not to be reinitialized
             pass
@@ -371,9 +375,10 @@ cdef class KINSOL(Algebraic):
         if flag < 0:
             raise KINSOLError(flag)
         
-        flag = SUNDIALS.KINSetPrintLevel(self.kinsol_mem, self._get_print_level()); #The function KINSetPrintLevel specifies the level of verbosity of the output.
-        if flag < 0:
-            raise KINSOLError(flag)
+        IF SUNDIALS_VERSION < (7,0,0):
+            flag = SUNDIALS.KINSetPrintLevel(self.kinsol_mem, self._get_print_level()); #The function KINSetPrintLevel specifies the level of verbosity of the output.
+            if flag < 0:
+                raise KINSOLError(flag)
     
     def _get_print_level(self):
         """
