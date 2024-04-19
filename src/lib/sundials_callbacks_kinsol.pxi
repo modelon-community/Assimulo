@@ -237,9 +237,9 @@ IF SUNDIALS_VERSION >= (7,0,0):
         else:
             category = 0
         
-        print "Error occured in <function: %s>."%function
-        print "<message: %s>"%msg
-        #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+        print("Error occured in <function: %s>."%function)
+        print("<message: %s>"%msg)
+        #print("<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL))
 ELSE:
     cdef void kin_err(int err_code, const char *module, const char *function, char *msg, void *eh_data) noexcept:
         cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
@@ -251,9 +251,9 @@ ELSE:
         else:
             category = 0
         
-        print "Error occured in <function: %s>."%function
-        print "<message: %s>"%msg
-        #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+        print("Error occured in <function: %s>."%function)
+        print("<message: %s>"%msg)
+        #print("<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL))
 
 
 cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data) noexcept:
@@ -287,9 +287,9 @@ cdef void kin_info(const char *module, const char *function, char *msg, void *eh
         print("<iteration_index:%d>"%nniters)
         print("ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n))
         print("<scaled_residual_norm:%E>", kin_mem->kin_fnorm))
-        print "residuals", 
+        print("residuals", 
             realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
-            f[i]*residual_scaling_factors[i]
+            f[i]*residual_scaling_factors[i])
     """
 
 cdef class ProblemDataEquationSolver:

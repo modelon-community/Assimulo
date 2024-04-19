@@ -768,13 +768,13 @@ cdef extern from "kinsol/kinsol.h":
 # Functions for error handling
 IF SUNDIALS_VERSION < (7,0,0):
     cdef extern from "kinsol/kinsol.h":
-        ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
+        ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data) noexcept
         int KINSetErrHandlerFn(void *kinmem, KINErrHandlerFn ehfun, void *eh_data) noexcept
     cdef extern from "cvodes/cvodes.h":
-        ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data)
+        ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) noexcept
         int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data) noexcept
     cdef extern from "idas/idas.h":
-        ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) 
+        ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) noexcept
         int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):

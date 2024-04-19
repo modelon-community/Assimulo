@@ -750,31 +750,31 @@ IF SUNDIALS_VERSION >= (7,0,0):
         cdef struct _SUNContext:
             pass
         ctypedef int SUNErrCode
-    cdef void cv_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx):
+    cdef void cv_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx) noexcept:
         """
         This method overrides the default handling of error messages.
         """
         cdef ProblemData pData = <ProblemData>problem_data
         
         if error_code > 0 and pData.verbose > 0: #Warning
-            print '[CVode Warning]', msg
+            print('[CVode Warning]', msg)
         
         if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
             if error_code < 0: #Error
-                print '[CVode Error]', msg
+                print('[CVode Error]', msg)
 ELSE:
-    cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data):
+    cdef void cv_err(int error_code, const char *module, const char *function, char *msg, void *problem_data) noexcept:
         """
         This method overrides the default handling of error messages.
         """
         cdef ProblemData pData = <ProblemData>problem_data
         
         if error_code > 0 and pData.verbose > 0: #Warning
-            print '[CVode Warning]', msg
+            print('[CVode Warning]', msg)
         
         if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
             if error_code < 0: #Error
-                print '[CVode Error]', msg
+                print('[CVode Error]', msg)
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef void ida_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx) noexcept:
@@ -784,11 +784,11 @@ IF SUNDIALS_VERSION >= (7,0,0):
         cdef ProblemData pData = <ProblemData>problem_data
         
         if error_code > 0 and pData.verbose > 0: #Warning
-            print '[IDA Warning]', msg
+            print('[IDA Warning]', msg)
         
         if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
             if error_code < 0: #Error
-                print '[IDA Error]', msg
+                print('[IDA Error]', msg)
 ELSE:
     cdef void ida_err(int error_code, const char *module, const char *function, char *msg, void *problem_data) noexcept:
         """
@@ -797,11 +797,11 @@ ELSE:
         cdef ProblemData pData = <ProblemData>problem_data
         
         if error_code > 0 and pData.verbose > 0: #Warning
-            print '[IDA Warning]', msg
+            print('[IDA Warning]', msg)
         
         if pData.verbose > 2: #Verbosity is greater than NORMAL, print warnings and errors
             if error_code < 0: #Error
-                print '[IDA Error]', msg
+                print('[IDA Error]', msg)
 
 
 cdef class ProblemData:
