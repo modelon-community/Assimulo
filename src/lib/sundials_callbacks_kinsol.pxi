@@ -65,8 +65,13 @@ ELSE:
             return KINDLS_SUCCESS
         except Exception:
             return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
-            
-cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
+
+IF SUNDIALS_VERSION >= (6,0,0):
+    ctypedef bint kin_jacv_bool
+ELSE:
+    ctypedef int kin_jacv_bool
+
+cdef int kin_jacv(N_Vector vv, N_Vector Jv, N_Vector vx, kin_jacv_bool* new_u,
             void *problem_data):
     cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>problem_data
     cdef N.ndarray x  = nv2arr(vx)
@@ -217,21 +222,40 @@ ELSE:
             return KIN_SYSFUNC_FAIL
         
         return KIN_SUCCESS
-        
 
-cdef void kin_err(int err_code, const char *module, const char *function, char *msg, void *eh_data):
-    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
-    
-    if err_code > 0: #Warning
-        category = 1
-    elif err_code < 0: #Error
-        category = -1
-    else:
-        category = 0
-    
-    print "Error occured in <function: %s>."%function
-    print "<message: %s>"%msg
-    #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+IF SUNDIALS_VERSION >= (7,0,0):
+    cdef extern from "sundials/sundials_context.h":
+        ctypedef _SUNContext * SUNContext
+        cdef struct _SUNContext:
+            pass
+        ctypedef int SUNErrCode
+    cdef void kin_err(int line, const char* function, const char* file, const char* msg, SUNErrCode err_code, void* eh_data, SUNContext sunctx):
+        cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+        
+        if err_code > 0: #Warning
+            category = 1
+        elif err_code < 0: #Error
+            category = -1
+        else:
+            category = 0
+        
+        print "Error occured in <function: %s>."%function
+        print "<message: %s>"%msg
+        #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
+ELSE:
+    cdef void kin_err(int err_code, const char *module, const char *function, char *msg, void *eh_data):
+        cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+        
+        if err_code > 0: #Warning
+            category = 1
+        elif err_code < 0: #Error
+            category = -1
+        else:
+            category = 0
+        
+        print "Error occured in <function: %s>."%function
+        print "<message: %s>"%msg
+        #print "<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL)
 
 
 cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data):
