@@ -8,6 +8,7 @@ Changelog
     * Improved examples with sparse jacobians by omitting the zeros in the jacobians.
     * Upgraded to Cython >= 3.
     * Removed deprecated build option "sundials_with_superlu", which is checked automatically.
+    * Added support for Sundials 7.x
 
 --- Assimulo-3.4.3 ---
     * Improved compliance with newer scipy version by instead using corresponding numpy calls when more suitable.
