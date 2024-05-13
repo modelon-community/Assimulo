@@ -44,3 +44,11 @@ jobs:
       run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr
     - name: Test
       run: python3 -m nose --verbose tests/* tests/solvers/*
+
+    - name: Build (cmake)
+      run: |
+        cmake -B build -DCMAKE_INSTALL_PREFIX=~/.local .
+        rm -r ~/.local/lib/python3.*/site-packages/assimulo
+        cmake --build build --target install --parallel 3
+    - name: Test (cmake)
+      run: python3 -m nose --verbose tests/* tests/solvers/*

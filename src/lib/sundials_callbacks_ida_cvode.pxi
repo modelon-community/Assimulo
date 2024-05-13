@@ -89,7 +89,7 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
         return CV_UNREC_RHSFUNC_ERR 
 
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     cdef int cv_jac_sparse(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac,
@@ -163,7 +163,7 @@ ELSE:
         cdef np.ndarray[int, ndim=1, mode='c'] jindices
         cdef np.ndarray[int, ndim=1, mode='c'] jindptr
         
-        IF SUNDIALS_VERSION >= (2,6,3):
+        IF SUNDIALS_VERSION_NR >= 200603:
             cdef int* rowvals = Jacobian.rowvals[0]
             cdef int* colptrs = Jacobian.colptrs[0]
         ELSE:
@@ -212,7 +212,7 @@ ELSE:
             return CVDLS_JACFUNC_UNRECVR
 
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     cdef int cv_jac(realtype t, N_Vector yv, N_Vector fy, SUNMatrix Jac, 
                 void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
@@ -363,7 +363,7 @@ cdef int cv_jacv(N_Vector vv, N_Vector Jv, realtype t, N_Vector yv, N_Vector fyv
             traceback.print_exc()
             return SPGMR_PSOLVE_FAIL_UNREC
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     cdef int cv_prec_setup(realtype t, N_Vector yy, N_Vector fyy,
                       bint jok, bint *jcurPtr,
                       realtype gamma, void *problem_data) noexcept:
@@ -558,7 +558,7 @@ cdef int ida_res(realtype t, N_Vector yv, N_Vector yvdot, N_Vector residual, voi
             traceback.print_exc()
             return IDA_RES_FAIL
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     cdef int ida_jac(realtype t, realtype c, N_Vector yv, N_Vector yvdot, N_Vector residual, SUNMatrix Jac,
                  void *problem_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept:
         """
@@ -744,7 +744,7 @@ cdef int ida_jacv(realtype t, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector vv
 
 # Error handling callback functions
 # =================================
-IF SUNDIALS_VERSION >= (7,0,0):
+IF SUNDIALS_VERSION_NR >= 700000:
     cdef extern from "sundials/sundials_context.h":
         ctypedef _SUNContext * SUNContext
         cdef struct _SUNContext:
@@ -776,7 +776,7 @@ ELSE:
             if error_code < 0: #Error
                 print('[CVode Error]', msg)
 
-IF SUNDIALS_VERSION >= (7,0,0):
+IF SUNDIALS_VERSION_NR >= 700000:
     cdef void ida_err(int line, const char* func, const char* file, const char* msg, SUNErrCode error_code, void* problem_data, SUNContext sunctx) noexcept:
         """
         This method overrides the default handling of error messages.

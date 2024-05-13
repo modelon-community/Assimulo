@@ -22,9 +22,9 @@ from numpy cimport PyArray_DATA
 #=================
 
 cdef N_Vector N_VNewEmpty_Euclidean(long int n) noexcept:
-    IF SUNDIALS_VERSION >= (6,0,0):
+    IF SUNDIALS_VERSION_NR >= 600000:
         cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
+        IF SUNDIALS_VERSION_NR >= 700000:
             cdef SUNDIALS.SUNComm comm = 0
         ELSE:
             cdef void* comm = NULL
@@ -40,9 +40,9 @@ cdef inline N_Vector arr2nv(x) noexcept:
     cdef long int n = len(x)
     cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
-    IF SUNDIALS_VERSION >= (6,0,0):
+    IF SUNDIALS_VERSION_NR >= 600000:
         cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
+        IF SUNDIALS_VERSION_NR >= 700000:
             cdef SUNDIALS.SUNComm comm = 0
         ELSE:
             cdef void* comm = NULL

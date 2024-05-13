@@ -19,7 +19,7 @@ import cython
 import traceback
 from assimulo.exception import AssimuloRecoverableError
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     cdef int kin_jac(N_Vector xv, N_Vector fval, SUNMatrix Jac, 
                     void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept:
         """
@@ -67,7 +67,7 @@ ELSE:
         except Exception:
             return KINDLS_JACFUNC_RECVR #Recoverable Error (See Sundials description)
 
-IF SUNDIALS_VERSION >= (6,0,0):
+IF SUNDIALS_VERSION_NR >= 600000:
     ctypedef bint kin_jacv_bool
 ELSE:
     ctypedef int kin_jacv_bool
@@ -115,7 +115,7 @@ cdef int kin_res(N_Vector xv, N_Vector fval, void *problem_data) noexcept:
         traceback.print_exc()
         return KIN_SYSFUNC_FAIL
 
-IF SUNDIALS_VERSION >= (3,0,0):
+IF SUNDIALS_VERSION_NR >= 300000:
     cdef int kin_prec_solve(N_Vector u, N_Vector uscaleN, N_Vector fval, 
              N_Vector fscaleN, N_Vector v, void *problem_data) noexcept:
         """
@@ -221,7 +221,7 @@ ELSE:
         
         return KIN_SUCCESS
 
-IF SUNDIALS_VERSION >= (7,0,0):
+IF SUNDIALS_VERSION_NR >= 700000:
     cdef extern from "sundials/sundials_context.h":
         ctypedef _SUNContext * SUNContext
         cdef struct _SUNContext:

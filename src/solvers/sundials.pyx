@@ -31,10 +31,10 @@ cimport sundials_includes as SUNDIALS
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
 from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
-IF SUNDIALS_VERSION < (5,0,0):
+IF SUNDIALS_VERSION_NR < 500000:
     from sundials_includes cimport SlsMat
 from sundials_includes cimport malloc, free, N_VConst_Serial
-IF SUNDIALS_VERSION >= (6,0,0):
+IF SUNDIALS_VERSION_NR >= 600000:
     from sundials_includes cimport N_VCloneVectorArray, N_VDestroy
 ELSE:
     from sundials_includes cimport N_VCloneVectorArray_Serial as N_VCloneVectorArray
@@ -181,7 +181,7 @@ cdef class IDA(Implicit_ODE):
             #Free Memory
             SUNDIALS.IDAFree(&self.ida_mem)
         
-        IF SUNDIALS_VERSION >= (3,0,0):
+        IF SUNDIALS_VERSION_NR >= 300000:
             if self.sun_matrix != NULL:
                 SUNDIALS.SUNMatDestroy(self.sun_matrix)
                 
@@ -237,9 +237,9 @@ cdef class IDA(Implicit_ODE):
     cdef initialize_ida(self):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -267,7 +267,7 @@ cdef class IDA(Implicit_ODE):
 
         if self.ida_mem == NULL: #The solver is not initialized
 
-            IF SUNDIALS_VERSION >= (6,0,0):
+            IF SUNDIALS_VERSION_NR >= 600000:
                 self.ida_mem = SUNDIALS.IDACreate(ctx)
             ELSE:
                 self.ida_mem = SUNDIALS.IDACreate() #Create solver
@@ -281,22 +281,22 @@ cdef class IDA(Implicit_ODE):
                 
             #Choose a linear solver if and only if NEWTON is choosen
             if self.options["linear_solver"] == 'DENSE':
-                IF SUNDIALS_VERSION >= (3,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
                     #Create a dense Sundials matrix
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
                     ELSE:
                         self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                     #Create a dense Sundials linear solver
-                    IF SUNDIALS_VERSION >= (4,0,0):
-                        IF SUNDIALS_VERSION >= (6,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
+                        IF SUNDIALS_VERSION_NR >= 600000:
                             self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.yTemp, self.sun_matrix, ctx)
                         ELSE:
                             self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.yTemp, self.sun_matrix)
                     ELSE:
                         self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
                     #Attach it to IDA
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetLinearSolver(self.ida_mem, self.sun_linearsolver, self.sun_matrix)
                     ELSE:
                         flag = SUNDIALS.IDADlsSetLinearSolver(self.ida_mem, self.sun_linearsolver, self.sun_matrix)
@@ -307,17 +307,17 @@ cdef class IDA(Implicit_ODE):
                     raise IDAError(flag, self.t)
                         
             elif self.options["linear_solver"] == 'SPGMR':
-                IF SUNDIALS_VERSION >= (3,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
                     #Create the linear solver
-                    IF SUNDIALS_VERSION >= (4,0,0):
-                        IF SUNDIALS_VERSION >= (6,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
+                        IF SUNDIALS_VERSION_NR >= 600000:
                             self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.yTemp, PREC_NONE, 0, ctx)
                         ELSE:
                             self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.yTemp, PREC_NONE, 0)
                     ELSE:
                         self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, PREC_NONE, 0)
                     #Attach it to IDAS
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetLinearSolver(self.ida_mem, self.sun_linearsolver, NULL)
                     ELSE:
                         flag = SUNDIALS.IDASpilsSetLinearSolver(self.ida_mem, self.sun_linearsolver)
@@ -340,7 +340,7 @@ cdef class IDA(Implicit_ODE):
                     raise IDAError(flag,self.t)
             
             #Specify the error handling
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 flag = SUNDIALS.SUNContext_PushErrHandler(ctx, ida_err, <void*>self.pData)
             ELSE:
                 flag = SUNDIALS.IDASetErrHandlerFn(self.ida_mem, ida_err, <void*>self.pData)
@@ -367,8 +367,8 @@ cdef class IDA(Implicit_ODE):
         if self.options["linear_solver"] == 'DENSE':
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetJacFn(self.ida_mem, ida_jac)
                     ELSE:
                         flag = SUNDIALS.IDADlsSetJacFn(self.ida_mem, ida_jac)
@@ -377,8 +377,8 @@ cdef class IDA(Implicit_ODE):
                 if flag < 0:
                     raise IDAError(flag,self.t)
             else:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetJacFn(self.ida_mem, NULL)
                     ELSE:
                         flag = SUNDIALS.IDADlsSetJacFn(self.ida_mem, NULL)
@@ -390,8 +390,8 @@ cdef class IDA(Implicit_ODE):
         elif self.options["linear_solver"] == 'SPGMR':
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetJacTimes(self.ida_mem, SUNDIALS.ida_spils_jtsetup_dummy, ida_jacv)
                     ELSE:
                         flag = SUNDIALS.IDASpilsSetJacTimes(self.ida_mem, SUNDIALS.ida_spils_jtsetup_dummy, ida_jacv)
@@ -400,8 +400,8 @@ cdef class IDA(Implicit_ODE):
                 if flag < 0:
                     raise IDAError(flag, self.t)
             else:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.IDASetJacTimes(self.ida_mem, NULL, NULL)
                     ELSE:
                         flag = SUNDIALS.IDASpilsSetJacTimes(self.ida_mem, NULL, NULL)
@@ -740,9 +740,9 @@ cdef class IDA(Implicit_ODE):
     cpdef get_last_estimated_errors(self):
         cdef flag
         cdef np.ndarray err, pyweight, pyele
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -778,9 +778,9 @@ cdef class IDA(Implicit_ODE):
         """
         cdef flag
         cdef np.ndarray res
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -822,9 +822,9 @@ cdef class IDA(Implicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -1443,7 +1443,7 @@ cdef class IDA(Implicit_ODE):
         flag = SUNDIALS.IDAGetNumGEvals(self.ida_mem, &ngevals)
 
         if self.options["linear_solver"] == "SPGMR":
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.IDAGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
                 flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
             ELSE:
@@ -1452,7 +1452,7 @@ cdef class IDA(Implicit_ODE):
             self.statistics["nfcnjacs"] += nfevalsLS
             self.statistics["njacvecs"] += njvevals
         else:
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.IDAGetNumJacEvals(self.ida_mem, &njevals)
                 flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nrevalsLS)
             ELSE:
@@ -1610,7 +1610,7 @@ cdef class CVode(Explicit_ODE):
             #Free Memory
             SUNDIALS.CVodeFree(&self.cvode_mem)
         
-        IF SUNDIALS_VERSION >= (3,0,0):
+        IF SUNDIALS_VERSION_NR >= 300000:
             if self.sun_matrix != NULL:
                 SUNDIALS.SUNMatDestroy(self.sun_matrix)
                 
@@ -1626,9 +1626,9 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL:
             raise CVodeError(CV_MEM_FAIL)
 
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -1721,9 +1721,9 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL:
             raise CVodeError(CV_MEM_FAIL)
 
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -1798,9 +1798,9 @@ cdef class CVode(Explicit_ODE):
     cdef initialize_cvode(self):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -1830,8 +1830,8 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL: #The solver is not initialized
             
             #Create the solver
-            IF SUNDIALS_VERSION >= (4,0,0):
-                IF SUNDIALS_VERSION >= (6,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
+                IF SUNDIALS_VERSION_NR >= 600000:
                     self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS, ctx)
                 ELSE:
                     self.cvode_mem = SUNDIALS.CVodeCreate(CV_BDF if self.options["discr"] == "BDF" else CV_ADAMS)
@@ -1846,14 +1846,14 @@ cdef class CVode(Explicit_ODE):
                 raise CVodeError(flag, self.t)
                 
             #For Sundials >=4.0 the iteration scheme is set after init
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 if self.options["iter"] == "Newton":
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp, ctx)
                     ELSE:
                         self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_Newton(self.yTemp)
                 else:
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0, ctx)
                     ELSE:
                         self.sun_nonlinearsolver = SUNDIALS.SUNNonlinSol_FixedPoint(self.yTemp, 0)
@@ -1874,7 +1874,7 @@ cdef class CVode(Explicit_ODE):
                     raise CVodeError(flag, self.t)
                     
             #Specify the error handling
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 flag = SUNDIALS.SUNContext_PushErrHandler(ctx, cv_err, <void*>self.pData)
             ELSE:
                 flag = SUNDIALS.CVodeSetErrHandlerFn(self.cvode_mem, cv_err, <void*>self.pData)
@@ -1895,16 +1895,16 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag, self.t)
                 
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     count = self.pData.dimSens if self.options["sensmethod"] == "STAGGERED" else (self.pData.dimSens+1)
                     
                     if self.options["iter"] == "Newton":
-                        IF SUNDIALS_VERSION >= (6,0,0):
+                        IF SUNDIALS_VERSION_NR >= 600000:
                             self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp, ctx)
                         ELSE:
                             self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_NewtonSens(count, self.yTemp)
                     else:
-                        IF SUNDIALS_VERSION >= (6,0,0):
+                        IF SUNDIALS_VERSION_NR >= 600000:
                             self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0, ctx)
                         ELSE:
                             self.sun_nonlinearsolver_sens = SUNDIALS.SUNNonlinSol_FixedPointSens(count, self.yTemp, 0)
@@ -1961,9 +1961,9 @@ cdef class CVode(Explicit_ODE):
         """
         cdef flag
         cdef np.ndarray res
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -2006,9 +2006,9 @@ cdef class CVode(Explicit_ODE):
             
                     A matrix containing the Ns vectors or a vector if i is specified.
         """
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -2289,9 +2289,9 @@ cdef class CVode(Explicit_ODE):
         Updates the simulation options.
         """
         cdef flag
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -2299,22 +2299,22 @@ cdef class CVode(Explicit_ODE):
 
         #Choose a linear solver if and only if NEWTON is choosen
         if self.options["linear_solver"] == 'DENSE' and self.options["iter"] == "Newton":
-            IF SUNDIALS_VERSION >= (3,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
                 #Create a dense Sundials matrix
-                IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 600000:
                     self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
                 ELSE:
                     self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                 #Create a dense Sundials linear solver
-                IF SUNDIALS_VERSION >= (4,0,0):
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.yTemp, self.sun_matrix, ctx)
                     ELSE:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.yTemp, self.sun_matrix)
                 ELSE:
                     self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.yTemp, self.sun_matrix)
                 #Attach it to CVode
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.CVodeSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
                 ELSE:
                     flag = SUNDIALS.CVDlsSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
@@ -2328,8 +2328,8 @@ cdef class CVode(Explicit_ODE):
                 
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetJacFn(self.cvode_mem, cv_jac)
                     ELSE:
                         flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, cv_jac)
@@ -2338,8 +2338,8 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0:
                     raise CVodeError(flag)
             else:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetJacFn(self.cvode_mem, NULL)
                     ELSE:
                         flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, NULL)
@@ -2350,17 +2350,17 @@ cdef class CVode(Explicit_ODE):
                     raise CVodeError(flag)
                     
         elif self.options["linear_solver"] == 'SPGMR' and self.options["iter"] == "Newton":
-            IF SUNDIALS_VERSION >= (3,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
                 #Create the linear solver
-                IF SUNDIALS_VERSION >= (4,0,0):
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.yTemp, self.options["precond"], self.options["maxkrylov"], ctx)
                     ELSE:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.yTemp, self.options["precond"], self.options["maxkrylov"])
                 ELSE:
                     self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.yTemp, self.options["precond"], self.options["maxkrylov"])
                 #Attach it to CVode
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.CVodeSetLinearSolver(self.cvode_mem, self.sun_linearsolver, NULL)
                 ELSE:
                     flag = SUNDIALS.CVSpilsSetLinearSolver(self.cvode_mem, self.sun_linearsolver)
@@ -2372,14 +2372,14 @@ cdef class CVode(Explicit_ODE):
                 
             if self.pData.PREC_SOLVE != NULL:
                 if self.pData.PREC_SETUP != NULL:
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetPreconditioner(self.cvode_mem, cv_prec_setup, cv_prec_solve)
                     ELSE:
                         flag = SUNDIALS.CVSpilsSetPreconditioner(self.cvode_mem, cv_prec_setup, cv_prec_solve)
                     if flag < 0:
                         raise CVodeError(flag)
                 else:
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetPreconditioner(self.cvode_mem, NULL, cv_prec_solve)
                     ELSE:
                         flag = SUNDIALS.CVSpilsSetPreconditioner(self.cvode_mem, NULL, cv_prec_solve)
@@ -2388,8 +2388,8 @@ cdef class CVode(Explicit_ODE):
                   
             #Specify the jacobian times vector function
             if self.pData.JACV != NULL and self.options["usejac"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetJacTimes(self.cvode_mem, SUNDIALS.cv_spils_jtsetup_dummy, cv_jacv)
                     ELSE:
                         flag = SUNDIALS.CVSpilsSetJacTimes(self.cvode_mem, SUNDIALS.cv_spils_jtsetup_dummy, cv_jacv)
@@ -2398,8 +2398,8 @@ cdef class CVode(Explicit_ODE):
                 if flag < 0: 
                     raise CVodeError(flag)
             else:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetJacTimes(self.cvode_mem, NULL, NULL)
                     ELSE:
                         flag = SUNDIALS.CVSpilsSetJacTimes(self.cvode_mem, NULL, NULL)
@@ -2418,14 +2418,14 @@ cdef class CVode(Explicit_ODE):
             if self.problem_info["jac_fcn_nnz"] == -1:
                 raise AssimuloException("Need to specify the number of non zero elements in the Jacobian via the option 'jac_nnz'")
 
-            IF SUNDIALS_VERSION >= (3,0,0):
-                IF SUNDIALS_VERSION >= (6,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
+                IF SUNDIALS_VERSION_NR >= 600000:
                     self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT, ctx)
                     self.sun_linearsolver = SUNDIALS.SUNLinSol_SuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"], ctx)
                 ELSE:
                     self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
                     self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.CVodeSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
                 ELSE:
                     flag = SUNDIALS.CVDlsSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
@@ -2436,8 +2436,8 @@ cdef class CVode(Explicit_ODE):
             
             #Specify the jacobian to the solver
             if self.pData.JAC != NULL and self.options["usejac"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.CVodeSetJacFn(self.cvode_mem, cv_jac_sparse)
                     ELSE:
                         flag = SUNDIALS.CVDlsSetJacFn(self.cvode_mem, cv_jac_sparse)
@@ -3275,7 +3275,7 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(CV_MEM_FAIL)
 
         if self.options["linear_solver"] == "SPGMR":
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.CVodeGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
                 flag = SUNDIALS.CVodeGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
             ELSE:
@@ -3283,8 +3283,8 @@ cdef class CVode(Explicit_ODE):
                 flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
             self.statistics["njacvecs"]  += njvevals
         elif self.options["linear_solver"] == "SPARSE":
-            IF SUNDIALS_VERSION >= (3,0,0):
-                IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals)
                 ELSE:
                     flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals)
@@ -3292,7 +3292,7 @@ cdef class CVode(Explicit_ODE):
                 flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
             self.statistics["njacs"]   += njevals
         else:
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
                 flag = SUNDIALS.CVodeGetNumLinRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
             ELSE:
@@ -3300,13 +3300,13 @@ cdef class CVode(Explicit_ODE):
                 flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
             self.statistics["njacs"]   += njevals
         if self.pData.PREC_SOLVE != NULL:
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.CVodeGetNumPrecSolves(self.cvode_mem, &npsolves)
             ELSE:
                 flag = SUNDIALS.CVSpilsGetNumPrecSolves(self.cvode_mem, &npsolves)
             self.statistics["nprecs"]  += npsolves
         if self.pData.PREC_SETUP != NULL:
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.CVodeGetNumPrecEvals(self.cvode_mem, &npevals)
             ELSE:
                 flag = SUNDIALS.CVSpilsGetNumPrecEvals(self.cvode_mem, &npevals)

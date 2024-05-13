@@ -376,7 +376,7 @@ class Assimulo_prepare(object):
         if os.path.exists(os.path.join(os.path.join(self.incdirs,'cvodes'), 'cvodes.h')):
             self.with_SUNDIALS=True
             logging.debug('SUNDIALS found.')
-            sundials_version = None
+            sundials_version_tuple = None
             sundials_vector_type_size = None
             sundials_with_superlu = False
             sundials_with_msvc = False
@@ -386,8 +386,8 @@ class Assimulo_prepare(object):
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
                             if "SUNDIALS_PACKAGE_VERSION" in line or "SUNDIALS_VERSION" in line:
-                                sundials_version = tuple([int(f) for f in line.split()[-1][1:-1].split('-dev')[0].split(".")])
-                                logging.debug('SUNDIALS %d.%d found.'%(sundials_version[0], sundials_version[1]))
+                                sundials_version_tuple = tuple([int(f) for f in line.split()[-1][1:-1].split('-dev')[0].split(".")])
+                                logging.debug('SUNDIALS %d.%d found.'%(sundials_version_tuple[0], sundials_version_tuple[1]))
                                 break
                     with open(os.path.join(os.path.join(self.incdirs,'sundials'), 'sundials_config.h')) as f:
                         for line in f:
@@ -418,13 +418,13 @@ class Assimulo_prepare(object):
                         sundials_with_msvc = True
             except Exception:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
-                    sundials_version = (2,6,0)
+                    sundials_version_tuple = (2,6,0)
                     logging.debug('SUNDIALS 2.6 found.')
                 else:
-                    sundials_version = (2,5,0)
+                    sundials_version_tuple = (2,5,0)
                     logging.debug('SUNDIALS 2.5 found.')
-                
-            self.SUNDIALS_version = sundials_version
+
+            self.SUNDIALS_version_nr = 100000 * sundials_version_tuple[0] + 100 * sundials_version_tuple[1] + sundials_version_tuple[2]
             self.SUNDIALS_vector_size = sundials_vector_type_size
             self.sundials_with_superlu = sundials_with_superlu
             self.sundials_with_msvc = sundials_with_msvc
@@ -489,7 +489,7 @@ class Assimulo_prepare(object):
 
         # SUNDIALS
         if self.with_SUNDIALS:
-            compile_time_env = {'SUNDIALS_VERSION': self.SUNDIALS_version,
+            compile_time_env = {'SUNDIALS_VERSION_NR': self.SUNDIALS_version_nr,
                                 'SUNDIALS_WITH_SUPERLU': self.sundials_with_superlu and self.with_SLU,
                                 'SUNDIALS_VECTOR_SIZE': self.SUNDIALS_vector_size,
                                 'SUNDIALS_CVODE_RTOL_VEC': self.sundials_cvode_with_rtol_vec}
@@ -502,14 +502,14 @@ class Assimulo_prepare(object):
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             
-            if self.SUNDIALS_version >= (3,0,0):
+            if self.SUNDIALS_version_nr >= 300000:
                 ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas", "sundials_sunlinsoldense", "sundials_sunlinsolspgmr", "sundials_sunmatrixdense", "sundials_sunmatrixsparse"]
-                if self.SUNDIALS_version >= (7,0,0):
+                if self.SUNDIALS_version_nr >= 700000:
                     ext_list[-1].libraries.extend(["sundials_core"])
             else:
                 ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
-                if self.SUNDIALS_version >= (3,0,0):
+                if self.SUNDIALS_version_nr >= 300000:
                     ext_list[-1].libraries.extend(["sundials_sunlinsolsuperlumt"])
                 
                 ext_list[-1].include_dirs.append(self.SLUincdir)
@@ -525,7 +525,7 @@ class Assimulo_prepare(object):
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
-            if self.SUNDIALS_version >= (7,0,0):
+            if self.SUNDIALS_version_nr >= 700000:
                 ext_list[-1].libraries.extend(["sundials_core"])
             
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU

@@ -27,10 +27,10 @@ cimport sundials_includes as SUNDIALS
 #Various C includes transfered to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
 from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
-IF SUNDIALS_VERSION < (5,0,0):
+IF SUNDIALS_VERSION_NR < 500000:
     from sundials_includes cimport SlsMat
 from sundials_includes cimport malloc, free
-IF SUNDIALS_VERSION >= (6,0,0):
+IF SUNDIALS_VERSION_NR >= 600000:
     from sundials_includes cimport N_VDestroy
 ELSE:
     from sundials_includes cimport N_VDestroy_Serial as N_VDestroy
@@ -114,7 +114,7 @@ cdef class KINSOL(Algebraic):
             #Free Memory
             SUNDIALS.KINFree(&self.kinsol_mem)
             
-        IF SUNDIALS_VERSION >= (3,0,0):
+        IF SUNDIALS_VERSION_NR >= 300000:
             if self.sun_matrix != NULL:
                 SUNDIALS.SUNMatDestroy(self.sun_matrix)
                 
@@ -181,9 +181,9 @@ cdef class KINSOL(Algebraic):
             
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
@@ -195,7 +195,7 @@ cdef class KINSOL(Algebraic):
    
         if self.kinsol_mem == NULL: #The solver is not initialized
             #Create the solver
-            IF SUNDIALS_VERSION >= (6,0,0):
+            IF SUNDIALS_VERSION_NR >= 600000:
                 self.kinsol_mem = SUNDIALS.KINCreate(ctx)
             ELSE:
                 self.kinsol_mem = SUNDIALS.KINCreate()
@@ -209,7 +209,7 @@ cdef class KINSOL(Algebraic):
                 raise KINSOLError(flag)
             
             #Specify the error handling
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 flag = SUNDIALS.SUNContext_PushErrHandler(ctx, kin_err, <void*>self.pData)
             ELSE:
                 flag = SUNDIALS.KINSetErrHandlerFn(self.kinsol_mem, kin_err, <void*>self.pData)
@@ -217,7 +217,7 @@ cdef class KINSOL(Algebraic):
                 raise KINSOLError(flag) 
                 
             #Specify the handling of info messages
-            IF SUNDIALS_VERSION < (7,0,0):
+            IF SUNDIALS_VERSION_NR < 700000:
                 flag = SUNDIALS.KINSetInfoHandlerFn(self.kinsol_mem, kin_info, <void*>self.pData);
                 if flag < 0:
                     raise KINSOLError(flag)
@@ -231,30 +231,30 @@ cdef class KINSOL(Algebraic):
             raise KINSOLError(flag)
             
     cpdef add_linear_solver(self):
-        IF SUNDIALS_VERSION >= (6,0,0):
+        IF SUNDIALS_VERSION_NR >= 600000:
             cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
+            IF SUNDIALS_VERSION_NR >= 700000:
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
         if self.options["linear_solver"] == "DENSE":
-            IF SUNDIALS_VERSION >= (3,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
                 #Create a dense Sundials matrix
-                IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 600000:
                     self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
                 ELSE:
                     self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim)
                 #Create a dense Sundials linear solver
-                IF SUNDIALS_VERSION >= (4,0,0):
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.y_temp, self.sun_matrix, ctx)
                     ELSE:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_Dense(self.y_temp, self.sun_matrix)
                 ELSE:
                     self.sun_linearsolver = SUNDIALS.SUNDenseLinearSolver(self.y_temp, self.sun_matrix)
                 #Attach it to Kinsol
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.KINSetLinearSolver(self.kinsol_mem, self.sun_linearsolver, self.sun_matrix)
                 ELSE:
                     flag = SUNDIALS.KINDlsSetLinearSolver(self.kinsol_mem, self.sun_linearsolver, self.sun_matrix)
@@ -264,8 +264,8 @@ cdef class KINSOL(Algebraic):
                 raise KINSOLError(flag)
             
             if self.problem_info["jac_fcn"]:
-                IF SUNDIALS_VERSION >= (3,0,0):
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 300000:
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.KINSetJacFn(self.kinsol_mem, kin_jac)
                     ELSE:
                         flag = SUNDIALS.KINDlsSetJacFn(self.kinsol_mem, kin_jac)
@@ -274,17 +274,17 @@ cdef class KINSOL(Algebraic):
                 if flag < 0:
                     raise KINSOLError(flag)
         elif self.options["linear_solver"] == "SPGMR":
-            IF SUNDIALS_VERSION >= (3,0,0):
+            IF SUNDIALS_VERSION_NR >= 300000:
                 #Create the linear solver
-                IF SUNDIALS_VERSION >= (4,0,0):
-                    IF SUNDIALS_VERSION >= (6,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
+                    IF SUNDIALS_VERSION_NR >= 600000:
                         self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.y_temp, self.options["precond"], self.options["max_krylov"], ctx)
                     ELSE:
                        self.sun_linearsolver = SUNDIALS.SUNLinSol_SPGMR(self.y_temp, self.options["precond"], self.options["max_krylov"])
                 ELSE:
                     self.sun_linearsolver = SUNDIALS.SUNSPGMR(self.y_temp, self.options["precond"], self.options["max_krylov"])
                 #Attach it to Kinsol
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.KINSetLinearSolver(self.kinsol_mem, self.sun_linearsolver, NULL)
                 ELSE:
                     flag = SUNDIALS.KINSpilsSetLinearSolver(self.kinsol_mem, self.sun_linearsolver)
@@ -295,7 +295,7 @@ cdef class KINSOL(Algebraic):
                 raise KINSOLError(flag)
             
             if self.problem_info["jacv_fcn"]:
-                IF SUNDIALS_VERSION >= (4,0,0):
+                IF SUNDIALS_VERSION_NR >= 400000:
                     flag = SUNDIALS.KINSetJacTimesVecFn(self.kinsol_mem, kin_jacv)
                 ELSE:
                     flag = SUNDIALS.KINSpilsSetJacTimesVecFn(self.kinsol_mem, kin_jacv)
@@ -304,21 +304,21 @@ cdef class KINSOL(Algebraic):
             
             if self.problem_info["prec_setup"] or self.problem_info["prec_solve"]:
                 if not self.problem_info["prec_setup"]:
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     ELSE:
                         flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, NULL, kin_prec_solve)
                     if flag < 0:
                         raise KINSOLError(flag)
                 elif not self.problem_info["prec_solve"]:
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, kin_prec_setup, NULL)
                     ELSE:
                         flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, kin_prec_setup, NULL)
                     if flag < 0:
                         raise KINSOLError(flag)
                 else:
-                    IF SUNDIALS_VERSION >= (4,0,0):
+                    IF SUNDIALS_VERSION_NR >= 400000:
                         flag = SUNDIALS.KINSetPreconditioner(self.kinsol_mem, kin_prec_setup, kin_prec_solve)
                     ELSE:
                         flag = SUNDIALS.KINSpilsSetPreconditioner(self.kinsol_mem, kin_prec_setup, kin_prec_solve)
@@ -377,7 +377,7 @@ cdef class KINSOL(Algebraic):
         if flag < 0:
             raise KINSOLError(flag)
         
-        IF SUNDIALS_VERSION < (7,0,0):
+        IF SUNDIALS_VERSION_NR < 700000:
             flag = SUNDIALS.KINSetPrintLevel(self.kinsol_mem, self._get_print_level()); #The function KINSetPrintLevel specifies the level of verbosity of the output.
             if flag < 0:
                 raise KINSOLError(flag)
@@ -442,7 +442,7 @@ cdef class KINSOL(Algebraic):
         """
         cdef int flag = 0, 
         cdef long int lsflag = 0
-        IF SUNDIALS_VERSION >= (4,0,0):
+        IF SUNDIALS_VERSION_NR >= 400000:
             flag = SUNDIALS.KINGetLastLinFlag(self.kinsol_mem, &lsflag)
         ELSE:
             flag = SUNDIALS.KINDlsGetLastFlag(self.kinsol_mem, &lsflag)
@@ -478,42 +478,42 @@ cdef class KINSOL(Algebraic):
         self.statistics["nbcfails"] = nbcfails
         
         if self.options["linear_solver"] == "SPGMR":
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumLinIters(self.kinsol_mem, &nliters)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumLinIters(self.kinsol_mem, &nliters)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["nliters"] = nliters
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumLinConvFails(self.kinsol_mem, &nlcfails)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumConvFails(self.kinsol_mem, &nlcfails)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["nlcfails"] = nlcfails
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumPrecEvals(self.kinsol_mem, &npevals)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumPrecEvals(self.kinsol_mem, &npevals)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["npevals"] = npevals
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumPrecSolves(self.kinsol_mem, &npsolves)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumPrecSolves(self.kinsol_mem, &npsolves)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["npsolves"] = npsolves
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumJtimesEvals(self.kinsol_mem, &njevals)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumJtimesEvals(self.kinsol_mem, &njevals)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["njevals"] = njevals
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumFuncEvals(self.kinsol_mem, &nfevalsLS)
             ELSE:
                 flag = SUNDIALS.KINSpilsGetNumFuncEvals(self.kinsol_mem, &nfevalsLS)
@@ -522,14 +522,14 @@ cdef class KINSOL(Algebraic):
             self.statistics["nfevalsLS"] = nfevalsLS
             
         elif self.options["linear_solver"] == "DENSE":
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumJacEvals(self.kinsol_mem, &njevals) #The function KINDlsGetNumJacEvals returns the number of calls to the dense Jacobian approximation function.
             ELSE:
                 flag = SUNDIALS.KINDlsGetNumJacEvals(self.kinsol_mem, &njevals)
             if flag < 0:
                 raise KINSOLError(flag)
             self.statistics["njevals"] = njevals
-            IF SUNDIALS_VERSION >= (4,0,0):
+            IF SUNDIALS_VERSION_NR >= 400000:
                 flag = SUNDIALS.KINGetNumFuncEvals(self.kinsol_mem, &nfevalsLS) #The function KINDlsGetNumFuncEvals returns the number of calls to the user system function used to compute the difference quotient approximation to the dense or banded Jacobian.
             ELSE:
                 flag = SUNDIALS.KINDlsGetNumFuncEvals(self.kinsol_mem, &nfevalsLS)

@@ -1,0 +1,18 @@
+[project]
+name = "assimulo"
+version = "3.5.2"
+dependencies = [
+  "scipy",
+  "cython",
+]
+
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+logging.level = "DEBUG"
+
+[tool.scikit-build.cmake.define]
+CMAKE_VERBOSE_MAKEFILE = "ON"
+PYTHON_SITE_PACKAGES = "."
