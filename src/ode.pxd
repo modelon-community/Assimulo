@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-cimport numpy as N
-from support cimport Statistics
+import numpy as np
+cimport numpy as np
+
+from assimulo.support cimport Statistics
 
 cdef class ODE:
     cdef public dict options, solver_options, problem_info
@@ -33,8 +34,8 @@ cdef class ODE:
     cdef public int display_counter
     cdef public int chattering_clear_counter
     cdef public int chattering_ok_print
-    cdef public N.ndarray y,yd, p
-    cdef public N.ndarray y0, yd0, p0, sw0
+    cdef public np.ndarray y,yd, p
+    cdef public np.ndarray y0, yd0, p0, sw0
     cdef double elapsed_step_time, time_integration_start
     cdef int time_limit_activated, display_progress_activated
     cdef double clock_start

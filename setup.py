@@ -15,14 +15,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #from distutils.core import setup, Extension
-import numpy as np
 import logging
 import sys 
 import os
-import shutil as SH
+import shutil
 import ctypes.util
 import argparse
 from os.path import isfile, join
+import numpy as np
+import numpy.distutils.core as ndc
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
@@ -79,15 +80,15 @@ try:
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
 except ImportError:
-    msg="Please upgrade to a newer Cython version, >= 0.18."
+    msg="Please upgrade to a newer Cython version, >= 3"
     logging.error(msg)
     raise Exception(msg)
 
 #Verify Cython version
 import Cython
 cython_version = Cython.__version__.split(".")
-if not (cython_version[0] > '0' or (cython_version[0] == '0' and cython_version[1] >= '18')):
-    msg="Please upgrade to a newer Cython version, >= 0.18."
+if not cython_version[0] >= '3':
+    msg="Please upgrade to a newer Cython version, >= 3"
     logging.error(msg)
     raise Exception(msg)
 
@@ -105,7 +106,7 @@ class Assimulo_prepare(object):
     def copy_file(self,fi, to_dir):
         # copies only files not directories
         if not os.path.isdir(fi):
-            SH.copy2(fi, to_dir)
+            shutil.copy2(fi, to_dir)
     def copy_all_files(self,file_list, from_dir, to_dir):
         logging.debug('fromdir {}  todir {}'.format(from_dir,to_dir))
         for f in file_list:
@@ -114,8 +115,8 @@ class Assimulo_prepare(object):
             else:
                 self.copy_file(f,to_dir)
     def __init__(self,args, thirdparty_methods):
-        # args[0] are optinal arguments given above
-        # args[1] are argumenets passed to distutils 
+        # args[0] are optional arguments given above
+        # args[1] are arguments passed to distutils 
         self.distutil_args=args[1]
         if args[0].prefix:
             self.prefix = args[0].prefix.replace('/',os.sep)   # required in this way for cygwin etc.
@@ -124,7 +125,6 @@ class Assimulo_prepare(object):
         self.BLASdir = args[0].blas_home 
         self.sundialsdir = args[0].sundials_home
         self.MKLdir = args[0].mkl_home
-        self.sundials_with_superlu = args[0].sundials_with_superlu
         self.BLASname_t = args[0].blas_name if args[0].blas_name.startswith('lib') else 'lib'+args[0].blas_name
         self.BLASname = self.BLASname_t[3:]    # the name without "lib"
         self.MKLname_t = args[0].mkl_name if args[0].mkl_name.startswith('lib') else 'lib'+args[0].mkl_name
@@ -148,9 +148,6 @@ class Assimulo_prepare(object):
         self.sundials_with_msvc = False
         self.msvcSLU = False
 
-        if self.sundials_with_superlu is not None:
-            logging.warning("The option 'sundials_with_superlu' has been deprecated and has no effect. Support for SuperLU using Sundials is automatically checked.")
-        
         if self.no_mvscr:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
@@ -167,15 +164,16 @@ class Assimulo_prepare(object):
         nd.fcompiler.intel.IntelVisualFCompiler.get_flags=fortran_compiler_flags
         
         self.platform = 'linux'
-        if 'win' in sys.platform: self.platform = 'win'
-        if 'darwin' in sys.platform: self.platform = 'mac' 
+        if 'win' in sys.platform: 
+            self.platform = 'win'
+        if 'darwin' in sys.platform: 
+            self.platform = 'mac' 
         
-        self.is_python3 = True if sys.version_info.major >= 3 else False
         logging.debug('Platform {}'.format(self.platform))
         
         if args[0].sundials_home:
-            self.incdirs = os.path.join(self.sundialsdir,'include')
-            self.libdirs = os.path.join(self.sundialsdir,'lib')
+            self.incdirs = os.path.join(self.sundialsdir, 'include')
+            self.libdirs = os.path.join(self.sundialsdir, 'lib')
         elif 'win' in self.platform:
             self.incdirs = ''
             self.libdirs = ''
@@ -241,8 +239,9 @@ class Assimulo_prepare(object):
         for f in self.filelist_thirdparty.items():
             logging.debug('Thirdparty method {} file {} copied'.format(f[0],f[1]))
             self.copy_all_files(f[1],os.path.join("thirdparty", f[0]), self.desThirdParty[f[0]])
+            license_name = f[0].upper() if f[0].upper() != "RADAU5" else "HAIRER"
             try:   
-                SH.copy2(os.path.join("thirdparty",f[0],"LICENSE_{}".format(f[0].upper())),self.desLib)
+                shutil.copy2(os.path.join("thirdparty", f[0], "LICENSE_{}".format(license_name)), self.desLib)
             except IOError:
                 logging.warning('No license file {} found.'.format("LICENSE_{}".format(f[0].upper())))
 
@@ -262,8 +261,8 @@ class Assimulo_prepare(object):
         if self.extra_fortran_link_files:
             for extra_fortran_lib in self.extra_fortran_link_files:
                 path_extra_fortran_lib = ctypes.util.find_library(extra_fortran_lib)
-                if path_extra_fortran_lib != None:
-                    SH.copy2(path_extra_fortran_lib,self.desSrc)
+                if path_extra_fortran_lib is not None:
+                    shutil.copy2(path_extra_fortran_lib,self.desSrc)
                 else:
                     logging.debug("Could not find Fortran link file: "+str(extra_fortran_lib))
     
@@ -417,7 +416,7 @@ class Assimulo_prepare(object):
                                 break
                     if os.path.exists(os.path.join(self.libdirs,'sundials_nvecserial.lib')) and not os.path.exists(os.path.join(self.libdirs,'libsundials_nvecserial.a')):
                         sundials_with_msvc = True
-            except Exception as e:
+            except Exception:
                 if os.path.exists(os.path.join(os.path.join(self.incdirs,'arkode'), 'arkode.h')): #This was added in 2.6
                     sundials_version = (2,6,0)
                     logging.debug('SUNDIALS 2.6 found.')
@@ -469,18 +468,24 @@ class Assimulo_prepare(object):
         
         # Cythonize main modules 
         ext_list = cythonize([os.path.join("assimulo", "explicit_ode.pyx")], 
-                             include_path=[".", "assimulo"], force = True)
+                             include_path=[".", "assimulo"],
+                             force = True,
+                             compiler_directives={'language_level' : "3str"})
         ext_list[-1].include_dirs += ["assimulo", self.incdirs]
         ext_list[-1].sources += [os.path.join("assimulo", "ode_event_locator.c")]
 
         remaining_pyx = ["algebraic", "implicit_ode", "ode", "problem", "special_systems", "support"]
         ext_list += cythonize([os.path.join("assimulo", "{}.pyx".format(x)) for x in remaining_pyx], 
-                              include_path=[".", "assimulo"], force = True)
+                              include_path=[".", "assimulo"],
+                              force = True,
+                              compiler_directives={'language_level' : "3str"})
 
         # Cythonize Solvers
         # Euler
         ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")], 
-                              include_path=[".", "assimulo", os.path.join("assimulo", "solvers")], force = True)
+                              include_path=[".", "assimulo", os.path.join("assimulo", "solvers")],
+                              force = True,
+                              compiler_directives={'language_level' : "3str"},)
 
         # SUNDIALS
         if self.with_SUNDIALS:
@@ -491,7 +496,9 @@ class Assimulo_prepare(object):
             #CVode and IDA
             ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "sundials.pyx"], 
                                  include_path=[".","assimulo","assimulo" + os.sep + "lib"],
-                                 compile_time_env=compile_time_env, force=True)
+                                 compile_time_env=compile_time_env,
+                                 force=True,
+                                 compiler_directives={'language_level' : "3str"})
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             
@@ -510,7 +517,9 @@ class Assimulo_prepare(object):
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
                         include_path=[".","assimulo","assimulo"+os.sep+"lib"],
-                        compile_time_env=compile_time_env, force=True)
+                        compile_time_env=compile_time_env,
+                        force=True,
+                        compiler_directives={'language_level' : "3str"})
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
@@ -523,7 +532,8 @@ class Assimulo_prepare(object):
         ## Radau5
         ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
                             include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
-                            force = True)
+                            force = True,
+                            compiler_directives={'language_level' : "3str"})
         ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
                                     os.path.join("assimulo","thirdparty","radau5"),
                                     self.incdirs]
@@ -573,8 +583,6 @@ class Assimulo_prepare(object):
             el.extra_compile_args += self.flag_32bit + self.extra_c_flags
 
         for el in ext_list:
-            if self.is_python3:
-                el.cython_directives = {"language_level": 3} 
             el.extra_link_args += extra_link_flags
         return ext_list
 
@@ -649,14 +657,6 @@ else:
     change_dir = False
 
 ext_list = prepare.cython_extensionlists()
-
-#MAJOR HACK DUE TO NUMPY CHANGE IN VERSION 1.6.2 THAT DOES NOT SEEM TO
-#HANDLE EXTENSIONS OF BOTH TYPE (DISTUTILS AND NUMPY DISTUTILS) AT THE
-#SAME TIME.
-for e in ext_list:
-    e.extra_f77_compile_args = []
-    e.extra_f90_compile_args = []
-
 ext_list += prepare.fortran_extensionlists()
 
 # distutils part
@@ -665,7 +665,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "trunk" if version_number_arg == "Default" else version_number_arg
+VERSION = "3.5.0" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
@@ -697,28 +697,21 @@ Documentation and installation instructions can be found at:
 http://www.jmodelica.org/assimulo . 
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
-compiling from source, Cython 0.18, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
+compiling from source, Cython >=3, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
 together with a C-compiler and a FORTRAN-compiler.
 """
 
-
-version_txt = 'assimulo'+os.path.sep+'version.txt'
-#If a revision is found, always write it!
-if revision != "unknown" and revision!="":
-    with open(version_txt, 'w') as f:
-        f.write(VERSION+'\n')
-        f.write("r"+revision)
-else:# If it does not, check if the file exists and if not, create the file!
-    if not os.path.isfile(version_txt):
-        with open(version_txt, 'w') as f:
-            f.write(VERSION+'\n')
-            f.write("unknown")
+version_txt = os.path.join('assimulo', 'version.txt')
+if revision == "":
+    revision = "unknown"
+with open(version_txt, 'w') as f:
+    f.write(VERSION + '\n')
+    f.write("r" + revision)
 
 license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]
 logging.debug(license_info)
 
-import numpy.distutils.core as ndc
 ndc.setup(name=NAME,
       version=VERSION,
       license=LICENSE,
@@ -741,4 +734,3 @@ ndc.setup(name=NAME,
 
 if change_dir:
     os.chdir(curr_dir) #Change back to original directory
-

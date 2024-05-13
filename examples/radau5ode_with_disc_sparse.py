@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-import scipy.sparse as sp
+import numpy as np
+import scipy.sparse as sps
 import nose
 from assimulo.solvers import Radau5ODE
 from assimulo.problem import Explicit_Problem
@@ -35,7 +35,7 @@ t=10    , [True, False, False]  (End of simulation)
 #Extend Assimulos problem definition
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditons directly into the problem
+    #Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     
@@ -51,10 +51,10 @@ class Extended_Problem(Explicit_Problem):
         yd_1 = 0.0
         yd_2 = 0.0
 
-        return N.array([yd_0,yd_1,yd_2])
+        return np.array([yd_0,yd_1,yd_2])
 
     def jac(self, t, y):
-        return sp.csc_matrix((len(y), len(y)), dtype = 'float')
+        return sps.csc_matrix((len(y), len(y)), dtype = 'float')
 
     jac_nnz = 0
 
@@ -71,7 +71,7 @@ class Extended_Problem(Explicit_Problem):
         event_1 = -y[2] + 1.0
         event_2 = -t + 1.0
         
-        return N.array([event_0,event_1,event_2])
+        return np.array([event_0,event_1,event_2])
     
     
     #Responsible for handling the events.
@@ -90,7 +90,7 @@ class Extended_Problem(Explicit_Problem):
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if not True in event_info: #Breaks the iteration loop
+            if True not in event_info: #Breaks the iteration loop
                 break
     
     #Helper function for handle_event
@@ -127,8 +127,6 @@ class Extended_Problem(Explicit_Problem):
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
-
-
 def run_example(with_plots=True):
     #Create an instance of the problem
     exp_mod = Extended_Problem() #Create the problem
@@ -150,15 +148,14 @@ def run_example(with_plots=True):
     
    #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y)
-        P.title("Solution of a differential equation with discontinuities")
-        P.ylabel('States')
-        P.xlabel('Time')
-        P.show()
+        import pylab as pl
+        pl.plot(t,y)
+        pl.title("Solution of a differential equation with discontinuities")
+        pl.ylabel('States')
+        pl.xlabel('Time')
+        pl.show()
         
     return exp_mod, exp_sim
     
 if __name__=="__main__":
     mod,sim = run_example()
-

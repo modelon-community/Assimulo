@@ -15,17 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+cimport numpy as np
 
-from ode cimport ODE
-import numpy as N
-cimport numpy as N
-
+from assimulo.ode cimport ODE
 
 cdef class Explicit_ODE(ODE):
 
-    cpdef _simulate(self, double t0, double tfinal,N.ndarray output_list,int COMPLETE_STEP, int INTERPOLATE_OUTPUT,int TIME_EVENT)
-    cpdef report_solution(self, double t, N.ndarray y, opts)
-    cpdef event_locator(self, double t_low, double t_high, N.ndarray y_high)
+    cpdef _simulate(self, double t0, double tfinal,np.ndarray output_list,int COMPLETE_STEP, int INTERPOLATE_OUTPUT,int TIME_EVENT)
+    cpdef report_solution(self, double t, np.ndarray y, opts)
+    cpdef event_locator(self, double t_low, double t_high, np.ndarray y_high)
 
 cdef extern from "string.h":
     void *memcpy(void *s1, void *s2, int n)

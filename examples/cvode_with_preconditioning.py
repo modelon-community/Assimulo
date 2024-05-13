@@ -53,7 +53,7 @@ def run_example(with_plots=True):
         A = np.array([[2.0, 1.0], [3.0, 2.0]])
         
         #If jok is false the jacobian data needs to be recomputed
-        if jok == False:
+        if jok is False:
                 
             #Extract the diagonal of the jacobian to form a Jacobi preconditioner
             a0 = A[0, 0] * t * np.cos(y[0])
@@ -64,7 +64,7 @@ def run_example(with_plots=True):
             return [True, a]
             
         #If jok is true the existing jacobian data can be reused 
-        if jok == True:
+        if jok is True:
             
             #Return false (jacobian data was reused) and the old data
             return [False, data]

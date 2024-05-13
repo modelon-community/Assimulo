@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
 from assimulo.solvers import ImplicitEuler
 from assimulo.problem import Explicit_Problem
@@ -47,7 +47,7 @@ def run_example(with_plots=True):
         yd_0 = y[1]
         yd_1 = my*((1.-y[0]**2)*y[1]-y[0])
         
-        return N.array([yd_0,yd_1])
+        return np.array([yd_0,yd_1])
     
     #Define the Jacobian 
     def jac(t,y):
@@ -56,7 +56,7 @@ def run_example(with_plots=True):
         jd_10 = -1.0*my-2*y[0]*y[1]*my
         jd_11 = my*(1.-y[0]**2)
         
-        return N.array([[jd_00,jd_01],[jd_10,jd_11]])
+        return np.array([[jd_00,jd_01],[jd_10,jd_11]])
     
     y0 = [2.0,-0.6] #Initial conditions
     
@@ -77,19 +77,18 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.plot(t,y[:,0], marker='o')
-        P.title(exp_mod.name)
-        P.ylabel("State: $y_1$")
-        P.xlabel("Time")
-        P.show()
+        import pylab as pl
+        pl.plot(t,y[:,0], marker='o')
+        pl.title(exp_mod.name)
+        pl.ylabel("State: $y_1$")
+        pl.xlabel("Time")
+        pl.show()
 
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(N.abs(float(x1[-1]) - 1.8601438), 1e-1)
+    nose.tools.assert_less(np.abs(float(x1[-1]) - 1.8601438), 1e-1)
     
     return exp_mod, exp_sim
 
 if __name__=='__main__':
     mod,sim = run_example()
-

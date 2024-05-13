@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-cimport numpy as N
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
+import numpy as np
+cimport numpy as np
 
 from collections import OrderedDict
 
@@ -26,7 +28,7 @@ def set_type_shape_array(var, datatype=realtype):
     """
     Helper function to convert a scalar or list to a 1D-array
     """
-    return  N.array(var, dtype = datatype).reshape(-1,)
+    return  np.array(var, dtype = datatype).reshape(-1,)
 
 cdef class Statistics:
     def __init__(self):
@@ -60,7 +62,7 @@ cdef class Statistics:
         for k in list(self.statistics.keys()):
             if self.statistics[k] == -1:
                 continue
-            print(" %s %s: %d")%(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1) ,self.statistics[k])
+            print(" {} {}: {}".format(self.statistics_msg[k], " "*(max_len_msg-len(self.statistics_msg[k])+1), self.statistics[k]))
         
     def reset(self):
         """

@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-cimport numpy as N
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
+import numpy as np
+cimport numpy as np
 from timeit import default_timer as timer
 
-from exception import Algebraic_Exception, AssimuloException
-from problem import Algebraic_Problem
+from assimulo.exception import Algebraic_Exception, AssimuloException
+from assimulo.problem import Algebraic_Problem
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -42,8 +44,8 @@ cdef class Algebraic:
         self.problem = problem
         
         if hasattr(problem, 'y0'):
-            self.y0 = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
-            self.y = N.array(problem.y0,dtype=realtype) if len(N.array(problem.y0,dtype=realtype).shape)>0 else N.array([problem.y0],dtype=realtype)
+            self.y0 = np.array(problem.y0,dtype=realtype) if len(np.array(problem.y0,dtype=realtype).shape)>0 else np.array([problem.y0],dtype=realtype)
+            self.y = np.array(problem.y0,dtype=realtype) if len(np.array(problem.y0,dtype=realtype).shape)>0 else np.array([problem.y0],dtype=realtype)
             self.problem_info["dim"] = len(self.y0)
         else:
             raise Algebraic_Exception('y0 must be specified in the problem.')
@@ -152,4 +154,3 @@ cdef class Algebraic:
         return self.options["verbosity"]
     
     verbosity = property(_get_verbosity,_set_verbosity)
-    

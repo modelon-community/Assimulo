@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
+import numpy as np
 import nose
-from assimulo.solvers import GLIMDA,IDA
+from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem
 
 def run_example(with_plots=True):
@@ -50,7 +50,7 @@ def run_example(with_plots=True):
         res_0 = yd[0]-yd_0
         res_1 = yd[1]-yd_1
         
-        return N.array([res_0,res_1])
+        return np.array([res_0,res_1])
     
     y0 = [2.0,-0.6] #Initial conditions
     yd0 = [-.6,-200000.]
@@ -72,17 +72,17 @@ def run_example(with_plots=True):
     
     #Plot
     if with_plots:
-        import pylab as P
-        P.subplot(211)
-        P.plot(t,y[:,0])#, marker='o')
-        P.xlabel('Time')
-        P.ylabel('State')
-        P.subplot(212)
-        P.plot(t,yd[:,0]*1.e-5)#, marker='o')
-        P.xlabel('Time')
-        P.ylabel('State derivatives scaled with $10^{-5}$')
-        P.suptitle(imp_mod.name)
-        P.show()
+        import pylab as pl
+        pl.subplot(211)
+        pl.plot(t,y[:,0])#, marker='o')
+        pl.xlabel('Time')
+        pl.ylabel('State')
+        pl.subplot(212)
+        pl.plot(t,yd[:,0]*1.e-5)#, marker='o')
+        pl.xlabel('Time')
+        pl.ylabel('State derivatives scaled with $10^{-5}$')
+        pl.suptitle(imp_mod.name)
+        pl.show()
     
     #Basic test
     x1 = y[:,0]

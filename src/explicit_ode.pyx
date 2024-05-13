@@ -15,19 +15,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from ode cimport ODE     
-from problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
+cimport cython
 
 import itertools
 import sys
-import numpy as N
-cimport numpy as N
-
-cimport explicit_ode # .pxd
-cimport cython
-
-from exception import Explicit_ODE_Exception, TimeLimitExceeded, TerminateSimulation
+import numpy as np
+cimport numpy as np
 from timeit import default_timer as timer
+
+from assimulo.ode cimport ODE
+from assimulo.explicit_ode cimport Explicit_ODE, f_event_locator
+
+from assimulo.problem import Explicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem, cExplicit_Problem
+from assimulo.exception import Explicit_ODE_Exception, TimeLimitExceeded, TerminateSimulation
 
 include "constants.pxi" #Includes the constants (textual include)
 
@@ -37,20 +39,20 @@ realtype = float
 @cython.wraparound(False)
 cdef void py2c_d(double* dest, object source, int dim):
     """Copy 1D numpy (double) array to (double *) C vector."""
-    if not (isinstance(source, N.ndarray) and source.flags.contiguous and source.dtype == N.float64):
-        source = N.ascontiguousarray(source, dtype=N.float64)
+    if not (isinstance(source, np.ndarray) and source.flags.contiguous and source.dtype == np.float64):
+        source = np.ascontiguousarray(source, dtype=np.float64)
     assert source.size >= dim, "The dimension of the vector is {} and not equal to the problem dimension {}. Please verify the output vectors from the min/max/nominal/evalute methods in the Problem class.".format(source.size, dim)
-    memcpy(dest, <double*>N.PyArray_DATA(source), dim*sizeof(double))
+    memcpy(dest, <double*>np.PyArray_DATA(source), dim*sizeof(double))
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void c2py_d(N.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
+cdef void c2py_d(np.ndarray[double, ndim=1, mode='c'] dest, double* source, int dim):
     """Copy (double *) C vector to 1D numpy array."""
-    memcpy(N.PyArray_DATA(dest), source, dim*sizeof(double))
+    memcpy(np.PyArray_DATA(dest), source, dim*sizeof(double))
 
-cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out, void* f_event_EXT):
+cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out, void* f_event_EXT) noexcept:
     """Event indicator callback function to event_locator.c"""
-    cdef N.ndarray[double, ndim=1, mode="c"]y_py = N.empty(n_y, dtype = N.double)
+    cdef np.ndarray[double, ndim=1, mode="c"]y_py = np.empty(n_y, dtype = np.double)
     c2py_d(y_py, y_in, n_y)
     ret, g_high = (<object>f_event_EXT)(t, y_py)
     if ret < 0: ## immediate return, no not try to copy g_high
@@ -58,7 +60,7 @@ cdef int callback_event(int n_y, int n_g, double t, double* y_in, double* g_out,
     py2c_d(g_out, g_high, n_g)
     return ret
 
-cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT):
+cdef int callback_interp(int n, double t, double* y_out, void* f_interp_EXT) noexcept:
     """Interpolation callback function to event_locator.c"""
     y_interp = (<object>f_interp_EXT)(t)
     py2c_d(y_out, y_interp, n)
@@ -81,7 +83,7 @@ cdef class Explicit_ODE(ODE):
         """
         ODE.__init__(self, problem) #Sets general attributes
         
-        if isinstance(problem, cExplicit_Problem) or isinstance(problem, Delay_Explicit_Problem) or isinstance(problem, SingPerturbed_Problem):
+        if isinstance(problem, (cExplicit_Problem, Delay_Explicit_Problem, SingPerturbed_Problem)):
             self.problem = problem
         else:
             raise Explicit_ODE_Exception('The problem needs to be a subclass of a Explicit_Problem.')
@@ -117,7 +119,7 @@ cdef class Explicit_ODE(ODE):
                 
         See information in the __init__ method.
         """
-        y0 = N.array(y0) if len(N.array(y0).shape)>0 else N.array([y0])
+        y0 = np.array(y0) if len(np.array(y0).shape)>0 else np.array([y0])
         
         if len(self.y) != len(y0):
             raise Explicit_ODE_Exception('y0 must be of the same length as the original problem.')
@@ -127,12 +129,12 @@ cdef class Explicit_ODE(ODE):
         self.y = y0
         
         if sw0 is not None:
-            self.sw = (N.array(sw0,dtype=bool) if len(N.array(sw0,dtype=bool).shape)>0 else N.array([sw0],dtype=bool)).tolist()
+            self.sw = (np.array(sw0,dtype=bool) if len(np.array(sw0,dtype=bool).shape)>0 else np.array([sw0],dtype=bool)).tolist()
             
         #Clear logs
         self.clear_logs()
 
-    cpdef _simulate(self, double t0, double tfinal, N.ndarray output_list, int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
+    cpdef _simulate(self, double t0, double tfinal, np.ndarray output_list, int REPORT_CONTINUOUSLY, int INTERPOLATE_OUTPUT,
                  int TIME_EVENT):
         """
         INTERNAL FUNCTION, FOR SIMULATION USE METHOD SIMULATE.
@@ -179,7 +181,7 @@ cdef class Explicit_ODE(ODE):
         cdef double tevent
         cdef int flag, output_index
         cdef dict opts
-        cdef double eps = N.finfo(float).eps*100 #Machine Epsilon
+        cdef double eps = np.finfo(float).eps*100 #Machine Epsilon
         cdef backward = 1 if self.backward else 0
         
         y0 = self.y
@@ -272,7 +274,7 @@ cdef class Explicit_ODE(ODE):
             if self.t == tfinal: #Finished simulation (might occur due to event at the final time)
                 break
         
-    cpdef report_solution(self, double t, N.ndarray y, opts):
+    cpdef report_solution(self, double t, np.ndarray y, opts):
         '''Is called after each successful step in case the complete step
         option is active. Here possible interpolation is done and the result 
         handeled. Furthermore possible step events are checked.
@@ -328,27 +330,27 @@ cdef class Explicit_ODE(ODE):
             
         return flag_initialize
         
-    cpdef event_locator(self, double t_low, double t_high, N.ndarray y_high):
+    cpdef event_locator(self, double t_low, double t_high, np.ndarray y_high):
         '''Checks if an event occurs in [t_low, t_high], if that is the case event 
         localization is started. Event localization finds the earliest small interval 
         that contains a change in domain. The right endpoint of this interval is then 
         returned as the time to restart the integration at.
         '''
         cdef int n_g = self.problem_info["dimRoot"]
-        cdef N.ndarray[double, mode="c", ndim=1] g_low_c  = N.array(self.g_old)
-        cdef N.ndarray[double, mode="c", ndim=1] g_mid_c  = N.empty(n_g, dtype = N.double)
-        cdef N.ndarray[double, mode="c", ndim=1] g_high_c = N.empty(n_g, dtype = N.double)
-        cdef N.ndarray[double, mode="c", ndim=1] y_high_c = N.array(y_high)
+        cdef np.ndarray[double, mode="c", ndim=1] g_low_c  = np.array(self.g_old)
+        cdef np.ndarray[double, mode="c", ndim=1] g_mid_c  = np.empty(n_g, dtype = np.double)
+        cdef np.ndarray[double, mode="c", ndim=1] g_high_c = np.empty(n_g, dtype = np.double)
+        cdef np.ndarray[double, mode="c", ndim=1] y_high_c = np.array(y_high)
         cdef int nstatefcns = 0
-        cdef int ret = explicit_ode.f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
-                                                    &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
-                                                    callback_event, <void*>self.event_func,
-                                                    callback_interp, <void*>self.interpolate,
-                                                    &nstatefcns)
+        cdef int ret = f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
+                                       &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
+                                       callback_event, <void*>self.event_func,
+                                       callback_interp, <void*>self.interpolate,
+                                       &nstatefcns)
         self.statistics["nstatefcns"] += nstatefcns
 
         if ret == ID_PY_EVENT:
-            event_info = N.zeros(n_g, dtype = int)
+            event_info = np.zeros(n_g, dtype = int)
             for i in range(n_g):
                 if (g_low_c[i] > 0) != (g_high_c[i] > 0):
                     event_info[i] = 1 if g_high_c[i] > 0 else -1
@@ -378,15 +380,15 @@ cdef class Explicit_ODE(ODE):
                         - See http://matplotlib.sourceforge.net/api/pyplot_api.html#matplotlib.pyplot.plot
                           for information about the available options for **kwargs.
         """
-        import pylab as P
+        import pylab as pl
         
         if len(self.t_sol) > 0:
-            P.xlabel('time')
-            P.ylabel('state')
-            P.title(self.problem.name)
+            pl.xlabel('time')
+            pl.ylabel('state')
+            pl.title(self.problem.name)
             
             if not mask:
-                P.plot(self.t_sol, self.y_sol, **kwargs)
+                pl.plot(self.t_sol, self.y_sol, **kwargs)
             else:
                 if not isinstance(mask, list):
                     raise Explicit_ODE_Exception('Mask must be a list of integers')
@@ -395,9 +397,8 @@ cdef class Explicit_ODE(ODE):
                                                  'the number of variables.')
                 for i in range(len(mask)):
                     if mask[i]:
-                        P.plot(self.t_sol, N.array(self.y_sol)[:,i],**kwargs)
+                        pl.plot(self.t_sol, np.array(self.y_sol)[:,i],**kwargs)
             
-            
-            P.show()
+            pl.show()
         else:
             self.log_message("No result for plotting found.",NORMAL)

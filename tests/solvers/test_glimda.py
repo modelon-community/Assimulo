@@ -21,7 +21,7 @@ from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem, Explicit_Problem
 from assimulo.exception import GLIMDA_Exception
 
-import numpy as N
+import numpy as np
 
 class Test_GLIMDA:
     """
@@ -41,7 +41,7 @@ class Test_GLIMDA:
             res_0 = yd[0]-yd_0
             res_1 = yd[1]-yd_1
             
-            return N.array([res_0,res_1])
+            return np.array([res_0,res_1])
         
         y0 = [2.0,-0.6] #Initial conditions
         yd0 = [-.6,-200000.]
@@ -64,7 +64,7 @@ class Test_GLIMDA:
         """
         Test a simulation of an explicit problem using GLIMDA.
         """
-        f = lambda t,y:N.array(-y)
+        f = lambda t,y:np.array(-y)
         y0 = [1.0]
         
         problem = Explicit_Problem(f,y0)
@@ -74,7 +74,7 @@ class Test_GLIMDA:
         
         t,y = simulator.simulate(1.0)
         
-        nose.tools.assert_almost_equal(float(y[-1]), float(N.exp(-1.0)),4)
+        nose.tools.assert_almost_equal(float(y[-1]), float(np.exp(-1.0)),4)
     
     @testattr(stddist = True)
     def test_maxord(self):
@@ -143,8 +143,8 @@ class Test_GLIMDA:
         """
         Tests the minimum stepsize of GLIMDA.
         """
-        nose.tools.assert_equal(self.sim.minh, N.finfo(N.double).eps)
-        nose.tools.assert_equal(self.sim.options["minh"], N.finfo(N.double).eps)
+        nose.tools.assert_equal(self.sim.minh, np.finfo(np.double).eps)
+        nose.tools.assert_equal(self.sim.options["minh"], np.finfo(np.double).eps)
         
         self.sim.minh = 1e-5
         
@@ -171,8 +171,8 @@ class Test_GLIMDA:
         """
         Tests the maximum stepsize of GLIMDA.
         """
-        nose.tools.assert_equal(self.sim.maxh, N.inf)
-        nose.tools.assert_equal(self.sim.options["maxh"], N.inf)
+        nose.tools.assert_equal(self.sim.maxh, np.inf)
+        nose.tools.assert_equal(self.sim.options["maxh"], np.inf)
         
         self.sim.maxh = 1e5
         

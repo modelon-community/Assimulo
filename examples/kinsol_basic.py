@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
 import nose
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
@@ -53,4 +52,3 @@ def run_example(with_plots=True):
 
 if __name__=='__main__':
     mod, solv = run_example()
-

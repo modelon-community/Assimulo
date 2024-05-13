@@ -24,8 +24,6 @@ see also Jon Olav Vik:
 http://codespeak.net/pipermail/cython-dev/2009-June/005947.html
 
 """
-#import numpy as N
-#cimport numpy as N
 
 from numpy cimport NPY_DOUBLE, npy_intp, NPY_INT
 
@@ -38,13 +36,13 @@ IF SUNDIALS_VERSION >= (6,0,0):
         ctypedef _SUNContext * SUNContext
         cdef struct _SUNContext:
             pass
-        int SUNContext_Create(void* comm, SUNContext* ctx)
+        int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
         ctypedef int SUNErrCode
-        ctypedef void (*SUNErrHandlerFn)(int line, const char* func, const char* file, const char* msg, SUNErrCode err_code, void* err_user_data, SUNContext sunctx)
-        SUNErrCode SUNContext_PushErrHandler(SUNContext sunctx, SUNErrHandlerFn err_fn, void* err_user_data)
+        ctypedef void (*SUNErrHandlerFn)(int line, const char* func, const char* file, const char* msg, SUNErrCode err_code, void* err_user_data, SUNContext sunctx) noexcept
+        SUNErrCode SUNContext_PushErrHandler(SUNContext sunctx, SUNErrHandlerFn err_fn, void* err_user_data) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "sundials/sundials_types.h":
@@ -75,20 +73,20 @@ cdef extern from "nvector/nvector_serial.h":
         booleantype own_data
         realtype* data
     ctypedef _N_VectorContent_Serial* N_VectorContent_Serial
-    cdef N_Vector N_VMake_Serial(long int vec_length, realtype *v_data)
-    void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v)
-    void N_VConst_Serial(realtype c, N_Vector z)
+    cdef N_Vector N_VMake_Serial(long int vec_length, realtype *v_data) noexcept
+    void N_VSetArrayPointer_Serial(realtype *v_data, N_Vector v) noexcept
+    void N_VConst_Serial(realtype c, N_Vector z) noexcept
     IF SUNDIALS_VERSION >= (6,0,0):
-        N_Vector N_VNew_Serial(long int vec_length, SUNContext ctx)
-        N_Vector *N_VCloneVectorArray(int count, N_Vector w)
-        N_Vector *N_VCloneVectorArrayEmpty(int count, N_Vector w)
-        void N_VDestroy(N_Vector v)
+        N_Vector N_VNew_Serial(long int vec_length, SUNContext ctx) noexcept
+        N_Vector *N_VCloneVectorArray(int count, N_Vector w) noexcept
+        N_Vector *N_VCloneVectorArrayEmpty(int count, N_Vector w) noexcept
+        void N_VDestroy(N_Vector v) noexcept
     ELSE:
-        N_Vector N_VNew_Serial(long int vec_length)
-        N_Vector *N_VCloneVectorArray_Serial(int count, N_Vector w)
-        N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w)
-        void N_VDestroy_Serial(N_Vector v)
-    void N_VPrint_Serial(N_Vector v)
+        N_Vector N_VNew_Serial(long int vec_length) noexcept
+        N_Vector *N_VCloneVectorArray_Serial(int count, N_Vector w) noexcept
+        N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w) noexcept
+        void N_VDestroy_Serial(N_Vector v) noexcept
+    void N_VPrint_Serial(N_Vector v) noexcept
 
 
 IF SUNDIALS_VERSION >= (4,0,0):
@@ -109,18 +107,18 @@ IF SUNDIALS_VERSION >= (3,0,0):
             ctypedef int sunindextype
     cdef extern from "sundials/sundials_matrix.h":
         ctypedef _generic_SUNMatrix *SUNMatrix
-        void SUNMatDestroy(SUNMatrix A)
+        void SUNMatDestroy(SUNMatrix A) noexcept
         
         cdef struct _generic_SUNMatrix_Ops:
-            SUNMatrix_ID (*getid)(SUNMatrix)
-            SUNMatrix    (*clone)(SUNMatrix)
-            void         (*destroy)(SUNMatrix)
-            int          (*zero)(SUNMatrix)
-            int          (*copy)(SUNMatrix, SUNMatrix)
-            int          (*scaleadd)(realtype, SUNMatrix, SUNMatrix)
-            int          (*scaleaddi)(realtype, SUNMatrix)
-            int          (*matvec)(SUNMatrix, N_Vector, N_Vector)
-            int          (*space)(SUNMatrix, long int*, long int*)
+            SUNMatrix_ID (*getid)(SUNMatrix) noexcept
+            SUNMatrix    (*clone)(SUNMatrix) noexcept
+            void         (*destroy)(SUNMatrix) noexcept
+            int          (*zero)(SUNMatrix) noexcept
+            int          (*copy)(SUNMatrix, SUNMatrix) noexcept
+            int          (*scaleadd)(realtype, SUNMatrix, SUNMatrix) noexcept
+            int          (*scaleaddi)(realtype, SUNMatrix) noexcept
+            int          (*matvec)(SUNMatrix, N_Vector, N_Vector) noexcept
+            int          (*space)(SUNMatrix, long int*, long int*) noexcept
 
         cdef struct _generic_SUNMatrix:
             void *content
@@ -134,25 +132,22 @@ IF SUNDIALS_VERSION >= (3,0,0):
     
     cdef extern from "sundials/sundials_linearsolver.h":
         ctypedef _generic_SUNLinearSolver *SUNLinearSolver
-        int SUNLinSolFree(SUNLinearSolver S)
+        int SUNLinSolFree(SUNLinearSolver S) noexcept
         
         cdef struct _generic_SUNLinearSolver_Ops:
-            SUNLinearSolver_Type (*gettype)(SUNLinearSolver)
-            int                  (*setatimes)(SUNLinearSolver, void*, ATimesFn)
-            int                  (*setpreconditioner)(SUNLinearSolver, void*, 
-                                                    PSetupFn, PSolveFn)
-            int                  (*setscalingvectors)(SUNLinearSolver,
-                                                    N_Vector, N_Vector)
-            int                  (*initialize)(SUNLinearSolver)
-            int                  (*setup)(SUNLinearSolver, SUNMatrix)
-            int                  (*solve)(SUNLinearSolver, SUNMatrix, N_Vector, 
-                                        N_Vector, realtype)
-            int                  (*numiters)(SUNLinearSolver)
-            realtype             (*resnorm)(SUNLinearSolver)
-            long int             (*lastflag)(SUNLinearSolver)
-            int                  (*space)(SUNLinearSolver, long int*, long int*)
-            N_Vector             (*resid)(SUNLinearSolver)
-            int                  (*free)(SUNLinearSolver)
+            SUNLinearSolver_Type (*gettype)(SUNLinearSolver) noexcept
+            int                  (*setatimes)(SUNLinearSolver, void*, ATimesFn) noexcept
+            int                  (*setpreconditioner)(SUNLinearSolver, void*, PSetupFn, PSolveFn) noexcept
+            int                  (*setscalingvectors)(SUNLinearSolver, N_Vector, N_Vector) noexcept
+            int                  (*initialize)(SUNLinearSolver) noexcept
+            int                  (*setup)(SUNLinearSolver, SUNMatrix) noexcept
+            int                  (*solve)(SUNLinearSolver, SUNMatrix, N_Vector, N_Vector, realtype) noexcept
+            int                  (*numiters)(SUNLinearSolver) noexcept
+            realtype             (*resnorm)(SUNLinearSolver) noexcept
+            long int             (*lastflag)(SUNLinearSolver) noexcept
+            int                  (*space)(SUNLinearSolver, long int*, long int*) noexcept
+            N_Vector             (*resid)(SUNLinearSolver) noexcept
+            int                  (*free)(SUNLinearSolver) noexcept
         
         cdef struct _generic_SUNLinearSolver:
             void *content
@@ -172,9 +167,9 @@ IF SUNDIALS_VERSION >= (3,0,0):
             sunindextype ldata
             realtype **cols
         IF SUNDIALS_VERSION >= (6,0,0):
-            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N, SUNContext ctx)
+            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N, SUNContext ctx) noexcept
         ELSE:
-            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N)
+            SUNMatrix SUNDenseMatrix(sunindextype M, sunindextype N) noexcept
     cdef extern from "sunmatrix/sunmatrix_sparse.h":
         ctypedef _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse
         cdef struct _SUNMatrixContent_Sparse:
@@ -191,25 +186,25 @@ IF SUNDIALS_VERSION >= (3,0,0):
             sunindextype **colvals
             sunindextype **rowptrs
         IF SUNDIALS_VERSION >= (6,0,0):
-            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype, SUNContext ctx)
+            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype, SUNContext ctx) noexcept
         ELSE:
-            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype)
+            SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype) noexcept
     cdef extern from "sunlinsol/sunlinsol_dense.h":
         IF SUNDIALS_VERSION >= (4,0,0):
             IF SUNDIALS_VERSION >= (6,0,0):
-                SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A, SUNContext ctx)
+                SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A, SUNContext ctx) noexcept
             ELSE:
-                SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A)
+                SUNLinearSolver SUNLinSol_Dense(N_Vector y, SUNMatrix A) noexcept
         ELSE:
-            SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A)
+            SUNLinearSolver SUNDenseLinearSolver(N_Vector y, SUNMatrix A) noexcept
     cdef extern from "sunlinsol/sunlinsol_spgmr.h":
         IF SUNDIALS_VERSION >= (4,0,0):
             IF SUNDIALS_VERSION >= (6,0,0):
-                SUNLinearSolver SUNLinSol_SPGMR(N_Vector y, int pretype, int maxl, SUNContext ctx)
+                SUNLinearSolver SUNLinSol_SPGMR(N_Vector y, int pretype, int maxl, SUNContext ctx) noexcept
             ELSE:
-                SUNLinearSolver SUNLinSol_SPGMR(N_Vector y, int pretype, int maxl)
+                SUNLinearSolver SUNLinSol_SPGMR(N_Vector y, int pretype, int maxl) noexcept
         ELSE:
-            SUNLinearSolver SUNSPGMR(N_Vector y, int pretype, int maxl)
+            SUNLinearSolver SUNSPGMR(N_Vector y, int pretype, int maxl) noexcept
 
 ELSE: 
     #Dummy defines
@@ -234,7 +229,7 @@ cdef extern from "sundials/sundials_direct.h":
         int ldata
         realtype **cols
     ctypedef _DlsMat* DlsMat
-    cdef realtype* DENSE_COL(DlsMat A, int j)
+    cdef realtype* DENSE_COL(DlsMat A, int j) noexcept
 
 IF SUNDIALS_VERSION >= (5,0,0):
     pass
@@ -288,262 +283,261 @@ cdef extern from "stdlib.h":
 #==============================================
 
 IF SUNDIALS_WITH_SUPERLU:
-    cdef inline int with_superlu(): return 1
+    cdef inline int with_superlu() noexcept: return 1
 ELSE:
-    cdef inline int with_superlu(): return 0
+    cdef inline int with_superlu() noexcept: return 0
 
 IF SUNDIALS_VERSION >= (4,0,0):
     cdef extern from "cvodes/cvodes.h":
         IF SUNDIALS_VERSION >= (6,0,0):
-            void* CVodeCreate(int lmm, SUNContext ctx)
+            void* CVodeCreate(int lmm, SUNContext ctx) noexcept
         ELSE:
-            void* CVodeCreate(int lmm)
+            void* CVodeCreate(int lmm) noexcept
 
-        int CVodeSetNonlinearSolver(void *cvode_mem, SUNNonlinearSolver NLS)
-        int CVodeSetNonlinearSolverSensSim(void *cvode_mem, SUNNonlinearSolver NLS)
-        int CVodeSetNonlinearSolverSensStg(void *cvode_mem, SUNNonlinearSolver NLS)
+        int CVodeSetNonlinearSolver(void *cvode_mem, SUNNonlinearSolver NLS) noexcept
+        int CVodeSetNonlinearSolverSensSim(void *cvode_mem, SUNNonlinearSolver NLS) noexcept
+        int CVodeSetNonlinearSolverSensStg(void *cvode_mem, SUNNonlinearSolver NLS) noexcept
     
     cdef extern from "sunnonlinsol/sunnonlinsol_newton.h":
         IF SUNDIALS_VERSION >= (6,0,0):
-            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y, SUNContext ctx)
-            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y, SUNContext ctx)
+            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y, SUNContext ctx) noexcept
+            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y, SUNContext ctx) noexcept
         ELSE:
-            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y)
-            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y)
+            SUNNonlinearSolver SUNNonlinSol_Newton(N_Vector y) noexcept
+            SUNNonlinearSolver SUNNonlinSol_NewtonSens(int count, N_Vector y) noexcept
     cdef extern from "sunnonlinsol/sunnonlinsol_fixedpoint.h":
         IF SUNDIALS_VERSION >= (6,0,0):
-            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m, SUNContext ctx)
-            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m, SUNContext ctx)
+            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m, SUNContext ctx) noexcept
+            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m, SUNContext ctx) noexcept
         ELSE:
-            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m)
-            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m)
+            SUNNonlinearSolver SUNNonlinSol_FixedPoint(N_Vector y, int m) noexcept
+            SUNNonlinearSolver SUNNonlinSol_FixedPointSens(int count, N_Vector y, int m) noexcept
 ELSE:
     cdef extern from "cvodes/cvodes.h":
-        void* CVodeCreate(int lmm, int iter)
+        void* CVodeCreate(int lmm, int iter) noexcept
         
 cdef extern from "cvodes/cvodes.h":
-    ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data)
-    int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0)
-    int CVodeReInit(void *cvode_mem, realtype t0, N_Vector y0)
-    void CVodeFree(void **cvode_mem)
-    int CVode(void *cvode_mem, realtype tout, N_Vector yout, realtype *tret, int itask)
+    ctypedef int (*CVRhsFn)(realtype t, N_Vector y, N_Vector ydot, void *f_data) noexcept
+    int CVodeInit(void *cvode_mem, CVRhsFn f, realtype t0, N_Vector y0) noexcept
+    int CVodeReInit(void *cvode_mem, realtype t0, N_Vector y0) noexcept
+    void CVodeFree(void **cvode_mem) noexcept
+    int CVode(void *cvode_mem, realtype tout, N_Vector yout, realtype *tret, int itask) noexcept
     
     #Functions for settings options
-    int CVodeSetMaxOrd(void *cvode_mem, int maxord)
-    int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps)
-    int CVodeSetMaxStep(void   *cvode_mem, realtype hmax)
-    int CVodeSetMinStep(void   *cvode_mem, realtype hmin)
-    int CVodeSetInitStep(void  *cvode_mem, realtype hin)
-    int CVodeSStolerances(void *cvode_mem, realtype reltol, realtype abstol)
-    int CVodeSVtolerances(void *cvode_mem, realtype reltol, N_Vector abstol)
+    int CVodeSetMaxOrd(void *cvode_mem, int maxord) noexcept
+    int CVodeSetMaxNumSteps(void *cvode_mem, long int mxsteps) noexcept
+    int CVodeSetMaxStep(void   *cvode_mem, realtype hmax) noexcept
+    int CVodeSetMinStep(void   *cvode_mem, realtype hmin) noexcept
+    int CVodeSetInitStep(void  *cvode_mem, realtype hin) noexcept
+    int CVodeSStolerances(void *cvode_mem, realtype reltol, realtype abstol) noexcept
+    int CVodeSVtolerances(void *cvode_mem, realtype reltol, N_Vector abstol) noexcept
     IF SUNDIALS_CVODE_RTOL_VEC:
-        int CVodeVVtolerances(void *cvode_mem, N_Vector reltol, N_Vector abstol)
-    int CVodeSetStopTime(void  *cvode_mem, realtype tstop)
-    int CVodeSetUserData(void  *cvode_mem,void *user_data)
-    int CVodeSetMaxConvFails(void *cvode_mem, int maxncf)
-    int CVodeSetMaxErrTestFails(void *cvode_mem, int maxnef)
-    int CVodeSetMaxNonlinIters(void *cvode_mem, int maxcor)
+        int CVodeVVtolerances(void *cvode_mem, N_Vector reltol, N_Vector abstol) noexcept
+    int CVodeSetStopTime(void  *cvode_mem, realtype tstop) noexcept
+    int CVodeSetUserData(void  *cvode_mem,void *user_data) noexcept
+    int CVodeSetMaxConvFails(void *cvode_mem, int maxncf) noexcept
+    int CVodeSetMaxErrTestFails(void *cvode_mem, int maxnef) noexcept
+    int CVodeSetMaxNonlinIters(void *cvode_mem, int maxcor) noexcept
     
     #Functions for retrieving results
-    int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky)
-
+    int CVodeGetDky(void *cvode_mem, realtype t, int k, N_Vector dky) noexcept
     #Functions for discontinuity handling
-    ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data)
-    int CVodeRootDirection(void *cvode_mem, int *rootdir)
-    int CVodeSetNoInactiveRootWarn(void *cvode_mem)
-    int CVodeRootInit(void *cvode_mem, int nrtfn, CVRootFn g)
-    int CVodeGetRootInfo(void *cvode_mem, int *rootsfound)
+    ctypedef int (*CVRootFn)(realtype tt, N_Vector yy, realtype *gout, void *user_data) noexcept
+    int CVodeRootDirection(void *cvode_mem, int *rootdir) noexcept
+    int CVodeSetNoInactiveRootWarn(void *cvode_mem) noexcept
+    int CVodeRootInit(void *cvode_mem, int nrtfn, CVRootFn g) noexcept
+    int CVodeGetRootInfo(void *cvode_mem, int *rootsfound) noexcept
     
     #Functions for retrieving statistics
-    int CVodeGetLastOrder(void * cvode_mem,int *qlast)
-    int CVodeGetLastStep(void * cvode_mem, realtype *hlast)
-    int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent)
-    int CVodeGetActualInitStep(void * cvode_mem, realtype *hinused)
-    int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) #Number of steps
-    int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) #Number of function evals
+    int CVodeGetLastOrder(void * cvode_mem,int *qlast) noexcept
+    int CVodeGetLastStep(void * cvode_mem, realtype *hlast) noexcept
+    int CVodeGetCurrentOrder(void * cvode_mem,int *qcurrent) noexcept
+    int CVodeGetActualInitStep(void * cvode_mem, realtype *hinused) noexcept
+    int CVodeGetNumSteps(void *cvode_mem, long int *nsteps) noexcept #Number of steps
+    int CVodeGetNumRhsEvals(void *cvode_mem, long int *nrevals) noexcept #Number of function evals
     IF SUNDIALS_VERSION >= (4,0,0):
-        int CVodeGetNumJacEvals(void *cvode_mem, long int *njevals) #Number of jac evals
-        int CVodeGetNumLinRhsEvals(void *cvode_mem, long int *nrevalsLS) #Number of res evals due to jac evals
+        int CVodeGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept #Number of jac evals
+        int CVodeGetNumLinRhsEvals(void *cvode_mem, long int *nrevalsLS) noexcept #Number of res evals due to jac evals
     ELSE:
-        int CVDlsGetNumJacEvals(void *cvode_mem, long int *njevals) #Number of jac evals
-        int CVDlsGetNumRhsEvals(void *cvode_mem, long int *nrevalsLS) #Number of res evals due to jac evals
-    int CVodeGetNumGEvals(void *cvode_mem, long int *ngevals) #Number of root evals
-    int CVodeGetNumErrTestFails(void *cvode_mem, long int *netfails) #Number of local error test failures
-    int CVodeGetNumNonlinSolvIters(void *cvode_mem, long int *nniters) #Number of nonlinear iteration
-    int CVodeGetNumNonlinSolvConvFails(void *cvode_mem, long int *nncfails) #Number of nonlinear conv failures
-    int CVodeGetNonlinSolvStats(void *cvode_mem, long int *nniters, long int *nncfails)
+        int CVDlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept #Number of jac evals
+        int CVDlsGetNumRhsEvals(void *cvode_mem, long int *nrevalsLS) noexcept #Number of res evals due to jac evals
+    int CVodeGetNumGEvals(void *cvode_mem, long int *ngevals) noexcept #Number of root evals
+    int CVodeGetNumErrTestFails(void *cvode_mem, long int *netfails) noexcept#Number of local error test failures
+    int CVodeGetNumNonlinSolvIters(void *cvode_mem, long int *nniters) noexcept #Number of nonlinear iteration
+    int CVodeGetNumNonlinSolvConvFails(void *cvode_mem, long int *nncfails) noexcept #Number of nonlinear conv failures
+    int CVodeGetNonlinSolvStats(void *cvode_mem, long int *nniters, long int *nncfails) noexcept
     int CVodeGetIntegratorStats(void* cvode_mem, long int *nsteps, long int *nfevals,
                                 long int *nlinsetups, long int *netfails, int *qlast, int *qcur,
-                                realtype *hinused, realtype *hlast, realtype *hcur, realtype *tcur)
-    int CVodeGetNumStabLimOrderReds(void *cvode_mem, long int *nslred)
+                                realtype *hinused, realtype *hlast, realtype *hcur, realtype *tcur) noexcept
+    int CVodeGetNumStabLimOrderReds(void *cvode_mem, long int *nslred) noexcept
     
     #Sensitivity methods
     ctypedef int (*CVSensRhsFn)(int Ns, realtype t, N_Vector y, N_Vector ydot, N_Vector *yS,
-                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
     ctypedef int (*CVSensRhs1Fn)(int Ns, realtype t, N_Vector y, N_Vector ydot, int iS, N_Vector *yS,
-                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2)
-    int CVodeSensInit(void *cvode_mem, int Ns, int ism, CVSensRhsFn fS, N_Vector *ySO)
-    int CVodeSensInit1(void *cvode_mem, int Ns, int ism, CVSensRhs1Fn fS1, N_Vector *ySO)
-    int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *ySO)
-    int CVodeSensFree(void *cvode_mem)
-    int CVodeSensToggleOff(void *cvode_mem)
-    int CVodeSensEEtolerances(void *cvode_mem)
-    int CVodeGetSens(void *cvode_mem, realtype *tret, N_Vector *yS)
-    int CVodeGetSensDky(void *cvode_mem, realtype t, int k, N_Vector *dkyS)
-    int CVodeGetSens1(void *cvode_mem, realtype *tret, int iss, N_Vector yS)
-    int CVodeGetSensDky1(void *cvode_mem, realtype t, int k, int iss, N_Vector dkyS)
-    int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist)
-    int CVodeSetSensDQMethod(void *cvode_mem, int DQtype, realtype DQrhomax)
-    int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS)
-    int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS)
-    int CVodeSetStabLimDet(void *cvode_mem, booleantype stldet)
+                                N_Vector *ySdot, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
+    int CVodeSensInit(void *cvode_mem, int Ns, int ism, CVSensRhsFn fS, N_Vector *ySO) noexcept
+    int CVodeSensInit1(void *cvode_mem, int Ns, int ism, CVSensRhs1Fn fS1, N_Vector *ySO) noexcept
+    int CVodeSensReInit(void *cvode_mem, int ism, N_Vector *ySO) noexcept
+    int CVodeSensFree(void *cvode_mem) noexcept
+    int CVodeSensToggleOff(void *cvode_mem) noexcept
+    int CVodeSensEEtolerances(void *cvode_mem) noexcept
+    int CVodeGetSens(void *cvode_mem, realtype *tret, N_Vector *yS) noexcept
+    int CVodeGetSensDky(void *cvode_mem, realtype t, int k, N_Vector *dkyS) noexcept
+    int CVodeGetSens1(void *cvode_mem, realtype *tret, int iss, N_Vector yS) noexcept
+    int CVodeGetSensDky1(void *cvode_mem, realtype t, int k, int iss, N_Vector dkyS) noexcept
+    int CVodeSetSensParams(void *cvode_mem, realtype *p, realtype *pbar, int *plist) noexcept
+    int CVodeSetSensDQMethod(void *cvode_mem, int DQtype, realtype DQrhomax) noexcept
+    int CVodeSetSensErrCon(void *cvode_mem, booleantype errconS) noexcept
+    int CVodeSetSensMaxNonlinIters(void *cvode_mem, int maxcorS) noexcept
+    int CVodeSetStabLimDet(void *cvode_mem, booleantype stldet) noexcept
     
     
     
     #Statistics
-    int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele)               #Estimated local errors
-    int CVodeGetErrWeights(void *cvode_mem, N_Vector eweight)               #Estimated local errors
-    int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals)
-    int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS)
-    int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails)
-    int CVodeGetSensNumLinSolvSetups(void *cvode_mem, long int *nlinsetupsS)
+    int CVodeGetEstLocalErrors(void *cvode_mem, N_Vector ele) noexcept #Estimated local errors
+    int CVodeGetErrWeights(void *cvode_mem, N_Vector eweight) noexcept #Estimated local errors
+    int CVodeGetSensNumRhsEvals(void *cvode_mem, long int *nfSevals) noexcept
+    int CVodeGetNumRhsEvalsSens(void *cvode_mem, long int *nfevalsS) noexcept
+    int CVodeGetSensNumErrTestFails(void *cvode_mem, long int *nSetfails) noexcept
+    int CVodeGetSensNumLinSolvSetups(void *cvode_mem, long int *nlinsetupsS) noexcept
     int CVodeGetSensStats(void *cvode_mem, long int *nfSevals, long int *nfevalsS,
-                         long int *nSetfails, long int *nlinsetupsS)
-    int CVodeGetSensErrWeights(void *cvode_mem, N_Vector *eSweight)
-    int CVodeGetSensNumNonlinSolvIters(void *cvode_mem, long int *nSniters)
-    int CVodeGetSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSncfails)
-    int CVodeGetSensNonlinSolvStats(void *cvode_mem, long int *nSniters, long int *nSncfails)
-    int CVodeGetStgrSensNumNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters)
-    int CVodeGetStgrSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSTGR1ncfails)
+                         long int *nSetfails, long int *nlinsetupsS) noexcept
+    int CVodeGetSensErrWeights(void *cvode_mem, N_Vector *eSweight) noexcept
+    int CVodeGetSensNumNonlinSolvIters(void *cvode_mem, long int *nSniters) noexcept
+    int CVodeGetSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSncfails) noexcept
+    int CVodeGetSensNonlinSolvStats(void *cvode_mem, long int *nSniters, long int *nSncfails) noexcept
+    int CVodeGetStgrSensNumNonlinSolvIters(void *cvode_mem, long int *nSTGR1niters) noexcept
+    int CVodeGetStgrSensNumNonlinSolvConvFails(void *cvode_mem, long int *nSTGR1ncfails) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "cvodes/cvodes_ls.h":
-        ctypedef int (*CVLsJacFn)(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix Jac, void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3);
-        ctypedef int (*CVLsPrecSolveFn)(sunrealtype t, N_Vector y, N_Vector fy, N_Vector r, N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, void* user_data);
-        ctypedef int (*CVLsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data)
-        ctypedef int (*CVLsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t, N_Vector y, N_Vector fy, void *user_data, N_Vector tmp)
+        ctypedef int (*CVLsJacFn)(sunrealtype t, N_Vector y, N_Vector fy, SUNMatrix Jac, void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
+        ctypedef int (*CVLsPrecSolveFn)(sunrealtype t, N_Vector y, N_Vector fy, N_Vector r, N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, void* user_data) noexcept
+        ctypedef int (*CVLsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept
+        ctypedef int (*CVLsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t, N_Vector y, N_Vector fy, void *user_data, N_Vector tmp) noexcept
 ELSE:
     cdef extern from "cvodes/cvodes_spils.h":
-        ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t, N_Vector y, N_Vector fy, void *user_data, N_Vector tmp)
+        ctypedef int (*CVSpilsJacTimesVecFn)(N_Vector v, N_Vector Jv, realtype t, N_Vector y, N_Vector fy, void *user_data, N_Vector tmp) noexcept
 
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "cvode/cvode_ls.h":
-       int CVodeSetJacTimes(void *cvode_mem, CVLsJacTimesSetupFn jtsetup, CVLsJacTimesVecFn jtimes)
-       int CVodeSetLinearSolver(void* cvode_mem, SUNLinearSolver LS, SUNMatrix A)
-       int CVodeSetJacFn(void* cvode_mem, CVLsJacFn jac)
+       int CVodeSetJacTimes(void *cvode_mem, CVLsJacTimesSetupFn jtsetup, CVLsJacTimesVecFn jtimes) noexcept
+       int CVodeSetLinearSolver(void* cvode_mem, SUNLinearSolver LS, SUNMatrix A) noexcept
+       int CVodeSetJacFn(void* cvode_mem, CVLsJacFn jac) noexcept
     IF SUNDIALS_WITH_SUPERLU:
         cdef extern from "sunlinsol/sunlinsol_superlumt.h":
-            SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx)
+            SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx) noexcept
     ELSE:
-        cdef inline SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx): return NULL
+        cdef inline SUNLinearSolver SUNLinSol_SuperLUMT(N_Vector y, SUNMatrix A, int num_threads, SUNContext ctx) noexcept: return NULL
 
-    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data): return 0
+    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept: return 0
     cdef inline tuple version(): return (6,0,0)
 ELIF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "cvodes/cvodes_direct.h":
         ctypedef int (*CVDlsDenseJacFn)(realtype t, N_Vector y, N_Vector fy, 
-                       SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       SUNMatrix Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
-            int CVodeSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A)
-            int CVodeSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+            int CVodeSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A) noexcept
+            int CVodeSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac) noexcept
         ELSE:
-            int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A)
-            int CVDlsSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+            int CVDlsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS, SUNMatrix A) noexcept
+            int CVDlsSetJacFn(void *cvode_mem, CVDlsDenseJacFn djac) noexcept
     cdef extern from "cvodes/cvodes_spils.h":
-        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data)
+        ctypedef int (*CVSpilsJacTimesSetupFn)(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
-            int CVodeSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
+            int CVodeSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes) noexcept
         ELSE:
-            int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS)
-            int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes)
+            int CVSpilsSetLinearSolver(void *cvode_mem, SUNLinearSolver LS) noexcept
+            int CVSpilsSetJacTimes(void *cvode_mem, CVSpilsJacTimesSetupFn jtsetup, CVSpilsJacTimesVecFn jtimes) noexcept
         ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
-				  booleantype jok, booleantype *jcurPtr, realtype gamma, void *user_data)
+				  booleantype jok, booleantype *jcurPtr, realtype gamma, void *user_data) noexcept
         ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
 				  N_Vector r, N_Vector z,
-				  realtype gamma, realtype delta, int lr, void *user_data)
+				  realtype gamma, realtype delta, int lr, void *user_data) noexcept
 
     IF SUNDIALS_WITH_SUPERLU:
         cdef extern from "sunlinsol/sunlinsol_superlumt.h":
-            SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads)
+            SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads) noexcept
     ELSE:
-         cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads): return NULL
+         cdef inline SUNLinearSolver SUNSuperLUMT(N_Vector y, SUNMatrix A, int num_threads) noexcept: return NULL
     
-    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data): return 0
-    cdef inline tuple version(): return (3,0,0)
+    cdef inline int cv_spils_jtsetup_dummy(realtype t, N_Vector y, N_Vector fy, void *user_data) noexcept: return 0
+    cdef inline tuple version() noexcept: return (3,0,0)
 ELSE:
     cdef extern from "cvodes/cvodes_dense.h":
-        int CVDense(void *cvode_mem, long int n)
+        int CVDense(void *cvode_mem, long int n) noexcept
         ctypedef int (*CVDlsDenseJacFn)(long int n, realtype t, N_Vector y, N_Vector fy, 
-                       DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-        int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac)
+                       DlsMat Jac, void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
+        int CVDlsSetDenseJacFn(void *cvode_mem, CVDlsDenseJacFn djac) noexcept
 
     cdef extern from "cvodes/cvodes_spgmr.h":
-        int CVSpgmr(void *cvode_mem, int pretype, int max1)
+        int CVSpgmr(void *cvode_mem, int pretype, int max1) noexcept
     
     cdef extern from "cvodes/cvodes_spils.h":
-        int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv)
+        int CVSpilsSetJacTimesVecFn(void *cvode_mem,  CVSpilsJacTimesVecFn jtv) noexcept
         ctypedef int (*CVSpilsPrecSetupFn)(realtype t, N_Vector y, N_Vector fy,
 				  booleantype jok, booleantype *jcurPtr,
 				  realtype gamma, void *user_data,
 				  N_Vector tmp1, N_Vector tmp2,
-				  N_Vector tmp3)
+				  N_Vector tmp3) noexcept
         ctypedef int (*CVSpilsPrecSolveFn)(realtype t, N_Vector y, N_Vector fy,
 				  N_Vector r, N_Vector z,
 				  realtype gamma, realtype delta,
-				  int lr, void *user_data, N_Vector tmp)
+				  int lr, void *user_data, N_Vector tmp) noexcept
     
     IF SUNDIALS_VERSION >= (2,6,0):
         cdef extern from "cvodes/cvodes_sparse.h":
             ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                       SlsMat Jac, void *user_data, N_Vector tmp1,
-                                        N_Vector tmp2, N_Vector tmp3)
-            int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac)
-            int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals)
-        cdef inline tuple version(): return (2,6,0)
+                                        N_Vector tmp2, N_Vector tmp3) noexcept
+            int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac) noexcept
+            int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept
+        cdef inline tuple version() noexcept: return (2,6,0)
         IF SUNDIALS_WITH_SUPERLU:
             cdef extern from "cvodes/cvodes_superlumt.h":
-                int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz)
+                int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept
         ELSE:
-            cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+            cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept: return -1
     ELSE:
-        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz): return -1
+        cdef inline int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept: return -1
         ctypedef int (*CVSlsSparseJacFn)(realtype t, N_Vector y, N_Vector fy,
                                   SlsMat Jac, void *user_data, N_Vector tmp1,
-                                    N_Vector tmp2, N_Vector tmp3)
-        cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac): return -1
-        cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals): return -1
-        cdef inline tuple version(): return (2,5,0)
+                                    N_Vector tmp2, N_Vector tmp3) noexcept
+        cdef inline int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac) noexcept: return -1
+        cdef inline int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept: return -1
+        cdef inline tuple version() noexcept: return (2,5,0)
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "cvode/cvode_ls.h":
-        ctypedef int (*CVLsPrecSetupFn)(sunrealtype t, N_Vector y, N_Vector fy, sunbooleantype jok, sunbooleantype* jcurPtr, sunrealtype gamma, void* user_data)
-        int CVodeSetPreconditioner(void* cvode_mem, CVLsPrecSetupFn pset, CVLsPrecSolveFn psolve)
-        int CVodeGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
-        int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
-        int CVodeGetNumPrecEvals(void *cvode_mem, long int *npevals)
-        int CVodeGetNumPrecSolves(void *cvode_mem, long int *npsolves)
+        ctypedef int (*CVLsPrecSetupFn)(sunrealtype t, N_Vector y, N_Vector fy, sunbooleantype jok, sunbooleantype* jcurPtr, sunrealtype gamma, void* user_data) noexcept
+        int CVodeSetPreconditioner(void* cvode_mem, CVLsPrecSetupFn pset, CVLsPrecSolveFn psolve) noexcept
+        int CVodeGetNumJtimesEvals(void *cvode_mem, long int *njvevals) noexcept #Number of jac*vector evals
+        int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) noexcept #Number of res evals due to jac*vector evals
+        int CVodeGetNumPrecEvals(void *cvode_mem, long int *npevals) noexcept
+        int CVodeGetNumPrecSolves(void *cvode_mem, long int *npsolves) noexcept
 ELSE:
     cdef extern from "cvodes/cvodes_spils.h":
         IF SUNDIALS_VERSION >= (4,0,0):
-            int CVodeSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve)
-            int CVodeGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
-            int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
-            int CVodeGetNumPrecEvals(void *cvode_mem, long int *npevals)
-            int CVodeGetNumPrecSolves(void *cvode_mem, long int *npsolves)
+            int CVodeSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve) noexcept
+            int CVodeGetNumJtimesEvals(void *cvode_mem, long int *njvevals) noexcept #Number of jac*vector evals
+            int CVodeGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) noexcept #Number of res evals due to jac*vector evals
+            int CVodeGetNumPrecEvals(void *cvode_mem, long int *npevals) noexcept
+            int CVodeGetNumPrecSolves(void *cvode_mem, long int *npsolves) noexcept
         ELSE:
-            int CVSpilsSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve)
-            int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) #Number of jac*vector evals
-            int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) #Number of res evals due to jacÄvector evals
-            int CVSpilsGetNumPrecEvals(void *cvode_mem, long int *npevals)
-            int CVSpilsGetNumPrecSolves(void *cvode_mem, long int *npsolves)
+            int CVSpilsSetPreconditioner(void *cvode_mem, CVSpilsPrecSetupFn psetup, CVSpilsPrecSolveFn psolve) noexcept
+            int CVSpilsGetNumJtimesEvals(void *cvode_mem, long int *njvevals) noexcept #Number of jac*vector evals
+            int CVSpilsGetNumRhsEvals(void *cvode_mem, long int *nfevalsLS) noexcept #Number of res evals due to jac*vector evals
+            int CVSpilsGetNumPrecEvals(void *cvode_mem, long int *npevals) noexcept
+            int CVSpilsGetNumPrecSolves(void *cvode_mem, long int *npsolves) noexcept
 
 cdef extern from "idas/idas.h":
-    ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data)
+    ctypedef int (*IDAResFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, void *user_data) noexcept
     IF SUNDIALS_VERSION >= (6,0,0):
-        void* IDACreate(SUNContext ctx)
+        void* IDACreate(SUNContext ctx) noexcept
     ELSE:
-        void* IDACreate()
+        void* IDACreate() noexcept
     int IDAInit(void* ida_mem, IDAResFn res, realtype t0, N_Vector y0, N_Vector yp0)
     int IDAReInit(void* ida_mem, realtype t0, N_Vector y0, N_Vector yp0)
     void IDAFree(void **ida_mem)
@@ -565,9 +559,8 @@ cdef extern from "idas/idas.h":
     
     #Functions for retrieving results
     int IDAGetDky(void *ida_mem, realtype t, int k, N_Vector dky)
-
     #Functions for discontinuity handling
-    ctypedef int (*IDARootFn)(realtype tt, N_Vector yy, N_Vector yp, realtype *gout, void *user_data)
+    ctypedef int (*IDARootFn)(realtype tt, N_Vector yy, N_Vector yp, realtype *gout, void *user_data) noexcept
     int IDASetRootDirection(void *ida_mem, int *rootdir)
     int IDASetNoInactiveRootWarn(void *ida_mem)
     int IDARootInit(void *ida_mem, int nrtfn, IDARootFn g)
@@ -604,7 +597,7 @@ cdef extern from "idas/idas.h":
     #===================
     ctypedef int (*IDASensResFn)(int Ns, realtype t, N_Vector yy, N_Vector yp, 
                                 N_Vector *yS, N_Vector *ypS, N_Vector *resvalS, 
-                                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                                void *user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
     int IDASensInit(void *ida_mem, int Ns, int ism, IDASensResFn resS, N_Vector *ySO, N_Vector *ypSO)
     int IDASensReInit(void *ida_mem, int ism, N_Vector *ySO, N_Vector *ypSO)
     
@@ -641,26 +634,26 @@ cdef extern from "idas/idas.h":
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "ida/ida_ls.h":
-        ctypedef int (*IDALsJacFn)(sunrealtype t, sunrealtype c_j, N_Vector y, N_Vector yp, N_Vector r, SUNMatrix Jac, void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
-        ctypedef int (*IDALsJacTimesSetupFn)(sunrealtype tt, N_Vector yy, N_Vector yp, N_Vector rr, sunrealtype c_j, void* user_data)
-        ctypedef int (*IDALsJacTimesVecFn)(sunrealtype tt, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector v, N_Vector Jv, sunrealtype c_j, void* user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*IDALsJacFn)(sunrealtype t, sunrealtype c_j, N_Vector y, N_Vector yp, N_Vector r, SUNMatrix Jac, void* user_data, N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
+        ctypedef int (*IDALsJacTimesSetupFn)(sunrealtype tt, N_Vector yy, N_Vector yp, N_Vector rr, sunrealtype c_j, void* user_data) noexcept
+        ctypedef int (*IDALsJacTimesVecFn)(sunrealtype tt, N_Vector yy, N_Vector yp, N_Vector rr, N_Vector v, N_Vector Jv, sunrealtype c_j, void* user_data, N_Vector tmp1, N_Vector tmp2) noexcept
 ELSE:
     cdef extern from "idas/idas_spils.h":
         ctypedef int (*IDASpilsJacTimesVecFn)(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, 
-                N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2)
+                N_Vector v, N_Vector Jv, realtype cj, void *user_data,N_Vector tmp1, N_Vector tmp2) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "ida/ida_ls.h":
-        int IDASetJacFn(void* ida_mem, IDALsJacFn jac)
-        int IDASetLinearSolver(void* ida_mem, SUNLinearSolver LS, SUNMatrix A)
-        int IDASetJacTimes(void* ida_mem, IDALsJacTimesSetupFn jtsetup, IDALsJacTimesVecFn jtimes)
+        int IDASetJacFn(void* ida_mem, IDALsJacFn jac) noexcept
+        int IDASetLinearSolver(void* ida_mem, SUNLinearSolver LS, SUNMatrix A) noexcept
+        int IDASetJacTimes(void* ida_mem, IDALsJacTimesSetupFn jtsetup, IDALsJacTimesVecFn jtimes) noexcept
 
-    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
+    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept: return 0
 ELIF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "idas/idas_direct.h":
         ctypedef int (*IDADlsDenseJacFn)(realtype tt, realtype cj, N_Vector yy, 
                        N_Vector yp, N_Vector rr, SUNMatrix Jac, void *user_data, 
-                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int IDASetJacFn(void *ida_mem, IDADlsDenseJacFn djac)
             int IDASetLinearSolver(void *ida_mem, SUNLinearSolver LS, SUNMatrix A)
@@ -670,7 +663,7 @@ ELIF SUNDIALS_VERSION >= (3,0,0):
     
     cdef extern from "idas/idas_spils.h":
         ctypedef int (*IDASpilsJacTimesSetupFn)(realtype tt, N_Vector yy,
-                      N_Vector yp, N_Vector rr, realtype c_j, void *user_data)
+                      N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
             int IDASetJacTimes(void *ida_mem,
                 IDASpilsJacTimesSetupFn jtsetup, IDASpilsJacTimesVecFn jtimes)
@@ -681,13 +674,13 @@ ELIF SUNDIALS_VERSION >= (3,0,0):
 
 
                 
-    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data): return 0
+    cdef inline int ida_spils_jtsetup_dummy(realtype tt, N_Vector yy, N_Vector yp, N_Vector rr, realtype c_j, void *user_data) noexcept: return 0
 ELSE:
     cdef extern from "idas/idas_dense.h":
         int IDADense(void *ida_mem, long int n)
         ctypedef int (*IDADlsDenseJacFn)(long int Neq, realtype tt, realtype cj, N_Vector yy, 
                        N_Vector yp, N_Vector rr, DlsMat Jac, void *user_data, 
-                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3)
+                       N_Vector tmp1, N_Vector tmp2, N_Vector tmp3) noexcept
         int IDADlsSetDenseJacFn(void *ida_mem, IDADlsDenseJacFn djac)
     
     cdef extern from "idas/idas_spgmr.h":
@@ -718,14 +711,14 @@ ELSE:
 # KINSOL functions and routines
 cdef extern from "kinsol/kinsol.h":
     # user defined functions
-    ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data )
-    ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data)
+    ctypedef int (*KINSysFn)(N_Vector uu, N_Vector fval, void *user_data) noexcept
+    ctypedef void (*KINInfoHandlerFn)(const char *module, const char *function, char *msg, void *user_data) noexcept
     # initialization routines
     IF SUNDIALS_VERSION >= (6,0,0):
-        void *KINCreate(SUNContext ctx)
+        void *KINCreate(SUNContext ctx) noexcept
     ELSE:
-        void *KINCreate()
-    int KINInit(void *kinmem, KINSysFn func, N_Vector tmpl)
+        void *KINCreate() noexcept
+    int KINInit(void *kinmem, KINSysFn func, N_Vector tmpl) noexcept
 
     # optional input spec. functions,
     # for specificationsdocumentation cf. kinsol.h line 218-449
@@ -772,23 +765,23 @@ cdef extern from "kinsol/kinsol.h":
 # Functions for error handling
 IF SUNDIALS_VERSION < (7,0,0):
     cdef extern from "kinsol/kinsol.h":
-        ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data)
-        int KINSetErrHandlerFn(void *kinmem, KINErrHandlerFn ehfun, void *eh_data)
+        ctypedef void (*KINErrHandlerFn)(int error_code, char *module, char *function, char *msg, void *user_data) noexcept
+        int KINSetErrHandlerFn(void *kinmem, KINErrHandlerFn ehfun, void *eh_data) noexcept
     cdef extern from "cvodes/cvodes.h":
-        ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data)
-        int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data)
+        ctypedef void (*CVErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) noexcept
+        int CVodeSetErrHandlerFn(void *cvode_mem, CVErrHandlerFn ehfun, void* eh_data) noexcept
     cdef extern from "idas/idas.h":
-        ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) 
-        int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data)
+        ctypedef void (*IDAErrHandlerFn)(int error_code, const char *module, const char *function, char *msg, void *eh_data) noexcept
+        int IDASetErrHandlerFn(void *ida_mem,IDAErrHandlerFn ehfun, void* eh_data) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "kinsol/kinsol_ls.h":
-        ctypedef int (*KINLsJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void* user_data, N_Vector tmp1, N_Vector tmp2)
-        int KINSetLinearSolver(void* kinmem, SUNLinearSolver LS, SUNMatrix A)
-        int KINSetJacFn(void* kinmem, KINLsJacFn jac)
+        ctypedef int (*KINLsJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void* user_data, N_Vector tmp1, N_Vector tmp2) noexcept
+        int KINSetLinearSolver(void* kinmem, SUNLinearSolver LS, SUNMatrix A) noexcept
+        int KINSetJacFn(void* kinmem, KINLsJacFn jac) noexcept
 ELIF SUNDIALS_VERSION >= (3,0,0):
     cdef extern from "kinsol/kinsol_direct.h":
-        ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*KINDlsDenseJacFn)(N_Vector u, N_Vector fu, SUNMatrix J, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
         IF SUNDIALS_VERSION < (4,0,0):
             int KINDlsSetLinearSolver(void *kinmem, SUNLinearSolver LS, SUNMatrix A)
             int KINDlsSetJacFn(void *kinmem, KINDlsDenseJacFn djac)
@@ -799,14 +792,14 @@ ELIF SUNDIALS_VERSION >= (3,0,0):
         int KINSpilsSetLinearSolver(void *kinsol_mem, SUNLinearSolver LS)
         
         ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data)
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data) noexcept
         ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, void *problem_data)
+                    N_Vector fval, N_Vector fscale, void *problem_data) noexcept
 ELSE:
     # functions used for supplying jacobian, and receiving info from linear solver
     cdef extern from "kinsol/kinsol_direct.h":
         # user functions
-        ctypedef int (*KINDlsDenseJacFn)(long int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2)
+        ctypedef int (*KINDlsDenseJacFn)(long int dim, N_Vector u, N_Vector fu, DlsMat J, void *user_data, N_Vector tmp1, N_Vector tmp2) noexcept
         
         # function used to link user functions to KINSOL
         int KINDlsSetDenseJacFn(void *kinmem, KINDlsDenseJacFn jac)
@@ -819,26 +812,26 @@ ELSE:
         
     cdef extern from "kinsol/kinsol_spils.h":
         ctypedef int (*KINSpilsPrecSolveFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp)
+                    N_Vector fval, N_Vector fscale, N_Vector v, void *problem_data, N_Vector tmp) noexcept
         ctypedef int (*KINSpilsPrecSetupFn)(N_Vector u, N_Vector uscale,
-                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2)
+                    N_Vector fval, N_Vector fscale, void *problem_data, N_Vector tmp1, N_Vector tmp2) noexcept
 
 IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "kinsol/kinsol_ls.h":
-        ctypedef int (*KINLsPrecSetupFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, void* user_data);
-        ctypedef int (*KINLsPrecSolveFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, N_Vector vv, void* user_data)
-        ctypedef int (*KINLsJacTimesVecFn)(N_Vector v, N_Vector Jv, N_Vector uu, sunbooleantype* new_uu, void* J_data)
-        int KINGetLastLinFlag(void *kinmem, long int *flag)
-        int KINGetNumJacEvals(void *kinmem, long int *njevalsB)
-        int KINGetNumFuncEvals(void *kinmem, long int *nfevalsB)
-        int KINSetJacTimesVecFn(void* kinmem, KINLsJacTimesVecFn jtv)
-        int KINSetPreconditioner(void* kinmem, KINLsPrecSetupFn psetup, KINLsPrecSolveFn psolve)
-        int KINGetNumLinIters(void *kinmem, long int *nliters)
-        int KINGetNumLinConvFails(void *kinmem, long int *nlcfails)
-        int KINGetNumPrecEvals(void *kinmem, long int *npevals)
-        int KINGetNumPrecSolves(void *kinmem, long int *npsolves)
-        int KINGetNumJtimesEvals(void *kinmem, long int *njevals)
-        int KINGetNumFuncEvals(void *kinmem, long int *nfevalsLS)
+        ctypedef int (*KINLsPrecSetupFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, void* user_data) noexcept
+        ctypedef int (*KINLsPrecSolveFn)(N_Vector uu, N_Vector uscale, N_Vector fval, N_Vector fscale, N_Vector vv, void* user_data) noexcept
+        ctypedef int (*KINLsJacTimesVecFn)(N_Vector v, N_Vector Jv, N_Vector uu, sunbooleantype* new_uu, void* J_data) noexcept
+        int KINGetLastLinFlag(void *kinmem, long int *flag) noexcept
+        int KINGetNumJacEvals(void *kinmem, long int *njevalsB) noexcept
+        int KINGetNumFuncEvals(void *kinmem, long int *nfevalsB) noexcept
+        int KINSetJacTimesVecFn(void* kinmem, KINLsJacTimesVecFn jtv) noexcept
+        int KINSetPreconditioner(void* kinmem, KINLsPrecSetupFn psetup, KINLsPrecSolveFn psolve) noexcept
+        int KINGetNumLinIters(void *kinmem, long int *nliters) noexcept
+        int KINGetNumLinConvFails(void *kinmem, long int *nlcfails) noexcept
+        int KINGetNumPrecEvals(void *kinmem, long int *npevals) noexcept
+        int KINGetNumPrecSolves(void *kinmem, long int *npsolves) noexcept
+        int KINGetNumJtimesEvals(void *kinmem, long int *njevals) noexcept
+        int KINGetNumFuncEvals(void *kinmem, long int *nfevalsLS) noexcept
 ELSE:
     cdef extern from "kinsol/kinsol_direct.h":
         # optional output fcts for linear direct solver
@@ -855,25 +848,25 @@ ELSE:
 
     cdef extern from "kinsol/kinsol_spils.h":
         ctypedef int (*KINSpilsJacTimesVecFn)(N_Vector vv, N_Vector Jv, N_Vector vx, int* new_u,
-                    void *problem_data)
+                    void *problem_data) noexcept
         IF SUNDIALS_VERSION >= (4,0,0):
-            int KINSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
-            int KINSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve)
-            int KINGetNumLinIters(void *kinmem, long int *nliters)
-            int KINGetNumLinConvFails(void *kinmem, long int *nlcfails)
-            int KINGetNumPrecEvals(void *kinmem, long int *npevals)
-            int KINGetNumPrecSolves(void *kinmem, long int *npsolves)
-            int KINGetNumJtimesEvals(void *kinmem, long int *njevals)
-            int KINGetNumFuncEvals(void *kinmem, long int *nfevalsLS)
+            int KINSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv) noexcept
+            int KINSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve) noexcept
+            int KINGetNumLinIters(void *kinmem, long int *nliters) noexcept
+            int KINGetNumLinConvFails(void *kinmem, long int *nlcfails) noexcept
+            int KINGetNumPrecEvals(void *kinmem, long int *npevals) noexcept
+            int KINGetNumPrecSolves(void *kinmem, long int *npsolves) noexcept
+            int KINGetNumJtimesEvals(void *kinmem, long int *njevals) noexcept
+            int KINGetNumFuncEvals(void *kinmem, long int *nfevalsLS) noexcept
         ELSE:
-            int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv)
-            int KINSpilsSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve)
-            int KINSpilsGetNumLinIters(void *kinmem, long int *nliters)
-            int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails)
-            int KINSpilsGetNumPrecEvals(void *kinmem, long int *npevals)
-            int KINSpilsGetNumPrecSolves(void *kinmem, long int *npsolves)
-            int KINSpilsGetNumJtimesEvals(void *kinmem, long int *njevals)
-            int KINSpilsGetNumFuncEvals(void *kinmem, long int *nfevalsLS)
+            int KINSpilsSetJacTimesVecFn(void *kinmem, KINSpilsJacTimesVecFn jacv) noexcept
+            int KINSpilsSetPreconditioner(void *kinmem, KINSpilsPrecSetupFn psetup, KINSpilsPrecSolveFn psolve) noexcept
+            int KINSpilsGetNumLinIters(void *kinmem, long int *nliters) noexcept
+            int KINSpilsGetNumConvFails(void *kinmem, long int *nlcfails) noexcept
+            int KINSpilsGetNumPrecEvals(void *kinmem, long int *npevals) noexcept
+            int KINSpilsGetNumPrecSolves(void *kinmem, long int *npsolves) noexcept
+            int KINSpilsGetNumJtimesEvals(void *kinmem, long int *njevals) noexcept
+            int KINSpilsGetNumFuncEvals(void *kinmem, long int *nfevalsLS) noexcept
 
 #=========================
 # END SUNDIALS DEFINITIONS

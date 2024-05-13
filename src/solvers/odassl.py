@@ -257,9 +257,9 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         lrw = 40+8*ny + neq**2 + 3*neq
         rwork = np.zeros((lrw,))                                                
         liw = 22+neq
-        iwork = np.zeros((liw,),np.int)                                                                          
+        iwork = np.zeros((liw,),np.intc)                                                                          
         jac_dummy = lambda t,x,xp: x
-        info = np.zeros((15,),np.int) 
+        info = np.zeros((15,),np.intc) 
         info[1] = 1  # Tolerances are vectors  
         info[2] = normal_mode = 1 if opts["output_list"] is None or opts["report_continuously"] else 0  # intermediate output mode
         info[6] = 1 if self.options["maxh"] > 0.0 else 0       
@@ -292,8 +292,8 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         self._opts = opts
         
         
-        #THIS IS NOT SUPPOSE TO BE NECCESSARY, BUT DUE TO A PROBLEM
-        #REPORTED IN TICKET:244 THIS IS HOWEVER NECCESSARY AS A 
+        #THIS IS NOT SUPPOSE TO BE NECESSARY, BUT DUE TO A PROBLEM
+        #REPORTED IN TICKET:244 THIS IS HOWEVER NECESSARY AS A 
         #WORKAROUND FOR NOW...
         def py_residual(t,y,yd):
             return self.problem.res(t,y,yd)
@@ -367,5 +367,3 @@ class ODASSL(ODASSL_Common, OverdeterminedDAE):
         log_message_verbose(' Tolerances (absolute)   : ' + str(self._compact_tol(self.options["atol"])))
         log_message_verbose(' Tolerances (relative)   : ' + str(self.options["rtol"]))
         log_message_verbose('')
-
-

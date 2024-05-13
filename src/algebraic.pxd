@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as N
-cimport numpy as N
+import numpy as np
+cimport numpy as np
 
 cdef class Algebraic:
     cdef public object problem
     cdef public dict options, solver_options, problem_info
     cdef public dict statistics
     
-    cdef public N.ndarray y
-    cdef public N.ndarray y0
+    cdef public np.ndarray y
+    cdef public np.ndarray y0
 
     cdef _reset_solution_variables(self)
     

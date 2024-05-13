@@ -15,10 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import assimulo.problem as ap
+# distutils: define_macros=NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
+import numpy as np
+cimport numpy as np
+
+from assimulo.problem import Implicit_Problem, Overdetermined_Problem
 from assimulo.support import set_type_shape_array
-import numpy as N
-cimport numpy as N
 
 cdef class cMechanical_System:
     u"""
@@ -104,10 +107,10 @@ cdef class cMechanical_System:
             elif index=='ind3':
                 constraint=self.constr3
             elif index in ('ovstab2', 'ggl2'):
-                constraint=lambda t,y: N.hstack((self.constr2(t,y),
+                constraint=lambda t,y: np.hstack((self.constr2(t,y),
                                                  self.constr3(t,y)))
             elif index=='ovstab1':
-                constraint=lambda t,y: N.hstack((self.constr1(t,y),
+                constraint=lambda t,y: np.hstack((self.constr1(t,y),
                                                 self.constr3(t,y),
                                                 self.constr2(t,y)))         
             else:
@@ -118,18 +121,18 @@ cdef class cMechanical_System:
                 def with_constraint(t,y,yd):
                     p,v,la=y[0:n_p], y[n_p:n_v], y[n_v:]
                     residual=func(t,y,yd)
-                    return N.hstack((
+                    return np.hstack((
                           residual[0:n_p],
-                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)), 
+                          residual[n_p:n_v]+np.dot(self.GT(p),la.reshape(-1,)), 
                           constraint(t,y)
                           ))  
             else:
                 def with_constraint(t,y,yd):
                     p,v,la,mue=y[0:n_p], y[n_p:n_v], y[n_v:n_v+n_la],y[n_v+n_la:]
                     residual=func(t,y,yd)
-                    return N.hstack((
-                          residual[0:n_p]+N.dot(self.GT(p),mue.reshape(-1,)),
-                          residual[n_p:n_v]+N.dot(self.GT(p),la.reshape(-1,)), 
+                    return np.hstack((
+                          residual[0:n_p]+np.dot(self.GT(p),mue.reshape(-1,)),
+                          residual[n_p:n_v]+np.dot(self.GT(p),la.reshape(-1,)), 
                           constraint(t,y)
                           )) 
             
@@ -138,9 +141,9 @@ cdef class cMechanical_System:
         def res(t,y,yd):
             p,pd=y[0:n_p], yd[0:n_p]
             v,vd=y[n_p:n_v], yd[n_p:n_v]
-            Mvd = N.dot(M,vd) if M is not None else vd
+            Mvd = np.dot(M,vd) if M is not None else vd
             
-            return N.hstack((pd - v, Mvd - self.forces(t,p,v)))
+            return np.hstack((pd - v, Mvd - self.forces(t,p,v)))
             
         if n_la==0:
             return res
@@ -155,13 +158,13 @@ cdef class cMechanical_System:
             raise ValueError(index_error)
         
         # 1. Treatment of initial conditions depending on the index
-        y0=N.hstack((self.pos0,self.vel0))
-        yd0=N.hstack((self.posd0,self.veld0))
+        y0=np.hstack((self.pos0,self.vel0))
+        yd0=np.hstack((self.posd0,self.veld0))
         if self.constrained:
             if index is None or index=='ind0':
                 raise ValueError(index_error)
-            y0=N.hstack((y0,self.lam0))
-            yd0=N.hstack((yd0,N.zeros(self.lam0.shape)))
+            y0=np.hstack((y0,self.lam0))
+            yd0=np.hstack((yd0,np.zeros(self.lam0.shape)))
         # 2. Indicating algebraic variables    
         if index == 'ind1':
             algvar = (self.pos0.size + self.vel0.size) * [1]\
@@ -181,25 +184,25 @@ cdef class cMechanical_System:
                         + self.lam0.size*[0] 
             neq=len(algvar)+self.lam0.size                          
         elif index == 'ggl1':
-            mue = N.zeros(self.lam0.shape)
-            gamma = N.zeros(self.lam0.shape)
-            y0 = N.hstack((y0,mue,gamma))
-            yd0 = N.hstack((yd0,mue,gamma))
+            mue = np.zeros(self.lam0.shape)
+            gamma = np.zeros(self.lam0.shape)
+            y0 = np.hstack((y0,mue,gamma))
+            yd0 = np.hstack((yd0,mue,gamma))
             algvar = (self.pos0.size + self.vel0.size) * [1] \
                         + 3*self.lam0.size*[0]
         elif index == 'ggl2': 
-            mue = N.zeros(self.lam0.shape)
-            y0 = N.hstack((y0,mue))
-            yd0 = N.hstack((yd0,N.zeros(mue.shape)))
+            mue = np.zeros(self.lam0.shape)
+            y0 = np.hstack((y0,mue))
+            yd0 = np.hstack((yd0,np.zeros(mue.shape)))
             algvar = (self.pos0.size + self.vel0.size) * [1] \
                          + 2*self.lam0.size*[0]
         elif index is None:
             algvar = (self.pos0.size + self.vel0.size) * [1]
         if index in ('ovstab2','ovstab1'):
-            problem=ap.Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            problem=Overdetermined_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
             problem.neq=neq           
         else:
-            problem=ap.Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
+            problem=Implicit_Problem(self.make_res(index), y0, yd0, self.t0, self.sw0)
         problem.algvar=algvar
         return problem          
                     
