@@ -256,41 +256,40 @@ ELSE:
         #print("<functionNorm: %g, scaledStepLength: %g, tolerance: %g>"%(fnorm, snorm, pData.TOL))
 
 
-cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data) noexcept:
-    cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
-    cdef int flag
-    cdef realtype fnorm
-    
-    if str(function) == "KINSol" and "fnorm" in str(msg):
-        #fnorm = float(msg.split("fnorm = ")[-1].strip())
-        flag = SUNDIALS.KINGetFuncNorm(pData.KIN_MEM, &fnorm)
-        pData.nl_fnorm.append(fnorm)
-        
-    pData.log.append([module, function, msg])
-    
-    #print("KinsolInfo <calling_function:%s>"%function)
-    #print("<message: %s>"%msg)
-    """
-    # Get the number of iterations
-    KINGetNumNonlinSolvIters(kin_mem, &nniters)
-    
-    
-    /* Only output an iteration under certain conditions:
-     *  1. nle_solver_log > 2
-     *  2. The calling function is either KINSolInit or KINSol
-     *  3. The message string starts with "nni"
-     *
-     *  This approach gives one printout per iteration
-    
-    
-    if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
-        print("<iteration_index:%d>"%nniters)
-        print("ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n))
-        print("<scaled_residual_norm:%E>", kin_mem->kin_fnorm))
-        print("residuals", 
-            realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
-            f[i]*residual_scaling_factors[i])
-    """
+
+    cdef void kin_info(const char *module, const char *function, char *msg, void *eh_data) noexcept:
+        cdef ProblemDataEquationSolver pData = <ProblemDataEquationSolver>eh_data
+        cdef int flag
+        cdef realtype fnorm
+
+        if str(function) == "KINSol" and "fnorm" in str(msg):
+            #fnorm = float(msg.split("fnorm = ")[-1].strip())
+            flag = SUNDIALS.KINGetFuncNorm(pData.KIN_MEM, &fnorm)
+            pData.nl_fnorm.append(fnorm)
+
+        pData.log.append([module, function, msg])
+
+        #print("KinsolInfo <calling_function:%s>"%function)
+        #print("<message: %s>"%msg)
+        """
+        # Get the number of iterations
+        KINGetNumNonlinSolvIters(kin_mem, &nniters)
+
+        /* Only output an iteration under certain conditions:
+        *  1. nle_solver_log > 2
+        *  2. The calling function is either KINSolInit or KINSol
+        *  3. The message string starts with "nni"
+        *
+        *  This approach gives one printout per iteration
+
+        if ("KINSolInit" in function or "KINSol" in function) and "nni" in msg:
+            print("<iteration_index:%d>"%nniters)
+            print("ivs", N_VGetArrayPointer(kin_mem->kin_uu), block->n))
+            print("<scaled_residual_norm:%E>", kin_mem->kin_fnorm))
+            print("residuals",
+                realtype* f = N_VGetArrayPointer(kin_mem->kin_fval);
+                f[i]*residual_scaling_factors[i])
+        """
 
 cdef class ProblemDataEquationSolver:
     cdef:
