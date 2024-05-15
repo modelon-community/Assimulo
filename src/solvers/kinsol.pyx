@@ -183,7 +183,10 @@ cdef class KINSOL(Algebraic):
         cdef int flag #Used for return
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         self.y_temp  = arr2nv(self.y)
@@ -230,7 +233,10 @@ cdef class KINSOL(Algebraic):
     cpdef add_linear_solver(self):
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
         if self.options["linear_solver"] == "DENSE":
             IF SUNDIALS_VERSION >= (3,0,0):

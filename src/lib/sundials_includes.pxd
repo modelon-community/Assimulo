@@ -36,7 +36,11 @@ IF SUNDIALS_VERSION >= (6,0,0):
         ctypedef _SUNContext * SUNContext
         cdef struct _SUNContext:
             pass
-        int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
+        IF SUNDIALS_VERSION >= (7,0,0):
+            ctypedef int SUNComm
+            int SUNContext_Create(SUNComm comm, SUNContext* ctx) noexcept
+        ELSE:
+            int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
@@ -48,6 +52,8 @@ IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "sundials/sundials_types.h":
         ctypedef double sunrealtype
         ctypedef bint sunbooleantype
+        IF SUNDIALS_VERSION >= (7,0,0):
+            cdef int SUN_COMM_NULL
     ctypedef double realtype
     ctypedef bint booleantype
 ELSE:

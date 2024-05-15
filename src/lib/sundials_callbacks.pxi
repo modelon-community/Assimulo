@@ -24,7 +24,10 @@ from numpy cimport PyArray_DATA
 cdef N_Vector N_VNewEmpty_Euclidean(long int n) noexcept:
     IF SUNDIALS_VERSION >= (6,0,0):
         cdef SUNDIALS.SUNContext ctx = NULL
-        cdef void * comm = NULL
+        IF SUNDIALS_VERSION >= (7,0,0):
+            cdef SUNDIALS.SUNComm comm = 0
+        ELSE:
+            cdef void* comm = NULL
         SUNDIALS.SUNContext_Create(comm, &ctx)
         cdef N_Vector v = N_VNew_Serial(n, ctx)
     ELSE:
@@ -39,7 +42,10 @@ cdef inline N_Vector arr2nv(x) noexcept:
     cdef void* data_ptr=PyArray_DATA(ndx)
     IF SUNDIALS_VERSION >= (6,0,0):
         cdef SUNDIALS.SUNContext ctx = NULL
-        cdef void * comm = NULL
+        IF SUNDIALS_VERSION >= (7,0,0):
+            cdef SUNDIALS.SUNComm comm = 0
+        ELSE:
+            cdef void* comm = NULL
         SUNDIALS.SUNContext_Create(comm, &ctx)
         cdef N_Vector v = N_VNew_Serial(n, ctx)
     ELSE:

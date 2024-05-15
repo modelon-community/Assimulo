@@ -239,7 +239,10 @@ cdef class IDA(Implicit_ODE):
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         self.yTemp  = arr2nv(self.y)
@@ -739,7 +742,10 @@ cdef class IDA(Implicit_ODE):
         cdef np.ndarray err, pyweight, pyele
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector ele = N_VNew_Serial(self.pData.dim, ctx)
             cdef N_Vector eweight = N_VNew_Serial(self.pData.dim, ctx)
@@ -774,7 +780,10 @@ cdef class IDA(Implicit_ODE):
         cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -815,7 +824,10 @@ cdef class IDA(Implicit_ODE):
         """
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1614,7 +1626,10 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector ele=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1696,7 +1711,10 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector eweight=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1770,7 +1788,10 @@ cdef class CVode(Explicit_ODE):
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         if self.options["norm"] == "EUCLIDEAN":
@@ -1930,7 +1951,10 @@ cdef class CVode(Explicit_ODE):
         cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1972,7 +1996,10 @@ cdef class CVode(Explicit_ODE):
         """
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -2251,8 +2278,11 @@ cdef class CVode(Explicit_ODE):
         """
         cdef flag
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx
-            cdef void* comm = NULL
+            cdef SUNDIALS.SUNContext ctx = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         #Choose a linear solver if and only if NEWTON is choosen
