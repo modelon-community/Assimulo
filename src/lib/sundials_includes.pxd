@@ -585,7 +585,7 @@ cdef extern from "idas/idas.h":
     int IDAGetNumResEvals(void *ida_mem, long int *nrevals)             #Number of res evals
     IF SUNDIALS_VERSION >= (4,0,0):
         int IDAGetNumJacEvals(void *ida_mem, long int *njevals)          #Number of jac evals
-        int IDAGetNumResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals
+        int IDAGetNumLinResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals
     ELSE:
         int IDADlsGetNumJacEvals(void *ida_mem, long int *njevals)          #Number of jac evals
         int IDADlsGetNumResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals

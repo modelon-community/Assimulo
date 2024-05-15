@@ -1441,13 +1441,11 @@ cdef class IDA(Implicit_ODE):
                                          &klast, &kcur, &hinused, &hlast, &hcur, &tcur)
         flag = SUNDIALS.IDAGetNonlinSolvStats(self.ida_mem, &nniters, &nncfails)
         flag = SUNDIALS.IDAGetNumGEvals(self.ida_mem, &ngevals)
-        #flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
-        #flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
-        
+
         if self.options["linear_solver"] == "SPGMR":
             IF SUNDIALS_VERSION >= (4,0,0):
                 flag = SUNDIALS.IDAGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
-                flag = SUNDIALS.IDAGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
+                flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
             ELSE:
                 flag = SUNDIALS.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
                 flag = SUNDIALS.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
@@ -1456,7 +1454,7 @@ cdef class IDA(Implicit_ODE):
         else:
             IF SUNDIALS_VERSION >= (4,0,0):
                 flag = SUNDIALS.IDAGetNumJacEvals(self.ida_mem, &njevals)
-                flag = SUNDIALS.IDAGetNumResEvals(self.ida_mem, &nrevalsLS)
+                flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nrevalsLS)
             ELSE:
                 flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
                 flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
