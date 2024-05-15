@@ -494,7 +494,7 @@ ELSE:
                                         N_Vector tmp2, N_Vector tmp3) noexcept
             int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac) noexcept
             int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept
-        cdef inline tuple version() noexcept: return (2,6,0)
+        cdef inline tuple version(): return (2,6,0)
         IF SUNDIALS_WITH_SUPERLU:
             cdef extern from "cvodes/cvodes_superlumt.h":
                 int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept
