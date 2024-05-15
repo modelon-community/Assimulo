@@ -1624,6 +1624,10 @@ cdef class CVode(Explicit_ODE):
         Returns the vector of estimated local errors at the current step.
         """
         cdef int flag
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
             IF SUNDIALS_VERSION >= (7,0,0):
@@ -1659,6 +1663,9 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef int qlast
         
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         flag = SUNDIALS.CVodeGetLastOrder(self.cvode_mem, &qlast)
         if flag < 0:
             raise CVodeError(flag, self.t)
@@ -1697,7 +1704,10 @@ cdef class CVode(Explicit_ODE):
         """
         cdef int flag
         cdef int qcur
-        
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         flag = SUNDIALS.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
         if flag < 0:
             raise CVodeError(flag, self.t)
@@ -1709,6 +1719,10 @@ cdef class CVode(Explicit_ODE):
         Returns the solution error weights at the current step.
         """
         cdef int flag
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
             IF SUNDIALS_VERSION >= (7,0,0):
@@ -3258,6 +3272,9 @@ cdef class CVode(Explicit_ODE):
         cdef long int npevals = 0, npsolves = 0, nlsred = 0
         cdef int qlast = 0, qcur = 0
         cdef realtype hinused = 0.0, hlast = 0.0, hcur = 0.0, tcur = 0.0
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
 
         if self.options["linear_solver"] == "SPGMR":
             IF SUNDIALS_VERSION >= (4,0,0):
