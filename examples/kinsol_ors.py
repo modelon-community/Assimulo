@@ -18,8 +18,9 @@
 import os
 import nose
 import numpy as np
-import scipy as sp
 import scipy.sparse as sps
+import scipy.sparse.linalg as spsl
+import scipy.io as spi
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 import warnings
@@ -36,7 +37,7 @@ def run_example(with_plots=True):
     Iterative Methods for Sparse Linear Systems.
     """
     #Read the original matrix
-    A_original = sp.io.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
+    A_original = spi.mmread(os.path.join(file_path,"kinsol_ors_matrix.mtx"))
 
     #Scale the original matrix
     A = sps.spdiags(1.0/A_original.diagonal(), 0, len(A_original.diagonal()), len(A_original.diagonal())) * A_original
@@ -51,7 +52,7 @@ def run_example(with_plots=True):
         U = D-F
         Prec = L.dot(U)
         
-        solvePrec = sps.linalg.factorized(Prec)
+        solvePrec = spsl.factorized(Prec)
 
     #Create the RHS
     b = A.dot(np.ones(A.shape[0]))

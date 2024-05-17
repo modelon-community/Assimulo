@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import scipy as sp
+import scipy.linalg as spl
 import scipy.sparse as sps
 
 from assimulo.exception import (
@@ -707,9 +707,9 @@ class _Radau5ODE(Radau_Common,Explicit_ODE):
                 self._g = self._gamma/self.h
                 self._B = self._g*self.I - self._jac
                 
-                self._P1,self._L1,self._U1 = sp.linalg.lu(self._B) #LU decomposition
-                self._P2,self._L2,self._U2 = sp.linalg.lu(self._a*self.I-self._jac)
-                self._P3,self._L3,self._U3 = sp.linalg.lu(self._b*self.I-self._jac)
+                self._P1,self._L1,self._U1 = spl.lu(self._B) #LU decomposition
+                self._P2,self._L2,self._U2 = spl.lu(self._a*self.I-self._jac)
+                self._P3,self._L3,self._U3 = spl.lu(self._b*self.I-self._jac)
                 
                 self._needLU = False
                 
@@ -1526,9 +1526,9 @@ class _Radau5DAE(Radau_Common,Implicit_ODE):
                 self._g = self._gamma/self.h
                 self._B = self._g*self.M - self._jac
                 
-                self._P1,self._L1,self._U1 = sp.linalg.lu(self._B) #LU decomposition
-                self._P2,self._L2,self._U2 = sp.linalg.lu(self._a*self.M-self._jac)
-                self._P3,self._L3,self._U3 = sp.linalg.lu(self._b*self.M-self._jac)
+                self._P1,self._L1,self._U1 = spl.lu(self._B) #LU decomposition
+                self._P2,self._L2,self._U2 = spl.lu(self._a*self.M-self._jac)
+                self._P3,self._L3,self._U3 = spl.lu(self._b*self.M-self._jac)
                 
                 self._needLU = False
                 

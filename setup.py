@@ -504,6 +504,8 @@ class Assimulo_prepare(object):
             
             if self.SUNDIALS_version >= (3,0,0):
                 ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas", "sundials_sunlinsoldense", "sundials_sunlinsolspgmr", "sundials_sunmatrixdense", "sundials_sunmatrixsparse"]
+                if self.SUNDIALS_version >= (7,0,0):
+                    ext_list[-1].libraries.extend(["sundials_core"])
             else:
                 ext_list[-1].libraries = ["sundials_cvodes", "sundials_nvecserial", "sundials_idas"]
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
@@ -523,6 +525,8 @@ class Assimulo_prepare(object):
             ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
             ext_list[-1].library_dirs = [self.libdirs]
             ext_list[-1].libraries = ["sundials_kinsol", "sundials_nvecserial"]
+            if self.SUNDIALS_version >= (7,0,0):
+                ext_list[-1].libraries.extend(["sundials_core"])
             
             if self.sundials_with_superlu and self.with_SLU: #If SUNDIALS is compiled with support for SuperLU
                 ext_list[-1].include_dirs.append(self.SLUincdir)
