@@ -54,7 +54,7 @@ parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
 parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
-parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='')
+parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='--std=legacy')
 parser.add_argument("--version", help='Package version number', default='Default')
                                        
 args = parser.parse_known_args()
