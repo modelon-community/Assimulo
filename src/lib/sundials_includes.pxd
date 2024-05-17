@@ -36,7 +36,11 @@ IF SUNDIALS_VERSION >= (6,0,0):
         ctypedef _SUNContext * SUNContext
         cdef struct _SUNContext:
             pass
-        int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
+        IF SUNDIALS_VERSION >= (7,0,0):
+            ctypedef int SUNComm
+            int SUNContext_Create(SUNComm comm, SUNContext* ctx) noexcept
+        ELSE:
+            int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
@@ -48,6 +52,8 @@ IF SUNDIALS_VERSION >= (6,0,0):
     cdef extern from "sundials/sundials_types.h":
         ctypedef double sunrealtype
         ctypedef bint sunbooleantype
+        IF SUNDIALS_VERSION >= (7,0,0):
+            cdef int SUN_COMM_NULL
     ctypedef double realtype
     ctypedef bint booleantype
 ELSE:
@@ -494,7 +500,7 @@ ELSE:
                                         N_Vector tmp2, N_Vector tmp3) noexcept
             int CVSlsSetSparseJacFn(void *cvode_mem, CVSlsSparseJacFn jac) noexcept
             int CVSlsGetNumJacEvals(void *cvode_mem, long int *njevals) noexcept
-        cdef inline tuple version() noexcept: return (2,6,0)
+        cdef inline tuple version(): return (2,6,0)
         IF SUNDIALS_WITH_SUPERLU:
             cdef extern from "cvodes/cvodes_superlumt.h":
                 int CVSuperLUMT(void *cvode_mem, int numthreads, int n, int nnz) noexcept
@@ -579,7 +585,7 @@ cdef extern from "idas/idas.h":
     int IDAGetNumResEvals(void *ida_mem, long int *nrevals)             #Number of res evals
     IF SUNDIALS_VERSION >= (4,0,0):
         int IDAGetNumJacEvals(void *ida_mem, long int *njevals)          #Number of jac evals
-        int IDAGetNumResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals
+        int IDAGetNumLinResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals
     ELSE:
         int IDADlsGetNumJacEvals(void *ida_mem, long int *njevals)          #Number of jac evals
         int IDADlsGetNumResEvals(void *ida_mem, long int *nrevalsLS)        #Number of res evals due to jac evals

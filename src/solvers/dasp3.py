@@ -44,8 +44,8 @@ class DASP3ODE(Explicit_ODE):
     
     .. math::
       
-      \\frac{\mathrm{d}y}{\mathrm{d}t} &=  f(t,y,z) \;\;\;  \\text{(N equations)} \\\\
-      \\varepsilon\\frac{\mathrm{d}z}{\mathrm{d}t} &= G(t,y,z)\;\;\;  \\text{(M equations)}       
+      \\frac{\\mathrm{d}y}{\\mathrm{d}t} &=  f(t,y,z) \\;\\;\\;  \\text{(N equations)} \\\\
+      \\varepsilon\\frac{\\mathrm{d}z}{\\mathrm{d}t} &= G(t,y,z)\\;\\;\\;  \\text{(M equations)}
     
     If is assumed that the first system is non-stiff and that
     the stiffness of the second system is due to the parameter

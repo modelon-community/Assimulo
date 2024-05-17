@@ -239,7 +239,10 @@ cdef class IDA(Implicit_ODE):
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         self.yTemp  = arr2nv(self.y)
@@ -739,7 +742,10 @@ cdef class IDA(Implicit_ODE):
         cdef np.ndarray err, pyweight, pyele
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector ele = N_VNew_Serial(self.pData.dim, ctx)
             cdef N_Vector eweight = N_VNew_Serial(self.pData.dim, ctx)
@@ -774,7 +780,10 @@ cdef class IDA(Implicit_ODE):
         cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -815,7 +824,10 @@ cdef class IDA(Implicit_ODE):
         """
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1429,13 +1441,11 @@ cdef class IDA(Implicit_ODE):
                                          &klast, &kcur, &hinused, &hlast, &hcur, &tcur)
         flag = SUNDIALS.IDAGetNonlinSolvStats(self.ida_mem, &nniters, &nncfails)
         flag = SUNDIALS.IDAGetNumGEvals(self.ida_mem, &ngevals)
-        #flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
-        #flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
-        
+
         if self.options["linear_solver"] == "SPGMR":
             IF SUNDIALS_VERSION >= (4,0,0):
                 flag = SUNDIALS.IDAGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
-                flag = SUNDIALS.IDAGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
+                flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
             ELSE:
                 flag = SUNDIALS.IDASpilsGetNumJtimesEvals(self.ida_mem, &njvevals) #Number of jac*vector
                 flag = SUNDIALS.IDASpilsGetNumResEvals(self.ida_mem, &nfevalsLS) #Number of rhs due to jac*vector
@@ -1444,7 +1454,7 @@ cdef class IDA(Implicit_ODE):
         else:
             IF SUNDIALS_VERSION >= (4,0,0):
                 flag = SUNDIALS.IDAGetNumJacEvals(self.ida_mem, &njevals)
-                flag = SUNDIALS.IDAGetNumResEvals(self.ida_mem, &nrevalsLS)
+                flag = SUNDIALS.IDAGetNumLinResEvals(self.ida_mem, &nrevalsLS)
             ELSE:
                 flag = SUNDIALS.IDADlsGetNumJacEvals(self.ida_mem, &njevals)
                 flag = SUNDIALS.IDADlsGetNumResEvals(self.ida_mem, &nrevalsLS)
@@ -1612,9 +1622,16 @@ cdef class CVode(Explicit_ODE):
         Returns the vector of estimated local errors at the current step.
         """
         cdef int flag
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector ele=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1644,6 +1661,9 @@ cdef class CVode(Explicit_ODE):
         cdef int flag
         cdef int qlast
         
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         flag = SUNDIALS.CVodeGetLastOrder(self.cvode_mem, &qlast)
         if flag < 0:
             raise CVodeError(flag, self.t)
@@ -1682,7 +1702,10 @@ cdef class CVode(Explicit_ODE):
         """
         cdef int flag
         cdef int qcur
-        
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         flag = SUNDIALS.CVodeGetCurrentOrder(self.cvode_mem, &qcur)
         if flag < 0:
             raise CVodeError(flag, self.t)
@@ -1694,9 +1717,16 @@ cdef class CVode(Explicit_ODE):
         Returns the solution error weights at the current step.
         """
         cdef int flag
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
+
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector eweight=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1770,7 +1800,10 @@ cdef class CVode(Explicit_ODE):
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void * comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         if self.options["norm"] == "EUCLIDEAN":
@@ -1930,7 +1963,10 @@ cdef class CVode(Explicit_ODE):
         cdef np.ndarray res
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dky=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -1972,7 +2008,10 @@ cdef class CVode(Explicit_ODE):
         """
         IF SUNDIALS_VERSION >= (6,0,0):
             cdef SUNDIALS.SUNContext ctx = NULL
-            cdef void* comm = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
             cdef N_Vector dkyS=N_VNew_Serial(self.pData.dim, ctx)
         ELSE:
@@ -2251,8 +2290,11 @@ cdef class CVode(Explicit_ODE):
         """
         cdef flag
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx
-            cdef void* comm = NULL
+            cdef SUNDIALS.SUNContext ctx = NULL
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
             SUNDIALS.SUNContext_Create(comm, &ctx)
 
         #Choose a linear solver if and only if NEWTON is choosen
@@ -3228,6 +3270,9 @@ cdef class CVode(Explicit_ODE):
         cdef long int npevals = 0, npsolves = 0, nlsred = 0
         cdef int qlast = 0, qcur = 0
         cdef realtype hinused = 0.0, hlast = 0.0, hcur = 0.0, tcur = 0.0
+
+        if self.cvode_mem == NULL:
+            raise CVodeError(CV_MEM_FAIL)
 
         if self.options["linear_solver"] == "SPGMR":
             IF SUNDIALS_VERSION >= (4,0,0):
