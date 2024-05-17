@@ -3,6 +3,11 @@
 Changelog
 ==========
 
+--- Assimulo-3.5.1 ---
+    * Fixed build with sundials 7.x
+    * Added "std=legacy" as default fortran compile flag. 
+      This addresses compilation issues commonly experienced with more modern Fortran standards.
+
 --- Assimulo-3.5.0 ---
     * Changed "numpy.float" to equivalent "numpy.float64" due to DeprecationWarnings in numpy >= 1.20.
     * Improved examples with sparse jacobians by omitting the zeros in the jacobians.
