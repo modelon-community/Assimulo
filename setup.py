@@ -54,7 +54,7 @@ parser.add_argument("--log_file",default=None,type=str,help='Path of a logfile')
 parser.add_argument("--prefix",default=None,type=str,help='Path to destination directory')
 parser.add_argument("--extra-fortran-link-flags", help='Extra Fortran link flags (a list enclosed in " ")', default='')
 parser.add_argument("--extra-fortran-link-files", help='Extra Fortran link files (a list enclosed in " ")', default='')
-parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='')
+parser.add_argument("--extra-fortran-compile-flags", help='Extra Fortran compile flags (a list enclosed in " ")', default='--std=legacy')
 parser.add_argument("--version", help='Package version number', default='Default')
                                        
 args = parser.parse_known_args()
@@ -669,7 +669,7 @@ ext_list += prepare.fortran_extensionlists()
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "3.5.0-dev" if version_number_arg == "Default" else version_number_arg
+VERSION = "3.5.1-dev" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "http://www.jmodelica.org/assimulo"
 DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
