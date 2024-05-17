@@ -41,6 +41,6 @@ jobs:
         make -j4
         sudo make install
     - name: Build
-      run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr --extra-fortran-compile-flags="-fallow-argument-mismatch"
+      run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr --extra-fortran-compile-flags="-fallow-argument-mismatch --std=legacy"
     - name: Test
       run: python3 -m nose --verbose tests/* tests/solvers/*
