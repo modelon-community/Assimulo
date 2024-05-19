@@ -19,11 +19,21 @@ import logging
 import sys 
 import os
 import shutil
+from subprocess import Popen, PIPE
 import ctypes.util
 import argparse
 from os.path import isfile, join
 import numpy as np
-import numpy.distutils.core as ndc
+try:
+    from numpy.distutils.core import setup
+    import numpy.distutils as nd
+    from numpy.distutils.fcompiler import intel
+    have_nd = True
+except ImportError:
+    from setuptools import setup
+    have_nd = False
+import Cython
+from Cython.Build import cythonize
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
@@ -63,7 +73,6 @@ version_number_arg = args[0].version
 logging.basicConfig(level=getattr(logging,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
 logging.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
 try:
-    from subprocess import Popen, PIPE
     _p = Popen(["svnversion", "."], stdout=PIPE)
     revision = _p.communicate()[0].decode('ascii')
 except Exception:
@@ -72,20 +81,10 @@ logging.debug('Source from svn revision {}'.format(revision[:-1])) # exclude new
 
 #If prefix is set, we want to allow installation in a directory that is not on PYTHONPATH
 #and this is only possible with distutils, not setuptools
-if not args[0].prefix:
-    import setuptools
-import numpy.distutils as nd
-
-try:
-    from Cython.Distutils import build_ext
-    from Cython.Build import cythonize
-except ImportError:
-    msg="Please upgrade to a newer Cython version, >= 3"
-    logging.error(msg)
-    raise Exception(msg)
+if args[0].prefix is not None and not have_nd:
+    raise ValueError("Cannot handle prefix argument without distutils")
 
 #Verify Cython version
-import Cython
 cython_version = Cython.__version__.split(".")
 if not cython_version[0] >= '3':
     msg="Please upgrade to a newer Cython version, >= 3"
@@ -148,20 +147,20 @@ class Assimulo_prepare(object):
         self.sundials_with_msvc = False
         self.msvcSLU = False
 
-        if self.no_mvscr:
+        if self.no_mvscr and have_nd:
         # prevent the MSVCR* being added to the DLLs passed to the linker
             def msvc_runtime_library_mod(): 
                 return None
             nd.misc_util.msvc_runtime_library = msvc_runtime_library_mod
             logging.debug('numpy.distutils.misc_util.msvc_runtime_library overwritten.')
-        
-        # prevent Fortran to link dynamically
-        # Are there any additional flags needed for e.g. MKL, see https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
-        def fortran_compiler_flags(self):
-            opt = ['/nologo', '/MT', '/nbs', '/names:lowercase', '/assume:underscore']
-            return opt
-        from numpy.distutils.fcompiler import intel
-        nd.fcompiler.intel.IntelVisualFCompiler.get_flags=fortran_compiler_flags
+
+        if have_nd:
+            # prevent Fortran to link dynamically
+            # Are there any additional flags needed for e.g. MKL, see https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+            def fortran_compiler_flags(self):
+                opt = ['/nologo', '/MT', '/nbs', '/names:lowercase', '/assume:underscore']
+                return opt
+            intel.IntelVisualFCompiler.get_flags=fortran_compiler_flags
         
         self.platform = 'linux'
         if 'win' in sys.platform: 
@@ -486,6 +485,8 @@ class Assimulo_prepare(object):
                               include_path=[".", "assimulo", os.path.join("assimulo", "solvers")],
                               force = True,
                               compiler_directives={'language_level' : "3str"},)
+        for ext in ext_list:
+            ext.include_dirs += [np.get_include()]
 
         # SUNDIALS
         if self.with_SUNDIALS:
@@ -661,7 +662,8 @@ else:
     change_dir = False
 
 ext_list = prepare.cython_extensionlists()
-ext_list += prepare.fortran_extensionlists()
+if have_nd:
+    ext_list += prepare.fortran_extensionlists()
 
 # distutils part
 
@@ -716,7 +718,7 @@ license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper())
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]
 logging.debug(license_info)
 
-ndc.setup(name=NAME,
+setup(name=NAME,
       version=VERSION,
       license=LICENSE,
       description=DESCRIPTION,
