@@ -25,6 +25,13 @@ foreach (COMPONENT ${SUNDIALS_COMPONENTS})
 
   if (SUNDIALS_${COMPONENT_UPPER}_LIBRARY)
     list (APPEND SUNDIALS_LIBRARIES ${SUNDIALS_${COMPONENT_UPPER}_LIBRARY})
+    if (NOT TARGET SUNDIALS::${COMPONENT}_shared)
+      add_library(SUNDIALS::${COMPONENT}_shared IMPORTED)
+      set_target_properties(SUNDIALS::ALL
+        PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${SUNDIALS_INCLUDE_DIRS}")
+      target_link_libraries(SUNDIALS::${COMPONENT}_shared INTERFACE sundials_${COMPONENT})
+    endif ()
   endif ()
 endforeach ()
 
