@@ -203,6 +203,7 @@ if (USE_FORTRAN)
       OUTPUT_VARIABLE F2PY_INCLUDE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
+  file(TO_CMAKE_PATH "${F2PY_INCLUDE_DIR}" F2PY_INCLUDE_DIR)
   message(STATUS "Using f2py include dir: ${F2PY_INCLUDE_DIR}")
 
   # object library with common f2py symbols
