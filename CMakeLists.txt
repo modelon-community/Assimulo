@@ -225,17 +225,24 @@ if (USE_FORTRAN)
     file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers.f)
     file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90)
 
-    python_add_library(${name} MODULE ${FMOD_SOURCES}
-      ${CMAKE_CURRENT_BINARY_DIR}/${name}module.c
+    # separate lib for fortran
+    add_library(${name}_fort STATIC
+      ${FMOD_SOURCES}
       ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers.f
-      ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90
+      ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90)
+    set_target_properties(${name}_fort PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers.f ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90 PROPERTIES GENERATED TRUE)
+    if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+      target_compile_options(${name}_fort PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-O2 --std=legacy>)
+    endif ()
+
+    python_add_library(${name} MODULE
+      ${CMAKE_CURRENT_BINARY_DIR}/${name}module.c
       WITH_SOABI)
-    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${name}module.c ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers.f ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90 PROPERTIES GENERATED TRUE)
+    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${name}module.c PROPERTIES GENERATED TRUE)
 
     target_link_libraries(${name} PRIVATE fortranobject)
-    if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-      target_compile_options(${name} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-O2 --std=legacy>)
-    endif ()
+    target_link_libraries(${name} PRIVATE ${name}_fort)
     install(TARGETS ${name} DESTINATION ${PYTHON_SITE_PACKAGES}/assimulo/lib)
   endmacro()
 
