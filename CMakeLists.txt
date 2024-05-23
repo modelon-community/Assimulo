@@ -226,7 +226,7 @@ if (USE_FORTRAN)
     file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90)
 
     # separate lib for fortran
-    add_library(${name}_fort STATIC
+    add_library(${name}_fort SHARED
       ${FMOD_SOURCES}
       ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers.f
       ${CMAKE_CURRENT_BINARY_DIR}/${name}-f2pywrappers2.f90)
@@ -235,7 +235,9 @@ if (USE_FORTRAN)
     if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
       target_compile_options(${name}_fort PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-O2 --std=legacy>)
     endif ()
-    set_property(TARGET ${name}_fort PROPERTY LINKER_LANGUAGE Fortran)
+    # set_property(TARGET ${name}_fort PROPERTY LINKER_LANGUAGE Fortran)
+    install(TARGETS ${name}_fort)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
     python_add_library(${name} MODULE
       ${CMAKE_CURRENT_BINARY_DIR}/${name}module.c
