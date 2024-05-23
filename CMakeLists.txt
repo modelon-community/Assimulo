@@ -313,7 +313,7 @@ if (USE_FORTRAN)
     assimulo_add_fortran_module(glimda thirdparty/glimda/glimda_complete.pyf
       SOURCES
         thirdparty/glimda/glimda_complete.f)
-    target_link_libraries(glimda PRIVATE ${LAPACK_LIBRARIES})
+    target_link_libraries(glimda_fort PRIVATE ${LAPACK_LIBRARIES})
   endif ()
 endif ()
 
