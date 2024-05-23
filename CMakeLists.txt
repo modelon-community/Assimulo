@@ -235,6 +235,7 @@ if (USE_FORTRAN)
     if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
       target_compile_options(${name}_fort PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-O2 --std=legacy>)
     endif ()
+    set_property(TARGET ${name}_fort PROPERTY LINKER_LANGUAGE Fortran)
 
     python_add_library(${name} MODULE
       ${CMAKE_CURRENT_BINARY_DIR}/${name}module.c
