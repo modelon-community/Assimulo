@@ -19,7 +19,6 @@ import logging
 import sys 
 import os
 import shutil
-from subprocess import Popen, PIPE
 import ctypes.util
 import argparse
 from os.path import isfile, join
@@ -72,12 +71,6 @@ version_number_arg = args[0].version
 
 logging.basicConfig(level=getattr(logging,args[0].log),format='%(levelname)s:%(message)s',filename=args[0].log_file)
 logging.debug('setup.py called with the following optional args\n %s\n argument parsing completed.',vars(args[0]))
-try:
-    _p = Popen(["svnversion", "."], stdout=PIPE)
-    revision = _p.communicate()[0].decode('ascii')
-except Exception:
-    revision = "unknown"
-logging.debug('Source from svn revision {}'.format(revision[:-1])) # exclude newline 
 
 #If prefix is set, we want to allow installation in a directory that is not on PYTHONPATH
 #and this is only possible with distutils, not setuptools
@@ -708,11 +701,8 @@ together with a C-compiler and a FORTRAN-compiler.
 """
 
 version_txt = os.path.join('assimulo', 'version.txt')
-if revision == "":
-    revision = "unknown"
 with open(version_txt, 'w') as f:
     f.write(VERSION + '\n')
-    f.write("r" + revision)
 
 license_info=[place+os.sep+pck+os.sep+'LICENSE_{}'.format(pck.upper()) 
                for pck in  thirdparty_methods for place in ['thirdparty','lib']]
