@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        sundials_version: [2.7.0, 3.2.0]
+        sundials_version: [2.7.0, 3.2.0, 7.0.0]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
