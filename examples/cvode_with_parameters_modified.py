@@ -21,7 +21,7 @@ from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
 def run_example(with_plots=True):
-    """
+    r"""
     This is the same example from the Sundials package (cvsRoberts_FSA_dns.c)
 
     This simple example problem for CVode, due to Robertson, 
