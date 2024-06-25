@@ -2,6 +2,8 @@
 ==========
 Changelog
 ==========
+--- Assimulo-3.5.2 ---
+    * Allow to build without distutils for Python>=3.12 support
 
 --- Assimulo-3.5.1 ---
     * Fixed build with sundials 7.x
