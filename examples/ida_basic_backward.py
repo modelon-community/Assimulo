@@ -39,7 +39,7 @@ def run_example(with_plots=True):
     
     #Define an Assimulo problem
     imp_mod = Implicit_Problem(f,t0=5, y0=0.02695, yd0=-0.02695,
-              name = 'IDA Example: $\dot y + y = 0$ (reverse time)')
+              name = r'IDA Example: $\dot y + y = 0$ (reverse time)')
     
     #Define an explicit solver
     imp_sim = IDA(imp_mod) #Create a IDA solver

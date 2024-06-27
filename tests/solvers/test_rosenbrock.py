@@ -23,7 +23,7 @@ from assimulo.exception import TimeLimitExceeded
 import numpy as np
 import scipy.sparse as sps
 
-float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
+float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
     def setUp(self):

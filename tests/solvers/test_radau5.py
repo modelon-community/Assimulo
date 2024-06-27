@@ -28,7 +28,7 @@ import scipy.sparse as sps
 import numpy as np
 
 import re
-float_regex = "[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
+float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class KeyboardInterruptAux:
     """Auxiliary class for creating problems (both explicit and implicit) 

@@ -80,7 +80,7 @@ def run_example(with_plots=True):
         import pylab as pl
         pl.plot(t,y[:,0], marker='o')
         pl.title(exp_mod.name)
-        pl.ylabel("State: $y_1$")
+        pl.ylabel(r"State: $y_1$")
         pl.xlabel("Time")
         pl.show()
 

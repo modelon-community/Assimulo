@@ -40,7 +40,7 @@ def run_example(with_plots=True):
 
     #Define an Assimulo problem
     exp_mod = Explicit_Problem(f, 4.0,
-              name = 'ExplicitEuler Example: $\dot y = - y$')
+              name = r'ExplicitEuler Example: $\dot y = - y$')
     
     #Explicit Euler
     exp_sim = ExplicitEuler(exp_mod) #Create a explicit Euler solver
