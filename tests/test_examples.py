@@ -18,6 +18,7 @@
 from assimulo import testattr
 from assimulo.exception import AssimuloException
 from assimulo.examples import *
+from assimulo.solvers.sundials import get_sundials_version
 
 class Test_Examples:
     @testattr(stddist = True)
@@ -195,7 +196,8 @@ class Test_Examples:
         """
         This tests the class Mechanical_system together with ind3 and ida
         """
-        mech_system_pendulum.run_example('ind3',with_plots=False,with_test=True)
+        if get_sundials_version() < (4,):
+            mech_system_pendulum.run_example('ind3',with_plots=False,with_test=True)
         
     @testattr(stddist = True)
     def test_mech_system_pendulum_ggl2(self):
