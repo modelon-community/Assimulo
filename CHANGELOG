@@ -1,5 +1,8 @@
 --- CHANGELOG ---
 
+--- Assimulo-3.5.x ---
+    * Added get_sundials_version function (import from assimulo.solvers.sundials).
+
 --- Assimulo-3.5.2 ---
     * Allow to build without distutils for Python>=3.12 support
 

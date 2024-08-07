@@ -17,7 +17,7 @@
 
 import nose
 from assimulo import testattr
-from assimulo.solvers.sundials import CVode, IDA, CVodeError
+from assimulo.solvers.sundials import CVode, IDA, CVodeError, get_sundials_version
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded, TerminateSimulation
@@ -1569,3 +1569,9 @@ class Test_Sundials:
         
         nose.tools.assert_almost_equal(imp_sim.pbar[0], 1000.00000,4)
         nose.tools.assert_almost_equal(imp_sim.pbar[1], 100.000000,4)
+
+    @testattr(stddist = True)
+    def test_get_sundials_version(self):
+        """Test fetching the sundials version."""
+        version = get_sundials_version()
+        assert isinstance(version, tuple), "Expected version to be a tuple"
