@@ -45,6 +45,11 @@ include "../lib/sundials_constants.pxi" #Sundials related constants
 include "../lib/sundials_callbacks.pxi"
 include "../lib/sundials_callbacks_ida_cvode.pxi"
 
+_sundials_version = SUNDIALS_VERSION
+
+cpdef get_sundials_version():
+    """Return SUNDIALS version as tuple."""
+    return _sundials_version
 
 cdef class IDA(Implicit_ODE):
     """
