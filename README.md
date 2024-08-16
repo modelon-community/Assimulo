@@ -27,7 +27,7 @@ See the INSTALL file or the installation page on http://www.jmodelica.org/assimu
 
 Contributing
 -------------------
-For information about contributing, see https://github.com/modelon/contributing.
+For information about contributing, see https://github.com/modelon-community/contributing.
 
 Contact
 -------------------
