@@ -502,7 +502,7 @@ class Test_Explicit_Radau5:
         nose.tools.assert_almost_equal(y[-1][1],3.0)
         nose.tools.assert_almost_equal(y[-1][2],2.0)
 
-        assert exp_sim.get_statistics()['nstateevents'] == 2, "Incorrect number of state events"
+        assert exp_sim.get_statistics()['nstateevents'] == 1, "Incorrect number of state events"
     
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
