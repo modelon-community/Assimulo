@@ -355,6 +355,7 @@ cdef class Explicit_ODE(ODE):
                 if (g_low_c[i] > 0) != (g_high_c[i] > 0):
                     event_info[i] = 1 if g_high_c[i] > 0 else -1
             self.set_event_info(event_info)
+            self.statistics["nstateevents"] += 1
 
         self.g_old = g_high_c[:]
         y_high = y_high_c[:]

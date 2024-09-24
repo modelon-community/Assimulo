@@ -286,7 +286,6 @@ class Test_Explicit_Radau5_Py:
         nose.tools.assert_less(self.sim.statistics["nsteps"], 300)
         
         #nose.tools.assert_almost_equal(self.sim.y[-2][0], 1.71505001, 4)
-        print
         nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], 1.7061680350, 4)
         
         self.sim.report_continuously = True
@@ -502,6 +501,8 @@ class Test_Explicit_Radau5:
         nose.tools.assert_almost_equal(y[-1][0],8.0)
         nose.tools.assert_almost_equal(y[-1][1],3.0)
         nose.tools.assert_almost_equal(y[-1][2],2.0)
+
+        assert exp_sim.get_statistics()['nstateevents'] == 2, "Incorrect number of state events"
     
     @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
