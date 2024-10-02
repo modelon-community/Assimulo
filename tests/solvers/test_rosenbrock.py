@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
-from assimulo import testattr
+import pytest
 from assimulo.solvers.rosenbrock import RodasODE
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
@@ -26,7 +25,9 @@ import scipy.sparse as sps
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
-    def setUp(self):
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup_class(cls):
         #Define the rhs
         def f(t,y):
             eps = 1.e-6
@@ -62,24 +63,22 @@ class Test_RodasODE:
         exp_mod_sp = Explicit_Problem(f,y0, name = 'Van der Pol (explicit)')
         exp_mod.jac = jac
         exp_mod_sp.jac = jac_sparse
-        self.mod = exp_mod
-        self.mod_sp = exp_mod_sp
+        cls.mod = exp_mod
+        cls.mod_sp = exp_mod_sp
     
-    @testattr(stddist = True)
     def test_nbr_fcn_evals_due_to_jac(self):
         sim = RodasODE(self.mod)
         
         sim.usejac = False
         sim.simulate(1)
         
-        nose.tools.assert_greater(sim.statistics["nfcnjacs"], 0)
+        assert sim.statistics["nfcnjacs"] > 0
         
         sim = RodasODE(self.mod)
         sim.simulate(1)
         
-        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
+        assert sim.statistics["nfcnjacs"] == 0
     
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         sim = RodasODE(self.mod_sp)
         
@@ -87,11 +86,10 @@ class Test_RodasODE:
         
         sim.simulate(2.) #Simulate 2 seconds
     
-        nose.tools.assert_equal(sim.statistics["nfcnjacs"], 0)
+        assert sim.statistics["nfcnjacs"] == 0
         
-        nose.tools.assert_almost_equal(sim.y_sol[-1][0], 1.7061680350, 4)
+        assert sim.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -107,5 +105,5 @@ class Test_RodasODE:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
