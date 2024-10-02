@@ -187,8 +187,7 @@ class Test_CVode:
         with pytest.raises(CVodeError):
             self.simulator.get_error_weights()
         
-        # self.simulator.simulate(1.0)
-        
+        self.simulator.simulate(1.0)
         weights = self.simulator.get_error_weights()
         assert weights[0] < 1e6
         
