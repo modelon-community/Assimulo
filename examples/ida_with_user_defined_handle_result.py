@@ -18,7 +18,6 @@
 import numpy as np
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
-import pytest
 
 def run_example(with_plots=True):
     r"""
@@ -107,11 +106,11 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic tests
-    assert y[-1][0] == pytest.approx(0.9401995, abs = 1e-4)
-    assert y[-1][1] == pytest.approx(-0.34095124, abs = 1e-4)
-    assert yd[-1][0] == pytest.approx(-0.88198927, abs = 1e-4)
-    assert yd[-1][1] == pytest.approx(-2.43227069, abs = 1e-4)
-    assert order[-1] == pytest.approx(5, abs = 1e-4)
+    assert abs(y[-1][0] - 0.9401995)   < 1e-4
+    assert abs(y[-1][1] + 0.34095124)  < 1e-4
+    assert abs(yd[-1][0] + 0.88198927) < 1e-4
+    assert abs(yd[-1][1] + 2.43227069) < 1e-4
+    assert abs(order[-1] - 5) < 1e-4
     
     return imp_mod, imp_sim
 

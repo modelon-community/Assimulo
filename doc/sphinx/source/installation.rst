@@ -60,9 +60,9 @@ the section troubleshooting see :ref:`instTrouble` should be consulted before in
 
 .. note::
 
-    To test Assimulo, go into the tests folder and type::
+    To test Assimulo, type::
     
-        pytest .
+        pytest
         
     Which requires pytest.
 

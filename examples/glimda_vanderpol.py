@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from assimulo.solvers import GLIMDA
 from assimulo.problem import Implicit_Problem
 
@@ -86,7 +85,7 @@ def run_example(with_plots=True):
     
     #Basic test
     x1 = y[:,0]
-    assert x1[-1] == pytest.approx(1.706168035, abs = 1e-3)
+    assert abs(x1[-1] - 1.706168035) < 1e-3
     
     return imp_mod, imp_sim
 

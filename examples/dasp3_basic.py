@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 
 try:
     from assimulo.solvers import DASP3ODE
@@ -100,7 +99,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert y[-1,0] == pytest.approx( 10.860063849896818, abs = 1e-3)
+    assert abs(y[-1,0] - 10.860063849896818) < 1e-3
     
     return exp_mod, exp_sim
 

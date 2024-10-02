@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pytest
 import numpy as np
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsl
@@ -127,7 +126,7 @@ def run_example(with_plots=True):
     
     #Basic test
     for j in range(len(y)):
-        assert y[j] == pytest.approx(1.0, abs = 1e-4)
+        assert abs(y[j] - 1.0) < 1e-4
         
     return [alg_mod, alg_mod_prec], [alg_solver, alg_solver_prec]
 

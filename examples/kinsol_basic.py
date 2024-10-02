@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 
@@ -46,7 +45,7 @@ def run_example(with_plots=True):
     y = alg_solver.solve()
     
     #Basic test
-    assert y == pytest.approx(1.0, abs = 1e-5)
+    assert abs(y - 1.0) < 1e-5
     
     return alg_mod, alg_solver
 

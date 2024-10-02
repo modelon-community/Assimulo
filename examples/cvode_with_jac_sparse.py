@@ -17,7 +17,6 @@
 
 import numpy as np
 import scipy.sparse as sps
-import pytest
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
@@ -93,7 +92,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic tests
-    assert y[-1][0] == pytest.approx(0.9851, abs = 1e-3)
+    assert abs(y[-1][0] - 0.9851) < 1e-3
     
     return exp_mod, exp_sim
 

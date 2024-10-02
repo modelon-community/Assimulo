@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 

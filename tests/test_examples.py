@@ -152,12 +152,13 @@ class Test_Examples:
         """
         mech_system_pendulum.run_example('ind2',with_plots=False,with_test=True)
         
+    @pytest.mark.skipif(get_sundials_version() >= (4,), 
+                        reason = "Needs fixing for modern SUNDIALS versions")
     def test_mech_system_pendulum3(self):
         """
         This tests the class Mechanical_system together with ind3 and ida
         """
-        if get_sundials_version() < (4,):
-            mech_system_pendulum.run_example('ind3',with_plots=False,with_test=True)
+        mech_system_pendulum.run_example('ind3',with_plots=False,with_test=True)
         
     def test_mech_system_pendulum_ggl2(self):
         """

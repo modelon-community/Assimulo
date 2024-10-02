@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
 from assimulo.special_systems import Mechanical_System
 from assimulo.solvers import IDA, ODASSL

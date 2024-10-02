@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from assimulo.solvers import RungeKutta34
 from assimulo.problem import Explicit_Problem
 
@@ -49,7 +48,7 @@ def run_example(with_plots=True):
     t, y = exp_sim.simulate(5) #Simulate 5 seconds
     
     #Basic test
-    assert y[-1][0] == pytest.approx(0.02695199, abs = 1e-5)
+    assert abs(y[-1][0] - 0.02695199) < 1e-5
     
     #Plot
     if with_plots:

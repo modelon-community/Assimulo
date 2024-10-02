@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -114,10 +113,10 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    assert y[-1][0] == pytest.approx(1577.6552477, abs = 1e-3)
-    assert y[-1][1] == pytest.approx(611.9574565, abs = 1e-3)
-    assert y[-1][2] == pytest.approx(2215.88563217, abs = 1e-3)
-    assert imp_sim.p_sol[0][1][0] == pytest.approx(1.0)
+    assert abs(y[-1][0] - 1577.6552477)      < 1e-3
+    assert abs(y[-1][1] - 611.9574565)       < 1e-3
+    assert abs(y[-1][2] - 2215.88563217)     < 1e-3
+    assert abs(imp_sim.p_sol[0][1][0] - 1.0) < 1e-6
     
         
     return imp_mod, imp_sim
