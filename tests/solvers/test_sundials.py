@@ -1544,7 +1544,6 @@ class Test_Sundials:
         assert imp_sim.pbar[0] == pytest.approx(1000.00000, abs = 1e-4)
         assert imp_sim.pbar[1] == pytest.approx(100.000000, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_get_sundials_version(self):
         """Test fetching the sundials version."""
         version = get_sundials_version()
