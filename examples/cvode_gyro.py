@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
+import pytest
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers import CVode
 
@@ -83,8 +83,8 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0], 692.800241862)
-    nose.tools.assert_almost_equal(y[-1][8], 7.08468221e-1)
+    assert y[-1][0] == pytest.approx(692.800241862)
+    assert y[-1][8] == pytest.approx(7.08468221e-1)
     
     return exp_mod, exp_sim    
 
