@@ -18,7 +18,6 @@
 import numpy as np
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
-import nose
 
 def run_example(with_plots=True):
     r"""
@@ -98,7 +97,7 @@ def run_example(with_plots=True):
     #Sets the parameters
     imp_sim.atol = 1e-6 #Default 1e-6
     imp_sim.rtol = 1e-6 #Default 1e-6
-    imp_sim.suppress_alg = True #Suppres the algebraic variables on the error test
+    imp_sim.suppress_alg = True #Suppress the algebraic variables on the error test
     
     #Let Sundials find consistent initial conditions by use of 'IDA_YA_YDP_INIT'
     imp_sim.make_consistent('IDA_YA_YDP_INIT')
@@ -107,10 +106,10 @@ def run_example(with_plots=True):
     t, y, yd = imp_sim.simulate(5,1000) #Simulate 5 seconds with 1000 communication points
     
     #Basic tests
-    nose.tools.assert_almost_equal(y[-1][0],0.9401995, places=4)
-    nose.tools.assert_almost_equal(y[-1][1],-0.34095124, places=4)
-    nose.tools.assert_almost_equal(yd[-1][0], -0.88198927, places=4)
-    nose.tools.assert_almost_equal(yd[-1][1], -2.43227069, places=4)
+    assert abs(y[-1][0] - 0.9401995) < 1e-4
+    assert abs(y[-1][1] + 0.34095124) < 1e-4
+    assert abs(yd[-1][0] + 0.88198927) < 1e-4
+    assert abs(yd[-1][1] - -2.43227069) < 1e-4
     
     #Plot
     if with_plots:

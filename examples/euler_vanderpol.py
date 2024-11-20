@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import ImplicitEuler
 from assimulo.problem import Explicit_Problem
 
@@ -86,7 +85,7 @@ def run_example(with_plots=True):
 
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(np.abs(float(x1[-1]) - 1.8601438), 1e-1)
+    assert np.abs(float(x1[-1]) - 1.8601438) < 1e-1
     
     return exp_mod, exp_sim
 

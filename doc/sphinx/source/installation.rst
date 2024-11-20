@@ -60,11 +60,11 @@ the section troubleshooting see :ref:`instTrouble` should be consulted before in
 
 .. note::
 
-    To test Assimulo, go into the tests folder and type::
+    To test Assimulo, type::
     
-        nosetests
+        pytest
         
-    Which requires python-nose.
+    Which requires pytest.
 
 Windows
 ==========
@@ -90,9 +90,9 @@ After a successful installation, the package will be located in pythons dist-pac
 
     To test Assimulo, go into the tests folder and type::
     
-        nosetests
+        pytest .
         
-    Which requires python-nose.
+    Which requires pytest.
 
 
 .. _instTrouble:

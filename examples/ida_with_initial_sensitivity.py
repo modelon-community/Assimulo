@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import IDA
 from assimulo.problem import Implicit_Problem
 
@@ -114,10 +113,10 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 1577.6552477,3)
-    nose.tools.assert_almost_equal(y[-1][1], 611.9574565, 3)
-    nose.tools.assert_almost_equal(y[-1][2], 2215.88563217, 3)
-    nose.tools.assert_almost_equal(imp_sim.p_sol[0][1][0], 1.0)
+    assert abs(y[-1][0] - 1577.6552477)      < 1e-3
+    assert abs(y[-1][1] - 611.9574565)       < 1e-3
+    assert abs(y[-1][2] - 2215.88563217)     < 1e-3
+    assert abs(imp_sim.p_sol[0][1][0] - 1.0) < 1e-6
     
         
     return imp_mod, imp_sim

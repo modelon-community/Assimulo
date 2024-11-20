@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import CVode
 from assimulo.problem import Explicit_Problem
 
@@ -104,12 +103,13 @@ def run_example(with_plots=True):
         pl.show()  
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0], 9.05518032e-01, 4)
-    nose.tools.assert_almost_equal(y[-1][1], 2.24046805e-05, 4)
-    nose.tools.assert_almost_equal(y[-1][2], 9.44595637e-02, 4)
-    nose.tools.assert_almost_equal(exp_sim.p_sol[0][-1][0], -1.8761, 2) #Values taken from the example in Sundials
-    nose.tools.assert_almost_equal(exp_sim.p_sol[1][-1][0], 2.9614e-06, 8)
-    nose.tools.assert_almost_equal(exp_sim.p_sol[2][-1][0], -4.9334e-10, 12)
+    assert abs(y[-1][0] - 9.05518032e-01) < 1e-4
+    assert abs(y[-1][1] - 2.24046805e-05) < 1e-4
+    assert abs(y[-1][2] - 9.44595637e-02) < 1e-4
+    #Values taken from the example in Sundials
+    assert abs(exp_sim.p_sol[0][-1][0] + 1.8761) < 1e-2
+    assert abs(exp_sim.p_sol[1][-1][0] - 2.9614e-06) < 1e-8
+    assert abs(exp_sim.p_sol[2][-1][0] + 4.9334e-10) < 1e-12
         
     return exp_mod, exp_sim
 

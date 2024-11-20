@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import KINSOL
 from assimulo.problem import Algebraic_Problem
 
@@ -51,8 +50,8 @@ def run_example(with_plots=True):
     y = alg_solver.solve()
     
     #Basic test
-    nose.tools.assert_almost_equal(y[0], 1.5, 5)
-    nose.tools.assert_almost_equal(y[1], 1.0, 5)
+    assert abs(y[0] - 1.5) < 1e-5
+    assert abs(y[1] - 1.0) < 1e-5
     
     return alg_mod, alg_solver
     

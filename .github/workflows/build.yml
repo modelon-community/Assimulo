@@ -19,7 +19,7 @@ jobs:
         python-version: '3.11.x'
     - name: Setup Python
       run: |
-        python3 -m pip install Cython numpy scipy matplotlib nose-py3 setuptools==69.1.0
+        python3 -m pip install Cython numpy scipy matplotlib pytest setuptools==69.1.0
     - name: Install system
       run: |
         sudo apt-get -y install cmake liblapack-dev libsuitesparse-dev libhypre-dev
@@ -44,4 +44,4 @@ jobs:
     - name: Build
       run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr
     - name: Test
-      run: python3 -m nose --verbose tests/* tests/solvers/*
+      run: pytest 

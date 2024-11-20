@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import Dopri5
 from assimulo.problem import Explicit_Problem
 
@@ -56,7 +55,7 @@ def run_example(with_plots=True):
         pl.show()
     
     #Basic test
-    nose.tools.assert_almost_equal(y[-1][0],0.02695199,5)
+    assert abs(y[-1][0] - 0.02695199) < 1e-5
     
     return exp_mod, exp_sim
 

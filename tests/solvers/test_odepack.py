@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import nose
-from assimulo import testattr
+import pytest
 from assimulo.lib.odepack import dsrcar, dcfode
+from assimulo.solvers.odepack import RKStarterNordsieck
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 from assimulo.exception import TimeLimitExceeded
@@ -122,7 +122,9 @@ class Test_LSODAR:
     """
     Tests the LSODAR solver.
     """
-    def setUp(self):
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def setup_class(cls):
         """
         This sets up the test case.
         """
@@ -167,18 +169,17 @@ class Test_LSODAR:
         
         exp_mod.jac = jac
         exp_mod_sp.jac = jac_sparse
-        self.mod = exp_mod
+        cls.mod = exp_mod
             
         #Define an explicit solver
-        self.sim = LSODAR(exp_mod) #Create a LSODAR solve
-        self.sim_sp = LSODAR(exp_mod_sp)
+        cls.sim = LSODAR(exp_mod) #Create a LSODAR solve
+        cls.sim_sp = LSODAR(exp_mod_sp)
         
         #Sets the parameters
-        self.sim.atol = 1e-6 #Default 1e-6
-        self.sim.rtol = 1e-6 #Default 1e-6
-        self.sim.usejac = False
+        cls.sim.atol = 1e-6 #Default 1e-6
+        cls.sim.rtol = 1e-6 #Default 1e-6
+        cls.sim.usejac = False
 
-    @testattr(stddist = True)
     def test_event_localizer(self):
         exp_mod = Extended_Problem() #Create the problem
 
@@ -191,26 +192,23 @@ class Test_LSODAR:
         t, y = exp_sim.simulate(10.0,1000) #Simulate 10 seconds with 1000 communications points
         
         #Basic test
-        nose.tools.assert_almost_equal(y[-1][0],8.0)
-        nose.tools.assert_almost_equal(y[-1][1],3.0)
-        nose.tools.assert_almost_equal(y[-1][2],2.0)
+        assert y[-1][0] == pytest.approx(8.0)
+        assert y[-1][1] == pytest.approx(3.0)
+        assert y[-1][2] == pytest.approx(2.0)
 
-    @testattr(stddist = True)
     def test_simulation(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
         """
         self.sim.simulate(1.) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
     
-    @testattr(stddist = True)
     def test_setcoefficients(self):
         elco,tesco=dcfode(1)
-        nose.tools.assert_almost_equal(elco[0,2],5./12.,9) # AM-2
-        nose.tools.assert_almost_equal(tesco[0,2],2.,9) # AM-2 error coeff  
+        assert elco[0,2] == pytest.approx(5./12., abs = 1e-9) # AM-2
+        assert tesco[0,2] == pytest.approx(2., abs = 1e-9) # AM-2 error coeff  
     
-    @testattr(stddist = True)
     def test_readcommon(self):
         """
         This tests the LSODAR's subroutine dsrcar  (read functionality).
@@ -219,10 +217,9 @@ class Test_LSODAR:
         r=np.ones((245,),'d')
         i=np.ones((55,),'i')
         dsrcar(r,i,1)
-        nose.tools.assert_almost_equal(r[217], 2.22044605e-16, 20)
-        nose.tools.assert_equal(i[36], 3)
+        assert r[217] == pytest.approx(2.22044605e-16, abs = 1e-20)
+        assert i[36] == 3
         
-    @testattr(stddist = True)
     def test_writereadcommon(self):
         """
         This tests the LSODAR's subroutine dsrcar  (write and read functionality).
@@ -233,15 +230,14 @@ class Test_LSODAR:
         r[0]=100.
         i[0]=10
         dsrcar(r,i,1)
-        nose.tools.assert_almost_equal(r[0], 1., 4)
-        nose.tools.assert_equal(i[0], 1)  
+        assert r[0] == pytest.approx(1., abs = 1e-4)
+        assert i[0] == 1  
     
+    @pytest.mark.skip("Test broken")
     def test_rkstarter(self):
         """
         This test checks the correctness of the Nordsieck array generated 
         from a RK starter
-        """
-        pass
         """
         A=np.array([[0.,1.],[-4.,0.]])
         def f(t,x,sw0):
@@ -262,12 +258,10 @@ class Test_LSODAR:
         h=H/4.
         nordsieck_at_0=np.array([coeff[-1,:],h*d1coeff[-1,:],h**2/2.*d2coeff[-1,:],
                                      h**3/6.*d3coeff[-1,:],h**4/24.*d4coeff[-1,:]])
-        rkNordsieck=odepack.RKStarterNordsieck(f,H)
+        rkNordsieck=RKStarterNordsieck(f,H)
         computed=rkNordsieck(0,y0)       
-        numpy.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)      
-        """              
+        np.testing.assert_allclose(computed[1], nordsieck_at_0, atol=H/100., verbose=True)      
         
-    @testattr(stddist = True)
     def test_interpol(self):
         # a with interpolation and report_continuously
         self.sim.report_continuously=True
@@ -275,9 +269,8 @@ class Test_LSODAR:
         self.sim.reset()
         t_sol1,y_sol1=self.sim.simulate(0.5)
         ind05=np.nonzero(np.array(t_sol)==0.5)[0][0]
-        nose.tools.assert_almost_equal(y_sol[ind05,0],y_sol1[-1,0],6)
+        assert y_sol[ind05,0] == pytest.approx(y_sol1[-1,0], abs = 1e-6)
         
-    @testattr(stddist = True)
     def test_simulation_with_jac(self):
         """
         This tests the LSODAR with a simulation of the van der pol problem.
@@ -285,48 +278,41 @@ class Test_LSODAR:
         self.sim.usejac = True
         self.sim.simulate(1.) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
     
-    @testattr(stddist = True)    
     def test_simulation_ncp(self):
         self.sim.simulate(1.,100) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)
     def test_usejac_csc_matrix(self):
         self.sim_sp.usejac = True
         
         self.sim_sp.simulate(2.) #Simulate 2 seconds
     
-        nose.tools.assert_equal(self.sim_sp.statistics["nfcnjacs"], 0)
+        assert self.sim_sp.statistics["nfcnjacs"] == 0
+        assert self.sim_sp.y_sol[-1][0] == pytest.approx(1.7061680350, abs = 1e-4)
         
-        nose.tools.assert_almost_equal(self.sim_sp.y_sol[-1][0], 1.7061680350, 4)
-        
-    @testattr(stddist = True)    
     def test_simulation_ncp_list(self):
         self.sim.simulate(1.,ncp_list=[0.5]) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)    
     def test_maxh(self):
         
         self.sim.hmax = 1.0
-        nose.tools.assert_equal(self.sim.options["maxh"], 1.0)
-        nose.tools.assert_equal(self.sim.maxh, 1.0)
+        assert self.sim.options["maxh"] == 1.0
+        assert self.sim.maxh == 1.0
         
         self.sim.maxh = 2.0
-        nose.tools.assert_equal(self.sim.options["maxh"], 2.0)
-        nose.tools.assert_equal(self.sim.maxh, 2.0)
+        assert self.sim.options["maxh"] == 2.0
+        assert self.sim.maxh == 2.0
         
-    @testattr(stddist = True)    
     def test_simulation_ncp_list_2(self):
         self.sim.simulate(1.,ncp_list=[0.5,4]) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
         
-    @testattr(stddist = True)    
     def test_simulation_ncp_with_jac(self):
         """
         Test a simulation with ncp.
@@ -334,9 +320,8 @@ class Test_LSODAR:
         self.sim.usejac= True
         self.sim.simulate(1.,100) #Simulate 2 seconds
 
-        nose.tools.assert_almost_equal(self.sim.y_sol[-1][0], -1.863646028, 4)
+        assert self.sim.y_sol[-1][0] == pytest.approx(-1.863646028, abs = 1e-4)
 
-    @testattr(stddist = True)
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
         import time
@@ -352,5 +337,5 @@ class Test_LSODAR:
         sim.report_continuously = True
 
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
-        with nose.tools.assert_raises_regex(TimeLimitExceeded, err_msg):
+        with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)

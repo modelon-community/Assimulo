@@ -16,7 +16,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-import nose
 from assimulo.solvers import LSODAR
 from assimulo.problem import Explicit_Problem
 
@@ -75,7 +74,7 @@ def run_example(with_plots=True):
     
     #Basic test
     x1 = y[:,0]
-    nose.tools.assert_less(np.abs(x1[-1] - 1.706168035), 1e-3)
+    assert np.abs(x1[-1] - 1.706168035) < 1e-3
     
     return exp_mod, exp_sim
 
