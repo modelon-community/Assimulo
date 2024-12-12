@@ -2,6 +2,12 @@
 ==========
 Changelog
 ==========
+--- Assimulo-3.6.0---
+    * Added get_sundials_version function (import from assimulo.solvers.sundials).
+    * Fixed bug that Radau5ODE would not count state events in statistics.
+    * Removed tests from the Assimulo installation.
+    * Changed testing framework from `nose` to `pytest`.
+
 --- Assimulo-3.5.2 ---
     * Allow to build without distutils for Python>=3.12 support
 
