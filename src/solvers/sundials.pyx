@@ -1542,6 +1542,7 @@ cdef class CVode(Explicit_ODE):
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver_sens
+    cdef int max_cons_steps_no_progress
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -1578,6 +1579,7 @@ cdef class CVode(Explicit_ODE):
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         self.options["stablimit"] = False
         self.options["norm"] = "WRMS"
+        self.max_cons_steps_no_progress = 10 # TODO: Set via an option
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -2124,14 +2126,16 @@ cdef class CVode(Explicit_ODE):
             if self.options["external_event_detection"]:
                 self.initialize_event_detection()
         
-        #Set stop time
+        # Set stop time
         flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
             N_VDestroy(yout)
             raise CVodeError(flag, t)
         
         if opts["report_continuously"] or opts["output_list"] is None: 
-            #Integration loop
+            # Integration loop
+            no_progress_counter = 0
+            previous_time = tret
             while True:
                     
                 flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
@@ -2139,6 +2143,14 @@ cdef class CVode(Explicit_ODE):
                     self.store_statistics(CV_TSTOP_RETURN)
                     N_VDestroy(yout)
                     raise CVodeError(flag, tret)
+                if tret == previous_time:
+                    no_progress_counter += 1
+                else:
+                    previous_time = tret
+                    no_progress_counter = 0
+
+                if no_progress_counter >= self.max_cons_steps_no_progress:
+                    raise CVodeError(CV_REPTD_RHSFUNC_ERR, tret)
                 
                 t = tret
                 y = nv2arr(yout)

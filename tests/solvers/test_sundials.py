@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import pytest
 from assimulo.solvers.sundials import CVode, IDA, CVodeError, get_sundials_version
 from assimulo.problem import Explicit_Problem
@@ -873,6 +874,19 @@ class Test_CVode:
         sim.rtol = 1e-6
         sim.rtol = [1e-6]
         sim.rtol = np.array([1e-6])
+
+    def test_no_progress(self):
+        """ Test example where CVode fails to make progress and ensure it errors out."""
+        def f(t, y, sw = None):
+            if t > 0.5:
+                raise Exception("nope")
+            return -y
+        prob = Explicit_Problem(f, np.array([1.]))
+        sim = CVode(prob)
+        sim.time_limit = 1.
+        err_msg = "The right-hand side function had repeated recoverable errors."
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1.)
 
 class Test_IDA:
     
