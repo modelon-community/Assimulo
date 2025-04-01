@@ -2150,7 +2150,12 @@ cdef class CVode(Explicit_ODE):
                     no_progress_counter = 0
 
                 if no_progress_counter >= self.max_cons_steps_no_progress:
-                    raise CVodeError(CV_REPTD_RHSFUNC_ERR, tret)
+                    self.minh = 100*(np.nextafter(tret, 2*tret) - tret)
+                    # print("Forcing CVode to make progress; setting minh = ", self.minh)
+                    flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.options["minh"])
+                    if flag < 0:
+                        raise CVodeError(flag)
+                    # raise CVodeError(CV_REPTD_RHSFUNC_ERR, tret)
                 
                 t = tret
                 y = nv2arr(yout)
