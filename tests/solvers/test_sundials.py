@@ -399,18 +399,10 @@ class Test_CVode:
         exp_sim.time_limit = 1 #One second
         exp_sim.report_continuously = True
         
-        try:
+        err_msg = "The time limit was exceeded at integration time"
+        with pytest.raises(TimeLimitExceeded, match = re.escape(err_msg)):
             exp_sim.simulate(1.0)
-            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except Exception:
-            pass
-            
-        found_data = False
-        for k in exp_sim.statistics.keys():
-            if exp_sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
-                found_data = True
-        
-        assert found_data, "No statistics was found to be stored"
+        assert any(exp_sim.statistics[k] > 0 for k in exp_sim.statistics.keys()), "No statistics was found to be stored"
     
     def test_discr_method(self):
         """

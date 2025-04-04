@@ -164,6 +164,23 @@ class Extended_Problem(Explicit_Problem):
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
+class Eval_Failure(Explicit_Problem):
+    """Problem for testing evaluation failures starting from a given time point and 
+    aborting on BaseExceptions."""
+    y0 = np.array([1.])
+    def __init__(self, t_failure = 0.5, max_evals = 1000):
+        self.t_failure = t_failure
+        self.max_evals = max_evals
+        self.n_evals = 0
+    
+    def rhs(self, t, y, sw = None):
+        self.n_evals += 1
+        if t > self.t_failure:
+            raise ValueError("passed failure time")
+        if (self.max_evals > 0) and (self.n_evals > self.max_evals):
+            raise BaseException("Abort")
+        return np.array([-1.])
+
 class Test_Explicit_Radau5_Py:
     """
     Tests the explicit Radau solver (Python implementation).
@@ -1003,11 +1020,8 @@ class Test_Explicit_Radau5:
         aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
         prob = Explicit_Problem(aux.f, y0)
         sim = Radau5ODE(prob)
-        try:
+        with pytest.raises(KeyboardInterrupt, match = "f"):
             sim.simulate(1.)
-            raise Exception("Simulation passed without interrupt.")
-        except KeyboardInterrupt as e:
-            assert str(e) == "f"
 
     def test_keyboard_interrupt_jac(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
@@ -1019,11 +1033,8 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(prob)
         sim.usejac = True
 
-        try:
+        with pytest.raises(KeyboardInterrupt, match = "jac"):
             sim.simulate(1.)
-            raise Exception("Simulation passed without interrupt.")
-        except KeyboardInterrupt as e:
-            assert str(e) == "jac"
 
     def test_keyboard_interrupt_jac_sparse(self):
         """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
@@ -1037,11 +1048,8 @@ class Test_Explicit_Radau5:
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        try:
+        with pytest.raises(KeyboardInterrupt, match = "jac"):
             sim.simulate(1.)
-            raise Exception("Simulation passed without interrupt.")
-        except KeyboardInterrupt as e:
-            assert str(e) == "jac"
 
     def test_keyboard_interrupt_event_indicator(self):
         """Test that KeyboardInterrupts in event indicator function resp. solout callback correctly terminate solution."""
@@ -1053,11 +1061,8 @@ class Test_Explicit_Radau5:
         prob.handle_event = aux.handle_event
         sim = Radau5ODE(prob)
 
-        try:
+        with pytest.raises(KeyboardInterrupt, match = "event"):
             sim.simulate(1.)
-            raise Exception("Simulation passed without interrupt.")
-        except KeyboardInterrupt as e:
-            assert str(e) == "event"
 
     def test_time_limit(self):
         """ Test that simulation is canceled when a set time limited is exceeded. """
@@ -1092,18 +1097,21 @@ class Test_Explicit_Radau5:
         sim.maxh = 1e-5
         sim.time_limit = 1
         sim.report_continuously = True
-        try:
+
+        err_msg = "The time limit was exceeded at integration time"
+        with pytest.raises(TimeLimitExceeded, match = re.escape(err_msg)):
             sim.simulate(1.0)
-            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except Exception:
-            pass
-            
-        found_data = False
-        for k in sim.statistics.keys():
-            if sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
-                found_data = True
-        
-        assert found_data, "No statistics was found to be stored"
+        assert any(sim.statistics[k] > 0 for k in sim.statistics.keys()), "No statistics was found to be stored"
+
+    def test_no_progress(self):
+        """Test example where solver cannot make progress past a given time."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
+        sim = Radau5ODE(prob)
+
+        err_msg = "passed failure time"
+        with pytest.raises(ValueError, match = re.escape(err_msg)):
+            sim.simulate(1.0)
+
 
 class Test_Implicit_Radau5:
     """
