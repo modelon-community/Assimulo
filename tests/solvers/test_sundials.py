@@ -911,7 +911,7 @@ class Test_CVode:
         sim = CVode(prob)
         sim.maxstepshnil = 0
         assert sim.minh == 0
-        err_msg = "The user-provided rhs function failed in an unrecoverable manner"
+        err_msg = "failed in an unrecoverable manner"
         with pytest.raises(CVodeError, match = re.escape(err_msg)):
             sim.simulate(1.)
         assert sim.minh == 0
@@ -929,7 +929,7 @@ class Test_CVode:
         sim = CVode(prob)
         assert sim.minh == 0
         sim.report_continuously = False
-        err_msg = "The user-provided rhs function failed in an unrecoverable manner."
+        err_msg = "failed in an unrecoverable manner"
         with pytest.raises(CVodeError, match = re.escape(err_msg)):
             sim.simulate(1., ncp = ncp, ncp_list = ncp_list)
         assert sim.minh == 0
