@@ -28,7 +28,7 @@ from assimulo.support import set_type_shape_array
 
 cimport sundials_includes as SUNDIALS
 
-#Various C includes transfered to namespace
+#Various C includes transferred to namespace
 from sundials_includes cimport N_Vector, realtype, N_VectorContent_Serial, DENSE_COL, sunindextype
 from sundials_includes cimport memcpy, N_VNew_Serial, DlsMat, SUNMatrix, SUNMatrixContent_Dense, SUNMatrixContent_Sparse
 IF SUNDIALS_VERSION < (5,0,0):
@@ -46,6 +46,7 @@ include "../lib/sundials_callbacks.pxi"
 include "../lib/sundials_callbacks_ida_cvode.pxi"
 
 _sundials_version = SUNDIALS_VERSION
+MINH_FORCE_FACTOR = 10
 
 cpdef get_sundials_version():
     """Return SUNDIALS version as tuple."""
@@ -1542,7 +1543,7 @@ cdef class CVode(Explicit_ODE):
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver_sens
-    cdef int max_cons_steps_no_progress
+    cdef int _progress_check
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
@@ -1563,6 +1564,7 @@ cdef class CVode(Explicit_ODE):
         self.options["maxord"] = 5        #Maximum order allowed
         self.options["maxncf"] = 10
         self.options["maxnef"] = 20  #Increased from the default 7 in Sundials
+        self.options["maxstepshnil"] = 10 # Maximum number of steps with effetive step-size zero. Will force minh afterwards
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["maxsteps"] = 10000  #Maximum number of steps
@@ -1579,7 +1581,7 @@ cdef class CVode(Explicit_ODE):
         self.options["external_event_detection"] = False #Sundials rootfinding is used for event location as default
         self.options["stablimit"] = False
         self.options["norm"] = "WRMS"
-        self.max_cons_steps_no_progress = 10 # TODO: Set via an option
+        self._progress_check = True # On by default
         
         self.options["maxkrylov"] = 5
         self.options["precond"] = PREC_NONE
@@ -2113,7 +2115,10 @@ cdef class CVode(Explicit_ODE):
         cdef double tret = self.t, tout
         cdef list tr = [], yr = []
         cdef np.ndarray output_list
-    
+
+        cdef int no_progress_counter = 0
+        cdef double previous_time = tret
+
         if self.options["norm"] == "EUCLIDEAN":
             yout = arr2nv_euclidean(y)
         else:
@@ -2132,30 +2137,26 @@ cdef class CVode(Explicit_ODE):
             N_VDestroy(yout)
             raise CVodeError(flag, t)
         
-        if opts["report_continuously"] or opts["output_list"] is None: 
+        if (opts["report_continuously"]) or (opts["output_list"] is None): 
             # Integration loop
-            no_progress_counter = 0
-            previous_time = tret
             while True:
-                    
                 flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
                 if flag < 0:
                     self.store_statistics(CV_TSTOP_RETURN)
                     N_VDestroy(yout)
                     raise CVodeError(flag, tret)
-                if tret == previous_time:
-                    no_progress_counter += 1
-                else:
-                    previous_time = tret
-                    no_progress_counter = 0
+                if self._progress_check:
+                    if tret == previous_time:
+                        no_progress_counter += 1
+                    else:
+                        previous_time = tret
+                        no_progress_counter = 0
 
-                if no_progress_counter >= self.max_cons_steps_no_progress:
-                    self.minh = 100*(np.nextafter(tret, 2*tret) - tret)
-                    # print("Forcing CVode to make progress; setting minh = ", self.minh)
-                    flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.options["minh"])
-                    if flag < 0:
-                        raise CVodeError(flag)
-                    # raise CVodeError(CV_REPTD_RHSFUNC_ERR, tret)
+                    if no_progress_counter >= self.options["maxstepshnil"]:
+                        self.minh = MINH_FORCE_FACTOR*(np.nextafter(tret, 2*tret) - tret)
+                        flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.minh)
+                        if flag < 0:
+                            raise CVodeError(flag)
                 
                 t = tret
                 y = nv2arr(yout)
@@ -3281,6 +3282,37 @@ cdef class CVode(Explicit_ODE):
         
     external_event_detection = property(_get_external_event_detection,
                                         _set_external_event_detection)
+
+    def _set_maxstepshnil(self, maxstepshnil):
+        if not isinstance(maxstepshnil, int):
+            raise TypeError("'maxstepshnil' must be an integer.")
+        self.options["maxstepshnil"] = maxstepshnil
+        self._progress_check = maxstepshnil > 0
+
+    def _get_maxstepshnil(self):
+        """
+        Specifies the number of consecutive sucessful integration steps CVode may 
+        take without effective advancement in time (t + h == t), 
+        before forcing progress with using a minimal stepsize.
+        ONLY ACTIVE if 
+            CVode.report_continuously is True 
+        OR
+            when using explicit output points, via
+            CVode.simulate(..., ncp = N) OR CVode.simulate(..., ncp_list = [...])
+        
+            Parameters::
+            
+                maxstepshnil
+                        - Integer; check only active for positive values.
+                        - Default: 10.
+                        
+            Returns::
+            
+                The current value of maxstepshnil.
+        """
+        return self.options["maxstepshnil"]
+
+    maxstepshnil = property(_get_maxstepshnil, _set_maxstepshnil)
     
     cdef void store_statistics(self, int return_flag):
         """

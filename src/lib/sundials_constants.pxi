@@ -91,7 +91,7 @@ DEF CVSPILS_SUCCESS = 0 #Success
 # Sensitivity constants
 DEF CV_SRHSFUNC_FAIL      = -41   #The sensitivity right-hand side function failed unrecoverable
 DEF CV_FIRST_SRHSFUNC_ERR = -42   #The sensitivity right-hand side function failed at first call
-DEF CV_REPTD_SRHSFUNC_ERR = -43   #Covergence tests occurred too many times.
+DEF CV_REPTD_SRHSFUNC_ERR = -43   #Convergence tests occurred too many times.
 DEF CV_UNREC_SRHSFUNC_ERR = -44   #The sensitivity right-hand side function had a recoverable error but was unable to recover
 DEF CV_BAD_IS             = -45
 
