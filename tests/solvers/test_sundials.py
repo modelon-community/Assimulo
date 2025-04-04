@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import pytest
 from assimulo.solvers.sundials import CVode, IDA, CVodeError, get_sundials_version
 from assimulo.problem import Explicit_Problem
@@ -112,6 +113,23 @@ class Extended_Problem(Explicit_Problem):
         """
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
+
+class Eval_Failure(Explicit_Problem):
+    """Problem for testing evaluation failures starting from a given time point and 
+    aborting on BaseExceptions."""
+    y0 = np.array([1.])
+    def __init__(self, t_failure = 0.5, max_evals = 1000):
+        self.t_failure = t_failure
+        self.max_evals = max_evals
+        self.n_evals = 0
+    
+    def rhs(self, t, y, sw = None):
+        self.n_evals += 1
+        if t > self.t_failure:
+            raise ValueError("passed failure time")
+        if (self.max_evals > 0) and (self.n_evals > self.max_evals):
+            raise BaseException("Abort")
+        return np.array([-1.])
 
 class Test_CVode:
     
@@ -381,18 +399,10 @@ class Test_CVode:
         exp_sim.time_limit = 1 #One second
         exp_sim.report_continuously = True
         
-        try:
+        err_msg = "The time limit was exceeded at integration time"
+        with pytest.raises(TimeLimitExceeded, match = re.escape(err_msg)):
             exp_sim.simulate(1.0)
-            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except Exception:
-            pass
-            
-        found_data = False
-        for k in exp_sim.statistics.keys():
-            if exp_sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
-                found_data = True
-        
-        assert found_data, "No statistics was found to be stored"
+        assert any(exp_sim.statistics[k] > 0 for k in exp_sim.statistics.keys()), "No statistics was found to be stored"
     
     def test_discr_method(self):
         """
@@ -873,6 +883,65 @@ class Test_CVode:
         sim.rtol = 1e-6
         sim.rtol = [1e-6]
         sim.rtol = np.array([1e-6])
+
+    def test_no_progress_force_min_h(self):
+        """ Test example where CVode fails to make progress and minimal stepsize 
+        will be forced."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
+        sim = CVode(prob)
+        sim.maxstepshnil = 10 # default
+        assert sim.minh == 0
+        err_msg = "The right-hand side function had repeated recoverable errors."
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1.)
+        assert sim.minh > 0
+
+    def test_no_progress_maxstepshnil_not_active(self):
+        """ Test example where CVode fails to make progress, but forcing minh 
+        is deactivated."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = 1000)
+        sim = CVode(prob)
+        sim.maxstepshnil = 0
+        assert sim.minh == 0
+        err_msg = "failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1.)
+        assert sim.minh == 0
+
+    @pytest.mark.parametrize("ncp, ncp_list",
+        [
+            (10, None),
+            (0, [0., 0.7, 1.])
+        ]
+        )
+    def test_maxstepshnil_not_enforced(self, ncp, ncp_list):
+        """ Test example where CVode fails to make progress, but minh will not be forced.
+        CVode fails in ordinary ways."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = 100)
+        sim = CVode(prob)
+        assert sim.minh == 0
+        sim.report_continuously = False
+        err_msg = "failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1., ncp = ncp, ncp_list = ncp_list)
+        assert sim.minh == 0
+
+    @pytest.mark.parametrize("val", [-1, 0, 20])
+    def test_maxstepshnil_set_valid(self, val):
+        """Test setting valid values for the 'maxstepshnil' option."""
+        prob = Explicit_Problem(lambda t, x: -x, np.array([1.]))
+        sim = CVode(prob)
+        sim.maxstepshnil = val
+        assert val == sim.maxstepshnil
+
+    @pytest.mark.parametrize("val", [1.23, "no", [1]])
+    def test_maxstepshnil_set_invalid(self, val):
+        """Test setting invalid values for the 'maxstepshnil' option."""
+        prob = Explicit_Problem(lambda t, x: -x, np.array([1.]))
+        sim = CVode(prob)
+        msg = "'maxstepshnil' must be an integer."
+        with pytest.raises(TypeError, match = re.escape(msg)):
+            sim.maxstepshnil = val
 
 class Test_IDA:
     
