@@ -17,119 +17,19 @@
 
 import re
 import pytest
-from assimulo.solvers.sundials import CVode, IDA, CVodeError, get_sundials_version
+from assimulo.solvers.sundials import CVode, IDA, CVodeError, IDAError, get_sundials_version
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded, TerminateSimulation
 import numpy as np
 import scipy.sparse as sps
+from .utils import (
+    Extended_Problem,
+    Eval_Failure,
+    ExplicitProbBaseException,
+    ImplicitProbBaseException
+)
 
-class Extended_Problem(Explicit_Problem):
-    
-    #Sets the initial conditions directly into the problem
-    y0 = [0.0, -1.0, 0.0]
-    sw0 = [False,True,True]
-    event_array = np.array([0.0,0.0,0.0])
-    rhs_array   = np.array([0.0,0.0,0.0])
-    
-    #The right-hand-side function (rhs)
-    def rhs(self,t,y,sw):
-        """
-        This is our function we are trying to simulate. During simulation
-        the parameter sw should be fixed so that our function is continuous
-        over the interval. The parameters sw should only be changed when the
-        integrator has stopped.
-        """
-        self.rhs_array[0] = (1.0 if sw[0] else -1.0)
-        self.rhs_array[1] = 0.0
-        self.rhs_array[2] = 0.0
-
-        return self.rhs_array
-
-    #Sets a name to our function
-    name = 'ODE with discontinuities and a function with consistency problem'
-    
-    #The event function
-    def state_events(self,t,y,sw):
-        """
-        This is our function that keeps track of our events. When the sign
-        of any of the events has changed, we have an event.
-        """
-        self.event_array[0] = y[1] - 1.0 
-        self.event_array[1] = -y[2] + 1.0
-        self.event_array[2] = -t + 1.0
-        
-        return self.event_array    
-    
-    #Responsible for handling the events.
-    def handle_event(self, solver, event_info):
-        """
-        Event handling. This functions is called when Assimulo finds an event as
-        specified by the event functions.
-        """
-        event_info = event_info[0] #We only look at the state events information.
-        while True: #Event Iteration
-            self.event_switch(solver, event_info) #Turns the switches
-            
-            b_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            
-            event_info = self.check_eIter(b_mode, a_mode)
-                
-            if True not in event_info: #Breaks the iteration loop
-                break
-    
-    #Helper function for handle_event
-    def event_switch(self, solver, event_info):
-        """
-        Turns the switches.
-        """
-        for i in range(len(event_info)): #Loop across all event functions
-            if event_info[i] != 0:
-                solver.sw[i] = not solver.sw[i] #Turn the switch
-        
-    #Helper function for handle_event
-    def check_eIter(self, before, after):
-        """
-        Helper function for handle_event to determine if we have event
-        iteration.
-        
-            Input: Values of the event indicator functions (state_events)
-            before and after we have changed mode of operations.
-        """
-        
-        eIter = [False]*len(before)
-        
-        for i in range(len(before)):
-            if (before[i] < 0.0 and after[i] > 0.0) or (before[i] > 0.0 and after[i] < 0.0):
-                eIter[i] = True
-                
-        return eIter
-    
-    def init_mode(self, solver):
-        """
-        Initialize the DAE with the new conditions.
-        """
-        solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
-        solver.y[2] = (0.0 if solver.sw[2] else 2.0)
-
-class Eval_Failure(Explicit_Problem):
-    """Problem for testing evaluation failures starting from a given time point and 
-    aborting on BaseExceptions."""
-    y0 = np.array([1.])
-    def __init__(self, t_failure = 0.5, max_evals = 1000):
-        self.t_failure = t_failure
-        self.max_evals = max_evals
-        self.n_evals = 0
-    
-    def rhs(self, t, y, sw = None):
-        self.n_evals += 1
-        if t > self.t_failure:
-            raise ValueError("passed failure time")
-        if (self.max_evals > 0) and (self.n_evals > self.max_evals):
-            raise BaseException("Abort")
-        return np.array([-1.])
 
 class Test_CVode:
     
@@ -277,8 +177,6 @@ class Test_CVode:
         
         qcur = self.simulator.get_current_order()
         assert qcur == 4
-
-
         
     def test_init(self):
         """
@@ -917,11 +815,12 @@ class Test_CVode:
     def test_maxstepshnil_not_enforced(self, ncp, ncp_list):
         """ Test example where CVode fails to make progress, but minh will not be forced.
         CVode fails in ordinary ways."""
-        prob = Eval_Failure(t_failure = 0.5, max_evals = 100)
+        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
         sim = CVode(prob)
         assert sim.minh == 0
         sim.report_continuously = False
-        err_msg = "failed in an unrecoverable manner"
+        sim.maxsteps = 200
+        err_msg = "The solver took max internal steps but could not reach tout"
         with pytest.raises(CVodeError, match = re.escape(err_msg)):
             sim.simulate(1., ncp = ncp, ncp_list = ncp_list)
         assert sim.minh == 0
@@ -942,6 +841,45 @@ class Test_CVode:
         msg = "'maxstepshnil' must be an integer."
         with pytest.raises(TypeError, match = re.escape(msg)):
             sim.maxstepshnil = val
+
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, fcn = True)
+        sim = CVode(prob)
+        msg = "The user-provided rhs function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    def test_base_exception_interrupt_jac(self):
+        """Test that BaseExceptions in jacobian terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
+        sim = CVode(prob)
+        sim.usejac = True
+
+        msg = "The linear solvers setup function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    def test_base_exception_interrupt_jac_sparse(self):
+        """Test that BaseExceptions in jacobian terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
+        prob.jac_nnc = 1
+        sim = CVode(prob)
+        sim.linear_solver = 'SPARSE'
+        sim.usejac = True
+
+        msg = "The linear solvers setup function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    def test_base_exception_interrupt_event_indicator(self):
+        """Test that BaseExceptions in event indicator function resp. solout callback correctly terminate solution."""
+        prob = ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
+        sim = CVode(prob)
+
+        msg = "The rootfinding function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
 
 class Test_IDA:
     
@@ -1376,6 +1314,15 @@ class Test_IDA:
         sim.simulate(2.)
         assert len(sim.t_sol) == sim.statistics["nsteps"] + 1
         assert nsteps == sim.statistics["nsteps"]
+
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
+        prob = ImplicitProbBaseException(dim = 2, fcn = True)
+        sim = IDA(prob)
+
+        err_msg = "The user-provided residual function failed in an unrecoverable manner."
+        with pytest.raises(IDAError, match = re.escape(err_msg)):
+            sim.simulate(1.)
 
 
 class Test_Sundials:

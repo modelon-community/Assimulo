@@ -26,160 +26,17 @@ from assimulo.exception import TimeLimitExceeded
 import scipy.sparse as sps
 import numpy as np
 
+from .utils import (
+    Extended_Problem,
+    Eval_Failure,
+    ExplicitProbBaseException,
+    ImplicitProbBaseException
+)
+
+
 import re
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
-class KeyboardInterruptAux:
-    """Auxiliary class for creating problems (both explicit and implicit) 
-    that simulate a Keyboardinterrupt (Ctrl + c) in the rhs f, jacobian or event indicator.
-    
-    Set 'fcn', 'jac' or 'event' to True to enable KeyboardInterrupt Exceptions for the respective functions."""
-    def __init__(self, dim, fcn = False, jac = False, event = False, fcn_n = 5, event_n = 5):
-        self.dim = dim
-        self.fcn_raise = fcn
-        self.fcn_n = fcn_n
-        self.jac_raise = jac
-        self.event_raise = event
-        self.event_n = event_n
-        self.n_f = 0
-        self.n_e = 0
-
-    def f(self, t, y, sw = None):
-        if self.fcn_raise:
-            self.n_f += 1
-            if self.n_f % self.fcn_n == 0:
-                raise KeyboardInterrupt('f')
-        return -y
-
-    def f_impl(self, t, y, yd):
-        if self.fcn_raise:
-            self.n_f += 1
-            if self.n_f % self.fcn_n == 0:
-                raise KeyboardInterrupt('f_impl')
-        return -y
-        
-    def jac(self, t, y):
-        if self.jac_raise:
-            raise KeyboardInterrupt('jac')
-        else:
-            return -np.eye(self.dim)
-
-    def state_events(self,t,y,sw):
-        if self.event_raise:
-            self.n_e += 1
-            if self.n_e % self.event_n == 0:
-                raise KeyboardInterrupt('event')
-        return np.ones(len(sw))
-
-    def handle_event(self, solver, event_info):
-        pass
-
-class Extended_Problem(Explicit_Problem):
-    
-    #Sets the initial conditions directly into the problem
-    y0 = [0.0, -1.0, 0.0]
-    sw0 = [False,True,True]
-    event_array = np.array([0.0,0.0,0.0])
-    rhs_array   = np.array([0.0,0.0,0.0])
-    
-    #The right-hand-side function (rhs)
-    def rhs(self,t,y,sw):
-        """
-        This is our function we are trying to simulate. During simulation
-        the parameter sw should be fixed so that our function is continuous
-        over the interval. The parameters sw should only be changed when the
-        integrator has stopped.
-        """
-        self.rhs_array[0] = (1.0 if sw[0] else -1.0)
-        self.rhs_array[1] = 0.0
-        self.rhs_array[2] = 0.0
-
-        return self.rhs_array
-
-    #Sets a name to our function
-    name = 'ODE with discontinuities and a function with consistency problem'
-    
-    #The event function
-    def state_events(self,t,y,sw):
-        """
-        This is our function that keeps track of our events. When the sign
-        of any of the events has changed, we have an event.
-        """
-        self.event_array[0] = y[1] - 1.0 
-        self.event_array[1] = -y[2] + 1.0
-        self.event_array[2] = -t + 1.0
-        
-        return self.event_array    
-    
-    #Responsible for handling the events.
-    def handle_event(self, solver, event_info):
-        """
-        Event handling. This functions is called when Assimulo finds an event as
-        specified by the event functions.
-        """
-        event_info = event_info[0] #We only look at the state events information.
-        while True: #Event Iteration
-            self.event_switch(solver, event_info) #Turns the switches
-            
-            b_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            
-            event_info = self.check_eIter(b_mode, a_mode)
-                
-            if True not in event_info: #Breaks the iteration loop
-                break
-    
-    #Helper function for handle_event
-    def event_switch(self, solver, event_info):
-        """
-        Turns the switches.
-        """
-        for i in range(len(event_info)): #Loop across all event functions
-            if event_info[i] != 0:
-                solver.sw[i] = not solver.sw[i] #Turn the switch
-        
-    #Helper function for handle_event
-    def check_eIter(self, before, after):
-        """
-        Helper function for handle_event to determine if we have event
-        iteration.
-        
-            Input: Values of the event indicator functions (state_events)
-            before and after we have changed mode of operations.
-        """
-        
-        eIter = [False]*len(before)
-        
-        for i in range(len(before)):
-            if (before[i] < 0.0 and after[i] > 0.0) or (before[i] > 0.0 and after[i] < 0.0):
-                eIter[i] = True
-                
-        return eIter
-    
-    def init_mode(self, solver):
-        """
-        Initialize the DAE with the new conditions.
-        """
-        solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
-        solver.y[2] = (0.0 if solver.sw[2] else 2.0)
-
-class Eval_Failure(Explicit_Problem):
-    """Problem for testing evaluation failures starting from a given time point and 
-    aborting on BaseExceptions."""
-    y0 = np.array([1.])
-    def __init__(self, t_failure = 0.5, max_evals = 1000):
-        self.t_failure = t_failure
-        self.max_evals = max_evals
-        self.n_evals = 0
-    
-    def rhs(self, t, y, sw = None):
-        self.n_evals += 1
-        if t > self.t_failure:
-            raise ValueError("passed failure time")
-        if (self.max_evals > 0) and (self.n_evals > self.max_evals):
-            raise BaseException("Abort")
-        return np.array([-1.])
 
 class Test_Explicit_Radau5_Py:
     """
@@ -1013,55 +870,39 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg.format('0', "<class 'int'>")):
             self.sim.linear_solver = 0
 
-    def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
-
-        y0 = np.array([1., 1.])
-        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
-        prob = Explicit_Problem(aux.f, y0)
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
+        prob = ExplicitProbBaseException(dim = 2, fcn = True)
         sim = Radau5ODE(prob)
-        with pytest.raises(KeyboardInterrupt, match = "f"):
+        with pytest.raises(BaseException, match = "f"):
             sim.simulate(1.)
 
-    def test_keyboard_interrupt_jac(self):
-        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem."""
-
-        y0 = np.array([1., 1.])
-        aux = KeyboardInterruptAux(dim = len(y0), jac = True)
-        prob = Explicit_Problem(aux.f, y0)
-        prob.jac = aux.jac
+    def test_base_exception_interrupt_jac(self):
+        """Test that BaseExceptions in jacobian terminate the simulation. Radau5 + C + explicit problem."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
         sim = Radau5ODE(prob)
         sim.usejac = True
 
-        with pytest.raises(KeyboardInterrupt, match = "jac"):
+        with pytest.raises(BaseException, match = "jac"):
             sim.simulate(1.)
 
-    def test_keyboard_interrupt_jac_sparse(self):
-        """Test that KeyboardInterrupts in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
-
-        y0 = np.array([1., 1.])
-        aux = KeyboardInterruptAux(dim = len(y0), jac = True)
-        prob = Explicit_Problem(aux.f, y0)
-        prob.jac = aux.jac
-        prob.jac_nnz = 1
+    def test_base_exception_interrupt_jac_sparse(self):
+        """Test that BaseExceptions in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
+        prob.jac_nnc = 1
         sim = Radau5ODE(prob)
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
-        with pytest.raises(KeyboardInterrupt, match = "jac"):
+        with pytest.raises(BaseException, match = "jac"):
             sim.simulate(1.)
 
-    def test_keyboard_interrupt_event_indicator(self):
-        """Test that KeyboardInterrupts in event indicator function resp. solout callback correctly terminate solution."""
-
-        y0 = np.array([1.])
-        aux = KeyboardInterruptAux(dim = len(y0), event = True, event_n = 3)
-        prob = Explicit_Problem(aux.f, y0, sw0 = np.array([1.]))
-        prob.state_events = aux.state_events
-        prob.handle_event = aux.handle_event
+    def test_base_exception_interrupt_event_indicator(self):
+        """Test that BaseExceptions in event indicator function resp. solout callback correctly terminate solution."""
+        prob = ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
         sim = Radau5ODE(prob)
 
-        with pytest.raises(KeyboardInterrupt, match = "event"):
+        with pytest.raises(BaseException, match = "event"):
             sim.simulate(1.)
 
     def test_time_limit(self):
@@ -1510,13 +1351,9 @@ class Test_Implicit_Radau5_Py:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
 
-    def test_keyboard_interrupt_fcn(self):
-        """Test that KeyboardInterrupts in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
-
-        y0 = np.array([1., 1.])
-        yd = np.array([0., 0.])
-        aux = KeyboardInterruptAux(dim = len(y0), fcn = True)
-        prob = Implicit_Problem(aux.f_impl, y0, yd)
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
+        prob = ImplicitProbBaseException(dim = 2, fcn = True)
         sim = Radau5DAE(prob)
 
         err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
