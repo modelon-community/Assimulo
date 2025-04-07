@@ -889,7 +889,7 @@ class Test_Explicit_Radau5:
     def test_base_exception_interrupt_jac_sparse(self):
         """Test that BaseExceptions in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
         prob = ExplicitProbBaseException(dim = 2, jac = True)
-        prob.jac_nnc = 1
+        prob.jac_nnz = 2
         sim = Radau5ODE(prob)
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
