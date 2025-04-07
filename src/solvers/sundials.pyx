@@ -2148,15 +2148,14 @@ cdef class CVode(Explicit_ODE):
                 if self._progress_check:
                     if tret == previous_time:
                         no_progress_counter += 1
+                        if no_progress_counter >= self.options["maxstepshnil"]:
+                            self.minh = MINH_FORCE_FACTOR*(np.nextafter(tret, 2*tret) - tret)
+                            flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.minh)
+                            if flag < 0:
+                                raise CVodeError(flag)
                     else:
                         previous_time = tret
                         no_progress_counter = 0
-
-                    if no_progress_counter >= self.options["maxstepshnil"]:
-                        self.minh = MINH_FORCE_FACTOR*(np.nextafter(tret, 2*tret) - tret)
-                        flag = SUNDIALS.CVodeSetMinStep(self.cvode_mem, self.minh)
-                        if flag < 0:
-                            raise CVodeError(flag)
                 
                 t = tret
                 y = nv2arr(yout)
