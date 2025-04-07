@@ -863,7 +863,7 @@ class Test_CVode:
     def test_base_exception_interrupt_jac_sparse(self):
         """Test that BaseExceptions in jacobian terminate the simulation."""
         prob = ExplicitProbBaseException(dim = 2, jac = True)
-        prob.jac_nnc = 1
+        prob.jac_nnz = 1
         sim = CVode(prob)
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
