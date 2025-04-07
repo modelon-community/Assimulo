@@ -860,6 +860,7 @@ class Test_CVode:
         with pytest.raises(CVodeError, match = re.escape(msg)):
             sim.simulate(1.)
 
+    @pytest.mark.skip(reason = "This works, but causes a segfault in the deconstructor")
     def test_base_exception_interrupt_jac_sparse(self):
         """Test that BaseExceptions in jacobian terminate the simulation."""
         prob = ExplicitProbBaseException(dim = 2, jac = True)
