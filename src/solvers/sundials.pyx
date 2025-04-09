@@ -1564,7 +1564,7 @@ cdef class CVode(Explicit_ODE):
         self.options["maxord"] = 5        #Maximum order allowed
         self.options["maxncf"] = 10
         self.options["maxnef"] = 20  #Increased from the default 7 in Sundials
-        self.options["maxstepshnil"] = 10 # Maximum number of steps with effetive step-size zero. Will force minh afterwards
+        self.options["maxstepshnil"] = 10 # Maximum number of steps with effective step-size zero. Will force minh afterwards
         self.options["usejac"]   = True if (self.problem_info["jac_fcn"] or self.problem_info["jacv_fcn"]) else False
         self.options["usesens"] = True if self.problem_info["dimSens"] > 0 else False
         self.options["maxsteps"] = 10000  #Maximum number of steps
@@ -3290,7 +3290,7 @@ cdef class CVode(Explicit_ODE):
 
     def _get_maxstepshnil(self):
         """
-        Specifies the number of consecutive sucessful integration steps CVode may 
+        Specifies the number of consecutive successful integration steps CVode may 
         take without effective advancement in time (t + h == t), 
         before forcing progress with using a minimal stepsize.
         ONLY ACTIVE if 

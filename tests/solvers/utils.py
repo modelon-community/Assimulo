@@ -23,7 +23,7 @@ from assimulo.problem import Explicit_Problem, Implicit_Problem
 
 class Extended_Problem(Explicit_Problem):
     
-    #Sets the initial conditions directly into the problem
+    # Sets the initial conditions directly into the problem
     y0 = [0.0, -1.0, 0.0]
     sw0 = [False,True,True]
     event_array = np.array([0.0,0.0,0.0])
