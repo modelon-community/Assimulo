@@ -42,7 +42,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noe
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
         
     else: #No sensitivity
         try:
@@ -53,7 +53,7 @@ cdef int cv_rhs(realtype t, N_Vector yv, N_Vector yvdot, void* problem_data) noe
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
     
     for i in range(pData.dim):
         resptr[i] = rhs[i]
@@ -92,7 +92,7 @@ cdef int cv_sens_rhs_all(int Ns, realtype t, N_Vector yv, N_Vector yvdot,
         traceback.print_exc()
         return CV_UNREC_RHSFUNC_ERR 
     except BaseException:
-        return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+        return CV_UNREC_RHSFUNC_ERR
 
 
 IF SUNDIALS_VERSION >= (3,0,0):
@@ -386,7 +386,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
         
         jcurPtr[0] = 1 if ret[0] else 0
         pData.PREC_DATA = ret[1]
@@ -412,7 +412,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
                     
         for i in range(pData.dim):
             zptr[i] = zres[i]
@@ -437,7 +437,7 @@ ELSE:
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
         
         jcurPtr[0] = 1 if ret[0] else 0
         pData.PREC_DATA = ret[1]
@@ -463,7 +463,7 @@ ELSE:
         except Exception:
             return CV_REC_ERR #Recoverable Error (See Sundials description)
         except BaseException:
-            return CV_UNREC_RHSFUNC_ERR # Non-recoverable
+            return CV_UNREC_RHSFUNC_ERR
                     
         for i in range(pData.dim):
             zptr[i] = zres[i]

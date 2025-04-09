@@ -29,7 +29,7 @@ class Extended_Problem(Explicit_Problem):
     event_array = np.array([0.0,0.0,0.0])
     rhs_array   = np.array([0.0,0.0,0.0])
     
-    #The right-hand-side function (rhs)
+    # The right-hand-side function (rhs)
     def rhs(self,t,y,sw):
         """
         This is our function we are trying to simulate. During simulation
@@ -43,10 +43,10 @@ class Extended_Problem(Explicit_Problem):
 
         return self.rhs_array
 
-    #Sets a name to our function
+    # Sets a name to our function
     name = 'ODE with discontinuities and a function with consistency problem'
     
-    #The event function
+    # The event function
     def state_events(self,t,y,sw):
         """
         This is our function that keeps track of our events. When the sign
@@ -58,35 +58,35 @@ class Extended_Problem(Explicit_Problem):
         
         return self.event_array    
     
-    #Responsible for handling the events.
+    # Responsible for handling the events.
     def handle_event(self, solver, event_info):
         """
         Event handling. This functions is called when Assimulo finds an event as
         specified by the event functions.
         """
-        event_info = event_info[0] #We only look at the state events information.
-        while True: #Event Iteration
-            self.event_switch(solver, event_info) #Turns the switches
+        event_info = event_info[0] # We only look at the state events information.
+        while True: # Event Iteration
+            self.event_switch(solver, event_info) # Turns the switches
             
             b_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            self.init_mode(solver) #Pass in the solver to the problem specified init_mode
+            self.init_mode(solver) # Pass in the solver to the problem specified init_mode
             a_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
             
             event_info = self.check_eIter(b_mode, a_mode)
                 
-            if True not in event_info: #Breaks the iteration loop
+            if True not in event_info: # Breaks the iteration loop
                 break
     
-    #Helper function for handle_event
+    # Helper function for handle_event
     def event_switch(self, solver, event_info):
         """
         Turns the switches.
         """
-        for i in range(len(event_info)): #Loop across all event functions
+        for i in range(len(event_info)): # Loop across all event functions
             if event_info[i] != 0:
-                solver.sw[i] = not solver.sw[i] #Turn the switch
+                solver.sw[i] = not solver.sw[i] # Turn the switch
         
-    #Helper function for handle_event
+    # Helper function for handle_event
     def check_eIter(self, before, after):
         """
         Helper function for handle_event to determine if we have event

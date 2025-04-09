@@ -66,37 +66,37 @@ class Test_CVode:
         assert np.all(t == np.arange(0,11)[::-1])
 
     def test_event_localizer(self):
-        """ Test that CVode internal event localization works correctly."""
-        exp_mod = Extended_Problem() #Create the problem
+        """Test that CVode internal event localization works correctly."""
+        exp_mod = Extended_Problem() # Create the problem
 
-        exp_sim = CVode(exp_mod) #Create the solver
+        exp_sim = CVode(exp_mod) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
         exp_sim.external_event_detection = False # default; CVode internal event detection
         
-        #Simulate
-        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
+        # Simulate
+        t, y = exp_sim.simulate(10.0, 1000) # Simulate 10 seconds with 1000 communications points
         
-        #Basic test
+        # Basic test
         assert y[-1][0] == pytest.approx(8.0)
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
     def test_event_localizer_external(self):
-        """ Test that CVode with Assimulo event localization works correctly."""
-        exp_mod = Extended_Problem() #Create the problem
+        """Test that CVode with Assimulo event localization works correctly."""
+        exp_mod = Extended_Problem() # Create the problem
 
-        exp_sim = CVode(exp_mod) #Create the solver
+        exp_sim = CVode(exp_mod) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
         exp_sim.external_event_detection = True # Assimulo event detection
         
-        #Simulate
-        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
+        # Simulate
+        t, y = exp_sim.simulate(10.0, 1000) # Simulate 10 seconds with 1000 communications points
         
-        #Basic test
+        # Basic test
         assert y[-1][0] == pytest.approx(8.0)
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
@@ -220,7 +220,7 @@ class Test_CVode:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = CVode(exp_mod)
         exp_sim(5.,100)
         
@@ -255,7 +255,7 @@ class Test_CVode:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = CVode(exp_mod)
         exp_sim.verbosity = 10
         exp_sim(5.,100)
@@ -278,7 +278,7 @@ class Test_CVode:
         exp_sim = CVode(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
         with pytest.raises(TimeLimitExceeded):
@@ -294,7 +294,7 @@ class Test_CVode:
         exp_sim = CVode(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
         err_msg = "The time limit was exceeded at integration time"
@@ -330,10 +330,10 @@ class Test_CVode:
         This tests that the change from Functional to Newton works
         """
         f = lambda t,y: np.array([1.0])
-        y0 = 4.0 #Initial conditions
+        y0 = 4.0 # Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.iter = "FixedPoint"
         exp_sim.simulate(1)
@@ -352,16 +352,16 @@ class Test_CVode:
         assert self.simulator.norm == 'EUCLIDEAN'
         
         f = lambda t,y: np.array([1.0])
-        y0 = 4.0 #Initial conditions
+        y0 = 4.0 # Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.norm = "WRMS"
         exp_sim.simulate(1)
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.norm = "EUCLIDEAN"
         exp_sim.simulate(1)
@@ -370,8 +370,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: np.array([[0.,1.],[0.,0.]]) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       # Defines the rhs
+        jac = lambda t,x: np.array([[0.,1.],[0.,0.]]) # Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -395,8 +395,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: sps.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       # Defines the rhs
+        jac = lambda t,x: sps.csc_matrix(np.array([[0.,1.],[0.,0.]])) # Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -423,7 +423,7 @@ class Test_CVode:
         f = lambda t,x,sw: np.array([1.0])
         state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
+            solver.sw = [False] # Override the switches to point to another instance
         
         mod = Explicit_Problem(f,[0.0])
         mod.sw0 = [True]
@@ -498,7 +498,7 @@ class Test_CVode:
         prob = Explicit_Problem(f,y0)
         sim = CVode(prob)
         
-        t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) #Simulate 5 seconds
+        t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) # Simulate 5 seconds
         
         assert y[-1][0] == pytest.approx(0.00364832, abs = 1e-4)
         
@@ -558,25 +558,25 @@ class Test_CVode:
         jacvsw = lambda t,y,fy,v,sw: np.dot(np.array([[0,1.],[0,0]]),v)
         jacvp = lambda t,y,fy,v,p: np.dot(np.array([[0,1.],[0,0]]),v)
         jacvswp = lambda t,y,fy,v,sw,p: np.dot(np.array([[0,1.],[0,0]]),v)
-        y0 = [1.0,0.0] #Initial conditions
+        y0 = [1.0,0.0] # Initial conditions
         
         def run_sim(exp_mod):
-            exp_sim = CVode(exp_mod) #Create a CVode solver
-            exp_sim.linear_solver = 'SPGMR' #Change linear solver
+            exp_sim = CVode(exp_mod) # Create a CVode solver
+            exp_sim.linear_solver = 'SPGMR' # Change linear solver
 
-            #Simulate
-            t, y = exp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
+            # Simulate
+            t, y = exp_sim.simulate(5, 1000) # Simulate 5 seconds with 1000 communication points
         
-            #Basic tests
+            # Basic tests
             assert y[-1][0] == pytest.approx(-121.75000000, abs = 1e-4)
             assert y[-1][1] == pytest.approx(-49.100000000)
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_mod.jacv = jacv #Sets the jacobian
+        exp_mod.jacv = jacv # Sets the jacobian
         run_sim(exp_mod)
         
-        #Need someway of suppressing error messages from deep down in the Cython wrapper
-        #See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
+        # Need someway of suppressing error messages from deep down in the Cython wrapper
+        # See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
         try:
             from cStringIO import StringIO
         except ImportError:
@@ -586,28 +586,28 @@ class Test_CVode:
         sys.stderr = StringIO()
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         with pytest.raises(CVodeError):
             run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         with pytest.raises(CVodeError):
             run_sim(exp_mod)
         
-        #Restore standard error
+        # Restore standard error
         sys.stderr = stderr
         
         exp_mod = Explicit_Problem(fp,y0,p0=1.0)
-        exp_mod.jacv = jacvp #Sets the jacobian
+        exp_mod.jacv = jacvp # Sets the jacobian
         run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fsw,y0,sw0=[True])
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
-        exp_mod.jacv = jacvswp #Sets the jacobian
+        exp_mod.jacv = jacvswp # Sets the jacobian
         run_sim(exp_mod)
     
     def test_max_order_discr(self):
@@ -741,7 +741,7 @@ class Test_CVode:
                 sim._set_rtol(np.array([1e-2, 1e-3]))
 
     def test_rtol_zero(self):
-        """ Test CVode with rtol = 0. """
+        """Test CVode with rtol = 0."""
         f = lambda t, y: y
         prob = Explicit_Problem(f, np.array([1]))
         sim = CVode(prob)
@@ -750,7 +750,7 @@ class Test_CVode:
         assert sim.rtol == 0.
 
     def test_rtol_vector_with_zeroes(self):
-        """ Test CVode with rtol vector containing zeroes. """
+        """Test CVode with rtol vector containing zeroes."""
         f = lambda t, y: y
         prob = Explicit_Problem(f, np.array([1, 1]))
         sim = CVode(prob)
@@ -766,7 +766,7 @@ class Test_CVode:
                 sim._set_rtol([1., 0.])
 
     def test_rtol_vector_sense(self):
-        """ Test CVode with rtol vector and sensitivity analysis. """
+        """Test CVode with rtol vector and sensitivity analysis."""
         n = 2
         f = lambda t, y, p: p*y
         prob = Explicit_Problem(f, np.ones(n), p0 = np.ones(n))
@@ -783,7 +783,7 @@ class Test_CVode:
         sim.rtol = np.array([1e-6])
 
     def test_no_progress_force_min_h(self):
-        """ Test example where CVode fails to make progress and minimal stepsize 
+        """Test example where CVode fails to make progress and minimal stepsize 
         will be forced."""
         prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
         sim = CVode(prob)
@@ -795,7 +795,7 @@ class Test_CVode:
         assert sim.minh > 0
 
     def test_no_progress_maxstepshnil_not_active(self):
-        """ Test example where CVode fails to make progress, but forcing minh 
+        """Test example where CVode fails to make progress, but forcing minh 
         is deactivated."""
         prob = Eval_Failure(t_failure = 0.5, max_evals = 1000)
         sim = CVode(prob)
@@ -813,7 +813,7 @@ class Test_CVode:
         ]
         )
     def test_maxstepshnil_not_enforced(self, ncp, ncp_list):
-        """ Test example where CVode fails to make progress, but minh will not be forced.
+        """Test example where CVode fails to make progress, but minh will not be forced.
         CVode fails in ordinary ways."""
         prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
         sim = CVode(prob)
@@ -904,7 +904,7 @@ class Test_IDA:
         exp_sim = IDA(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
         with pytest.raises(TimeLimitExceeded):
@@ -1119,8 +1119,8 @@ class Test_IDA:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x,xd: np.array([xd[0]-x[1], xd[1]-9.82])       #Defines the rhs
-        jac = lambda c,t,x,xd: np.array([[c,-1.],[0.,c]]) #Defines the jacobian
+        f = lambda t,x,xd: np.array([xd[0]-x[1], xd[1]-9.82])       # Defines the rhs
+        jac = lambda c,t,x,xd: np.array([[c,-1.],[0.,c]]) # Defines the jacobian
 
         imp_mod = Implicit_Problem(f,[1.0,0.0],[0.,-9.82])
         imp_mod.jac = jac
@@ -1226,7 +1226,7 @@ class Test_IDA:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = IDA(exp_mod)
         exp_sim(5.,100)
         
@@ -1271,7 +1271,7 @@ class Test_IDA:
         f = lambda t,x,xd,sw: np.array([xd[0]- 1.0])
         state_events = lambda t,x,xd,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
+            solver.sw = [False] # Override the switches to point to another instance
         
         mod = Implicit_Problem(f, [0.0],[1.0])
         mod.f = f
@@ -1397,7 +1397,7 @@ class Test_Sundials:
             with pytest.raises(Exception):
                 sim._set_rtol(-1.0)
             with pytest.raises(Exception):
-                sim._set_rtol([1.0, 2.0]) ## size mismatch
+                sim._set_rtol([1.0, 2.0]) # # size mismatch
             with pytest.raises(Exception):
                 sim._set_rtol("Test")
             
@@ -1432,7 +1432,7 @@ class Test_Sundials:
         Tests the property of dqtype.
         """
         
-        assert self.sim.dqtype == 'CENTERED' #Test the default value.
+        assert self.sim.dqtype == 'CENTERED' # Test the default value.
         
         self.sim.dqtype = 'FORWARD'
         assert self.sim.dqtype == 'FORWARD'
@@ -1457,7 +1457,7 @@ class Test_Sundials:
         """
         Tests the property of DQrhomax.
         """
-        assert self.sim.dqrhomax == 0.0 #Test the default value.
+        assert self.sim.dqrhomax == 0.0 # Test the default value.
         
         self.sim.dqrhomax = 1.0
         assert self.sim.dqrhomax == 1.0
@@ -1477,7 +1477,7 @@ class Test_Sundials:
         """
         Tests the property of usesens.
         """
-        assert self.sim.usesens#Test the default value.
+        assert self.sim.usesens# Test the default value.
         self.sim.usesens = False
         assert not self.sim.usesens
         self.sim.usesens = 0
@@ -1489,7 +1489,7 @@ class Test_Sundials:
         """
         Tests the property of sensmethod.
         """
-        assert self.sim.sensmethod == 'STAGGERED' #Test the default value
+        assert self.sim.sensmethod == 'STAGGERED' # Test the default value
         
         self.sim.sensmethod = 'SIMULTANEOUS'
         assert self.sim.sensmethod == 'SIMULTANEOUS'
@@ -1526,7 +1526,7 @@ class Test_Sundials:
         """
         Tests the property of maxsensiter.
         """
-        assert self.sim.maxcorS == 3 #Test the default value
+        assert self.sim.maxcorS == 3 # Test the default value
         self.sim.maxcorS = 1
         assert self.sim.maxcorS == 1
         self.sim.maxcorS = 10.5
