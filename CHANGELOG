@@ -1,6 +1,8 @@
 --- CHANGELOG ---
 
 --- Assimulo-FUTURE---
+
+--- Assimulo-3.7.0---
     * New CVode option: `maxstepshnil` (default = 10). Enforces a minimal stepsize 
     after `maxstepshnil` consecutive successful integration steps without time advancement.
     See docstring for details. This prevents the time-integration loop from getting
