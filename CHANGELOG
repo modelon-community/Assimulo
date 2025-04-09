@@ -2,6 +2,14 @@
 
 --- Assimulo-FUTURE---
 
+--- Assimulo-3.7.0---
+    * New CVode option: `maxstepshnil` (default = 10). Enforces a minimal stepsize 
+    after `maxstepshnil` consecutive successful integration steps without time advancement.
+    See docstring for details. This prevents the time-integration loop from getting
+    stuck for evaluation failures after a fixed time-point.
+    * CVode and IDA will now correctly abort simulation for BaseExceptions raised 
+    from any problem callbacks.
+
 --- Assimulo-3.6.0---
     * Added get_sundials_version function (import from assimulo.solvers.sundials).
     * Fixed bug that Radau5ODE would not count state events in statistics.

@@ -15,103 +15,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import re
 import pytest
-from assimulo.solvers.sundials import CVode, IDA, CVodeError, get_sundials_version
+from assimulo.solvers.sundials import CVode, IDA, CVodeError, IDAError, get_sundials_version
 from assimulo.problem import Explicit_Problem
 from assimulo.problem import Implicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded, TerminateSimulation
 import numpy as np
 import scipy.sparse as sps
+from .utils import (
+    Extended_Problem,
+    Eval_Failure,
+    ExplicitProbBaseException,
+    ImplicitProbBaseException
+)
 
-class Extended_Problem(Explicit_Problem):
-    
-    #Sets the initial conditions directly into the problem
-    y0 = [0.0, -1.0, 0.0]
-    sw0 = [False,True,True]
-    event_array = np.array([0.0,0.0,0.0])
-    rhs_array   = np.array([0.0,0.0,0.0])
-    
-    #The right-hand-side function (rhs)
-    def rhs(self,t,y,sw):
-        """
-        This is our function we are trying to simulate. During simulation
-        the parameter sw should be fixed so that our function is continuous
-        over the interval. The parameters sw should only be changed when the
-        integrator has stopped.
-        """
-        self.rhs_array[0] = (1.0 if sw[0] else -1.0)
-        self.rhs_array[1] = 0.0
-        self.rhs_array[2] = 0.0
-
-        return self.rhs_array
-
-    #Sets a name to our function
-    name = 'ODE with discontinuities and a function with consistency problem'
-    
-    #The event function
-    def state_events(self,t,y,sw):
-        """
-        This is our function that keeps track of our events. When the sign
-        of any of the events has changed, we have an event.
-        """
-        self.event_array[0] = y[1] - 1.0 
-        self.event_array[1] = -y[2] + 1.0
-        self.event_array[2] = -t + 1.0
-        
-        return self.event_array    
-    
-    #Responsible for handling the events.
-    def handle_event(self, solver, event_info):
-        """
-        Event handling. This functions is called when Assimulo finds an event as
-        specified by the event functions.
-        """
-        event_info = event_info[0] #We only look at the state events information.
-        while True: #Event Iteration
-            self.event_switch(solver, event_info) #Turns the switches
-            
-            b_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            
-            event_info = self.check_eIter(b_mode, a_mode)
-                
-            if True not in event_info: #Breaks the iteration loop
-                break
-    
-    #Helper function for handle_event
-    def event_switch(self, solver, event_info):
-        """
-        Turns the switches.
-        """
-        for i in range(len(event_info)): #Loop across all event functions
-            if event_info[i] != 0:
-                solver.sw[i] = not solver.sw[i] #Turn the switch
-        
-    #Helper function for handle_event
-    def check_eIter(self, before, after):
-        """
-        Helper function for handle_event to determine if we have event
-        iteration.
-        
-            Input: Values of the event indicator functions (state_events)
-            before and after we have changed mode of operations.
-        """
-        
-        eIter = [False]*len(before)
-        
-        for i in range(len(before)):
-            if (before[i] < 0.0 and after[i] > 0.0) or (before[i] > 0.0 and after[i] < 0.0):
-                eIter[i] = True
-                
-        return eIter
-    
-    def init_mode(self, solver):
-        """
-        Initialize the DAE with the new conditions.
-        """
-        solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
-        solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
 class Test_CVode:
     
@@ -148,37 +66,37 @@ class Test_CVode:
         assert np.all(t == np.arange(0,11)[::-1])
 
     def test_event_localizer(self):
-        """ Test that CVode internal event localization works correctly."""
-        exp_mod = Extended_Problem() #Create the problem
+        """Test that CVode internal event localization works correctly."""
+        exp_mod = Extended_Problem() # Create the problem
 
-        exp_sim = CVode(exp_mod) #Create the solver
+        exp_sim = CVode(exp_mod) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
         exp_sim.external_event_detection = False # default; CVode internal event detection
         
-        #Simulate
-        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
+        # Simulate
+        t, y = exp_sim.simulate(10.0, 1000) # Simulate 10 seconds with 1000 communications points
         
-        #Basic test
+        # Basic test
         assert y[-1][0] == pytest.approx(8.0)
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
     def test_event_localizer_external(self):
-        """ Test that CVode with Assimulo event localization works correctly."""
-        exp_mod = Extended_Problem() #Create the problem
+        """Test that CVode with Assimulo event localization works correctly."""
+        exp_mod = Extended_Problem() # Create the problem
 
-        exp_sim = CVode(exp_mod) #Create the solver
+        exp_sim = CVode(exp_mod) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
         exp_sim.external_event_detection = True # Assimulo event detection
         
-        #Simulate
-        t, y = exp_sim.simulate(10.0, 1000) #Simulate 10 seconds with 1000 communications points
+        # Simulate
+        t, y = exp_sim.simulate(10.0, 1000) # Simulate 10 seconds with 1000 communications points
         
-        #Basic test
+        # Basic test
         assert y[-1][0] == pytest.approx(8.0)
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
@@ -259,8 +177,6 @@ class Test_CVode:
         
         qcur = self.simulator.get_current_order()
         assert qcur == 4
-
-
         
     def test_init(self):
         """
@@ -304,7 +220,7 @@ class Test_CVode:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = CVode(exp_mod)
         exp_sim(5.,100)
         
@@ -339,7 +255,7 @@ class Test_CVode:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = CVode(exp_mod)
         exp_sim.verbosity = 10
         exp_sim(5.,100)
@@ -362,7 +278,7 @@ class Test_CVode:
         exp_sim = CVode(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
         with pytest.raises(TimeLimitExceeded):
@@ -378,21 +294,13 @@ class Test_CVode:
         exp_sim = CVode(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
-        try:
+        err_msg = "The time limit was exceeded at integration time"
+        with pytest.raises(TimeLimitExceeded, match = re.escape(err_msg)):
             exp_sim.simulate(1.0)
-            assert False, "Simulation passed without Exception, TimeLimitException should have been raised"
-        except Exception:
-            pass
-            
-        found_data = False
-        for k in exp_sim.statistics.keys():
-            if exp_sim.statistics[k] > 0: #If any statistics is stored, it is working as expected
-                found_data = True
-        
-        assert found_data, "No statistics was found to be stored"
+        assert any(exp_sim.statistics[k] > 0 for k in exp_sim.statistics.keys()), "No statistics was found to be stored"
     
     def test_discr_method(self):
         """
@@ -422,10 +330,10 @@ class Test_CVode:
         This tests that the change from Functional to Newton works
         """
         f = lambda t,y: np.array([1.0])
-        y0 = 4.0 #Initial conditions
+        y0 = 4.0 # Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.iter = "FixedPoint"
         exp_sim.simulate(1)
@@ -444,16 +352,16 @@ class Test_CVode:
         assert self.simulator.norm == 'EUCLIDEAN'
         
         f = lambda t,y: np.array([1.0])
-        y0 = 4.0 #Initial conditions
+        y0 = 4.0 # Initial conditions
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.norm = "WRMS"
         exp_sim.simulate(1)
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_sim = CVode(exp_mod) #Create a CVode solver
+        exp_sim = CVode(exp_mod) # Create a CVode solver
         
         exp_sim.norm = "EUCLIDEAN"
         exp_sim.simulate(1)
@@ -462,8 +370,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: np.array([[0.,1.],[0.,0.]]) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       # Defines the rhs
+        jac = lambda t,x: np.array([[0.,1.],[0.,0.]]) # Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -487,8 +395,8 @@ class Test_CVode:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x: np.array([x[1], -9.82])       #Defines the rhs
-        jac = lambda t,x: sps.csc_matrix(np.array([[0.,1.],[0.,0.]])) #Defines the jacobian
+        f = lambda t,x: np.array([x[1], -9.82])       # Defines the rhs
+        jac = lambda t,x: sps.csc_matrix(np.array([[0.,1.],[0.,0.]])) # Defines the jacobian
         
         exp_mod = Explicit_Problem(f, [1.0,0.0])
         exp_mod.jac = jac
@@ -515,7 +423,7 @@ class Test_CVode:
         f = lambda t,x,sw: np.array([1.0])
         state_events = lambda t,x,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
+            solver.sw = [False] # Override the switches to point to another instance
         
         mod = Explicit_Problem(f,[0.0])
         mod.sw0 = [True]
@@ -590,7 +498,7 @@ class Test_CVode:
         prob = Explicit_Problem(f,y0)
         sim = CVode(prob)
         
-        t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) #Simulate 5 seconds
+        t, y = sim.simulate(7, ncp_list=np.arange(0, 7, 0.1)) # Simulate 5 seconds
         
         assert y[-1][0] == pytest.approx(0.00364832, abs = 1e-4)
         
@@ -650,25 +558,25 @@ class Test_CVode:
         jacvsw = lambda t,y,fy,v,sw: np.dot(np.array([[0,1.],[0,0]]),v)
         jacvp = lambda t,y,fy,v,p: np.dot(np.array([[0,1.],[0,0]]),v)
         jacvswp = lambda t,y,fy,v,sw,p: np.dot(np.array([[0,1.],[0,0]]),v)
-        y0 = [1.0,0.0] #Initial conditions
+        y0 = [1.0,0.0] # Initial conditions
         
         def run_sim(exp_mod):
-            exp_sim = CVode(exp_mod) #Create a CVode solver
-            exp_sim.linear_solver = 'SPGMR' #Change linear solver
+            exp_sim = CVode(exp_mod) # Create a CVode solver
+            exp_sim.linear_solver = 'SPGMR' # Change linear solver
 
-            #Simulate
-            t, y = exp_sim.simulate(5, 1000) #Simulate 5 seconds with 1000 communication points
+            # Simulate
+            t, y = exp_sim.simulate(5, 1000) # Simulate 5 seconds with 1000 communication points
         
-            #Basic tests
+            # Basic tests
             assert y[-1][0] == pytest.approx(-121.75000000, abs = 1e-4)
             assert y[-1][1] == pytest.approx(-49.100000000)
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_mod.jacv = jacv #Sets the jacobian
+        exp_mod.jacv = jacv # Sets the jacobian
         run_sim(exp_mod)
         
-        #Need someway of suppressing error messages from deep down in the Cython wrapper
-        #See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
+        # Need someway of suppressing error messages from deep down in the Cython wrapper
+        # See http://stackoverflow.com/questions/1218933/can-i-redirect-the-stdout-in-python-into-some-sort-of-string-buffer
         try:
             from cStringIO import StringIO
         except ImportError:
@@ -678,28 +586,28 @@ class Test_CVode:
         sys.stderr = StringIO()
         
         exp_mod = Explicit_Problem(f,y0)
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         with pytest.raises(CVodeError):
             run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         with pytest.raises(CVodeError):
             run_sim(exp_mod)
         
-        #Restore standard error
+        # Restore standard error
         sys.stderr = stderr
         
         exp_mod = Explicit_Problem(fp,y0,p0=1.0)
-        exp_mod.jacv = jacvp #Sets the jacobian
+        exp_mod.jacv = jacvp # Sets the jacobian
         run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fsw,y0,sw0=[True])
-        exp_mod.jacv = jacvsw #Sets the jacobian
+        exp_mod.jacv = jacvsw # Sets the jacobian
         run_sim(exp_mod)
         
         exp_mod = Explicit_Problem(fswp,y0,sw0=[True],p0=1.0)
-        exp_mod.jacv = jacvswp #Sets the jacobian
+        exp_mod.jacv = jacvswp # Sets the jacobian
         run_sim(exp_mod)
     
     def test_max_order_discr(self):
@@ -833,7 +741,7 @@ class Test_CVode:
                 sim._set_rtol(np.array([1e-2, 1e-3]))
 
     def test_rtol_zero(self):
-        """ Test CVode with rtol = 0. """
+        """Test CVode with rtol = 0."""
         f = lambda t, y: y
         prob = Explicit_Problem(f, np.array([1]))
         sim = CVode(prob)
@@ -842,7 +750,7 @@ class Test_CVode:
         assert sim.rtol == 0.
 
     def test_rtol_vector_with_zeroes(self):
-        """ Test CVode with rtol vector containing zeroes. """
+        """Test CVode with rtol vector containing zeroes."""
         f = lambda t, y: y
         prob = Explicit_Problem(f, np.array([1, 1]))
         sim = CVode(prob)
@@ -858,7 +766,7 @@ class Test_CVode:
                 sim._set_rtol([1., 0.])
 
     def test_rtol_vector_sense(self):
-        """ Test CVode with rtol vector and sensitivity analysis. """
+        """Test CVode with rtol vector and sensitivity analysis."""
         n = 2
         f = lambda t, y, p: p*y
         prob = Explicit_Problem(f, np.ones(n), p0 = np.ones(n))
@@ -873,6 +781,106 @@ class Test_CVode:
         sim.rtol = 1e-6
         sim.rtol = [1e-6]
         sim.rtol = np.array([1e-6])
+
+    def test_no_progress_force_min_h(self):
+        """Test example where CVode fails to make progress and minimal stepsize 
+        will be forced."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
+        sim = CVode(prob)
+        sim.maxstepshnil = 10 # default
+        assert sim.minh == 0
+        err_msg = "The right-hand side function had repeated recoverable errors."
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1.)
+        assert sim.minh > 0
+
+    def test_no_progress_maxstepshnil_not_active(self):
+        """Test example where CVode fails to make progress, but forcing minh 
+        is deactivated."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = 1000)
+        sim = CVode(prob)
+        sim.maxstepshnil = 0
+        assert sim.minh == 0
+        err_msg = "failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1.)
+        assert sim.minh == 0
+
+    @pytest.mark.parametrize("ncp, ncp_list",
+        [
+            (10, None),
+            (0, [0., 0.7, 1.])
+        ]
+        )
+    def test_maxstepshnil_not_enforced(self, ncp, ncp_list):
+        """Test example where CVode fails to make progress, but minh will not be forced.
+        CVode fails in ordinary ways."""
+        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
+        sim = CVode(prob)
+        assert sim.minh == 0
+        sim.report_continuously = False
+        sim.maxsteps = 200
+        err_msg = "The solver took max internal steps but could not reach tout"
+        with pytest.raises(CVodeError, match = re.escape(err_msg)):
+            sim.simulate(1., ncp = ncp, ncp_list = ncp_list)
+        assert sim.minh == 0
+
+    @pytest.mark.parametrize("val", [-1, 0, 20])
+    def test_maxstepshnil_set_valid(self, val):
+        """Test setting valid values for the 'maxstepshnil' option."""
+        prob = Explicit_Problem(lambda t, x: -x, np.array([1.]))
+        sim = CVode(prob)
+        sim.maxstepshnil = val
+        assert val == sim.maxstepshnil
+
+    @pytest.mark.parametrize("val", [1.23, "no", [1]])
+    def test_maxstepshnil_set_invalid(self, val):
+        """Test setting invalid values for the 'maxstepshnil' option."""
+        prob = Explicit_Problem(lambda t, x: -x, np.array([1.]))
+        sim = CVode(prob)
+        msg = "'maxstepshnil' must be an integer."
+        with pytest.raises(TypeError, match = re.escape(msg)):
+            sim.maxstepshnil = val
+
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, fcn = True)
+        sim = CVode(prob)
+        msg = "The user-provided rhs function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    def test_base_exception_interrupt_jac(self):
+        """Test that BaseExceptions in jacobian terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
+        sim = CVode(prob)
+        sim.usejac = True
+
+        msg = "The linear solvers setup function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    @pytest.mark.skip(reason = "This works, but causes a segfault in the deconstructor")
+    def test_base_exception_interrupt_jac_sparse(self):
+        """Test that BaseExceptions in jacobian terminate the simulation."""
+        prob = ExplicitProbBaseException(dim = 2, jac = True)
+        prob.jac_nnz = 2
+        sim = CVode(prob)
+        sim.linear_solver = 'SPARSE'
+        sim.usejac = True
+
+        msg = "The linear solvers setup function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
+
+    def test_base_exception_interrupt_event_indicator(self):
+        """Test that BaseExceptions in event indicator function resp. solout callback correctly terminate solution."""
+        prob = ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
+        sim = CVode(prob)
+
+        msg = "The rootfinding function failed in an unrecoverable manner"
+        with pytest.raises(CVodeError, match = re.escape(msg)):
+            sim.simulate(1.)
 
 class Test_IDA:
     
@@ -896,7 +904,7 @@ class Test_IDA:
         exp_sim = IDA(exp_mod)
         
         exp_sim.maxh = 1e-8
-        exp_sim.time_limit = 1 #One second
+        exp_sim.time_limit = 1 # One second
         exp_sim.report_continuously = True
         
         with pytest.raises(TimeLimitExceeded):
@@ -1111,8 +1119,8 @@ class Test_IDA:
         """
         This tests the functionality of the property usejac.
         """
-        f = lambda t,x,xd: np.array([xd[0]-x[1], xd[1]-9.82])       #Defines the rhs
-        jac = lambda c,t,x,xd: np.array([[c,-1.],[0.,c]]) #Defines the jacobian
+        f = lambda t,x,xd: np.array([xd[0]-x[1], xd[1]-9.82])       # Defines the rhs
+        jac = lambda c,t,x,xd: np.array([[c,-1.],[0.,c]]) # Defines the jacobian
 
         imp_mod = Implicit_Problem(f,[1.0,0.0],[0.,-9.82])
         imp_mod.jac = jac
@@ -1218,7 +1226,7 @@ class Test_IDA:
         exp_mod.time_events = time_events
         exp_mod.handle_event = handle_event
         
-        #CVode
+        # CVode
         exp_sim = IDA(exp_mod)
         exp_sim(5.,100)
         
@@ -1263,7 +1271,7 @@ class Test_IDA:
         f = lambda t,x,xd,sw: np.array([xd[0]- 1.0])
         state_events = lambda t,x,xd,sw: np.array([x[0]-1.])
         def handle_event(solver, event_info):
-            solver.sw = [False] #Override the switches to point to another instance
+            solver.sw = [False] # Override the switches to point to another instance
         
         mod = Implicit_Problem(f, [0.0],[1.0])
         mod.f = f
@@ -1307,6 +1315,15 @@ class Test_IDA:
         sim.simulate(2.)
         assert len(sim.t_sol) == sim.statistics["nsteps"] + 1
         assert nsteps == sim.statistics["nsteps"]
+
+    def test_base_exception_interrupt_fcn(self):
+        """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
+        prob = ImplicitProbBaseException(dim = 2, fcn = True)
+        sim = IDA(prob)
+
+        err_msg = "The user-provided residual function failed in an unrecoverable manner."
+        with pytest.raises(IDAError, match = re.escape(err_msg)):
+            sim.simulate(1.)
 
 
 class Test_Sundials:
@@ -1380,7 +1397,7 @@ class Test_Sundials:
             with pytest.raises(Exception):
                 sim._set_rtol(-1.0)
             with pytest.raises(Exception):
-                sim._set_rtol([1.0, 2.0]) ## size mismatch
+                sim._set_rtol([1.0, 2.0]) # # size mismatch
             with pytest.raises(Exception):
                 sim._set_rtol("Test")
             
@@ -1415,7 +1432,7 @@ class Test_Sundials:
         Tests the property of dqtype.
         """
         
-        assert self.sim.dqtype == 'CENTERED' #Test the default value.
+        assert self.sim.dqtype == 'CENTERED' # Test the default value.
         
         self.sim.dqtype = 'FORWARD'
         assert self.sim.dqtype == 'FORWARD'
@@ -1440,7 +1457,7 @@ class Test_Sundials:
         """
         Tests the property of DQrhomax.
         """
-        assert self.sim.dqrhomax == 0.0 #Test the default value.
+        assert self.sim.dqrhomax == 0.0 # Test the default value.
         
         self.sim.dqrhomax = 1.0
         assert self.sim.dqrhomax == 1.0
@@ -1460,7 +1477,7 @@ class Test_Sundials:
         """
         Tests the property of usesens.
         """
-        assert self.sim.usesens#Test the default value.
+        assert self.sim.usesens# Test the default value.
         self.sim.usesens = False
         assert not self.sim.usesens
         self.sim.usesens = 0
@@ -1472,7 +1489,7 @@ class Test_Sundials:
         """
         Tests the property of sensmethod.
         """
-        assert self.sim.sensmethod == 'STAGGERED' #Test the default value
+        assert self.sim.sensmethod == 'STAGGERED' # Test the default value
         
         self.sim.sensmethod = 'SIMULTANEOUS'
         assert self.sim.sensmethod == 'SIMULTANEOUS'
@@ -1509,7 +1526,7 @@ class Test_Sundials:
         """
         Tests the property of maxsensiter.
         """
-        assert self.sim.maxcorS == 3 #Test the default value
+        assert self.sim.maxcorS == 3 # Test the default value
         self.sim.maxcorS = 1
         assert self.sim.maxcorS == 1
         self.sim.maxcorS = 10.5

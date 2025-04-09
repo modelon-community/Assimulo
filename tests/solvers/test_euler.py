@@ -22,97 +22,9 @@ from assimulo.exception import AssimuloException, TimeLimitExceeded
 import numpy as np
 import scipy.sparse as sps
 
+from .utils import Extended_Problem
+
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
-
-class Extended_Problem(Explicit_Problem):
-    
-    #Sets the initial conditions directly into the problem
-    y0 = [0.0, -1.0, 0.0]
-    sw0 = [False,True,True]
-    event_array = np.array([0.0,0.0,0.0])
-    rhs_array   = np.array([0.0,0.0,0.0])
-    
-    #The right-hand-side function (rhs)
-    def rhs(self,t,y,sw):
-        """
-        This is our function we are trying to simulate. During simulation
-        the parameter sw should be fixed so that our function is continuous
-        over the interval. The parameters sw should only be changed when the
-        integrator has stopped.
-        """
-        self.rhs_array[0] = (1.0 if sw[0] else -1.0)
-        self.rhs_array[1] = 0.0
-        self.rhs_array[2] = 0.0
-
-        return self.rhs_array
-
-    #Sets a name to our function
-    name = 'ODE with discontinuities and a function with consistency problem'
-    
-    #The event function
-    def state_events(self,t,y,sw):
-        """
-        This is our function that keeps track of our events. When the sign
-        of any of the events has changed, we have an event.
-        """
-        self.event_array[0] = y[1] - 1.0 
-        self.event_array[1] = -y[2] + 1.0
-        self.event_array[2] = -t + 1.0
-        
-        return self.event_array    
-    
-    #Responsible for handling the events.
-    def handle_event(self, solver, event_info):
-        """
-        Event handling. This functions is called when Assimulo finds an event as
-        specified by the event functions.
-        """
-        event_info = event_info[0] #We only look at the state events information.
-        while True: #Event Iteration
-            self.event_switch(solver, event_info) #Turns the switches
-            
-            b_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            self.init_mode(solver) #Pass in the solver to the problem specified init_mode
-            a_mode = self.state_events(solver.t, solver.y, solver.sw).copy()
-            
-            event_info = self.check_eIter(b_mode, a_mode)
-                
-            if True not in event_info: #Breaks the iteration loop
-                break
-    
-    #Helper function for handle_event
-    def event_switch(self, solver, event_info):
-        """
-        Turns the switches.
-        """
-        for i in range(len(event_info)): #Loop across all event functions
-            if event_info[i] != 0:
-                solver.sw[i] = not solver.sw[i] #Turn the switch
-        
-    #Helper function for handle_event
-    def check_eIter(self, before, after):
-        """
-        Helper function for handle_event to determine if we have event
-        iteration.
-        
-            Input: Values of the event indicator functions (state_events)
-            before and after we have changed mode of operations.
-        """
-        
-        eIter = [False]*len(before)
-        
-        for i in range(len(before)):
-            if (before[i] < 0.0 and after[i] > 0.0) or (before[i] > 0.0 and after[i] < 0.0):
-                eIter[i] = True
-                
-        return eIter
-    
-    def init_mode(self, solver):
-        """
-        Initialize the DAE with the new conditions.
-        """
-        solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
-        solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
 
 class Test_Explicit_Euler:
