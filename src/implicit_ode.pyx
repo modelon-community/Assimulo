@@ -219,7 +219,7 @@ cdef class Implicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal): #Event have been detected
                 
-                if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1]-self.t) > eps*max(abs(self.t), abs(tfinal)):
+                if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1]-self.t) > eps*max(abs(self.t), abs(tevent)):
                     self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
                                 
                 #Get and store event information
