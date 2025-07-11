@@ -273,7 +273,6 @@ cdef class ODE:
         #Determine the output list
         if ncp != 0:
             output_list = np.linspace(t0,tfinal,ncp+1)[1:]
-            output_index = 0
         elif ncp_list is not None:
             if self.options["backward"]:
                 output_list = np.array(ncp_list, dtype=realtype, ndmin=1)[np.logical_and(np.array(ncp_list, dtype=realtype, ndmin=1)<t0,np.array(ncp_list, dtype=realtype, ndmin=1)>=tfinal)]
@@ -284,10 +283,8 @@ cdef class ODE:
                 output_list = np.array(ncp_list, dtype=realtype, ndmin=1)[np.logical_and(np.array(ncp_list, dtype=realtype, ndmin=1)>t0,np.array(ncp_list, dtype=realtype, ndmin=1)<=tfinal)]
                 if output_list[-1] < tfinal: #Add the last point if necessary!
                     output_list = np.append(output_list, tfinal)
-            output_index = 0
         else:
             output_list = None
-            output_index = 0
         
         #Determine if we are using one step mode or normal mode
         if self.problem_info['step_events'] or self.options['report_continuously']:
