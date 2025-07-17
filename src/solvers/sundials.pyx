@@ -3327,31 +3327,32 @@ cdef class CVode(Explicit_ODE):
         if self.cvode_mem == NULL:
             raise CVodeError(CV_MEM_FAIL)
 
-        if self.options["linear_solver"] == "SPGMR":
-            IF SUNDIALS_VERSION >= (4,0,0):
-                flag = SUNDIALS.CVodeGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
-                flag = SUNDIALS.CVodeGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
-            ELSE:
-                flag = SUNDIALS.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
-                flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
-            self.statistics["njacvecs"]  += njvevals
-        elif self.options["linear_solver"] == "SPARSE":
-            IF SUNDIALS_VERSION >= (3,0,0):
+        if self.options["iter"] == "Newton": # Requires structure otherwise not initialized, see initialize_options
+            if self.options["linear_solver"] == "SPGMR":
                 IF SUNDIALS_VERSION >= (4,0,0):
-                    flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals)
+                    flag = SUNDIALS.CVodeGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
+                    flag = SUNDIALS.CVodeGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
                 ELSE:
-                    flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals)
-            ELSE:
-                flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
-            self.statistics["njacs"]   += njevals
-        else:
-            IF SUNDIALS_VERSION >= (4,0,0):
-                flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
-                flag = SUNDIALS.CVodeGetNumLinRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
-            ELSE:
-                flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
-                flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
-            self.statistics["njacs"]   += njevals
+                    flag = SUNDIALS.CVSpilsGetNumJtimesEvals(self.cvode_mem, &njvevals) #Number of jac*vector
+                    flag = SUNDIALS.CVSpilsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of rhs due to jac*vector
+                self.statistics["njacvecs"]  += njvevals
+            elif self.options["linear_solver"] == "SPARSE":
+                IF SUNDIALS_VERSION >= (3,0,0):
+                    IF SUNDIALS_VERSION >= (4,0,0):
+                        flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals)
+                    ELSE:
+                        flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals)
+                ELSE:
+                    flag = SUNDIALS.CVSlsGetNumJacEvals(self.cvode_mem, &njevals)
+                self.statistics["njacs"]   += njevals
+            else:
+                IF SUNDIALS_VERSION >= (4,0,0):
+                    flag = SUNDIALS.CVodeGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
+                    flag = SUNDIALS.CVodeGetNumLinRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
+                ELSE:
+                    flag = SUNDIALS.CVDlsGetNumJacEvals(self.cvode_mem, &njevals) #Number of jac evals
+                    flag = SUNDIALS.CVDlsGetNumRhsEvals(self.cvode_mem, &nfevalsLS) #Number of res evals due to jac evals
+                self.statistics["njacs"]   += njevals
         if self.pData.PREC_SOLVE != NULL:
             IF SUNDIALS_VERSION >= (4,0,0):
                 flag = SUNDIALS.CVodeGetNumPrecSolves(self.cvode_mem, &npsolves)

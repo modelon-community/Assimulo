@@ -1,6 +1,7 @@
 --- CHANGELOG ---
 
 --- Assimulo-FUTURE---
+    * Fixed error messages from uninitialized internal memory for CVode when using `iter = 'FixedPoint'`.
 
 --- Assimulo-3.7.0---
     * New CVode option: `maxstepshnil` (default = 10). Enforces a minimal stepsize 
