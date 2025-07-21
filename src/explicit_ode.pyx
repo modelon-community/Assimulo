@@ -202,12 +202,11 @@ cdef class Explicit_ODE(ODE):
         opts["output_list"] = output_list
         opts["output_index"] = 0
         opts["report_continuously"] = 1 if REPORT_CONTINUOUSLY else 0
-        output_index = 0
         
         self.display_progress_activated = 1 if self.display_progress else 0
         self.time_integration_start = timer()
         
-        while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t-eps > tfinal) if backward else (self.t+eps < tfinal):
+        while (flag == ID_COMPLETE and tevent == tfinal) is False and (self.t - eps*max(abs(self.t), abs(tfinal)) > tfinal) if backward else (self.t + eps*max(abs(self.t), abs(tfinal)) < tfinal):
 
             #Time event function is specified
             if TIME_EVENT == 1:
@@ -233,7 +232,7 @@ cdef class Explicit_ODE(ODE):
             #Event handling
             if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal) or (flag == ID_COMPLETE and TIME_EVENT and tret==tevent): #Event has been detected
                 
-                if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1]-self.t) > eps:
+                if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1] - self.t) > eps*max(abs(self.t), abs(tevent)):
                     self.problem.handle_result(self, self.t, self.y.copy())
                 
                 #Get and store event information

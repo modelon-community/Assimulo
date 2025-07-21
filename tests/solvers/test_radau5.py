@@ -30,7 +30,9 @@ from .utils import (
     Extended_Problem,
     Eval_Failure,
     ExplicitProbBaseException,
-    ImplicitProbBaseException
+    ImplicitProbBaseException,
+    ExplicitTimeEventCloseToFinalTime,
+    ImplicitTimeEventCloseToFinalTime,
 )
 
 
@@ -953,6 +955,15 @@ class Test_Explicit_Radau5:
         with pytest.raises(ValueError, match = re.escape(err_msg)):
             sim.simulate(1.0)
 
+    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
+    @pytest.mark.parametrize("report_continuously", [True, False])
+    def test_event_close_to_final_time(self, tfinal, report_continuously):
+        """Test event close to final time."""
+        exp_sim = Radau5ODE(ExplicitTimeEventCloseToFinalTime(tfinal))
+        exp_sim.report_continuously = report_continuously
+        tt, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
+        assert tt[-1] < tfinal # check final interval is skipped
+
 
 class Test_Implicit_Radau5:
     """
@@ -1212,6 +1223,15 @@ class Test_Implicit_Radau5:
         # with pytest.raises(Radau5Error, match = err_msg):
         with pytest.raises(Radau5Error):
             sim.simulate(1.)
+
+    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
+    @pytest.mark.parametrize("report_continuously", [True, False])
+    def test_event_close_to_final_time(self, tfinal, report_continuously):
+        """Test event close to final time."""
+        exp_sim = Radau5DAE(ImplicitTimeEventCloseToFinalTime(tfinal))
+        exp_sim.report_continuously = report_continuously
+        tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
+        assert tt[-1] < tfinal # check final interval is skipped
 
 
 class Test_Implicit_Radau5_Py:

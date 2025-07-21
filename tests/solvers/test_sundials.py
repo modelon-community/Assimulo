@@ -27,7 +27,9 @@ from .utils import (
     Extended_Problem,
     Eval_Failure,
     ExplicitProbBaseException,
-    ImplicitProbBaseException
+    ImplicitProbBaseException,
+    ExplicitTimeEventCloseToFinalTime,
+    ImplicitTimeEventCloseToFinalTime,
 )
 
 
@@ -882,6 +884,15 @@ class Test_CVode:
         with pytest.raises(CVodeError, match = re.escape(msg)):
             sim.simulate(1.)
 
+    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
+    @pytest.mark.parametrize("report_continuously", [True, False])
+    def test_event_close_to_final_time(self, tfinal, report_continuously):
+        """Test event close to final time."""
+        exp_sim = CVode(ExplicitTimeEventCloseToFinalTime(tfinal))
+        exp_sim.report_continuously = report_continuously
+        tt, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
+        assert tt[-1] < tfinal # check final interval is skipped
+
 class Test_IDA:
     
     @classmethod
@@ -1324,6 +1335,15 @@ class Test_IDA:
         err_msg = "The user-provided residual function failed in an unrecoverable manner."
         with pytest.raises(IDAError, match = re.escape(err_msg)):
             sim.simulate(1.)
+
+    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
+    @pytest.mark.parametrize("report_continuously", [True, False])
+    def test_event_close_to_final_time(self, tfinal, report_continuously):
+        """Test event close to final time."""
+        exp_sim = IDA(ImplicitTimeEventCloseToFinalTime(tfinal))
+        exp_sim.report_continuously = report_continuously
+        tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 10)
+        assert tt[-1] < tfinal # check final interval is skipped
 
 
 class Test_Sundials:
