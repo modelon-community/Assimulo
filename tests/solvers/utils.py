@@ -198,3 +198,34 @@ class ImplicitProbBaseException(Implicit_Problem):
             self.handle_event = self.aux.handle_event
             sw0 = np.array([1.])
         super().__init__(self.aux.f_impl, y0, yd0, sw0 = sw0)
+
+class ExplicitTimeEventCloseToFinalTime(Explicit_Problem):
+    t0 = 0.0
+    def __init__(self, tfinal):
+        super().__init__(self.rhs, np.array([0.0]))
+        self._time_event = tfinal - 2e-16 * abs(tfinal)
+
+    def rhs(self, t, y, sw = None):
+        return np.array([0.])
+    
+    def handle_event(self, solver, event_info):
+        pass
+
+    def time_events(self, t, y, sw = None):
+        return self._time_event if self._time_event > t else None
+    
+class ImplicitTimeEventCloseToFinalTime(Implicit_Problem):
+    t0 = 0.0
+    def __init__(self, tfinal):
+        super().__init__(self.res, np.array([0.0]), np.array([0.]))
+        self._time_event = tfinal - 2e-16 * abs(tfinal)
+
+    def res(self, t, y, yd, sw = None):
+        return y - yd
+    
+    def handle_event(self, solver, event_info):
+        pass
+    
+    def time_events(self, t, y, yd, sw = None):
+        return self._time_event if self._time_event > t else None
+            

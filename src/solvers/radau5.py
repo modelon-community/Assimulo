@@ -292,6 +292,7 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         try:
             self._werr = werr
             ret = 0
+            flag = 0
             
             if self.problem_info["state_events"]:
                 flag, t, y = self.event_locator(told, t, y)
@@ -380,6 +381,13 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         self.statistics["nfcnjacs"]  += (njacs*self.problem_info["dim"] if not self.usejac else 0)
         self.statistics["nerrfails"] += nerrfails
         self.statistics["nlus"]      += nLU
+
+        if (flag >= 0) and \
+           (opts["output_list"] is not None) and \
+           (not self._tlist or self._tlist[-1] != t):
+            # make sure final point is added in case of time-events
+            self._tlist.append(t)
+            self._ylist.append(y)
         
         #Checking return
         if flag == 0:
@@ -1177,6 +1185,14 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         t, y, h, iwork, flag = self.radau5.radau5(self._f, t, y.copy(), tf, self.inith, self.rtol*np.ones(self.problem_info["dim"]*2), atol, 
                                                   ITOL, jac_dummy, IJAC, MLJAC, MUJAC, self._mas_f, IMAS, MLMAS, MUMAS, self._solout,
                                                   IOUT, WORK, IWORK)
+        
+        if (flag >= 0) and \
+           (opts["output_list"] is not None) and \
+           (not self._tlist or self._tlist[-1] != t):
+            # make sure final point is added in case of time-events
+            self._tlist.append(t)
+            self._ylist.append(y[:self._leny].copy())
+            self._ydlist.append(y[self._leny:2*self._leny].copy())
 
         #Checking return
         if flag == 1:
