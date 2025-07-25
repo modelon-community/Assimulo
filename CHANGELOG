@@ -1,6 +1,7 @@
 --- CHANGELOG ---
-
 --- Assimulo-FUTURE---
+
+--- Assimulo-3.7.1---
     * Fixed error messages from uninitialized internal memory for CVode when using `iter = 'FixedPoint'`.
     * Fixed an issue with events close to (large) final times.
 
