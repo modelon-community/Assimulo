@@ -1,5 +1,5 @@
 --- CHANGELOG ---
---- Assimulo-FUTURE---
+--- Assimulo-3.7.2---
     * Fixed issue with 'report_continuously = True' for backwards simulation.
 
 --- Assimulo-3.7.1---

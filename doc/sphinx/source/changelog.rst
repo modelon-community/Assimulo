@@ -2,6 +2,9 @@
 ==========
 Changelog
 ==========
+--- Assimulo-3.7.2---
+    * Fixed issue with 'report_continuously = True' for backwards simulation.
+
 --- Assimulo-3.7.1---
     * Fixed error messages from uninitialized internal memory for CVode when using `iter = 'FixedPoint'`.
     * Fixed an issue with events close to (large) final times.
