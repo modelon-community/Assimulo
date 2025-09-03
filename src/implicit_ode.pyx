@@ -298,7 +298,7 @@ cdef class Implicit_ODE(ODE):
             output_list = opts["output_list"] 
             output_index = opts["output_index"] 
             try: 
-                while output_list[output_index] <= t: 
+                while output_list[output_index] <= t if not self.backward else output_list[output_index] >= t:
                     if self.problem_info["type"] == 0:
                         self.problem.handle_result(self, output_list[output_index], 
                                         self.interpolate(output_list[output_index]))
