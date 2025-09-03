@@ -899,7 +899,7 @@ class Test_CVode:
         sim = CVode(mod)
         sim.backward = True
         sim.report_continuously = True
-        sim.simulate(0, ncp = 10) # should work
+        sim.simulate(0, ncp = 10)
 
 class Test_IDA:
     
@@ -1352,6 +1352,14 @@ class Test_IDA:
         exp_sim.report_continuously = report_continuously
         tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 10)
         assert tt[-1] < tfinal # check final interval is skipped
+
+    def test_backwards_report_continuously(self):
+        """Test that backward simulation functions with report_continuously = True."""
+        mod = Implicit_Problem(lambda t, y, yd: yd, y0 = [1], yd0 = [0], t0 = 1)
+        sim = IDA(mod)
+        sim.backward = True
+        sim.report_continuously = True
+        sim.simulate(0, ncp = 10)
 
 
 class Test_Sundials:

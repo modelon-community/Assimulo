@@ -970,7 +970,7 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(mod)
         sim.backward = True
         sim.report_continuously = True
-        sim.simulate(0, ncp = 10) # should work
+        sim.simulate(0, ncp = 10)
 
 
 class Test_Implicit_Radau5:
@@ -1240,6 +1240,14 @@ class Test_Implicit_Radau5:
         exp_sim.report_continuously = report_continuously
         tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
         assert tt[-1] < tfinal # check final interval is skipped
+
+    def test_backwards_report_continuously(self):
+        """Test that backward simulation functions with report_continuously = True."""
+        mod = Implicit_Problem(lambda t, y, yd: yd, y0 = [1], yd0 = [0], t0 = 1)
+        sim = Radau5DAE(mod)
+        sim.backward = True
+        sim.report_continuously = True
+        sim.simulate(0, ncp = 10)
 
 
 class Test_Implicit_Radau5_Py:
