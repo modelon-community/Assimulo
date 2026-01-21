@@ -16,7 +16,7 @@ Contents
    
    usage
    examples
-   jmodelica
+   pyfmi
    download
    installation
    code
