@@ -659,8 +659,8 @@ AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
 VERSION = "3.7.0.dev0" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
-URL = "http://www.jmodelica.org/assimulo"
-DOWNLOAD_URL = "http://www.jmodelica.org/assimulo"
+URL = "https://github.com/modelon-community/Assimulo"
+DOWNLOAD_URL = "https://github.com/modelon-community/Assimulo/releases"
 DESCRIPTION = "A package for solving ordinary differential equations and differential algebraic equations."
 PLATFORMS = ["Linux", "Windows", "MacOS X"]
 CLASSIFIERS = [ 'Programming Language :: Python',
@@ -684,9 +684,6 @@ order 4 and Runge-Kutta of order 4. It also wraps the popular SUNDIALS
 (for ODEs) and IDA (for DAEs). Ernst Hairer's 
 (http://www.unige.ch/~hairer/software.html) codes Radau5, Rodas and 
 Dopri5 are also available. For the full list, see the documentation.
-
-Documentation and installation instructions can be found at: 
-http://www.jmodelica.org/assimulo . 
 
 The package requires Numpy, Scipy and Matplotlib and additionally for 
 compiling from source, Cython >=3, Sundials 2.6/2.7/3.1/4.1, BLAS and LAPACK 
