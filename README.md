@@ -12,9 +12,6 @@ The package comes with a Problem specifications class and subclasses correspondi
 To define and solve a problem, first import the solver of choice and the appropriate `Implicit`/`Explicit` class. Furthermore, define your function $f$ and the initial conditions to pass to the problem class constructor. Then, create your solver, set the attributes
 (method, absolute/relative tolerance etc.) and use the simulate method to simulate.
 
-For more information about Assimulo, documentation tutorial etc, see
-the docs from the older [JModelica](http://www.jmodelica.org/assimulo) website.
-
 Sundials Compliance
 -------------------
 Current Assimulo development aims for compliancy with Sundials [v2.7.0](https://github.com/LLNL/sundials/releases/tag/v2.7.0).
@@ -23,7 +20,13 @@ Some optional features in `Assimulo>=3.4.1`` are built on the modified Sundials 
 
 Installation
 -------------------
-See the INSTALL file or the installation page on http://www.jmodelica.org/assimulo.
+The recommended way to install Assimulo is through CONDA.
+
+`conda install conda-forge::assimulo`
+
+For installing from source, see the INSTALL file.
+
+Note that currently the releases on PYPI is outdated.
 
 Contributing
 -------------------

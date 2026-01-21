@@ -21,6 +21,3 @@ Installation is performed using the command:
 	
 Assimulo is then installed under Python dist-packages. 
 To test the installation, run "pytest".
-
-For more information regarding Assimulo and the installation procedure, 
-please visit: http://www.jmodelica.org/assimulo

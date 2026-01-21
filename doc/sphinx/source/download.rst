@@ -4,26 +4,17 @@
 Download
 =============
 
-Current version:
+The recommended way to install Assimulo is through `conda <https://anaconda.org/channels/conda-forge/packages/assimulo/overview>`_::
 
-    Available on PyPI, http://pypi.python.org/pypi/Assimulo
+    conda install conda-forge::assimulo
    
-See :doc:`installation` for instructions on setting up Assimulo. Additionally, Assimulo is available through `conda <http://conda.pydata.org/docs/index.html>`_::
+See :doc:`installation` for instructions on installing Assimulo from source. 
 
-    conda install -c https://conda.binstar.org/chria assimulo
+The source code can be found at::
 
-
-To retrieve the latest (develop) version using a subversion software use::
-
-    svn checkout https://svn.jmodelica.org/assimulo/trunk
-
-
-.. warning::
-
-    The latest (develop) version may not function properly.
-
+    https://github.com/modelon-community/Assimulo
 
 Old versions:
     
-    - See, https://trac.jmodelica.org/assimulo/browser/releases
+    - See, https://github.com/modelon-community/Assimulo/releases
     
