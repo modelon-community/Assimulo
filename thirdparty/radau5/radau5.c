@@ -626,6 +626,13 @@ L40:
 		for (i = 1; i <= n; ++i) {
 			scal[i] = atol[i] + rtol[i] * radau5_abs(y[i]);
 		}
+		/* possibly round to h_output if sufficiently close; Note: this bypasses hmax;
+		 * This avoid a too small stepsize in the following step that would case an error.
+		 * Needs to be done before reporting solution via callback. */
+		if (radau5_abs(*xend - xph) < 100*rmem->input->uround*radau5_abs(xph)) {
+			*x = *xend;
+			last = TRUE_;
+		}
 		if (iout) {
 			rmem->xsol = *x;
 			for (i = 1; i <= n; ++i) {

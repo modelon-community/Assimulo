@@ -972,6 +972,24 @@ class Test_Explicit_Radau5:
         sim.report_continuously = True
         sim.simulate(0, ncp = 10)
 
+    @pytest.mark.parametrize("scale_factor", [1e-6, 1, 1e6])
+    def test_final_step_skip_due_to_t_final_rounding(self, scale_factor):
+        """Test the case of skipping a final step in case a step finishes an epsilon 
+        before the final time."""
+        mod = Explicit_Problem(lambda t, y: [0], y0 = [1], t0 = 0)
+        
+        maxh = 1*scale_factor
+        inith = 1*scale_factor
+        eps = 1e-15*scale_factor
+        t_final = 2*scale_factor + eps
+
+        sim = Radau5ODE(mod)
+        sim.maxh = maxh
+        sim.inith = inith
+        t, _ = sim.simulate(t_final)
+        
+        assert t[-1] == t_final
+        assert sim.get_statistics()["nsteps"] == 2
 
 class Test_Implicit_Radau5:
     """
