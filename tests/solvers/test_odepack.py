@@ -25,8 +25,6 @@ from assimulo.exception import TimeLimitExceeded
 import numpy as np
 import scipy.sparse as sps
 
-from .utils import Extended_Problem
-
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 
@@ -92,10 +90,8 @@ class Test_LSODAR:
         cls.sim.rtol = 1e-6 #Default 1e-6
         cls.sim.usejac = False
 
-    def test_event_localizer(self):
-        exp_mod = Extended_Problem() #Create the problem
-
-        exp_sim = LSODAR(exp_mod) #Create the solver
+    def test_event_localizer(self, extended_problem):
+        exp_sim = LSODAR(extended_problem) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True

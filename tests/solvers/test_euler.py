@@ -22,8 +22,6 @@ from assimulo.exception import AssimuloException, TimeLimitExceeded
 import numpy as np
 import scipy.sparse as sps
 
-from .utils import Extended_Problem
-
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 
@@ -41,10 +39,8 @@ class Test_Explicit_Euler:
         cls.problem = Explicit_Problem(f, y0)
         cls.simulator = ExplicitEuler(cls.problem)
     
-    def test_event_localizer(self):
-        exp_mod = Extended_Problem() #Create the problem
-
-        exp_sim = ExplicitEuler(exp_mod) #Create the solver
+    def test_event_localizer(self, extended_problem):
+        exp_sim = ExplicitEuler(extended_problem) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
