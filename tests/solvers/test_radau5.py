@@ -26,19 +26,8 @@ from assimulo.exception import TimeLimitExceeded
 import scipy.sparse as sps
 import numpy as np
 
-from .utils import (
-    Extended_Problem,
-    Eval_Failure,
-    ExplicitProbBaseException,
-    ImplicitProbBaseException,
-    ExplicitTimeEventCloseToFinalTime,
-    ImplicitTimeEventCloseToFinalTime,
-)
-
-
 import re
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
-
 
 class Test_Explicit_Radau5_Py:
     """
@@ -90,10 +79,8 @@ class Test_Explicit_Radau5_Py:
         cls.sim.usejac = False
     
     @pytest.mark.skip("Does not support state events")
-    def test_event_localizer(self):
-        exp_mod = Extended_Problem() #Create the problem
-
-        exp_sim = _Radau5ODE(exp_mod) #Create the solver
+    def test_event_localizer(self, extended_problem):
+        exp_sim = _Radau5ODE(extended_problem) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
@@ -351,10 +338,8 @@ class Test_Explicit_Radau5:
         cls.sim.inith = 1.e-4 #Initial step-size
         cls.sim.usejac = False
 
-    def test_event_localizer(self):
-        exp_mod = Extended_Problem() #Create the problem
-
-        exp_sim = Radau5ODE(exp_mod) #Create the solver
+    def test_event_localizer(self, extended_problem):
+        exp_sim = Radau5ODE(extended_problem) #Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
@@ -872,37 +857,33 @@ class Test_Explicit_Radau5:
         with pytest.raises(Radau_Exception, match = err_msg.format('0', "<class 'int'>")):
             self.sim.linear_solver = 0
 
-    def test_base_exception_interrupt_fcn(self):
+    def test_base_exception_interrupt_fcn(self, explicit_prob_base_exception_func_eval):
         """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + explicit problem."""
-        prob = ExplicitProbBaseException(dim = 2, fcn = True)
-        sim = Radau5ODE(prob)
+        sim = Radau5ODE(explicit_prob_base_exception_func_eval)
         with pytest.raises(BaseException, match = "f"):
             sim.simulate(1.)
 
-    def test_base_exception_interrupt_jac(self):
+    def test_base_exception_interrupt_jac(self, explicit_prob_base_exception_jac_eval):
         """Test that BaseExceptions in jacobian terminate the simulation. Radau5 + C + explicit problem."""
-        prob = ExplicitProbBaseException(dim = 2, jac = True)
-        sim = Radau5ODE(prob)
+        sim = Radau5ODE(explicit_prob_base_exception_jac_eval)
         sim.usejac = True
 
         with pytest.raises(BaseException, match = "jac"):
             sim.simulate(1.)
 
-    def test_base_exception_interrupt_jac_sparse(self):
+    def test_base_exception_interrupt_jac_sparse(self, explicit_prob_base_exception_jac_eval):
         """Test that BaseExceptions in jacobian terminate the simulation. Radau5 + C + explicit problem + sparse jac."""
-        prob = ExplicitProbBaseException(dim = 2, jac = True)
-        prob.jac_nnz = 2
-        sim = Radau5ODE(prob)
+        explicit_prob_base_exception_jac_eval.jac_nnz = 2
+        sim = Radau5ODE(explicit_prob_base_exception_jac_eval)
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
         with pytest.raises(BaseException, match = "jac"):
             sim.simulate(1.)
 
-    def test_base_exception_interrupt_event_indicator(self):
+    def test_base_exception_interrupt_event_indicator(self, explicit_prob_base_exception_event):
         """Test that BaseExceptions in event indicator function resp. solout callback correctly terminate solution."""
-        prob = ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
-        sim = Radau5ODE(prob)
+        sim = Radau5ODE(explicit_prob_base_exception_event)
 
         with pytest.raises(BaseException, match = "event"):
             sim.simulate(1.)
@@ -946,20 +927,23 @@ class Test_Explicit_Radau5:
             sim.simulate(1.0)
         assert any(sim.statistics[k] > 0 for k in sim.statistics.keys()), "No statistics was found to be stored"
 
-    def test_no_progress(self):
+    def test_no_progress(self, eval_failure):
         """Test example where solver cannot make progress past a given time."""
-        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
-        sim = Radau5ODE(prob)
+        sim = Radau5ODE(eval_failure)
 
         err_msg = "passed failure time"
         with pytest.raises(ValueError, match = re.escape(err_msg)):
             sim.simulate(1.0)
 
-    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
     @pytest.mark.parametrize("report_continuously", [True, False])
-    def test_event_close_to_final_time(self, tfinal, report_continuously):
+    def test_event_close_to_final_time(self, 
+                                       report_continuously, 
+                                       explicit_prob_time_event_close_to_final_time):
         """Test event close to final time."""
-        exp_sim = Radau5ODE(ExplicitTimeEventCloseToFinalTime(tfinal))
+        problem = explicit_prob_time_event_close_to_final_time.problem
+        tfinal = explicit_prob_time_event_close_to_final_time.tfinal
+
+        exp_sim = Radau5ODE(problem)
         exp_sim.report_continuously = report_continuously
         tt, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
         assert tt[-1] < tfinal # check final interval is skipped
@@ -972,6 +956,24 @@ class Test_Explicit_Radau5:
         sim.report_continuously = True
         sim.simulate(0, ncp = 10)
 
+    @pytest.mark.parametrize("scale_factor", [1e-6, 1, 1e6])
+    def test_final_step_skip_due_to_t_final_rounding(self, scale_factor):
+        """Test the case of skipping a final step in case a step finishes an epsilon 
+        before the final time."""
+        mod = Explicit_Problem(lambda t, y: [0], y0 = [1], t0 = 0)
+        
+        maxh = 1*scale_factor
+        inith = 1*scale_factor
+        eps = 1e-15*scale_factor
+        t_final = 2*scale_factor + eps
+
+        sim = Radau5ODE(mod)
+        sim.maxh = maxh
+        sim.inith = inith
+        t, _ = sim.simulate(t_final)
+        
+        assert t[-1] == t_final
+        assert sim.get_statistics()["nsteps"] == 2
 
 class Test_Implicit_Radau5:
     """
@@ -1232,11 +1234,15 @@ class Test_Implicit_Radau5:
         with pytest.raises(Radau5Error):
             sim.simulate(1.)
 
-    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
     @pytest.mark.parametrize("report_continuously", [True, False])
-    def test_event_close_to_final_time(self, tfinal, report_continuously):
+    def test_event_close_to_final_time(self,
+                                       report_continuously,
+                                       implicit_prob_time_event_close_to_final_time):
         """Test event close to final time."""
-        exp_sim = Radau5DAE(ImplicitTimeEventCloseToFinalTime(tfinal))
+        prob = implicit_prob_time_event_close_to_final_time.problem
+        tfinal = implicit_prob_time_event_close_to_final_time.tfinal
+
+        exp_sim = Radau5DAE(prob)
         exp_sim.report_continuously = report_continuously
         tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
         assert tt[-1] < tfinal # check final interval is skipped
@@ -1387,10 +1393,9 @@ class Test_Implicit_Radau5_Py:
         self.sim.simulate(0.5)
         assert max(np.diff(self.sim.t_sol))-np.finfo('double').eps <= 0.01
 
-    def test_base_exception_interrupt_fcn(self):
+    def test_base_exception_interrupt_fcn(self, implicit_prob_base_exception_func_eval):
         """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
-        prob = ImplicitProbBaseException(dim = 2, fcn = True)
-        sim = Radau5DAE(prob)
+        sim = Radau5DAE(implicit_prob_base_exception_func_eval)
 
         err_msg = "Unrecoverable exception encountered during callback to problem (right-hand side/jacobian)."
         with pytest.raises(Radau5Error, match = re.escape(err_msg)):

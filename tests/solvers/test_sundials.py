@@ -23,15 +23,6 @@ from assimulo.problem import Implicit_Problem
 from assimulo.exception import AssimuloException, TimeLimitExceeded, TerminateSimulation
 import numpy as np
 import scipy.sparse as sps
-from .utils import (
-    Extended_Problem,
-    Eval_Failure,
-    ExplicitProbBaseException,
-    ImplicitProbBaseException,
-    ExplicitTimeEventCloseToFinalTime,
-    ImplicitTimeEventCloseToFinalTime,
-)
-
 
 class Test_CVode:
     
@@ -67,11 +58,9 @@ class Test_CVode:
         
         assert np.all(t == np.arange(0,11)[::-1])
 
-    def test_event_localizer(self):
+    def test_event_localizer(self, extended_problem):
         """Test that CVode internal event localization works correctly."""
-        exp_mod = Extended_Problem() # Create the problem
-
-        exp_sim = CVode(exp_mod) # Create the solver
+        exp_sim = CVode(extended_problem) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
@@ -85,11 +74,9 @@ class Test_CVode:
         assert y[-1][1] == pytest.approx(3.0)
         assert y[-1][2] == pytest.approx(2.0)
     
-    def test_event_localizer_external(self):
+    def test_event_localizer_external(self, extended_problem):
         """Test that CVode with Assimulo event localization works correctly."""
-        exp_mod = Extended_Problem() # Create the problem
-
-        exp_sim = CVode(exp_mod) # Create the solver
+        exp_sim = CVode(extended_problem) # Create the solver
         
         exp_sim.verbosity = 0
         exp_sim.report_continuously = True
@@ -784,11 +771,10 @@ class Test_CVode:
         sim.rtol = [1e-6]
         sim.rtol = np.array([1e-6])
 
-    def test_no_progress_force_min_h(self):
+    def test_no_progress_force_min_h(self, eval_failure):
         """Test example where CVode fails to make progress and minimal stepsize 
         will be forced."""
-        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
-        sim = CVode(prob)
+        sim = CVode(eval_failure)
         sim.maxstepshnil = 10 # default
         assert sim.minh == 0
         err_msg = "The right-hand side function had repeated recoverable errors."
@@ -796,11 +782,11 @@ class Test_CVode:
             sim.simulate(1.)
         assert sim.minh > 0
 
-    def test_no_progress_maxstepshnil_not_active(self):
+    def test_no_progress_maxstepshnil_not_active(self, eval_failure):
         """Test example where CVode fails to make progress, but forcing minh 
         is deactivated."""
-        prob = Eval_Failure(t_failure = 0.5, max_evals = 1000)
-        sim = CVode(prob)
+        eval_failure.max_evals = 1000
+        sim = CVode(eval_failure)
         sim.maxstepshnil = 0
         assert sim.minh == 0
         err_msg = "failed in an unrecoverable manner"
@@ -814,11 +800,10 @@ class Test_CVode:
             (0, [0., 0.7, 1.])
         ]
         )
-    def test_maxstepshnil_not_enforced(self, ncp, ncp_list):
+    def test_maxstepshnil_not_enforced(self, ncp, ncp_list, eval_failure):
         """Test example where CVode fails to make progress, but minh will not be forced.
         CVode fails in ordinary ways."""
-        prob = Eval_Failure(t_failure = 0.5, max_evals = -1)
-        sim = CVode(prob)
+        sim = CVode(eval_failure)
         assert sim.minh == 0
         sim.report_continuously = False
         sim.maxsteps = 200
@@ -844,18 +829,16 @@ class Test_CVode:
         with pytest.raises(TypeError, match = re.escape(msg)):
             sim.maxstepshnil = val
 
-    def test_base_exception_interrupt_fcn(self):
+    def test_base_exception_interrupt_fcn(self, explicit_prob_base_exception_func_eval):
         """Test that BaseExceptions in right-hand side terminate the simulation."""
-        prob = ExplicitProbBaseException(dim = 2, fcn = True)
-        sim = CVode(prob)
+        sim = CVode(explicit_prob_base_exception_func_eval)
         msg = "The user-provided rhs function failed in an unrecoverable manner"
         with pytest.raises(CVodeError, match = re.escape(msg)):
             sim.simulate(1.)
 
-    def test_base_exception_interrupt_jac(self):
+    def test_base_exception_interrupt_jac(self, explicit_prob_base_exception_jac_eval):
         """Test that BaseExceptions in jacobian terminate the simulation."""
-        prob = ExplicitProbBaseException(dim = 2, jac = True)
-        sim = CVode(prob)
+        sim = CVode(explicit_prob_base_exception_jac_eval)
         sim.usejac = True
 
         msg = "The linear solvers setup function failed in an unrecoverable manner"
@@ -863,11 +846,10 @@ class Test_CVode:
             sim.simulate(1.)
 
     @pytest.mark.skip(reason = "This works, but causes a segfault in the deconstructor")
-    def test_base_exception_interrupt_jac_sparse(self):
+    def test_base_exception_interrupt_jac_sparse(self, explicit_prob_base_exception_jac_eval):
         """Test that BaseExceptions in jacobian terminate the simulation."""
-        prob = ExplicitProbBaseException(dim = 2, jac = True)
-        prob.jac_nnz = 2
-        sim = CVode(prob)
+        explicit_prob_base_exception_jac_eval.jac_nnz = 2
+        sim = CVode(explicit_prob_base_exception_jac_eval)
         sim.linear_solver = 'SPARSE'
         sim.usejac = True
 
@@ -875,20 +857,23 @@ class Test_CVode:
         with pytest.raises(CVodeError, match = re.escape(msg)):
             sim.simulate(1.)
 
-    def test_base_exception_interrupt_event_indicator(self):
+    def test_base_exception_interrupt_event_indicator(self, explicit_prob_base_exception_event):
         """Test that BaseExceptions in event indicator function resp. solout callback correctly terminate solution."""
-        prob = ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
-        sim = CVode(prob)
+        sim = CVode(explicit_prob_base_exception_event)
 
         msg = "The rootfinding function failed in an unrecoverable manner"
         with pytest.raises(CVodeError, match = re.escape(msg)):
             sim.simulate(1.)
 
-    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
     @pytest.mark.parametrize("report_continuously", [True, False])
-    def test_event_close_to_final_time(self, tfinal, report_continuously):
+    def test_event_close_to_final_time(self, 
+                                       report_continuously,
+                                       explicit_prob_time_event_close_to_final_time):
         """Test event close to final time."""
-        exp_sim = CVode(ExplicitTimeEventCloseToFinalTime(tfinal))
+        problem = explicit_prob_time_event_close_to_final_time.problem
+        tfinal = explicit_prob_time_event_close_to_final_time.tfinal
+
+        exp_sim = CVode(problem)
         exp_sim.report_continuously = report_continuously
         tt, _ = exp_sim.simulate(tfinal = tfinal, ncp = 2)
         assert tt[-1] < tfinal # check final interval is skipped
@@ -900,6 +885,24 @@ class Test_CVode:
         sim.backward = True
         sim.report_continuously = True
         sim.simulate(0, ncp = 10)
+
+    @pytest.mark.parametrize("scale_factor", [1e-6, 1, 1e6])
+    def test_final_step_skip_due_to_t_final_rounding(self, scale_factor):
+        """Test the case of skipping a final step in case a step finishes an epsilon 
+        before the final time."""
+        mod = Explicit_Problem(lambda t, y: [0], y0 = [1], t0 = 0)
+        maxh = 1*scale_factor
+        inith = 1*scale_factor
+        eps = 1e-15*scale_factor
+        t_final = 2*scale_factor + eps
+
+        sim = CVode(mod)
+        sim.maxh = maxh
+        sim.inith = inith
+        t, _ = sim.simulate(t_final)
+        
+        assert t[-1] == t_final
+        assert sim.get_statistics()["nsteps"] == 2
 
 class Test_IDA:
     
@@ -1335,20 +1338,23 @@ class Test_IDA:
         assert len(sim.t_sol) == sim.statistics["nsteps"] + 1
         assert nsteps == sim.statistics["nsteps"]
 
-    def test_base_exception_interrupt_fcn(self):
+    def test_base_exception_interrupt_fcn(self, implicit_prob_base_exception_func_eval):
         """Test that BaseExceptions in right-hand side terminate the simulation. Radau5 + C + implicit problem."""
-        prob = ImplicitProbBaseException(dim = 2, fcn = True)
-        sim = IDA(prob)
+        sim = IDA(implicit_prob_base_exception_func_eval)
 
         err_msg = "The user-provided residual function failed in an unrecoverable manner."
         with pytest.raises(IDAError, match = re.escape(err_msg)):
             sim.simulate(1.)
 
-    @pytest.mark.parametrize("tfinal", [1e-6, 1, 1e6])
     @pytest.mark.parametrize("report_continuously", [True, False])
-    def test_event_close_to_final_time(self, tfinal, report_continuously):
+    def test_event_close_to_final_time(self, 
+                                       report_continuously,
+                                       implicit_prob_time_event_close_to_final_time):
         """Test event close to final time."""
-        exp_sim = IDA(ImplicitTimeEventCloseToFinalTime(tfinal))
+        prob = implicit_prob_time_event_close_to_final_time.problem
+        tfinal = implicit_prob_time_event_close_to_final_time.tfinal
+
+        exp_sim = IDA(prob)
         exp_sim.report_continuously = report_continuously
         tt, _, _ = exp_sim.simulate(tfinal = tfinal, ncp = 10)
         assert tt[-1] < tfinal # check final interval is skipped

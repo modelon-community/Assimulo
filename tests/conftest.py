@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2025 Modelon AB
+# Copyright (C) 2026 Modelon AB
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-# Testing utilities shared in a variety of solver tests
+import pytest
+import dataclasses
+from typing import Union
 
 import numpy as np
 
@@ -111,11 +113,12 @@ class Extended_Problem(Explicit_Problem):
         solver.y[1] = (-1.0 if solver.sw[1] else 3.0)
         solver.y[2] = (0.0 if solver.sw[2] else 2.0)
 
+
 class Eval_Failure(Explicit_Problem):
     """Problem for testing evaluation failures starting from a given time point and 
     aborting on BaseExceptions."""
     y0 = np.array([1.])
-    def __init__(self, t_failure = 0.5, max_evals = 1000):
+    def __init__(self, t_failure = 0.5, max_evals = -1):
         self.t_failure = t_failure
         self.max_evals = max_evals
         self.n_evals = 0
@@ -187,6 +190,7 @@ class ExplicitProbBaseException(Explicit_Problem):
         super().__init__(self.aux.f, y0, sw0 = sw0)
         self.jac = self.aux.jac
 
+
 class ImplicitProbBaseException(Implicit_Problem):
     def __init__(self, dim, fcn = False, jac = False, event = False, fcn_n = 5, event_n = 5):
         self.aux = BaseExceptionAux(dim = dim, fcn = fcn, jac = jac, event = event, fcn_n = fcn_n, event_n = event_n)
@@ -198,6 +202,7 @@ class ImplicitProbBaseException(Implicit_Problem):
             self.handle_event = self.aux.handle_event
             sw0 = np.array([1.])
         super().__init__(self.aux.f_impl, y0, yd0, sw0 = sw0)
+
 
 class ExplicitTimeEventCloseToFinalTime(Explicit_Problem):
     t0 = 0.0
@@ -213,7 +218,8 @@ class ExplicitTimeEventCloseToFinalTime(Explicit_Problem):
 
     def time_events(self, t, y, sw = None):
         return self._time_event if self._time_event > t else None
-    
+
+
 class ImplicitTimeEventCloseToFinalTime(Implicit_Problem):
     t0 = 0.0
     def __init__(self, tfinal):
@@ -228,4 +234,49 @@ class ImplicitTimeEventCloseToFinalTime(Implicit_Problem):
     
     def time_events(self, t, y, yd, sw = None):
         return self._time_event if self._time_event > t else None
-            
+
+@pytest.fixture
+def extended_problem():
+    return Extended_Problem()
+
+@pytest.fixture
+def eval_failure():
+    return Eval_Failure()
+
+@pytest.fixture
+def explicit_prob_base_exception_func_eval():
+    return ExplicitProbBaseException(dim = 2, fcn = True)
+
+@pytest.fixture
+def explicit_prob_base_exception_jac_eval():
+    return ExplicitProbBaseException(dim = 2, jac = True)
+
+@pytest.fixture
+def explicit_prob_base_exception_event():
+    return ExplicitProbBaseException(dim = 1, event = True, event_n = 3)
+
+@pytest.fixture
+def implicit_prob_base_exception_func_eval():
+    return ImplicitProbBaseException(dim = 2, fcn = True)
+
+
+@dataclasses.dataclass
+class TimeEventCloseToFinalTimeCase:
+    problem: Union[Explicit_Problem, Implicit_Problem]
+    tfinal: float
+
+@pytest.fixture(params = [1e-6, 1, 1e6])
+def explicit_prob_time_event_close_to_final_time(request):
+    tfinal = request.param
+    return TimeEventCloseToFinalTimeCase(
+        problem = ExplicitTimeEventCloseToFinalTime(tfinal = tfinal),
+        tfinal = tfinal
+        )
+
+@pytest.fixture(params = [1e-6, 1, 1e6])
+def implicit_prob_time_event_close_to_final_time(request):
+    tfinal = request.param
+    return TimeEventCloseToFinalTimeCase(
+        problem = ImplicitTimeEventCloseToFinalTime(tfinal = tfinal),
+        tfinal = tfinal
+        )
