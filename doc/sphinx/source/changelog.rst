@@ -2,6 +2,9 @@
 ==========
 Changelog
 ==========
+--- Assimulo-3.7.3---
+    * Improved Radau5ODE handling of steps ending close to final time. 
+
 --- Assimulo-3.7.2---
     * Fixed issue with 'report_continuously = True' for backwards simulation.
 
