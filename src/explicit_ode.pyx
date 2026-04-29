@@ -340,9 +340,14 @@ cdef class Explicit_ODE(ODE):
         cdef np.ndarray[double, mode="c", ndim=1] g_mid_c  = np.empty(n_g, dtype = np.double)
         cdef np.ndarray[double, mode="c", ndim=1] g_high_c = np.empty(n_g, dtype = np.double)
         cdef np.ndarray[double, mode="c", ndim=1] y_high_c = np.array(y_high)
+        cdef double* y_high_c_ptr
+        if len(y_high) == 0:
+            y_high_c_ptr = NULL
+        else: 
+            y_high_c_ptr = &y_high_c[0]
         cdef int nstatefcns = 0
         cdef int ret = f_event_locator(len(y_high), n_g, 1.e-13, t_low, &t_high,
-                                       &y_high_c[0], &g_low_c[0], &g_mid_c[0], &g_high_c[0],
+                                       y_high_c_ptr, &g_low_c[0], &g_mid_c[0], &g_high_c[0],
                                        callback_event, <void*>self.event_func,
                                        callback_interp, <void*>self.interpolate,
                                        &nstatefcns)
