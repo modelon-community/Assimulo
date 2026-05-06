@@ -1,0 +1,27 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/docker-existing-dockerfile
+{
+  "name": "Assimulo (Sundials 2.7.0)",
+  "build": {
+    "dockerfile": "../../Dockerfile",
+    "args": { "SUNDIALS_VERSION": "2.7.0" }
+  },
+  // Mount to WORKDIR as specified in Dockerfile:
+  "workspaceMount": "source=${localWorkspaceFolder},target=/src,type=bind",
+  "workspaceFolder": "/src",
+  "onCreateCommand": ["make", ".venv"],
+  // Python IDE settings:
+  "customizations": {"vscode": {
+    "settings": {
+      "python.defaultInterpreterPath": "/src/.venv/bin/python",
+      "python.testing.pytestEnabled": true
+    },
+    // Python IDE extensions:
+    "extensions": [
+      "ms-python.python",
+      "ms-python.vscode-pylance"
+    ]
+  }},
+  // User from Dockerfile:
+  "remoteUser": "root"
+}
