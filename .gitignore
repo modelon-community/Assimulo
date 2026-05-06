@@ -1,3 +1,4 @@
 build.sh
 build/
 *.pyc
+.venv

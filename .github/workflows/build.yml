@@ -14,35 +14,13 @@ jobs:
       matrix:
         sundials_version: [2.7.0, 3.2.0, 7.1.1]
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11.x'
-    - name: Setup Python
-      run: |
-        python3 -m pip install Cython numpy scipy matplotlib pytest setuptools==69.1.0
-    - name: Install system
-      run: |
-        sudo apt-get -y install cmake liblapack-dev libsuitesparse-dev libhypre-dev
-        sudo cp -v /usr/lib/x86_64-linux-gnu/libblas.so /usr/lib/x86_64-linux-gnu/libblas_OPENMP.so
-    - name: Install superlu
-      run: |
-        cd /tmp
-        curl -fSsL https://github.com/xiaoyeli/superlu_mt/archive/refs/tags/v4.0.1.tar.gz | tar xz
-        cd superlu_mt-4.0.1
-        cmake -Denable_examples=OFF -Denable_tests=OFF -DPLAT="_OPENMP" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DSUPERLUMT_INSTALL_INCLUDEDIR=include .
-        make -j4
-        sudo make install
-    - name: Install sundials
-      run: |
-        git clone --depth 1 -b v${{ matrix.sundials_version }} https://github.com/LLNL/sundials /tmp/sundials
-        cd /tmp/sundials
-        if test "${{ matrix.sundials_version }}" = "2.7.0"; then echo "target_link_libraries(sundials_idas_shared lapack blas superlu_mt_OPENMP)" >> src/idas/CMakeLists.txt; echo "target_link_libraries(sundials_kinsol_shared lapack blas superlu_mt_OPENMP)" >> src/kinsol/CMakeLists.txt; fi
-        mkdir build && cd build
-        cmake -LAH -DSUPERLUMT_BLAS_LIBRARIES=blas -DSUPERLUMT_LIBRARIES=blas -DSUPERLUMT_INCLUDE_DIR=/usr/include -DSUPERLUMT_LIBRARY=/usr/lib/libsuperlu_mt_OPENMP.a -DSUPERLUMT_THREAD_TYPE=OpenMP -DCMAKE_INSTALL_PREFIX=/usr -DSUPERLUMT_ENABLE=ON -DLAPACK_ENABLE=ON -DEXAMPLES_ENABLE=OFF -DEXAMPLES_ENABLE_C=OFF -DBUILD_STATIC_LIBS=OFF -DSUNDIALS_INDEX_SIZE=32 ..
-        make -j4
-        sudo make install
-    - name: Build
-      run: python3 setup.py install --user --sundials-home=/usr --blas-home=/usr/lib/x86_64-linux-gnu/ --lapack-home=/usr/lib/x86_64-linux-gnu/ --superlu-home=/usr
-    - name: Test
-      run: pytest 
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+      - name: Install make
+        run: sudo apt install make -y
+      - name: Build image
+        run: make build-dev-image SUNDIALS_VERSION=${{ matrix.sundials_version }}
+      - name: Build
+        run: make build SUNDIALS_VERSION=${{ matrix.sundials_version }}
+      - name: Test
+        run: make test SUNDIALS_VERSION=${{ matrix.sundials_version }}
