@@ -82,7 +82,7 @@ cdef class ImplicitEuler(Explicit_ODE):
         
         #Solver support
         self.supports["report_continuously"] = True
-        self.supports["interpolated_output"] = False
+        self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
 
         
@@ -531,7 +531,7 @@ cdef class ExplicitEuler(Explicit_ODE):
         
         #Solver support
         self.supports["report_continuously"] = True
-        self.supports["interpolated_output"] = False
+        self.supports["interpolated_output"] = True
         self.supports["state_events"] = True
     
     def set_problem_data(self): 

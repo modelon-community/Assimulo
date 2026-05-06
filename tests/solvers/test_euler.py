@@ -156,10 +156,10 @@ class Test_Explicit_Euler:
         def f(t, y):
             time.sleep(.1)
             return -y
-        
+
         prob = Explicit_Problem(f,1.0)
         sim = ExplicitEuler(prob)
-        
+
         sim.h = 1e-5
         sim.time_limit = 1
         sim.report_continuously = True
@@ -167,7 +167,18 @@ class Test_Explicit_Euler:
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
         with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
-    
+
+    def test_interpolated_output_ncp(self):
+        # dy/dt = 1, y(0) = 1  =>  exact: y(t) = 1 + t
+        f = lambda t, y: np.array([1.0])
+        prob = Explicit_Problem(f, [1.0])
+        sim = ExplicitEuler(prob)
+        sim.h = 0.1
+        sim.report_continuously = True
+        t_sol, y_sol = sim.simulate(tfinal = 1.0, ncp = 100)
+        assert len(t_sol) == 101
+        np.testing.assert_array_almost_equal(y_sol[:,0], np.array(t_sol) + 1, decimal = 10)
+
 class Test_Implicit_Euler:
     
     @classmethod
@@ -318,10 +329,10 @@ class Test_Implicit_Euler:
         def f(t, y):
             time.sleep(.1)
             return -y
-        
+
         prob = Explicit_Problem(f,1.0)
         sim = ImplicitEuler(prob)
-        
+
         sim.h = 1e-5
         sim.time_limit = 1
         sim.report_continuously = True
@@ -329,3 +340,14 @@ class Test_Implicit_Euler:
         err_msg = f'The time limit was exceeded at integration time {float_regex}.'
         with pytest.raises(TimeLimitExceeded, match = err_msg):
             sim.simulate(1.)
+
+    def test_interpolated_output_ncp(self):
+        # dy/dt = 1, y(0) = 1  =>  exact: y(t) = 1 + t
+        f = lambda t, y: np.array([1.0])
+        prob = Explicit_Problem(f, [1.0])
+        sim = ImplicitEuler(prob)
+        sim.h = 0.1
+        sim.report_continuously = True
+        t_sol, y_sol = sim.simulate(tfinal = 1.0, ncp = 100)
+        assert len(t_sol) == 101
+        np.testing.assert_array_almost_equal(y_sol[:,0], np.array(t_sol) + 1, decimal = 10)
