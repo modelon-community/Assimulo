@@ -467,10 +467,34 @@ class Assimulo_prepare(object):
 
         # Cythonize Solvers
         # Euler
-        ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")], 
+        ext_list += cythonize([os.path.join("assimulo", "solvers", "euler.pyx")],
                               include_path=[".", "assimulo", os.path.join("assimulo", "solvers")],
                               force = True,
                               compiler_directives={'language_level' : "3str"},)
+        # Radau5ODE (merged - replaces assimulo.lib.radau5ode)
+        ext_list += cythonize([os.path.join("assimulo", "solvers", "radau5.pyx")],
+                              include_path=[".", "assimulo", os.path.join("assimulo", "solvers")],
+                              force=True,
+                              compiler_directives={'language_level': "3str"})
+        ext_list[-1].include_dirs += [os.path.join("assimulo", "thirdparty", "radau5"), self.incdirs]
+        _radau5_sources = ["radau5.c", "radau5_io.c"]
+        if self.with_SLU:
+            ext_list[-1].include_dirs += [self.SLUincdir]
+            _radau5_sources += ["superlu_double.c", "superlu_complex.c", "superlu_util.c"]
+        ext_list[-1].sources += [os.path.join("assimulo", "thirdparty", "radau5", f)
+                                  for f in _radau5_sources]
+        if self.with_SLU:
+            if 'win' in self.platform:
+                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.libdirs]
+                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']
+                ext_list[-1].extra_compile_args += ["-D__OPENMP", "-D__RADAU5_WITH_SUPERLU"]
+            else:
+                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
+                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
+                ext_list[-1].extra_compile_args = ["-D__RADAU5_WITH_SUPERLU"]
+        else:
+            if 'win' not in self.platform:
+                ext_list[-1].libraries = ['m']
         for ext in ext_list:
             ext.include_dirs += [np.get_include()]
 
@@ -519,34 +543,6 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
-
-        ## Radau5
-        ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
-                            include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
-                            force = True,
-                            compiler_directives={'language_level' : "3str"})
-        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib"),
-                                    os.path.join("assimulo","thirdparty","radau5"),
-                                    self.incdirs]
-        extra_sources = ["radau5.c", "radau5_io.c"]
-        if self.with_SLU:
-            ext_list[-1].include_dirs += [self.SLUincdir]
-            extra_sources += ["superlu_double.c", "superlu_complex.c", "superlu_util.c"]
-        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo","thirdparty","radau5", file) for file in extra_sources]
-        ext_list[-1].name = "assimulo.lib.radau5ode"
-
-        if self.with_SLU:
-            if 'win' in self.platform:
-                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.libdirs]
-                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP']
-                ext_list[-1].extra_compile_args += ["-D__OPENMP", "-D__RADAU5_WITH_SUPERLU"]
-            else:
-                ext_list[-1].library_dirs = [os.path.join(self.SLUincdir, "..", "lib"), self.BLASdir]
-                ext_list[-1].libraries = ['superlu_mt_OPENMP', 'blas_OPENMP', 'blas', 'm', 'gomp']
-                ext_list[-1].extra_compile_args = ["-D__RADAU5_WITH_SUPERLU"]
-        else:
-            if 'win' not in self.platform:
-                ext_list[-1].libraries = ['m']
 
         for el in ext_list:
             #Debug

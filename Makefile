@@ -1,4 +1,4 @@
-.PHONY: build build-dev-image test shell
+.PHONY: build build-dev-image test shell clean
 
 SUNDIALS_VERSION ?= 2.7.0
 DOCKER_IMAGE := assimulo-dev-sundials_$(SUNDIALS_VERSION)
@@ -35,3 +35,6 @@ test: build
 
 shell:
 	$(call _run, /bin/bash,-it)
+
+clean:
+	rm -rf build/

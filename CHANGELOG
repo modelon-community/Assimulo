@@ -1,4 +1,7 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * Removed the deprecated `implementation` attributes of the Radau5DAE & Radau5ODE solvers.
+
 --- Assimulo-3.7.3---
     * Improved Radau5ODE handling of steps ending close to final time. 
 

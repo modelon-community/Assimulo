@@ -664,7 +664,7 @@ class Test_Explicit_Radau5:
         sim = Radau5ODE(prob)
         sim.usejac = True
 
-        err_msg = "Use of an analytical Jacobian is enabled, but problem does contain a 'jac' function."
+        err_msg = "Use of an analytical Jacobian is enabled, but problem does not contain a 'jac' function."
         with pytest.raises(Radau_Exception, match = err_msg):
             sim.simulate(1.)
 
@@ -1012,20 +1012,6 @@ class Test_Implicit_Radau5:
         cls.sim.atol = 1e-4 #Default 1e-6
         cls.sim.rtol = 1e-4 #Default 1e-6
         cls.sim.inith = 1.e-4 #Initial step-size
-
-    def test_implementation_get(self):
-        """
-            Test getting of implementation property of Radau5DAE.
-        """
-        assert self.sim.implementation == 'f'
-
-    def test_implementation_set(self):
-        """
-            Test setting of implementation property of Radau5DAE.
-        """
-        err_msg = "Radau5DAE does not support setting the 'implementation' attribute, since it only supports the Fortran implementation of Radau5."
-        with pytest.raises(Radau_Exception, match = err_msg):
-            self.sim.implementation = 'c'
 
     def test_linear_solver_get(self):
         """
