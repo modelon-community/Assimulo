@@ -657,7 +657,7 @@ if have_nd:
 NAME = "Assimulo"
 AUTHOR = u"C. Winther (Andersson), C. Führer, J. Åkesson, M. Gäfvert"
 AUTHOR_EMAIL = "christian.winther@modelon.com"
-VERSION = "3.7.0.dev0" if version_number_arg == "Default" else version_number_arg
+VERSION = "3.8.0" if version_number_arg == "Default" else version_number_arg
 LICENSE = "LGPL"
 URL = "https://github.com/modelon-community/Assimulo"
 DOWNLOAD_URL = "https://github.com/modelon-community/Assimulo/releases"
