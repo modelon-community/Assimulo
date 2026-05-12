@@ -1,5 +1,5 @@
 --- CHANGELOG ---
---- Assimulo-FUTURE---
+--- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     
 --- Assimulo-3.7.3---
