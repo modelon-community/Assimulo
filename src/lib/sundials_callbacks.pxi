@@ -21,15 +21,20 @@ from numpy cimport PyArray_DATA
 # Module functions
 #=================
 
+IF SUNDIALS_VERSION >= (6,0,0):
+    cdef SUNDIALS.SUNContext _global_ctx = NULL
+    cdef SUNDIALS.SUNContext _get_global_ctx() noexcept:
+        IF SUNDIALS_VERSION >= (7,0,0):
+            cdef SUNDIALS.SUNComm _comm = 0
+        ELSE:
+            cdef void* _comm = NULL
+        if _global_ctx == NULL:
+            SUNDIALS.SUNContext_Create(_comm, &_global_ctx)
+        return _global_ctx
+
 cdef N_Vector N_VNewEmpty_Euclidean(long int n) noexcept:
     IF SUNDIALS_VERSION >= (6,0,0):
-        cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
-            cdef SUNDIALS.SUNComm comm = 0
-        ELSE:
-            cdef void* comm = NULL
-        SUNDIALS.SUNContext_Create(comm, &ctx)
-        cdef N_Vector v = N_VNew_Serial(n, ctx)
+        cdef N_Vector v = N_VNew_Serial(n, _get_global_ctx())
     ELSE:
         cdef N_Vector v = N_VNew_Serial(n)
     v.ops.nvwrmsnorm = v.ops.nvwl2norm #Overwrite the WRMS norm to the 2-Norm
@@ -41,13 +46,7 @@ cdef inline N_Vector arr2nv(x) noexcept:
     cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
     IF SUNDIALS_VERSION >= (6,0,0):
-        cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
-            cdef SUNDIALS.SUNComm comm = 0
-        ELSE:
-            cdef void* comm = NULL
-        SUNDIALS.SUNContext_Create(comm, &ctx)
-        cdef N_Vector v = N_VNew_Serial(n, ctx)
+        cdef N_Vector v = N_VNew_Serial(n, _get_global_ctx())
     ELSE:
         cdef N_Vector v = N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))

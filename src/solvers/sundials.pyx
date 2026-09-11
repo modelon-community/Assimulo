@@ -35,10 +35,11 @@ IF SUNDIALS_VERSION < (5,0,0):
     from sundials_includes cimport SlsMat
 from sundials_includes cimport malloc, free, N_VConst_Serial
 IF SUNDIALS_VERSION >= (6,0,0):
-    from sundials_includes cimport N_VCloneVectorArray, N_VDestroy
+    from sundials_includes cimport N_VCloneVectorArray, N_VDestroy, N_VDestroyVectorArray
 ELSE:
     from sundials_includes cimport N_VCloneVectorArray_Serial as N_VCloneVectorArray
     from sundials_includes cimport N_VDestroy_Serial as N_VDestroy
+    from sundials_includes cimport N_VDestroyVectorArray_Serial as N_VDestroyVectorArray
 
 include "constants.pxi" #Includes the constants (textual include)
 include "../lib/sundials_constants.pxi" #Sundials related constants
@@ -80,6 +81,7 @@ cdef class IDA(Implicit_ODE):
     cdef public np.ndarray g_old
     cdef SUNDIALS.SUNMatrix sun_matrix
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
+    cdef SUNDIALS.SUNContext sun_ctx
     
     def __init__(self, problem):
         Implicit_ODE.__init__(self, problem) #Calls the base class
@@ -183,6 +185,18 @@ cdef class IDA(Implicit_ODE):
         if self.nv_atol != NULL:
             N_VDestroy(self.nv_atol)
         
+        if self.pData.dimSens > 0:
+            if self.pData.p != NULL:
+                free(self.pData.p)
+            if self.pData.pbar != NULL:
+                free(self.pData.pbar)
+            if self.ySO != NULL:
+                N_VDestroyVectorArray(self.ySO, self.pData.dimSens)
+                self.ySO = NULL
+            if self.ydSO != NULL:
+                N_VDestroyVectorArray(self.ydSO, self.pData.dimSens)
+                self.ydSO = NULL
+
         if self.ida_mem != NULL: 
             #Free Memory
             SUNDIALS.IDAFree(&self.ida_mem)
@@ -193,6 +207,10 @@ cdef class IDA(Implicit_ODE):
                 
             if self.sun_linearsolver != NULL:
                 SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+
+        IF SUNDIALS_VERSION >= (6,0,0):
+            if self.sun_ctx != NULL:
+                SUNDIALS.SUNContext_Free(&self.sun_ctx)
     
     cpdef state_event_info(self):
         """
@@ -244,13 +262,20 @@ cdef class IDA(Implicit_ODE):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx = NULL
             IF SUNDIALS_VERSION >= (7,0,0):
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
-            SUNDIALS.SUNContext_Create(comm, &ctx)
+            if self.sun_ctx == NULL:
+                SUNDIALS.SUNContext_Create(comm, &self.sun_ctx)
+            cdef SUNDIALS.SUNContext ctx = self.sun_ctx
 
+        if self.yTemp != NULL:
+            N_VDestroy(self.yTemp)
+            self.yTemp = NULL
+        if self.ydTemp != NULL:
+            N_VDestroy(self.ydTemp)
+            self.ydTemp = NULL
         self.yTemp  = arr2nv(self.y)
         self.ydTemp = arr2nv(self.yd)
         
@@ -259,6 +284,12 @@ cdef class IDA(Implicit_ODE):
             self.pData.sw = <void*>self.sw
         
         if self.pData.dimSens > 0:
+            if self.ySO != NULL:
+                N_VDestroyVectorArray(self.ySO, self.pData.dimSens)
+                self.ySO = NULL
+            if self.ydSO != NULL:
+                N_VDestroyVectorArray(self.ydSO, self.pData.dimSens)
+                self.ydSO = NULL
             #Create the initial matrices
             self.ySO  = N_VCloneVectorArray(self.pData.dimSens, self.yTemp)
             self.ydSO = N_VCloneVectorArray(self.pData.dimSens, self.ydTemp)
@@ -508,7 +539,9 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag)
         
         #Set the algebraic components and the differential
-        flag = SUNDIALS.IDASetId(self.ida_mem, arr2nv(self.options["algvar"]))
+        cdef N_Vector nv_algvar = arr2nv(self.options["algvar"])
+        flag = SUNDIALS.IDASetId(self.ida_mem, nv_algvar)
+        N_VDestroy(nv_algvar)
         if flag < 0:
             raise IDAError(flag)
         
@@ -518,6 +551,9 @@ cdef class IDA(Implicit_ODE):
             raise IDAError(flag)
             
         #Set the tolerances
+        if self.nv_atol != NULL:
+            N_VDestroy(self.nv_atol)
+            self.nv_atol = NULL
         self.nv_atol = arr2nv(self.options["atol"])
         flag = SUNDIALS.IDASVtolerances(self.ida_mem, self.options["rtol"], self.nv_atol)
         if flag < 0:
@@ -546,6 +582,8 @@ cdef class IDA(Implicit_ODE):
         #Set stop time
         flag = SUNDIALS.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
+            N_VDestroy(yout)
+            N_VDestroy(ydout)
             raise IDAError(flag, t)
         
         if opts["report_continuously"] or opts["output_list"] is None:
@@ -555,6 +593,8 @@ cdef class IDA(Implicit_ODE):
                 #Integration loop
                 flag = SUNDIALS.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
                 if flag < 0:
+                    N_VDestroy(yout)
+                    N_VDestroy(ydout)
                     raise IDAError(flag, tret)
                     
                 t = tret 
@@ -596,6 +636,8 @@ cdef class IDA(Implicit_ODE):
                 #Integration loop
                 flag = SUNDIALS.IDASolve(self.ida_mem,tout,&tret,yout,ydout,IDA_NORMAL)
                 if flag < 0:
+                    N_VDestroy(yout)
+                    N_VDestroy(ydout)
                     raise IDAError(flag, tret)
                 
                 #Store results
@@ -650,11 +692,15 @@ cdef class IDA(Implicit_ODE):
         #Set stop time
         flag = SUNDIALS.IDASetStopTime(self.ida_mem, tf)
         if flag < 0:
+            N_VDestroy(yout)
+            N_VDestroy(ydout)
             raise IDAError(flag, t)
         
         #Integration loop
         flag = SUNDIALS.IDASolve(self.ida_mem,tf,&tret,yout,ydout,IDA_ONE_STEP)
         if flag < 0:
+            N_VDestroy(yout)
+            N_VDestroy(ydout)
             raise IDAError(flag, tret)
             
         #Store results
@@ -761,9 +807,17 @@ cdef class IDA(Implicit_ODE):
         
         flag = SUNDIALS.IDAGetErrWeights(self.ida_mem, eweight)
         if flag < 0:
+            N_VDestroy(ele)
+            N_VDestroy(eweight)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise IDAError(flag)
         flag = SUNDIALS.IDAGetEstLocalErrors(self.ida_mem, ele)
         if flag < 0:
+            N_VDestroy(ele)
+            N_VDestroy(eweight)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise IDAError(flag)
         
         pyweight = nv2arr(eweight)
@@ -773,6 +827,8 @@ cdef class IDA(Implicit_ODE):
         
         N_VDestroy(ele) #Deallocate
         N_VDestroy(eweight) #Deallocate
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNDIALS.SUNContext_Free(&ctx)
         
         return err
     
@@ -798,11 +854,16 @@ cdef class IDA(Implicit_ODE):
         flag = SUNDIALS.IDAGetDky(self.ida_mem, t, k, dky)
         
         if flag < 0:
+            N_VDestroy(dky)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise IDAError(flag, t)
         
         res = nv2arr(dky)
         
         N_VDestroy(dky) #Deallocate
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNDIALS.SUNContext_Free(&ctx)
         
         return res
         
@@ -849,22 +910,32 @@ cdef class IDA(Implicit_ODE):
                 flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, x, dkyS)
                 
                 if flag<0:
+                    N_VDestroy(dkyS)
+                    IF SUNDIALS_VERSION >= (6,0,0):
+                        SUNDIALS.SUNContext_Free(&ctx)
                     raise IDAError(flag, t)
                 
                 matrix += [nv2arr(dkyS)]
             
             N_VDestroy(dkyS)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             
             return np.array(matrix)
         else:
             flag = SUNDIALS.IDAGetSensDky1(self.ida_mem, t, k, i, dkyS)
             
             if flag <0:
+                N_VDestroy(dkyS)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    SUNDIALS.SUNContext_Free(&ctx)
                 raise IDAError(flag, t)
             
             res = nv2arr(dkyS)
             
             N_VDestroy(dkyS)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             
             return res
             
@@ -1543,8 +1614,9 @@ cdef class CVode(Explicit_ODE):
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver
     cdef SUNDIALS.SUNNonlinearSolver sun_nonlinearsolver_sens
+    cdef SUNDIALS.SUNContext sun_ctx
     cdef int _progress_check
-    
+
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
 
@@ -1614,17 +1686,36 @@ cdef class CVode(Explicit_ODE):
 
         if self.nv_rtol != NULL:
             N_VDestroy(self.nv_rtol)
-        
+
+        if self.pData.dimSens > 0:
+            if self.pData.p != NULL:
+                free(self.pData.p)
+            if self.pData.pbar != NULL:
+                free(self.pData.pbar)
+            if self.ySO != NULL:
+                N_VDestroyVectorArray(self.ySO, self.pData.dimSens)
+                self.ySO = NULL
+
+        IF SUNDIALS_VERSION >= (4,0,0):
+            if self.sun_nonlinearsolver != NULL:
+                SUNDIALS.SUNNonlinSolFree(self.sun_nonlinearsolver)
+            if self.sun_nonlinearsolver_sens != NULL:
+                SUNDIALS.SUNNonlinSolFree(self.sun_nonlinearsolver_sens)
+
         if self.cvode_mem != NULL:
             #Free Memory
             SUNDIALS.CVodeFree(&self.cvode_mem)
-        
+
         IF SUNDIALS_VERSION >= (3,0,0):
             if self.sun_matrix != NULL:
                 SUNDIALS.SUNMatDestroy(self.sun_matrix)
                 
             if self.sun_linearsolver != NULL:
                 SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+
+        IF SUNDIALS_VERSION >= (6,0,0):
+            if self.sun_ctx != NULL:
+                SUNDIALS.SUNContext_Free(&self.sun_ctx)
     
     cpdef get_local_errors(self):
         """
@@ -1648,12 +1739,17 @@ cdef class CVode(Explicit_ODE):
 
         flag = SUNDIALS.CVodeGetEstLocalErrors(self.cvode_mem, ele)
         if flag < 0:
+            N_VDestroy(ele)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise CVodeError(flag, self.t)
             
         ele_py = nv2arr(ele)
         
         #Deallocate N_Vector
         N_VDestroy(ele)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNDIALS.SUNContext_Free(&ctx)
         
         return ele_py
         
@@ -1743,12 +1839,17 @@ cdef class CVode(Explicit_ODE):
         
         flag = SUNDIALS.CVodeGetErrWeights(self.cvode_mem, eweight)
         if flag < 0:
+            N_VDestroy(eweight)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise CVodeError(flag, self.t)
             
         eweight_py = nv2arr(eweight)
         
         #Deallocate N_Vector
         N_VDestroy(eweight)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNDIALS.SUNContext_Free(&ctx)
         
         return eweight_py
     
@@ -1808,19 +1909,26 @@ cdef class CVode(Explicit_ODE):
         cdef int flag #Used for return
         cdef realtype ZERO = 0.0
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx = NULL
             IF SUNDIALS_VERSION >= (7,0,0):
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
-            SUNDIALS.SUNContext_Create(comm, &ctx)
+            if self.sun_ctx == NULL:
+                SUNDIALS.SUNContext_Create(comm, &self.sun_ctx)
+            cdef SUNDIALS.SUNContext ctx = self.sun_ctx
 
+        if self.yTemp != NULL:
+            N_VDestroy(self.yTemp)
+            self.yTemp = NULL
         if self.options["norm"] == "EUCLIDEAN":
             self.yTemp = arr2nv_euclidean(self.y)
         else:
             self.yTemp = arr2nv(self.y)
         
         if self.pData.dimSens > 0:
+            if self.ySO != NULL:
+                N_VDestroyVectorArray(self.ySO, self.pData.dimSens)
+                self.ySO = NULL
             #Create the initial matrices
             self.ySO  = N_VCloneVectorArray(self.pData.dimSens, self.yTemp)
             
@@ -1984,12 +2092,17 @@ cdef class CVode(Explicit_ODE):
         flag = SUNDIALS.CVodeGetDky(self.cvode_mem, t, k, dky)
         
         if flag < 0:
+            N_VDestroy(dky)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             raise CVodeError(flag, t)
         
         res = nv2arr(dky)
         
         #Deallocate N_Vector
         N_VDestroy(dky)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            SUNDIALS.SUNContext_Free(&ctx)
         
         return res
         
@@ -2035,21 +2148,31 @@ cdef class CVode(Explicit_ODE):
             for x in range(self.pData.dimSens):
                 flag = SUNDIALS.CVodeGetSensDky1(self.cvode_mem, t, k, x, dkyS)
                 if flag<0:
+                    N_VDestroy(dkyS)
+                    IF SUNDIALS_VERSION >= (6,0,0):
+                        SUNDIALS.SUNContext_Free(&ctx)
                     raise CVodeError(flag, t)
                 
                 matrix += [nv2arr(dkyS)]
             
             N_VDestroy(dkyS)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             
             return np.array(matrix)
         else:
             flag = SUNDIALS.CVodeGetSensDky1(self.cvode_mem, t, k, i, dkyS)
             if flag <0:
+                N_VDestroy(dkyS)
+                IF SUNDIALS_VERSION >= (6,0,0):
+                    SUNDIALS.SUNContext_Free(&ctx)
                 raise CVodeError(flag, t)
             
             res = nv2arr(dkyS)
             
             N_VDestroy(dkyS)
+            IF SUNDIALS_VERSION >= (6,0,0):
+                SUNDIALS.SUNContext_Free(&ctx)
             
             return res
     
@@ -2085,11 +2208,13 @@ cdef class CVode(Explicit_ODE):
         #Set stop time
         flag = SUNDIALS.CVodeSetStopTime(self.cvode_mem, tf)
         if flag < 0:
+            N_VDestroy(yout)
             raise CVodeError(flag, t)
         
         #Integration loop
         flag = SUNDIALS.CVode(self.cvode_mem,tf,yout,&tret,CV_ONE_STEP)
         if flag < 0:
+            N_VDestroy(yout)
             raise CVodeError(flag, tret)
             
         #Store results
@@ -2312,16 +2437,28 @@ cdef class CVode(Explicit_ODE):
         """
         cdef flag
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx = NULL
             IF SUNDIALS_VERSION >= (7,0,0):
                 cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
             ELSE:
                 cdef void* comm = NULL
-            SUNDIALS.SUNContext_Create(comm, &ctx)
+            if self.sun_ctx == NULL:
+                SUNDIALS.SUNContext_Create(comm, &self.sun_ctx)
+            cdef SUNDIALS.SUNContext ctx = self.sun_ctx
+        IF SUNDIALS_VERSION < (7,6,0):
+            cdef int sparse_type = CSC_MAT
+        ELSE:
+            #CSC_MAT deprecated in 7.6, removed in 8.0
+            cdef int sparse_type = SUNDIALS.SUN_CSC_MAT
 
         #Choose a linear solver if and only if NEWTON is choosen
         if self.options["linear_solver"] == 'DENSE' and self.options["iter"] == "Newton":
             IF SUNDIALS_VERSION >= (3,0,0):
+                if self.sun_matrix != NULL:
+                    SUNDIALS.SUNMatDestroy(self.sun_matrix)
+                    self.sun_matrix = NULL
+                if self.sun_linearsolver != NULL:
+                    SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+                    self.sun_linearsolver = NULL
                 #Create a dense Sundials matrix
                 IF SUNDIALS_VERSION >= (6,0,0):
                     self.sun_matrix = SUNDIALS.SUNDenseMatrix(self.pData.dim, self.pData.dim, ctx)
@@ -2373,6 +2510,9 @@ cdef class CVode(Explicit_ODE):
                     
         elif self.options["linear_solver"] == 'SPGMR' and self.options["iter"] == "Newton":
             IF SUNDIALS_VERSION >= (3,0,0):
+                if self.sun_linearsolver != NULL:
+                    SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+                    self.sun_linearsolver = NULL
                 #Create the linear solver
                 IF SUNDIALS_VERSION >= (4,0,0):
                     IF SUNDIALS_VERSION >= (6,0,0):
@@ -2441,11 +2581,17 @@ cdef class CVode(Explicit_ODE):
                 raise AssimuloException("Need to specify the number of non zero elements in the Jacobian via the option 'jac_nnz'")
 
             IF SUNDIALS_VERSION >= (3,0,0):
+                if self.sun_matrix != NULL:
+                    SUNDIALS.SUNMatDestroy(self.sun_matrix)
+                    self.sun_matrix = NULL
+                if self.sun_linearsolver != NULL:
+                    SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+                    self.sun_linearsolver = NULL
                 IF SUNDIALS_VERSION >= (6,0,0):
-                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT, ctx)
+                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], sparse_type, ctx)
                     self.sun_linearsolver = SUNDIALS.SUNLinSol_SuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"], ctx)
                 ELSE:
-                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], CSC_MAT)
+                    self.sun_matrix = SUNDIALS.SUNSparseMatrix(self.pData.dim, self.pData.dim, self.problem_info["jac_fcn_nnz"], sparse_type)
                     self.sun_linearsolver = SUNDIALS.SUNSuperLUMT(self.yTemp, self.sun_matrix, self.options["num_threads"])
                 IF SUNDIALS_VERSION >= (4,0,0):
                     flag = SUNDIALS.CVodeSetLinearSolver(self.cvode_mem, self.sun_linearsolver, self.sun_matrix)
@@ -2514,6 +2660,12 @@ cdef class CVode(Explicit_ODE):
             raise CVodeError(flag)
         
         #Tolerances
+        if self.nv_atol != NULL:
+            N_VDestroy(self.nv_atol)
+            self.nv_atol = NULL
+        if self.nv_rtol != NULL:
+            N_VDestroy(self.nv_rtol)
+            self.nv_rtol = NULL
         self.nv_atol = arr2nv(self.options["atol"])
         if SUNDIALS_CVODE_RTOL_VEC and isinstance(self.options["rtol"], np.ndarray):
             self.nv_rtol = arr2nv(self.options["rtol"])

@@ -41,6 +41,10 @@ IF SUNDIALS_VERSION >= (6,0,0):
             int SUNContext_Create(SUNComm comm, SUNContext* ctx) noexcept
         ELSE:
             int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
+        int SUNContext_Free(SUNContext* ctx) noexcept
+ELSE:
+    #Dummy define so solver classes can hold a context handle on all versions
+    ctypedef void* SUNContext
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
@@ -87,11 +91,13 @@ cdef extern from "nvector/nvector_serial.h":
         N_Vector *N_VCloneVectorArray(int count, N_Vector w) noexcept
         N_Vector *N_VCloneVectorArrayEmpty(int count, N_Vector w) noexcept
         void N_VDestroy(N_Vector v) noexcept
+        void N_VDestroyVectorArray(N_Vector *vs, int count) noexcept
     ELSE:
         N_Vector N_VNew_Serial(long int vec_length) noexcept
         N_Vector *N_VCloneVectorArray_Serial(int count, N_Vector w) noexcept
         N_Vector *N_VCloneVectorArrayEmpty_Serial(int count, N_Vector w) noexcept
         void N_VDestroy_Serial(N_Vector v) noexcept
+        void N_VDestroyVectorArray_Serial(N_Vector *vs, int count) noexcept
     void N_VPrint_Serial(N_Vector v) noexcept
 
 
@@ -101,6 +107,7 @@ IF SUNDIALS_VERSION >= (4,0,0):
         
         cdef struct _generic_SUNNonlinearSolver:
             pass
+        int SUNNonlinSolFree(SUNNonlinearSolver NLS) noexcept
 ELSE:
     #Dummy defines
     ctypedef void *SUNNonlinearSolver
@@ -195,6 +202,10 @@ IF SUNDIALS_VERSION >= (3,0,0):
             SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype, SUNContext ctx) noexcept
         ELSE:
             SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N, sunindextype NNZ, int sparsetype) noexcept
+        IF SUNDIALS_VERSION >= (7,6,0):
+            #CSC_MAT/CSR_MAT are deprecated since 7.6 and removed in 8.0
+            cdef int SUN_CSC_MAT
+            cdef int SUN_CSR_MAT
     cdef extern from "sunlinsol/sunlinsol_dense.h":
         IF SUNDIALS_VERSION >= (4,0,0):
             IF SUNDIALS_VERSION >= (6,0,0):
@@ -756,7 +767,6 @@ cdef extern from "kinsol/kinsol.h":
 
     # optional output routines.
     # Documentation see kinsol.h line 670-735
-    int KINGetWorkSpace(void *kinmem, long int *lenrw, long int *leniw)
     int KINGetNumNonlinSolvIters(void *kinmem, long int *nniters)
     int KINGetNumFuncEvals(void *kinmem, long int *nfevals)
     int KINGetNumBetaCondFails(void *kinmem, long int *nbcfails) 
@@ -841,7 +851,6 @@ IF SUNDIALS_VERSION >= (6,0,0):
 ELSE:
     cdef extern from "kinsol/kinsol_direct.h":
         # optional output fcts for linear direct solver
-        int KINDlsGetWorkSpace(void *kinmem, long int *lenrwB, long int *leniwB)
         IF SUNDIALS_VERSION >= (4,0,0):
             int KINGetLastLinFlag(void *kinmem, long int *flag)
             int KINGetNumJacEvals(void *kinmem, long int *njevalsB)
