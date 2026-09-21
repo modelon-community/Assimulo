@@ -1,4 +1,10 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * CVode, IDA and KINSOL create one SUNContext per solver object instead of one per
+      (re)initialization, interpolation call and array-to-N_Vector conversion, and free it;
+      every one of those contexts was leaked (SUNDIALS >= 6), and each re-created the
+      SUNLogger from the environment (SUNDIALS >= 7), truncating a log file at every event.
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     

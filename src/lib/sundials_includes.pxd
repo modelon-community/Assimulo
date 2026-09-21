@@ -39,8 +39,10 @@ IF SUNDIALS_VERSION >= (6,0,0):
         IF SUNDIALS_VERSION >= (7,0,0):
             ctypedef int SUNComm
             int SUNContext_Create(SUNComm comm, SUNContext* ctx) noexcept
+            int SUNContext_Free(SUNContext* ctx) noexcept
         ELSE:
             int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
+            int SUNContext_Free(SUNContext* ctx) noexcept
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
