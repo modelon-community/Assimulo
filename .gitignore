@@ -2,3 +2,4 @@ build.sh
 build/
 *.pyc
 .venv
+build-meson/
