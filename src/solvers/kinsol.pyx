@@ -52,6 +52,8 @@ cdef class KINSOL(Algebraic):
     
     """
     cdef void* kinsol_mem
+    cdef void* ctx              #The solver object's SUNContext (SUNDIALS >= 6)
+    cdef int _err_handler_pushed
     cdef ProblemDataEquationSolver pData #A struct containing information about the problem
     cdef N_Vector y_temp, y_scale, f_scale
     cdef public double _eps
@@ -61,6 +63,17 @@ cdef class KINSOL(Algebraic):
     cdef SUNDIALS.SUNMatrix sun_matrix
     cdef SUNDIALS.SUNLinearSolver sun_linearsolver
     
+    def __cinit__(self, *args, **kwargs):
+        # one SUNContext per solver object, freed in __dealloc__ (SUNDIALS >= 6)
+        self.ctx = NULL
+        self._err_handler_pushed = 0
+        IF SUNDIALS_VERSION >= (6,0,0):
+            IF SUNDIALS_VERSION >= (7,0,0):
+                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
+            ELSE:
+                cdef void* comm = NULL
+            SUNDIALS.SUNContext_Create(comm, <SUNDIALS.SUNContext*>&self.ctx)
+
     def __init__(self, problem):
         Algebraic.__init__(self, problem) #Calls the base class
 
@@ -120,6 +133,9 @@ cdef class KINSOL(Algebraic):
                 
             if self.sun_linearsolver != NULL:
                 SUNDIALS.SUNLinSolFree(self.sun_linearsolver)
+        IF SUNDIALS_VERSION >= (6,0,0):
+            if self.ctx != NULL:
+                SUNDIALS.SUNContext_Free(<SUNDIALS.SUNContext*>&self.ctx)
         
     def update_variable_scaling(self, value="Automatic"):
         """
@@ -182,16 +198,11 @@ cdef class KINSOL(Algebraic):
     cdef initialize_kinsol(self):
         cdef int flag #Used for return
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
-                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
-            ELSE:
-                cdef void* comm = NULL
-            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef SUNDIALS.SUNContext ctx = <SUNDIALS.SUNContext>self.ctx
 
-        self.y_temp  = arr2nv(self.y)
-        self.y_scale = arr2nv([1.0]*self.problem_info["dim"])
-        self.f_scale = arr2nv([1.0]*self.problem_info["dim"])
+        self.y_temp  = arr2nv(self.y, self.ctx)
+        self.y_scale = arr2nv([1.0]*self.problem_info["dim"], self.ctx)
+        self.f_scale = arr2nv([1.0]*self.problem_info["dim"], self.ctx)
    
         if self.kinsol_mem == NULL: #The solver is not initialized
             #Create the solver
@@ -210,7 +221,10 @@ cdef class KINSOL(Algebraic):
             
             #Specify the error handling
             IF SUNDIALS_VERSION >= (7,0,0):
-                flag = SUNDIALS.SUNContext_PushErrHandler(ctx, kin_err, <void*>self.pData)
+                flag = 0
+                if not self._err_handler_pushed:
+                    flag = SUNDIALS.SUNContext_PushErrHandler(ctx, kin_err, <void*>self.pData)
+                    self._err_handler_pushed = 1
             ELSE:
                 flag = SUNDIALS.KINSetErrHandlerFn(self.kinsol_mem, kin_err, <void*>self.pData)
             if flag < 0:
@@ -232,12 +246,7 @@ cdef class KINSOL(Algebraic):
             
     cpdef add_linear_solver(self):
         IF SUNDIALS_VERSION >= (6,0,0):
-            cdef SUNDIALS.SUNContext ctx = NULL
-            IF SUNDIALS_VERSION >= (7,0,0):
-                cdef SUNDIALS.SUNComm comm = SUNDIALS.SUN_COMM_NULL
-            ELSE:
-                cdef void* comm = NULL
-            SUNDIALS.SUNContext_Create(comm, &ctx)
+            cdef SUNDIALS.SUNContext ctx = <SUNDIALS.SUNContext>self.ctx
         if self.options["linear_solver"] == "DENSE":
             IF SUNDIALS_VERSION >= (3,0,0):
                 #Create a dense Sundials matrix

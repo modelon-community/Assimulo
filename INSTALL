@@ -21,3 +21,16 @@ Installation is performed using the command:
 	
 Assimulo is then installed under Python dist-packages. 
 To test the installation, run "pytest".
+
+Building with meson-python (Python >= 3.12, where numpy.distutils no longer exists)
+------------------------------------------------------------------------------------
+    pip install --no-build-isolation \
+        -Csetup-args=-Dsundials-home=$CONDA_PREFIX \
+        -Csetup-args=-Dsuperlu-home=$CONDA_PREFIX \
+        -Csetup-args=-Dblas-home=$CONDA_PREFIX/lib -Csetup-args=-Dlapack-home=$CONDA_PREFIX/lib .
+
+Options (meson.options): sundials-home, superlu-home, blas-home, lapack-home, fortran
+(auto/enabled/disabled), extra-fortran-flags (default --std=legacy). Needs meson-python,
+Cython >= 3, numpy, a C compiler and, for the Fortran solvers, gfortran. The build produces
+the same 19 extension modules as setup.py with the same compiler flags; tools/dump_examples.py
+and tests/test_build_equivalence.py compare two builds bit for bit.

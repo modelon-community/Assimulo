@@ -1,0 +1,12 @@
+option('sundials-home', type: 'string', value: '',
+       description: 'Prefix of the SUNDIALS installation (include/ and lib/ below it); empty: /usr/local')
+option('superlu-home', type: 'string', value: '',
+       description: 'Prefix of SuperLU_MT (include/ or SRC/ with supermatrix.h, lib/ with libsuperlu_mt_OPENMP.a); empty: no sparse Radau5/CVode')
+option('blas-home', type: 'string', value: '',
+       description: 'Directory containing libblas (GLIMDA, SuperLU); empty: compiler default paths')
+option('lapack-home', type: 'string', value: '',
+       description: 'Directory containing liblapack (GLIMDA); empty: compiler default paths')
+option('fortran', type: 'feature', value: 'auto',
+       description: 'Build the Fortran solvers (Dopri5, RodasODE, Radau5/Radar5 Fortran, LSODAR, ODASSL, DASP3, GLIMDA)')
+option('extra-fortran-flags', type: 'array', value: ['--std=legacy'],
+       description: 'Extra Fortran compile flags')

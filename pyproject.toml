@@ -1,0 +1,25 @@
+[build-system]
+build-backend = "mesonpy"
+requires = ["meson-python>=0.15.0", "Cython>=3.0", "numpy>=1.25"]
+
+[project]
+name = "Assimulo"
+version = "3.8.0"
+description = "A package for solving ordinary differential equations and differential algebraic equations"
+readme = "README.md"
+license = {text = "LGPL-3.0"}
+requires-python = ">=3.9"
+dependencies = ["numpy", "scipy", "matplotlib"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.urls]
+Homepage = "https://github.com/modelon-community/Assimulo"
+
+[tool.meson-python.args]
+# The numerics of the shipped solvers are compared bit for bit against the numpy.distutils
+# build (-O2 for C, -O3 -funroll-loops for Fortran); the flags live in meson.build.
+setup = ["-Dbuildtype=release"]

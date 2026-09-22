@@ -21,44 +21,37 @@ from numpy cimport PyArray_DATA
 # Module functions
 #=================
 
-cdef N_Vector N_VNewEmpty_Euclidean(long int n) noexcept:
+cdef N_Vector N_VNewEmpty_Euclidean(long int n, void* ctx) noexcept:
+    """A serial N_Vector with the 2-norm as its WRMS norm, in the solver's SUNContext
+    (`ctx`, unused before SUNDIALS 6)."""
     IF SUNDIALS_VERSION >= (6,0,0):
-        cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
-            cdef SUNDIALS.SUNComm comm = 0
-        ELSE:
-            cdef void* comm = NULL
-        SUNDIALS.SUNContext_Create(comm, &ctx)
-        cdef N_Vector v = N_VNew_Serial(n, ctx)
+        cdef N_Vector v = N_VNew_Serial(n, <SUNDIALS.SUNContext>ctx)
     ELSE:
         cdef N_Vector v = N_VNew_Serial(n)
     v.ops.nvwrmsnorm = v.ops.nvwl2norm #Overwrite the WRMS norm to the 2-Norm
     return v
 
-cdef inline N_Vector arr2nv(x) noexcept:
+cdef inline N_Vector arr2nv(x, void* ctx) noexcept:
+    """A serial N_Vector holding a copy of `x`, in the solver's SUNContext (`ctx`, unused
+    before SUNDIALS 6). One context per solver object: a context per call would leak it,
+    and every context created from the environment re-opens the SUNLOGGER_* files."""
     x=np.array(x)
     cdef long int n = len(x)
     cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
     IF SUNDIALS_VERSION >= (6,0,0):
-        cdef SUNDIALS.SUNContext ctx = NULL
-        IF SUNDIALS_VERSION >= (7,0,0):
-            cdef SUNDIALS.SUNComm comm = 0
-        ELSE:
-            cdef void* comm = NULL
-        SUNDIALS.SUNContext_Create(comm, &ctx)
-        cdef N_Vector v = N_VNew_Serial(n, ctx)
+        cdef N_Vector v = N_VNew_Serial(n, <SUNDIALS.SUNContext>ctx)
     ELSE:
         cdef N_Vector v = N_VNew_Serial(n)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
 
-cdef inline N_Vector arr2nv_euclidean(x) noexcept:
+cdef inline N_Vector arr2nv_euclidean(x, void* ctx) noexcept:
     x=np.array(x)
     cdef long int n = len(x)
     cdef np.ndarray[realtype, ndim=1,mode='c'] ndx=x
     cdef void* data_ptr=PyArray_DATA(ndx)
-    cdef N_Vector v=N_VNewEmpty_Euclidean(n)
+    cdef N_Vector v=N_VNewEmpty_Euclidean(n, ctx)
     memcpy((<N_VectorContent_Serial>v.content).data, data_ptr, n*sizeof(realtype))
     return v
     

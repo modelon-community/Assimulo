@@ -1,4 +1,50 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * CVode, IDA and KINSOL create one SUNContext per solver object instead of one per
+      (re)initialization, interpolation call and array-to-N_Vector conversion, and free it;
+      every one of those contexts was leaked (SUNDIALS >= 6), and each re-created the
+      SUNLogger from the environment (SUNDIALS >= 7), truncating a log file at every event.
+    * New solver `ARKODE` (assimulo.solvers.ARKODE): SUNDIALS ARKODE's ARKStep with a diagonally
+      implicit (orders 2-5) or explicit (orders 2-9) Runge-Kutta table selected by `order` or by
+      name with `table`, Newton with the problem Jacobian (dense) or Jacobian-vector products
+      (SPGMR), ARKODE's rootfinding for state events (or Assimulo's locator with
+      `external_event_detection`), dense output, and ARKodeReset after events. Built when
+      SUNDIALS >= 7.1 with arkode/arkode.h is found; uses only the stepper-independent ARKode*
+      API. A failure-rate fallback (`fallback_table`, `fallback_conv_fail_rate`,
+      `fallback_window`) continues with a 2-stage table when Newton fails on most steps of a
+      many-stage method, as happens on a rhs with a state-dependent jump and no event indicator.
+      `method = "symplectic"` runs SPRKStep (symplectic partitioned RK, orders 1-6, 8, 10) at a
+      fixed step `fixed_h` on a separable system whose position states are named by `q_states`;
+      the problem's rhs is evaluated twice per stage and masked into f1/f2.
+      The dense-output interpolant defaults to degree 3 (`interpolant_degree`): ARKODE's own
+      default, the method order, costs extra rhs evaluations at every output point at order 5
+      and reports spurious events through the quintic Hermite interpolant under rootfinding.
+      `method = "imex"` runs ARKStep's additive (implicit-explicit) Runge-Kutta pairs, orders
+      2-5, on a rhs the problem splits as `rhs_implicit(t, y) + rhs_explicit(t, y)` (both
+      full-length, zero outside their part); Newton iterates on the implicit part only and
+      `jac` is then its Jacobian. `linear_solver = "BLOCK"` factors the Newton matrix block by
+      block when the problem declares `implicit_blocks`, index sets of implicit states whose
+      derivatives do not depend on each other's states (several fast subsystems that only
+      interact through the explicit part): states outside the blocks are identity rows, each
+      block is a small dense LU with the coupling to the outside states substituted, and every
+      setup checks the matrix against the declared structure, stopping the run with the
+      offending entry when it does not hold. `nfcns_implicit` counts the implicit rhs calls.
+      A recoverable rhs failure at a directly evaluated stage (every explicit stage of an ERK
+      or ARK pair) is unrecoverable to ARKODE, which retries only the failures inside Newton;
+      the run is then restarted at the last accepted point with the step reduced by
+      `fail_factor` (0.25), up to `fail_max` (40) consecutive times, as Radau5ODE and TRBDF2
+      do; `nrhsfails` counts the refused points.
+    * New solver `TRBDF2` (assimulo.solvers.TRBDF2): TR-BDF2, a second-order L-stable ESDIRK
+      method (Hosea & Shampine 1996) implemented in C with a third-order error estimate filtered
+      for stiffness, piecewise cubic Hermite dense output, a CVode-like Jacobian reuse policy,
+      CVode-like retries on recoverable rhs failures, and state/time/step events through
+      Assimulo's event locator.
+    * Radau5ODE: a recoverable failure of the rhs or Jacobian callback at a trial point now
+      reduces the step by a factor 0.25 (was 0.5) and is retried up to 40 consecutive times
+      (was 10), and the counter is per consecutive run of failures instead of per call.
+      Models whose property functions fail in a region the stage points step into (steam
+      tables at initialization) now complete instead of "Repeated unexpected step rejections".
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     

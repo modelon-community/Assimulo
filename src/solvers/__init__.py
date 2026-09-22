@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 __all__ = ["euler","radau5","sundials","runge_kutta","rosenbrock",
-           "glimda","odepack","radar5","dasp3","odassl"]
+           "glimda","odepack","radar5","dasp3","odassl","trbdf2","arkode"]
 
 import sys
 
@@ -34,8 +34,16 @@ try:
 except ImportError as ie:
     sys.stderr.write("Could not find " + str(ie) + "\n")
 try:
+    from .trbdf2 import TRBDF2
+except ImportError as ie:
+    sys.stderr.write("Could not find " + str(ie) + "\n")
+try:
     from .sundials import IDA
     from .sundials import CVode
+except ImportError as ie:
+    sys.stderr.write("Could not find " + str(ie) + "\n")
+try:
+    from .arkode import ARKODE
 except ImportError as ie:
     sys.stderr.write("Could not find " + str(ie) + "\n")
 try:

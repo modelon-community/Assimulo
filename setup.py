@@ -502,6 +502,24 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
+
+            #ARKODE (stepper-independent API: SUNDIALS >= 7.1)
+            if self.SUNDIALS_version >= (7,1,0) and os.path.exists(os.path.join(self.incdirs, 'arkode', 'arkode.h')):
+                ext_list += cythonize(["assimulo" + os.path.sep + "solvers" + os.path.sep + "arkode.pyx"],
+                                     include_path=[".","assimulo","assimulo" + os.sep + "lib"],
+                                     compile_time_env=compile_time_env,
+                                     force=True,
+                                     compiler_directives={'language_level' : "3str"})
+                ext_list[-1].include_dirs = [np.get_include(), "assimulo","assimulo"+os.sep+"lib", self.incdirs]
+                ext_list[-1].library_dirs = [self.libdirs]
+                ext_list[-1].libraries = ["sundials_arkode", "sundials_nvecserial", "sundials_sunlinsoldense", "sundials_sunlinsolspgmr",
+                                          "sundials_sunmatrixdense", "sundials_sunmatrixsparse", "sundials_core"]
+                if self.sundials_with_superlu and self.with_SLU:
+                    ext_list[-1].include_dirs.append(self.SLUincdir)
+                    ext_list[-1].library_dirs.append(self.SLUlibdir)
+                    ext_list[-1].libraries.extend(self.superLUFiles)
+            else:
+                logging.warning("ARKODE not built: needs SUNDIALS >= 7.1 with arkode/arkode.h")
         
             #Kinsol
             ext_list += cythonize(["assimulo"+os.path.sep+"solvers"+os.path.sep+"kinsol.pyx"], 
@@ -519,6 +537,17 @@ class Assimulo_prepare(object):
                 ext_list[-1].include_dirs.append(self.SLUincdir)
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
+
+        ## TR-BDF2 (C stepper in assimulo/lib/trbdf2.c)
+        ext_list += cythonize([os.path.join("assimulo", "lib", "trbdf2ode.pyx")],
+                            include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                            force = True,
+                            compiler_directives={'language_level' : "3str"})
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib")]
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo", "lib", "trbdf2.c")]
+        ext_list[-1].name = "assimulo.lib.trbdf2ode"
+        if 'win' not in self.platform:
+            ext_list[-1].libraries = ['m']
 
         ## Radau5
         ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],

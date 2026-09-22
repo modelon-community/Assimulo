@@ -24,7 +24,12 @@ def mark_solvers():
     solvers = [(sundials.CVode, "ODE"), (sundials.IDA, "DAE"), (radau5.Radau5ODE, "ODE"), (radau5.Radau5DAE, "DAE"),
                (euler.ExplicitEuler, "ODE"), (runge_kutta.RungeKutta4, "ODE"), (runge_kutta.RungeKutta34, "ODE"),
                (runge_kutta.Dopri5, "ODE"), (rosenbrock.RodasODE, "ODE"), (odepack.LSODAR, "ODE"),(glimda.GLIMDA, "DAE"),
-               (euler.ImplicitEuler, "ODE"), (dasp3.DASP3ODE, "ODE_SING"), (odassl.ODASSL,"DAE_OVER")]
+               (euler.ImplicitEuler, "ODE"), (dasp3.DASP3ODE, "ODE_SING"), (odassl.ODASSL,"DAE_OVER"),
+               (trbdf2.TRBDF2, "ODE")]
+    try:
+        solvers.append((arkode.ARKODE, "ODE"))      # only with SUNDIALS >= 7.1
+    except NameError:
+        pass
     
     
     rhs = lambda t,y: [1.0]

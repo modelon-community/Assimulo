@@ -39,8 +39,10 @@ IF SUNDIALS_VERSION >= (6,0,0):
         IF SUNDIALS_VERSION >= (7,0,0):
             ctypedef int SUNComm
             int SUNContext_Create(SUNComm comm, SUNContext* ctx) noexcept
+            int SUNContext_Free(SUNContext* ctx) noexcept
         ELSE:
             int SUNContext_Create(void* comm, SUNContext* ctx) noexcept
+            int SUNContext_Free(SUNContext* ctx) noexcept
 
 IF SUNDIALS_VERSION >= (7,0,0):
     cdef extern from "sundials/sundials_context.h":
@@ -150,7 +152,7 @@ IF SUNDIALS_VERSION >= (3,0,0):
             int                  (*solve)(SUNLinearSolver, SUNMatrix, N_Vector, N_Vector, realtype) noexcept
             int                  (*numiters)(SUNLinearSolver) noexcept
             realtype             (*resnorm)(SUNLinearSolver) noexcept
-            long int             (*lastflag)(SUNLinearSolver) noexcept
+            sunindextype         (*lastflag)(SUNLinearSolver) noexcept
             int                  (*space)(SUNLinearSolver, long int*, long int*) noexcept
             N_Vector             (*resid)(SUNLinearSolver) noexcept
             int                  (*free)(SUNLinearSolver) noexcept
