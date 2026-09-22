@@ -1,4 +1,11 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * Radau5ODE: a recoverable failure of the rhs or Jacobian callback at a trial point now
+      reduces the step by a factor 0.25 (was 0.5) and is retried up to 40 consecutive times
+      (was 10), and the counter is per consecutive run of failures instead of per call.
+      Models whose property functions fail in a region the stage points step into (steam
+      tables at initialization) now complete instead of "Repeated unexpected step rejections".
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     

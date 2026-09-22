@@ -6,6 +6,10 @@
 #include <math.h>
 #include "radau5.h"
 
+/* Recoverable callback failures (rhs/jac returning a recoverable error at a trial point) */
+#define RADAU_MAX_CONSECUTIVE_CALLBACK_FAILURES 40
+#define RADAU_CALLBACK_FAILURE_STEP_FACTOR 0.25
+
 #ifdef __RADAU5_WITH_SUPERLU
 	#include "superlu_double.h"
 	#include "superlu_complex.h"
@@ -303,7 +307,7 @@ static int _radcor(radau_mem_t *rmem, int n, FP_CB_f fcn, void *fcn_EXT,
 	double ysafe; /* auxiliary value in jacobians*/
 
 	/* tracking for various failure states */
-	int nunexpect; /* number of unexpected step failures, max = 10 */
+	int nunexpect; /* number of consecutive unexpected (recoverable callback) step failures, max = 10 */
 	int nsing; /* number of singular jacobians */
 
     /* Parameter adjustments */
@@ -598,6 +602,7 @@ L40:
 	/* --- STEP IS ACCEPTED */
 		first = FALSE_;
 		rmem->stats->naccpt++;
+		nunexpect = 0; /* limit applies to consecutive recoverable callback failures, not to the whole call */
 		if (rmem->input->pred_step_control) {
 			/*       --- PREDICTIVE CONTROLLER OF GUSTAFSSON */
 			if (rmem->stats->naccpt > 1) {
@@ -743,12 +748,17 @@ L79:
 	if (ier > 0){ /* recoverable */
 		/* else, other negative return value: recoverable */
 		++nunexpect;
-		if (nunexpect >= 10) {
+		if (nunexpect >= RADAU_MAX_CONSECUTIVE_CALLBACK_FAILURES) {
 			sprintf(rmem->err_log, "Repeated unexpected step rejections.");
 			return RADAU_ERROR_REP_STEP_REJECT;
 		}
-		*h__ *= .5;
-		hhfac = .5;
+		/* A recoverable callback failure (the model refused a trial point) is handled like
+		   CVode handles a recoverable rhs failure: shrink the step by a quarter and retry,
+		   up to a budget of consecutive failures. Halving with a budget of 10 (h/1024) was
+		   not enough for models whose property functions fail in a region the stage points
+		   step into (steam tables at initialization). */
+		*h__ *= RADAU_CALLBACK_FAILURE_STEP_FACTOR;
+		hhfac = RADAU_CALLBACK_FAILURE_STEP_FACTOR;
 		reject = TRUE_;
 		last = FALSE_;
 		if (rmem->jac_is_fresh) {
