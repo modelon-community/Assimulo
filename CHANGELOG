@@ -1,4 +1,9 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * Verified with SUNDIALS 7.9.0 (conda-forge, 32-bit index, SuperLU_MT): the test suite and
+      all 45 examples (20 of them CVode/IDA/Kinsol) give results identical to SUNDIALS 7.8.0,
+      bit for bit; no code change was needed.
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     
