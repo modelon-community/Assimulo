@@ -1,4 +1,16 @@
 --- CHANGELOG ---
+--- Assimulo-FUTURE---
+    * New solver `TRBDF2` (assimulo.solvers.TRBDF2): TR-BDF2, a second-order L-stable ESDIRK
+      method (Hosea & Shampine 1996) implemented in C with a third-order error estimate filtered
+      for stiffness, piecewise cubic Hermite dense output, a CVode-like Jacobian reuse policy,
+      CVode-like retries on recoverable rhs failures, and state/time/step events through
+      Assimulo's event locator.
+    * Radau5ODE: a recoverable failure of the rhs or Jacobian callback at a trial point now
+      reduces the step by a factor 0.25 (was 0.5) and is retried up to 40 consecutive times
+      (was 10), and the counter is per consecutive run of failures instead of per call.
+      Models whose property functions fail in a region the stage points step into (steam
+      tables at initialization) now complete instead of "Repeated unexpected step rejections".
+
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     

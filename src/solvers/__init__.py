@@ -34,6 +34,10 @@ try:
 except ImportError as ie:
     sys.stderr.write("Could not find " + str(ie) + "\n")
 try:
+    from .trbdf2 import TRBDF2
+except ImportError as ie:
+    sys.stderr.write("Could not find " + str(ie) + "\n")
+try:
     from .sundials import IDA
     from .sundials import CVode
 except ImportError as ie:

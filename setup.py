@@ -520,6 +520,17 @@ class Assimulo_prepare(object):
                 ext_list[-1].library_dirs.append(self.SLUlibdir)
                 ext_list[-1].libraries.extend(self.superLUFiles)
 
+        ## TR-BDF2 (C stepper in assimulo/lib/trbdf2.c)
+        ext_list += cythonize([os.path.join("assimulo", "lib", "trbdf2ode.pyx")],
+                            include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
+                            force = True,
+                            compiler_directives={'language_level' : "3str"})
+        ext_list[-1].include_dirs = [np.get_include(), "assimulo", os.path.join("assimulo", "lib")]
+        ext_list[-1].sources = ext_list[-1].sources + [os.path.join("assimulo", "lib", "trbdf2.c")]
+        ext_list[-1].name = "assimulo.lib.trbdf2ode"
+        if 'win' not in self.platform:
+            ext_list[-1].libraries = ['m']
+
         ## Radau5
         ext_list += cythonize([os.path.join("assimulo","thirdparty","radau5","radau5ode.pyx")],
                             include_path=[".", "assimulo", os.path.join("assimulo", "lib")],
