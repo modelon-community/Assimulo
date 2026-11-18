@@ -33,8 +33,8 @@ class Test_Explicit_Radau5_Py:
     """
     Tests the explicit Radau solver (Python implementation).
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
@@ -278,8 +278,8 @@ class Test_Explicit_Radau5:
     """
     Tests the explicit Radau solver.
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
@@ -979,8 +979,8 @@ class Test_Implicit_Radau5:
     """
     Tests the implicit Radau solver.
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
@@ -1260,8 +1260,8 @@ class Test_Implicit_Radau5_Py:
     """
     Tests the implicit Radau solver (Python implementation).
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
@@ -1405,8 +1405,8 @@ class Test_Radau_Common:
     """
     Tests the common attributes of the Radau solvers.
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.

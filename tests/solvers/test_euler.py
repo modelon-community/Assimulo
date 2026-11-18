@@ -27,8 +27,8 @@ float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_Explicit_Euler:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -181,8 +181,8 @@ class Test_Explicit_Euler:
 
 class Test_Implicit_Euler:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This function sets up the test case.

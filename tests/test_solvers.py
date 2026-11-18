@@ -32,8 +32,8 @@ def handle_event(solver, event_info):
     pass
 
 class Test_Solvers:
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         cls.problem = Implicit_Problem(res, [1.0], [-1.0])
         cls.problem.state_events = state_events

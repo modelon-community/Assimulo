@@ -26,8 +26,8 @@ class Test_GLIMDA:
     """
     Tests the GLIMDA solver.
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
