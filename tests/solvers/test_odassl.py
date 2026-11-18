@@ -23,8 +23,8 @@ import numpy as np
 
 class Test_ODASSL:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This function sets up the test case.

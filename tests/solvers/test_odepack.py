@@ -32,8 +32,8 @@ class Test_LSODAR:
     """
     Tests the LSODAR solver.
     """
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.

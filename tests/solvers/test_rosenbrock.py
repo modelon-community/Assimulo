@@ -25,8 +25,8 @@ import scipy.sparse as sps
 float_regex = r"[\s]*[\d]*.[\d]*((e|E)(\+|\-)\d\d|)"
 
 class Test_RodasODE:
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         #Define the rhs
         def f(t,y):

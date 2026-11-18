@@ -26,8 +26,8 @@ import scipy.sparse as sps
 
 class Test_CVode:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -906,8 +906,8 @@ class Test_CVode:
 
 class Test_IDA:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This function sets up the test case.
@@ -1370,8 +1370,8 @@ class Test_IDA:
 
 class Test_Sundials:
     
-    @classmethod
     @pytest.fixture(autouse=True)
+    @classmethod
     def setup_class(cls):
         """
         This sets up the test case.
