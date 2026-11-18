@@ -180,6 +180,7 @@ cdef class Explicit_ODE(ODE):
         """
         cdef double tevent
         cdef int flag, output_index
+        cdef bint time_event, tevent_is_time_event
         cdef dict opts
         cdef double eps = np.finfo(float).eps*100 #Machine Epsilon
         cdef backward = 1 if self.backward else 0
@@ -214,11 +215,13 @@ cdef class Explicit_ODE(ODE):
                 tevent = tfinal if tret is None else (tret if tret < tfinal else tfinal)
             else:
                 tevent = tfinal
+            tevent_is_time_event = tevent != tfinal or (TIME_EVENT and tret == tevent)
             
             #Initialize the clock, enabling storing elapsed time for each step
             if REPORT_CONTINUOUSLY and self.options["clock_step"]:
                 self.clock_start = timer()
             
+            self.step_event_signalled = False
             flag, tlist, ylist = self.integrate(self.t, self.y, tevent, opts)
             
             #Store data if not done after each step
@@ -230,14 +233,17 @@ cdef class Explicit_ODE(ODE):
             flag_initialize = False
             
             #Event handling
-            if flag == ID_EVENT or (flag == ID_COMPLETE and tevent != tfinal) or (flag == ID_COMPLETE and TIME_EVENT and tret==tevent): #Event has been detected
+            if flag == ID_EVENT or (flag == ID_COMPLETE and tevent_is_time_event): #Event has been detected
                 
                 if self.store_event_points and output_list is not None and abs(output_list[opts["output_index"]-1] - self.t) > eps*max(abs(self.t), abs(tevent)):
                     self.problem.handle_result(self, self.t, self.y.copy())
                 
                 #Get and store event information
-                event_info = [[],flag == ID_COMPLETE]
-                if flag == ID_COMPLETE:
+                #A step event replaces the solver's flag, so check the time event against tevent
+                time_event = tevent_is_time_event and (flag == ID_COMPLETE or
+                    (self.step_event_signalled and abs(self.t - tevent) <= eps*max(abs(self.t), abs(tevent))))
+                event_info = [[], time_event, self.step_event_signalled]
+                if time_event:
                     self.statistics["ntimeevents"] += 1#Time event detected
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
@@ -322,6 +328,7 @@ cdef class Explicit_ODE(ODE):
         #Callback to the problem
         if self.problem_info["step_events"]:
             flag_initialize = self.problem.step_events(self) #completed step returned to the problem
+            self.step_event_signalled = flag_initialize
             if flag_initialize:
                 self.statistics["nstepevents"] += 1
         else:

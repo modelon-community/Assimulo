@@ -119,7 +119,6 @@ class Radau5ODE(Radau_Common,Explicit_ODE):
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(explicit)'
-        self._event_info = None
         self._werr = np.zeros(self._leny)
 
     def _get_linear_solver(self):
