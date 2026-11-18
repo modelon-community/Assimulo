@@ -58,10 +58,15 @@ cdef class cProblem:
         the first element is a list containing information about state events,
         the second element is a Boolean for indicating if there has been a time
         event and the third element is a Boolean indicating if there has been a
-        step event. If there has not been a state event the first element is an empty
-        list. The state event list contains a set of integers of values (-1,0,1),
-        the values indicates which state event has triggered (determined from 
-        state_event(...) ) and the value indicates to where the state event is 'headed'.
+        step event. Entry i of the state event list is non-zero if state event
+        function i (determined from state_events(...) ) has triggered: -1 or 1,
+        where the sign indicates to where the state event is 'headed'. A state event
+        has occurred if any entry is non-zero::
+
+            state_info, time_event, step_event = event_info
+            for i, direction in enumerate(state_info):
+                if direction != 0:
+                    ... #State event function i has triggered
         """
         solver.log_message("No event handling defined.", NORMAL)
        
@@ -311,10 +316,15 @@ class Implicit_Problem(cImplicit_Problem):
                 the first element is a list containing information about state events,
                 the second element is a Boolean  indicating if there has been a time
                 event and the third element is a Boolean indicating if there has been a
-                step event. If there has not been a state event the first element is an empty
-                list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicate which state event has triggered (determined from 
-                state_event(...) ) and the value indicates to where the state event is 'headed'.
+                step event. Entry i of the state event list is non-zero if state event
+                function i (determined from state_events(...) ) has triggered: -1 or 1,
+                where the sign indicates to where the state event is 'headed'. A state event
+                has occurred if any entry is non-zero::
+
+                    state_info, time_event, step_event = event_info
+                    for i, direction in enumerate(state_info):
+                        if direction != 0:
+                            ... #State event function i has triggered
     """
     pass
 class Overdetermined_Problem(cOverdetermined_Problem):
@@ -397,10 +407,15 @@ class Overdetermined_Problem(cOverdetermined_Problem):
                 the first element is a list containing information about state events,
                 the second element is a Boolean indicating if there has been a time
                 event and the third element is a Boolean indicating if there has been a
-                step event. If there have not been a state event the first element is an empty
-                list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicate which state event has triggered (determined from 
-                state_event(...) ) and the value indicates to where the state event is 'headed'.
+                step event. Entry i of the state event list is non-zero if state event
+                function i (determined from state_events(...) ) has triggered: -1 or 1,
+                where the sign indicates to where the state event is 'headed'. A state event
+                has occurred if any entry is non-zero::
+
+                    state_info, time_event, step_event = event_info
+                    for i, direction in enumerate(state_info):
+                        if direction != 0:
+                            ... #State event function i has triggered
     """
     pass
 class Explicit_Problem(cExplicit_Problem):
@@ -484,10 +499,15 @@ class Explicit_Problem(cExplicit_Problem):
                 the first element is a list containing information about state events,
                 the second element is a Boolean  indicating if there has been a time
                 event and the third element is a Boolean indicating if there has been a
-                step event. If there has not been a state event the first element is an empty
-                list. The state event list contains a set of integers of values (-1,0,1),
-                the values indicate which state event has triggered (determined from 
-                state_event(...) ) and the value indicates to where the state event is 'headed'.
+                step event. Entry i of the state event list is non-zero if state event
+                function i (determined from state_events(...) ) has triggered: -1 or 1,
+                where the sign indicates to where the state event is 'headed'. A state event
+                has occurred if any entry is non-zero::
+
+                    state_info, time_event, step_event = event_info
+                    for i, direction in enumerate(state_info):
+                        if direction != 0:
+                            ... #State event function i has triggered
     """
     pass
 class SingPerturbed_Problem(cSingPerturbed_Problem):

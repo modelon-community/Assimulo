@@ -68,8 +68,7 @@ class Decay:
         return True
 
     def handle_event(self, solver, event_info):
-        state_info, time_event, step_event = event_info
-        self.received.append([[int(i) for i in state_info], time_event, step_event])
+        self.received.append(list(event_info))
 
 
 class ExplicitDecay(Decay, Explicit_Problem):

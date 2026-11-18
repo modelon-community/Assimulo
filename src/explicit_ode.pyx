@@ -246,7 +246,9 @@ cdef class Explicit_ODE(ODE):
                 if time_event:
                     self.statistics["ntimeevents"] += 1#Time event detected
                 if flag == ID_EVENT:
-                    event_info[0] = self.state_event_info()
+                    #All zeros for a step event alone
+                    if self.problem_info["state_events"]:
+                        event_info[0] = self.state_event_info()
                     if REPORT_CONTINUOUSLY:
                         self._chattering_check(event_info)
                 
