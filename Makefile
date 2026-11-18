@@ -14,6 +14,7 @@ define _run
 	else \
 		docker run \
 		--rm $(2) \
+		--user $(shell id -u):$(shell id -g) \
 		-v $(CURDIR):/src \
 		$(DOCKER_IMAGE) \
 		$(1); \
