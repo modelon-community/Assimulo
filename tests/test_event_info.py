@@ -20,7 +20,7 @@ import pytest
 
 from assimulo import solvers
 from assimulo.ode import QUIET
-from assimulo.problem import Explicit_Problem
+from assimulo.problem import Explicit_Problem, Implicit_Problem
 
 TIME_EVENT = 1.0
 STATE_EVENT_Y = 0.5
@@ -77,6 +77,14 @@ class ExplicitDecay(Decay, Explicit_Problem):
         return -y
 
 
+class ImplicitDecay(Decay, Implicit_Problem):
+    def __init__(self, signal, with_state_event):
+        super().__init__(signal, with_state_event, yd0=[-1.0])
+
+    def res(self, t, y, yd, *sw):
+        return yd + y
+
+
 SOLVER_CASES = [
     (ExplicitDecay, solvers.CVode),
     (ExplicitDecay, solvers.Radau5ODE),
@@ -86,6 +94,8 @@ SOLVER_CASES = [
     (ExplicitDecay, solvers.LSODAR),
     (ExplicitDecay, solvers.ExplicitEuler),
     (ExplicitDecay, solvers.ImplicitEuler),
+    (ImplicitDecay, solvers.IDA),
+    (ImplicitDecay, solvers.Radau5DAE),
 ]
 
 

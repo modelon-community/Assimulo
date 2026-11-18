@@ -156,6 +156,7 @@ cdef class Implicit_ODE(ODE):
         """
         cdef double tevent
         cdef int flag, output_index
+        cdef bint time_event
         cdef dict opts
         cdef int type = self.problem_info["type"]
         cdef double eps = np.finfo(float).eps*100 #Machine Epsilon
@@ -203,6 +204,7 @@ cdef class Implicit_ODE(ODE):
             if REPORT_CONTINUOUSLY and self.options["clock_step"]: 
                 self.clock_start = timer()
                 
+            self.step_event_signalled = False
             [flag, tlist, ylist, ydlist] = self.integrate(self.t, self.y, self.yd, tevent, opts)
 
             #Store data if not done in report_solution
@@ -223,8 +225,11 @@ cdef class Implicit_ODE(ODE):
                     self.problem.handle_result(self, self.t, self.y.copy(), self.yd.copy())
                                 
                 #Get and store event information
-                event_info = [[],flag == ID_COMPLETE]
-                if flag == ID_COMPLETE:
+                #A step event replaces the solver's flag, so check the time event against tevent
+                time_event = tevent != tfinal and (flag == ID_COMPLETE or
+                    (self.step_event_signalled and abs(self.t - tevent) <= eps*max(abs(self.t), abs(tevent))))
+                event_info = [[], time_event, self.step_event_signalled]
+                if time_event:
                     self.statistics["ntimeevents"] += 1#Time event detected
                 if flag == ID_EVENT:
                     event_info[0] = self.state_event_info()
@@ -319,6 +324,7 @@ cdef class Implicit_ODE(ODE):
         #Callback to FMU 
         if self.problem_info["step_events"]:  
             flag_initialize = self.problem.step_events(self) #completed step returned to FMU
+            self.step_event_signalled = flag_initialize
             if flag_initialize:
                 self.statistics["nstepevents"] += 1
         else: 

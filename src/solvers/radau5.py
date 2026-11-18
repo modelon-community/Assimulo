@@ -998,7 +998,6 @@ class Radau5DAE(Radau_Common,Implicit_ODE):
         
         self._leny = len(self.y) #Dimension of the problem
         self._type = '(implicit)'
-        self._event_info = None
 
     def _get_implementation(self):
         return 'f'

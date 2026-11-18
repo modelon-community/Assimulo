@@ -54,10 +54,11 @@ cdef class cProblem:
         """
         Defines how to handle a discontinuity. This functions gets called when
         a discontinuity has been found in the supplied event functions. The solver
-        is the solver attribute while the event_info is a list of length 2 where
-        the first element is a list containing information about state events and
+        is the solver attribute while the event_info is a list of length 3 where
+        the first element is a list containing information about state events,
         the second element is a Boolean for indicating if there has been a time
-        event. If there has not been a state event the first element is an empty
+        event and the third element is a Boolean indicating if there has been a
+        step event. If there has not been a state event the first element is an empty
         list. The state event list contains a set of integers of values (-1,0,1),
         the values indicates which state event has triggered (determined from 
         state_event(...) ) and the value indicates to where the state event is 'headed'.
@@ -306,10 +307,11 @@ class Implicit_Problem(cImplicit_Problem):
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
                 a discontinuity has been found in the supplied event functions. The solver
-                is the solver attribute. The event_info is a list of length 2 where
-                the first element is a list containing information about state events and
+                is the solver attribute. The event_info is a list of length 3 where
+                the first element is a list containing information about state events,
                 the second element is a Boolean  indicating if there has been a time
-                event. If there has not been a state event the first element is an empty
+                event and the third element is a Boolean indicating if there has been a
+                step event. If there has not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
                 the values indicate which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
@@ -391,10 +393,11 @@ class Overdetermined_Problem(cOverdetermined_Problem):
             def handle_event(self, object solver, event_info):
                 Defines how to handle a discontinuity. This functions gets called when
                 a discontinuity has been found in the supplied event functions. The solver
-                is the solver attribute. The event_info is a list of length 2 where
-                the first element is a list containing information about state events and
+                is the solver attribute. The event_info is a list of length 3 where
+                the first element is a list containing information about state events,
                 the second element is a Boolean indicating if there has been a time
-                event. If there have not been a state event the first element is an empty
+                event and the third element is a Boolean indicating if there has been a
+                step event. If there have not been a state event the first element is an empty
                 list. The state event list contains a set of integers of values (-1,0,1),
                 the values indicate which state event has triggered (determined from 
                 state_event(...) ) and the value indicates to where the state event is 'headed'.
