@@ -1,4 +1,8 @@
 --- CHANGELOG ---
+--- Assimulo-3.9.0---
+    * `handle_event` now receives `event_info = [state_event_info, time_event, step_event]`,
+    also reporting the time event when a step event fires at it.
+    
 --- Assimulo-3.8.0---
     * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
     
