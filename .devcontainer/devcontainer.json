@@ -23,5 +23,7 @@
     ]
   }},
   // User from Dockerfile:
-  "remoteUser": "root"
+  "containerUser": "dev",
+  "remoteUser": "dev",
+  "updateRemoteUserUID": true
 }
