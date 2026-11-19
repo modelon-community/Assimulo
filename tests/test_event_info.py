@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from dataclasses import dataclass, field
+
 import numpy as np
 import pytest
 
@@ -51,7 +53,7 @@ class Decay:
         super().__init__(y0=[1.0], t0=0.0, **initial_values)
         self.signal = signal
         self.signalled = False
-        self.received = []
+        self.handled_events_info = []
         if with_state_event:
             self.state_events = self.indicator
 
@@ -62,13 +64,14 @@ class Decay:
         return TIME_EVENT if t < TIME_EVENT else None
 
     def step_events(self, solver):
-        if self.signalled or not self.signal(solver):
-            return False
-        self.signalled = True
-        return True
+        if not self.signalled and self.signal(solver):
+            self.signalled = True
+            return True
+
+        return False
 
     def handle_event(self, solver, event_info):
-        self.received.append(list(event_info))
+        self.handled_events_info.append(list(event_info))
 
 
 class ExplicitDecay(Decay, Explicit_Problem):
@@ -98,7 +101,7 @@ SOLVER_CASES = [
 ]
 
 
-def simulate(solver_class, problem):
+def simulate_and_get_nevents(solver_class, problem):
     solver = solver_class(problem)
     solver.verbosity = QUIET
     solver.report_continuously = True
@@ -106,9 +109,26 @@ def simulate(solver_class, problem):
     return solver.get_statistics()["ntimeevents"]
 
 
-def step_event_info(received):
-    [event_info] = [event_info for event_info in received if event_info[2]]
-    return event_info
+@dataclass
+class Event:
+    """Expected event_info passed to handle_event. Omitting `state` means no state event info."""
+
+    time: bool = False
+    step: bool = False
+    state: list = field(default_factory=list)
+
+
+def assert_events(problem, expects):
+    received = [
+        Event(time=time_event, step=step_event, state=[int(s) for s in state_info])
+        for state_info, time_event, step_event in problem.handled_events_info
+    ]
+    assert received == expects
+
+
+def downward_crossing(solver_class):
+    # LSODAR reports the opposite sign for a root crossing compared to the other solvers.
+    return 1 if solver_class is solvers.LSODAR else -1
 
 
 @pytest.mark.parametrize("problem_class, solver_class", SOLVER_CASES)
@@ -117,10 +137,10 @@ def test_time_event_without_step_event_reports_time_event_only(problem_class, so
     problem = problem_class(never, with_state_event=False)
 
     # When
-    ntimeevents = simulate(solver_class, problem)
+    ntimeevents = simulate_and_get_nevents(solver_class, problem)
 
     # Then
-    assert problem.received == [[[], True, False]]
+    assert_events(problem, expects=[Event(time=True)])
     assert ntimeevents == 1
 
 
@@ -130,10 +150,13 @@ def test_step_event_alone_reports_step_event_only(problem_class, solver_class):
     problem = problem_class(on_first_step, with_state_event=False)
 
     # When
-    simulate(solver_class, problem)
+    simulate_and_get_nevents(solver_class, problem)
 
     # Then
-    assert step_event_info(problem.received) == [[], False, True]
+    assert_events(problem, expects=[
+        Event(step=True),
+        Event(time=True),
+    ])
 
 
 @pytest.mark.parametrize("problem_class, solver_class", SOLVER_CASES)
@@ -142,10 +165,14 @@ def test_step_event_alone_with_state_events_reports_no_located_root(problem_clas
     problem = problem_class(on_first_step, with_state_event=True)
 
     # When
-    simulate(solver_class, problem)
+    simulate_and_get_nevents(solver_class, problem)
 
     # Then
-    assert step_event_info(problem.received) == [[0], False, True]
+    assert_events(problem, expects=[
+        Event(step=True, state=[0]),
+        Event(state=[downward_crossing(solver_class)]),
+        Event(time=True),
+    ])
 
 
 @pytest.mark.parametrize("problem_class, solver_class", SOLVER_CASES)
@@ -154,10 +181,10 @@ def test_step_event_reaching_time_event_reports_both(problem_class, solver_class
     problem = problem_class(at_time_event, with_state_event=False)
 
     # When
-    ntimeevents = simulate(solver_class, problem)
+    ntimeevents = simulate_and_get_nevents(solver_class, problem)
 
     # Then
-    assert problem.received == [[[], True, True]]
+    assert_events(problem, expects=[Event(time=True, step=True)])
     assert ntimeevents == 1
 
 
@@ -167,9 +194,10 @@ def test_step_event_ending_at_state_event_reports_both(problem_class, solver_cla
     problem = problem_class(at_state_event, with_state_event=True)
 
     # When
-    simulate(solver_class, problem)
+    simulate_and_get_nevents(solver_class, problem)
 
     # Then
-    [state_info], time_event, step_event = step_event_info(problem.received)
-    assert state_info != 0
-    assert (time_event, step_event) == (False, True)
+    assert_events(problem, expects=[
+        Event(step=True, state=[downward_crossing(solver_class)]),
+        Event(time=True),
+    ])
