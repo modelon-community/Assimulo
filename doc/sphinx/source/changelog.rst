@@ -2,6 +2,13 @@
 ==========
 Changelog
 ==========
+--- Assimulo-3.9.0---
+    * `handle_event` now receives `event_info = [state_event_info, time_event, step_event]`.
+    If a step event coincides with a time or state event, both events are reported in `event_info`.
+
+--- Assimulo-3.8.0---
+    * Enabled interpolated output support for ExplicitEuler and ImplicitEuler.
+
 --- Assimulo-3.7.3---
     * Improved Radau5ODE handling of steps ending close to final time. 
 
